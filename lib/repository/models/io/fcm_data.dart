@@ -89,16 +89,6 @@ class FCMData {
   }
 
   static FCMData getFCM() {
-    if (kIsWeb) {
-      return FCMData(
-        projectID: prefs.getString('projectID'),
-        storageBucket: prefs.getString('storageBucket'),
-        apiKey: prefs.getString('apiKey'),
-        firebaseURL: prefs.getString('firebaseURL'),
-        clientID: prefs.getString('clientID'),
-        applicationID: prefs.getString('applicationID'),
-      );
-    }
     final result = fcmDataBox.getAll();
     if (result.isEmpty) {
       return FCMData(

@@ -58,9 +58,13 @@ class FCMData {
   }
 
   FCMData save() {
-    for (MapEntry entry in toMap().entries) {
-      prefs.setString(entry.key, entry.value);
-    }
+    if (isNull) return this;
+    prefs.setString('projectID', projectID!);
+    prefs.setString('storageBucket', storageBucket!);
+    prefs.setString('apiKey', apiKey!);
+    prefs.setString('firebaseURL', firebaseURL!);
+    prefs.setString('clientID', clientID!);
+    prefs.setString('applicationID', applicationID!);
     return this;
   }
 
