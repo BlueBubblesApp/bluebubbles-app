@@ -198,6 +198,7 @@ class Chat {
   }
 
   Future<Chat> save({bool updateIfAbsent = true, bool updateLocalVals = false}) async {
+    if (kIsWeb) return this;
     final Database? db = await DBProvider.db.database;
 
     // Try to find an existing chat before saving it

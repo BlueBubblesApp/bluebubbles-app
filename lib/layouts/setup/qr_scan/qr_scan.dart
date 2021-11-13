@@ -540,7 +540,7 @@ class _QRScanState extends State<QRScan> {
       context: context,
       builder: (connectContext) => ConnectingAlert(
         onConnect: (bool result) {
-          Navigator.of(connectContext).pop();
+          Get.back();
           if (result) {
             setState(() {
               showManualEntry = false;
