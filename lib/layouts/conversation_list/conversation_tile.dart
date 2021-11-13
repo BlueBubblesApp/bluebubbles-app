@@ -217,21 +217,32 @@ class _ConversationTileState extends State<ConversationTile> {
         ));
   }
 
+  Future<String?> getOrUpdateChatTitle() async {
+    if (widget.chat.title != null) {
+      return widget.chat.title;
+    } else {
+      return widget.chat.getTitle();
+    }
+  }
+
   Widget buildTitle() {
     final hideInfo = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
     final generateNames =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style = Theme.of(context).textTheme.bodyText1;
-    String? title = widget.chat.title ?? "";
-
-    if (generateNames) {
-      title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
-    } else if (hideInfo) {
-      style = style?.copyWith(color: Colors.transparent);
-    }
-
-    return TextOneLine(title ?? 'Fake Person', style: style, overflow: TextOverflow.ellipsis);
+    return FutureBuilder<String?>(
+        future: widget.chat.getTitle(),
+        builder: (context, snapshot) {
+          String? title = snapshot.data ?? "";
+          if (generateNames) {
+            title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
+          } else if (hideInfo) {
+            style = style?.copyWith(color: Colors.transparent);
+          }
+          return TextOneLine(title ?? 'Fake Person', style: style, overflow: TextOverflow.ellipsis);
+        }
+    );
   }
 
   Widget buildSubtitle() {
