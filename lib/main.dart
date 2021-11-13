@@ -28,6 +28,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
@@ -334,6 +335,22 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         /// [Home] is the starting widget for the app
         home: Home(),
 
+        shortcuts: {
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): const OpenSearchIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation): const HeartRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at): const LikeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign): const DislikeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar): const LaughRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent): const EmphasizeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret): const QuestionRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowDown): const OpenNextChatIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowUp): const OpenPreviousChatIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
+        },
+
         builder: (context, child) => SecureApplication(
           child: Builder(builder: (context) {
             if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
@@ -493,6 +510,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             serverCompatible = false;
           });
         }
+
+        // override ctrl-f action in browsers
+        html.document.onKeyDown.listen((e) {
+          if (e.keyCode == 114 || (e.ctrlKey && e.keyCode == 70)) {
+            e.preventDefault();
+          }
+        });
       }
 
       if (!kIsWeb && !kIsDesktop) {
@@ -612,38 +636,47 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Builder(
-          builder: (BuildContext context) {
-            if (SettingsManager().settings.finishedSetup.value) {
-              SystemChrome.setPreferredOrientations([
-                DeviceOrientation.landscapeRight,
-                DeviceOrientation.landscapeLeft,
-                DeviceOrientation.portraitUp,
-                DeviceOrientation.portraitDown,
-              ]);
-              if (!serverCompatible && kIsWeb) {
-                return FailureToStart(
-                  otherTitle: "Server version too low, please upgrade!",
-                  e: "Required Server Version: v0.2.0",
+      child: Actions(
+        actions: {
+          OpenSettingsIntent: OpenSettingsAction(context),
+          OpenNewChatCreatorIntent: OpenNewChatCreatorAction(context),
+          OpenSearchIntent: OpenSearchAction(context),
+          OpenNextChatIntent: OpenNextChatAction(context),
+          OpenPreviousChatIntent: OpenPreviousChatAction(context),
+        },
+        child: Scaffold(
+          backgroundColor: Colors.black,
+          body: Builder(
+            builder: (BuildContext context) {
+              if (SettingsManager().settings.finishedSetup.value) {
+                SystemChrome.setPreferredOrientations([
+                  DeviceOrientation.landscapeRight,
+                  DeviceOrientation.landscapeLeft,
+                  DeviceOrientation.portraitUp,
+                  DeviceOrientation.portraitDown,
+                ]);
+                if (!serverCompatible && kIsWeb) {
+                  return FailureToStart(
+                    otherTitle: "Server version too low, please upgrade!",
+                    e: "Required Server Version: v0.2.0",
+                  );
+                }
+                return ConversationList(
+                  showArchivedChats: false,
+                  showUnknownSenders: false,
+                );
+              } else {
+                SystemChrome.setPreferredOrientations([
+                  DeviceOrientation.portraitUp,
+                ]);
+                return WillPopScope(
+                  onWillPop: () async => false,
+                  child: TitleBarWrapper(child: kIsWeb || kIsDesktop
+                      ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
                 );
               }
-              return ConversationList(
-                showArchivedChats: false,
-                showUnknownSenders: false,
-              );
-            } else {
-              SystemChrome.setPreferredOrientations([
-                DeviceOrientation.portraitUp,
-              ]);
-              return WillPopScope(
-                onWillPop: () async => false,
-                child: TitleBarWrapper(child: kIsWeb || kIsDesktop
-                    ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
-              );
-            }
-          },
+            },
+          ),
         ),
       ),
     );
