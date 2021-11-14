@@ -40,6 +40,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
@@ -255,6 +256,7 @@ Future<Null> main() async {
         fontExistsOnDisk.value = false;
       }
     }
+    await dotenv.load();
   } catch (e, s) {
     exception = e;
     stacktrace = s;

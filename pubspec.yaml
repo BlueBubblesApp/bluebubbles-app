@@ -120,6 +120,9 @@ dependencies:
   pdf: ^3.6.1
   printing: ^5.6.0
   shimmer: ^2.0.0
+  # pinned to 2.0.2 because chewie is on provider 5.0.0
+  giphy_get: ^2.0.2
+  flutter_dotenv: ^5.0.2
 
 dependency_overrides:
   rxdart: ^0.27.2
@@ -188,6 +191,7 @@ flutter:
     - assets/icon/icon.png
     - assets/changelog/changelog.md
     - assets/icon/icon.ico
+    - .env
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
   # For details regarding adding assets from package dependencies, see

@@ -29,8 +29,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:get/get.dart';
+import 'package:giphy_get/giphy_get.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
 import 'package:transparent_pointer/transparent_pointer.dart';
@@ -500,12 +502,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Widget buildAttachmentList() => Padding(
-        padding: const EdgeInsets.only(left: 50.0),
+        padding: EdgeInsets.only(left: kIsWeb || kIsDesktop ? 90 : 50.0),
         child: TextFieldAttachmentList(
           attachments: pickedImages,
           onRemove: (PlatformFile attachment) {
             pickedImages
-                .removeWhere((element) => kIsWeb ? element.bytes == element.bytes : element.path == attachment.path);
+                .removeWhere((element) => kIsWeb ? element.bytes == attachment.bytes : element.path == attachment.path);
             updateTextFieldAttachments();
             if (mounted) setState(() {});
           },
@@ -518,6 +520,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
         buildShareButton(),
+        if (kIsWeb || kIsDesktop)
+          buildGIFButton(),
         buildActualTextField(),
         if (SettingsManager().settings.skin.value == Skins.Material ||
             SettingsManager().settings.skin.value == Skins.Samsung)
@@ -582,6 +586,76 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildGIFButton() {
+    double size = SettingsManager().settings.skin.value == Skins.iOS ? 35 : 40;
+    return Container(
+      height: size,
+      width: size,
+      margin: EdgeInsets.only(right: 5.0),
+      child: ClipOval(
+        child: Material(
+          color: SettingsManager().settings.skin.value == Skins.Samsung
+              ? Colors.transparent
+              : Theme.of(context).primaryColor,
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              bottomSheetTheme: BottomSheetThemeData(
+                backgroundColor: Theme.of(context).backgroundColor,
+                modalBackgroundColor: Theme.of(context).backgroundColor,
+              ),
+              brightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5
+                  ? Brightness.light : Brightness.dark,
+              canvasColor: Theme.of(context).backgroundColor,
+              iconTheme: IconThemeData(color: Colors.black45),
+            ),
+            child: Builder(
+              builder: (context) {
+                return InkWell(
+                  onTap: () async {
+                    GiphyGif? gif = await GiphyGet.getGif(
+                      context: context,
+                      apiKey: dotenv.get('GIPHY_API_KEY'),
+                      tabColor: context.theme.primaryColor,
+                    );
+                    if (gif?.images?.original != null) {
+                      final response = await api.downloadGiphy(gif!.images!.original!.url);
+                      if (response.statusCode == 200) {
+                        try {
+                          final Uint8List data = response.data;
+                          addAttachment(PlatformFile(
+                            path: null,
+                            name: (gif.title ?? randomString(8)) + ".gif",
+                            size: data.length,
+                            bytes: data,
+                          ));
+                          return;
+                        } catch (_) {}
+                      }
+                    }
+                    if (gif != null) {
+                      showSnackbar("Error", "Something went wrong, please try again.");
+                    }
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                        right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1,
+                        left: SettingsManager().settings.skin.value == Skins.iOS ? 0.5 : 0),
+                    child: Icon(Icons.gif,
+                      color: SettingsManager().settings.skin.value == Skins.Samsung
+                          ? context.theme.textTheme.bodyText1!.color
+                          : Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                );
+              }
+            ),
+          ),
         ),
       ),
     );
@@ -903,7 +977,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                           TextSpan(children: [
                                             TextSpan(text: "Replying to "),
                                             TextSpan(
-                                              text: generateContactInfo
+                                              text: reply.isFromMe! ? "You" : generateContactInfo
                                                   ? ContactManager().handleToFakeName[reply.handle?.address] ?? "You"
                                                   : ContactManager()
                                                           .handleToContact[reply.handle?.address ?? ""]

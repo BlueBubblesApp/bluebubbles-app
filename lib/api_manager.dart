@@ -399,6 +399,14 @@ class ApiService extends GetxService {
     );
   }
 
+  Future<Response> downloadGiphy(String url, {CancelToken? cancelToken}) async {
+    return await dio.get(
+        url,
+        options: Options(responseType: ResponseType.bytes),
+        cancelToken: cancelToken,
+    );
+  }
+
   /// Test most API GET requests (the ones that don't have required parameters)
   void testAPI() {
     Stopwatch s = Stopwatch();

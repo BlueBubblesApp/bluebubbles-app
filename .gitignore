@@ -48,3 +48,6 @@ pubspeck.lock
 .dart_tool/build/*/error_cache/**
 !.dart_tool/build/generated
 !*.info
+
+#private keys
+*.env
