@@ -236,7 +236,10 @@ class ActionHandler {
     params["tempGuid"] = message.guid;
 
     void sendSocketMessage() {
-      if ((message.subject?.isNotEmpty ?? false) || message.threadOriginatorGuid != null || message.expressiveSendStyleId != null) {
+      if ((SettingsManager().settings.enablePrivateAPI.value && (message.text?.isNotEmpty ?? false))
+          || (message.subject?.isNotEmpty ?? false)
+          || message.threadOriginatorGuid != null
+          || message.expressiveSendStyleId != null) {
         api.sendMessage(
             chat.guid!,
             message.guid!,
