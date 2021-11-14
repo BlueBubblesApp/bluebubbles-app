@@ -439,18 +439,35 @@ class Chat {
   }
 
   /// Save a chat to the DB
-  Chat save({bool updateLocalVals = false}) {
+  Chat save({
+    bool updateMuteType = false,
+    bool updateMuteArgs = false,
+    bool updateIsPinned = false,
+    bool updatePinIndex = false,
+    bool updateIsArchived = false,
+    bool updateHasUnreadMessage = false
+  }) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
       /// Find an existing, and update the ID to the existing ID if necessary
       Chat? existing = Chat.findOne(guid: guid);
       id = existing?.id ?? id;
-      if (!updateLocalVals) {
+      if (!updateMuteType) {
         muteType = existing?.muteType ?? muteType;
+      }
+      if (!updateMuteArgs) {
         muteArgs = existing?.muteArgs ?? muteArgs;
+      }
+      if (!updateIsPinned) {
         isPinned = existing?.isPinned ?? isPinned;
+      }
+      if (!updatePinIndex) {
         pinIndex = existing?.pinIndex ?? pinIndex;
+      }
+      if (!updateIsArchived) {
         isArchived = existing?.isArchived ?? isArchived;
+      }
+      if (!updateHasUnreadMessage) {
         hasUnreadMessage = existing?.hasUnreadMessage ?? hasUnreadMessage;
       }
 
@@ -521,9 +538,6 @@ class Chat {
       bool shouldMute = DateTime.now().toLocal().difference(time).inSeconds.isNegative;
       if (!shouldMute) {
         toggleMute(false);
-        muteType = null;
-        muteArgs = null;
-        save(updateLocalVals: true);
       }
       return shouldMute;
 
@@ -571,7 +585,7 @@ class Chat {
     }
 
     hasUnreadMessage = hasUnread;
-    save(updateLocalVals: true);
+    save(updateHasUnreadMessage: true);
 
     if (hasUnread) {
       EventDispatcher().emit("add-unread-chat", {"chatGuid": guid});
@@ -944,7 +958,7 @@ class Chat {
     if (id == null) return this;
     this.isPinned = isPinned;
     _pinIndex.value = null;
-    save(updateLocalVals: true);
+    save(updateIsPinned: true, updatePinIndex: true);
     ChatBloc().updateChat(this);
     return this;
   }
@@ -953,7 +967,7 @@ class Chat {
     if (id == null) return this;
     muteType = isMuted ? "mute" : null;
     muteArgs = null;
-    save(updateLocalVals: true);
+    save(updateMuteType: true, updateMuteArgs: true);
     ChatBloc().updateChat(this);
     return this;
   }
@@ -961,7 +975,7 @@ class Chat {
   Chat toggleArchived(bool isArchived) {
     if (id == null) return this;
     this.isArchived = isArchived;
-    save(updateLocalVals: true);
+    save(updateIsArchived: true);
     ChatBloc().updateChat(this);
     return this;
   }

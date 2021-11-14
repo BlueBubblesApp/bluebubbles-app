@@ -152,7 +152,7 @@ class MethodChannelInterface {
           TestingModeController controller = Get.find<TestingModeController>();
           controller.mostRecentReply.value = call.arguments["text"];
           // If `reply` is called when the app is in a background isolate, then we need to close it once we are done
-          closeThread();
+          await closeThread();
 
           return Future.value("");
         }
@@ -162,7 +162,7 @@ class MethodChannelInterface {
         // If no chat is found, then we can't do anything
         if (chat == null) {
           // If `reply` is called when the app is in a background isolate, then we need to close it once we are done
-          closeThread();
+          await closeThread();
 
           return Future.value("");
         }
@@ -171,7 +171,7 @@ class MethodChannelInterface {
         // Send the message to that chat
         await ActionHandler.sendMessage(chat, call.arguments["text"], completer: completer);
 
-        closeThread();
+        await closeThread();
 
         return Future.value("");
       case "markAsRead":
@@ -181,7 +181,7 @@ class MethodChannelInterface {
         // If no chat is found, then we can't do anything
         if (chat == null) {
           // If `markAsRead` is called when the app is in a background isolate, then we need to close it once we are done
-          closeThread();
+          await closeThread();
 
           return Future.value("");
         }
@@ -194,7 +194,7 @@ class MethodChannelInterface {
         }
 
         // In case this method is called when the app is in a background isolate
-        closeThread();
+        await closeThread();
 
         return Future.value("");
       case "shareAttachments":
@@ -352,7 +352,9 @@ class MethodChannelInterface {
         return Future.value("");
       case "remove-sendPort":
         IsolateNameServer.removePortNameMapping('bg_isolate');
-        print("Removed sendPort because Activity was destroyed");
+        await prefs.remove('objectbox-reference');
+        print("Removed sendPort and objectbox reference because Activity was destroyed");
+        store.close();
         return Future.value("");
       default:
         return Future.value("");
@@ -360,11 +362,12 @@ class MethodChannelInterface {
   }
 
   /// [closeThread] closes the background isolate when the app is fully closed
-  void closeThread() {
+  Future<void> closeThread() async {
     // Only do this if we are indeed running in the background
     if (headless) {
       Logger.info("Closing the background isolate...", tag: "MCI-CloseThread");
-
+      await prefs.remove('objectbox-reference');
+      store.close();
       // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");
     }

@@ -143,7 +143,19 @@ Future<Null> main() async {
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
       Future<void> initStore({bool saveThemes = false}) async {
-        store = await openStore(directory: documentsDirectory.path + '/objectbox');
+        String? storeRef = prefs.getString("objectbox-reference");
+        if (storeRef != null) {
+          debugPrint("Opening ObjectBox store from reference");
+          try {
+            store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
+          } catch (_) {
+            debugPrint("Failed to open store from reference, opening from path");
+            store = await openStore(directory: documentsDirectory.path + '/objectbox');
+          }
+        } else {
+          debugPrint("Opening ObjectBox store from path");
+          store = await openStore(directory: documentsDirectory.path + '/objectbox');
+        }
         attachmentBox = store.box<Attachment>();
         chatBox = store.box<Chat>();
         fcmDataBox = store.box<FCMData>();
@@ -582,7 +594,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         // This is only really necessary when opening a notification and the app is fully closed
         MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
           if (!SettingsManager().settings.finishedSetup.value) return;
-          if (value != null) {
+          if (value['guid'] != null) {
             LifeCycleManager().isBubble = value['bubble'] == "true";
             MethodChannelInterface().openChat(value['guid'].toString());
           }

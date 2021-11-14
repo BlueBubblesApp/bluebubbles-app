@@ -37,6 +37,8 @@ class Store {
 
   R runInTransaction<R>(TxMode mode, R Function() fn) => throw Exception('Unsupported Platform');
 
+  void close() => throw Exception('Unsupported Platform');
+
   dynamic get reference => throw Exception('Unsupported Platform');
 
   Store.fromReference(dynamic _, dynamic __);
