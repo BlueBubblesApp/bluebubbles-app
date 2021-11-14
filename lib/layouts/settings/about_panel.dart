@@ -292,6 +292,136 @@ class AboutPanel extends StatelessWidget {
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
+                    title: "Keyboard Shortcuts",
+                    onTap: () {
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Keyboard Shortcuts', style: context.theme.textTheme.bodyText1),
+                          scrollable: true,
+                          backgroundColor: context.theme.backgroundColor.lightenOrDarken(),
+                          content: Container(
+                            height: MediaQuery.of(context).size.height / 2,
+                            child: SingleChildScrollView(
+                              child: DataTable(
+                                columnSpacing: 5,
+                                dataRowHeight: 75,
+                                columns: const <DataColumn>[
+                                  DataColumn(
+                                    label: Text(
+                                      'Key Combination',
+                                      style: TextStyle(
+                                          fontStyle: FontStyle.italic),
+                                    ),
+                                  ),
+                                  DataColumn(
+                                    label: Text(
+                                      'Action',
+                                      style: TextStyle(
+                                          fontStyle: FontStyle.italic),
+                                    ),
+                                  ),
+                                ],
+                                rows: const <DataRow>[
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + COMMA')),
+                                      DataCell(Text('Open settings')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + N')),
+                                      DataCell(Text('Start new chat (Desktop only)')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('ALT + N')),
+                                      DataCell(
+                                          Text('Start new chat')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + F')),
+                                      DataCell(
+                                          Text('Open search page')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + R')),
+                                      DataCell(
+                                          Text('Reply to most recent message in the currently selected chat')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + SHIFT + 1-6')),
+                                      DataCell(Text('Apply reaction to most recent message in the currently selected chat')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + ARROW DOWN')),
+                                      DataCell(Text('Switch to the chat below the currently selected one')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + TAB')),
+                                      DataCell(Text('Switch to the chat below the currently selected one (Desktop only)')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + ARROW UP')),
+                                      DataCell(Text('Switch to the chat above the currently selected one')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + SHIFT + TAB')),
+                                      DataCell(Text('Switch to the chat above the currently selected one (Desktop only)')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + I')),
+                                      DataCell(Text('Open chat details page')),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () async {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('Close'),
+                            )
+                          ],
+                        );
+                      });
+                    },
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.keyboard,
+                      materialIcon: Icons.keyboard,
+                    ),
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  SettingsTile(
+                    backgroundColor: tileColor,
                     title: "About",
                     onTap: () {
                       showDialog<void>(
