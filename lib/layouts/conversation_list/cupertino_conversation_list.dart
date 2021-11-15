@@ -325,7 +325,6 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                     .isEmpty) {
                   return SliverToBoxAdapter(child: Container());
                 }
-                ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).sort(Chat.sort);
 
                 int rowCount = context.mediaQuery.orientation == Orientation.portrait
                     ? SettingsManager().settings.pinRowsPortrait.value
@@ -422,7 +421,6 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                 );
               }),
               Obx(() {
-                ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).sort(Chat.sort);
                 if (!ChatBloc().loadedChatBatch.value) {
                   return SliverToBoxAdapter(
                     child: Center(

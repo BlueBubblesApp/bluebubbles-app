@@ -25,12 +25,12 @@ class ContactAvatarGroupWidget extends StatefulWidget {
 }
 
 class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
-  late final RxList<Handle> participants;
+  late final List<Handle> participants;
 
   @override
   void initState() {
     super.initState();
-    participants = widget.chat.participants.obs;
+    participants = widget.chat.participants;
 
     participants.sort((a, b) {
       bool avatarA = ContactManager().getCachedContact(address: a.address)?.avatar.value?.isNotEmpty ?? false;
@@ -39,10 +39,6 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
       if (avatarA && !avatarB) return -1;
       return 0;
     });
-
-    for (Handle participant in participants) {
-      if (!(ContactManager().handleToContact[participant]?.avatar.value?.isNotEmpty ?? false)) {}
-    }
   }
 
   @override

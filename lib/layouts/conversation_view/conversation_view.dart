@@ -101,10 +101,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     getAdjustBackground();
 
-    if (widget.isCreator) {
-      getShowAlert();
-    }
-
     selected = widget.selected.isEmpty ? [] : widget.selected;
     existingAttachments = widget.existingAttachments.isEmpty ? [] : widget.existingAttachments;
     existingText = widget.existingText;
@@ -165,6 +161,14 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     // Bind the lifecycle events
     WidgetsBinding.instance!.addObserver(this);
+
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      if (widget.isCreator) {
+        setState(() {
+          getShowAlert();
+        });
+      }
+    });
   }
 
   void getAdjustBackground() async {
@@ -492,29 +496,30 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               allContacts: contacts,
               selectedContacts: selected,
             ),
-          Obx(() {
-            if (!ChatBloc().hasChats.value) {
-              return Center(
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 20.0),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          "Loading existing chats...",
-                          style: Theme.of(context).textTheme.subtitle1,
+          if (isCreator!)
+            Obx(() {
+              if (!ChatBloc().hasChats.value) {
+                return Center(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 20.0),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            "Loading existing chats...",
+                            style: Theme.of(context).textTheme.subtitle1,
+                          ),
                         ),
-                      ),
-                      buildProgressIndicator(context, size: 15),
-                    ],
+                        buildProgressIndicator(context, size: 15),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            } else {
-              return SizedBox.shrink();
-            }
-          }),
+                );
+              } else {
+                return SizedBox.shrink();
+              }
+            }),
           Expanded(
             child: Stack(children: [
               Positioned.fill(
