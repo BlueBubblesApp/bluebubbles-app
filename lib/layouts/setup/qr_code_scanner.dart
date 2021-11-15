@@ -42,6 +42,14 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
       child: Scaffold(
         body: QRView(
           key: qrKey,
+          overlay: QrScannerOverlayShape(
+            borderColor: Theme.of(context).primaryColor,
+            borderRadius: 10,
+            borderLength: 30,
+            borderWidth: 10,
+            cutOutSize:
+                (MediaQuery.of(context).size.width < 400 || MediaQuery.of(context).size.height < 400) ? 250.0 : 450.0,
+          ),
           onQRViewCreated: _onQRViewCreated,
         ),
       ),
