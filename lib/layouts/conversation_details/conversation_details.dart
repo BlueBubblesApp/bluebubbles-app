@@ -35,7 +35,7 @@ class ConversationDetails extends StatefulWidget {
   _ConversationDetailsState createState() => _ConversationDetailsState();
 }
 
-class _ConversationDetailsState extends State<ConversationDetails> {
+class _ConversationDetailsState extends State<ConversationDetails> with WidgetsBindingObserver {
   late TextEditingController controller;
   bool readOnly = true;
   late Chat chat;
@@ -66,7 +66,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     controller = TextEditingController(text: chat.displayName);
     showNameField = chat.displayName?.isNotEmpty ?? false;
 
-    fetchAttachments();
     ever(ChatBloc().chats, (List<Chat> chats) async {
       Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat.guid);
       if (_chat == null) return;
@@ -74,6 +73,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
       chat = _chat;
       readOnly = !(chat.participants.length > 1);
       if (mounted) setState(() {});
+    });
+
+    WidgetsBinding.instance!.addObserver(this);
+
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      fetchAttachments();
     });
   }
 
