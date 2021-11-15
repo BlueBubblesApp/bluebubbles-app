@@ -584,6 +584,8 @@ class Chat {
       }
     }
 
+    if (hasUnreadMessage == hasUnread) return this;
+
     hasUnreadMessage = hasUnread;
     save(updateHasUnreadMessage: true);
 

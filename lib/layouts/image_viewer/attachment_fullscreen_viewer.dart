@@ -57,13 +57,13 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
     }
   }
 
-  void init() {
+  void init() async {
     getStartingIndex();
 
     // If the allAttachments is not updated
     if (startingIndex == null) {
       // Then fetch all of them and try again
-      widget.currentChat?.updateChatAttachments();
+      await widget.currentChat?.updateChatAttachments();
       getStartingIndex();
     }
 
@@ -78,7 +78,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
         List<Attachment> older = widget.currentChat!.chatAttachments.sublist(0);
 
         // Update all of the attachments
-        widget.currentChat!.updateChatAttachments();
+        await widget.currentChat!.updateChatAttachments();
         List<Attachment> newer = widget.currentChat!.chatAttachments.sublist(0);
         if (newer.length > older.length) {
           Logger.info("Increasing currentIndex from " +
@@ -295,7 +295,14 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
               controller: controller,
             ),
           ),
-        ) : Container(),
+        ) : Container(
+          child: Center(
+            child: CircularProgressIndicator(
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+            ),
+          )
+        ),
       ),
     );
   }

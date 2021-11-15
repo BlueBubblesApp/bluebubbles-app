@@ -101,7 +101,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     getAdjustBackground();
 
-    getShowAlert();
+    if (widget.isCreator) {
+      getShowAlert();
+    }
 
     selected = widget.selected.isEmpty ? [] : widget.selected;
     existingAttachments = widget.existingAttachments.isEmpty ? [] : widget.existingAttachments;
@@ -237,7 +239,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void didChangeDependencies() async {
     super.didChangeDependencies();
     if (CurrentChat.activeChat != null) didChangeDependenciesConversationView();
-    getAdjustBackground();
   }
 
   /// Called when the app is either closed or opened or paused
@@ -446,7 +447,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     if (messageBloc == null && !isCreator!) {
       messageBloc = initMessageBloc();
-      messageBloc!.getMessages();
     }
 
     Widget textField = BlueBubblesTextField(

@@ -79,7 +79,6 @@ class NotificationManager {
         SocketManager().sendMessage("update-typing-status", {"chatGuid": chat.guid}, (data) {});
       }
     }
-    ChatBloc().updateUnreads();
     if (!LifeCycleManager().isBubble) {
       MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
     }

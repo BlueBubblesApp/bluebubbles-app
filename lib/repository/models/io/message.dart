@@ -510,7 +510,7 @@ class Message {
 
   /// Fetch reactions
   Message fetchAssociatedMessages({MessageBloc? bloc}) {
-    if (associatedMessages.isNotEmpty && associatedMessages.length == 1 && associatedMessages[0].guid == guid) {
+    if (associatedMessages.isNotEmpty || (associatedMessages.length == 1 && associatedMessages[0].guid == guid)) {
       return this;
     }
     if (kIsWeb) {

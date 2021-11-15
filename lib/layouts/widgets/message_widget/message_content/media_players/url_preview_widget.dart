@@ -54,7 +54,7 @@ class UrlPreviewController extends GetxController {
 
   Future<void> fetchPreview() async {
     // Try to get any already loaded attachment data
-    if (CurrentChat.activeChat!.urlPreviews.containsKey(message.text)) {
+    if (CurrentChat.activeChat?.urlPreviews.containsKey(message.text) ?? false) {
       data.value = CurrentChat.activeChat!.urlPreviews[message.text];
     }
 

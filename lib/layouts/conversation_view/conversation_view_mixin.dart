@@ -89,7 +89,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     newMessages = ChatBloc()
         .chats
-        .where((element) => element != chat && (element.hasUnreadMessage ?? false))
+        .where((element) => element.guid != chat?.guid && (element.hasUnreadMessage ?? false))
         .map((e) => e.guid)
         .toList();
 
@@ -163,7 +163,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     currentChat!.stream.listen((event) {
       if (mounted) setState(() {});
     });
-    await currentChat!.updateChatAttachments();
   }
 
   MessageBloc initMessageBloc() {
