@@ -231,7 +231,14 @@ class _ConversationTileState extends State<ConversationTile> {
       style = style?.copyWith(color: Colors.transparent);
     }
 
-    return TextOneLine(title, style: style, overflow: TextOverflow.ellipsis);
+    return TextOneLine(title,
+        style: style?.copyWith(
+            fontWeight: SettingsManager().settings.skin.value == Skins.Material
+                && (widget.chat.hasUnreadMessage ?? false)
+                ? FontWeight.bold : null
+        ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0),
+        overflow: TextOverflow.ellipsis
+    );
   }
 
   Widget buildSubtitle() {
@@ -257,14 +264,24 @@ class _ConversationTileState extends State<ConversationTile> {
           style = style.copyWith(color: Colors.transparent);
         }
 
-        return RichText(
-          text: TextSpan(
-              children: MessageHelper.buildEmojiText(
-            latestText,
-            style,
-          )),
-          overflow: TextOverflow.ellipsis,
-          maxLines: 3,
+        return Padding(
+          padding: const EdgeInsets.only(top: 4.0),
+          child: RichText(
+            text: TextSpan(
+                children: MessageHelper.buildEmojiText(
+              latestText,
+              style.copyWith(
+                  fontWeight: SettingsManager().settings.skin.value == Skins.Material
+                      && (widget.chat.hasUnreadMessage ?? false)
+                      ? FontWeight.w600 : null,
+                  color: SettingsManager().settings.skin.value == Skins.Material
+                      && (widget.chat.hasUnreadMessage ?? false)
+                      ? Theme.of(context).textTheme.bodyText1!.color : null,
+              ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 0.95 : 1.0),
+            )),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 3,
+          ),
         );
       },
     );
@@ -646,22 +663,35 @@ class _Material extends StatelessWidget {
                       padding: EdgeInsets.only(right: 3),
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Row(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
-                            if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
-                            if (parent.widget.chat.muteType == "mute")
-                              Icon(
-                                Icons.notifications_off,
-                                color: parent.widget.chat.hasUnreadMessage!
-                                    ? Theme.of(context).primaryColor.withOpacity(0.8)
-                                    : Theme.of(context).textTheme.subtitle1!.color,
-                                size: 15,
-                              ),
                             Container(
                               padding: EdgeInsets.only(right: 2, left: 2),
                               child: parent._buildDate(),
+                            ),
+                            SizedBox(height: 5),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (parent.widget.chat.isPinned!)
+                                  Icon(
+                                      Icons.push_pin,
+                                      size: 15,
+                                      color: Theme.of(context).textTheme.subtitle1!.color
+                                  ),
+                                SizedBox(width: 5),
+                                if (parent.widget.chat.muteType == "mute")
+                                  Icon(
+                                    Icons.notifications_off,
+                                    color: parent.widget.chat.hasUnreadMessage!
+                                        ? Theme.of(context).primaryColor.withOpacity(0.8)
+                                        : Theme.of(context).textTheme.subtitle1!.color,
+                                    size: 15,
+                                  ),
+                              ],
                             ),
                           ],
                         ),

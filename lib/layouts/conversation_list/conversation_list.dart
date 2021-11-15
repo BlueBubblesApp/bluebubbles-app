@@ -62,6 +62,10 @@ class ConversationListState extends State<ConversationList> {
       if (event["type"] == 'refresh' && mounted) {
         setState(() {});
       }
+
+      if (event["type"] == 'theme-update' && mounted) {
+        setState(() {});
+      }
     });
   }
 
@@ -93,6 +97,42 @@ class ConversationListState extends State<ConversationList> {
       ),
       (route) => route.isFirst,
     );
+  }
+
+  void openCamera() async {
+    bool camera = await Permission.camera.isGranted;
+    if (!camera) {
+      bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
+      if (!granted) {
+        showSnackbar(
+            "Error",
+            "Camera was denied"
+        );
+        return;
+      }
+    }
+
+    String appDocPath = SettingsManager().appDocDir.path;
+    String ext = ".png";
+    File file = File("$appDocPath/attachments/" + randomString(16) + ext);
+    await file.create(recursive: true);
+
+    // Take the picture after opening the camera
+    await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+
+    // If we don't get data back, return outta here
+    if (!file.existsSync()) return;
+    if (file.statSync().size == 0) {
+      file.deleteSync();
+      return;
+    }
+
+    openNewChatCreator(existing: [PlatformFile(
+      name: file.path.split("/").last,
+      path: file.path,
+      bytes: file.readAsBytesSync(),
+      size: file.lengthSync(),
+    )]);
   }
 
   Widget buildSettingsButton() => !widget.showArchivedChats && !widget.showUnknownSenders
@@ -241,7 +281,7 @@ class ConversationListState extends State<ConversationList> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        if (SettingsManager().settings.cameraFAB.value)
+        if (SettingsManager().settings.cameraFAB.value && SettingsManager().settings.skin.value != Skins.Material)
           ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: 45,
@@ -252,41 +292,7 @@ class ConversationListState extends State<ConversationList> {
                   SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
                 size: 20,
               ),
-              onPressed: () async {
-                bool camera = await Permission.camera.isGranted;
-                if (!camera) {
-                  bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
-                  if (!granted) {
-                    showSnackbar(
-                        "Error",
-                        "Camera was denied"
-                    );
-                    return;
-                  }
-                }
-
-                String appDocPath = SettingsManager().appDocDir.path;
-                String ext = ".png";
-                File file = File("$appDocPath/attachments/" + randomString(16) + ext);
-                await file.create(recursive: true);
-
-                // Take the picture after opening the camera
-                await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
-
-                // If we don't get data back, return outta here
-                if (!file.existsSync()) return;
-                if (file.statSync().size == 0) {
-                  file.deleteSync();
-                  return;
-                }
-
-                openNewChatCreator(existing: [PlatformFile(
-                  name: file.path.split("/").last,
-                  path: file.path,
-                  bytes: file.readAsBytesSync(),
-                  size: file.lengthSync(),
-                )]);
-              },
+              onPressed: openCamera,
               heroTag: null,
             ),
           ),
