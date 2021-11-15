@@ -263,7 +263,7 @@ class _ConversationTileState extends State<ConversationTile> {
                 style,
               )),
           overflow: TextOverflow.ellipsis,
-          maxLines: 2,
+          maxLines: 3,
         );
       },
     );
@@ -552,8 +552,25 @@ class _Material extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: parent.shouldHighlight && (kIsWeb || kIsDesktop) ? Theme.of(context).backgroundColor.lightenOrDarken(20) : parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
+    return Obx(
+      () => Container(
+        padding: const EdgeInsets.fromLTRB(
+          5,
+          3,
+          0,
+          3,
+        ),
+        child: Material(
+          clipBehavior: Clip.hardEdge,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            bottomLeft: Radius.circular(20),
+          ),
+          color: parent.shouldHighlight && (kIsWeb || kIsDesktop)
+              ? Theme.of(context).backgroundColor.lightenOrDarken(20)
+              : parent.selected
+                  ? Theme.of(context).backgroundColor.lightenOrDarken(20)
+                  : Theme.of(context).backgroundColor,
       child: GestureDetector(
         onSecondaryTapUp: (details) async {
           if (kIsWeb) {
@@ -591,8 +608,7 @@ class _Material extends StatelessWidget {
           },
           child: Padding(
             padding: EdgeInsets.only(left: kIsDesktop ? 5 : 0),
-            child: Obx(
-              () => Container(
+                child: Container(
                 decoration: BoxDecoration(
                   border: (!SettingsManager().settings.hideDividers.value)
                       ? Border(
@@ -656,6 +672,7 @@ class _Material extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }
