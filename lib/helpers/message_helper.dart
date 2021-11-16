@@ -340,6 +340,7 @@ class MessageHelper {
 
   static bool shouldShowBigEmoji(String text) {
     if (isEmptyString(text)) return false;
+    if (text.codeUnits.length == 1 && text.codeUnits.first == 9786) return true;
 
     RegExp pattern = emojiRegex;
     List<RegExpMatch> matches = pattern.allMatches(text).toList();
