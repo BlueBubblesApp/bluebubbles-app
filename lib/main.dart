@@ -639,6 +639,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     }
   }
 
+  /// Just in case the theme doesn't change automatically
+  @override
+  void didChangePlatformBrightness() {
+    super.didChangePlatformBrightness();
+    if (AdaptiveTheme.maybeOf(context)?.mode == AdaptiveThemeMode.system) {
+      setState(() {});
+    }
+  }
+
   /// Render
   @override
   Widget build(BuildContext context) {
