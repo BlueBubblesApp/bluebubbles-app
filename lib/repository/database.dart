@@ -6,7 +6,6 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 //ignore: implementation_imports
 import 'package:objectbox/src/transaction.dart';
@@ -139,7 +138,7 @@ class DBProvider {
     String path = join(documentsDirectory.path, "chat.db");
     return await openDatabase(path, version: currentVersion, onUpgrade: _onUpgrade, onOpen: (Database db) async {
       Logger.info("Database Opened");
-      await checkTableExistenceAndCreate(db, initStore);
+      await migrateToObjectBox(db, initStore);
     });
   }
 
@@ -177,9 +176,7 @@ class DBProvider {
     tvJoinBox.removeAll();
   }
 
-  Future<void> checkTableExistenceAndCreate(Database db, Future<void> Function()? initStore) async {
-    //this is to ensure that all tables are created on start
-    //this will allow us to also add more tables and make it so that users will not have to
+  Future<void> migrateToObjectBox(Database db, Future<void> Function()? initStore) async {
     if (initStore != null) {
       Stopwatch s = Stopwatch();
       s.start();
@@ -203,101 +200,207 @@ class DBProvider {
       chJoinBox.removeAll();
       cmJoinBox.removeAll();
       tvJoinBox.removeAll();
+      // The general premise of the migration is to transfer every single bit
+      // of data from SQLite into ObjectBox. The most important thing to keep
+      // track of are the IDs, since we have numerous queries that relate IDs
+      // from one table to IDs from another table.
+      //
+      // As such, this code will create a "migration map", which contains some
+      // unique identifying characteristic of the data item as the key, and
+      // then another map containing the old (SQLite) ID and the new (ObjectBox)
+      // ID as the value.
+      //
+      // This map is then used when saving the "join" tables, which would still
+      // have the old (SQLite) IDs for each data item. Using the map, we can
+      // update that old ID to the new ID and thus avoid creating an incorrect
+      // link due to the ID mismatch.
       store.runInTransaction(TxMode.write, () {
+        Logger.info("Migrating chats...", tag: "OB Migration");
         final chats = tableData[0].map((e) => Chat.fromMap(e)).toList();
-        final existingChatIds = chats.map((e) => e.id!).toList();
+        final chatIdsMigrationMap = <String, Map<String, int>>{};
         for (Chat element in chats) {
+          chatIdsMigrationMap[element.guid!] = {
+            "old": element.id!
+          };
           element.id = null;
         }
-        final newChatIds = chatBox.putMany(chats);
+        Logger.info("Created chat ID migration map, length ${chatIdsMigrationMap.length}", tag: "OB Migration");
+        chatBox.putMany(chats);
+        Logger.info("Inserted chats into ObjectBox", tag: "OB Migration");
+        final newChats = chatBox.getAll();
+        Logger.info("Fetched ObjectBox chats, length ${newChats.length}", tag: "OB Migration");
+        for (Chat element in newChats) {
+          chatIdsMigrationMap[element.guid!]!['new'] = element.id!;
+        }
+        Logger.info("Added new IDs to chat ID migration map", tag: "OB Migration");
         chats.clear();
+        newChats.clear();
+        Logger.info("Migrating handles...", tag: "OB Migration");
         final handles = tableData[1].map((e) => Handle.fromMap(e)).toList();
-        final existingHandleIds = handles.map((e) => e.id!).toList();
+        final handleIdsMigrationMap = <String, Map<String, int>>{};
         for (Handle element in handles) {
+          handleIdsMigrationMap[element.address] = {
+            "old": element.id!
+          };
           element.id = null;
         }
-        final newHandleIds = handleBox.putMany(handles);
+        Logger.info("Created handle ID migration map, length ${handleIdsMigrationMap.length}", tag: "OB Migration");
+        handleBox.putMany(handles);
+        Logger.info("Inserted handles into ObjectBox", tag: "OB Migration");
+        final newHandles = handleBox.getAll();
+        Logger.info("Fetched ObjectBox handles, length ${newHandles.length}", tag: "OB Migration");
+        for (Handle element in newHandles) {
+          handleIdsMigrationMap[element.address]!['new'] = element.id!;
+        }
+        Logger.info("Added new IDs to handle ID migration map", tag: "OB Migration");
         handles.clear();
+        newHandles.clear();
+        Logger.info("Migrating messages...", tag: "OB Migration");
         final messages = tableData[2].map((e) => Message.fromMap(e)).toList();
-        final existingMessageIds = messages.map((e) => e.id!).toList();
+        final messageIdsMigrationMap = <String, Map<String, int>>{};
         for (Message element in messages) {
+          messageIdsMigrationMap[element.guid!] = {
+            "old": element.id!
+          };
           element.id = null;
+          if (element.handleId != null && element.handleId != 0) {
+            final newHandleId = handleIdsMigrationMap.values.firstWhere((e) => e['old'] == element.handleId)['new'];
+            element.handleId = newHandleId!;
+          }
         }
-        final newMessageIds = messageBox.putMany(messages);
+        Logger.info("Created message ID migration map, length ${messageIdsMigrationMap.length}", tag: "OB Migration");
+        messageBox.putMany(messages);
+        Logger.info("Inserted messages into ObjectBox", tag: "OB Migration");
+        final newMessages = messageBox.getAll();
+        Logger.info("Fetched ObjectBox messages, length ${newMessages.length}", tag: "OB Migration");
+        for (Message element in newMessages) {
+          messageIdsMigrationMap[element.guid!]!['new'] = element.id!;
+        }
+        Logger.info("Added new IDs to message ID migration map", tag: "OB Migration");
         messages.clear();
+        newMessages.clear();
+        Logger.info("Migrating attachments....", tag: "OB Migration");
         final attachments = tableData[3].map((e) => Attachment.fromMap(e)).toList();
-        final existingAttachmentIds = attachments.map((e) => e.id!).toList();
+        final attachmentIdsMigrationMap = <String, Map<String, int>>{};
         for (Attachment element in attachments) {
+          attachmentIdsMigrationMap[element.guid!] = {
+            "old": element.id!
+          };
           element.id = null;
         }
-        final newAttachmentIds = attachmentBox.putMany(attachments);
+        Logger.info("Created attachment ID migration map, length ${attachmentIdsMigrationMap.length}", tag: "OB Migration");
+        attachmentBox.putMany(attachments);
+        Logger.info("Inserted attachments into ObjectBox", tag: "OB Migration");
+        final newAttachments = attachmentBox.getAll();
+        Logger.info("Fetched ObjectBox attachments, length ${newAttachments.length}", tag: "OB Migration");
+        for (Attachment element in newAttachments) {
+          attachmentIdsMigrationMap[element.guid!]!['new'] = element.id!;
+        }
+        Logger.info("Added new IDs to attachment ID migration map", tag: "OB Migration");
         attachments.clear();
+        newAttachments.clear();
+        Logger.info("Migrating chat-handle joins...", tag: "OB Migration");
         List<ChatHandleJoin> chJoins = tableData[4].map((e) => ChatHandleJoin.fromMap(e)).toList();
-        existingChatIds.forEachIndexed((index, i) {
-          final joins = chJoins.where((e) => e.chatId == i);
-          joins.map((element) => element..chatId = newChatIds[index]);
-        });
-        existingHandleIds.forEachIndexed((index, i) {
-          final joins = chJoins.where((e) => e.handleId == i);
-          joins.map((element) => element..handleId = newHandleIds[index]);
-        });
+        for (ChatHandleJoin chj in chJoins) {
+          final newChatId = chatIdsMigrationMap.values.firstWhere((e) => e['old'] == chj.chatId)['new'];
+          final newHandleId = handleIdsMigrationMap.values.firstWhere((e) => e['old'] == chj.handleId)['new'];
+          chj.chatId = newChatId!;
+          chj.handleId = newHandleId!;
+        }
+        Logger.info("Replaced old chat & handle IDs with new ObjectBox IDs", tag: "OB Migration");
         chJoinBox.putMany(chJoins);
+        Logger.info("Inserted chat-handle joins into ObjectBox", tag: "OB Migration");
         chJoins.clear();
+        Logger.info("Migrating chat-message joins...", tag: "OB Migration");
         List<ChatMessageJoin> cmJoins = tableData[5].map((e) => ChatMessageJoin.fromMap(e)).toList();
-        existingChatIds.forEachIndexed((index, i) {
-          final joins = cmJoins.where((e) => e.chatId == i);
-          joins.map((element) => element..chatId = newChatIds[index]);
-        });
-        existingMessageIds.forEachIndexed((index, i) {
-          final joins = cmJoins.where((e) => e.messageId == i);
-          joins.map((element) => element..messageId = newMessageIds[index]);
-        });
+        for (ChatMessageJoin cmj in cmJoins) {
+          final newChatId = chatIdsMigrationMap.values.firstWhere((e) => e['old'] == cmj.chatId)['new'];
+          final newMessageId = messageIdsMigrationMap.values.firstWhere((e) => e['old'] == cmj.messageId)['new'];
+          cmj.chatId = newChatId!;
+          cmj.messageId = newMessageId!;
+        }
+        Logger.info("Replaced old chat & message IDs with new ObjectBox IDs", tag: "OB Migration");
         cmJoinBox.putMany(cmJoins);
+        Logger.info("Inserted chat-message joins into ObjectBox", tag: "OB Migration");
         cmJoins.clear();
+        Logger.info("Migrating attachment-message joins...", tag: "OB Migration");
         List<AttachmentMessageJoin> amJoins = tableData[6].map((e) => AttachmentMessageJoin.fromMap(e)).toList();
-        existingAttachmentIds.forEachIndexed((index, i) {
-          final joins = amJoins.where((e) => e.attachmentId == i);
-          joins.map((element) => element..attachmentId = newAttachmentIds[index]);
-        });
-        existingMessageIds.forEachIndexed((index, i) {
-          final joins = amJoins.where((e) => e.messageId == i);
-          joins.map((element) => element..messageId = newMessageIds[index]);
-        });
+        for (AttachmentMessageJoin amj in amJoins) {
+          final newAttachmentId = attachmentIdsMigrationMap.values.firstWhere((e) => e['old'] == amj.attachmentId)['new'];
+          final newMessageId = messageIdsMigrationMap.values.firstWhere((e) => e['old'] == amj.messageId)['new'];
+          amj.attachmentId = newAttachmentId!;
+          amj.messageId = newMessageId!;
+        }
+        Logger.info("Replaced old attachment & message IDs with new ObjectBox IDs", tag: "OB Migration");
         amJoinBox.putMany(amJoins);
+        Logger.info("Inserted attachment-message joins into ObjectBox", tag: "OB Migration");
         amJoins.clear();
+        Logger.info("Migrating theme objects...", tag: "OB Migration");
         final themeObjects = tableData[7].map((e) => ThemeObject.fromMap(e)).toList();
-        final existingThemeObjectIds = themeObjects.map((e) => e.id!).toList();
+        final themeObjectIdsMigrationMap = <String, Map<String, int>>{};
         for (ThemeObject element in themeObjects) {
+          themeObjectIdsMigrationMap[element.name!] = {
+            "old": element.id!
+          };
           element.id = null;
         }
-        final newThemeObjectIds = themeObjectBox.putMany(themeObjects);
+        Logger.info("Created theme object ID migration map, length ${themeObjectIdsMigrationMap.length}", tag: "OB Migration");
+        themeObjectBox.putMany(themeObjects);
+        Logger.info("Inserted theme objects into ObjectBox", tag: "OB Migration");
+        final newThemeObjects = themeObjectBox.getAll();
+        Logger.info("Fetched ObjectBox theme objects, length ${newThemeObjects.length}", tag: "OB Migration");
+        for (ThemeObject element in newThemeObjects) {
+          themeObjectIdsMigrationMap[element.name]!['new'] = element.id!;
+        }
+        Logger.info("Added new IDs to theme object ID migration map", tag: "OB Migration");
         themeObjects.clear();
+        newThemeObjects.clear();
+        Logger.info("Migrating theme entries...", tag: "OB Migration");
         final themeEntries = tableData[8].map((e) => ThemeEntry.fromMap(e)).toList();
-        final existingThemeEntryIds = themeEntries.map((e) => e.id!).toList();
+        final themeEntryIdsMigrationMap = <String, Map<String, int>>{};
         for (ThemeEntry element in themeEntries) {
+          final newThemeId = themeObjectIdsMigrationMap.values.firstWhere((e) => e['old'] == element.themeId)['new'];
+          element.themeId = newThemeId!;
+          themeEntryIdsMigrationMap["${element.name}-${element.themeId!}"] = {
+            "old": element.id!
+          };
           element.id = null;
         }
-        final newThemeEntryIds = themeEntryBox.putMany(themeEntries);
+        Logger.info("Created theme entry ID migration map, length ${themeEntryIdsMigrationMap.length}", tag: "OB Migration");
+        themeEntryBox.putMany(themeEntries);
+        Logger.info("Inserted theme entries into ObjectBox", tag: "OB Migration");
+        final newThemeEntries = themeEntryBox.getAll();
+        Logger.info("Fetched ObjectBox theme entries, length ${newThemeEntries.length}", tag: "OB Migration");
+        for (ThemeEntry element in newThemeEntries) {
+          themeEntryIdsMigrationMap["${element.name}-${element.themeId!}"]!['new'] = element.id!;
+        }
+        Logger.info("Added new IDs to theme entry ID", tag: "OB Migration");
         themeEntries.clear();
+        newThemeEntries.clear();
+        Logger.info("Migrating theme-value joins...", tag: "OB Migration");
         List<ThemeValueJoin> tvJoins = tableData[9].map((e) => ThemeValueJoin.fromMap(e)).toList();
-        existingThemeObjectIds.forEachIndexed((index, i) {
-          final joins = tvJoins.where((e) => e.themeId == i);
-          joins.map((e) => e.themeId = newThemeObjectIds[index]);
-        });
-        existingThemeEntryIds.forEachIndexed((index, i) {
-          final joins = tvJoins.where((e) => e.themeValueId == i);
-          joins.map((e) => e.themeId = newThemeEntryIds[index]);
-        });
+        for (ThemeValueJoin tvj in tvJoins) {
+          final newThemeId = themeObjectIdsMigrationMap.values.firstWhere((e) => e['old'] == tvj.themeId)['new'];
+          final newThemeValueId = themeEntryIdsMigrationMap.values.firstWhere((e) => e['old'] == tvj.themeValueId)['new'];
+          tvj.themeId = newThemeId!;
+          tvj.themeValueId = newThemeValueId!;
+        }
+        Logger.info("Replaced old theme object & theme entry IDs with new ObjectBox IDs", tag: "OB Migration");
         tvJoinBox.putMany(tvJoins);
+        Logger.info("Inserted theme-value joins into ObjectBox", tag: "OB Migration");
         tvJoins.clear();
       });
+      Logger.info("Migrating FCM data...", tag: "OB Migration");
       List<ConfigEntry> entries = [];
       for (Map<String, dynamic> setting in tableData[10]) {
         entries.add(ConfigEntry.fromMap(setting));
       }
       final fcm = FCMData.fromConfigEntries(entries);
+      Logger.info("Parsed FCM data from SQLite", tag: "OB Migration");
       fcm.save();
+      Logger.info("Inserted FCM data into ObjectBox", tag: "OB Migration");
       prefs.setBool('objectbox-migration', true);
+      Logger.info("Migration to ObjectBox complete!", tag: "OB Migration");
     }
   }
 }

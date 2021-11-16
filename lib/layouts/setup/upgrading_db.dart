@@ -35,16 +35,10 @@ class UpgradingDB extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0),
                   child: Center(
-                    child: Text("Please wait, this shouldn't take longer than 10 seconds...",
+                    child: Text("Please wait, this shouldn't take longer than 15 seconds...",
                         style: TextStyle(color: Colors.white, fontSize: 10)),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                )
               ],
             ),
           ),
