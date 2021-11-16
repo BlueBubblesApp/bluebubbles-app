@@ -1,0 +1,3 @@
+edit the Bluebubbles.desktop change exec to the location of the bluebubbles_app
+edit the icon to the location of the icon usually in flutter_assets
+move Bluebubbles.desktop to /usr/share/applications(or where ever your applications folder is)
