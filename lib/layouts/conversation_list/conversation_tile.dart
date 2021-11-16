@@ -280,7 +280,7 @@ class _ConversationTileState extends State<ConversationTile> {
               ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 0.95 : 1.0),
             )),
             overflow: TextOverflow.ellipsis,
-            maxLines: 3,
+            maxLines: SettingsManager().settings.skin.value == Skins.Material ? 3 : 2,
           ),
         );
       },
