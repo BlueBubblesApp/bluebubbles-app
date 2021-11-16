@@ -134,6 +134,8 @@ bool sameAddress(List<String?> options, String? compared) {
       break;
     }
 
+    if (opt.isEmail && !compared.isEmail) continue;
+
     String formatted = slugify(compared, delimiter: '').toString().replaceAll('-', '');
     if (opt.endsWith(formatted) || formatted.endsWith(opt)) {
       match = true;
