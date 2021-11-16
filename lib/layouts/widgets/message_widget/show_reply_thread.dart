@@ -15,7 +15,6 @@ void showReplyThread(BuildContext context, Message message, MessageBloc? message
   } else {
     _messages = messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == message.guid || e.guid == message.guid).toList() ?? [];
   }
-  if (!kIsWeb) _messages.sort((a, b) => a.id!.compareTo(b.id!));
   _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
   final controller = ScrollController();
   Navigator.push(

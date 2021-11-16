@@ -511,6 +511,9 @@ class Message {
   /// Fetch reactions
   Message fetchAssociatedMessages({MessageBloc? bloc}) {
     if (associatedMessages.isNotEmpty || (associatedMessages.length == 1 && associatedMessages[0].guid == guid)) {
+      if (threadOriginatorGuid != null && !guid!.startsWith("temp")) {
+        bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
+      }
       return this;
     }
     if (kIsWeb) {
