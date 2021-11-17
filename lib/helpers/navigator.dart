@@ -1,4 +1,5 @@
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -150,6 +151,7 @@ class BaseNavigator extends GetxService {
         return true;
       }, id: 1);
     }
+    EventDispatcher().emit('update-highlight', null);
   }
 
   void backSettings(BuildContext context, {bool closeOverlays = false}) {
