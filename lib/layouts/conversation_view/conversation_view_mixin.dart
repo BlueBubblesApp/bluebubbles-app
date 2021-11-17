@@ -13,9 +13,8 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
-import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -448,35 +447,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       );
     }
 
-    // Build the stack
-    List<Widget> avatars = [];
-    for (Handle participant in chat!.participants) {
-      avatars.add(
-        Container(
-          height: 42.0, // 2 px larger than the diameter
-          width: 42.0, // 2 px larger than the diameter
-          child: CircleAvatar(
-            radius: 20,
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            child: ContactAvatarWidget(
-                key: Key("${participant.address}-conversation-view"),
-                handle: participant,
-                borderThickness: 0.1,
-                editable: false,
-                onTap: openDetails),
-          ),
-        ),
-      );
-    }
-
     TextStyle? titleStyle = Theme.of(context).textTheme.bodyText1;
     if (!generateTitle && hideTitle) titleStyle = titleStyle!.copyWith(color: Colors.transparent);
-
-    // Calculate separation factor
-    // Anything below -60 won't work due to the alignment
-    double distance = avatars.length * -4.0;
-    if (distance <= -30.0 && distance > -60) distance = -30.0;
-    if (distance <= -60.0) distance = -35.0;
 
     // NOTE: THIS IS ZACH TRYING TO FIX THE NAV BAR (REPLACE IT)
     // IT KINDA WORKED BUT ULTIMATELY FAILED
@@ -563,7 +535,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     final children = [
       ContactAvatarGroupWidget(
         chat: chat!,
-        size: avatars.length == 1 ? 40 : 45,
+        size: chat!.participants.length == 1 ? 40 : 45,
         onTap: openDetails,
       ),
       SizedBox(height: 5.0, width: 5.0),

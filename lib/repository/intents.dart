@@ -58,7 +58,7 @@ class OpenNewChatCreatorAction extends Action<OpenNewChatCreatorIntent> {
         ConversationView(
           isCreator: true,
         ),
-            (route) => route.isFirst,
+        (route) => route.isFirst,
       );
     }
   }
@@ -230,14 +230,17 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
     final chat = CurrentChat.activeChat?.chat;
     if (chat != null) {
       final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
-      if (index > -1 && index < ChatBloc().chats.length) {
+      if (index > -1 && index < ChatBloc().chats.length - 1) {
+        final _chat = ChatBloc().chats[index + 1];
         CustomNavigator.pushAndRemoveUntil(
           context,
           ConversationView(
-            chat: ChatBloc().chats[index + 1],
+            chat: _chat,
           ),
           (route) => route.isFirst,
         );
+        CurrentChat.activeChat!.isAlive = false;
+        CurrentChat.getCurrentChat(_chat)!.isAlive = true;
       }
     }
   }
@@ -258,13 +261,16 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
     if (chat != null) {
       final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
       if (index > 0 && index < ChatBloc().chats.length) {
+        final _chat = ChatBloc().chats[index - 1];
         CustomNavigator.pushAndRemoveUntil(
           context,
           ConversationView(
-            chat: ChatBloc().chats[index - 1],
+            chat: _chat,
           ),
           (route) => route.isFirst,
         );
+        CurrentChat.activeChat!.isAlive = false;
+        CurrentChat.getCurrentChat(_chat)!.isAlive = true;
       }
     }
   }
