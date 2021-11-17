@@ -184,7 +184,14 @@ class Chat {
     return data;
   }
 
-  Chat save({bool updateLocalVals = false}) {
+  Chat save({
+    bool updateMuteType = false,
+    bool updateMuteArgs = false,
+    bool updateIsPinned = false,
+    bool updatePinIndex = false,
+    bool updateIsArchived = false,
+    bool updateHasUnreadMessage = false
+  }) {
     return this;
   }
 

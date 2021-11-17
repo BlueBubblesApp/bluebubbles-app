@@ -26,6 +26,9 @@ class Box<T> {
   /// Returns a list of all IDs of the inserted Objects.
   List<int> putMany(List<T> objects, {PutMode mode = PutMode.put}) => throw Exception('Unsupported Platform');
 
+  /// Returns all stored objects in this Box.
+  List<T> getAll() => throw Exception('Unsupported Platform');
+
   /// Removes (deletes) ALL Objects in a single transaction.
   int removeAll() => throw Exception('Unsupported Platform');
 
