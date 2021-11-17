@@ -75,7 +75,13 @@ class ConversationListState extends State<ConversationList> {
 
     return Padding(
       padding: const EdgeInsets.only(right: 10.0),
-      child: Text(widget.showArchivedChats ? "Archive" : widget.showUnknownSenders ? "Unknown Senders" : "Messages", style: style),
+      child: Text(
+          widget.showArchivedChats
+              ? "Archive"
+              : widget.showUnknownSenders
+                  ? "Unknown Senders"
+                  : "Messages",
+          style: style),
     );
   }
 
@@ -83,7 +89,7 @@ class ConversationListState extends State<ConversationList> {
     return Obx(() {
       if (!SettingsManager().settings.showSyncIndicator.value) return SizedBox.shrink();
       if (!SetupBloc().isSyncing.value) return Container();
-      return buildProgressIndicator(context, size: 10);
+      return buildProgressIndicator(context, size: 12);
     });
   }
 
@@ -312,7 +318,7 @@ class ConversationListState extends State<ConversationList> {
     if (!SettingsManager().settings.showConnectionIndicator.value) return Container();
 
     return Obx(() => Padding(
-      padding: const EdgeInsets.only(right: 10.0),
+          padding: const EdgeInsets.only(right: 0.0),
       child: getIndicatorIcon(SocketManager().state.value, size: 12),
     ));
   }
