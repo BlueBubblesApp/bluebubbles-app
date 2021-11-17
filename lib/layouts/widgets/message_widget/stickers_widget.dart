@@ -1,19 +1,20 @@
 import 'dart:async';
 import 'dart:isolate';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:collection/collection.dart';
 import 'package:image/image.dart' as img;
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class StickersWidget extends StatefulWidget {
-  StickersWidget({Key? key, required this.messages}) : super(key: key);
+  StickersWidget({Key? key, required this.messages, required this.size}) : super(key: key);
   final List<Message> messages;
+  final Size size;
 
   @override
   _StickersWidgetState createState() => _StickersWidgetState();
@@ -105,12 +106,16 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
 
     final data = stickers!.map((e) => e.values).expand((element) => element);
     // Turn the attachments into Image Widgets
-    List<Widget> stickerWidgets = data.map((item) {
-      return Image.memory(
-        item,
-        width: CustomNavigator.width(context) * 2 / 3,
-        height: CustomNavigator.width(context) * 2 / 4,
-        gaplessPlayback: true,
+    List<Widget> stickerWidgets = data.mapIndexed((index, item) {
+      return Positioned(
+        left: widget.size.width / data.length * index - 50,
+        bottom: -15,
+        height: widget.size.height + 20,
+        child: Image.memory(
+          item,
+          height: widget.size.height + 20,
+          gaplessPlayback: true,
+        ),
       );
     }).toList();
 
@@ -119,7 +124,17 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
         child: Opacity(
             key: Key(stickers.first.keys.first),
             opacity: _visible ? 1.0 : 0.25,
-            child: Stack(children: stickerWidgets, alignment: Alignment.center)));
+            child: Container(
+              width: widget.size.width,
+              height: widget.size.height,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: stickerWidgets,
+                alignment: Alignment.centerLeft
+              ),
+            )
+        )
+    );
   }
 
   @override

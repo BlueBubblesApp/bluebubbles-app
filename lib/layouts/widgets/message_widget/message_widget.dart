@@ -256,7 +256,7 @@ class _MessageState extends State<MessageWidget> {
     UrlPreviewWidget urlPreviewWidget = UrlPreviewWidget(
         key: Key("preview-${_message.guid}"), linkPreviews: _message.getPreviewAttachments(), message: _message);
     StickersWidget stickersWidget =
-        StickersWidget(key: Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages);
+        StickersWidget(key: Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages, size: _message.getBubbleSize(context));
     ReactionsWidget reactionsWidget = ReactionsWidget(
         key: Key("reactions-${associatedCount.toString()}"), associatedMessages: _message.associatedMessages);
     final separator = MessageTimeStampSeparator(
