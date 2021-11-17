@@ -54,7 +54,11 @@ class SettingsManager {
       //ignore: unnecessary_cast, we need this as a workaround
       appDocDir = (await getApplicationSupportDirectory()) as Directory;
     }
-    canAuthenticate = !kIsWeb && !kIsDesktop && await LocalAuthentication().isDeviceSupported();
+    try {
+      canAuthenticate = !kIsWeb && !kIsDesktop && await LocalAuthentication().isDeviceSupported();
+    } catch (_) {
+      canAuthenticate = false;
+    }
   }
 
   /// Retreives files from disk and stores them in [settings]
