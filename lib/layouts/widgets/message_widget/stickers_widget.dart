@@ -105,10 +105,26 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
     if (stickers?.isEmpty ?? true) return Container();
 
     final data = stickers!.map((e) => e.values).expand((element) => element);
+
+    List<double> leftVec = [];
+    data.forEachIndexed((index, item) {
+      leftVec.add(widget.size.width / data.length * index);
+    });
+    double middle = 0;
+    if (leftVec.length <= 1) {
+      middle = 0;
+    } else if (leftVec.length.isEven) {
+      middle = (leftVec[(leftVec.length / 2 - 1).toInt()] + leftVec[leftVec.length ~/ 2]) / 2;
+    } else {
+      middle = leftVec[(leftVec.length / 2 - 0.5).toInt()];
+    }
+
+    leftVec = leftVec.map((e) => e - middle).toList();
+
     // Turn the attachments into Image Widgets
     List<Widget> stickerWidgets = data.mapIndexed((index, item) {
       return Positioned(
-        left: widget.size.width / data.length * index - 50,
+        left: leftVec[index] + widget.size.height / 2,
         bottom: -15,
         height: widget.size.height + 20,
         child: Image.memory(
