@@ -537,7 +537,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       child: Container(
         height: size,
         width: fileDragged ? size * 3 : size,
-        margin: EdgeInsets.only(left: 5.0, right: 5.0),
+        margin: EdgeInsets.only(left: 5.0, right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS ? 4.5 : 0),
         decoration: BoxDecoration(
           color: SettingsManager().settings.skin.value == Skins.Samsung ? null : Theme.of(context).primaryColor,
           borderRadius: BorderRadius.circular(fileDragged ? 5 : 40),
@@ -596,7 +596,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     return Container(
       height: size,
       width: size,
-      margin: EdgeInsets.only(right: 5.0),
+      margin: EdgeInsets.only(right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS ? 4.5 : 0),
       child: ClipOval(
         child: Material(
           color: SettingsManager().settings.skin.value == Skins.Samsung
@@ -736,19 +736,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             child: Focus(
               focusNode: FocusNode(),
               onKey: (focus, event) {
-                if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
-                Logger.info(
-                    "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
-                    tag: "RawKeyboardListener");
-                if (event.data is RawKeyEventDataWindows) {
+                if (event is RawKeyUpEvent && event.data is RawKeyEventDataWindows) {
                   var data = event.data as RawKeyEventDataWindows;
-                  if (data.keyCode == 13 && !event.isShiftPressed) {
-                    sendMessage();
-                    focusNode!.requestFocus();
-                    return KeyEventResult.handled;
-                  }
                   if (data.keyCode == 8 && event.isControlPressed) {
-                    // Delete bad character (code 127)
                     String text = controller!.text;
                     text = text.characters.where((char) => char.codeUnits[0] != 127).join();
                     TextSelection selection = controller!.selection;
@@ -781,56 +771,32 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     end += trailing; // Account for trimming
                     start = max(0, start); // Make sure it's not negative
                     text = text.substring(0, start) + text.substring(end);
-                    controller!.text = text; // Set the text
-                    controller!.selection = TextSelection.fromPosition(TextPosition(offset: start)); // Set the position
+                    controller!.value = TextEditingValue(
+                        text: text, selection: TextSelection.fromPosition(TextPosition(offset: start)));
                     return KeyEventResult.handled;
                   }
-                  return KeyEventResult.ignored;
                 }
-                // TODO figure out the Linux keycode
-                if (event.data is RawKeyEventDataLinux) {
-                  var data = event.data as RawKeyEventDataLinux;
+                if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
+                Logger.info(
+                    "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
+                    tag: "RawKeyboardListener");
+                if (event.data is RawKeyEventDataWindows) {
+                  var data = event.data as RawKeyEventDataWindows;
                   if (data.keyCode == 13 && !event.isShiftPressed) {
                     sendMessage();
                     focusNode!.requestFocus();
                     return KeyEventResult.handled;
                   }
                   if (data.keyCode == 8 && event.isControlPressed) {
-                    // Delete bad character (code 127)
-                    String text = controller!.text;
-                    text = text.characters.where((char) => char.codeUnits[0] != 127).join();
-                    TextSelection selection = controller!.selection;
-                    TextPosition base = selection.base;
-                    int startPos = base.offset;
-                    controller!.text = text;
-                    controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
-
-                    // Check if at end of a word
-                    if (startPos - 1 == text.length || text.characters.toList()[startPos - 1].isBlank!) {
-                      // Get the word
-                      int trailing = text.length - text.trimRight().length;
-                      List<String> words = text.trimRight().split(" ");
-                      print(words);
-                      List<int> counts = words.map((word) => word.length).toList();
-                      int end = startPos - 1 - trailing;
-                      int start = 0;
-                      for (int i = 0; i < counts.length; i++) {
-                        int count = counts[i];
-                        if (start + count < end) {
-                          start += count + (i == counts.length - 1 ? 0 : 1);
-                        } else {
-                          break;
-                        }
-                      }
-                      end += trailing; // Account for trimming
-                      start -= 1; // Remove the space after the previous word
-                      start = max(0, start); // Make sure it's not negative
-                      text = text.substring(0, start) + text.substring(end);
-                      // Set the text
-                      controller!.text = text;
-                      // Set the position
-                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
-                    }
+                    return KeyEventResult.ignored;
+                  }
+                  return KeyEventResult.ignored;
+                }
+                if (event.data is RawKeyEventDataLinux) {
+                  var data = event.data as RawKeyEventDataLinux;
+                  if (data.keyCode == 65293 && !event.isShiftPressed) {
+                    sendMessage();
+                    focusNode!.requestFocus();
                     return KeyEventResult.handled;
                   }
                   return KeyEventResult.ignored;
@@ -843,44 +809,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     focusNode!.requestFocus();
                     return KeyEventResult.handled;
                   }
-                  if (data.keyCode == 8 && event.isControlPressed) {
-                    // Delete bad character (code 127)
-                    String text = controller!.text;
-                    text = text.characters.where((char) => char.codeUnits[0] != 127).join();
-                    TextSelection selection = controller!.selection;
-                    TextPosition base = selection.base;
-                    int startPos = base.offset;
-                    controller!.text = text;
-                    controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
-
-                    // Check if at end of a word
-                    if (startPos - 1 == text.length || text.characters.toList()[startPos - 1].isBlank!) {
-                      // Get the word
-                      int trailing = text.length - text.trimRight().length;
-                      List<String> words = text.trimRight().split(" ");
-                      print(words);
-                      List<int> counts = words.map((word) => word.length).toList();
-                      int end = startPos - 1 - trailing;
-                      int start = 0;
-                      for (int i = 0; i < counts.length; i++) {
-                        int count = counts[i];
-                        if (start + count < end) {
-                          start += count + (i == counts.length - 1 ? 0 : 1);
-                        } else {
-                          break;
-                        }
-                      }
-                      end += trailing; // Account for trimming
-                      start -= 1; // Remove the space after the previous word
-                      start = max(0, start); // Make sure it's not negative
-                      text = text.substring(0, start) + text.substring(end);
-                      // Set the text
-                      controller!.text = text;
-                      // Set the position
-                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
-                    }
-                    return KeyEventResult.handled;
-                  }
+                  // if (data.keyCode == 8 && event.isControlPressed) {
+                  //   // TODO figure out if mac already supports this
+                  //   return KeyEventResult.handled;
+                  // }
                   return KeyEventResult.ignored;
                 }
                 if (event.data is RawKeyEventDataWeb) {
@@ -1657,12 +1589,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Widget buildSendButton() => Align(
-        alignment: Alignment.bottomRight,
+        alignment: Alignment.centerRight,
         child: Row(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.center, children: [
           if (sendCountdown != null) Text(sendCountdown.toString()),
           (SettingsManager().settings.skin.value == Skins.iOS)
               ? Container(
-                  constraints: BoxConstraints(maxWidth: 35, maxHeight: 34),
+            height: SettingsManager().settings.skin.value == Skins.iOS ? 35 : 40,
+                  width: SettingsManager().settings.skin.value == Skins.iOS ? 35 : 40,
                   padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),
                   child: GestureDetector(
                     onSecondaryTapUp: (_) async {
