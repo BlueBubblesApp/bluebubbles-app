@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
@@ -43,7 +44,16 @@ class ImageWidgetController extends GetxController {
       // If it's an image, compress the image when loading it
       if (kIsWeb || file.path == null) {
         if (attachment.guid != "redacted-mode-demo-attachment") {
-          tmpData = file.bytes;
+          if ((attachment.mimeType?.endsWith("tif") ?? false) || (attachment.mimeType?.endsWith("tiff") ?? false)) {
+            final receivePort = ReceivePort();
+            await Isolate.spawn(
+                unsupportedToPngIsolate, IsolateData(file, receivePort.sendPort));
+            // Get the processed image from the isolate.
+            final image = await receivePort.first as Uint8List?;
+            tmpData = image;
+          } else {
+            tmpData = file.bytes;
+          }
         } else {
           data.value = Uint8List.view((await rootBundle.load(attachment.transferName!)).buffer);
           return;

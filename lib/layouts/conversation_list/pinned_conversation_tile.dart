@@ -192,6 +192,8 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                       (context.theme.backgroundColor.green * 0.2).toInt(),
                   (context.theme.primaryColor.blue * 0.8).toInt() + (context.theme.backgroundColor.blue * 0.2).toInt(),
                 );
+                MessageMarkers? markers =
+                    CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers;
                 return ConstrainedBox(
                   constraints: BoxConstraints(
                     maxWidth: maxWidth,
@@ -271,8 +273,6 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                             showTypingIndicator.value = snapshot.data["data"];
                           }
                           return Obx(() {
-                            MessageMarkers? markers =
-                                CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers.value ?? null.obs.value;
                             if (showTypingIndicator.value) {
                               return Positioned(
                                 top: -sqrt(maxWidth / 2),
@@ -287,8 +287,8 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                 ),
                               );
                             }
-                            if (shouldShow(widget.chat.latestMessage, markers?.myLastMessage, markers?.lastReadMessage,
-                                    markers?.lastDeliveredMessage) !=
+                            if (shouldShow(widget.chat.latestMessage, markers?.myLastMessage.value, markers?.lastReadMessage.value,
+                                    markers?.lastDeliveredMessage.value) !=
                                 Indicator.NONE) {
                               return Positioned(
                                 left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
@@ -308,18 +308,18 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                       ),
                                     ),
                                     Transform.rotate(
-                                      angle: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
-                                                  markers?.lastReadMessage, markers?.lastDeliveredMessage) !=
+                                      angle: shouldShow(widget.chat.latestMessage, markers?.myLastMessage.value,
+                                                  markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value) !=
                                               Indicator.SENT
                                           ? pi / 2
                                           : 0,
                                       child: Icon(
-                                        shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
-                                                    markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                        shouldShow(widget.chat.latestMessage, markers?.myLastMessage.value,
+                                                    markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value) ==
                                                 Indicator.DELIVERED
                                             ? CupertinoIcons.location_north_fill
-                                            : shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
-                                                        markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                            : shouldShow(widget.chat.latestMessage, markers?.myLastMessage.value,
+                                                        markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value) ==
                                                     Indicator.READ
                                                 ? CupertinoIcons.location_north
                                                 : CupertinoIcons.location_fill,

@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
@@ -34,6 +35,17 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
     final file = File(path!);
     if (widget.data.mimeType != null && widget.data.mimeType!.startsWith("video/")) {
       image = await AttachmentHelper.getVideoThumbnail(file.path, useCachedFile: false);
+      if (mounted) setState(() {});
+    } else if (widget.data.mimeType == "image/heic"
+        || widget.data.mimeType == "image/heif"
+        || widget.data.mimeType == "image/tif"
+        || widget.data.mimeType == "image/tiff") {
+      Attachment fakeAttachment = Attachment(transferName: file.path,
+        mimeType: widget.data.mimeType!,
+      );
+      image = await AttachmentHelper.compressAttachment(
+          fakeAttachment, file.path, qualityOverride: 100,
+          getActualPath: false);
       if (mounted) setState(() {});
     } else {
       image = await file.readAsBytes();

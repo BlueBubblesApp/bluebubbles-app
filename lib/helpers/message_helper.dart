@@ -1,12 +1,9 @@
 import 'dart:async';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_html/html.dart' as html;
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -14,8 +11,12 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:universal_html/html.dart' as html;
+
 import 'emoji_regex.dart';
 
 class EmojiConst {
@@ -360,7 +361,9 @@ class MessageHelper {
     List<Message> normalized = [];
 
     for (Message message in associatedMessages.reversed.toList()) {
-      if (guids.remove(message.handleId ?? 0)) {
+      if (message.associatedMessageType == "sticker") {
+        normalized.add(message);
+      } else if (guids.remove(message.handleId ?? 0)) {
         normalized.add(message);
       }
     }
@@ -404,9 +407,9 @@ class MessageHelper {
         message.dateDelivered != null &&
         newerMessage.dateDelivered == null) return true;
 
-    Message? lastRead = CurrentChat.activeChat?.messageMarkers.lastReadMessage;
+    Message? lastRead = CurrentChat.activeChat?.messageMarkers.lastReadMessage.value;
     if (lastRead != null && lastRead.guid == message.guid) return true;
-    Message? lastDelivered = CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage;
+    Message? lastDelivered = CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage.value;
     if (lastDelivered != null && lastDelivered.guid == message.guid) return true;
 
     return false;

@@ -34,6 +34,7 @@ class CurrentChat {
   Chat chat;
 
   Map<String, Uint8List> imageData = {};
+  Map<String, Map<String, Uint8List>> stickerData = {};
   Map<String, Metadata> urlPreviews = {};
   Map<String, VideoPlayerController> currentPlayingVideo = {};
   Map<String, Tuple2<ChewieAudioController, VideoPlayerController>> audioPlayers = {};
@@ -173,6 +174,7 @@ class CurrentChat {
     dispose();
 
     imageData = {};
+    stickerData = {};
     currentPlayingVideo = {};
     audioPlayers = {};
     urlPreviews = {};
@@ -327,6 +329,7 @@ class CurrentChat {
     _timeStampOffset = 0;
     showScrollDown.value = false;
     imageData = {};
+    stickerData = {};
     currentPlayingVideo = {};
     audioPlayers = {};
     urlPreviews = {};

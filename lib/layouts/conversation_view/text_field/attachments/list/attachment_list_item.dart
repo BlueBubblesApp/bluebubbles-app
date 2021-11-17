@@ -41,16 +41,18 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       if (mounted) setState(() {});
     } else if (mimeType.startsWith("image/")) {
       // Compress the file, using a dummy attachment object
-      if (mimeType == "image/heic" || mimeType == "image/heif") {
+      if (mimeType == "image/heic"
+          || mimeType == "image/heif"
+          || mimeType == "image/tif"
+          || mimeType == "image/tiff") {
         Attachment fakeAttachment =
                 Attachment(transferName: widget.file.path, mimeType: mimeType, bytes: widget.file.bytes);
-        preview =
-          await AttachmentHelper.compressAttachment(
+        preview = await AttachmentHelper.compressAttachment(
             fakeAttachment, widget.file.path!, qualityOverride: 100, getActualPath: false);
       } else {
         preview = widget.file.bytes;
       }
-      
+
       if (mounted) setState(() {});
     }
   }
