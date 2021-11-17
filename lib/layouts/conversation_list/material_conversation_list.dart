@@ -271,13 +271,16 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                     ),
                                   ),
                                   SizedBox(width: 5),
+                                        Stack(
+                                          alignment: Alignment.centerLeft,
+                                          children: [
+                                            widget.parent.getSyncIndicatorWidget(),
                                   widget.parent.getConnectionIndicatorWidget(),
-                                  widget.parent.getSyncIndicatorWidget(),
                                 ],
                               ),
-                              Center(
-                                  child: widget.parent.getHeaderTextWidget(size: 20)
+                                      ],
                               ),
+                                    Center(child: widget.parent.getHeaderTextWidget(size: 20)),
                               Container(
                                 alignment: Alignment.centerRight,
                                 child: Row(
