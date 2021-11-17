@@ -352,9 +352,37 @@ class AboutPanel extends StatelessWidget {
                                   ),
                                   DataRow(
                                     cells: <DataCell>[
-                                      DataCell(Text('CTRL + R')),
+                                      DataCell(Text('ALT + R')),
                                       DataCell(
                                           Text('Reply to most recent message in the currently selected chat')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + R')),
+                                      DataCell(
+                                          Text('Reply to most recent message in the currently selected chat (Desktop only)')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('ALT + G')),
+                                      DataCell(
+                                          Text('Sync from server')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + SHIFT + R')),
+                                      DataCell(
+                                          Text('Sync from server (Desktop only)')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('CTRL + G')),
+                                      DataCell(
+                                          Text('Sync from server (Desktop only)')),
                                     ],
                                   ),
                                   DataRow(
@@ -391,6 +419,13 @@ class AboutPanel extends StatelessWidget {
                                     cells: <DataCell>[
                                       DataCell(Text('CTRL + I')),
                                       DataCell(Text('Open chat details page')),
+                                    ],
+                                  ),
+                                  DataRow(
+                                    cells: <DataCell>[
+                                      DataCell(Text('ESC')),
+                                      DataCell(
+                                          Text('Close pages')),
                                     ],
                                   ),
                                 ],

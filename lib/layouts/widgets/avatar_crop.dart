@@ -39,7 +39,7 @@ class _AvatarCropState extends State<AvatarCrop> {
       await file.writeAsBytes(croppedData);
       ChatBloc().chats[widget.index!].customAvatarPath = file.path;
       ChatBloc().chats[widget.index!].save();
-      CustomNavigator.backSettingsCloseOverlays(context);
+      CustomNavigator.backSettings(context, closeOverlays: true);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
       File file = File(widget.chat!.customAvatarPath ?? "$appDocPath/avatars/${widget.chat!.guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");

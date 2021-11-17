@@ -1,6 +1,8 @@
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/blocs/setup_bloc.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -13,6 +15,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class OpenSettingsIntent extends Intent {
   const OpenSettingsIntent();
@@ -25,13 +28,15 @@ class OpenSettingsAction extends Action<OpenSettingsIntent> {
 
   @override
   Object? invoke(covariant OpenSettingsIntent intent) {
-    Navigator.of(context).push(
-      ThemeSwitcher.buildPageRoute(
-        builder: (BuildContext context) {
-          return SettingsPanel();
-        },
-      ),
-    );
+    if (SettingsManager().settings.finishedSetup.value) {
+      Navigator.of(context).push(
+        ThemeSwitcher.buildPageRoute(
+          builder: (BuildContext context) {
+            return SettingsPanel();
+          },
+        ),
+      );
+    }
   }
 }
 
@@ -46,14 +51,16 @@ class OpenNewChatCreatorAction extends Action<OpenNewChatCreatorIntent> {
 
   @override
   Object? invoke(covariant OpenNewChatCreatorIntent intent) {
-    EventDispatcher().emit("update-highlight", null);
-    CustomNavigator.pushAndRemoveUntil(
-      context,
-      ConversationView(
-        isCreator: true,
-      ),
-      (route) => route.isFirst,
-    );
+    if (SettingsManager().settings.finishedSetup.value) {
+      EventDispatcher().emit("update-highlight", null);
+      CustomNavigator.pushAndRemoveUntil(
+        context,
+        ConversationView(
+          isCreator: true,
+        ),
+            (route) => route.isFirst,
+      );
+    }
   }
 }
 
@@ -68,10 +75,12 @@ class OpenSearchAction extends Action<OpenSearchIntent> {
 
   @override
   Object? invoke(covariant OpenSearchIntent intent) async {
-    CustomNavigator.pushLeft(
-      context,
-      SearchView(),
-    );
+    if (SettingsManager().settings.finishedSetup.value) {
+      CustomNavigator.pushLeft(
+        context,
+        SearchView(),
+      );
+    }
   }
 }
 
@@ -278,5 +287,38 @@ class OpenChatDetailsAction extends Action<OpenChatDetailsIntent> {
       context,
       ConversationDetails(messageBloc: bloc, chat: chat),
     );
+  }
+}
+
+class StartIncrementalSyncIntent extends Intent {
+  const StartIncrementalSyncIntent();
+}
+
+class StartIncrementalSyncAction extends Action<StartIncrementalSyncIntent> {
+  @override
+  Object? invoke(covariant StartIncrementalSyncIntent intent) {
+    if (SettingsManager().settings.finishedSetup.value) {
+      SetupBloc().startIncrementalSync(SettingsManager().settings, onConnectionError: (String err) {
+        Logger.error("Error performing incremental sync. Not saving last sync date.", tag: "IncrementalSync");
+        Logger.error(err);
+      });
+    }
+  }
+}
+
+class GoBackIntent extends Intent {
+  const GoBackIntent();
+}
+
+class GoBackAction extends Action<GoBackIntent> {
+  GoBackAction(this.context);
+
+  final BuildContext context;
+
+  @override
+  Object? invoke(covariant GoBackIntent intent) {
+    if (SettingsManager().settings.finishedSetup.value && !(Get.isDialogOpen ?? true)) {
+      CustomNavigator.backConversationView(context);
+    }
   }
 }

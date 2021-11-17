@@ -3,6 +3,7 @@ import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/repository/intents.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -95,7 +96,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
         systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Obx(() => buildForDevice()),
+      child: Actions(
+        actions: {
+          GoBackIntent: GoBackAction(context),
+        },
+        child: Obx(() => buildForDevice())
+      ),
     );
   }
 

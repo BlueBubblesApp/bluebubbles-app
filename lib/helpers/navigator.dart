@@ -115,13 +115,50 @@ class BaseNavigator extends GetxService {
     }
   }
 
-  void backSettingsCloseOverlays(BuildContext context) {
+  void backConversationView(BuildContext context) {
+    if (Get.keys.containsKey(3) &&
+        Get.keys[3]?.currentContext != null &&
+        (!context.isPhone || context.isLandscape) &&
+        (SettingsManager().settings.tabletMode.value)) {
+      Get.until((route) {
+        if (route.settings.name == "initial") {
+          Get.back();
+        } else {
+          Get.back(id: 3);
+        }
+        return true;
+      }, id: 3);
+    } else if (Get.keys.containsKey(2) &&
+        Get.keys[2]?.currentContext != null &&
+        (!context.isPhone || context.isLandscape) &&
+        (SettingsManager().settings.tabletMode.value)) {
+      Get.until((route) {
+        bool id2result = false;
+        // check if we should pop the left side first
+        Get.until((route) {
+          if (route.settings.name != "initial") {
+            Get.back(id: 2);
+            id2result = true;
+          }
+          return true;
+        }, id: 2);
+        if (!id2result) {
+          if (route.settings.name != "initial") {
+            Get.back(id: 1);
+          }
+        }
+        return true;
+      }, id: 1);
+    }
+  }
+
+  void backSettings(BuildContext context, {bool closeOverlays = false}) {
     if (Get.keys.containsKey(3) &&
         (!context.isPhone || context.isLandscape) &&
         (SettingsManager().settings.tabletMode.value)) {
-      Get.back(closeOverlays: true, id: 3);
+      Get.back(closeOverlays: closeOverlays, id: 3);
     } else {
-      Get.back(closeOverlays: true);
+      Get.back(closeOverlays: closeOverlays);
     }
   }
 }

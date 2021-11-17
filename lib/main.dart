@@ -355,7 +355,14 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
           if (kIsDesktop)
             LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): const OpenSearchIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): const StartIncrementalSyncIntent(),
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation): const HeartRecentIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at): const LikeRecentIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign): const DislikeRecentIntent(),
@@ -369,6 +376,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
           if (kIsDesktop)
             LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab): const OpenPreviousChatIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
+          LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
         },
 
         builder: (context, child) => SecureApplication(
@@ -672,6 +680,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           OpenSearchIntent: OpenSearchAction(context),
           OpenNextChatIntent: OpenNextChatAction(context),
           OpenPreviousChatIntent: OpenPreviousChatAction(context),
+          StartIncrementalSyncIntent: StartIncrementalSyncAction(),
+          GoBackIntent: GoBackAction(context),
         },
         child: Scaffold(
           backgroundColor: Colors.black,
