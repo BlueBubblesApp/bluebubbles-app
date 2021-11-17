@@ -156,7 +156,9 @@ public class NewMessageNotification implements Handler {
         style.setGroupConversation(chatIsGroup);
 
         // Set the title of the conversation (in-case it may have changed)
-        style.setConversationTitle(chatTitle);
+        if (chatIsGroup) {
+            style.setConversationTitle(chatTitle);
+        }
 
         // Add the message to the notification
         style.addMessage(new NotificationCompat.MessagingStyle.Message(
