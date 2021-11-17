@@ -360,7 +360,9 @@ class MessageHelper {
     List<Message> normalized = [];
 
     for (Message message in associatedMessages.reversed.toList()) {
-      if (guids.remove(message.handleId ?? 0)) {
+      if (message.associatedMessageType == "sticker") {
+        normalized.add(message);
+      } else if (guids.remove(message.handleId ?? 0)) {
         normalized.add(message);
       }
     }
