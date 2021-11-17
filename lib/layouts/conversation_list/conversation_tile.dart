@@ -363,7 +363,6 @@ class _ConversationTileState extends State<ConversationTile> {
               Message message = widget.chat.latestMessageGetter;
               Indicator show = shouldShow(message, markers.myLastMessage.value, markers.lastReadMessage.value,
                   markers.lastDeliveredMessage.value);
-              print(show);
               return Text(
                   message.error > 0
                       ? "Error"

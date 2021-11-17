@@ -30,7 +30,6 @@ class MessageMarkers {
             msg.dateCreated != null &&
             msg.dateCreated!.millisecondsSinceEpoch > myLastMessage.value!.dateCreated!.millisecondsSinceEpoch)) {
       myLastMessage.value = msg;
-      print('Updating my last message');
     }
 
     if ((lastReadMessage.value == null && msg.dateRead != null) ||
@@ -38,7 +37,6 @@ class MessageMarkers {
             msg.dateRead != null &&
             msg.dateRead!.millisecondsSinceEpoch > lastReadMessage.value!.dateRead!.millisecondsSinceEpoch)) {
       lastReadMessage.value = msg;
-      print('Updating last read message');
     }
 
     if ((lastDeliveredMessage.value == null && msg.dateDelivered != null) ||
@@ -47,7 +45,6 @@ class MessageMarkers {
             msg.dateDelivered!.millisecondsSinceEpoch >
                 lastDeliveredMessage.value!.dateDelivered!.millisecondsSinceEpoch)) {
       lastDeliveredMessage.value = msg;
-      print('Updating last delivered message');
     }
   }
 }
