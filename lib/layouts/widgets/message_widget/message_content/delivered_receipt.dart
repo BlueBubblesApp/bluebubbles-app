@@ -68,8 +68,10 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> {
       text = "Received " + buildDate(widget.message.dateCreated);
     } else if (widget.message.dateRead != null) {
       text = "Read " + buildDate(widget.message.dateRead);
-    } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateDelivered != null) {
-      text = "Delivered " + buildDate(widget.message.dateDelivered);
+    } else if (widget.message.dateDelivered != null) {
+      text = "Delivered"
+          + (SettingsManager().settings.showDeliveryTimestamps.value
+              ? " ${buildDate(widget.message.dateDelivered)}" : "");
     } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateCreated != null) {
       text = "Sent " + buildDate(widget.message.dateCreated);
     }
