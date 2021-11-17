@@ -21,6 +21,7 @@ import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:permission_handler/permission_handler.dart';
@@ -387,6 +388,20 @@ class AttachmentHelper {
     }
 
     Uint8List previewData = await originalFile.readAsBytes();
+
+    if ((attachment.mimeType?.endsWith("tif") ?? false)
+        || (attachment.mimeType?.endsWith("tiff") ?? false)) {
+      final receivePort = ReceivePort();
+      await Isolate.spawn(
+          unsupportedToPngIsolate, IsolateData(PlatformFile(
+        name: randomString(8),
+        path: originalFile.path,
+        size: 0,
+      ), receivePort.sendPort));
+      // Get the processed image from the isolate.
+      final image = await receivePort.first as Uint8List?;
+      previewData = image ?? previewData;
+    }
     if (attachment.mimeType == "image/gif") {
       try {
         Size size = getGifDimensions(previewData);
@@ -431,7 +446,9 @@ class AttachmentHelper {
     }
 
     // If we should update the attachment data, do it right before we return, no awaiting
-    attachment.save(null);
+    if (attachment.guid != null) {
+      attachment.save(null);
+    }
 
     // Return the bytes
     return previewData;
@@ -449,6 +466,28 @@ class AttachmentHelper {
 
     return (aWidth / aHeight).abs();
   }
+}
+
+void unsupportedToPngIsolate(IsolateData param) {
+  try {
+    final bytes = param.file.bytes
+        ?? (kIsWeb ? null : File(param.file.path!).readAsBytesSync());
+    if (bytes == null) {
+      param.sendPort.send(null);
+      return;
+    }
+    final image = img.decodeImage(bytes)!;
+    final encoded = img.encodePng(image);
+    param.sendPort.send(encoded);
+  } catch (_) {
+    param.sendPort.send(null);
+  }
+}
+
+class IsolateData {
+  final PlatformFile file;
+  final SendPort sendPort;
+  IsolateData(this.file, this.sendPort);
 }
 
 class ResizeArgs {
