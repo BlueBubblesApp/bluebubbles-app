@@ -346,7 +346,7 @@ class MiscPanel extends StatelessWidget {
                   Obx(() {
                     if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return SettingsTile(
-                        title: "Maximum Group Avatar Size",
+                        title: "Maximum Group Avatar Count",
                         subtitle: "Controls the maximum number of contact avatars in a group chat's widget",
                         backgroundColor: tileColor,
                       );
