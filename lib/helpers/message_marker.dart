@@ -4,13 +4,13 @@ import 'package:get/get.dart';
 
 class MessageMarkers {
   Chat chat;
-  Message? myLastMessage;
-  Message? lastReadMessage;
-  Message? lastDeliveredMessage;
-  late final Rx<MessageMarkers> markers;
+  final Rxn<Message> myLastMessage = Rxn();
+  final Rxn<Message> lastReadMessage = Rxn();
+  final Rxn<Message> lastDeliveredMessage = Rxn();
+  late MessageMarkers markers;
 
   MessageMarkers(this.chat) {
-    markers = Rx<MessageMarkers>(this);
+    markers = this;
     NewMessageManager().stream.listen((event) {
       // Ignore any events that don't have to do with the current chat
       if (event.chatGuid != chat.guid) return;
@@ -25,27 +25,29 @@ class MessageMarkers {
   updateMessageMarkers(Message msg) {
     if (!msg.isFromMe!) return;
 
-    if (myLastMessage == null ||
-        (myLastMessage?.dateCreated != null &&
+    if (myLastMessage.value == null ||
+        (myLastMessage.value?.dateCreated != null &&
             msg.dateCreated != null &&
-            msg.dateCreated!.millisecondsSinceEpoch > myLastMessage!.dateCreated!.millisecondsSinceEpoch)) {
-      myLastMessage = msg;
+            msg.dateCreated!.millisecondsSinceEpoch > myLastMessage.value!.dateCreated!.millisecondsSinceEpoch)) {
+      myLastMessage.value = msg;
+      print('Updating my last message');
     }
 
-    if ((lastReadMessage == null && msg.dateRead != null) ||
-        (lastReadMessage?.dateRead != null &&
+    if ((lastReadMessage.value == null && msg.dateRead != null) ||
+        (lastReadMessage.value?.dateRead != null &&
             msg.dateRead != null &&
-            msg.dateRead!.millisecondsSinceEpoch > lastReadMessage!.dateRead!.millisecondsSinceEpoch)) {
-      lastReadMessage = msg;
+            msg.dateRead!.millisecondsSinceEpoch > lastReadMessage.value!.dateRead!.millisecondsSinceEpoch)) {
+      lastReadMessage.value = msg;
+      print('Updating last read message');
     }
 
-    if ((lastDeliveredMessage == null && msg.dateDelivered != null) ||
-        (lastDeliveredMessage?.dateDelivered != null &&
+    if ((lastDeliveredMessage.value == null && msg.dateDelivered != null) ||
+        (lastDeliveredMessage.value?.dateDelivered != null &&
             msg.dateDelivered != null &&
             msg.dateDelivered!.millisecondsSinceEpoch >
-                lastDeliveredMessage!.dateDelivered!.millisecondsSinceEpoch)) {
-      lastDeliveredMessage = msg;
+                lastDeliveredMessage.value!.dateDelivered!.millisecondsSinceEpoch)) {
+      lastDeliveredMessage.value = msg;
+      print('Updating last delivered message');
     }
-    markers.value = this;
   }
 }

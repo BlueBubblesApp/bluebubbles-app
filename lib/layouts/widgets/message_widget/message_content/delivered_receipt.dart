@@ -24,9 +24,9 @@ class DeliveredReceipt extends StatefulWidget {
 class _DeliveredReceiptState extends State<DeliveredReceipt> {
   bool shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
     if (CurrentChat.activeChat != null) {
-      lastReadMessage ??= CurrentChat.activeChat?.messageMarkers.lastReadMessage;
-      lastDeliveredMessage ??= CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage;
-      myLastMessage ??= CurrentChat.activeChat?.messageMarkers.myLastMessage;
+      lastReadMessage ??= CurrentChat.activeChat?.messageMarkers.lastReadMessage.value;
+      lastDeliveredMessage ??= CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage.value;
+      myLastMessage ??= CurrentChat.activeChat?.messageMarkers.myLastMessage.value;
     }
 
     // If the message is the same as the last read message, we want to show it
@@ -81,11 +81,11 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> {
 
   @override
   Widget build(BuildContext context) {
+    MessageMarkers? markers = CurrentChat.activeChat?.messageMarkers.markers;
     Widget timestampWidget = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Obx(() {
-        MessageMarkers? markers = CurrentChat.activeChat?.messageMarkers.markers.value ?? null.obs.value;
-        if (shouldShow(markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage)) {
+        if (shouldShow(markers?.myLastMessage.value, markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value)) {
           return Text(
             getText(),
             style: Theme.of(context).textTheme.subtitle2,

@@ -232,13 +232,14 @@ class _ConversationTileState extends State<ConversationTile> {
     }
 
     return TextOneLine(title,
-        style: style?.copyWith(
-            fontWeight: SettingsManager().settings.skin.value == Skins.Material
-                && (widget.chat.hasUnreadMessage ?? false)
-                ? FontWeight.bold : null
-        ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0),
-        overflow: TextOverflow.ellipsis
-    );
+        style: style
+            ?.copyWith(
+                fontWeight:
+                    SettingsManager().settings.skin.value == Skins.Material && (widget.chat.hasUnreadMessage ?? false)
+                        ? FontWeight.bold
+                        : null)
+            .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0),
+        overflow: TextOverflow.ellipsis);
   }
 
   Widget buildSubtitle() {
@@ -270,14 +271,18 @@ class _ConversationTileState extends State<ConversationTile> {
             text: TextSpan(
                 children: MessageHelper.buildEmojiText(
               latestText,
-              style.copyWith(
-                  fontWeight: SettingsManager().settings.skin.value == Skins.Material
-                      && (widget.chat.hasUnreadMessage ?? false)
-                      ? FontWeight.w600 : null,
-                  color: SettingsManager().settings.skin.value == Skins.Material
-                      && (widget.chat.hasUnreadMessage ?? false)
-                      ? Theme.of(context).textTheme.bodyText1!.color : null,
-              ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 0.95 : 1.0),
+              style
+                  .copyWith(
+                    fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
+                            (widget.chat.hasUnreadMessage ?? false)
+                        ? FontWeight.w600
+                        : null,
+                    color: SettingsManager().settings.skin.value == Skins.Material &&
+                            (widget.chat.hasUnreadMessage ?? false)
+                        ? Theme.of(context).textTheme.bodyText1!.color
+                        : null,
+                  )
+                  .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 0.95 : 1.0),
             )),
             overflow: TextOverflow.ellipsis,
             maxLines: SettingsManager().settings.skin.value == Skins.Material ? 3 : 2,
@@ -343,41 +348,43 @@ class _ConversationTileState extends State<ConversationTile> {
         });
   }
 
-  Widget _buildDate() => kIsWeb
-      ? Text(buildDate(widget.chat.latestMessageDate),
-          textAlign: TextAlign.right,
-          style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-              ),
-          overflow: TextOverflow.clip)
-      : ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 100.0),
-          child: Obx(() {
-            Message message = widget.chat.latestMessageGetter;
-            MessageMarkers? markers =
-                CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers.value ?? null.obs.value;
-            Indicator show =
-                shouldShow(message, markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage);
-            return Text(
-                message.error > 0
-                    ? "Error"
-                    : ((show == Indicator.READ
-                            ? "Read\n"
-                            : show == Indicator.DELIVERED
-                                ? "Delivered\n"
-                                : show == Indicator.SENT
-                                    ? "Sent\n"
-                                    : "") +
-                        buildDate(widget.chat.latestMessageDate)),
-                textAlign: TextAlign.right,
-                style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                      color: message.error > 0
-                          ? Colors.red
-                          : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                    ),
-                overflow: TextOverflow.clip);
-          }),
-        );
+  Widget _buildDate() {
+    MessageMarkers? markers = CurrentChat.getCurrentChat(widget.chat)!.messageMarkers.markers;
+    return kIsWeb
+        ? Text(buildDate(widget.chat.latestMessageDate),
+            textAlign: TextAlign.right,
+            style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                  color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                ),
+            overflow: TextOverflow.clip)
+        : ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 100.0),
+            child: Obx(() {
+              Message message = widget.chat.latestMessageGetter;
+              Indicator show = shouldShow(message, markers.myLastMessage.value, markers.lastReadMessage.value,
+                  markers.lastDeliveredMessage.value);
+              print(show);
+              return Text(
+                  message.error > 0
+                      ? "Error"
+                      : ((show == Indicator.READ
+                              ? "Read\n"
+                              : show == Indicator.DELIVERED
+                                  ? "Delivered\n"
+                                  : show == Indicator.SENT
+                                      ? "Sent\n"
+                                      : "") +
+                          buildDate(widget.chat.latestMessageDate)),
+                  textAlign: TextAlign.right,
+                  style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                        color: message.error > 0
+                            ? Colors.red
+                            : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                      ),
+                  overflow: TextOverflow.clip);
+            }),
+          );
+  }
 
   void onTap() {
     CustomNavigator.pushAndRemoveUntil(
@@ -677,11 +684,7 @@ class _Material extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 if (parent.widget.chat.isPinned!)
-                                  Icon(
-                                      Icons.push_pin,
-                                      size: 15,
-                                      color: Theme.of(context).textTheme.subtitle1!.color
-                                  ),
+                                  Icon(Icons.push_pin, size: 15, color: Theme.of(context).textTheme.subtitle1!.color),
                                 SizedBox(width: 5),
                                 if (parent.widget.chat.muteType == "mute")
                                   Icon(
