@@ -178,7 +178,7 @@ Future<List<Message>> getMessagesIsolate(List<dynamic> stuff) async {
       Message message = messages[i];
       if (handles.isNotEmpty && message.handleId != 0) {
         Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
-        if (handle == null) {
+        if (handle == null && message.originalROWID != null) {
           messages.remove(message);
           i--;
         } else {
@@ -668,7 +668,7 @@ class Chat {
 
     try {
       // Add the relationship
-      cmJoinBox.put(ChatMessageJoin(chatId: id!, messageId: message.id!));
+      cmJoinBox.put(ChatMessageJoin(chatId: id!, messageId: newMessage!.id!));
     } catch (ex) {
       // Don't do anything if it already exists
     }

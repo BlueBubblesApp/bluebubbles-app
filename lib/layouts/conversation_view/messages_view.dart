@@ -447,7 +447,14 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
               child: ImprovedScrolling(
                 enableMMBScrolling: true,
                 enableKeyboardScrolling: true,
+                // we use negative of the default values because the scrollview is reversed
+                keyboardScrollConfig: KeyboardScrollConfig(
+                  arrowsScrollAmount: -200,
+                  pageUpDownScrollAmount: -500,
+                  spaceScrollAmount: -600
+                ),
                 mmbScrollConfig: MMBScrollConfig(
+                  velocityBackpropagationPercent: -30.0 / 100.0,
                   customScrollCursor: DefaultCustomScrollCursor(
                     cursorColor: context.textTheme.subtitle1!.color!,
                     backgroundColor: Colors.white,

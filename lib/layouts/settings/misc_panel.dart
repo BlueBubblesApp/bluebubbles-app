@@ -6,8 +6,10 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:secure_application/secure_application.dart';
+import 'package:universal_io/io.dart';
 
 class MiscPanel extends StatelessWidget {
   @override
@@ -282,6 +284,63 @@ class MiscPanel extends StatelessWidget {
                   }),
                 ],
               ),
+              if (kIsDesktop)
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Desktop Behavior"),
+              if (kIsDesktop)
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    Obx(() =>
+                        SettingsSwitch(
+                          onChanged: (bool val) async {
+                            SettingsManager().settings.launchAtStartup.value = val;
+                            saveSettings();
+                            if (!Platform.isLinux) {
+                              if (val) {
+                                await LaunchAtStartup.instance.enable();
+                              } else {
+                                await LaunchAtStartup.instance.disable();
+                              }
+                            }
+                          },
+                          initialVal: SettingsManager().settings.launchAtStartup.value,
+                          title: "Launch on Startup",
+                          subtitle:
+                          "Automatically open the desktop app on startup. Note: Currently unsupported on Linux.",
+                          backgroundColor: tileColor,
+                        )),
+                    Obx(() {
+                      if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        return Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 65.0),
+                            child: SettingsDivider(color: headerColor),
+                          ),
+                        );
+                      } else {
+                        return SizedBox.shrink();
+                      }
+                    }),
+                    Obx(() =>
+                        SettingsSwitch(
+                          onChanged: (bool val) async {
+                            SettingsManager().settings.closeToTray.value = val;
+                            saveSettings();
+                          },
+                          initialVal: SettingsManager().settings.closeToTray.value,
+                          title: "Close to Tray",
+                          subtitle:
+                          "When enabled, clicking the close button will minimize the app to the system tray",
+                          backgroundColor: tileColor,
+                        )),
+                  ],
+                ),
               SettingsHeader(
                 headerColor: headerColor,
                 tileColor: tileColor,

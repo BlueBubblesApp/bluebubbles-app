@@ -1,5 +1,6 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_utils/src/extensions/context_extensions.dart';
 
@@ -59,7 +60,9 @@ class WindowButtons extends StatelessWidget {
       children: [
         MinimizeWindowButton(colors: buttonColors),
         MaximizeWindowButton(colors: buttonColors),
-        CloseWindowButton(colors: closeButtonColors, onPressed: () => appWindow.hide()),
+        CloseWindowButton(colors: closeButtonColors, onPressed: () =>
+          SettingsManager().settings.closeToTray.value
+              ? appWindow.hide() : appWindow.close()),
       ],
     );
   }

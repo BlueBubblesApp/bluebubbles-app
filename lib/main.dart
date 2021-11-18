@@ -47,7 +47,9 @@ import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' show join;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -218,6 +220,18 @@ Future<Null> main() async {
     await SettingsManager().getSavedSettings(headless: true);
     if (SettingsManager().settings.immersiveMode.value) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+    if (kIsDesktop && !Platform.isLinux) {
+      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      LaunchAtStartup.instance.setup(
+        appName: packageInfo.appName,
+        appPath: Platform.resolvedExecutable,
+      );
+      if (SettingsManager().settings.launchAtStartup.value) {
+        await LaunchAtStartup.instance.enable();
+      } else {
+        await LaunchAtStartup.instance.disable();
+      }
     }
     // this is to avoid a fade-in transition between the android native splash screen
     // and our dummy splash screen

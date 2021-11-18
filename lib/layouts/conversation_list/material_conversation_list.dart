@@ -224,163 +224,231 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
           child: Scaffold(
             appBar: PreferredSize(
               preferredSize: Size.fromHeight(60),
-              child: AnimatedSwitcher(
-                duration: Duration(milliseconds: 500),
-                child: selected.isEmpty ? SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5),
-                    child: GestureDetector(
-                      onTap: () {
-                        if (!showArchived && !showUnknown) {
-                          CustomNavigator.pushLeft(
-                            context,
-                            SearchView(),
-                          );
-                        }
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(25),
-                          color: context.theme.backgroundColor.lightenOrDarken(20),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
-                          child: Stack(
-                            alignment: Alignment.centerLeft,
-                            children: [
-                              Row(
-                                children: [
-                                  (!showArchived && !showUnknown)
-                                  ? GestureDetector(
-                                    onTap: () async {
-                                      CustomNavigator.pushLeft(
-                                        context,
-                                        SearchView(),
-                                      );
-                                    },
-                                    child: Icon(
-                                      Icons.search,
-                                      color: context.textTheme.bodyText1!.color,
-                                    ),
-                                  ) : GestureDetector(
-                                    onTap: () async {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: Icon(
-                                      Icons.arrow_back,
-                                      color: context.textTheme.bodyText1!.color,
-                                    ),
-                                  ),
-                                  SizedBox(width: 5),
-                                        Stack(
-                                          alignment: Alignment.centerLeft,
-                                          children: [
-                                            widget.parent.getSyncIndicatorWidget(),
-                                  widget.parent.getConnectionIndicatorWidget(),
-                                ],
-                              ),
-                                      ],
-                              ),
-                                    Center(child: widget.parent.getHeaderTextWidget(size: 20)),
-                              Container(
-                                alignment: Alignment.centerRight,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(25),
+                  gradient: LinearGradient(
+                    begin: AlignmentDirectional.topCenter,
+                    end: AlignmentDirectional.bottomCenter,
+                    colors: [context.theme.backgroundColor, Colors.transparent],
+                    stops: [0.75, 1]
+                  ),
+                ),
+                child: AnimatedSwitcher(
+                  duration: Duration(milliseconds: 500),
+                  child: selected.isEmpty ? SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5),
+                      child: GestureDetector(
+                        onTap: () {
+                          if (!showArchived && !showUnknown) {
+                            CustomNavigator.pushLeft(
+                              context,
+                              SearchView(),
+                            );
+                          }
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(25),
+                            color: context.theme.backgroundColor.lightenOrDarken(20),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 15.0, top: 5.0, bottom: 5.0),
+                            child: Stack(
+                              alignment: Alignment.centerLeft,
+                              children: [
+                                Row(
                                   children: [
-                                    (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
-                                        ? GestureDetector(
-                                      onTap: () {
-                                        EventDispatcher().emit("update-highlight", null);
-                                        CustomNavigator.pushAndRemoveUntil(
-                                          context,
-                                          ConversationView(
-                                            isCreator: true,
-                                          ),
-                                              (route) => route.isFirst,
-                                        );
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(right: 4.0),
+                                    (!showArchived && !showUnknown)
+                                      ? GestureDetector(
+                                        onTap: () async {
+                                          CustomNavigator.pushLeft(
+                                            context,
+                                            SearchView(),
+                                          );
+                                        },
                                         child: Icon(
-                                          Icons.create,
+                                          Icons.search,
+                                          color: context.textTheme.bodyText1!.color,
+                                        ),
+                                      ) : GestureDetector(
+                                        onTap: () async {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Icon(
+                                          Icons.arrow_back,
                                           color: context.textTheme.bodyText1!.color,
                                         ),
                                       ),
-                                    )
-                                        : Container(),
-                                    (SettingsManager().settings.moveChatCreatorToHeader.value
-                                        && SettingsManager().settings.cameraFAB.value
-                                        && !showArchived && !showUnknown)
-                                        ? GestureDetector(
-                                      onTap: () async {
-                                        bool camera = await Permission.camera.isGranted;
-                                        if (!camera) {
-                                          bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
-                                          if (!granted) {
-                                            showSnackbar(
-                                                "Error",
-                                                "Camera was denied"
-                                            );
-                                            return;
-                                          }
-                                        }
-
-                                        String appDocPath = SettingsManager().appDocDir.path;
-                                        String ext = ".png";
-                                        File file = File("$appDocPath/attachments/" + randomString(16) + ext);
-                                        await file.create(recursive: true);
-
-                                        // Take the picture after opening the camera
-                                        await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
-
-                                        // If we don't get data back, return outta here
-                                        if (!file.existsSync()) return;
-                                        if (file.statSync().size == 0) {
-                                          file.deleteSync();
-                                          return;
-                                        }
-
-                                        widget.parent.openNewChatCreator(existing: [PlatformFile(
-                                          name: file.path.split("/").last,
-                                          path: file.path,
-                                          bytes: file.readAsBytesSync(),
-                                          size: file.lengthSync(),
-                                        )]);
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Icon(
-                                          Icons.photo_camera,
-                                          color: context.textTheme.bodyText1!.color,
-                                        ),
+                                      SizedBox(width: 5),
+                                      Stack(
+                                        alignment: Alignment.centerLeft,
+                                        children: [
+                                          widget.parent.getSyncIndicatorWidget(),
+                                          widget.parent.getConnectionIndicatorWidget(),
+                                        ],
                                       ),
-                                    )
-                                        : Container(),
-                                    widget.parent.buildSettingsButton(),
                                   ],
                                 ),
-                              )
-                            ],
+                                Center(child: widget.parent.getHeaderTextWidget(size: 20)),
+                                Container(
+                                  alignment: Alignment.centerRight,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
+                                          ? GestureDetector(
+                                        onTap: () {
+                                          EventDispatcher().emit("update-highlight", null);
+                                          CustomNavigator.pushAndRemoveUntil(
+                                            context,
+                                            ConversationView(
+                                              isCreator: true,
+                                            ),
+                                                (route) => route.isFirst,
+                                          );
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(right: 4.0),
+                                          child: Icon(
+                                            Icons.create,
+                                            color: context.textTheme.bodyText1!.color,
+                                          ),
+                                        ),
+                                      )
+                                          : Container(),
+                                      (SettingsManager().settings.moveChatCreatorToHeader.value
+                                          && SettingsManager().settings.cameraFAB.value
+                                          && !showArchived && !showUnknown)
+                                          ? GestureDetector(
+                                        onTap: () async {
+                                          bool camera = await Permission.camera.isGranted;
+                                          if (!camera) {
+                                            bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
+                                            if (!granted) {
+                                              showSnackbar(
+                                                  "Error",
+                                                  "Camera was denied"
+                                              );
+                                              return;
+                                            }
+                                          }
+
+                                          String appDocPath = SettingsManager().appDocDir.path;
+                                          String ext = ".png";
+                                          File file = File("$appDocPath/attachments/" + randomString(16) + ext);
+                                          await file.create(recursive: true);
+
+                                          // Take the picture after opening the camera
+                                          await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+
+                                          // If we don't get data back, return outta here
+                                          if (!file.existsSync()) return;
+                                          if (file.statSync().size == 0) {
+                                            file.deleteSync();
+                                            return;
+                                          }
+
+                                          widget.parent.openNewChatCreator(existing: [PlatformFile(
+                                            name: file.path.split("/").last,
+                                            path: file.path,
+                                            bytes: file.readAsBytesSync(),
+                                            size: file.lengthSync(),
+                                          )]);
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Icon(
+                                            Icons.photo_camera,
+                                            color: context.textTheme.bodyText1!.color,
+                                          ),
+                                        ),
+                                      )
+                                          : Container(),
+                                      widget.parent.buildSettingsButton(),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                )  : Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          if (([0, selected.length])
-                              .contains(selected.where((element) => element.hasUnreadMessage!).length))
+                  )  : Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (([0, selected.length])
+                                .contains(selected.where((element) => element.hasUnreadMessage!).length))
+                              GestureDetector(
+                                onTap: () {
+                                  for (Chat element in selected) {
+                                    element.toggleHasUnread(!element.hasUnreadMessage!);
+                                  }
+                                  selected = [];
+                                  if (mounted) setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    selected[0].hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
+                                    color: context.textTheme.bodyText1!.color,
+                                  ),
+                                ),
+                              ),
+                            if (([0, selected.length])
+                                .contains(selected.where((element) => element.muteType == "mute").length))
+                              GestureDetector(
+                                onTap: () {
+                                  for (Chat element in selected) {
+                                    element.toggleMute(element.muteType != "mute");
+                                  }
+                                  selected = [];
+                                  if (mounted) setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    selected[0].muteType == "mute"
+                                        ? Icons.notifications_active
+                                        : Icons.notifications_off,
+                                    color: context.textTheme.bodyText1!.color,
+                                  ),
+                                ),
+                              ),
+                            if (([0, selected.length])
+                                .contains(selected.where((element) => element.isPinned!).length))
+                              GestureDetector(
+                                onTap: () {
+                                  for (Chat element in selected) {
+                                    element.togglePin(!element.isPinned!);
+                                  }
+                                  selected = [];
+                                  if (mounted) setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    selected[0].isPinned! ? Icons.star_outline : Icons.star,
+                                    color: context.textTheme.bodyText1!.color,
+                                  ),
+                                ),
+                              ),
                             GestureDetector(
                               onTap: () {
                                 for (Chat element in selected) {
-                                  element.toggleHasUnread(!element.hasUnreadMessage!);
+                                  if (element.isArchived!) {
+                                    ChatBloc().unArchiveChat(element);
+                                  } else {
+                                    ChatBloc().archiveChat(element);
+                                  }
                                 }
                                 selected = [];
                                 if (mounted) setState(() {});
@@ -388,101 +456,45 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
-                                  selected[0].hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
+                                  showArchived ? Icons.unarchive : Icons.archive,
                                   color: context.textTheme.bodyText1!.color,
                                 ),
                               ),
                             ),
-                          if (([0, selected.length])
-                              .contains(selected.where((element) => element.muteType == "mute").length))
-                            GestureDetector(
-                              onTap: () {
-                                for (Chat element in selected) {
-                                  element.toggleMute(element.muteType != "mute");
-                                }
-                                selected = [];
-                                if (mounted) setState(() {});
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Icon(
-                                  selected[0].muteType == "mute"
-                                      ? Icons.notifications_active
-                                      : Icons.notifications_off,
-                                  color: context.textTheme.bodyText1!.color,
+                            if (selected[0].isArchived!)
+                              GestureDetector(
+                                onTap: () {
+                                  for (Chat element in selected) {
+                                    ChatBloc().deleteChat(element);
+                                    Chat.deleteChat(element);
+                                  }
+                                  selected = [];
+                                  if (mounted) setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    Icons.delete_forever,
+                                    color: context.textTheme.bodyText1!.color,
+                                  ),
                                 ),
                               ),
-                            ),
-                          if (([0, selected.length])
-                              .contains(selected.where((element) => element.isPinned!).length))
-                            GestureDetector(
-                              onTap: () {
-                                for (Chat element in selected) {
-                                  element.togglePin(!element.isPinned!);
-                                }
-                                selected = [];
-                                if (mounted) setState(() {});
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Icon(
-                                  selected[0].isPinned! ? Icons.star_outline : Icons.star,
-                                  color: context.textTheme.bodyText1!.color,
-                                ),
-                              ),
-                            ),
-                          GestureDetector(
-                            onTap: () {
-                              for (Chat element in selected) {
-                                if (element.isArchived!) {
-                                  ChatBloc().unArchiveChat(element);
-                                } else {
-                                  ChatBloc().archiveChat(element);
-                                }
-                              }
-                              selected = [];
-                              if (mounted) setState(() {});
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Icon(
-                                showArchived ? Icons.unarchive : Icons.archive,
-                                color: context.textTheme.bodyText1!.color,
-                              ),
-                            ),
-                          ),
-                          if (selected[0].isArchived!)
-                            GestureDetector(
-                              onTap: () {
-                                for (Chat element in selected) {
-                                  ChatBloc().deleteChat(element);
-                                  Chat.deleteChat(element);
-                                }
-                                selected = [];
-                                if (mounted) setState(() {});
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Icon(
-                                  Icons.delete_forever,
-                                  color: context.textTheme.bodyText1!.color,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
             backgroundColor: context.theme.backgroundColor,
+            extendBodyBehindAppBar: true,
             body: Obx(
                   () {
                 if (!ChatBloc().loadedChatBatch.value) {
                   return Center(
                     child: Container(
-                      padding: EdgeInsets.only(top: 50.0),
+                      padding: EdgeInsets.only(top: 100.0),
                       child: Column(
                         children: [
                           Padding(
@@ -741,11 +753,11 @@ class _FABStatefulWrapperState extends State<FABStatefulWrapper> {
     super.initState();
     widget.parent.scrollController.addListener(() {
       if (SettingsManager().settings.skin.value != Skins.Material) return;
-      if (widget.parent.scrollController.position.userScrollDirection == ScrollDirection.reverse && showText) {
+      if (widget.parent.scrollController.position.userScrollDirection == ScrollDirection.reverse && showText && mounted) {
         setState(() {
           showText = false;
         });
-      } else if (widget.parent.scrollController.position.userScrollDirection == ScrollDirection.forward && !showText) {
+      } else if (widget.parent.scrollController.position.userScrollDirection == ScrollDirection.forward && !showText && mounted) {
         setState(() {
           showText = true;
         });

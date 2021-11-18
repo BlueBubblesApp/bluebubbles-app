@@ -367,17 +367,18 @@ class Message {
   }
 
   /// Replace a temp message with the message from the server
-  static Future<Message?> replaceMessage(String? oldGuid, Message? newMessage,
+  static Future<Message> replaceMessage(String? oldGuid, Message newMessage,
       {bool awaitNewMessageEvent = true, Chat? chat}) async {
     Message? existing = Message.findOne(guid: oldGuid);
 
-    if (existing == null || existing.handleId == null || existing.handle == null) {
+    if (existing == null || existing.handleId == null
+        || (existing.handle == null && (existing.handleId ?? 0) > 0)) {
       if (awaitNewMessageEvent) {
         await Future.delayed(Duration(milliseconds: 500));
         return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false, chat: chat);
       } else {
         if (chat != null) {
-          await chat.addMessage(newMessage!);
+          await chat.addMessage(newMessage);
           NewMessageManager().addMessage(chat, newMessage, outgoing: false);
           return newMessage;
         }
@@ -385,13 +386,15 @@ class Message {
 
       return newMessage;
     } else {
-      existing._dateDelivered.value = newMessage?._dateDelivered.value ?? existing._dateDelivered.value;
-      existing._dateRead.value = newMessage?._dateRead.value ?? existing._dateRead.value;
+      existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
+      existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
     }
 
-    newMessage!.id = existing.id;
+    newMessage.id = existing.id;
     newMessage.handleId = existing.handleId;
-    newMessage.handle = Handle.findOne(address: existing.handle!.address) ?? existing.handle;
+    if (existing.handle != null) {
+      newMessage.handle = Handle.findOne(address: existing.handle!.address) ?? existing.handle;
+    }
     newMessage.hasAttachments = existing.hasAttachments;
     newMessage.hasReactions = existing.hasReactions;
     newMessage.metadata = existing.metadata;
@@ -544,7 +547,7 @@ class Message {
   }
 
   Handle? getHandle() {
-    if (kIsWeb || handleId == 0) return null;
+    if (kIsWeb || handleId == 0 || handleId == null) return null;
     return handleBox.get(handleId!);
   }
 
@@ -555,12 +558,14 @@ class Message {
       query.limit = 1;
       final result = query.findFirst();
       query.close();
+      result?.handle = result.getHandle();
       return result;
     } else if (associatedMessageGuid != null) {
       final query = messageBox.query(Message_.associatedMessageGuid.equals(associatedMessageGuid)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
+      result?.handle = result.getHandle();
       return result;
     }
     return null;

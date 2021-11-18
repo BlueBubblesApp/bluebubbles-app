@@ -65,6 +65,8 @@ class Settings {
   final RxBool highlightSelectedChat = true.obs;
   final RxBool immersiveMode = false.obs;
   final RxDouble avatarScale = 1.0.obs;
+  final RxBool launchAtStartup = false.obs;
+  final RxBool closeToTray = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -294,6 +296,10 @@ class Settings {
         settings.swipeToReply.value = entry.value;
       } else if (entry.name == "avatarScale") {
         settings.avatarScale.value = entry.value;
+      } else if (entry.name == "launchAtStartup") {
+        settings.launchAtStartup.value = entry.value;
+      } else if (entry.name == "closeToTray") {
+        settings.closeToTray.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -406,6 +412,8 @@ class Settings {
       'tabletMode': tabletMode.value,
       'immersiveMode': immersiveMode.value,
       'avatarScale': avatarScale.value,
+      'launchAtStartup': launchAtStartup.value,
+      'closeToTray': closeToTray.value,
       'swipeToReply': swipeToReply.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
@@ -505,7 +513,9 @@ class Settings {
     SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
     SettingsManager().settings.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     SettingsManager().settings.immersiveMode.value = map['immersiveMode'] ?? false;
-    SettingsManager().settings.avatarScale.value = map['avatarScale'] ?? 1.0;
+    SettingsManager().settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
+    SettingsManager().settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
+    SettingsManager().settings.closeToTray.value = map['closeToTray'] ?? false;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -571,7 +581,7 @@ class Settings {
     s.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     s.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     s.hideDividers.value = map['hideDividers'] ?? false;
-    s.scrollVelocity.value = map['scrollVelocity'] ?? 1;
+    s.scrollVelocity.value = map['scrollVelocity']?.toDouble() ?? 1;
     s.sendWithReturn.value = map['sendWithReturn'] ?? (kIsWeb || kIsDesktop);
     s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     s.denseChatTiles.value = map['denseChatTiles'] ?? false;
@@ -606,7 +616,9 @@ class Settings {
     s.tabletMode.value = map['tabletMode'] ?? true;
     s.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     s.immersiveMode.value = map['immersiveMode'] ?? false;
-    s.avatarScale.value = map['avatarScale'] ?? 1.0;
+    s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
+    s.launchAtStartup.value = map['launchAtStartup'] ?? false;
+    s.closeToTray.value = map['closeToTray'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;

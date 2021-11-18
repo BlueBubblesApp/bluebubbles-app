@@ -154,20 +154,13 @@ class ThemePanel extends GetView<ThemePanelController> {
                         child: SettingsDivider(color: headerColor),
                       ),
                     ),
-                    Obx(() {
-                        if (SettingsManager().settings.skin.value == Skins.iOS ||
-                            SettingsManager().settings.skin.value == Skins.Material) {
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: tileColor,
-                          ),
-                            padding: EdgeInsets.only(left: 15, top: 10),
-                          child: Text("Avatar Scale Factor"),
-                        );
-                      } else {
-                        return SizedBox.shrink();
-                      }
-                    }),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: tileColor,
+                      ),
+                      padding: EdgeInsets.only(left: 15),
+                      child: Text("Avatar Scale Factor"),
+                    ),
                     Obx(() => SettingsSlider(
                         text: "Avatar Scale Factor",
                         startingVal: SettingsManager().settings.avatarScale.value.toDouble(),
