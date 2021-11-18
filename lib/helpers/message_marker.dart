@@ -7,10 +7,8 @@ class MessageMarkers {
   final Rxn<Message> myLastMessage = Rxn();
   final Rxn<Message> lastReadMessage = Rxn();
   final Rxn<Message> lastDeliveredMessage = Rxn();
-  late MessageMarkers markers;
 
   MessageMarkers(this.chat) {
-    markers = this;
     NewMessageManager().stream.listen((event) {
       // Ignore any events that don't have to do with the current chat
       if (event.chatGuid != chat.guid) return;

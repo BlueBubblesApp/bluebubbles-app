@@ -349,7 +349,7 @@ class _ConversationTileState extends State<ConversationTile> {
   }
 
   Widget _buildDate() {
-    MessageMarkers? markers = CurrentChat.getCurrentChat(widget.chat)!.messageMarkers.markers;
+    MessageMarkers? markers = CurrentChat.getCurrentChat(widget.chat)!.messageMarkers;
     return kIsWeb
         ? Text(buildDate(widget.chat.latestMessageDate),
             textAlign: TextAlign.right,
