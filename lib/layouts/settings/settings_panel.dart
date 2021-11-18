@@ -530,7 +530,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                       ),
                                       onPressed: () async {
                                         DateTime now = DateTime.now().toLocal();
-                                        String name = "Android_${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}";
+                                        String name = "Android_${now.year}-${now.month}-${now.day}_${now.hour}-${now.minute}-${now.second}";
                                         Map<String, dynamic> json = SettingsManager().settings.toMap();
                                         var response = await api.setSettings(name, json);
                                         if (response.statusCode != 200) {
@@ -602,8 +602,31 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                   itemCount: json.length,
                                                                   physics: NeverScrollableScrollPhysics(),
                                                                   itemBuilder: (context, index) {
+                                                                    String finalName = "";
+                                                                    if(json[index]['name'].toString().contains("-")){
+                                                                      String date = json[index]['name'].toString().split("_")[1];
+                                                                      String time = json[index]['name'].toString().split("_")[2];
+                                                                      String year = date.split("-")[0];
+                                                                      String month = date.split("-")[1];
+                                                                      String day = date.split("-")[2];
+                                                                      String hour = time.split("-")[0];
+                                                                      String min = time.split("-")[1];
+                                                                      String sec = time.split("-")[2];
+                                                                      String timeType = "";
+                                                                      if(int.parse(hour) > 12 && int.parse(hour) < 24){
+                                                                        timeType = "PM";
+                                                                      } else{
+                                                                        timeType = "AM";
+                                                                      }
+                                                                      if(int.parse(hour) > 12){
+                                                                        hour = (int.parse(hour) -12).toString();
+                                                                      }
+                                                                      finalName = "$month/$day/$year at $hour:$min:$sec $timeType";
+                                                                    } else{
+                                                                      finalName = json[index]['name'].toString();
+                                                                    }
                                                                     return ListTile(
-                                                                      title: Text(json[index]['name'], style: Theme.of(context).textTheme.headline1),
+                                                                      title: Text(finalName, style: Theme.of(context).textTheme.headline1),
                                                                       onTap: () {
                                                                         Settings.updateFromMap(json[index]);
                                                                         Get.back();
