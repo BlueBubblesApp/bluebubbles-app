@@ -136,11 +136,18 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
           ? openMessageDetails
           : SettingsManager().settings.enableQuickTapback.value && (CurrentChat.activeChat?.chat.isIMessage ?? true)
               ? () {
+                  if (widget.message.guid!.startsWith('temp')) return;
                   HapticFeedback.lightImpact();
                   sendReaction(SettingsManager().settings.quickTapbackType.value);
                 }
               : null,
-      onLongPress: openMessageDetails,
+      onLongPress: SettingsManager().settings.doubleTapForDetails.value && SettingsManager().settings.enableQuickTapback.value && (CurrentChat.activeChat?.chat.isIMessage ?? true)
+          ? () {
+              if (widget.message.guid!.startsWith('temp')) return;
+              HapticFeedback.lightImpact();
+              sendReaction(SettingsManager().settings.quickTapbackType.value);
+            }
+          : openMessageDetails,
       onSecondaryTapUp: (details) async {
         if (!kIsWeb && !kIsDesktop) return;
         if (kIsWeb) {
