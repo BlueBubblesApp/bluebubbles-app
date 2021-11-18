@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
@@ -15,6 +16,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:path/path.dart' show join;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -106,4 +108,5 @@ callbackHandler() async {
   await ContactManager().getContacts(headless: true);
   MethodChannelInterface().init(customChannel: _backgroundChannel);
   await SocketManager().refreshConnection(connectToSocket: false);
+  Get.put(AttachmentDownloadService());
 }

@@ -668,7 +668,7 @@ class Chat {
 
     try {
       // Add the relationship
-      cmJoinBox.put(ChatMessageJoin(chatId: id!, messageId: message.id!));
+      cmJoinBox.put(ChatMessageJoin(chatId: id!, messageId: newMessage!.id!));
     } catch (ex) {
       // Don't do anything if it already exists
     }
