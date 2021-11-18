@@ -14,6 +14,7 @@ import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -65,6 +66,18 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
       }
 
       setNewChatData(forceUpdate: true);
+    });
+
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!["add-unread-chat", "remove-unread-chat"].contains(event["type"])) return;
+      if (!event["data"].containsKey("chatGuid")) return;
+
+      // Ignore any events having to do with this chat
+      String? chatGuid = event["data"]["chatGuid"];
+      if (widget.chat.guid != chatGuid) return;
+
+      // Only re-render if the newMessages count changes
+      if (mounted) setState(() {});
     });
   }
 
