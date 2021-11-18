@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
@@ -740,11 +741,11 @@ class _FABStatefulWrapperState extends State<FABStatefulWrapper> {
     super.initState();
     widget.parent.scrollController.addListener(() {
       if (SettingsManager().settings.skin.value != Skins.Material) return;
-      if (widget.parent.scrollController.offset > 100 && showText) {
+      if (widget.parent.scrollController.position.userScrollDirection == ScrollDirection.reverse && showText) {
         setState(() {
           showText = false;
         });
-      } else if (widget.parent.scrollController.offset < 100 && !showText) {
+      } else if (widget.parent.scrollController.position.userScrollDirection == ScrollDirection.forward && !showText) {
         setState(() {
           showText = true;
         });
@@ -756,33 +757,46 @@ class _FABStatefulWrapperState extends State<FABStatefulWrapper> {
   Widget build(BuildContext context) {
     return InkWell(
       onLongPress: SettingsManager().settings.cameraFAB.value ? widget.parent.openCamera : null,
+      child: Container(
+        height: 65,
+        padding: const EdgeInsets.fromLTRB(
+          0,
+          0,
+          4.5,
+          9,
+        ),
       child: FloatingActionButton.extended(
-          backgroundColor: context.theme.primaryColor,
+          backgroundColor: context.theme.primaryColor.oppositeLightenOrDarken(15),
           label: AnimatedSwitcher(
-            duration: Duration(milliseconds: 100),
-            transitionBuilder: (Widget child, Animation<double> animation) =>
-              SizeTransition(
+            duration: Duration(milliseconds: 150),
+            transitionBuilder: (Widget child, Animation<double> animation) => SizeTransition(
                 child: child,
                 sizeFactor: animation,
                 axis: Axis.horizontal,
               ),
-            child: showText ? Padding(
-              padding: const EdgeInsets.only(left: 8.0),
-              child: Text("Start Chat"),
-            ) : Container(width: 0, height: 0),
+            child: showText
+                ? Padding(
+                    padding: const EdgeInsets.only(left: 6.0),
+                    child: Text(
+                      "Start Chat",
+                      style: TextStyle(
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                : Container(width: 0, height: 0),
           ),
           extendedIconLabelSpacing: 0,
           icon: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS
-                  ? CupertinoIcons.pencil : Icons.message,
+              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message_outlined,
               color: Colors.white,
-              size: 25
-          ),
+              size: 25),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(17),
           ),
           onPressed: widget.parent.openNewChatCreator,
         ),
+      ),
     );
   }
 }

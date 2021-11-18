@@ -45,6 +45,15 @@ extension ColorHelpers on Color {
       return lightenPercent(percent);
     }
   }
+  
+  Color oppositeLightenOrDarken([double percent = 10]) {
+    if (computeLuminance() >= 0.5) {
+      return lightenPercent(percent);
+    } else {
+      return darkenPercent(percent);
+      
+    }
+  }
 
   Color darkenAmount([double amount = .1]) {
     assert(amount >= 0 && amount <= 1);
