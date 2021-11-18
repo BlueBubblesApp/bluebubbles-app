@@ -79,9 +79,10 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> {
     return text;
   }
 
+  MessageMarkers? markers = CurrentChat.activeChat?.messageMarkers;
+
   @override
   Widget build(BuildContext context) {
-    MessageMarkers? markers = CurrentChat.activeChat?.messageMarkers.markers;
     Widget timestampWidget = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Obx(() {
