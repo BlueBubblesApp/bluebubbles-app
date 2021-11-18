@@ -193,7 +193,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                   (context.theme.primaryColor.blue * 0.8).toInt() + (context.theme.backgroundColor.blue * 0.2).toInt(),
                 );
                 MessageMarkers? markers =
-                    CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers;
+                    CurrentChat.getCurrentChat(widget.chat)?.messageMarkers;
                 return ConstrainedBox(
                   constraints: BoxConstraints(
                     maxWidth: maxWidth,

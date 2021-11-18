@@ -141,6 +141,9 @@ class BaseNavigator extends GetxService {
             Get.back(id: 2);
             id2result = true;
           }
+          if (!(Get.global(2).currentState?.canPop() ?? true)) {
+            EventDispatcher().emit('update-highlight', null);
+          }
           return true;
         }, id: 2);
         if (!id2result) {
@@ -151,7 +154,6 @@ class BaseNavigator extends GetxService {
         return true;
       }, id: 1);
     }
-    EventDispatcher().emit('update-highlight', null);
   }
 
   void backSettings(BuildContext context, {bool closeOverlays = false}) {
