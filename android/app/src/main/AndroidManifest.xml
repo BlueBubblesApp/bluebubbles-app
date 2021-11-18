@@ -30,6 +30,7 @@
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
 
     <application
+        tools:replace="android:label"
         android:allowBackup="false"
         android:name=".Application"
         android:icon="@mipmap/ic_launcher"
