@@ -592,11 +592,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Widget buildGIFButton() {
-    double size = SettingsManager().settings.skin.value == Skins.iOS ? 35 : 40;
+    double size = SettingsManager().settings.skin.value == Skins.iOS ? 37 : 40;
     return Container(
       height: size,
       width: size,
-      margin: EdgeInsets.only(right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS ? 4.5 : 0),
+      margin: EdgeInsets.only(right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
       child: ClipOval(
         child: Material(
           color: SettingsManager().settings.skin.value == Skins.Samsung

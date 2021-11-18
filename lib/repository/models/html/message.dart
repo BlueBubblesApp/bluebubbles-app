@@ -229,7 +229,7 @@ class Message {
     return this;
   }
 
-  static Future<Message?> replaceMessage(String? oldGuid, Message? newMessage,
+  static Future<Message> replaceMessage(String? oldGuid, Message newMessage,
       {bool awaitNewMessageEvent = true, Chat? chat}) async {
     Message? existing = Message.findOne(guid: oldGuid);
 
@@ -239,7 +239,7 @@ class Message {
         return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false, chat: chat);
       } else {
         if (chat != null) {
-          await chat.addMessage(newMessage!);
+          await chat.addMessage(newMessage);
           // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
           NewMessageManager().addMessage(chat, newMessage, outgoing: false);
           return newMessage;
@@ -249,7 +249,7 @@ class Message {
       return newMessage;
     }
 
-    newMessage!.id = existing.id;
+    newMessage.id = existing.id;
 
     return newMessage;
   }
