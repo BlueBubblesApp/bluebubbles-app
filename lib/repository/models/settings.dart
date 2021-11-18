@@ -505,7 +505,7 @@ class Settings {
     SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
     SettingsManager().settings.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     SettingsManager().settings.immersiveMode.value = map['immersiveMode'] ?? false;
-    SettingsManager().settings.avatarScale.value = map['avatarScale'] ?? 1.0;
+    SettingsManager().settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -571,7 +571,7 @@ class Settings {
     s.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     s.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     s.hideDividers.value = map['hideDividers'] ?? false;
-    s.scrollVelocity.value = map['scrollVelocity'] ?? 1;
+    s.scrollVelocity.value = map['scrollVelocity']?.toDouble() ?? 1;
     s.sendWithReturn.value = map['sendWithReturn'] ?? (kIsWeb || kIsDesktop);
     s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     s.denseChatTiles.value = map['denseChatTiles'] ?? false;
@@ -606,7 +606,7 @@ class Settings {
     s.tabletMode.value = map['tabletMode'] ?? true;
     s.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     s.immersiveMode.value = map['immersiveMode'] ?? false;
-    s.avatarScale.value = map['avatarScale'] ?? 1.0;
+    s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
