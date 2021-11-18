@@ -701,7 +701,7 @@ class Chat {
 
   /// Add a lot of messages for the single chat to avoid running [addMessage]
   /// in a loop
-  Future<List<Message>> bulkAddMessages(List<Message> messages,
+ /* Future<List<Message>> bulkAddMessages(List<Message> messages,
       {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
     for (Message m in messages) {
       // If this is a message preview and we don't already have metadata for this, get it
@@ -770,7 +770,7 @@ class Chat {
 
     // Return the current chat instance (with updated vals)
     return newMessages;
-  }
+  }*/
 
   void serverSyncParticipants() {
     // Send message to server to get the participants

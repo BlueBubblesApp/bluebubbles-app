@@ -52,8 +52,6 @@ class MessageHelper {
 
     // Iterate over each message to parse it
     int index = 0;
-    List<Message> messagesList = messages.map((e) => Message.fromMap(e)).toList();
-
     for (dynamic item in messages) {
       if (onProgress != null) {
         onProgress(_messages.length, messages.length);
@@ -79,13 +77,11 @@ class MessageHelper {
 
       Message message = Message.fromMap(item);
       Message? existing = Message.findOne(guid: message.guid);
-      if (chat == null || kIsWeb) {
-        await msgChat.addMessage(
-          message,
-          changeUnreadStatus: notifyForNewMessage,
-          checkForMessageText: checkForLatestMessageText,
-        );
-      }
+      await msgChat.addMessage(
+        message,
+        changeUnreadStatus: notifyForNewMessage,
+        checkForMessageText: checkForLatestMessageText,
+      );
 
       if (existing == null) {
         if (isIncremental && !notificationMessages.containsValue(msgChat.guid)) {
@@ -105,7 +101,7 @@ class MessageHelper {
       }
 
       // Add message to the "master list"
-      if (chat == null || kIsWeb) _messages.add(message);
+      _messages.add(message);
 
       // Every 50 messages synced, who a message
       index += 1;
@@ -114,15 +110,6 @@ class MessageHelper {
       } else if (index == messages.length) {
         Logger.info('Saved ${messages.length} messages', tag: "BulkIngest");
       }
-    }
-
-    if (chat != null && !kIsWeb) {
-      final msgs = await chat.bulkAddMessages(
-        messagesList,
-        changeUnreadStatus: notifyForNewMessage,
-        checkForMessageText: checkForLatestMessageText,
-      );
-      _messages.addAll(msgs);
     }
 
     if (notifyForNewMessage || notifyMessageManager) {
