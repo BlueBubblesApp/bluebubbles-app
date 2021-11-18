@@ -591,14 +591,15 @@ class Message {
     if (kIsWeb) return;
     store.runInTransaction(TxMode.write, () {
       final query = messageBox.query(Message_.guid.equals(guid)).build();
-      final results = query.find();
-      final ids = results.map((e) => e.id!).toList();
+      final result = query.findFirst();
       query.close();
-      final query2 = cmJoinBox.query(ChatMessageJoin_.messageId.oneOf(ids)).build();
-      final results2 = query2.find();
-      query2.close();
-      cmJoinBox.removeMany(results2.map((e) => e.id!).toList());
-      messageBox.removeMany(ids);
+      if (result?.id != null) {
+        final query2 = cmJoinBox.query(ChatMessageJoin_.messageId.equals(result!.id!)).build();
+        final results2 = query2.find();
+        query2.close();
+        cmJoinBox.removeMany(results2.map((e) => e.id!).toList());
+        messageBox.remove(result.id!);
+      }
     });
   }
 
