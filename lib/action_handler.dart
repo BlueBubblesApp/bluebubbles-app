@@ -84,6 +84,7 @@ class ActionHandler {
         threadOriginatorGuid: replyGuid,
         expressiveSendStyleId: effectId,
         isFromMe: true,
+        handleId: 0,
       );
 
       // Generate a Temp GUID
@@ -101,6 +102,7 @@ class ActionHandler {
           threadOriginatorGuid: replyGuid,
           expressiveSendStyleId: effectId,
           isFromMe: true,
+          handleId: 0,
         );
 
         // Generate a Temp GUID
@@ -141,6 +143,7 @@ class ActionHandler {
         threadOriginatorGuid: replyGuid,
         expressiveSendStyleId: effectId,
         isFromMe: true,
+        handleId: 0,
       );
 
       // Generate a Temp GUID

@@ -392,7 +392,9 @@ class Message {
 
     newMessage.id = existing.id;
     newMessage.handleId = existing.handleId;
-    newMessage.handle = Handle.findOne(address: existing.handle!.address) ?? existing.handle;
+    if (existing.handle != null) {
+      newMessage.handle = Handle.findOne(address: existing.handle!.address) ?? existing.handle;
+    }
     newMessage.hasAttachments = existing.hasAttachments;
     newMessage.hasReactions = existing.hasReactions;
     newMessage.metadata = existing.metadata;
