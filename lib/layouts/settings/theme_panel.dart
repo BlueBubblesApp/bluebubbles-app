@@ -155,12 +155,13 @@ class ThemePanel extends GetView<ThemePanelController> {
                       ),
                     ),
                     Obx(() {
-                      if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        if (SettingsManager().settings.skin.value == Skins.iOS ||
+                            SettingsManager().settings.skin.value == Skins.Material) {
                         return Container(
                           decoration: BoxDecoration(
                             color: tileColor,
                           ),
-                          padding: EdgeInsets.only(left: 15),
+                            padding: EdgeInsets.only(left: 15, top: 10),
                           child: Text("Avatar Scale Factor"),
                         );
                       } else {
