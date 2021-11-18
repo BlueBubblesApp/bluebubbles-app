@@ -123,6 +123,7 @@ dependencies:
   giphy_get: ^2.0.2
   flutter_dotenv: ^5.0.2
   image: ^3.0.8
+  launch_at_startup: ^0.0.1
 
 dependency_overrides:
   rxdart: ^0.27.2

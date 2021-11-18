@@ -65,6 +65,7 @@ class Settings {
   final RxBool highlightSelectedChat = true.obs;
   final RxBool immersiveMode = false.obs;
   final RxDouble avatarScale = 1.0.obs;
+  final RxBool launchAtStartup = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -294,6 +295,8 @@ class Settings {
         settings.swipeToReply.value = entry.value;
       } else if (entry.name == "avatarScale") {
         settings.avatarScale.value = entry.value;
+      } else if (entry.name == "launchAtStartup") {
+        settings.launchAtStartup.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -406,6 +409,7 @@ class Settings {
       'tabletMode': tabletMode.value,
       'immersiveMode': immersiveMode.value,
       'avatarScale': avatarScale.value,
+      'launchAtStartup': launchAtStartup.value,
       'swipeToReply': swipeToReply.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
@@ -506,6 +510,7 @@ class Settings {
     SettingsManager().settings.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     SettingsManager().settings.immersiveMode.value = map['immersiveMode'] ?? false;
     SettingsManager().settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
+    SettingsManager().settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -607,6 +612,7 @@ class Settings {
     s.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     s.immersiveMode.value = map['immersiveMode'] ?? false;
     s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
+    s.launchAtStartup.value = map['launchAtStartup'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;

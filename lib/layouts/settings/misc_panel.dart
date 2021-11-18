@@ -6,8 +6,10 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:secure_application/secure_application.dart';
+import 'package:universal_io/io.dart';
 
 class MiscPanel extends StatelessWidget {
   @override
@@ -282,6 +284,80 @@ class MiscPanel extends StatelessWidget {
                   }),
                 ],
               ),
+              if (kIsDesktop)
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Desktop Behavior"),
+              if (kIsDesktop)
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    Obx(() =>
+                        SettingsSwitch(
+                          onChanged: (bool val) async {
+                            SettingsManager().settings.launchAtStartup.value = val;
+                            saveSettings();
+                            if (!Platform.isLinux) {
+                              if (val) {
+                                await LaunchAtStartup.instance.enable();
+                              } else {
+                                await LaunchAtStartup.instance.disable();
+                              }
+                            }
+                          },
+                          initialVal: SettingsManager().settings.launchAtStartup.value,
+                          title: "Launch on Startup",
+                          subtitle:
+                          "Automatically open the desktop app on startup. Note: Currently unsupported on Linux.",
+                          backgroundColor: tileColor,
+                        )),
+                    Obx(() {
+                      if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        return Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 65.0),
+                            child: SettingsDivider(color: headerColor),
+                          ),
+                        );
+                      } else {
+                        return SizedBox.shrink();
+                      }
+                    }),
+                    Obx(() {
+                      if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        return SettingsTile(
+                          title: "Scroll Speed Multiplier",
+                          subtitle: "Controls how fast scrolling occurs",
+                          backgroundColor: tileColor,
+                        );
+                      } else {
+                        return SizedBox.shrink();
+                      }
+                    }),
+                    Obx(() {
+                      if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        return SettingsSlider(
+                            text: "Scroll Speed Multiplier",
+                            startingVal: SettingsManager().settings.scrollVelocity.value,
+                            update: (double val) {
+                              SettingsManager().settings.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
+                              saveSettings();
+                            },
+                            formatValue: ((double val) => val.toStringAsFixed(2)),
+                            backgroundColor: tileColor,
+                            min: 0.20,
+                            max: 1,
+                            divisions: 8);
+                      } else {
+                        return SizedBox.shrink();
+                      }
+                    }),
+                  ],
+                ),
               SettingsHeader(
                 headerColor: headerColor,
                 tileColor: tileColor,
