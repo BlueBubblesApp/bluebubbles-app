@@ -51,3 +51,4 @@ pubspeck.lock
 
 #private keys
 *.env
+.vscode/launch.json
