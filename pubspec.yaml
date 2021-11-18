@@ -71,11 +71,6 @@ dependencies:
   google_ml_kit: ^0.7.0 # mobile only
   faker: ^2.0.0
   share_plus: ^3.0.4 # sharing files not supported on Windows & Linux, todo desktop
-  # for nullsafety
-  battery_optimization: # android only
-    git:
-      url: https://github.com/ChangJoo-Park/battery_optimization
-      ref: master
   collection: ^1.15.0
   disable_battery_optimization: # android only
     git:
