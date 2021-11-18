@@ -327,35 +327,18 @@ class MiscPanel extends StatelessWidget {
                         return SizedBox.shrink();
                       }
                     }),
-                    Obx(() {
-                      if (SettingsManager().settings.skin.value == Skins.iOS) {
-                        return SettingsTile(
-                          title: "Scroll Speed Multiplier",
-                          subtitle: "Controls how fast scrolling occurs",
+                    Obx(() =>
+                        SettingsSwitch(
+                          onChanged: (bool val) async {
+                            SettingsManager().settings.closeToTray.value = val;
+                            saveSettings();
+                          },
+                          initialVal: SettingsManager().settings.closeToTray.value,
+                          title: "Close to Tray",
+                          subtitle:
+                          "When enabled, clicking the close button will minimize the app to the system tray",
                           backgroundColor: tileColor,
-                        );
-                      } else {
-                        return SizedBox.shrink();
-                      }
-                    }),
-                    Obx(() {
-                      if (SettingsManager().settings.skin.value == Skins.iOS) {
-                        return SettingsSlider(
-                            text: "Scroll Speed Multiplier",
-                            startingVal: SettingsManager().settings.scrollVelocity.value,
-                            update: (double val) {
-                              SettingsManager().settings.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
-                              saveSettings();
-                            },
-                            formatValue: ((double val) => val.toStringAsFixed(2)),
-                            backgroundColor: tileColor,
-                            min: 0.20,
-                            max: 1,
-                            divisions: 8);
-                      } else {
-                        return SizedBox.shrink();
-                      }
-                    }),
+                        )),
                   ],
                 ),
               SettingsHeader(
