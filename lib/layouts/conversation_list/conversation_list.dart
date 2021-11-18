@@ -255,7 +255,12 @@ class ConversationListState extends State<ConversationList> {
                 )
             ];
           },
-          child: ThemeSwitcher(
+          icon: SettingsManager().settings.skin.value == Skins.Material ? Icon(
+            Icons.more_vert,
+            color: context.textTheme.bodyText1!.color,
+            size: 25,
+          ) : null,
+          child: SettingsManager().settings.skin.value == Skins.Material ? null : ThemeSwitcher(
             iOSSkin: Container(
               width: 20,
               height: 20,
@@ -269,11 +274,7 @@ class ConversationListState extends State<ConversationList> {
                 size: 15,
               ),
             ),
-            materialSkin: Icon(
-              Icons.more_vert,
-              color: context.textTheme.bodyText1!.color,
-              size: 25,
-            ),
+            materialSkin: Container(),
             samsungSkin: Icon(
               Icons.more_vert,
               color: context.textTheme.bodyText1!.color,
