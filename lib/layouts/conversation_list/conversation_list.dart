@@ -255,7 +255,12 @@ class ConversationListState extends State<ConversationList> {
                 )
             ];
           },
-          child: ThemeSwitcher(
+          icon: SettingsManager().settings.skin.value == Skins.Material ? Icon(
+            Icons.more_vert,
+            color: context.textTheme.bodyText1!.color,
+            size: 25,
+          ) : null,
+          child: SettingsManager().settings.skin.value == Skins.Material ? null : ThemeSwitcher(
             iOSSkin: Container(
               width: 20,
               height: 20,
@@ -269,11 +274,7 @@ class ConversationListState extends State<ConversationList> {
                 size: 15,
               ),
             ),
-            materialSkin: Icon(
-              Icons.more_vert,
-              color: context.textTheme.bodyText1!.color,
-              size: 25,
-            ),
+            materialSkin: Container(),
             samsungSkin: Icon(
               Icons.more_vert,
               color: context.textTheme.bodyText1!.color,
@@ -318,7 +319,7 @@ class ConversationListState extends State<ConversationList> {
     if (!SettingsManager().settings.showConnectionIndicator.value) return Container();
 
     return Obx(() => Padding(
-          padding: const EdgeInsets.only(right: 0.0),
+          padding: EdgeInsets.only(right: SettingsManager().settings.skin.value != Skins.Material ? 10 : 0.0),
       child: getIndicatorIcon(SocketManager().state.value, size: 12),
     ));
   }

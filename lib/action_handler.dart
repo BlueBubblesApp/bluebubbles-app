@@ -488,7 +488,7 @@ class ActionHandler {
       Logger.info("Handling message update: " + updatedMessage.text!, tag: "Actions-UpdatedMessage");
     }
 
-    updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage) ?? updatedMessage;
+    updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage);
 
     Chat? chat;
     if (data["chats"] == null && updatedMessage.id != null) {
