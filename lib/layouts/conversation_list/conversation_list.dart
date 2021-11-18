@@ -318,7 +318,7 @@ class ConversationListState extends State<ConversationList> {
     if (!SettingsManager().settings.showConnectionIndicator.value) return Container();
 
     return Obx(() => Padding(
-          padding: const EdgeInsets.only(right: 0.0),
+          padding: EdgeInsets.only(right: SettingsManager().settings.skin.value != Skins.Material ? 10 : 0.0),
       child: getIndicatorIcon(SocketManager().state.value, size: 12),
     ));
   }
