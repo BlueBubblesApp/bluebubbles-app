@@ -618,6 +618,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                       } else{
                                                                         timeType = "AM";
                                                                       }
+                                                                      if(int.parse(min) < 10){
+                                                                        min = "0" + min;
+                                                                      }
+                                                                      if(int.parse(sec) < 10){
+                                                                        sec = "0" + sec;
+                                                                      }
                                                                       if(int.parse(hour) > 12){
                                                                         hour = (int.parse(hour) -12).toString();
                                                                       }
