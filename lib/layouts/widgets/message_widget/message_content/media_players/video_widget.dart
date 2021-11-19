@@ -52,7 +52,11 @@ class VideoWidgetController extends GetxController {
       controller = controllers[attachment.guid]!;
       createListener(controller!);
     } else {
-      getThumbnail();
+      if (CurrentChat.activeChat?.imageData[attachment.guid] != null) {
+        thumbnail = CurrentChat.activeChat?.imageData[attachment.guid];
+      } else {
+        getThumbnail();
+      }
     }
   }
 
@@ -97,6 +101,7 @@ class VideoWidgetController extends GetxController {
     if (!kIsWeb) {
       thumbnail = await AttachmentHelper.getVideoThumbnail(file.path!);
       if (thumbnail == null) return;
+      CurrentChat.activeChat?.imageData[attachment.guid!] = thumbnail!;
       await precacheImage(MemoryImage(thumbnail!), context);
       update();
     }
