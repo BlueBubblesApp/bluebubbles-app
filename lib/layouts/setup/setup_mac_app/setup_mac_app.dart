@@ -4,14 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:simple_animations/stateless_animation/custom_animation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SetupMacApp extends StatelessWidget {
   SetupMacApp({Key? key, required this.controller}) : super(key: key);
   final PageController controller;
-  final CustomAnimationControl animationController = CustomAnimationControl.mirror;
-  final Tween<double> tween = Tween<double>(begin: 0, end: 5);
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -102,29 +99,15 @@ class SetupMacApp extends StatelessWidget {
                                 child: Shimmer.fromColors(
                                   baseColor: Colors.white70,
                                   highlightColor: Colors.white,
-                                  child: Stack(
-                                    clipBehavior: Clip.none,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(right: 30.0),
-                                        child: Text("Server Setup Instructions",
-                                            style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)),
+                                      Text(
+                                          "Server setup instructions",
+                                          style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)
                                       ),
-                                      Positioned(
-                                        left: 195,
-                                        child: CustomAnimation<double>(
-                                          control: animationController,
-                                          tween: tween,
-                                          duration: Duration(milliseconds: 600),
-                                          curve: Curves.easeOut,
-                                          builder: (context, _, anim) {
-                                            return Padding(
-                                              padding: EdgeInsets.only(left: anim),
-                                              child: Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-                                            );
-                                          },
-                                        ),
-                                      )
+                                      SizedBox(width: 10),
+                                      Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                                     ],
                                   ),
                                 ),
