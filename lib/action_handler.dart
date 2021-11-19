@@ -653,9 +653,11 @@ class ActionHandler {
         Attachment file = Attachment.fromMap(attachmentItem);
         file.save(message);
 
+        bool exists = await File(file.getPath()).exists();
         if ((await AttachmentHelper.canAutoDownload()) &&
             file.mimeType != null &&
-            !Get.find<AttachmentDownloadService>().downloaders.contains(file.guid)) {
+            !Get.find<AttachmentDownloadService>().downloaders.contains(file.guid) &&
+            !exists) {
           Get.put(AttachmentDownloadController(attachment: file), tag: file.guid);
         }
       }
