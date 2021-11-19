@@ -507,7 +507,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           attachments: pickedImages,
           onRemove: (PlatformFile attachment) {
             pickedImages
-                .removeWhere((element) => kIsWeb ? element.bytes == attachment.bytes : element.path == attachment.path);
+              .removeWhere((element) => kIsWeb || attachment.path == null
+                ? element.bytes == attachment.bytes
+                : element.path == attachment.path);
             updateTextFieldAttachments();
             if (mounted) setState(() {});
           },
