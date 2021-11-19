@@ -103,9 +103,12 @@ class Handle {
     return this;
   }
 
-  static Handle? findOne({int? originalROWID, String? address}) {
+  static Handle? findOne({int? id, int? originalROWID, String? address}) {
     if (kIsWeb) return null;
-    if (originalROWID != null) {
+    if (id != null) {
+      final handle = handleBox.get(id) ?? Handle.findOne(originalROWID: id);
+      return handle;
+    } else if (originalROWID != null) {
       final query = handleBox.query(Handle_.originalROWID.equals(originalROWID)).build();
       query.limit = 1;
       final result = query.findFirst();

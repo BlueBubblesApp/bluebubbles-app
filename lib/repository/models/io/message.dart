@@ -525,7 +525,7 @@ class Message {
       if (threadOriginatorGuid != null) {
         final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
         final threadOriginator = existing ?? Message.findOne(guid: threadOriginatorGuid);
-        threadOriginator?.handle ??= Handle.findOne(originalROWID: threadOriginator.handleId);
+        threadOriginator?.handle ??= Handle.findOne(id: threadOriginator.handleId);
         if (threadOriginator != null) associatedMessages.add(threadOriginator);
         if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
         if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
@@ -536,7 +536,7 @@ class Message {
       if (threadOriginatorGuid != null) {
         final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
         final threadOriginator = existing ?? Message.findOne(guid: threadOriginatorGuid);
-        threadOriginator?.handle ??= Handle.findOne(originalROWID: threadOriginator.handleId);
+        threadOriginator?.handle ??= Handle.findOne(id: threadOriginator.handleId);
         if (threadOriginator != null) associatedMessages.add(threadOriginator);
         if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
         if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;

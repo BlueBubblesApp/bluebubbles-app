@@ -313,7 +313,9 @@ class ChatBloc {
           chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
           chat.latestMessageDate = chat.latestMessageGetter.dateCreated;
           if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) {
-            chat.latestMessage!.handle = Handle.findOne(originalROWID: chat.latestMessage!.handleId);
+            chat.latestMessage!.handle = kIsWeb
+                ? Handle.findOne(originalROWID: chat.latestMessage!.handleId)
+                : Handle.findOne(id: chat.latestMessage!.handleId);
           }
         }
       }

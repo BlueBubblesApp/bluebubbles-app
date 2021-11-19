@@ -54,7 +54,7 @@ class Handle {
     return this;
   }
 
-  static Handle? findOne({int? originalROWID, String? address}) {
+  static Handle? findOne({int? id, int? originalROWID, String? address}) {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return ChatBloc().cachedHandles.firstWhereOrNull((e) => originalROWID != null ? e.originalROWID == originalROWID : e.address == address);
   }
