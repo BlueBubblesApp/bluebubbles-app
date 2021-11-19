@@ -30,7 +30,8 @@ class _SetupViewState extends State<SetupView> {
   void initState() {
     super.initState();
     ever(SocketManager().state, (event) {
-      if (!SettingsManager().settings.finishedSetup.value && controller.hasClients && controller.page! > 3) {
+      if (!SettingsManager().settings.finishedSetup.value && controller.hasClients
+          && ((kIsWeb && currentPage > 3) || currentPage > 5)) {
         switch (event) {
           case SocketState.FAILED:
             showDialog(
