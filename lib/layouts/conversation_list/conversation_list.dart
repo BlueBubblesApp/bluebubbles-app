@@ -87,15 +87,23 @@ class ConversationListState extends State<ConversationList> {
                         padding: EdgeInsets.only(left: 10, right: 10),
                         child: Align(
                             alignment: Alignment.centerLeft,
-                            child: Text(
-                                "Hi there, we hope you've been enjoying your experience with BlueBubbles!!\r\n"
-                                "We've got some changes in the works to greatly improve the speed and reliability of the connection between the app and the server.\r\n"
-                                "Many of these changes have already been added on the server, but we haven't been able to add them on the app because not everyone may have the latest server.\r\n"
-                                "Therefore, this is a warning that you *must* upgrade your server to a minimum of v0.3.0 by January 1st, 2022, otherwise you will no longer be able to use the latest versions of the app.\r\n"
-                                "We hope you can understand this requirement, and be on the lookout for some exciting new features soon!\r\n"
-                                "~ BlueBubbles Devs",
+                            child: RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(text: "Hi there, we hope you've been enjoying BlueBubbles!!\r\n\n"),
+                                  TextSpan(text: "We've got some architectural changes in the works to make the app even better.\r\n\n"),
+                                  TextSpan(text: "Please make sure to upgrade your server to a ",
+                                      style: context.theme.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold)),
+                                  TextSpan(text: "minimum of v0.3.0",
+                                      style: context.theme.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
+                                  TextSpan(text: " by January 1st, 2022 to maintain full functionality.\r\n\n",
+                                      style: context.theme.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold)),
+                                  TextSpan(text: "Be on the lookout for some exciting new features soon!\r\n\n"),
+                                  TextSpan(text: "~ BlueBubbles Devs"),
+                                ],
                                 style: context.theme.textTheme.subtitle1,
-                            )
+                              ),
+                            ),
                         ),
                       ),
                     ]
