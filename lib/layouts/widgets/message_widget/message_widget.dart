@@ -134,7 +134,7 @@ class _MessageState extends State<MessageWidget> {
         }
 
         // If the associated message GUID matches this one, fetch associated messages
-        if (fetchAssoc) fetchAssociatedMessages(forceReload: true);
+        if (fetchAssoc) fetchAssociatedMessages(shouldReload: true);
         if (fetchAttach) fetchAttachments(forceReload: true);
       } else if (data.type == NewMessageType.UPDATE) {
         String? oldGuid = data.event["oldGuid"];
@@ -180,13 +180,13 @@ class _MessageState extends State<MessageWidget> {
     } catch (_) {}
   }
 
-  void fetchAssociatedMessages({bool forceReload = false}) {
+  void fetchAssociatedMessages({bool shouldReload = false}) {
     try {
-      _message.fetchAssociatedMessages(bloc: widget.bloc);
+      _message.fetchAssociatedMessages(bloc: widget.bloc, shouldRefresh: shouldReload);
     } catch (_) {}
 
     bool hasChanges = false;
-    if (_message.associatedMessages.length != associatedCount || forceReload) {
+    if (_message.associatedMessages.length != associatedCount || shouldReload) {
       associatedCount = _message.associatedMessages.length;
       hasChanges = true;
     }

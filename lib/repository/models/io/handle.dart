@@ -104,7 +104,7 @@ class Handle {
   }
 
   static Handle? findOne({int? id, int? originalROWID, String? address}) {
-    if (kIsWeb) return null;
+    if (kIsWeb || id == 0) return null;
     if (id != null) {
       final handle = handleBox.get(id) ?? Handle.findOne(originalROWID: id);
       return handle;

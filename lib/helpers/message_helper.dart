@@ -348,7 +348,7 @@ class MessageHelper {
     List<Message> normalized = [];
 
     for (Message message in associatedMessages.reversed.toList()) {
-      if (message.associatedMessageType == "sticker") {
+      if (!ReactionTypes.toList().contains(message.associatedMessageType)) {
         normalized.add(message);
       } else if (guids.remove(message.handleId ?? 0)) {
         normalized.add(message);

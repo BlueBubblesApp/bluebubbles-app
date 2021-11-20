@@ -280,10 +280,7 @@ class Message {
     return null;
   }
 
-  Message fetchAssociatedMessages({MessageBloc? bloc}) {
-    if (associatedMessages.isNotEmpty && associatedMessages.length == 1 && associatedMessages[0].guid == guid) {
-      return this;
-    }
+  Message fetchAssociatedMessages({MessageBloc? bloc, bool shouldRefresh = false}) {
     associatedMessages = (bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? []).cast<Message>();
     if (threadOriginatorGuid != null) {
       final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
@@ -293,7 +290,7 @@ class Message {
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       if (threadOriginator != null) associatedMessages.add(threadOriginator);
       if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
-      if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
+      if (!guid!.startsWith("temp")) bloc?.threadOriginators.conditionalAdd(guid!, threadOriginatorGuid!, shouldRefresh);
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     return this;

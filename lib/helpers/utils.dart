@@ -714,5 +714,14 @@ extension WidgetLocation on GlobalKey {
   }
 }
 
+/// this extensions allows us to update an RxMap without re-rendering UI
+/// (to avoid getting the markNeedsBuild exception)
+extension ConditionlAdd on RxMap {
+  void conditionalAdd(Object? key, Object? value, bool shouldRefresh) {
+    // ignore this warning, for some reason value is a protected member
+    this.value[key] = value;
+    if (shouldRefresh) refresh();
+  }
+}
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;

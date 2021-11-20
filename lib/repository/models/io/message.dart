@@ -512,35 +512,16 @@ class Message {
   }
 
   /// Fetch reactions
-  Message fetchAssociatedMessages({MessageBloc? bloc}) {
-    if (associatedMessages.isNotEmpty || (associatedMessages.length == 1 && associatedMessages[0].guid == guid)) {
-      if (threadOriginatorGuid != null && !guid!.startsWith("temp")) {
-        bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
-      }
-      return this;
-    }
-    if (kIsWeb) {
-      associatedMessages =
-          bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
-      if (threadOriginatorGuid != null) {
-        final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
-        final threadOriginator = existing ?? Message.findOne(guid: threadOriginatorGuid);
-        threadOriginator?.handle ??= Handle.findOne(id: threadOriginator.handleId);
-        if (threadOriginator != null) associatedMessages.add(threadOriginator);
-        if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
-        if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
-      }
-    } else {
-      associatedMessages = Message.find(cond: Message_.associatedMessageGuid.equals(guid ?? ""));
-      associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
-      if (threadOriginatorGuid != null) {
-        final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
-        final threadOriginator = existing ?? Message.findOne(guid: threadOriginatorGuid);
-        threadOriginator?.handle ??= Handle.findOne(id: threadOriginator.handleId);
-        if (threadOriginator != null) associatedMessages.add(threadOriginator);
-        if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
-        if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
-      }
+  Message fetchAssociatedMessages({MessageBloc? bloc, bool shouldRefresh = false}) {
+    associatedMessages = Message.find(cond: Message_.associatedMessageGuid.equals(guid ?? ""));
+    associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
+    if (threadOriginatorGuid != null) {
+      final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
+      final threadOriginator = existing ?? Message.findOne(guid: threadOriginatorGuid);
+      threadOriginator?.handle ??= Handle.findOne(id: threadOriginator.handleId);
+      if (threadOriginator != null) associatedMessages.add(threadOriginator);
+      if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
+      if (!guid!.startsWith("temp")) bloc?.threadOriginators.conditionalAdd(guid!, threadOriginatorGuid!, shouldRefresh);
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     return this;
