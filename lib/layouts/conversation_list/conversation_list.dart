@@ -1,9 +1,12 @@
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
@@ -65,6 +68,55 @@ class ConversationListState extends State<ConversationList> {
 
       if (event["type"] == 'theme-update' && mounted) {
         setState(() {});
+      }
+    });
+
+    SchedulerBinding.instance?.addPostFrameCallback((timeStamp) {
+      if (prefs.getBool('warning') != true && !kIsWeb) {
+        Get.defaultDialog(
+            title: "IMPORTANT NOTICE",
+            content: Container(
+              constraints: BoxConstraints(
+                maxHeight: Get.height - 300,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(left: 10, right: 10),
+                        child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                                "Hi there, we hope you've been enjoying your experience with BlueBubbles!!\r\n"
+                                "We've got some changes in the works to greatly improve the speed and reliability of the connection between the app and the server.\r\n"
+                                "Many of these changes have already been added on the server, but we haven't been able to add them on the app because not everyone may have the latest server.\r\n"
+                                "Therefore, this is a warning that you *must* upgrade your server to a minimum of v0.3.0 by January 1st, 2022, otherwise you will no longer be able to use the latest versions of the app.\r\n"
+                                "We hope you can understand this requirement, and be on the lookout for some exciting new features soon!\r\n"
+                                "~ BlueBubbles Devs",
+                                style: context.theme.textTheme.subtitle1,
+                            )
+                        ),
+                      ),
+                    ]
+                ),
+              ),
+            ),
+            cancel: Container(
+              height: 0,
+              width: 0,
+            ),
+            textConfirm: "OK",
+            confirmTextColor: Get.theme.dialogBackgroundColor,
+            buttonColor: context.theme.primaryColor,
+            backgroundColor: context.theme.backgroundColor.lightenOrDarken(),
+            barrierDismissible: false,
+            titleStyle: context.theme.textTheme.bodyText1!.copyWith(fontWeight: FontWeight.bold).apply(fontSizeFactor: 1.3),
+            onConfirm: () {
+              Get.back();
+              prefs.setBool('warning', true);
+            }
+        );
       }
     });
   }
