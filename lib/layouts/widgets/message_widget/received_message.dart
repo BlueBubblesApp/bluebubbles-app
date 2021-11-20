@@ -363,7 +363,9 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   );
                 }
             ) : FutureBuilder<List<InlineSpan>>(
-                future: spanFuture,
+                future: SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape)
+                    ? MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null)
+                    : spanFuture,
                 initialData: MessageWidgetMixin.buildMessageSpans(context, widget.message,
                     colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null),
                 builder: (context, snapshot) {
