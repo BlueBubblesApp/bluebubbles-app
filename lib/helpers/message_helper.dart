@@ -253,11 +253,11 @@ class MessageHelper {
     List<RegExpMatch> matches = parseLinks(message.text!);
 
     // If there are attachments, return the number of attachments
-    int aCount = message.attachments.length;
+    int aCount = message.dbAttachments.length;
     if (message.hasAttachments && matches.isEmpty) {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
-      return "$output: ${getAttachmentText(message.attachments)}";
+      return "$output: ${getAttachmentText(message.dbAttachments)}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the sender
       String? sender = message.isFromMe! ? "You" : ContactManager().getContactTitle(message.handle);

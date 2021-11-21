@@ -131,9 +131,11 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
     WidgetsBinding.instance!.addObserver(this);
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) async {
       widgetsBuilt = true;
+      EventDispatcher().emit("update-highlight", widget.chat!.guid);
       // See if we need to load anything from the message bloc
+      await Future.delayed(Duration(milliseconds: 100));
       if (widget.messages.isNotEmpty) {
         _messages = widget.messages;
       } else if (_messages.isEmpty && widget.messageBloc!.messages.isEmpty) {
@@ -141,7 +143,6 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
       } else if (_messages.isEmpty && widget.messageBloc!.messages.isNotEmpty) {
         widget.messageBloc!.emitLoaded();
       }
-      EventDispatcher().emit("update-highlight", widget.chat!.guid);
     });
   }
 
