@@ -10,6 +10,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as path;
+import 'package:universal_io/io.dart';
 
 class AttachmentListItem extends StatefulWidget {
   AttachmentListItem({
@@ -50,7 +51,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         preview = await AttachmentHelper.compressAttachment(
             fakeAttachment, widget.file.path!, qualityOverride: 100, getActualPath: false);
       } else {
-        preview = widget.file.bytes;
+        preview = widget.file.bytes ?? await File(widget.file.path!).readAsBytes();
       }
 
       if (mounted) setState(() {});
