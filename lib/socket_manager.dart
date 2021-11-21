@@ -64,8 +64,8 @@ class SocketManager {
 
   final Rx<SocketState> state = SocketState.DISCONNECTED.obs;
 
-  int addSocketProcess(Function() cb) {
-    int processId = Random().nextInt(10000);
+  int addSocketProcess(Function() cb, {int? id}) {
+    int processId = id ?? Random().nextInt(10000);
     socketProcesses[processId] = cb;
     Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
       if (state.value == SocketState.DISCONNECTED || state.value == SocketState.FAILED) {
@@ -79,6 +79,10 @@ class SocketManager {
 
   void finishSocketProcess(int? processId) {
     socketProcesses.remove(processId);
+    if (socketProcesses.length == 1 && socketProcesses.entries.first.key == -1) {
+      socketProcesses.entries.first.value();
+      socketProcesses.remove(-1);
+    }
     Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
       _socketProcessUpdater.sink.add(socketProcesses.keys.toList());
     });
@@ -382,6 +386,7 @@ class SocketManager {
   void closeSocket({bool force = false}) {
     if (!force && _manager.socketProcesses.isNotEmpty) {
       Logger.info("Not closing the socket! Count: " + socketProcesses.length.toString());
+      addSocketProcess(() => closeSocket(force: true), id: -1);
       return;
     }
     if (_manager.socket != null) {
@@ -637,7 +642,7 @@ class SocketManager {
         if (awaitResponse) _manager.finishSocketProcess(_processId);
       } else {
         if (path == null) {
-          _manager.socket!.emitWithAck(event, message, ack: (response) {
+          _manager.socket?.emitWithAck(event, message, ack: (response) {
             if (response.containsKey('encrypted') && response['encrypted']) {
               try {
                 response['data'] =
