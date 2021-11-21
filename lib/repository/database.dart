@@ -170,10 +170,6 @@ class DBProvider {
     scheduledBox.removeAll();
     themeEntryBox.removeAll();
     themeObjectBox.removeAll();
-    amJoinBox.removeAll();
-    chJoinBox.removeAll();
-    cmJoinBox.removeAll();
-    tvJoinBox.removeAll();
   }
 
   Future<void> migrateToObjectBox(Database db, Future<void> Function()? initStore) async {
@@ -196,10 +192,6 @@ class DBProvider {
       scheduledBox.removeAll();
       themeEntryBox.removeAll();
       themeObjectBox.removeAll();
-      amJoinBox.removeAll();
-      chJoinBox.removeAll();
-      cmJoinBox.removeAll();
-      tvJoinBox.removeAll();
       // The general premise of the migration is to transfer every single bit
       // of data from SQLite into ObjectBox. The most important thing to keep
       // track of are the IDs, since we have numerous queries that relate IDs
@@ -308,7 +300,13 @@ class DBProvider {
           chj.handleId = newHandleId!;
         }
         Logger.info("Replaced old chat & handle IDs with new ObjectBox IDs", tag: "OB Migration");
-        chJoinBox.putMany(chJoins);
+        final chats2 = chatBox.getAll();
+        for (int i = 0; i < chats2.length; i++) {
+          final handleIds = chJoins.where((e) => e.chatId == chats2[i].id).map((e) => e.handleId).toList();
+          final handles = handleBox.getMany(handleIds);
+          chats2[i].handles.addAll(List<Handle>.from(handles));
+        }
+        chatBox.putMany(chats2);
         Logger.info("Inserted chat-handle joins into ObjectBox", tag: "OB Migration");
         chJoins.clear();
         Logger.info("Migrating chat-message joins...", tag: "OB Migration");
@@ -320,7 +318,13 @@ class DBProvider {
           cmj.messageId = newMessageId!;
         }
         Logger.info("Replaced old chat & message IDs with new ObjectBox IDs", tag: "OB Migration");
-        cmJoinBox.putMany(cmJoins);
+        final messages2 = messageBox.getAll();
+        for (int i = 0; i < messages2.length; i++) {
+          final chatId = cmJoins.firstWhere((e) => e.messageId == messages2[i].id).chatId;
+          final chat = chatBox.get(chatId);
+          messages2[i].chat.target = chat;
+        }
+        messageBox.putMany(messages2);
         Logger.info("Inserted chat-message joins into ObjectBox", tag: "OB Migration");
         cmJoins.clear();
         Logger.info("Migrating attachment-message joins...", tag: "OB Migration");
@@ -332,7 +336,13 @@ class DBProvider {
           amj.messageId = newMessageId!;
         }
         Logger.info("Replaced old attachment & message IDs with new ObjectBox IDs", tag: "OB Migration");
-        amJoinBox.putMany(amJoins);
+        final attachments2 = attachmentBox.getAll();
+        for (int i = 0; i < attachments2.length; i++) {
+          final messageId = amJoins.firstWhere((e) => e.attachmentId == attachments2[i].id).messageId;
+          final message = messageBox.get(messageId);
+          attachments2[i].message.target = message;
+        }
+        attachmentBox.putMany(attachments2);
         Logger.info("Inserted attachment-message joins into ObjectBox", tag: "OB Migration");
         amJoins.clear();
         Logger.info("Migrating theme objects...", tag: "OB Migration");
@@ -386,7 +396,13 @@ class DBProvider {
           tvj.themeValueId = newThemeValueId!;
         }
         Logger.info("Replaced old theme object & theme entry IDs with new ObjectBox IDs", tag: "OB Migration");
-        tvJoinBox.putMany(tvJoins);
+        final themeValues2 = themeEntryBox.getAll();
+        for (int i = 0; i < themeValues2.length; i++) {
+          final themeId = tvJoins.firstWhere((e) => e.themeValueId == themeValues2[i].id).themeId;
+          final themeObject = themeObjectBox.get(themeId);
+          themeValues2[i].themeObject.target = themeObject;
+        }
+        themeEntryBox.putMany(themeValues2);
         Logger.info("Inserted theme-value joins into ObjectBox", tag: "OB Migration");
         tvJoins.clear();
       });

@@ -1,7 +1,3 @@
-import 'package:bluebubbles/objectbox.g.dart';
-import 'package:objectbox/objectbox.dart';
-
-@Entity()
 class AttachmentMessageJoin {
   int? id;
   int attachmentId;
@@ -20,7 +16,6 @@ class AttachmentMessageJoin {
   }
 }
 
-@Entity()
 class ChatHandleJoin {
   int? id;
   int chatId;
@@ -39,7 +34,6 @@ class ChatHandleJoin {
   }
 }
 
-@Entity()
 class ChatMessageJoin {
   int? id;
   int chatId;
@@ -58,7 +52,6 @@ class ChatMessageJoin {
   }
 }
 
-@Entity()
 class ThemeValueJoin {
   int? id;
   int themeId;

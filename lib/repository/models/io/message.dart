@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/darty.dart';
@@ -15,7 +16,6 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/attachment.dart';
-import 'package:bluebubbles/repository/models/io/join_tables.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
@@ -31,28 +31,39 @@ import 'chat.dart';
 import 'handle.dart';
 
 /// Async method to fetch attachments;
-Future<Map<String, List<Attachment?>>> fetchAttachmentsIsolate(List<dynamic> stuff) async {
-  /// Pull args from input and create new instances of store and boxes
-  List<int> messageIds = stuff[0];
-  List<String> guids = stuff[1];
-  String? storeRef = stuff[2];
-  final Map<String, List<Attachment?>> map = {};
-  final store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
-  final amJoinBox = store.box<AttachmentMessageJoin>();
-  return store.runInTransaction(TxMode.read, () {
-    /// Query the [amJoinBox] for relevant attachment IDs
-    final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
-    final amJoins = amJoinQuery.find();
-    amJoinQuery.close();
+class GetMessageAttachments extends AsyncTask<List<dynamic>, Map<String, List<Attachment?>>> {
+  final List<dynamic> stuff;
 
-    /// Add the attachments to the map with some clever list operations
-    map.addEntries(guids.mapIndexed((index, e) => MapEntry(
-        e,
-        attachmentBox.getMany(
-            amJoins.where((e2) => e2.messageId == messageIds[index]).map((e3) => e3.attachmentId).toSet().toList(),
-            growableResult: true))));
-    return map;
-  });
+  GetMessageAttachments(this.stuff);
+
+  @override
+  AsyncTask<List<dynamic>, Map<String, List<Attachment?>>> instantiate(List<dynamic> parameters, [Map<String, SharedData>? sharedData]) {
+    return GetMessageAttachments(parameters);
+  }
+
+  @override
+  List<dynamic> parameters() {
+    return stuff;
+  }
+
+  @override
+  FutureOr<Map<String, List<Attachment?>>> run() {
+    /// Pull args from input and create new instances of store and boxes
+    List<int> messageIds = stuff[0];
+    String? storeRef = stuff[1];
+    final Map<String, List<Attachment?>> map = {};
+    final store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
+    return store.runInTransaction(TxMode.read, () {
+      /// Query the [amJoinBox] for relevant attachment IDs
+      final messages = messageBox.getMany(messageIds);
+
+      /// Add the attachments to the map with some clever list operations
+      map.addEntries(messages.mapIndexed((index, e) => MapEntry(
+          e!.guid!,
+          e.dbAttachments)));
+      return map;
+    });
+  }
 }
 
 enum LineType { meToMe, otherToMe, meToOther, otherToOther }
@@ -68,22 +79,7 @@ class Message {
   String? text;
   String? subject;
   String? country;
-  final RxInt _error = RxInt(0);
-
-  int get error => _error.value;
-
-  set error(int i) => _error.value = i;
   DateTime? dateCreated;
-  final Rxn<DateTime> _dateRead = Rxn<DateTime>();
-
-  DateTime? get dateRead => _dateRead.value;
-
-  set dateRead(DateTime? d) => _dateRead.value = d;
-  final Rxn<DateTime> _dateDelivered = Rxn<DateTime>();
-
-  DateTime? get dateDelivered => _dateDelivered.value;
-
-  set dateDelivered(DateTime? d) => _dateDelivered.value = d;
   bool? isFromMe;
   bool? isDelayed;
   bool? isAutoReply;
@@ -111,10 +107,26 @@ class Message {
   Map<String, dynamic>? metadata;
   String? threadOriginatorGuid;
   String? threadOriginatorPart;
-
   List<Attachment?> attachments = [];
   List<Message> associatedMessages = [];
   bool? bigEmoji;
+
+  final RxInt _error = RxInt(0);
+  int get error => _error.value;
+  set error(int i) => _error.value = i;
+
+  final Rxn<DateTime> _dateRead = Rxn<DateTime>();
+  DateTime? get dateRead => _dateRead.value;
+  set dateRead(DateTime? d) => _dateRead.value = d;
+
+  final Rxn<DateTime> _dateDelivered = Rxn<DateTime>();
+  DateTime? get dateDelivered => _dateDelivered.value;
+  set dateDelivered(DateTime? d) => _dateDelivered.value = d;
+
+  @Backlink('message')
+  final dbAttachments = ToMany<Attachment>();
+
+  final chat = ToOne<Chat>();
 
   Message(
       {this.id,
@@ -263,7 +275,7 @@ class Message {
 
   /// Save a single message - prefer [bulkSave] for multiple messages rather
   /// than iterating through them
-  Message save() {
+  Message save({Chat? chat}) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
       Message? existing = Message.findOne(guid: guid);
@@ -295,6 +307,7 @@ class Message {
       }
 
       try {
+        if (chat != null) this.chat.target = chat;
         id = messageBox.put(this);
       } on UniqueViolationException catch (_) {}
     });
@@ -398,6 +411,7 @@ class Message {
     newMessage.hasAttachments = existing.hasAttachments;
     newMessage.hasReactions = existing.hasReactions;
     newMessage.metadata = existing.metadata;
+    newMessage.chat.target = existing.chat.target;
 
     messageBox.put(newMessage);
 
@@ -434,17 +448,12 @@ class Message {
     return store.runInTransaction(TxMode.read, () {
       /// Find eligible message IDs and then find [AttachmentMessageJoin]s
       /// matching those message IDs
-      final messageIds = messages.where((element) => element?.id != null).map((e) => e!.id!).toList();
-      final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
-      final amJoins = amJoinQuery.find();
-      amJoinQuery.close();
 
       /// Add the attachments with some fancy list operations
-      map.addEntries(messages.map((e) => MapEntry(
+      map.addEntries(messages.where((element) => element?.id != null).map((e) => MapEntry(
           e!.guid!,
-          attachmentBox.getMany(
-              amJoins.where((e2) => e2.messageId == e.id).map((e3) => e3.attachmentId).toSet().toList(),
-              growableResult: true))));
+          e.dbAttachments
+      )));
       return map;
     });
   }
@@ -463,11 +472,11 @@ class Message {
       return map;
     }
 
-    return await compute(fetchAttachmentsIsolate, [
+    final task = GetMessageAttachments([
       messages.map((e) => e!.id!).toList(),
-      messages.map((e) => e!.guid!).toList(),
       prefs.getString("objectbox-reference")
     ]);
+    return (await createAsyncTask<Map<String, List<Attachment?>>>(task)) ?? {};
   }
 
   /// Fetch attachments for a single message. Prefer using [fetchAttachmentsByMessages]
@@ -484,15 +493,7 @@ class Message {
 
     if (id == null) return [];
     return store.runInTransaction(TxMode.read, () {
-      /// Find attachment IDs matching the provided message ID
-      final attachmentIdQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.equals(id!)).build();
-      final attachmentIds = attachmentIdQuery.property(AttachmentMessageJoin_.attachmentId).find().toSet().toList();
-      attachmentIdQuery.close();
-
-      /// Find the attachments themselves
-      final attachments = attachmentBox.getMany(attachmentIds, growableResult: true);
-      this.attachments = attachments;
-      return attachments;
+      return dbAttachments;
     });
   }
 
@@ -500,14 +501,7 @@ class Message {
   Chat? getChat() {
     if (kIsWeb) return null;
     return store.runInTransaction(TxMode.read, () {
-      /// Find the chatID, then find the chat itself
-      final chatIdQuery = cmJoinBox.query(ChatMessageJoin_.messageId.equals(id!)).build();
-
-      /// Note: don't use [findFirst()] here because it errors out sometimes
-      final chatId = chatIdQuery.property(ChatMessageJoin_.chatId).find().firstOrNull;
-      chatIdQuery.close();
-      if (chatId == null) return null;
-      return chatBox.get(chatId);
+      return chat.target;
     });
   }
 
@@ -580,11 +574,7 @@ class Message {
       final result = query.findFirst();
       query.close();
       if (result?.id != null) {
-        final query2 = cmJoinBox.query(ChatMessageJoin_.messageId.equals(result!.id!)).build();
-        final results2 = query2.find();
-        query2.close();
-        cmJoinBox.removeMany(results2.map((e) => e.id!).toList());
-        messageBox.remove(result.id!);
+        messageBox.remove(result!.id!);
       }
     });
   }
@@ -662,10 +652,7 @@ class Message {
   /// Find how many messages exist in the DB for a chat
   static int? countForChat(Chat? chat) {
     if (kIsWeb || chat == null || chat.id == null) return 0;
-    final chatIdQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
-    final length = chatIdQuery.find().length;
-    chatIdQuery.close();
-    return length;
+    return chat.messages.length;
   }
 
   void merge(Message otherMessage) {

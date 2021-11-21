@@ -71,6 +71,20 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.8.2"
+  async_extension:
+    dependency: transitive
+    description:
+      name: async_extension
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.9"
+  async_task:
+    dependency: "direct main"
+    description:
+      name: async_task
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.12"
   barcode:
     dependency: transitive
     description:

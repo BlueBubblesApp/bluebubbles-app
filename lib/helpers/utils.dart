@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
@@ -683,6 +684,17 @@ Future<bool> rebuild(State s) async {
   // ignore protected member use error - that's the whole point of this function
   s.setState(() {});
   return true;
+}
+
+/// Create a "fake" asynchronous task from a traditionally synchronous task
+///
+/// Used for heavy ObjectBox read/writes to avoid causing jank
+Future<T?> createAsyncTask<T>(AsyncTask<List<dynamic>, T> task) async {
+  final executor = AsyncExecutor(parallelism: 0, taskTypeRegister: () => [task]);
+  executor.logger.enabled = true;
+  executor.logger.enabledExecution = true;
+  await executor.execute(task);
+  return task.result;
 }
 
 extension PlatformSpecificCapitalize on String {

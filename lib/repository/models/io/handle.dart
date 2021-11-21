@@ -7,8 +7,6 @@ import 'package:get/get.dart' hide Condition;
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
 
-import './chat.dart';
-
 @Entity()
 class Handle {
   int? id;
@@ -16,11 +14,12 @@ class Handle {
   @Unique()
   String address;
   String? country;
+  String? defaultPhone;
+  String? uncanonicalizedId;
+
   final RxnString _color = RxnString();
   String? get color => _color.value;
   set color(String? val) => _color.value = val;
-  String? defaultPhone;
-  String? uncanonicalizedId;
 
   Handle({
     this.id,
@@ -128,22 +127,6 @@ class Handle {
   static List<Handle> find({Condition<Handle>? cond}) {
     final query = handleBox.query(cond).build();
     return query.find();
-  }
-
-  /// Find chats associated with the specified handle
-  List<Chat> getChats() {
-    if (kIsWeb) return [];
-    return store.runInTransaction(TxMode.read, () {
-      /// Find the chat IDs associated with the handle
-      final chatIdQuery = chJoinBox.query(ChatHandleJoin_.handleId.equals(id!)).build();
-      final chatIds = chatIdQuery.property(ChatHandleJoin_.chatId).find();
-      chatIdQuery.close();
-
-      /// Find the chats themselves
-      final chats = chatBox.getMany(chatIds, growableResult: true)..removeWhere((e) => e == null);
-      final nonNullChats = List<Chat>.from(chats);
-      return nonNullChats;
-    });
   }
 
   static void flush() {

@@ -27,6 +27,9 @@ class ThemeObject {
   ThemeData? data;
   List<ThemeEntry> entries = [];
 
+  @Backlink('themeObject')
+  final themeEntries = ToMany<ThemeEntry>();
+
   ThemeObject({
     this.id,
     this.name,
@@ -114,9 +117,6 @@ class ThemeObject {
     store.runInTransaction(TxMode.write, () {
       fetchData();
       themeEntryBox.removeMany(entries.map((e) => e.id!).toList());
-      final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(id!)).build();
-      if (query.findFirst() != null) tvJoinBox.remove(query.findFirst()!.themeId);
-      query.close();
       themeObjectBox.remove(id!);
     });
   }
@@ -206,14 +206,7 @@ class ThemeObject {
       return entries;
     }
     if (kIsWeb) return entries;
-    final themeEntries2 = store.runInTransaction(TxMode.read, () {
-      final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(id!)).build();
-      final themeEntryIds = query.property(ThemeValueJoin_.themeValueId).find();
-      query.close();
-      return themeEntryBox.getMany(themeEntryIds, growableResult: true);
-    });
-    themeEntries2.retainWhere((element) => element != null);
-    final themeEntries = List<ThemeEntry>.from(themeEntries2);
+    final themeEntries = List<ThemeEntry>.from(this.themeEntries);
     if (name == "Music Theme (Light)" && themeEntries.isEmpty) {
       data = whiteLightTheme;
       entries = toEntries();

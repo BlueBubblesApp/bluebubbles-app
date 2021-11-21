@@ -14,14 +14,15 @@ class ThemeEntry {
   int? id;
   int? themeId;
   String? name;
-  Color? color;
-
-  String? get dbColor => color?.value.toRadixString(16);
-
-  set dbColor(String? s) => s == null ? color = null : color = HexColor(s);
   bool? isFont;
   int? fontSize;
   int? fontWeight;
+
+  Color? color;
+  String? get dbColor => color?.value.toRadixString(16);
+  set dbColor(String? s) => s == null ? color = null : color = HexColor(s);
+
+  final themeObject = ToOne<ThemeObject>();
 
   ThemeEntry({
     this.id,
@@ -71,11 +72,10 @@ class ThemeEntry {
       ThemeEntry? existing = ThemeEntry.findOne(name!, themeId!);
       if (existing != null) {
         id = existing.id;
+      } else {
+        themeObject.target = theme;
       }
       id = themeEntryBox.put(this);
-      if (id != null && theme.id != null && existing == null) {
-        tvJoinBox.put(ThemeValueJoin(themeValueId: id!, themeId: theme.id!));
-      }
     });
     return this;
   }

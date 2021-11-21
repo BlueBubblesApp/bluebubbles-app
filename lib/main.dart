@@ -92,10 +92,6 @@ late final Box<Message> messageBox;
 late final Box<ScheduledMessage> scheduledBox;
 late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
-late final Box<AttachmentMessageJoin> amJoinBox;
-late final Box<ChatHandleJoin> chJoinBox;
-late final Box<ChatMessageJoin> cmJoinBox;
-late final Box<ThemeValueJoin> tvJoinBox;
 String? recentIntent;
 final RxBool fontExistsOnDisk = false.obs;
 final RxBool downloadingFont = false.obs;
@@ -166,10 +162,6 @@ Future<Null> main() async {
         scheduledBox = store.box<ScheduledMessage>();
         themeEntryBox = store.box<ThemeEntry>();
         themeObjectBox = store.box<ThemeObject>();
-        amJoinBox = store.box<AttachmentMessageJoin>();
-        chJoinBox = store.box<ChatHandleJoin>();
-        cmJoinBox = store.box<ChatMessageJoin>();
-        tvJoinBox = store.box<ThemeValueJoin>();
         if (saveThemes && themeObjectBox.isEmpty()) {
           for (ThemeObject theme in Themes.themes) {
             if (theme.name == "OLED Dark") theme.selectedDarkTheme = true;

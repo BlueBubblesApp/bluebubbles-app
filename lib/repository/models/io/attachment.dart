@@ -7,7 +7,6 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/repository/models/io/join_tables.dart';
 import 'package:bluebubbles/repository/models/io/message.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -37,6 +36,8 @@ class Attachment {
   Map<String, dynamic>? metadata;
   Uint8List? bytes;
   String? webUrl;
+
+  final message = ToOne<Message>();
 
   Attachment({
     this.id,
@@ -145,10 +146,10 @@ class Attachment {
       try {
         /// store the attachment and add the link between the message and
         /// attachment
-        id = attachmentBox.put(this);
-        if (id != null && message?.id != null) {
-          amJoinBox.put(AttachmentMessageJoin(attachmentId: id!, messageId: message!.id!));
+        if (message != null) {
+          this.message.target = message;
         }
+        id = attachmentBox.put(this);
       } on UniqueViolationException catch (_) {}
     });
     return this;
@@ -181,11 +182,11 @@ class Attachment {
 
         /// convert the map of messages and lists into an [AttachmentMessageJoin]
         /// with some fancy list operations
-        amJoinBox.putMany(map.entries
+        /*amJoinBox.putMany(map.entries
             .map((e) => e.value.map((e2) => AttachmentMessageJoin(attachmentId: e2.id ?? 0, messageId: e.key.id ?? 0)))
             .expand((element) => element)
             .toList()
-          ..removeWhere((element) => element.attachmentId == 0 || element.messageId == 0));
+          ..removeWhere((element) => element.attachmentId == 0 || element.messageId == 0));*/
       } on UniqueViolationException catch (_) {}
     });
   }

@@ -68,10 +68,6 @@ callbackHandler() async {
       scheduledBox = store.box<ScheduledMessage>();
       themeEntryBox = store.box<ThemeEntry>();
       themeObjectBox = store.box<ThemeObject>();
-      amJoinBox = store.box<AttachmentMessageJoin>();
-      chJoinBox = store.box<ChatHandleJoin>();
-      cmJoinBox = store.box<ChatMessageJoin>();
-      tvJoinBox = store.box<ThemeValueJoin>();
       if (saveThemes && themeObjectBox.isEmpty()) {
         for (ThemeObject theme in Themes.themes) {
           if (theme.name == "OLED Dark") theme.selectedDarkTheme = true;
