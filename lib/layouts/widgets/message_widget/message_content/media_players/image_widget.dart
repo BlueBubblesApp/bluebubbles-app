@@ -29,7 +29,22 @@ class ImageWidgetController extends GetxController {
 
   @override
   void onInit() {
-    initBytes();
+    if (ModalRoute.of(context)?.animation != null) {
+      if (ModalRoute.of(context)?.animation?.status != AnimationStatus.completed) {
+        late final AnimationStatusListener listener;
+        listener = (AnimationStatus status) {
+          if (status == AnimationStatus.completed) {
+            initBytes();
+            ModalRoute.of(context)?.animation?.removeStatusListener(listener);
+          }
+        };
+        ModalRoute.of(context)?.animation?.addStatusListener(listener);
+      } else {
+        initBytes();
+      }
+    } else {
+      initBytes();
+    }
     super.onInit();
   }
 
@@ -144,6 +159,9 @@ class ImageWidget extends StatelessWidget {
                 controller.data.value!,
                 // prevents the image widget from "refreshing" when the provider changes
                 gaplessPlayback: true,
+                filterQuality: FilterQuality.none,
+                cacheWidth: controller.attachment.width != null ? (controller.attachment.width! * Get.pixelRatio).round() : null,
+                cacheHeight: controller.attachment.height != null ? (controller.attachment.height! * Get.pixelRatio).round() : null,
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   return Stack(children: [
                     buildPlaceHolder(context, controller, isLoaded: wasSynchronouslyLoaded),
