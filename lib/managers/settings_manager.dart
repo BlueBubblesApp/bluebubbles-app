@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
@@ -35,7 +36,6 @@ class SettingsManager {
   FCMData? fcmData;
   late List<ThemeObject> themes;
   String? countryCode;
-  int? _macOSVersion;
   String? _serverVersion;
   bool canAuthenticate = false;
 
@@ -160,16 +160,19 @@ class SettingsManager {
     await saveSettings(temp);
   }
 
-  Future<int?> getMacOSVersion() async {
-    if (_macOSVersion == null) {
+  Future<int?> getMacOSVersion({bool refresh = false}) async {
+    if (refresh) {
       var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
-      _macOSVersion = int.tryParse(res['data']['os_version'].split(".")[0]);
+      final version = int.tryParse(res['data']['os_version'].split(".")[0]);
+      if (version != null) prefs.setInt("macos-version", version);
+      return version;
+    } else {
+      return prefs.getInt("macos-version") ?? 11;
     }
-    return _macOSVersion;
   }
 
   FutureOr<String?> getServerVersion() async {
-    if (_macOSVersion == null) {
+    if (_serverVersion == null) {
       var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
       _serverVersion = res['data']['server_version'];
     }

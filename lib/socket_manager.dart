@@ -134,6 +134,7 @@ class SocketManager {
             Logger.error(err);
           });
         }
+        SettingsManager().getMacOSVersion(refresh: true);
         return;
       case "connect_error":
         if (state.value != SocketState.ERROR && state.value != SocketState.FAILED) {
