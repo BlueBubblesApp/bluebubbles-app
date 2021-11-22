@@ -35,7 +35,7 @@ class LifeCycleManager {
     SocketManager().socketProcessUpdater.listen((event) {
       // If there are no more socket processes, then we can safely close the socket
       if (event.isEmpty && !_isAlive && !kIsDesktop) {
-        SocketManager().closeSocket();
+        SocketManager().closeSocket(force: true);
       }
     });
   }

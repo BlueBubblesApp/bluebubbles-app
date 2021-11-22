@@ -64,8 +64,8 @@ class SocketManager {
 
   final Rx<SocketState> state = SocketState.DISCONNECTED.obs;
 
-  int addSocketProcess(Function() cb, {int? id}) {
-    int processId = id ?? Random().nextInt(10000);
+  int addSocketProcess(Function() cb) {
+    int processId = Random().nextInt(10000);
     socketProcesses[processId] = cb;
     Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
       if (state.value == SocketState.DISCONNECTED || state.value == SocketState.FAILED) {
@@ -79,10 +79,6 @@ class SocketManager {
 
   void finishSocketProcess(int? processId) {
     socketProcesses.remove(processId);
-    if (socketProcesses.length == 1 && socketProcesses.entries.first.key == -1) {
-      socketProcesses.entries.first.value();
-      socketProcesses.remove(-1);
-    }
     Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
       _socketProcessUpdater.sink.add(socketProcesses.keys.toList());
     });
@@ -174,7 +170,7 @@ class SocketManager {
         Timer t;
         t = Timer(const Duration(seconds: 5), () {
           if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
-            showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
+            showSnackbar('Socket Disconnected', 'You are no longer connected to the socket 🔌');
           }
         });
         LifeCycleManager().stream.listen((event) {
@@ -183,7 +179,7 @@ class SocketManager {
           } else {
             t = Timer(const Duration(seconds: 5), () {
               if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
-                showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
+                showSnackbar('Socket Disconnected', 'You are no longer connected to the socket 🔌');
               }
             });
           }
@@ -387,7 +383,6 @@ class SocketManager {
   void closeSocket({bool force = false}) {
     if (!force && _manager.socketProcesses.isNotEmpty) {
       Logger.info("Not closing the socket! Count: " + socketProcesses.length.toString());
-      addSocketProcess(() => closeSocket(force: true), id: -1);
       return;
     }
     if (_manager.socket != null) {
