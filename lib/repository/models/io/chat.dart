@@ -99,22 +99,21 @@ class GetChatAttachments extends AsyncTask<List<dynamic>, List<Attachment>> {
     /// Pull args from input and create new instances of store and boxes
     int chatId = stuff[0];
     return store.runInTransaction(TxMode.read, () {
-      /// Get the [ChatMessageJoin] objects matching the [chatId], and then find
-      /// the message IDs
-      final chat = chatBox.get(chatId)!;
-
       /// Query the [messageBox] for all the message IDs and order by date
       /// descending
-      final messages = List<Message>.from(chat.messages
-        ..sort((a, b) => -a.dateCreated!.compareTo(b.dateCreated!))
-        ..sort((a, b) => a.originalROWID == null || b.originalROWID == null
-            ? 0 : -a.originalROWID!.compareTo(b.originalROWID!)));
+      final query = (messageBox.query()
+        ..link(Message_.chat, Chat_.id.equals(chatId))
+        ..order(Message_.dateCreated, flags: Order.descending)
+        ..order(Message_.originalROWID, flags: Order.descending))
+          .build();
+      final messages = query.find();
+      query.close();
 
       final actualAttachments = <Attachment>[];
 
       /// Match the attachments to their messages
       for (Message m in messages) {
-        m.attachments = List<Attachment>.from(m.dbAttachments);
+        m.attachments = List<Attachment>.from(m.dbAttachments.where((element) => element.mimeType != null));
         actualAttachments.addAll((m.attachments).map((e) => e!));
       }
 
@@ -153,14 +152,18 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
     bool includeDeleted = stuff[3];
     return store.runInTransaction(TxMode.read, () {
       /// Get the message IDs for the chat by querying the [cmJoinBox]
-      final chat = chatBox.get(chatId)!;
-
-      final messages = List<Message>.from(chat.messages
-        ..removeWhere((e) => includeDeleted ? false : e.dateDeleted != null)
-        ..sort((a, b) => -a.dateCreated!.compareTo(b.dateCreated!))
-        ..sort((a, b) =>  a.originalROWID == null || b.originalROWID == null
-            ? -1 : -a.originalROWID!.compareTo(b.originalROWID!)))
-          .sublist(offset, min(offset + limit, (chat.messages.length)));
+      final query = (messageBox.query(includeDeleted
+            ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
+            : Message_.dateDeleted.isNull())
+          ..link(Message_.chat, Chat_.id.equals(chatId))
+          ..order(Message_.dateCreated, flags: Order.descending)
+          ..order(Message_.originalROWID, flags: Order.descending))
+        .build();
+      query
+        ..limit = limit
+        ..offset = offset;
+      final messages = query.find();
+      query.close();
 
       /// Fetch and match handles
       final handles =
@@ -794,11 +797,18 @@ class Chat {
       {int offset = 0, int limit = 25, bool includeDeleted = false, bool getDetails = false}) {
     if (kIsWeb || chat.id == null) return [];
     return store.runInTransaction(TxMode.read, () {
-      final messages = List<Message>.from(chat.messages..removeWhere((e) => includeDeleted ? false : e.dateDeleted != null)
-        ..sort((a, b) => -a.dateCreated!.compareTo(b.dateCreated!))
-        ..sort((a, b) =>  a.originalROWID == null || b.originalROWID == null
-            ? 0 : -a.originalROWID!.compareTo(b.originalROWID!)))
-          .sublist(offset, min(offset + limit, (chat.messages.length)));
+      final query = (messageBox.query(includeDeleted
+          ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
+          : Message_.dateDeleted.isNull())
+        ..link(Message_.chat, Chat_.id.equals(chat.id!))
+        ..order(Message_.dateCreated, flags: Order.descending)
+        ..order(Message_.originalROWID, flags: Order.descending))
+          .build();
+      query
+        ..limit = limit
+        ..offset = offset;
+      final messages = query.find();
+      query.close();
       final handles =
           handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
       for (int i = 0; i < messages.length; i++) {
