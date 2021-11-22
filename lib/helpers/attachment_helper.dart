@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
-import 'package:flutter_isolate/flutter_isolate.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
@@ -263,16 +262,16 @@ class AttachmentHelper {
   static void redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) {
     if (!kIsWeb) {
       File file = File(attachment.getPath());
-      File compressedFile = File(attachment.getCompressedPath());
+      File jpgFile = File(attachment.getHeicToJpgPath());
 
       // If neither exist, don't do anything
       bool fExists = file.existsSync();
-      bool cExists = compressedFile.existsSync();
+      bool cExists = jpgFile.existsSync();
       if (!fExists && !cExists) return;
 
       // Delete them if they exist
       if (fExists) file.deleteSync();
-      if (cExists) compressedFile.deleteSync();
+      if (cExists) jpgFile.deleteSync();
     }
 
     // Redownload the attachment
@@ -380,14 +379,19 @@ class AttachmentHelper {
 
     // Handle getting heic images
     if ((attachment.mimeType == 'image/heic' || attachment.mimeType == 'image/heif') && !kIsWeb && !kIsDesktop) {
-      final receivePort = ReceivePort();
-      final isolate = await FlutterIsolate.spawn(
-          heicDecodeIsolate, [filePath, receivePort.sendPort]);
-      dynamic file = await receivePort.first;
-      if (file != null) {
+      if (await File(filePath + ".jpg").exists()) {
+        originalFile = File(filePath + ".jpg");
+      } else {
+        final file = await FlutterNativeImage.compressImage(
+          filePath,
+          percentage: 100,
+          quality: 100,
+        );
+        final cacheFile = File(filePath + ".jpg");
+        final bytes = await file.readAsBytes();
+        await cacheFile.writeAsBytes(bytes);
         originalFile = file;
       }
-      isolate.kill();
     }
 
     Uint8List previewData = await originalFile.readAsBytes();
@@ -484,19 +488,6 @@ void unsupportedToPngIsolate(IsolateData param) {
     param.sendPort.send(encoded);
   } catch (_) {
     param.sendPort.send(null);
-  }
-}
-
-void heicDecodeIsolate(List<dynamic> param) async {
-  try {
-    dynamic file = await FlutterNativeImage.compressImage(
-      param[0],
-      percentage: 100,
-      quality: 100,
-    );
-    param[1].send(file);
-  } catch (_) {
-    param[1].send(null);
   }
 }
 

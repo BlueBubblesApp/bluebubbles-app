@@ -286,8 +286,8 @@ class Attachment {
     return pathName;
   }
 
-  String getCompressedPath() {
-    return "${getPath()}.${SettingsManager().compressionQuality}.compressed";
+  String getHeicToJpgPath() {
+    return "${getPath()}.jpg";
   }
 
   Map<String, dynamic> toMap() => {
