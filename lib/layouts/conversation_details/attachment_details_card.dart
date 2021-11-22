@@ -118,7 +118,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
         alignment: Alignment.center,
         color: Theme.of(context).colorScheme.secondary,
         child: Text(
-          widget.attachment.mimeType!,
+          widget.attachment.mimeType ?? "Unknown",
           textAlign: TextAlign.center,
         ),
       );
@@ -190,7 +190,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
   }
 
   Widget _buildPreview(PlatformFile file, BuildContext context) {
-    if (widget.attachment.mimeType!.startsWith("image/")) {
+    if (widget.attachment.mimeType?.startsWith("image/") ?? false) {
       if (previewImage == null) {
         if (file.bytes != null) {
           previewImage = file.bytes;
@@ -234,7 +234,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
           )
         ],
       );
-    } else if (widget.attachment.mimeType!.startsWith("video/")) {
+    } else if (widget.attachment.mimeType?.startsWith("video/") ?? false) {
       getVideoPreview(file);
 
       return Stack(

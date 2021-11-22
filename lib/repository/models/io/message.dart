@@ -486,8 +486,8 @@ class Message {
       return attachments;
     }
 
-    if (currentChat != null) {
-      attachments = currentChat.getAttachmentsForMessage(this);
+    if (currentChat?.messageAttachments.containsKey(guid) ?? false) {
+      attachments = currentChat!.getAttachmentsForMessage(this);
       if (attachments.isNotEmpty) return attachments;
     }
 

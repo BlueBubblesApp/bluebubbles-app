@@ -181,6 +181,7 @@ class _MessageState extends State<MessageWidget> {
   }
 
   void fetchAssociatedMessages({bool shouldReload = false}) {
+    associatedCount = _message.associatedMessages.length;
     try {
       _message.fetchAssociatedMessages(bloc: widget.bloc, shouldRefresh: shouldReload);
     } catch (_) {}
@@ -200,11 +201,12 @@ class _MessageState extends State<MessageWidget> {
         _message.save();
       }
 
-      if (mounted) setState(() {});
+      if (mounted && shouldReload) setState(() {});
     }
   }
 
   void fetchAttachments({bool forceReload = false}) {
+    attachmentCount = _message.attachments.length;
     try {
       _message.fetchAttachments(currentChat: currentChat);
     } catch (_) {}

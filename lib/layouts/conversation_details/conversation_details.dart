@@ -78,7 +78,22 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
     WidgetsBinding.instance!.addObserver(this);
 
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      fetchAttachments();
+      if (ModalRoute.of(context)?.animation != null) {
+        if (ModalRoute.of(context)?.animation?.status != AnimationStatus.completed) {
+          late final AnimationStatusListener listener;
+          listener = (AnimationStatus status) {
+            if (status == AnimationStatus.completed) {
+              fetchAttachments();
+              ModalRoute.of(context)?.animation?.removeStatusListener(listener);
+            }
+          };
+          ModalRoute.of(context)?.animation?.addStatusListener(listener);
+        } else {
+          fetchAttachments();
+        }
+      } else {
+        fetchAttachments();
+      }
     });
   }
 
