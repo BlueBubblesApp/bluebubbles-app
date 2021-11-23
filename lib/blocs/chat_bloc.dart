@@ -226,13 +226,18 @@ class ChatBloc {
         icon = contact.avatar.value;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
-        // If [defaultAvatar] is not loaded, load it from assets
-        if (NotificationManager().defaultAvatar == null) {
-          ByteData file = await loadAsset("assets/images/person64.png");
-          NotificationManager().defaultAvatar = file.buffer.asUint8List();
+        if (contact != null && (contact.avatar.value?.isEmpty ?? true)) {
+          icon = await ContactManager().getAvatar(contact.id);
         }
+        if (icon == null) {
+          // If [defaultAvatar] is not loaded, load it from assets
+          if (NotificationManager().defaultAvatar == null) {
+            ByteData file = await loadAsset("assets/images/person64.png");
+            NotificationManager().defaultAvatar = file.buffer.asUint8List();
+          }
 
-        icon = NotificationManager().defaultAvatar;
+          icon = NotificationManager().defaultAvatar;
+        }
       }
     } catch (ex) {
       Logger.error("Failed to load contact avatar: ${ex.toString()}");
