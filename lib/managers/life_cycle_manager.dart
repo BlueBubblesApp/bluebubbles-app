@@ -44,7 +44,7 @@ class LifeCycleManager {
   opened() {
     // If the app is not alive (was previously closed) and the curent chat is not null (a chat is already open)
     // Then mark the current chat as read.
-    if (!_isAlive && CurrentChat.activeChat != null && !kIsDesktop) {
+    if (!_isAlive && CurrentChat.activeChat != null && !kIsDesktop && (recentIntent == null || recentIntent == CurrentChat.activeChat?.chat.guid)) {
       NotificationManager().switchChat(CurrentChat.activeChat!.chat);
     }
 

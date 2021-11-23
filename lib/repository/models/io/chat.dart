@@ -563,9 +563,10 @@ class Chat {
       }
     }
 
-    if (hasUnreadMessage == hasUnread) return this;
+    if (hasUnreadMessage == hasUnread || (recentIntent != null && recentIntent != guid)) return this;
 
     hasUnreadMessage = hasUnread;
+    ChatBloc().chats.firstWhere((e) => e.guid == guid).hasUnreadMessage = hasUnread;
     save(updateHasUnreadMessage: true);
 
     if (hasUnread) {

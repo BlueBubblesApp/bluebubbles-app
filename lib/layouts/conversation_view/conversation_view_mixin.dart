@@ -594,7 +594,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               Navigator.of(context).pop();
             },
             behavior: HitTestBehavior.translucent,
-            child: Container(
+            child: Obx(() => Container(
               width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
               child: Row(
                 mainAxisSize: cupertino.MainAxisSize.min,
@@ -620,7 +620,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 ],
               ),
             ),
-          ),
+          )),
           middle: cupertino.Padding(
             padding: EdgeInsets.only(right: newMessages.isNotEmpty ? 10 : 0),
             child: GestureDetector(
