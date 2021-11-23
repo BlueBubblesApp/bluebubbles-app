@@ -362,7 +362,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           preferredSize: Size.fromHeight(0.5),
         ),
         leading: buildBackButton(context, callback: () {
-          if (LifeCycleManager().isBubble) SystemNavigator.pop();
+          if (LifeCycleManager().isBubble) {
+            NotificationManager().switchChat(null);
+            SystemNavigator.pop();
+          }
           EventDispatcher().emit("update-highlight", null);
         }),
         automaticallyImplyLeading: false,
@@ -582,7 +585,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           ),
           leading: GestureDetector(
             onTap: () {
-              if (LifeCycleManager().isBubble) SystemNavigator.pop();
+              if (LifeCycleManager().isBubble) {
+                NotificationManager().switchChat(null);
+                SystemNavigator.pop();
+                return;
+              }
               EventDispatcher().emit("update-highlight", null);
               Navigator.of(context).pop();
             },

@@ -227,7 +227,7 @@ class MessageHelper {
         ((!SettingsManager().settings.notifyOnChatList.value &&
                 currChat == null &&
                 !Get.currentRoute.contains("settings")) ||
-            currChat?.chat.guid == chat.guid)) {
+            (currChat?.chat.guid == chat.guid && !LifeCycleManager().isBubble))) {
       // Don't notify if the the chat is the active chat
       return;
     }
