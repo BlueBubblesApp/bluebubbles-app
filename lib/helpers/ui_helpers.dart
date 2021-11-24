@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 Widget buildBackButton(BuildContext context,
-    {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, Function()? callback}) {
+    {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, bool Function()? callback}) {
   return Container(
     padding: kIsDesktop ? EdgeInsets.only(left: 10) : padding,
     width: 25,
@@ -22,11 +22,13 @@ Widget buildBackButton(BuildContext context,
           : Obx(() => Icon(SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
               color: Theme.of(context).primaryColor)),
       onPressed: () {
-        callback?.call();
-        while (Get.isOverlaysOpen) {
-          Get.back();
+        final result = callback?.call() ?? true;
+        if (result) {
+          while (Get.isOverlaysOpen) {
+            Get.back();
+          }
+          Navigator.of(context).pop();
         }
-        Navigator.of(context).pop();
       },
     ),
   );

@@ -262,7 +262,7 @@ class Chat {
     }
 
     hasUnreadMessage = hasUnread;
-    ChatBloc().chats.firstWhere((e) => e.guid == guid).hasUnreadMessage = hasUnread;
+    ChatBloc().chats.firstWhereOrNull((e) => e.guid == guid)?.hasUnreadMessage = hasUnread;
     save();
 
     if (hasUnread) {

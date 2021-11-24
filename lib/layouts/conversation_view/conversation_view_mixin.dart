@@ -363,10 +363,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
         leading: buildBackButton(context, callback: () {
           if (LifeCycleManager().isBubble) {
-            NotificationManager().switchChat(null);
             SystemNavigator.pop();
+            return false;
           }
           EventDispatcher().emit("update-highlight", null);
+          return true;
         }),
         automaticallyImplyLeading: false,
         backgroundColor: backgroundColor,
@@ -600,10 +601,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 mainAxisSize: cupertino.MainAxisSize.min,
                 mainAxisAlignment: cupertino.MainAxisAlignment.start,
                 children: [
-                  buildBackButton(context, callback: () async {
-                    if (LifeCycleManager().isBubble) SystemNavigator.pop();
+                  buildBackButton(context, callback: () {
+                    if (LifeCycleManager().isBubble) {
+                      SystemNavigator.pop();
+                      return false;
+                    }
                     EventDispatcher().emit("update-highlight", null);
-                    await SystemChannels.textInput.invokeMethod('TextInput.hide');
+                    SystemChannels.textInput.invokeMethod('TextInput.hide');
+                    return true;
                   }),
                   if (ChatBloc().unreads.value > 0)
                     Container(
