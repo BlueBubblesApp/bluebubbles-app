@@ -81,152 +81,161 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       opacity: showOverlay ? 1.0 : 0.0,
       duration: Duration(milliseconds: 125),
       child: Container(
-          height: 150.0,
-          width: CustomNavigator.width(context),
-          color: Colors.black.withOpacity(0.65),
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Padding(
-              padding: EdgeInsets.only(top: 40.0, left: 5),
-              child: CupertinoButton(
-                padding: EdgeInsets.symmetric(horizontal: 5),
-                onPressed: () async {
-                  Navigator.pop(context);
-                },
-                child: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.back : Icons.arrow_back,
-                  color: Colors.white,
+        height: 115.0,
+        width: CustomNavigator.width(context),
+        color: Colors.black.withOpacity(0.65),
+        child: SafeArea(
+          left: false,
+          right: false,
+          bottom: false,
+          child: Container(
+            height: 50,
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Padding(
+                padding: EdgeInsets.only(top: 10.0, left: 5),
+                child: CupertinoButton(
+                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                  },
+                  child: Icon(
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.back : Icons.arrow_back,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(top: 40.0),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    onPressed: () async {
-                      List<Widget> metaWidgets = [];
-                      for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
-                        metaWidgets.add(RichText(
-                            text: TextSpan(children: [
-                          TextSpan(
-                              text: "${entry.key}: ",
-                              style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
-                          TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
-                        ])));
-                      }
-
-                      if (metaWidgets.isEmpty) {
-                        metaWidgets.add(Text(
-                          "No metadata available",
-                          style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
-                          textAlign: TextAlign.center,
-                        ));
-                      }
-
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text(
-                            "Metadata",
-                            style: Theme.of(context).textTheme.headline1,
-                            textAlign: TextAlign.center,
-                          ),
-                          backgroundColor: Theme.of(context).colorScheme.secondary,
-                          content: SizedBox(
-                            width: CustomNavigator.width(context) * 3 / 5,
-                            height: context.height * 1 / 4,
-                            child: Container(
-                              padding: EdgeInsets.all(10.0),
-                              decoration: BoxDecoration(
-                                  color: Theme.of(context).backgroundColor,
-                                  borderRadius: BorderRadius.all(Radius.circular(10))),
-                              child: ListView(
-                                physics: AlwaysScrollableScrollPhysics(
-                                  parent: BouncingScrollPhysics(),
-                                ),
-                                children: metaWidgets,
-                              ),
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              child: Text(
-                                "Close",
-                                style: Theme.of(context).textTheme.bodyText1!.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                              ),
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(top: 40.0),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    onPressed: () async {
-                      CurrentChat.activeChat?.clearImageData(widget.attachment);
-
-                      showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
-                      AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
-                        initBytes();
-                      }, onError: () {
-                        Navigator.pop(context);
-                      });
-
-                      bytes = null;
-                      if (mounted) setState(() {});
-                    },
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(top: 40.0),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    onPressed: () async {
-                      await AttachmentHelper.saveToGallery(widget.file);
-                    },
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                if (!kIsWeb && !kIsDesktop)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
                   Padding(
-                    padding: EdgeInsets.only(top: 40.0),
+                    padding: EdgeInsets.only(top: 10.0),
                     child: CupertinoButton(
                       padding: EdgeInsets.symmetric(horizontal: 5),
                       onPressed: () async {
-                        if (widget.file.path == null) return;
-                        Share.file(
-                          "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                          widget.file.path!,
+                        List<Widget> metaWidgets = [];
+                        for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
+                          metaWidgets.add(RichText(
+                              text: TextSpan(children: [
+                            TextSpan(
+                                text: "${entry.key}: ",
+                                style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
+                            TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
+                          ])));
+                        }
+
+                        if (metaWidgets.isEmpty) {
+                          metaWidgets.add(Text(
+                            "No metadata available",
+                            style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
+                            textAlign: TextAlign.center,
+                          ));
+                        }
+
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text(
+                              "Metadata",
+                              style: Theme.of(context).textTheme.headline1,
+                              textAlign: TextAlign.center,
+                            ),
+                            backgroundColor: Theme.of(context).colorScheme.secondary,
+                            content: SizedBox(
+                              width: CustomNavigator.width(context) * 3 / 5,
+                              height: context.height * 1 / 4,
+                              child: Container(
+                                padding: EdgeInsets.all(10.0),
+                                decoration: BoxDecoration(
+                                    color: Theme.of(context).backgroundColor,
+                                    borderRadius: BorderRadius.all(Radius.circular(10))),
+                                child: ListView(
+                                  physics: AlwaysScrollableScrollPhysics(
+                                    parent: BouncingScrollPhysics(),
+                                  ),
+                                  children: metaWidgets,
+                                ),
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                child: Text(
+                                  "Close",
+                                  style: Theme.of(context).textTheme.bodyText1!.copyWith(
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                ),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                            ],
+                          ),
                         );
                       },
                       child: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
                         color: Colors.white,
                       ),
                     ),
                   ),
-              ],
-            ),
-          ])),
+                  Padding(
+                    padding: EdgeInsets.only(top: 10.0),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.symmetric(horizontal: 5),
+                      onPressed: () async {
+                        CurrentChat.activeChat?.clearImageData(widget.attachment);
+
+                        showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
+                        AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
+                          initBytes();
+                        }, onError: () {
+                          Navigator.pop(context);
+                        });
+
+                        bytes = null;
+                        if (mounted) setState(() {});
+                      },
+                      child: Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(top: 10.0),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.symmetric(horizontal: 5),
+                      onPressed: () async {
+                        await AttachmentHelper.saveToGallery(widget.file);
+                      },
+                      child: Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  if (!kIsWeb && !kIsDesktop)
+                    Padding(
+                      padding: EdgeInsets.only(top: 10.0),
+                      child: CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 5),
+                        onPressed: () async {
+                          if (widget.file.path == null) return;
+                          Share.file(
+                            "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
+                            widget.file.path!,
+                          );
+                        },
+                        child: Icon(
+                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ]),
+          ),
+        ),
+      ),
     );
 
     var loader = Center(
