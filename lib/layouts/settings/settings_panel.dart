@@ -613,7 +613,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                       String min = time.split("-")[1];
                                                                       String sec = time.split("-")[2];
                                                                       String timeType = "";
-                                                                      if(int.parse(hour) > 12 && int.parse(hour) < 24){
+                                                                      if(int.parse(hour) >= 12 && int.parse(hour) < 24){
                                                                         timeType = "PM";
                                                                       } else{
                                                                         timeType = "AM";
@@ -624,7 +624,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                       if(int.parse(sec) < 10){
                                                                         sec = "0" + sec;
                                                                       }
-                                                                      if(int.parse(hour) > 12){
+                                                                      // TODO check 24 hour time setting to display in 24
+                                                                      if(int.parse(hour) > 12 && !SettingsManager().settings.use24HrFormat.value){
                                                                         hour = (int.parse(hour) -12).toString();
                                                                       }
                                                                       finalName = "$month/$day/$year at $hour:$min:$sec $timeType";
