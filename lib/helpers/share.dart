@@ -66,11 +66,14 @@ class Share {
 
     // Create the message object and link the attachment
     Message sentMessage = Message(
-        guid: _attachmentGuid,
-        text: "",
-        dateCreated: DateTime.now(),
-        hasAttachments: true,
-        attachments: [messageAttachment]);
+      guid: _attachmentGuid,
+      text: "",
+      dateCreated: DateTime.now(),
+      hasAttachments: true,
+      attachments: [messageAttachment],
+      isFromMe: true,
+      handleId: 0,
+    );
 
     // Add the message to the chat and save
     NewMessageManager().addMessage(chat, sentMessage);
