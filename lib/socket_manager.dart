@@ -169,7 +169,7 @@ class SocketManager {
         state.value = SocketState.DISCONNECTED;
         Timer t;
         t = Timer(const Duration(seconds: 5), () {
-          if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
+          if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen! && SettingsManager().settings.finishedSetup.value) {
             showSnackbar('Socket Disconnected', 'You are no longer connected to the socket 🔌');
           }
         });
@@ -178,7 +178,7 @@ class SocketManager {
             t.cancel();
           } else {
             t = Timer(const Duration(seconds: 5), () {
-              if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
+              if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen! && SettingsManager().settings.finishedSetup.value) {
                 showSnackbar('Socket Disconnected', 'You are no longer connected to the socket 🔌');
               }
             });
