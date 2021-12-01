@@ -111,8 +111,20 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
+//ignore: prefer_void_to_null
 Future<Null> main() async {
+  await initApp(false);
+}
+
+@pragma('vm:entry-point')
+Future<Null> bubble() async {
+  await initApp(true);
+}
+
+//ignore: prefer_void_to_null
+Future<Null> initApp(bool isBubble) async {
   HttpOverrides.global = MyHttpOverrides();
+  LifeCycleManager().isBubble = isBubble;
 
   // This captures errors reported by the Flutter framework.
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -135,8 +147,8 @@ Future<Null> main() async {
     prefs = await SharedPreferences.getInstance();
     if (!kIsWeb) {
       Directory documentsDirectory =
-          //ignore: unnecessary_cast, we need this as a workaround
-          (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+      //ignore: unnecessary_cast, we need this as a workaround
+      (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
       final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
@@ -229,13 +241,13 @@ Future<Null> main() async {
     // and our dummy splash screen
     if (!SettingsManager().settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
       runApp(
-        MaterialApp(
-          home: SplashScreen(shouldNavigate: false),
-          theme: ThemeData(
-              backgroundColor: SchedulerBinding.instance!.window.platformBrightness == Brightness.dark
-                  ? Colors.black : Colors.white
+          MaterialApp(
+              home: SplashScreen(shouldNavigate: false),
+              theme: ThemeData(
+                  backgroundColor: SchedulerBinding.instance!.window.platformBrightness == Brightness.dark
+                      ? Colors.black : Colors.white
+              )
           )
-        )
       );
     }
     Get.put(AttachmentDownloadService());
@@ -243,7 +255,7 @@ Future<Null> main() async {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
       final InitializationSettings initializationSettings =
-          InitializationSettings(android: initializationSettingsAndroid);
+      InitializationSettings(android: initializationSettingsAndroid);
       await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
       tz.initializeTimeZones();
       tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
@@ -265,16 +277,16 @@ Future<Null> main() async {
     if (!kIsWeb) {
       try {
         DynamicCachedFonts.loadCachedFont(
-                "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
-                fontFamily: "Apple Color Emoji")
+            "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
+            fontFamily: "Apple Color Emoji")
             .then((_) {
           fontExistsOnDisk.value = true;
         });
       } on StateError catch (_) {
         fontExistsOnDisk.value = false;
       }
+      await dotenv.load();
     }
-    await dotenv.load();
   } catch (e, s) {
     exception = e;
     stacktrace = s;
@@ -487,39 +499,40 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     LifeCycleManager().opened();
 
     if (!kIsWeb) {
-      // This initialization sets the function address in the native code to be used later
-      BackgroundIsolateInterface.initialize();
+      if (!LifeCycleManager().isBubble) {
+        // This initialization sets the function address in the native code to be used later
+        BackgroundIsolateInterface.initialize();
+        // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
+        NotificationManager().createNotificationChannel(
+          NotificationManager.NEW_MESSAGE_CHANNEL,
+          "New Messages",
+          "For new messages retreived",
+        );
+        NotificationManager().createNotificationChannel(
+          NotificationManager.SOCKET_ERROR_CHANNEL,
+          "Socket Connection Error",
+          "Notifications that will appear when the connection to the server has failed",
+        );
+        // create a send port to receive messages from the background isolate when
+        // the UI thread is active
+        final result = IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+        if (!result) {
+          IsolateNameServer.removePortNameMapping('bg_isolate');
+          IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+        }
+        port.listen((dynamic data) {
+          Logger.info("SendPort received action ${data['action']}");
+          if (data['action'] == 'new-message') {
+            // Add it to the queue with the data as the item
+            IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+          } else if (data['action'] == 'update-message') {
+            // Add it to the queue with the data as the item
+            IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+          }
+        });
+      }
       // Set a reference to the DB so it can be used in another isolate
       prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
-      // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
-      NotificationManager().createNotificationChannel(
-        NotificationManager.NEW_MESSAGE_CHANNEL,
-        "New Messages",
-        "For new messages retreived",
-      );
-      NotificationManager().createNotificationChannel(
-        NotificationManager.SOCKET_ERROR_CHANNEL,
-        "Socket Connection Error",
-        "Notifications that will appear when the connection to the server has failed",
-      );
-
-      // create a send port to receive messages from the background isolate when
-      // the UI thread is active
-      final result = IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
-      if (!result) {
-        IsolateNameServer.removePortNameMapping('bg_isolate');
-        IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
-      }
-      port.listen((dynamic data) {
-        Logger.info("SendPort received action ${data['action']}");
-        if (data['action'] == 'new-message') {
-          // Add it to the queue with the data as the item
-          IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
-        } else if (data['action'] == 'update-message') {
-          // Add it to the queue with the data as the item
-          IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
-        }
-      });
     }
 
     // Get the saved settings from the settings manager after the first frame
@@ -554,53 +567,55 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       }
 
       if (!kIsWeb && !kIsDesktop) {
-        // Get sharing media from files shared to the app from cold start
-        // This one only handles files, not text
-        ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
-          if (!SettingsManager().settings.finishedSetup.value) return;
-          if (value.isEmpty) return;
+        if (!LifeCycleManager().isBubble) {
+          // Get sharing media from files shared to the app from cold start
+          // This one only handles files, not text
+          ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
+            if (!SettingsManager().settings.finishedSetup.value) return;
+            if (value.isEmpty) return;
 
-          // If we don't have storage permission, we can't do anything
-          if (!await Permission.storage.request().isGranted) return;
+            // If we don't have storage permission, we can't do anything
+            if (!await Permission.storage.request().isGranted) return;
 
-          // Add the attached files to a list
-          List<PlatformFile> attachments = [];
-          for (SharedMediaFile element in value) {
-            attachments.add(PlatformFile(
-              name: element.path.split("/").last,
-              path: element.path,
-              size: 0,
-            ));
-          }
+            // Add the attached files to a list
+            List<PlatformFile> attachments = [];
+            for (SharedMediaFile element in value) {
+              attachments.add(PlatformFile(
+                name: element.path.split("/").last,
+                path: element.path,
+                size: 0,
+              ));
+            }
 
-          if (attachments.isEmpty) return;
+            if (attachments.isEmpty) return;
 
-          // Go to the new chat creator, with all of our attachments
-          CustomNavigator.pushAndRemoveUntil(
-            context,
-            ConversationView(
-              existingAttachments: attachments,
-              isCreator: true,
-            ),
-            (route) => route.isFirst,
-          );
-        });
+            // Go to the new chat creator, with all of our attachments
+            CustomNavigator.pushAndRemoveUntil(
+              context,
+              ConversationView(
+                existingAttachments: attachments,
+                isCreator: true,
+              ),
+                  (route) => route.isFirst,
+            );
+          });
 
-        // Same thing as [getInitialMedia] except for text
-        ReceiveSharingIntent.getInitialText().then((String? text) {
-          if (!SettingsManager().settings.finishedSetup.value) return;
-          if (text == null) return;
+          // Same thing as [getInitialMedia] except for text
+          ReceiveSharingIntent.getInitialText().then((String? text) {
+            if (!SettingsManager().settings.finishedSetup.value) return;
+            if (text == null) return;
 
-          // Go to the new chat creator, with all of our text
-          CustomNavigator.pushAndRemoveUntil(
-            context,
-            ConversationView(
-              existingText: text,
-              isCreator: true,
-            ),
-            (route) => route.isFirst,
-          );
-        });
+            // Go to the new chat creator, with all of our text
+            CustomNavigator.pushAndRemoveUntil(
+              context,
+              ConversationView(
+                existingText: text,
+                isCreator: true,
+              ),
+                  (route) => route.isFirst,
+            );
+          });
+        }
 
         // Request native code to retreive what the starting intent was
         //

@@ -75,6 +75,11 @@ public class BubbleActivity extends FlutterFragmentActivity {
                 .setMethodCallHandler(((call, result) -> MethodCallHandler.methodCallHandler(call, result, BubbleActivity.this, null)));
     }
 
+    @Override
+    @NonNull
+    public String getDartEntrypointFunctionName() {
+        return "bubble";
+    }
 
     protected void onNewIntent(Intent intent) {
         // Get intent, action and MIME type
