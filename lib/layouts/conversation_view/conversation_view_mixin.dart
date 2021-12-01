@@ -1145,7 +1145,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 builder: (BuildContext context) {
                   return AlertDialog(
                       backgroundColor: Theme.of(context).colorScheme.secondary,
-                      title: Text("Group Naming",
+                      title: Text("Group Chat Creation",
                           style:
                           TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                       content: Column(

@@ -667,29 +667,64 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                     SliverToBoxAdapter(
                       child: InkWell(
                         onTap: () {
-                          if (mounted) {
-                            setState(() {
-                              isClearing = true;
-                            });
-                          }
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  title: Text("Are You Sure?",
+                                      style:
+                                      TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                  content: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Clearing the transcript will permanently prevent all stored messages from being loaded by the client app, until you perform a full reset.',
+                                        style: context.theme.textTheme.subtitle1,
+                                      ),
+                                    ],
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: Text("Yes"),
+                                      onPressed: () async {
+                                        if (mounted) {
+                                          setState(() {
+                                            isClearing = true;
+                                          });
+                                        }
 
-                          try {
-                            widget.chat.clearTranscript();
-                            EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
-                            if (mounted) {
-                              setState(() {
-                                isClearing = false;
-                                isCleared = true;
-                              });
-                            }
-                          } catch (ex) {
-                            if (mounted) {
-                              setState(() {
-                                isClearing = false;
-                                isCleared = false;
-                              });
-                            }
-                          }
+                                        try {
+                                          widget.chat.clearTranscript();
+                                          EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
+                                          if (mounted) {
+                                            setState(() {
+                                              isClearing = false;
+                                              isCleared = true;
+                                            });
+                                          }
+                                        } catch (ex) {
+                                          if (mounted) {
+                                            setState(() {
+                                              isClearing = false;
+                                              isCleared = false;
+                                            });
+                                          }
+                                        }
+                                      },
+                                    ),
+                                    TextButton(
+                                      child: Text("Cancel"),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                  ]
+                              );
+                            },
+                          );
                         },
                         child: ListTile(
                           leading: Text(
