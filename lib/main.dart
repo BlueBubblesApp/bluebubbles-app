@@ -690,7 +690,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           GoBackIntent: GoBackAction(context),
         },
         child: Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor: context.theme.backgroundColor,
           body: Builder(
             builder: (BuildContext context) {
               if (SettingsManager().settings.finishedSetup.value) {
