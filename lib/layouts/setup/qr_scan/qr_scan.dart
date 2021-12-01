@@ -33,6 +33,7 @@ class _QRScanState extends State<QRScan> {
   String error = "";
   CustomAnimationControl controller = CustomAnimationControl.mirror;
   Tween<double> tween = Tween<double>(begin: 0, end: 5);
+  bool obscureText = true;
 
   Future<void> scanQRCode() async {
     PermissionStatus status = await Permission.contacts.status;
@@ -414,6 +415,7 @@ class _QRScanState extends State<QRScan> {
                                           autocorrect: false,
                                           autofocus: true,
                                           controller: urlController,
+                                          textInputAction: TextInputAction.next,
                                           decoration: InputDecoration(
                                             enabledBorder: OutlineInputBorder(
                                                 borderSide: BorderSide(color: Colors.grey),
@@ -428,30 +430,45 @@ class _QRScanState extends State<QRScan> {
                                       SizedBox(height: 20),
                                       Container(
                                         width: context.width * 2 / 3,
-                                        child: TextField(
-                                          cursorColor: Theme.of(context).primaryColor,
-                                          autocorrect: false,
-                                          autofocus: false,
-                                          controller: passwordController,
-                                          textInputAction: TextInputAction.next,
-                                          onSubmitted: (_) {
-                                            if (urlController.text == "googleplaytest" &&
-                                                passwordController.text == "googleplaytest") {
-                                              Get.toNamed("/testing-mode");
-                                              return;
-                                            }
-                                            connect(urlController.text, passwordController.text);
-                                          },
-                                          decoration: InputDecoration(
-                                            enabledBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.grey),
-                                                borderRadius: BorderRadius.circular(20)),
-                                            focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                                                borderRadius: BorderRadius.circular(20)),
-                                            labelText: "Password",
-                                          ),
-                                          obscureText: true,
+                                        child: Stack(
+                                          alignment: Alignment.centerRight,
+                                          children: [
+                                            TextField(
+                                              cursorColor: Theme.of(context).primaryColor,
+                                              autocorrect: false,
+                                              autofocus: false,
+                                              controller: passwordController,
+                                              textInputAction: TextInputAction.next,
+                                              onSubmitted: (_) {
+                                                if (urlController.text == "googleplaytest" &&
+                                                    passwordController.text == "googleplaytest") {
+                                                  Get.toNamed("/testing-mode");
+                                                  return;
+                                                }
+                                                connect(urlController.text, passwordController.text);
+                                              },
+                                              decoration: InputDecoration(
+                                                enabledBorder: OutlineInputBorder(
+                                                    borderSide: BorderSide(color: Colors.grey),
+                                                    borderRadius: BorderRadius.circular(20)),
+                                                focusedBorder: OutlineInputBorder(
+                                                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                                                    borderRadius: BorderRadius.circular(20)),
+                                                labelText: "Password",
+                                                contentPadding: EdgeInsets.fromLTRB(12, 24, 40, 16),
+                                              ),
+                                              obscureText: obscureText,
+                                            ),
+                                            IconButton(
+                                              icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility),
+                                              color: Colors.grey,
+                                              onPressed: () {
+                                                setState(() {
+                                                  obscureText = !obscureText;
+                                                });
+                                              },
+                                            ),
+                                          ],
                                         ),
                                       ),
                                       SizedBox(height: 20),
