@@ -193,6 +193,7 @@ class ActionHandler {
       text: text.trim(),
       dateCreated: DateTime.now(),
       isFromMe: true,
+      handleId: 0,
     );
 
     message.generateTempGuid();

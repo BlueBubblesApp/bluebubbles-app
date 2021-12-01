@@ -146,7 +146,7 @@ class Attachment {
       try {
         /// store the attachment and add the link between the message and
         /// attachment
-        if (message != null) {
+        if (message?.id != null) {
           this.message.target = message;
         }
         id = attachmentBox.put(this);

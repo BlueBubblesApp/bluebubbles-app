@@ -160,8 +160,8 @@ class ImageWidget extends StatelessWidget {
                 // prevents the image widget from "refreshing" when the provider changes
                 gaplessPlayback: true,
                 filterQuality: FilterQuality.none,
-                cacheWidth: controller.attachment.width != null ? (controller.attachment.width! * Get.pixelRatio).round() : null,
-                cacheHeight: controller.attachment.height != null ? (controller.attachment.height! * Get.pixelRatio).round() : null,
+                cacheWidth: controller.attachment.width != null ? (controller.attachment.width! * Get.pixelRatio).round().abs() : null,
+                cacheHeight: controller.attachment.height != null ? (controller.attachment.height! * Get.pixelRatio).round().abs() : null,
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   return Stack(children: [
                     buildPlaceHolder(context, controller, isLoaded: wasSynchronouslyLoaded),

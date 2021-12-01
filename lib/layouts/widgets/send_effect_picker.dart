@@ -51,6 +51,7 @@ void sendEffectAction(
     hasAttachments: false,
     threadOriginatorGuid: threadOriginatorGuid,
     isFromMe: true,
+    handleId: 0,
   );
   message.generateTempGuid();
   final GlobalKey key = GlobalKey();

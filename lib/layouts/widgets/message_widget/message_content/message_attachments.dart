@@ -66,7 +66,7 @@ class MessageAttachments extends StatelessWidget {
   List<Widget> _buildAttachments(BuildContext context) {
     List<Widget> content = <Widget>[];
     List<Attachment?>? items;
-    if (message?.guid == "redacted-mode-demo" || message!.guid!.contains("theme-selector")) {
+    if (message?.guid == "redacted-mode-demo" || message!.guid!.contains("theme-selector") || message!.guid!.startsWith("temp-")) {
       items = message!.attachments;
     } else {
       items = CurrentChat.activeChat?.getAttachmentsForMessage(message) ?? [];

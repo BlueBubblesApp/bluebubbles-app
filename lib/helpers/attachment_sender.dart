@@ -139,7 +139,10 @@ class AttachmentSender {
         text: "",
         dateCreated: DateTime.now(),
         hasAttachments: true,
-        attachments: [messageAttachment]);
+        attachments: [messageAttachment],
+        isFromMe: true,
+        handleId: 0,
+    );
 
     if (_text != "") {
       messageWithText = Message(
@@ -147,6 +150,8 @@ class AttachmentSender {
         text: _text,
         dateCreated: DateTime.now(),
         hasAttachments: false,
+        isFromMe: true,
+        handleId: 0,
       );
     }
 
