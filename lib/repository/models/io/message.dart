@@ -763,22 +763,23 @@ class Message {
               .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble())));
     }
     // initialize constraints for text rendering
+    final fontSizeFactor = isBigEmoji() ? 4.0 : 1.0;
     final constraints = BoxConstraints(
       maxWidth: maxWidthOverride ?? CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
-      minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodyText2!.fontSize!,
+      minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodyText2!.fontSize! * fontSizeFactor,
     );
     final renderParagraph = RichText(
       text: TextSpan(
         text: textOverride ?? fullText,
-        style: context.theme.textTheme.bodyText2!.apply(color: Colors.white),
+        style: context.theme.textTheme.bodyText2!.apply(color: Colors.white, fontSizeFactor: fontSizeFactor),
       ),
     ).createRenderObject(context);
     // get the text size
     Size size = renderParagraph.getDryLayout(constraints);
     // if the text is shorter than the full width, add 28 to account for the
     // container margins
-    if (size.height < context.theme.textTheme.bodyText2!.fontSize! * 2 ||
-        (subject != null && size.height < context.theme.textTheme.bodyText2!.fontSize! * 3)) {
+    if (size.height < context.theme.textTheme.bodyText2!.fontSize! * 2 * fontSizeFactor ||
+        (subject != null && size.height < context.theme.textTheme.bodyText2!.fontSize! * 3 * fontSizeFactor)) {
       size = Size(size.width + 28, size.height);
     }
     // if we have a URL preview, extend to the full width
