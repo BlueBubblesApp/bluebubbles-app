@@ -80,6 +80,13 @@ class AttachmentDownloadController extends GetxController {
     params["compress"] = false;
     if (kIsWeb) {
       var response = await api.downloadAttachment(attachment.guid!);
+      if (response.statusCode != 200) {
+        if (onError != null) onError!.call();
+
+        error.value = true;
+        Get.find<AttachmentDownloadService>().removeFromQueue(this);
+        return;
+      }
       attachment.webUrl = response.requestOptions.path;
       Logger.info("Finished fetching attachment");
       stopwatch.stop();
