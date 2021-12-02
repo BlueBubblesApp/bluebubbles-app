@@ -65,13 +65,51 @@ android {
             storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
             storePassword keystoreProperties['storePassword']
         }
+        debug {
+
+        }
+    }
+
+    flavorDimensions "app"
+
+    productFlavors {
+        tanay {
+            dimension "app"
+            resValue "string", "app_name", "BlueBubbles (Tanay Special Sauce)"
+            resValue "color", "ic_launcher_background", "#4c49de"
+            resValue "string", "file_provider", "com.bluebubbles.messaging.tanay.fileprovider"
+            applicationId "com.bluebubbles.messaging.tanay"
+        }
+        alpha {
+            dimension "app"
+            resValue "string", "app_name", "BlueBubbles (Alpha)"
+            resValue "color", "ic_launcher_background", "#49dbde"
+            resValue "string", "file_provider", "com.bluebubbles.messaging.alpha.fileprovider"
+            applicationId "com.bluebubbles.messaging.alpha"
+        }
+        beta {
+            dimension "app"
+            resValue "string", "app_name", "BlueBubbles (Beta)"
+            resValue "color", "ic_launcher_background", "#4990de"
+            resValue "string", "file_provider", "com.bluebubbles.messaging.beta.fileprovider"
+            applicationId "com.bluebubbles.messaging.beta"
+        }
+        prod {
+            getIsDefault().set(true)
+            dimension "app"
+            resValue "string", "app_name", "BlueBubbles"
+            resValue "color", "ic_launcher_background", "#4990de"
+            resValue "string", "file_provider", "com.bluebubbles.messaging.fileprovider"
+            applicationId "com.bluebubbles.messaging"
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig signingConfigs.release
+            productFlavors.tanay.signingConfig signingConfigs.debug
+            productFlavors.alpha.signingConfig signingConfigs.release
+            productFlavors.beta.signingConfig signingConfigs.release
+            productFlavors.prod.signingConfig signingConfigs.release
             minifyEnabled false
             shrinkResources false
         }
