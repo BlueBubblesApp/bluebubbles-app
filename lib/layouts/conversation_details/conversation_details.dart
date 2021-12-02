@@ -771,7 +771,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                     children: [
                                       Padding(
                                           padding: EdgeInsets.all(15),
-                                          child: Text("Note: Longer timeframes may take a while to generate the PDF")
+                                          child: Text("Note: Longer timeframes may take a while to generate the txt file")
                                       ),
                                       Wrap(
                                         alignment: WrapAlignment.center,

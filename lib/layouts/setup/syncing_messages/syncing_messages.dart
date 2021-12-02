@@ -112,7 +112,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                               borderRadius: BorderRadius.circular(20),
                               child: LinearProgressIndicator(
                                 value: progress != 100.0 && progress != 0.0 ? (progress / 100) : null,
-                                backgroundColor: Colors.white,
+                                backgroundColor: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Colors.grey : Colors.white,
                                 valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                               ),
                             ),
@@ -203,7 +203,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                                 Padding(
                                   padding: const EdgeInsets.only(right: 0.0, left: 5.0),
                                   child: Text("Finish",
-                                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.2)),
+                                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.2, color: Colors.white)),
                                 ),
                               ],
                             ),

@@ -333,7 +333,7 @@ class _QRScanState extends State<QRScan> {
                                     Padding(
                                       padding: const EdgeInsets.only(right: 0.0, left: 5.0),
                                       child: Text("Scan QR Code",
-                                          style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)),
+                                          style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                                     ),
                                   ],
                                 ),
@@ -388,7 +388,7 @@ class _QRScanState extends State<QRScan> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(CupertinoIcons.text_cursor, color: Colors.white, size: 20),
+                                Icon(CupertinoIcons.text_cursor, color: Theme.of(context).textTheme.bodyText1!.color, size: 20),
                                 SizedBox(width: 10),
                                 Text("Manual entry",
                                     style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)),
@@ -552,7 +552,7 @@ class _QRScanState extends State<QRScan> {
                                                       style: Theme.of(context)
                                                           .textTheme
                                                           .bodyText1!
-                                                          .apply(fontSizeFactor: 1.1)),
+                                                          .apply(fontSizeFactor: 1.1, color: Colors.white)),
                                                   SizedBox(width: 10),
                                                   Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                                                 ],
@@ -604,7 +604,7 @@ class _QRScanState extends State<QRScan> {
       context: context,
       builder: (connectContext) => ConnectingAlert(
         onConnect: (bool result) {
-          Navigator.of(connectContext).pop();
+          Get.back();
           if (result) {
             setState(() {
               showManualEntry = false;

@@ -67,7 +67,7 @@ class ConversationPanel extends StatelessWidget {
                     },
                     initialVal: SettingsManager().settings.recipientAsPlaceholder.value,
                     title: "Show Recipient (or Group Name) as Placeholder",
-                    subtitle: "Changes the 'BlueBubbles' text in the message box to display the recipient name",
+                    subtitle: "Changes the default hint text in the message box to display the recipient name",
                     backgroundColor: tileColor,
                   )),
                   Container(

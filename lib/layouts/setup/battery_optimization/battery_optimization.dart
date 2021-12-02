@@ -150,7 +150,7 @@ class _BatteryOptimizationPageState extends State<BatteryOptimizationPage> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .bodyText1!
-                                                  .apply(fontSizeFactor: 1.1)),
+                                                  .apply(fontSizeFactor: 1.1, color: Colors.white)),
                                       SizedBox(width: 10),
                                       bOptimized
                                           ? Icon(Icons.check, color: Colors.white, size: 20)
@@ -197,7 +197,7 @@ class _BatteryOptimizationPageState extends State<BatteryOptimizationPage> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                                Icon(Icons.arrow_back, color: Theme.of(context).textTheme.bodyText1!.color, size: 20),
                                 SizedBox(width: 10),
                                 Text("Back",
                                     style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)),
@@ -240,7 +240,7 @@ class _BatteryOptimizationPageState extends State<BatteryOptimizationPage> {
                                   Padding(
                                     padding: const EdgeInsets.only(right: 30.0),
                                     child: Text("Next",
-                                        style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)),
+                                        style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                                   ),
                                   Positioned(
                                     left: 40,
