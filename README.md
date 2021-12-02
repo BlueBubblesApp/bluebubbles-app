@@ -24,7 +24,7 @@ Private API Features:
 - Rename group chats
 - Add and remove participants from group chats
 
-**Private API Features are not enabled by default and require extra configurations. Details can be found in the settings page of the app.**
+**Private API Features are not enabled by default and require extra configurations. Learn how to set up Private API Features [here](https://github.com/BlueBubblesApp/bluebubbles-server/wiki/Using-Private-API-Features)**
 
 Screenshots:
 
