@@ -1,5 +1,4 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/layouts/stateful_wrapper.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 import 'package:flutter/material.dart';

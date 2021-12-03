@@ -22,7 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-class NotificationPanelController extends GetxController with SingleGetTickerProviderMixin {
+class NotificationPanelController extends GetxController with GetSingleTickerProviderStateMixin {
   late final TabController tabController;
   final List<Widget> tabs = [];
 

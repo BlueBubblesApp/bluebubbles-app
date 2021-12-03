@@ -251,47 +251,49 @@ class ContactTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return canBeRemoved ? Slidable(
-      actionExtentRatio: 0.25,
-      actionPane: SlidableStrechActionPane(),
-      secondaryActions: <Widget>[
-        IconSlideAction(
-          caption: 'Remove',
-          color: Colors.red,
-          icon: SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete,
-          onTap: () async {
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: SizedBox(
-                      height: 40,
-                      width: 40,
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                });
+      endActionPane: ActionPane(
+        motion: StretchMotion(),
+        extentRatio: 0.25,
+        children: [
+          SlidableAction(
+            label: 'Remove',
+            backgroundColor: Colors.red,
+            icon: SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete,
+            onPressed: (context) async {
+              showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: SizedBox(
+                        height: 40,
+                        width: 40,
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  });
 
-            Map<String, dynamic> params = {};
-            params["identifier"] = chat.guid;
-            params["address"] = handle.address;
-            SocketManager().sendMessage("remove-participant", params, (response) async {
-              Logger.info("Removed participant participant " + response.toString());
+              Map<String, dynamic> params = {};
+              params["identifier"] = chat.guid;
+              params["address"] = handle.address;
+              SocketManager().sendMessage("remove-participant", params, (response) async {
+                Logger.info("Removed participant participant " + response.toString());
 
-              if (response["status"] == 200) {
-                Chat updatedChat = Chat.fromMap(response["data"]);
-                updatedChat.save();
-                await ChatBloc().updateChatPosition(updatedChat);
-                Chat chatWithParticipants = updatedChat.getParticipants();
+                if (response["status"] == 200) {
+                  Chat updatedChat = Chat.fromMap(response["data"]);
+                  updatedChat.save();
+                  await ChatBloc().updateChatPosition(updatedChat);
+                  Chat chatWithParticipants = updatedChat.getParticipants();
 
-                Logger.info("Updating chat with ${chatWithParticipants.participants.length} participants");
-                updateChat(chatWithParticipants);
-                Navigator.of(context).pop();
-              }
-            });
-          },
-        ),
-      ],
+                  Logger.info("Updating chat with ${chatWithParticipants.participants.length} participants");
+                  updateChat(chatWithParticipants);
+                  Navigator.of(context).pop();
+                }
+              });
+            },
+          ),
+        ],
+      ),
       child: _buildContactTile(context),
     )
         : _buildContactTile(context);

@@ -87,6 +87,7 @@
             android:hardwareAccelerated="true"
             android:launchMode="singleTask"
             android:theme="@style/LaunchTheme"
+            android:exported="true"
             android:windowSoftInputMode="adjustResize"
             android:allowEmbedded="true"
             android:resizeableActivity="true">

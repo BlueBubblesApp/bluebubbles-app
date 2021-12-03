@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/crypto.dart';
@@ -165,11 +164,11 @@ class SocketManager {
         for (Function f in _manager.disconnectSubscribers.values) {
           f.call();
         }
-
+//androidx.sharetarget.ChooserTargetServiceCompat
         state.value = SocketState.DISCONNECTED;
         Timer t;
         t = Timer(const Duration(seconds: 5), () {
-          if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen! && SettingsManager().settings.finishedSetup.value) {
+          if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen && SettingsManager().settings.finishedSetup.value) {
             showSnackbar('Socket Disconnected', 'You are no longer connected to the socket 🔌');
           }
         });
@@ -178,7 +177,7 @@ class SocketManager {
             t.cancel();
           } else {
             t = Timer(const Duration(seconds: 5), () {
-              if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen! && SettingsManager().settings.finishedSetup.value) {
+              if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen && SettingsManager().settings.finishedSetup.value) {
                 showSnackbar('Socket Disconnected', 'You are no longer connected to the socket 🔌');
               }
             });

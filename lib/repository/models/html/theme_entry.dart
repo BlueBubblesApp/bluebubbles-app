@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/repository/models/html/objectbox.dart';
 import 'package:bluebubbles/repository/models/html/theme_object.dart';
 import 'package:flutter/material.dart';
 
@@ -14,6 +15,8 @@ class ThemeEntry {
   bool? isFont;
   int? fontSize;
   int? fontWeight;
+
+  final themeObject = ToOne<ThemeObject>();
 
   ThemeEntry({
     this.id,

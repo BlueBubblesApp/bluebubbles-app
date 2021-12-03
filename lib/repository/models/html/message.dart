@@ -15,6 +15,7 @@ import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/chat.dart';
 import 'package:bluebubbles/repository/models/html/handle.dart';
+import 'package:bluebubbles/repository/models/html/objectbox.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:flutter/material.dart';
@@ -79,6 +80,9 @@ class Message {
   List<Attachment?> attachments = [];
   List<Message> associatedMessages = [];
   bool? bigEmoji;
+
+  final chat = ToOne<Chat>();
+  final dbAttachments = <Attachment>[];
 
   Message(
       {this.id,

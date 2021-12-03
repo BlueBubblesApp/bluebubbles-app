@@ -18,6 +18,8 @@ export 'package:bluebubbles/repository/models/io/join_tables.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/join_tables.dart';
 export 'package:bluebubbles/repository/models/io/js.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/js.dart';
+export 'package:bluebubbles/repository/models/io/launch_at_startup.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/launch_at_startup.dart';
 export 'package:bluebubbles/repository/models/io/message.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/message.dart';
 export 'package:bluebubbles/repository/models/io/scheduled.dart'

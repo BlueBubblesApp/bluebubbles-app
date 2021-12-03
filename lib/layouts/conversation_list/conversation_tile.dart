@@ -150,68 +150,74 @@ class _ConversationTileState extends State<ConversationTile> {
   Widget buildSlider(Widget child) {
     if (kIsWeb || kIsDesktop) return child;
     return Obx(() => Slidable(
-          actionPane: SlidableStrechActionPane(),
-          actionExtentRatio: 0.2,
-          actions: [
-            if (SettingsManager().settings.iosShowPin.value)
-              IconSlideAction(
-                caption: widget.chat.isPinned! ? 'Unpin' : 'Pin',
-                color: Colors.yellow[800],
-                foregroundColor: Colors.white,
-                icon: widget.chat.isPinned! ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
-                onTap: () {
-                  widget.chat.togglePin(!widget.chat.isPinned!);
-                  EventDispatcher().emit("refresh", null);
-                  if (mounted) setState(() {});
-                },
-              ),
-          ],
-          secondaryActions: <Widget>[
-            if (!widget.chat.isArchived! && SettingsManager().settings.iosShowAlert.value)
-              IconSlideAction(
-                caption: widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
-                color: Colors.purple[700],
-                icon: widget.chat.muteType == "mute" ? CupertinoIcons.bell : CupertinoIcons.bell_slash,
-                onTap: () {
-                  widget.chat.toggleMute(widget.chat.muteType != "mute");
-                  if (mounted) setState(() {});
-                },
-              ),
-            if (SettingsManager().settings.iosShowDelete.value)
-              IconSlideAction(
-                caption: "Delete",
-                color: Colors.red,
-                icon: CupertinoIcons.trash,
-                onTap: () {
-                  ChatBloc().deleteChat(widget.chat);
-                  Chat.deleteChat(widget.chat);
-                },
-              ),
-            if (SettingsManager().settings.iosShowMarkRead.value)
-              IconSlideAction(
-                caption: widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
-                color: Colors.blue,
-                icon: widget.chat.hasUnreadMessage!
-                    ? CupertinoIcons.person_crop_circle_badge_checkmark
-                    : CupertinoIcons.person_crop_circle_badge_exclam,
-                onTap: () {
-                  ChatBloc().toggleChatUnread(widget.chat, !widget.chat.hasUnreadMessage!);
-                },
-              ),
-            if (SettingsManager().settings.iosShowArchive.value)
-              IconSlideAction(
-                caption: widget.chat.isArchived! ? 'UnArchive' : 'Archive',
-                color: widget.chat.isArchived! ? Colors.blue : Colors.red,
-                icon: widget.chat.isArchived! ? CupertinoIcons.tray_arrow_up : CupertinoIcons.tray_arrow_down,
-                onTap: () {
-                  if (widget.chat.isArchived!) {
-                    ChatBloc().unArchiveChat(widget.chat);
-                  } else {
-                    ChatBloc().archiveChat(widget.chat);
-                  }
-                },
-              ),
-          ],
+          startActionPane: ActionPane(
+            motion: StretchMotion(),
+            extentRatio: 0.2,
+            children: [
+              if (SettingsManager().settings.iosShowPin.value)
+                SlidableAction(
+                  label: widget.chat.isPinned! ? 'Unpin' : 'Pin',
+                  backgroundColor: Colors.yellow[800]!,
+                  foregroundColor: Colors.white,
+                  icon: widget.chat.isPinned! ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
+                  onPressed: (context) {
+                    widget.chat.togglePin(!widget.chat.isPinned!);
+                    EventDispatcher().emit("refresh", null);
+                    if (mounted) setState(() {});
+                  },
+                ),
+            ],
+          ),
+          endActionPane: ActionPane(
+            motion: StretchMotion(),
+            extentRatio: 0.2,
+            children: [
+              if (!widget.chat.isArchived! && SettingsManager().settings.iosShowAlert.value)
+                SlidableAction(
+                  label: widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
+                  backgroundColor: Colors.purple[700]!,
+                  icon: widget.chat.muteType == "mute" ? CupertinoIcons.bell : CupertinoIcons.bell_slash,
+                  onPressed: (context) {
+                    widget.chat.toggleMute(widget.chat.muteType != "mute");
+                    if (mounted) setState(() {});
+                  },
+                ),
+              if (SettingsManager().settings.iosShowDelete.value)
+                SlidableAction(
+                  label: "Delete",
+                  backgroundColor: Colors.red,
+                  icon: CupertinoIcons.trash,
+                  onPressed: (context) {
+                    ChatBloc().deleteChat(widget.chat);
+                    Chat.deleteChat(widget.chat);
+                  },
+                ),
+              if (SettingsManager().settings.iosShowMarkRead.value)
+                SlidableAction(
+                  label: widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
+                  backgroundColor: Colors.blue,
+                  icon: widget.chat.hasUnreadMessage!
+                      ? CupertinoIcons.person_crop_circle_badge_checkmark
+                      : CupertinoIcons.person_crop_circle_badge_exclam,
+                  onPressed: (context) {
+                    ChatBloc().toggleChatUnread(widget.chat, !widget.chat.hasUnreadMessage!);
+                  },
+                ),
+              if (SettingsManager().settings.iosShowArchive.value)
+                SlidableAction(
+                  label: widget.chat.isArchived! ? 'UnArchive' : 'Archive',
+                  backgroundColor: widget.chat.isArchived! ? Colors.blue : Colors.red,
+                  icon: widget.chat.isArchived! ? CupertinoIcons.tray_arrow_up : CupertinoIcons.tray_arrow_down,
+                  onPressed: (context) {
+                    if (widget.chat.isArchived!) {
+                      ChatBloc().unArchiveChat(widget.chat);
+                    } else {
+                      ChatBloc().archiveChat(widget.chat);
+                    }
+                  },
+                ),
+            ],
+          ),
           child: child,
         ));
   }
@@ -230,19 +236,11 @@ class _ConversationTileState extends State<ConversationTile> {
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style = Theme.of(context).textTheme.bodyText1;
-    if (widget.chat.title == null || kIsWeb || kIsDesktop) widget.chat.getTitle();
-    String title = widget.chat.title ?? "Fake Person";
-
-    if (generateNames) {
-      title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
-    } else if (hideInfo) {
-      style = style?.copyWith(color: Colors.transparent);
-    }
 
     return FutureBuilder<String?>(
         future: getOrUpdateChatTitle(),
         builder: (context, snapshot) {
-          String? title = snapshot.data ?? "";
+          String title = snapshot.data ?? "Fake Person";
           if (generateNames) {
             title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
           } else if (hideInfo) {

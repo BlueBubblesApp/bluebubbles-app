@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/html/message.dart';
+import 'package:bluebubbles/repository/models/html/objectbox.dart';
 import 'package:mime_type/mime_type.dart';
 
 class Attachment {
@@ -24,6 +25,8 @@ class Attachment {
   Map<String, dynamic>? metadata;
   Uint8List? bytes;
   String? webUrl;
+
+  final message = ToOne<Message>();
 
   Attachment({
     this.id,
@@ -158,6 +161,10 @@ class Attachment {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/$guid/$fileName";
     return pathName;
+  }
+
+  String getHeicToJpgPath() {
+    return "${getPath()}.jpg";
   }
 
   String getCompressedPath() {

@@ -3,13 +3,12 @@ import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:secure_application/secure_application.dart';
-import 'package:universal_io/io.dart';
 
 class MiscPanel extends StatelessWidget {
   @override
@@ -300,18 +299,16 @@ class MiscPanel extends StatelessWidget {
                           onChanged: (bool val) async {
                             SettingsManager().settings.launchAtStartup.value = val;
                             saveSettings();
-                            if (!Platform.isLinux) {
-                              if (val) {
-                                await LaunchAtStartup.instance.enable();
-                              } else {
-                                await LaunchAtStartup.instance.disable();
-                              }
+                            if (val) {
+                              await LaunchAtStartup.enable();
+                            } else {
+                              await LaunchAtStartup.disable();
                             }
                           },
                           initialVal: SettingsManager().settings.launchAtStartup.value,
                           title: "Launch on Startup",
                           subtitle:
-                          "Automatically open the desktop app on startup. Note: Currently unsupported on Linux.",
+                          "Automatically open the desktop app on startup.",
                           backgroundColor: tileColor,
                         )),
                     Obx(() {

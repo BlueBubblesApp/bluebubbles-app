@@ -21,7 +21,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
@@ -197,7 +196,7 @@ String randomString(int length) {
 }
 
 void showSnackbar(String title, String message,
-    {int animationMs = 250, int durationMs = 1500, Function(GetBar<Object>)? onTap, TextButton? button}) {
+    {int animationMs = 250, int durationMs = 1500, Function(GetSnackBar)? onTap, TextButton? button}) {
   Get.snackbar(title, message,
       snackPosition: SnackPosition.BOTTOM,
       colorText: Get.textTheme.bodyText1!.color,
@@ -209,8 +208,8 @@ void showSnackbar(String title, String message,
       animationDuration: Duration(milliseconds: animationMs),
       mainButton: button,
       onTap: onTap ??
-          (GetBar<Object> bar) {
-            if (Get.isSnackbarOpen ?? false) Get.back();
+          (GetSnackBar bar) {
+            if (Get.isSnackbarOpen) Get.back();
           });
 }
 

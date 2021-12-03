@@ -26,13 +26,33 @@ class Box<T> {
   /// Returns a list of all IDs of the inserted Objects.
   List<int> putMany(List<T> objects, {PutMode mode = PutMode.put}) => throw Exception('Unsupported Platform');
 
+  /// Retrieves the stored object with the ID [id] from this box's database.
+  /// Returns null if an object with the given ID doesn't exist.
+  T? get(int id) => throw Exception('Unsupported Platform');
+
   /// Returns all stored objects in this Box.
   List<T> getAll() => throw Exception('Unsupported Platform');
+
+  /// Returns a list of [ids.length] Objects of type T, each corresponding to
+  /// the location of its ID in [ids]. Non-existent IDs become null.
+  ///
+  /// Pass growableResult: true for the resulting list to be growable.
+  List<T?> getMany(List<int> ids, {bool growableResult = false}) => throw Exception('Unsupported Platform');
 
   /// Removes (deletes) ALL Objects in a single transaction.
   int removeAll() => throw Exception('Unsupported Platform');
 
   bool isEmpty() => throw Exception('Unsupported Platform');
+}
+
+class ToOne<EntityT> {
+
+  /// Get target object. If it's the first access, this reads from DB.
+  EntityT? get target {}
+
+  /// Set relation target object. Note: this does not store the change yet, use
+  /// [Box.put()] on the containing (relation source) object.
+  set target(EntityT? object) {}
 }
 
 class Store {
