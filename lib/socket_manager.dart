@@ -367,8 +367,16 @@ class SocketManager {
         IncomingQueue().add(QueueItem(event: "handle-updated-message", item: {"data": _data}));
       });
 
-      Logger.info("Connecting to the socket at: $serverAddress");
-      _manager.socket!.connect();
+      if (serverAddress.contains("trycloudflare.com")) {
+        Logger.info("Detected Cloudflare URL, waiting 10 seconds before connecting to socket at: $serverAddress");
+        Future.delayed(Duration(seconds: 10), () {
+          Logger.info("Connecting to the socket at: $serverAddress");
+          _manager.socket!.connect();
+        });
+      } else {
+        Logger.info("Connecting to the socket at: $serverAddress");
+        _manager.socket!.connect();
+      }
     } catch (e) {
       if (!catchException) {
         throw ("[$tag] -> Failed to connect: ${e.toString()}");
