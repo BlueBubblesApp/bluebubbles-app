@@ -624,7 +624,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                       if(int.parse(sec) < 10){
                                                                         sec = "0" + sec;
                                                                       }
-                                                                      // TODO check 24 hour time setting to display in 24
                                                                       if(int.parse(hour) > 12 && !SettingsManager().settings.use24HrFormat.value){
                                                                         hour = (int.parse(hour) -12).toString();
                                                                       }
