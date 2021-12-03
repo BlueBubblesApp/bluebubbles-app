@@ -178,6 +178,9 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                           SettingsSwitch(
                             onChanged: (bool val) {
                               controller._settingsCopy.privateMarkChatAsRead.value = val;
+                              if (val) {
+                                controller._settingsCopy.privateManualMarkAsRead.value = false;
+                              }
                               saveSettings();
                             },
                             initialVal: controller._settingsCopy.privateMarkChatAsRead.value,
