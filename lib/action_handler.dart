@@ -240,7 +240,9 @@ class ActionHandler {
     params["tempGuid"] = message.guid;
 
     void sendSocketMessage() {
-      if ((SettingsManager().settings.enablePrivateAPI.value && (message.text?.isNotEmpty ?? false))
+      if ((SettingsManager().settings.enablePrivateAPI.value
+          && SettingsManager().settings.privateAPISend.value
+          && (message.text?.isNotEmpty ?? false))
           || (message.subject?.isNotEmpty ?? false)
           || message.threadOriginatorGuid != null
           || message.expressiveSendStyleId != null) {

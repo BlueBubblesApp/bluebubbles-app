@@ -316,6 +316,22 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                                   }
                                 });
                               }),
+                          Obx(() {
+                            if ((controller.serverVersionCode.value ?? 0) >= 63) {
+                              return SettingsSwitch(
+                                onChanged: (bool val) {
+                                  controller._settingsCopy.privateAPISend.value = val;
+                                  saveSettings();
+                                },
+                                initialVal: controller._settingsCopy.privateAPISend.value,
+                                title: "Private API Send",
+                                subtitle: "Send regular text messages using the Private API for much faster speed",
+                                backgroundColor: tileColor,
+                              );
+                            } else {
+                              return SizedBox.shrink();
+                            }
+                          }),
                         ],
                       )
                     ],

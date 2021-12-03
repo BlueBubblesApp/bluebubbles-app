@@ -77,6 +77,7 @@ class Settings {
   final RxBool privateManualMarkAsRead = false.obs;
   final RxBool privateSubjectLine = false.obs;
   final RxBool swipeToReply = false.obs;
+  final RxBool privateAPISend = false.obs;
 
   // Redacted Mode Settings
   final RxBool redactedMode = false.obs;
@@ -294,6 +295,8 @@ class Settings {
         settings.immersiveMode.value = entry.value;
       } else if (entry.name == "swipeToReply") {
         settings.swipeToReply.value = entry.value;
+      } else if (entry.name == "privateAPISend") {
+        settings.privateAPISend.value = entry.value;
       } else if (entry.name == "avatarScale") {
         settings.avatarScale.value = entry.value;
       } else if (entry.name == "launchAtStartup") {
@@ -415,6 +418,7 @@ class Settings {
       'launchAtStartup': launchAtStartup.value,
       'closeToTray': closeToTray.value,
       'swipeToReply': swipeToReply.value,
+      'privateAPISend': privateAPISend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
       'privateSendTypingIndicators': privateSendTypingIndicators.value,
@@ -517,6 +521,7 @@ class Settings {
     SettingsManager().settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
     SettingsManager().settings.closeToTray.value = map['closeToTray'] ?? false;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
+    SettingsManager().settings.privateAPISend.value = map['privateAPISend'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
@@ -620,6 +625,7 @@ class Settings {
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
     s.closeToTray.value = map['closeToTray'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
+    s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
