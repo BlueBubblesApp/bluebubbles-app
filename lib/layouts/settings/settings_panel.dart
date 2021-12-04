@@ -613,7 +613,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                       String min = time.split("-")[1];
                                                                       String sec = time.split("-")[2];
                                                                       String timeType = "";
-                                                                      if(int.parse(hour) >= 12 && int.parse(hour) < 24){
+                                                                      if(int.parse(hour) >= 12 && int.parse(hour) < 24 && !SettingsManager().settings.use24HrFormat.value){
                                                                         timeType = "PM";
                                                                       } else{
                                                                         timeType = "AM";
