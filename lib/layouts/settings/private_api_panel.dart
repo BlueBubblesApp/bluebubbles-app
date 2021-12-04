@@ -320,7 +320,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                                 });
                               }),
                           Obx(() {
-                            if ((controller.serverVersionCode.value ?? 0) >= 63) {
+                            if ((controller.serverVersionCode.value ?? 0) >= 84) {
                               return SettingsSwitch(
                                 onChanged: (bool val) {
                                   controller._settingsCopy.privateAPISend.value = val;
