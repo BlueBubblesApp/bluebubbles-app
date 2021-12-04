@@ -100,8 +100,7 @@ class GetChatAttachments extends AsyncTask<List<dynamic>, List<Attachment>> {
       /// descending
       final query = (messageBox.query()
         ..link(Message_.chat, Chat_.id.equals(chatId))
-        ..order(Message_.dateCreated, flags: Order.descending)
-        ..order(Message_.originalROWID, flags: Order.descending))
+        ..order(Message_.dateCreated, flags: Order.descending))
           .build();
       final messages = query.find();
       query.close();
@@ -153,8 +152,7 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
             ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
             : Message_.dateDeleted.isNull())
           ..link(Message_.chat, Chat_.id.equals(chatId))
-          ..order(Message_.dateCreated, flags: Order.descending)
-          ..order(Message_.originalROWID, flags: Order.descending))
+          ..order(Message_.dateCreated, flags: Order.descending))
         .build();
       query
         ..limit = limit
@@ -799,8 +797,7 @@ class Chat {
           ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
           : Message_.dateDeleted.isNull())
         ..link(Message_.chat, Chat_.id.equals(chat.id!))
-        ..order(Message_.dateCreated, flags: Order.descending)
-        ..order(Message_.originalROWID, flags: Order.descending))
+        ..order(Message_.dateCreated, flags: Order.descending))
           .build();
       query
         ..limit = limit
