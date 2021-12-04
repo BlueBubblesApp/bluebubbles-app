@@ -141,7 +141,7 @@ Future<Null> initApp(bool isBubble) async {
 
   WidgetsFlutterBinding.ensureInitialized();
   dynamic exception;
-  dynamic stacktrace;
+  StackTrace? stacktrace;
   try {
     prefs = await SharedPreferences.getInstance();
     if (!kIsWeb) {
@@ -296,7 +296,7 @@ Future<Null> initApp(bool isBubble) async {
       darkTheme: dark.themeData,
     ));
   } else {
-    runApp(FailureToStart(e: exception));
+    runApp(FailureToStart(e: exception, s: stacktrace));
     throw Exception("$exception $stacktrace");
   }
 }

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class FailureToStart extends StatelessWidget {
-  const FailureToStart({Key? key, this.e, this.otherTitle}) : super(key: key);
+  const FailureToStart({Key? key, this.e, this.s, this.otherTitle}) : super(key: key);
   final dynamic e;
+  final StackTrace? s;
   final String? otherTitle;
 
   @override
@@ -35,6 +36,12 @@ class FailureToStart extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 20.0),
                   child: Center(
                     child: Text("Error: ${e.toString()}", style: TextStyle(color: Colors.white, fontSize: 10)),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0),
+                  child: Center(
+                    child: Text("Stacktrace: ${s.toString()}", style: TextStyle(color: Colors.white, fontSize: 10)),
                   ),
                 )
               ],
