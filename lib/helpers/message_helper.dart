@@ -223,13 +223,11 @@ class MessageHelper {
     // add unread icon as long as it isn't the active chat
     if (currChat?.chat.guid != chat.guid) ChatBloc().toggleChatUnread(chat, true, clearNotifications: false);
 
-    if (((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) &&
-        ((!SettingsManager().settings.notifyOnChatList.value &&
-                currChat == null &&
-                !Get.currentRoute.contains("settings")) ||
-            (currChat?.chat.guid == chat.guid && !LifeCycleManager().isBubble))) {
-      // Don't notify if the the chat is the active chat
-      return;
+    if ((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) {
+      if (!SettingsManager().settings.notifyOnChatList.value
+          && currChat == null
+          && !Get.currentRoute.contains("settings")) return;
+      if (currChat?.chat.guid == chat.guid && !LifeCycleManager().isBubble) return;
     }
     await NotificationManager().createNotificationFromMessage(chat, message);
   }
