@@ -307,7 +307,7 @@ class _QRScanState extends State<QRScan> {
                                     SizedBox(width: 10),
                                     Text(
                                       "Scan QR code",
-                                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
+                                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)
                                     ),
                                   ],
                                 ),
@@ -361,7 +361,7 @@ class _QRScanState extends State<QRScan> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(CupertinoIcons.text_cursor, color: Colors.white, size: 20),
+                                  Icon(CupertinoIcons.text_cursor, color: Theme.of(context).textTheme.bodyText1!.color, size: 20),
                                   SizedBox(width: 10),
                                   Text(
                                     "Manual entry",
@@ -495,7 +495,7 @@ class _QRScanState extends State<QRScan> {
                                             children: [
                                               Text(
                                                   "Connect",
-                                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
+                                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)
                                               ),
                                               SizedBox(width: 10),
                                               Icon(Icons.arrow_forward, color: Colors.white, size: 20),
@@ -540,7 +540,7 @@ class _QRScanState extends State<QRScan> {
       context: context,
       builder: (connectContext) => ConnectingAlert(
         onConnect: (bool result) {
-          Navigator.of(connectContext).pop();
+          Get.back();
           if (result) {
             setState(() {
               showManualEntry = false;
