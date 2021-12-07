@@ -2,6 +2,15 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.7.1
+
+## Changes
+
+* Adds warning message to let people know to update their server to at minimum, 0.3.0, by January 15th, 2022.
+* Fixes some issues with Text Forwarding
+* Fixes some issues with not loading chat titles properly
+* Better descriptions for certain config options
+
 ## v1.7.0
 
 **NOTE**: If you want to try out the new Private API features (or Big Sur Private API), server version v0.3.0 and Private API helper version v0.0.3 are _required_!
