@@ -1,9 +1,12 @@
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
@@ -57,6 +60,63 @@ class ConversationListState extends State<ConversationList> {
 
       if (event["type"] == 'refresh' && mounted) {
         setState(() {});
+      }
+    });
+
+    SchedulerBinding.instance?.addPostFrameCallback((timeStamp) {
+      if (prefs.getBool('warning') != true && !kIsWeb) {
+        Get.defaultDialog(
+            title: "IMPORTANT NOTICE",
+            content: Container(
+              constraints: BoxConstraints(
+                maxHeight: Get.height - 300,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(left: 10, right: 10),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(text: "Hi there, we hope you've been enjoying BlueBubbles!!\r\n\n"),
+                                TextSpan(text: "We've got some architectural changes in the works to make the app even better.\r\n\n"),
+                                TextSpan(text: "Please make sure to upgrade your server to a ",
+                                    style: context.theme.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold)),
+                                TextSpan(text: "minimum of v0.3.0",
+                                    style: context.theme.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
+                                TextSpan(text: " by February 1st, 2022 to maintain full functionality.\r\n\n",
+                                    style: context.theme.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold)),
+                                TextSpan(text: "Be on the lookout for some exciting new features soon!\r\n\n"),
+                                TextSpan(text: "~ BlueBubbles Devs"),
+                              ],
+                              style: context.theme.textTheme.subtitle1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ]
+                ),
+              ),
+            ),
+            cancel: Container(
+              height: 0,
+              width: 0,
+            ),
+            textConfirm: "OK",
+            confirmTextColor: Get.theme.dialogBackgroundColor,
+            buttonColor: context.theme.primaryColor,
+            backgroundColor: context.theme.backgroundColor.lightenOrDarken(),
+            barrierDismissible: false,
+            titleStyle: context.theme.textTheme.bodyText1!.copyWith(fontWeight: FontWeight.bold).apply(fontSizeFactor: 1.3),
+            onConfirm: () {
+              Get.back();
+              prefs.setBool('warning', true);
+            }
+        );
       }
     });
   }

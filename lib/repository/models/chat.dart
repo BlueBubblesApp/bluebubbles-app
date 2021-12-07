@@ -198,6 +198,7 @@ class Chat {
   }
 
   Future<Chat> save({bool updateIfAbsent = true, bool updateLocalVals = false}) async {
+    if (kIsWeb) return this;
     final Database? db = await DBProvider.db.database;
 
     // Try to find an existing chat before saving it
@@ -1022,7 +1023,7 @@ class Chat {
     return message;
   }
 
-  bool get isTextForwarding => chatIdentifier?.startsWith("sms") ?? false;
+  bool get isTextForwarding => guid?.startsWith("SMS") ?? false;
 
   bool get isSMS => false;
 

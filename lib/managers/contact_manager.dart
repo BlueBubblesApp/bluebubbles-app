@@ -126,10 +126,10 @@ class ContactManager {
         try {
           if (contacts.isEmpty) {
             var response = await api.contacts();
-            for (Map<String, dynamic> map in response.data['data']){
+            for (Map<String, dynamic> map in response.data['data']) {
               ContactManager().contacts.add(Contact(
-                id: randomString(9),
-                displayName: map['firstName'] + " " + map['lastName'],
+                id: randomString(8),
+                displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
                 emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
                 phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
               ));
