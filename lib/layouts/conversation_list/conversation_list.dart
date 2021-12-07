@@ -88,7 +88,7 @@ class ConversationListState extends State<ConversationList> {
                                     style: context.theme.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold)),
                                 TextSpan(text: "minimum of v0.3.0",
                                     style: context.theme.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
-                                TextSpan(text: " by December 15th, 2022 to maintain full functionality.\r\n\n",
+                                TextSpan(text: " by February 1st, 2022 to maintain full functionality.\r\n\n",
                                     style: context.theme.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold)),
                                 TextSpan(text: "Be on the lookout for some exciting new features soon!\r\n\n"),
                                 TextSpan(text: "~ BlueBubbles Devs"),
