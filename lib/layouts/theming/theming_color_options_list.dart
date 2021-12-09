@@ -54,7 +54,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
         builder: (context) => NewThemeCreateAlert(
           onCreate: (String name) async {
             Navigator.of(context).pop();
-            ThemeObject newTheme = ThemeObject.fromData(currentTheme!.themeData, name, gradientBg: currentTheme!.gradientBg);
+            ThemeObject newTheme = ThemeObject(data: currentTheme!.themeData, name: name);
             allThemes.add(newTheme);
             currentTheme = newTheme;
             if (widget.isDarkMode) {
