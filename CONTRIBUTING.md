@@ -1,3 +1,5 @@
+# Contribution Guide
+
 We encourage all contributions to this project! All we ask are you follow these simple rules when contributing:
 
 * Write clean code
