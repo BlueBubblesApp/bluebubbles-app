@@ -86,9 +86,11 @@ class ThemeObject {
 
   ThemeObject save({bool updateIfNotAbsent = true}) {
     store.runInTransaction(TxMode.write, () {
+      print(data);
       if (data == null) {
         fetchData();
       }
+      print(entries);
       if (entries.isEmpty) {
         entries = toEntries();
       }
@@ -117,7 +119,7 @@ class ThemeObject {
     store.runInTransaction(TxMode.write, () {
       fetchData();
       themeEntryBox.removeMany(entries.map((e) => e.id!).toList());
-      themeObjectBox.remove(id!);
+      print(themeObjectBox.remove(id!));
     });
   }
 
@@ -234,7 +236,6 @@ class ThemeObject {
       };
 
   ThemeData get themeData {
-    assert(entries.length == ThemeColors.Colors.length);
     Map<String, ThemeEntry> data = {};
     for (ThemeEntry entry in entries) {
       if (entry.name == ThemeColors.Headline1) {

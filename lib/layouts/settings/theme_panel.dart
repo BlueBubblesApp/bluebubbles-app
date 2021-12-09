@@ -42,7 +42,6 @@ class ThemePanelController extends GetxController {
     // revert back to iOS skin since we disabled Samsung
     if (SettingsManager().settings.skin.value == Skins.Samsung) {
       SettingsManager().settings.skin.value = Skins.iOS;
-      SettingsManager().settings.hideDividers.value = false;
       ChatBloc().refreshChats();
       SettingsManager().saveSettings(SettingsManager().settings);
     }
@@ -188,13 +187,6 @@ class ThemePanel extends GetView<ThemePanelController> {
                       onChanged: (val) {
                         if (val == null) return;
                         controller._settingsCopy.skin.value = val;
-                        if (val == Skins.Material) {
-                          controller._settingsCopy.hideDividers.value = true;
-                        } else if (val == Skins.Samsung) {
-                          controller._settingsCopy.hideDividers.value = true;
-                        } else {
-                          controller._settingsCopy.hideDividers.value = false;
-                        }
                         ChatBloc().refreshChats();
                         saveSettings();
                         controller.update();

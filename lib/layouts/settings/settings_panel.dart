@@ -40,6 +40,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'desktop_panel.dart';
+
 List disconnectedStates = [SocketState.DISCONNECTED, SocketState.ERROR, SocketState.FAILED];
 
 class SettingsPanel extends StatefulWidget {
@@ -361,6 +363,31 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           child: SettingsDivider(color: headerColor),
                         ),
                       ),
+                      if (kIsDesktop)
+                        SettingsTile(
+                          backgroundColor: tileColor,
+                            title: "Desktop Settings",
+                          onTap: () {
+                            CustomNavigator.pushAndRemoveSettingsUntil(
+                              context,
+                              DesktopPanel(),
+                                (route) => route.isFirst,
+                            );
+                          },
+                          leading: SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.desktopcomputer,
+                            materialIcon: Icons.desktop_windows,
+                          ),
+                          trailing: nextIcon,
+                        ),
+                      if (kIsDesktop)
+                        Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 65.0),
+                            child: SettingsDivider(color: headerColor),
+                          ),
+                        ),
                       SettingsTile(
                         backgroundColor: tileColor,
                         title: "Misc and Advanced Settings",

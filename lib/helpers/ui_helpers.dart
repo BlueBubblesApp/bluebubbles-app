@@ -13,7 +13,7 @@ import 'package:get/get.dart';
 Widget buildBackButton(BuildContext context,
     {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, bool Function()? callback}) {
   return Container(
-    padding: kIsDesktop ? EdgeInsets.only(left: 10) : padding,
+    padding: padding,
     width: 25,
     child: IconButton(
       iconSize: iconSize ?? (SettingsManager().settings.skin.value != Skins.Material ? 30 : 24),

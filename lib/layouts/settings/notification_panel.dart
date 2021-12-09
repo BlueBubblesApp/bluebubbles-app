@@ -369,6 +369,57 @@ class NotificationPanel extends StatelessWidget {
                             ),
                             if (SettingsManager().settings.skin.value != Skins.Samsung)
                               Container(
+                                  height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                                  alignment: Alignment.bottomLeft,
+                                  decoration: SettingsManager().settings.skin.value == Skins.iOS
+                                      ? BoxDecoration(
+                                    color: headerColor,
+                                    border: Border(
+                                        bottom: BorderSide(
+                                            color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                                  )
+                                      : BoxDecoration(
+                                    color: tileColor,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                                    child: Text("Advanced".psCapitalize,
+                                        style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                                  )),
+                            SettingsSection(
+                              backgroundColor: tileColor,
+                              children: [Obx(() =>
+                                  SettingsSwitch(
+                                    onChanged: (bool val) {
+                                      SettingsManager().settings.hideTextPreviews.value = val;
+                                      saveSettings();
+                                    },
+                                    initialVal: SettingsManager().settings.hideTextPreviews.value,
+                                    title: "Hide Message Text",
+                                    subtitle: "Replaces message text with 'iMessage' in notifications",
+                                    backgroundColor: tileColor,
+                                  )),
+                                Container(
+                                  color: tileColor,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 65.0),
+                                    child: SettingsDivider(color: headerColor),
+                                  ),
+                                ),
+                                Obx(() =>
+                                    SettingsSwitch(
+                                      onChanged: (bool val) {
+                                        SettingsManager().settings.showIncrementalSync.value = val;
+                                        saveSettings();
+                                      },
+                                      initialVal: SettingsManager().settings.showIncrementalSync.value,
+                                      title: "Notify when incremental sync complete",
+                                      subtitle: "Show a snackbar whenever a message sync is completed",
+                                      backgroundColor: tileColor,
+                                    )),],
+                            ),
+                            if (SettingsManager().settings.skin.value != Skins.Samsung)
+                              Container(
                                 height: 30,
                                 decoration: SettingsManager().settings.skin.value == Skins.iOS
                                     ? BoxDecoration(
