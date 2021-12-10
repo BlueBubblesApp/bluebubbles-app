@@ -76,37 +76,40 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
                 width: _width1,
                 child: widget.left,
               ),
-              (widget.allowResize) ? GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                child: Container(
-                    color: Theme.of(context).colorScheme.secondary,
-                    child: SizedBox(
-                      width: widget.dividerWidth,
-                      height: constraints.maxHeight,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(height: 4, width: 4, decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(25),
-                            color: Theme.of(context).textTheme.subtitle1?.color,
-                          )),
-                          SizedBox(height: 20,),
-                          Container(height: 4, width: 4, decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(25),
-                            color: Theme.of(context).textTheme.subtitle1?.color,
-                          )),
-                          SizedBox(height: 20,),
-                          Container(height: 4, width: 4, decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(25),
-                            color: Theme.of(context).textTheme.subtitle1?.color,
-                          )),
-                        ],
-                      ),
-                    )),
-                onPanUpdate: (DragUpdateDetails details) {
-                  _ratio.value = (_ratio.value + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
-                },
+              (widget.allowResize) ? MouseRegion(
+                cursor: SystemMouseCursors.resizeLeftRight,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  child: Container(
+                      color: Theme.of(context).colorScheme.secondary,
+                      child: SizedBox(
+                        width: widget.dividerWidth,
+                        height: constraints.maxHeight,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(height: 4, width: 4, decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(25),
+                              color: Theme.of(context).textTheme.subtitle1?.color,
+                            )),
+                            SizedBox(height: 20,),
+                            Container(height: 4, width: 4, decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(25),
+                              color: Theme.of(context).textTheme.subtitle1?.color,
+                            )),
+                            SizedBox(height: 20,),
+                            Container(height: 4, width: 4, decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(25),
+                              color: Theme.of(context).textTheme.subtitle1?.color,
+                            )),
+                          ],
+                        ),
+                      )),
+                  onPanUpdate: (DragUpdateDetails details) {
+                    _ratio.value = (_ratio.value + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
+                  },
+                ),
               ) : SizedBox(
                 width: widget.dividerWidth,
                 height: constraints.maxHeight,
