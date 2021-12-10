@@ -66,7 +66,7 @@ class Settings {
   final RxBool immersiveMode = false.obs;
   final RxDouble avatarScale = 1.0.obs;
   final RxBool launchAtStartup = false.obs;
-  final RxBool closeToTray = false.obs;
+  final RxBool closeToTray = true.obs;
 
   // final RxString emojiFontFamily;
 
