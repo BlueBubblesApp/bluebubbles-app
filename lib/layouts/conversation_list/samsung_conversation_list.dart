@@ -651,7 +651,6 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
     return VerticalSplitView(
-      dividerWidth: 10.0,
       initialRatio: 0.4,
       minRatio: 0.33,
       maxRatio: 0.5,
