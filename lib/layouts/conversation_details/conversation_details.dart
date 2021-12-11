@@ -1,10 +1,14 @@
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:slugify/slugify.dart';
 import 'package:universal_io/io.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -398,6 +402,111 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                   return AlertDialog(
                                     actions: [
                                       TextButton(
+                                        child: Text("Cancel"),
+                                        onPressed: () => Get.back(),
+                                      ),
+                                      TextButton(
+                                        child: Text("Pick Contact"),
+                                        onPressed: () async {
+                                          final contacts = [];
+                                          final cache = [];
+                                          String slugText(String text) {
+                                            return slugify(text, delimiter: '').toString().replaceAll('-', '');
+                                          }
+
+                                          for (Contact contact in ContactManager().contacts) {
+                                            for (String phone in contact.phones) {
+                                              String cleansed = slugText(phone);
+
+                                              if (!cache.contains(cleansed)) {
+                                                cache.add(cleansed);
+                                                contacts.add(
+                                                  UniqueContact(
+                                                    address: phone,
+                                                    displayName: contact.displayName,
+                                                  ),
+                                                );
+                                              }
+                                            }
+
+                                            for (String email in contact.emails) {
+                                              String emailVal = slugText.call(email);
+
+                                              if (!cache.contains(emailVal)) {
+                                                cache.add(emailVal);
+                                                contacts.add(
+                                                  UniqueContact(
+                                                    address: email,
+                                                    displayName: contact.displayName,
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          }
+                                          UniqueContact? selected;
+                                          await Get.defaultDialog(
+                                            title: "Pick Contact",
+                                            titleStyle: Theme.of(context).textTheme.headline1,
+                                            backgroundColor: Theme.of(context).backgroundColor,
+                                            buttonColor: Theme.of(context).primaryColor,
+                                            content: Container(
+                                              constraints: BoxConstraints(
+                                                maxHeight: Get.height - 300,
+                                              ),
+                                              child: Center(
+                                                child: Container(
+                                                  width: 300,
+                                                  height: Get.height - 300,
+                                                  constraints: BoxConstraints(
+                                                    maxHeight: Get.height - 300,
+                                                  ),
+                                                  child: StatefulBuilder(
+                                                      builder: (context, setState) {
+                                                        return SingleChildScrollView(
+                                                          child: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            children: [
+                                                              Padding(
+                                                                padding: const EdgeInsets.all(8.0),
+                                                                child: Text("Select the contact you would like to add"),
+                                                              ),
+                                                              ListView.builder(
+                                                                shrinkWrap: true,
+                                                                itemCount: contacts.length,
+                                                                physics: NeverScrollableScrollPhysics(),
+                                                                itemBuilder: (context, index) {
+                                                                  return ContactSelectorOption(
+                                                                    key: Key("selector-${contacts[index].displayName}"),
+                                                                    item: contacts[index],
+                                                                    onSelected: (contact) {
+                                                                      Get.back();
+                                                                      selected = contact;
+                                                                    },
+                                                                    index: index,
+                                                                  );
+                                                                },
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        );
+                                                      }
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            confirm: Container(height: 0, width: 0),
+                                            cancel: Container(height: 0, width: 0),
+                                          );
+                                          if (selected?.address != null) {
+                                            if (!selected!.address!.isEmail) {
+                                              participantController.text = selected!.address!.numericOnly();
+                                            } else {
+                                              participantController.text = selected!.address!;
+                                            }
+                                          }
+                                        },
+                                      ),
+                                      TextButton(
                                         child: Text("OK"),
                                         onPressed: () async {
                                           if (participantController.text.isEmpty || (!participantController.text.isEmail && !participantController.text.isPhoneNumber)) {
@@ -436,10 +545,6 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                           }
                                         },
                                       ),
-                                      TextButton(
-                                        child: Text("Cancel"),
-                                        onPressed: () => Get.back(),
-                                      )
                                     ],
                                     content: Column(
                                       mainAxisSize: MainAxisSize.min,
