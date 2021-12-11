@@ -183,7 +183,7 @@ public class NewMessageNotification implements Handler {
                 .putExtra("messageGuid", messageGuid)
                 .putExtra("bubble", "false")
                 .setType("NotificationOpen"),
-            Intent.FILL_IN_ACTION);
+            PendingIntent.FLAG_MUTABLE | Intent.FILL_IN_ACTION);
 
         // Create intent for opening the app when the summary is pressed
         PendingIntent openSummaryIntent = PendingIntent.getActivity(
@@ -194,7 +194,7 @@ public class NewMessageNotification implements Handler {
                         .putExtra("chatGuid", "-1")
                         .putExtra("bubble", "false")
                         .setType("NotificationOpen"),
-                Intent.FILL_IN_ACTION);
+                PendingIntent.FLAG_MUTABLE | Intent.FILL_IN_ACTION);
 
         // Create intent for swiping away the notification
         PendingIntent swipeAwayIntent = PendingIntent.getBroadcast(
@@ -206,7 +206,7 @@ public class NewMessageNotification implements Handler {
                         .putExtra("messageGuid", messageGuid)
                         .putExtra("bubble", "false")
                         .setType("swipeAway"),
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
         // Create intent for dismissing the notification (mark as read)
         PendingIntent dismissIntent = PendingIntent.getBroadcast(
@@ -218,7 +218,7 @@ public class NewMessageNotification implements Handler {
                 .putExtra("messageGuid", messageGuid)
                 .putExtra("bubble", "false")
                 .setType("markAsRead"),
-            PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
         // Create intent for quick reply
         Intent intent = new Intent(context, ReplyReceiver.class)
@@ -236,7 +236,7 @@ public class NewMessageNotification implements Handler {
             .setShowsUserInterface(false)
             .build();
 
-        PendingIntent replyIntent = PendingIntent.getBroadcast(context, existingNotificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent replyIntent = PendingIntent.getBroadcast(context, existingNotificationId, intent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Action.Builder replyActionBuilder = null;
 
         // SEMANTIC_ACTION_REPLY isn't supported until API level 28 so we need to programatically
@@ -318,7 +318,7 @@ public class NewMessageNotification implements Handler {
 //                            .putExtra("chatGuid", chatGuid)
 //                            .putExtra("bubble", "true")
 //                            .setType("NotificationOpen"),
-//                    PendingIntent.FLAG_UPDATE_CURRENT);
+//                    PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 //
 //            NotificationCompat.BubbleMetadata.Builder bubbleMetadataBuilder = new NotificationCompat.BubbleMetadata.Builder()
 //                    .setIntent(bubbleIntent)
