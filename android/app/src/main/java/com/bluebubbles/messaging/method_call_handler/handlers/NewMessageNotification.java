@@ -309,34 +309,34 @@ public class NewMessageNotification implements Handler {
             notificationBuilder.setAllowSystemGeneratedContextualActions(true);
         }
 
-        if (Build.VERSION.SDK_INT >= 30) {
-            PendingIntent bubbleIntent = PendingIntent.getActivity(
-                    context,
-                    existingNotificationId,
-                    new Intent(context, BubbleActivity.class)
-                            .putExtra("id", existingNotificationId)
-                            .putExtra("chatGuid", chatGuid)
-                            .putExtra("bubble", "true")
-                            .setType("NotificationOpen"),
-                    PendingIntent.FLAG_UPDATE_CURRENT);
-
-            NotificationCompat.BubbleMetadata.Builder bubbleMetadataBuilder = new NotificationCompat.BubbleMetadata.Builder()
-                    .setIntent(bubbleIntent)
-                    .setDesiredHeight(600)
-                    .setAutoExpandBubble(false)
-                    .setSuppressNotification(true);
-
-            // Set the icon to a user or group or fallback to the BB icon
-            if (groupIcon != null) {
-                bubbleMetadataBuilder.setIcon(groupIcon);
-            } else if (senderIcon != null) {
-                bubbleMetadataBuilder.setIcon(senderIcon);
-            } else {
-                bubbleMetadataBuilder.setIcon(IconCompat.createWithResource(context, R.mipmap.ic_stat_icon));
-            }
-
-            notificationBuilder.setBubbleMetadata(bubbleMetadataBuilder.build());
-        }
+//        if (Build.VERSION.SDK_INT >= 30) {
+//            PendingIntent bubbleIntent = PendingIntent.getActivity(
+//                    context,
+//                    existingNotificationId,
+//                    new Intent(context, BubbleActivity.class)
+//                            .putExtra("id", existingNotificationId)
+//                            .putExtra("chatGuid", chatGuid)
+//                            .putExtra("bubble", "true")
+//                            .setType("NotificationOpen"),
+//                    PendingIntent.FLAG_UPDATE_CURRENT);
+//
+//            NotificationCompat.BubbleMetadata.Builder bubbleMetadataBuilder = new NotificationCompat.BubbleMetadata.Builder()
+//                    .setIntent(bubbleIntent)
+//                    .setDesiredHeight(600)
+//                    .setAutoExpandBubble(false)
+//                    .setSuppressNotification(true);
+//
+//            // Set the icon to a user or group or fallback to the BB icon
+//            if (groupIcon != null) {
+//                bubbleMetadataBuilder.setIcon(groupIcon);
+//            } else if (senderIcon != null) {
+//                bubbleMetadataBuilder.setIcon(senderIcon);
+//            } else {
+//                bubbleMetadataBuilder.setIcon(IconCompat.createWithResource(context, R.mipmap.ic_stat_icon));
+//            }
+//
+//            notificationBuilder.setBubbleMetadata(bubbleMetadataBuilder.build());
+//        }
 
         Log.d(TAG, "Creating notification for chat: " + chatGuid + " - With ID: " + existingNotificationId);
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
