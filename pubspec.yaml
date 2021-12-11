@@ -135,7 +135,7 @@ dev_dependencies:
   flutter_launcher_icons: ^0.9.1
   flutter_native_splash: ^1.3.2
   flutter_lints: ^1.0.4
-  msix: ^2.6.5
+  msix: ^2.6.6
   peanut: ^4.1.1
   objectbox_generator: any
   flutter_test:
