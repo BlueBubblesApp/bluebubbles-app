@@ -216,6 +216,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
+                            backgroundColor: context.theme.backgroundColor,
                             content: Padding(
                               padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
                               child: SelectableText.rich(
