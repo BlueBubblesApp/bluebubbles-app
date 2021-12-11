@@ -67,6 +67,7 @@ class Settings {
   final RxDouble avatarScale = 1.0.obs;
   final RxBool launchAtStartup = false.obs;
   final RxBool closeToTray = true.obs;
+  final RxBool askWhereToSave = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -303,11 +304,9 @@ class Settings {
         settings.launchAtStartup.value = entry.value;
       } else if (entry.name == "closeToTray") {
         settings.closeToTray.value = entry.value;
+      } else if (entry.name == "askWhereToSave") {
+        settings.askWhereToSave.value = entry.value;
       }
-
-      // else if (entry.name == "emojiFontFamily") {
-      //   settings.emojiFontFamily = entry.value;
-      // }
     }
     settings.save();
     return settings;
@@ -417,6 +416,7 @@ class Settings {
       'avatarScale': avatarScale.value,
       'launchAtStartup': launchAtStartup.value,
       'closeToTray': closeToTray.value,
+      'askWhereToSave': askWhereToSave.value,
       'swipeToReply': swipeToReply.value,
       'privateAPISend': privateAPISend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
@@ -520,6 +520,7 @@ class Settings {
     SettingsManager().settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     SettingsManager().settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
     SettingsManager().settings.closeToTray.value = map['closeToTray'] ?? false;
+    SettingsManager().settings.askWhereToSave.value = map['askWhereToSave'] ?? false;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.privateAPISend.value = map['privateAPISend'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -624,6 +625,7 @@ class Settings {
     s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
     s.closeToTray.value = map['closeToTray'] ?? false;
+    s.askWhereToSave.value = map['askWhereToSave'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;

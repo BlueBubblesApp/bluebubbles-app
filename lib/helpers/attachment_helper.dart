@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
+import 'package:filesystem_picker/filesystem_picker.dart';
+import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
@@ -154,7 +156,7 @@ class AttachmentHelper {
         File(file.path!).copy(savePath);
         return showSnackbar('Success', 'Saved attachment to $savePath!');
       }
-      return showSnackbar('Failed', 'You didn' 't select a file path!');
+      return showSnackbar('Failed', 'You didn\'t select a file path!');
     }
     void showDeniedSnackbar({String? err}) {
       if (showAlert) showSnackbar("Save Failed", err ?? "Failed to save attachment!");
@@ -177,6 +179,22 @@ class AttachmentHelper {
 
     if (file.path == null) {
       return showDeniedSnackbar();
+    }
+
+    if (SettingsManager().settings.askWhereToSave.value && showAlert) {
+      String? path = await FilesystemPicker.open(
+        title: 'Save to folder',
+        context: Get.context!,
+        rootDirectory: Directory("/storage/emulated/0/"),
+        fsType: FilesystemType.folder,
+        pickText: 'Save file',
+        folderIconColor: Theme.of(Get.context!).primaryColor,
+      );
+      if (path != null) {
+        final bytes = await File(file.path!).readAsBytes();
+        await File(join(path, file.name)).writeAsBytes(bytes);
+      }
+      return;
     }
 
     await ImageGallerySaver.saveFile(file.path!);
