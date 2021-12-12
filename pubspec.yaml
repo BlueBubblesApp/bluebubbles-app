@@ -72,10 +72,7 @@ dependencies:
   faker: ^2.0.0
   share_plus: ^3.0.4 # sharing files not supported on Windows & Linux, todo desktop
   collection: ^1.15.0
-  disable_battery_optimization: # android only
-    git:
-      url: https://github.com/Rexios80/Disable-Battery-Optimizations
-      ref: feature/v2-embedding
+  optimization_battery: ^0.0.4
   internet_connection_checker: ^0.0.1+3 # no web support, but we don't need it obviously
   secure_application: ^3.7.3 # no linux support
   local_auth: ^1.1.8 # mobile only
