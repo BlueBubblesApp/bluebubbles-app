@@ -72,7 +72,11 @@ dependencies:
   faker: ^2.0.0
   share_plus: ^3.0.4 # sharing files not supported on Windows & Linux, todo desktop
   collection: ^1.15.0
-  optimization_battery: ^0.0.4
+  # for nullsafety
+  battery_optimization: # android only
+    git:
+      url: https://github.com/ChangJoo-Park/battery_optimization
+      ref: master
   internet_connection_checker: ^0.0.1+3 # no web support, but we don't need it obviously
   secure_application: ^3.7.3 # no linux support
   local_auth: ^1.1.8 # mobile only

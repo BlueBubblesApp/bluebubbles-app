@@ -3,7 +3,7 @@ import 'package:bluebubbles/layouts/stateful_wrapper.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:optimization_battery/optimization_battery.dart';
+import 'package:battery_optimization/battery_optimization.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -16,8 +16,8 @@ class BatteryOptimizationPage extends StatelessWidget {
     return StatefulWrapper(
         onInit: () {
           // If battery optimizations are already disabled, go to the next page
-          OptimizationBattery.isIgnoringBatteryOptimizations().then((isDisabled) {
-            if (isDisabled) {
+          BatteryOptimization.isIgnoringBatteryOptimizations().then((isDisabled) {
+            if (isDisabled ?? false) {
               controller.nextPage(
                 duration: Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -101,7 +101,7 @@ class BatteryOptimizationPage extends StatelessWidget {
                                           maximumSize: MaterialStateProperty.all(Size(200, 36)),
                                         ),
                                         onPressed: () async {
-                                          OptimizationBattery.openBatteryOptimizationSettings();
+                                          BatteryOptimization.openBatteryOptimizationSettings();
                                         },
                                         child: Shimmer.fromColors(
                                           baseColor: Colors.white70,

@@ -92,6 +92,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
+  battery_optimization:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: master
+      resolved-ref: "8d193276320275d01e3cc8e9e328a465671154f0"
+      url: "https://github.com/ChangJoo-Park/battery_optimization"
+    source: git
+    version: "0.0.0"
   bitsdojo_window:
     dependency: "direct main"
     description:
@@ -1182,13 +1191,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.4.3"
-  optimization_battery:
-    dependency: "direct main"
-    description:
-      name: optimization_battery
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.0.4"
   package_config:
     dependency: transitive
     description:
