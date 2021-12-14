@@ -126,6 +126,7 @@ dependencies:
   launch_at_startup: ^0.1.1
   async_task: ^1.0.13
   filesystem_picker: ^2.0.0
+  monet: ^0.1.0
 
 dependency_overrides:
   rxdart: ^0.27.3

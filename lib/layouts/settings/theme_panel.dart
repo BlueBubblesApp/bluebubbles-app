@@ -251,6 +251,25 @@ class ThemePanel extends GetView<ThemePanelController> {
                   backgroundColor: tileColor,
                   children: [
                     if (!kIsWeb && !kIsDesktop)
+                      Obx(() => SettingsSwitch(
+                        onChanged: (bool val) {
+                          SettingsManager().settings.colorsFromMonet.value = val;
+                          SettingsManager().settings.save();
+                          },
+                        initialVal: SettingsManager().settings.colorsFromMonet.value,
+                        title: "Colors from Monet",
+                        backgroundColor: tileColor,
+                        subtitle: "Pull colors from Material You's new Monet theming",
+                      )),
+                    if (!kIsWeb && !kIsDesktop)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                    if (!kIsWeb && !kIsDesktop)
                       Obx(
                             () => SettingsSwitch(
                           onChanged: (bool val) async {
@@ -293,6 +312,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                           backgroundColor: tileColor,
                           subtitle:
                           "Pull app colors from currently playing media. Note: Requires full notification access & a custom theme to be set",
+                          isThreeLine: true,
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop)

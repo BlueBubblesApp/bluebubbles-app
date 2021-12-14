@@ -1,9 +1,14 @@
 package com.bluebubbles.messaging;
 
-import io.flutter.app.FlutterApplication;
+import hrx.plugin.monet.MonetApplication;
 import io.flutter.plugin.common.PluginRegistry;
 
-public class Application extends FlutterApplication implements PluginRegistry.PluginRegistrantCallback {
+/*
+ * MonetApplication extends FlutterApplication, and enables
+ * support for getting a monet palette from the wallpaper
+ * on devices running lower than android 8.
+ */
+public class Application extends MonetApplication implements PluginRegistry.PluginRegistrantCallback {
 
     private PluginRegistry.PluginRegistrantCallback callback;
     PluginRegistry.PluginRegistrantCallback getCallback()  {

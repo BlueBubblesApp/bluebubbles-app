@@ -26,6 +26,7 @@ class Settings {
   final RxBool lowMemoryMode = false.obs;
   final RxInt lastIncrementalSync = 0.obs;
   final RxInt refreshRate = 0.obs;
+  final RxBool colorsFromMonet = false.obs;
   final RxBool colorfulAvatars = false.obs;
   final RxBool colorfulBubbles = false.obs;
   final RxBool hideDividers = false.obs;
@@ -154,6 +155,8 @@ class Settings {
         settings.lastIncrementalSync.value = entry.value;
       } else if (entry.name == "displayMode") {
         settings.refreshRate.value = entry.value;
+      } else if (entry.name == "colorsFromMonet") {
+        settings.colorsFromMonet.value = entry.value;
       } else if (entry.name == "rainbowBubbles") {
         settings.colorfulAvatars.value = entry.value;
       } else if (entry.name == "colorfulBubbles") {
@@ -377,6 +380,7 @@ class Settings {
       'lowMemoryMode': lowMemoryMode.value,
       'lastIncrementalSync': lastIncrementalSync.value,
       'refreshRate': refreshRate.value,
+      'colorsFromMonet': colorsFromMonet.value,
       'colorfulAvatars': colorfulAvatars.value,
       'colorfulBubbles': colorfulBubbles.value,
       'hideDividers': hideDividers.value,
@@ -478,6 +482,7 @@ class Settings {
     SettingsManager().settings.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
     SettingsManager().settings.lowMemoryMode.value = map['lowMemoryMode'] ?? false;
     SettingsManager().settings.refreshRate.value = map['refreshRate'] ?? 0;
+    SettingsManager().settings.colorsFromMonet.value = map['colorsFromMonet'] ?? false;
     SettingsManager().settings.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     SettingsManager().settings.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     SettingsManager().settings.hideDividers.value = map['hideDividers'] ?? false;
@@ -584,6 +589,7 @@ class Settings {
     s.lowMemoryMode.value = map['lowMemoryMode'] ?? false;
     s.lastIncrementalSync.value = map['lastIncrementalSync'] ?? 0;
     s.refreshRate.value = map['refreshRate'] ?? 0;
+    s.colorsFromMonet.value = map['colorsFromMonet'] ?? false;
     s.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     s.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     s.hideDividers.value = map['hideDividers'] ?? false;

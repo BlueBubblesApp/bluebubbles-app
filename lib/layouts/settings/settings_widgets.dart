@@ -393,12 +393,14 @@ class SettingsSwitch extends StatelessWidget {
     required this.title,
     this.backgroundColor,
     this.subtitle,
+    this.isThreeLine = false,
   }) : super(key: key);
   final bool initialVal;
   final Function(bool) onChanged;
   final String title;
   final Color? backgroundColor;
   final String? subtitle;
+  final bool isThreeLine;
 
   @override
   Widget build(BuildContext context) {
@@ -426,6 +428,7 @@ class SettingsSwitch extends StatelessWidget {
             ? Theme.of(context).backgroundColor
             : Theme.of(context).colorScheme.secondary,
         onChanged: onChanged,
+        isThreeLine: isThreeLine,
       ),
     );
   }
