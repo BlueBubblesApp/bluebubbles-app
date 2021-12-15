@@ -6,7 +6,7 @@ Below are the last few BlueBubbles App release changelogs
 
 ## Changes
 
-* Adds warning message to let people know to update their server to at minimum, 0.3.0, by January 15th, 2022.
+* Adds warning message to let people know to update their server to at minimum, 0.3.0, by February 1st, 2022.
 * Fixes some issues with Text Forwarding
 * Fixes some issues with not loading chat titles properly
 * Better descriptions for certain config options
