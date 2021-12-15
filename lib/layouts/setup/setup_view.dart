@@ -30,8 +30,9 @@ class _SetupViewState extends State<SetupView> {
   void initState() {
     super.initState();
     ever(SocketManager().state, (event) {
-      if (!SettingsManager().settings.finishedSetup.value && controller.hasClients
-          && ((kIsWeb && currentPage > 3) || currentPage > 5)) {
+      if (!SettingsManager().settings.finishedSetup.value &&
+          controller.hasClients &&
+          ((kIsWeb && currentPage > 3) || currentPage > 5)) {
         switch (event) {
           case SocketState.FAILED:
             showDialog(
@@ -62,8 +63,10 @@ class _SetupViewState extends State<SetupView> {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-          backgroundColor: Theme.of(context).backgroundColor,
-          body: SafeArea(
+        backgroundColor: Theme.of(context).backgroundColor,
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(top: 20),
             child: Stack(
               fit: StackFit.passthrough,
               alignment: Alignment.topCenter,
@@ -79,10 +82,8 @@ class _SetupViewState extends State<SetupView> {
                     WelcomePage(
                       controller: controller,
                     ),
-                    if (!kIsWeb && !kIsDesktop)
-                      RequestContacts(controller: controller),
-                    if (!kIsWeb && !kIsDesktop)
-                      BatteryOptimizationPage(controller: controller),
+                    if (!kIsWeb && !kIsDesktop) RequestContacts(controller: controller),
+                    if (!kIsWeb && !kIsDesktop) BatteryOptimizationPage(controller: controller),
                     SetupMacApp(controller: controller),
                     QRScan(
                       controller: controller,
@@ -102,49 +103,62 @@ class _SetupViewState extends State<SetupView> {
                   child: Padding(
                     padding: EdgeInsets.only(top: 20, left: 20, right: 20),
                     child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Hero(
-                                  tag: "setup-icon",
-                                  child: Image.asset("assets/icon/icon.png", width: 30, fit: BoxFit.contain)
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                "BlueBubbles",
-                                style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2, fontSizeFactor: 1.35),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(25),
-                              gradient: LinearGradient(
-                                begin: AlignmentDirectional.topStart,
-                                colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                              ),
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Hero(
+                                tag: "setup-icon",
+                                child: Image.asset("assets/icon/icon.png", width: 30, fit: BoxFit.contain)),
+                            SizedBox(width: 10),
+                            Text(
+                              "BlueBubbles",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyText1!
+                                  .apply(fontWeightDelta: 2, fontSizeFactor: 1.35),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13),
-                              child: RichText(
-                                text: TextSpan(
-                                    children: [
-                                      TextSpan(text: "$currentPage", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                                      TextSpan(text: " of ${kIsWeb ? "4" : kIsDesktop ? "5" : "7"}", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white38, fontWeight: FontWeight.bold)),
-                                    ]
-                                ),
-                              ),
+                          ],
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(25),
+                            gradient: LinearGradient(
+                              begin: AlignmentDirectional.topStart,
+                              colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
                             ),
                           ),
-                        ]
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13),
+                            child: RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                      text: "$currentPage",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText1!
+                                          .copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  TextSpan(
+                                      text: " of ${kIsWeb ? "4" : kIsDesktop ? "5" : "7"}",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText1!
+                                          .copyWith(color: Colors.white38, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 )
               ],
             ),
-          )
+          ),
+        ),
       ),
     );
   }

@@ -1142,7 +1142,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         SettingsManager().settings.finishedSetup.value = false;
                                         Get.offAll(() => WillPopScope(
                                           onWillPop: () async => false,
-                                          child: SetupView(),
+                                          child: TitleBarWrapper(child: SetupView()),
                                         ), duration: Duration.zero, transition: Transition.noTransition);
                                         SettingsManager().settings = Settings();
                                         SettingsManager().settings.save();
