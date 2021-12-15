@@ -645,13 +645,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.getBackgroundColor(context), // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(primaryColor: chat?.isTextForwarding ?? false ? Colors.green : Theme.of(context).primaryColor),
+        data: Theme.of(context).copyWith(primaryColor: !(chat?.isTextForwarding ?? false) ? context.theme.smsColor(context) : context.theme.messageColor(context)),
         child: Builder(
           builder: (context) {
             return WillPopScope(
@@ -663,7 +663,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 return !LifeCycleManager().isBubble;
               },
               child: Scaffold(
-                backgroundColor: Theme.of(context).backgroundColor,
+                backgroundColor: context.theme.getBackgroundColor(context),
                 extendBodyBehindAppBar: !isCreator!,
                 appBar: !isCreator!
                     ? buildConversationViewHeader(context) as PreferredSizeWidget?
@@ -683,7 +683,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                   AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
                                       ? Theme.of(context).primaryColor.lightenPercent(20)
                                       : Theme.of(context).primaryColor.darkenPercent(20),
-                                  Theme.of(context).backgroundColor
+                                  context.theme.getBackgroundColor(context)
                                 ]))
                               : null,
                           child: child,

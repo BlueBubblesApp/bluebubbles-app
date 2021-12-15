@@ -250,18 +250,19 @@ class ThemePanel extends GetView<ThemePanelController> {
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    if (!kIsWeb && !kIsDesktop)
+                    if (SettingsManager().monet != null)
                       Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.colorsFromMonet.value = val;
                           SettingsManager().settings.save();
-                          },
+                          EventDispatcher().emit('monet-update', null);
+                        },
                         initialVal: SettingsManager().settings.colorsFromMonet.value,
                         title: "Colors from Monet",
                         backgroundColor: tileColor,
                         subtitle: "Pull colors from Material You's new Monet theming",
                       )),
-                    if (!kIsWeb && !kIsDesktop)
+                    if (SettingsManager().monet != null)
                       Container(
                         color: tileColor,
                         child: Padding(

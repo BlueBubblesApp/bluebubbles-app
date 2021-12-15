@@ -770,4 +770,24 @@ extension MonetTheme on ThemeData {
             )
         : backgroundColor.lightenOrDarken(20);
   }
+  Color messageColor(BuildContext context) {
+    return SettingsManager().settings.isMonetEnabled
+        ? SettingsManager().monet!.primary
+            [context.mediaQuery.platformBrightness == Brightness.light ? 400 : 600]!
+        : primaryColor;
+  }
+  Color smsColor(BuildContext context) {
+    return SettingsManager().settings.isMonetEnabled
+        ? context.mediaQuery.platformBrightness == Brightness.light
+            ? SettingsManager().monet!.primary[100]!
+            : SettingsManager().monet!.secondary[200]!
+        : Colors.green;
+  }
+}
+
+/// fast computeLuminance alternative
+extension FastLuminance on Color {
+  double fastLuminance() {
+    return (red+green+blue)/765.0;
+  }
 }

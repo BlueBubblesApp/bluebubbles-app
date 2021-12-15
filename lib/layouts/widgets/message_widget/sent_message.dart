@@ -189,6 +189,15 @@ class SentMessageHelper {
                                 )
                               : null,
                   color: customColor ?? bubbleColor,
+                  gradient: currentSkin == Skins.Material && (currentChat?.chat.isTextForwarding ?? false)
+                      ? LinearGradient(
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
+                        colors: [
+                          (customColor ?? bubbleColor),
+                          (customColor ?? bubbleColor).darkenAmount(0.18)
+                        ],
+                      ) : null
                 ),
                 child: customContent ??
                     (effect.isBubble && controller != CustomAnimationControl.stop

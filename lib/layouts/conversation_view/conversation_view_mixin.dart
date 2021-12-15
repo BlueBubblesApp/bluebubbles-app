@@ -319,7 +319,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildConversationViewHeader(BuildContext context) {
-    Color backgroundColor = Theme.of(context).backgroundColor;
+    Color backgroundColor = context.theme.getBackgroundColor(context);
     Color? fontColor = Theme.of(context).textTheme.headline1!.color;
     Color? fontColor2 = Theme.of(context).textTheme.subtitle1!.color;
     String? title = chat!.title;
@@ -371,8 +371,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         }),
         automaticallyImplyLeading: false,
         backgroundColor: backgroundColor,
-        actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-        iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+        actionsIconTheme: IconThemeData(color: context.theme.messageColor(context)),
+        iconTheme: IconThemeData(color: context.theme.messageColor(context)),
         actions: [
           Obx(() {
             if (SettingsManager().settings.showConnectionIndicator.value) {
@@ -390,7 +390,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)),
+                        valueColor: AlwaysStoppedAnimation<Color>(context.theme.messageColor(context))),
                   )));
             } else {
               return SizedBox.shrink();
@@ -1134,7 +1134,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             icon: Icon(
               SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.exclamationmark_circle : Icons.error_outline,
               size: 20,
-              color: Theme.of(context).primaryColor,
+              color: context.theme.messageColor(context),
             ),
             padding: EdgeInsets.zero,
             iconSize: 20,

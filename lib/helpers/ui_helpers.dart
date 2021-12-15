@@ -1,6 +1,7 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
@@ -19,7 +20,7 @@ Widget buildBackButton(BuildContext context,
       icon: skin != null
           ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: Theme.of(context).primaryColor)
           : Obx(() => Icon(SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
-              color: Theme.of(context).primaryColor)),
+              color: context.theme.messageColor(context))),
       onPressed: () {
         final result = callback?.call() ?? true;
         if (result) {

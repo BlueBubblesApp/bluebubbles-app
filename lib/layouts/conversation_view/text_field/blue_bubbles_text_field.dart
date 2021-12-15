@@ -313,31 +313,31 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
   }
 
-  void onContentCommit(CommittedContent content) async {
-    // Add some debugging logs
-    Logger.info("[Content Commit] Keyboard received content");
-    Logger.info("  -> Content Type: ${content.mimeType}");
-    Logger.info("  -> URI: ${content.uri}");
-    Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
-
-    // Parse the filename from the URI and read the data as a List<int>
-    String filename = uriToFilename(content.uri, content.mimeType);
-
-    // Save the data to a location and add it to the file picker
-    if (content.hasData) {
-      addAttachments([PlatformFile(
-        name: filename,
-        size: content.data!.length,
-        bytes: content.data,
-      )]);
-
-      // Update the state
-      updateTextFieldAttachments();
-      if (mounted) setState(() {});
-    } else {
-      showSnackbar('Insertion Failed', 'Attachment has no data!');
-    }
-  }
+  // void onContentCommit(CommittedContent content) async {
+  //   // Add some debugging logs
+  //   Logger.info("[Content Commit] Keyboard received content");
+  //   Logger.info("  -> Content Type: ${content.mimeType}");
+  //   Logger.info("  -> URI: ${content.uri}");
+  //   Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
+  //
+  //   // Parse the filename from the URI and read the data as a List<int>
+  //   String filename = uriToFilename(content.uri, content.mimeType);
+  //
+  //   // Save the data to a location and add it to the file picker
+  //   if (content.hasData) {
+  //     addAttachments([PlatformFile(
+  //       name: filename,
+  //       size: content.data!.length,
+  //       bytes: content.data,
+  //     )]);
+  //
+  //     // Update the state
+  //     updateTextFieldAttachments();
+  //     if (mounted) setState(() {});
+  //   } else {
+  //     showSnackbar('Insertion Failed', 'Attachment has no data!');
+  //   }
+  // }
 
   Future<void> reviewAudio(BuildContext originalContext, PlatformFile file) async {
     showDialog(
@@ -541,7 +541,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         width: fileDragged ? size * 3 : size,
         margin: EdgeInsets.only(left: 5.0, right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
         decoration: BoxDecoration(
-          color: SettingsManager().settings.skin.value == Skins.Samsung ? null : Theme.of(context).primaryColor,
+          color: SettingsManager().settings.skin.value == Skins.Samsung ? null : context.theme.messageColor(context),
           borderRadius: BorderRadius.circular(fileDragged ? 5 : 40),
         ),
         child: Stack(
@@ -603,7 +603,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         child: Material(
           color: SettingsManager().settings.skin.value == Skins.Samsung
               ? Colors.transparent
-              : Theme.of(context).primaryColor,
+              : context.theme.messageColor(context),
           child: Theme(
             data: Theme.of(context).copyWith(
               bottomSheetTheme: BottomSheetThemeData(
@@ -1010,7 +1010,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 focusNode!.requestFocus();
                                 sendMessage();
                               },
-                              onContentCommitted: onContentCommit,
+                              // onContentCommitted: onContentCommit,
                               textCapitalization: TextCapitalization.sentences,
                               focusNode: focusNode,
                               autocorrect: true,
@@ -1199,7 +1199,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     : Colors.white,
                                 fontSizeDelta: -0.25,
                               ),
-                          onContentCommitted: onContentCommit,
+                          // onContentCommitted: onContentCommit,
                           decoration: InputDecoration(
                             isDense: true,
                             enabledBorder: OutlineInputBorder(
@@ -1417,7 +1417,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     : Colors.white,
                                 fontSizeDelta: -0.25,
                               ),
-                          onContentCommitted: onContentCommit,
+                          // onContentCommitted: onContentCommit,
                           decoration: InputDecoration(
                             isDense: true,
                             enabledBorder: OutlineInputBorder(
@@ -1685,7 +1685,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       child: Material(
                         color: SettingsManager().settings.skin.value == Skins.Samsung
                             ? Colors.transparent
-                            : Theme.of(context).primaryColor,
+                            : context.theme.messageColor(context),
                         child: GestureDetector(
                           onSecondaryTapUp: (_) async {
                             if (kIsWeb) {
