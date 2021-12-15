@@ -182,10 +182,11 @@ class AttachmentHelper {
     }
 
     if (SettingsManager().settings.askWhereToSave.value && showAlert) {
+      dynamic dir = Directory("/storage/emulated/0/");
       String? path = await FilesystemPicker.open(
         title: 'Save to folder',
         context: Get.context!,
-        rootDirectory: Directory("/storage/emulated/0/"),
+        rootDirectory: dir,
         fsType: FilesystemType.folder,
         pickText: 'Save file',
         folderIconColor: Theme.of(Get.context!).primaryColor,

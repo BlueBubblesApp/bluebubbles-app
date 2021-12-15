@@ -92,6 +92,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
+  battery_optimization:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: master
+      resolved-ref: "8d193276320275d01e3cc8e9e328a465671154f0"
+      url: "https://github.com/ChangJoo-Park/battery_optimization"
+    source: git
+    version: "0.0.0"
   bitsdojo_window:
     dependency: "direct main"
     description:
@@ -437,15 +446,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "5.0.4"
-  disable_battery_optimization:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: "feature/v2-embedding"
-      resolved-ref: "31df6430a23bd3c31230ff883ed2f49af9d5f2af"
-      url: "https://github.com/Rexios80/Disable-Battery-Optimizations"
-    source: git
-    version: "0.1.0"
   dynamic_cached_fonts:
     dependency: "direct main"
     description:

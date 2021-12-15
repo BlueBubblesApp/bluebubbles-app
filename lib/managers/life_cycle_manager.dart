@@ -8,6 +8,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/foundation.dart';
 
 /// [LifeCycleManager] is responsible for keeping track of when the app is open and when it is closed
 ///
@@ -34,7 +35,7 @@ class LifeCycleManager {
     // Listen to the socket processes that are updated
     SocketManager().socketProcessUpdater.listen((event) {
       // If there are no more socket processes, then we can safely close the socket
-      if (event.isEmpty && !_isAlive && !kIsDesktop) {
+      if (event.isEmpty && !_isAlive && !kIsDesktop && !kIsWeb) {
         SocketManager().closeSocket(force: true);
       }
     });
@@ -68,7 +69,7 @@ class LifeCycleManager {
       // NOTE: [closeSocket] does not necessarily close the socket, it simply requests the SocketManager to attempt to do so
       // If there are socket processes using the socket, then it will not close, and will wait until those tasks are done
       updateStatus(false);
-      if (!kIsDesktop) {
+      if (!kIsDesktop && !kIsWeb) {
         SocketManager().closeSocket();
 
         // Closes the background thread when the app is fully closed

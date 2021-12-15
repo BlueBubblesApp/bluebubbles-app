@@ -153,7 +153,7 @@ class SocketManager {
               value(true);
             }
             socketProcesses = {};
-            if (!LifeCycleManager().isAlive && !kIsDesktop) {
+            if (!LifeCycleManager().isAlive && !kIsDesktop && !kIsWeb) {
               closeSocket(force: true);
             }
           });
