@@ -75,7 +75,7 @@ abstract class MessageWidgetMixin {
         textStyle = textStyle!.apply(color: Colors.transparent);
       }
     } else {
-      textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
+      textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.5 ? Colors.black : Colors.white);
     }
     if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
     if ((!isEmptyString(message.text) || !isEmptyString(message.subject))) {
@@ -206,7 +206,7 @@ abstract class MessageWidgetMixin {
         textStyle = textStyle!.apply(color: Colors.transparent);
       }
     } else {
-      textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
+      textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.5 ? Colors.black : Colors.white);
     }
     if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
     if ((!isEmptyString(message.text) || !isEmptyString(message.subject))) {

@@ -651,7 +651,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(primaryColor: !(chat?.isTextForwarding ?? false) ? context.theme.smsColor(context) : context.theme.messageColor(context)),
+        data: Theme.of(context).copyWith(primaryColor: (chat?.isTextForwarding ?? false) ? context.theme.smsColor(context) : context.theme.messageColor(context)),
         child: Builder(
           builder: (context) {
             return WillPopScope(
