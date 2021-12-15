@@ -49,7 +49,7 @@ class ContactManager {
       int? sum = version?.split(".").mapIndexed((index, e) {
         if (index == 0) return int.parse(e) * 100;
         if (index == 1) return int.parse(e) * 21;
-        return int.parse(e);
+        return int.parse(e.split("-").firstOrNull ?? "0");
       }).sum;
       return (sum ?? 0) >= 42;
     }

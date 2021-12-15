@@ -237,26 +237,24 @@ class _ConversationTileState extends State<ConversationTile> {
 
     TextStyle? style = Theme.of(context).textTheme.bodyText1;
 
-    return FutureBuilder<String?>(
-        future: getOrUpdateChatTitle(),
-        builder: (context, snapshot) {
-          String title = snapshot.data ?? "Fake Person";
-          if (generateNames) {
-            title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
-          } else if (hideInfo) {
-            style = style?.copyWith(color: Colors.transparent);
-          }
-          return TextOneLine(title, style: style
-              ?.copyWith(fontWeight:
-                  SettingsManager().settings.skin.value == Skins.Material
-                  && (widget.chat.hasUnreadMessage ?? false)
-                    ? FontWeight.bold
-                    : null)
-              .apply(fontSizeFactor:
-                  SettingsManager().settings.skin.value == Skins.Material
-                      ? 1.1 : 1.0), overflow: TextOverflow.ellipsis);
-        }
-    );
+    return Obx(() {
+      widget.chat.getTitle();
+      String title = widget.chat.title ?? "Fake Person";
+      if (generateNames) {
+        title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
+      } else if (hideInfo) {
+        style = style?.copyWith(color: Colors.transparent);
+      }
+      return TextOneLine(title,
+          style: style
+              ?.copyWith(
+                  fontWeight:
+                      SettingsManager().settings.skin.value == Skins.Material && (widget.chat.hasUnreadMessage ?? false)
+                          ? FontWeight.bold
+                          : null)
+              .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0),
+          overflow: TextOverflow.ellipsis);
+    });
   }
 
   Widget buildSubtitle() {

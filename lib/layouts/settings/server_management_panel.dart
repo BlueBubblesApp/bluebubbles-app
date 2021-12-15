@@ -71,7 +71,7 @@ class ServerManagementPanelController extends GetxController {
         serverVersionCode.value = serverVersion.value?.split(".").mapIndexed((index, e) {
           if (index == 0) return int.parse(e) * 100;
           if (index == 1) return int.parse(e) * 21;
-          return int.parse(e);
+          return int.parse(e.split("-").firstOrNull ?? '0');
         }).sum;
         privateAPIStatus.value = res['data']['private_api'] ?? false;
         helperBundleStatus.value = res['data']['helper_connected'] ?? false;

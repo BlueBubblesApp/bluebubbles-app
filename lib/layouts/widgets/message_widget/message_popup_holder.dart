@@ -1,4 +1,5 @@
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/action_handler.dart';
@@ -41,7 +42,7 @@ class MessagePopupHolder extends StatefulWidget {
 
 class _MessagePopupHolderState extends State<MessagePopupHolder> {
   GlobalKey containerKey = GlobalKey();
-  Offset childOffset = Offset(0, 0);
+  double childOffsetY = 0;
   Size? childSize;
   bool visible = true;
 
@@ -56,14 +57,13 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         !sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
 
-    childOffset = Offset(
-        offset.dx - (increaseWidth ? 35 : 0),
+    childOffsetY =
         offset.dy -
             (doNotIncreaseHeight
                 ? 0
                 : widget.message.getReactions().isNotEmpty
                     ? 20.0
-                    : 23.0));
+                    : 23.0);
     childSize = Size(
         size.width + (increaseWidth ? 35 : 0),
         size.height +
@@ -97,14 +97,13 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
             opacity: animation,
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
-                childOffset =
-                    Offset(childOffset.dx - context.mediaQuerySize.width + constraints.maxWidth, childOffset.dy);
                 return MessageDetailsPopup(
                   currentChat: currentChat,
                   child: widget.popupChild,
-                  childOffset: childOffset,
+                  childOffsetY: childOffsetY,
                   childSize: childSize,
                   message: widget.message,
+                  newerMessage: widget.newerMessage,
                   messageBloc: widget.messageBloc,
                 );
               },

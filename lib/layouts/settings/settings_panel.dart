@@ -1262,11 +1262,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
     Widget settingsList = buildSettingsList();
     if (showAltLayout) {
       return buildForLandscape(context, settingsList);
-    } else if (kIsDesktop) {
-      return TitleBarWrapper(child: settingsList);
     }
-
-    return settingsList;
+    return TitleBarWrapper(child: settingsList);
   }
 
   void saveSettings() {
