@@ -199,7 +199,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
     hasPinnedChat();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.getBackgroundColor(context), // navigation bar color
         systemNavigationBarIconBrightness:
         context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -211,6 +211,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
   Widget buildChatList() {
     bool showArchived = widget.parent.widget.showArchivedChats;
     bool showUnknown = widget.parent.widget.showUnknownSenders;
+    var brightness = context.mediaQuery.platformBrightness;
     return Obx(() => WillPopScope(
         onWillPop: () async {
           if (selected.isNotEmpty) {
@@ -232,7 +233,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                     Container(
                       height: 80,
                       width: context.width,
-                      color: context.theme.backgroundColor,
+                      color: context.theme.getBackgroundColor(context),
                     ),
                     AnimatedSwitcher(
                       duration: Duration(milliseconds: 500),
@@ -251,7 +252,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(25),
-                                color: context.theme.backgroundColor.lightenOrDarken(20),
+                                color: context.theme.textFieldColor(context),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.only(left: 15.0, top: 5.0, bottom: 5.0),
@@ -777,6 +778,7 @@ class _FABStatefulWrapperState extends State<FABStatefulWrapper> {
 
   @override
   Widget build(BuildContext context) {
+    var brightness = MediaQuery.of(context).platformBrightness;
     return InkWell(
       onLongPress: SettingsManager().settings.cameraFAB.value ? widget.parent.openCamera : null,
       child: Container(
@@ -788,7 +790,7 @@ class _FABStatefulWrapperState extends State<FABStatefulWrapper> {
           9,
         ),
       child: FloatingActionButton.extended(
-          backgroundColor: context.theme.primaryColor.oppositeLightenOrDarken(15),
+          backgroundColor: context.theme.fabBackgroundColor(context),
           label: AnimatedSwitcher(
             duration: Duration(milliseconds: 150),
             transitionBuilder: (Widget child, Animation<double> animation) => SizeTransition(
@@ -802,7 +804,7 @@ class _FABStatefulWrapperState extends State<FABStatefulWrapper> {
                     child: Text(
                       "Start Chat",
                       style: TextStyle(
-                        color: Colors.white,
+                        color: context.theme.fabTextColor(context),
                       ),
                     ),
                   )
@@ -811,7 +813,7 @@ class _FABStatefulWrapperState extends State<FABStatefulWrapper> {
           extendedIconLabelSpacing: 0,
           icon: Icon(
               SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message_outlined,
-              color: Colors.white,
+              color: context.theme.fabTextColor(context),
               size: 25),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(17),

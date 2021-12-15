@@ -701,7 +701,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           GoBackIntent: GoBackAction(context),
         },
         child: Scaffold(
-          backgroundColor: context.theme.backgroundColor,
+          backgroundColor: SettingsManager().settings.skin.value == Skins.Material
+              ? context.theme.getBackgroundColor(context)
+              : context.theme.backgroundColor,
           body: Builder(
             builder: (BuildContext context) {
               if (SettingsManager().settings.finishedSetup.value) {

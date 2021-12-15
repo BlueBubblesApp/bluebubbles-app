@@ -26,7 +26,6 @@ class Settings {
   final RxBool lowMemoryMode = false.obs;
   final RxInt lastIncrementalSync = 0.obs;
   final RxInt refreshRate = 0.obs;
-  final RxBool colorsFromMonet = false.obs;
   final RxBool colorfulAvatars = false.obs;
   final RxBool colorfulBubbles = false.obs;
   final RxBool hideDividers = false.obs;
@@ -123,6 +122,12 @@ class Settings {
   final RxInt pinColumnsLandscape = RxInt(6);
 
   final RxInt maxAvatarsInGroupWidget = RxInt(4);
+
+  // Monet theming settings
+  final RxBool colorsFromMonet = false.obs;
+  bool get isMonetEnabled {
+    return colorsFromMonet.value && SettingsManager().monet != null;
+  }
 
   Settings();
 

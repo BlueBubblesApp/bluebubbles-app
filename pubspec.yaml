@@ -127,6 +127,7 @@ dependencies:
   async_task: ^1.0.13
   filesystem_picker: ^2.0.0
   monet: ^0.1.0
+  monet_colors: ^0.9.0
 
 dependency_overrides:
   rxdart: ^0.27.3

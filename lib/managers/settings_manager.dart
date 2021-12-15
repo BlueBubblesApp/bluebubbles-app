@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
+//import 'package:monet/monet.dart';
+import 'package:monet_colors/monet_colors.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -33,6 +36,7 @@ class SettingsManager {
 
   /// [settings] is just an instance of the current settings that are saved
   late Settings settings;
+  late final MonetColors? monet;
   FCMData? fcmData;
   late List<ThemeObject> themes;
   String? countryCode;
@@ -47,9 +51,11 @@ class SettingsManager {
     return SettingsManager().settings.previewCompressionQuality.value;
   }
 
-  /// [init] is run at start and fetches both the [appDocDir] and sets the [settings] to a default value
+  /// [init] is run at start and fetches the [appDocDir],
+  /// sets the [settings] to a default value, and sets [monetProvider]
   Future<void> init() async {
     settings = Settings();
+    monet = await Monet.get();
     if (!kIsWeb) {
       //ignore: unnecessary_cast, we need this as a workaround
       appDocDir = (await getApplicationSupportDirectory()) as Directory;

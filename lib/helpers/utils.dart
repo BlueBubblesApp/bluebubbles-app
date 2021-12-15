@@ -736,3 +736,38 @@ extension ConditionlAdd on RxMap {
 }
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;
+
+/// This extension adds monet theming support to ThemeData
+extension MonetTheme on ThemeData {
+  Color fabTextColor(BuildContext context) {
+    return SettingsManager().settings.isMonetEnabled
+        && context.mediaQuery.platformBrightness == Brightness.light
+        ? Colors.black
+        : Colors.white;
+  }
+  Color fabBackgroundColor(BuildContext context) {
+    return SettingsManager().settings.isMonetEnabled
+        ? SettingsManager().monet!.primary
+            [context.mediaQuery.platformBrightness == Brightness.light ? 100 : 700]!
+        : primaryColor.oppositeLightenOrDarken(15);
+  }
+  Color getBackgroundColor(BuildContext context) {
+    return SettingsManager().settings.isMonetEnabled
+        ? SettingsManager().monet!.neutral
+            [context.mediaQuery.platformBrightness == Brightness.light ? 10 : 900]!
+        : backgroundColor;
+  }
+  Color textFieldColor(BuildContext context) {
+    return SettingsManager().settings.isMonetEnabled
+        ? context.mediaQuery.platformBrightness == Brightness.light
+            ? Color.alphaBlend(
+              SettingsManager().monet!.primary[500]!.withAlpha(15),
+              SettingsManager().monet!.neutral[50]!
+            )
+            : Color.alphaBlend(
+              SettingsManager().monet!.primary[500]!.withAlpha(30),
+              SettingsManager().monet!.neutral[800]!
+            )
+        : backgroundColor.lightenOrDarken(20);
+  }
+}
