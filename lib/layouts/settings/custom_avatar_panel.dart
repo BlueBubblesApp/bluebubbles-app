@@ -106,7 +106,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                   chat: ChatBloc().chats[index],
                   inSelectMode: true,
                   onSelect: (_) {
-                    if (ChatBloc().chats[index].customAvatarPath.value != null) {
+                    if (ChatBloc().chats[index].customAvatarPath != null) {
                       showDialog(
                         context: context,
                         builder: (BuildContext context) {
@@ -142,9 +142,9 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                             .subtitle1!
                                             .apply(color: Theme.of(context).primaryColor)),
                                     onPressed: () {
-                                      File file = File(ChatBloc().chats[index].customAvatarPath.value!);
+                                      File file = File(ChatBloc().chats[index].customAvatarPath!);
                                       file.delete();
-                                      ChatBloc().chats[index].customAvatarPath.value = null;
+                                      ChatBloc().chats[index].customAvatarPath = null;
                                       ChatBloc().chats[index].save();
                                       Get.back();
                                     }),

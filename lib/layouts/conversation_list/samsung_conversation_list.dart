@@ -1,5 +1,4 @@
 import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
@@ -13,12 +12,13 @@ import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -651,7 +651,6 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
     return VerticalSplitView(
-      dividerWidth: 10.0,
       initialRatio: 0.4,
       minRatio: 0.33,
       maxRatio: 0.5,
@@ -726,6 +725,8 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
     Widget chatList = buildChatList();
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);
+    } else if (!widget.parent.widget.showArchivedChats && !widget.parent.widget.showUnknownSenders) {
+      return TitleBarWrapper(child: chatList);
     }
 
     return chatList;

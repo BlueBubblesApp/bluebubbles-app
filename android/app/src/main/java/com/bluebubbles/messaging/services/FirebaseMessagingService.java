@@ -28,6 +28,9 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
     @Override
     public void onCreate() {
         Log.d("BlueBubblesApp", "FCM service spawned");
+        if (ContextHolder.getApplicationContext() == null) {
+            ContextHolder.setApplicationContext(getApplicationContext());
+        }
         super.onCreate();
     }
 
@@ -48,7 +51,7 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
         if (remoteMessage == null) return;
         Log.d("BlueBubblesApp", "Received new message from FCM");
         Log.d("BlueBubblesApp", "Message type: " + remoteMessage.getData().get("type"));
-        if (ContextHolder.getApplicationContext() == null) {
+        if (ContextHolder.getApplicationContext() == null && getApplicationContext() != null) {
             ContextHolder.setApplicationContext(getApplicationContext());
         }
         Intent onBackgroundMessageIntent =

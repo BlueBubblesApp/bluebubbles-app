@@ -5,7 +5,7 @@ import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
@@ -130,7 +130,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                           subtitle: "View instructions on how to set up these features",
                           onTap: () async {
                             await launch(
-                                "https://github.com/BlueBubblesApp/BlueBubbles-Server/wiki/Using-Private-API-Features");
+                                "https://docs.bluebubbles.app/helper-bundle/installation");
                           },
                           leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.checkmark_shield,
@@ -178,6 +178,9 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                           SettingsSwitch(
                             onChanged: (bool val) {
                               controller._settingsCopy.privateMarkChatAsRead.value = val;
+                              if (val) {
+                                controller._settingsCopy.privateManualMarkAsRead.value = false;
+                              }
                               saveSettings();
                             },
                             initialVal: controller._settingsCopy.privateMarkChatAsRead.value,
@@ -316,6 +319,22 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                                   }
                                 });
                               }),
+                          Obx(() {
+                            if ((controller.serverVersionCode.value ?? 0) >= 84) {
+                              return SettingsSwitch(
+                                onChanged: (bool val) {
+                                  controller._settingsCopy.privateAPISend.value = val;
+                                  saveSettings();
+                                },
+                                initialVal: controller._settingsCopy.privateAPISend.value,
+                                title: "Private API Send",
+                                subtitle: "Send regular text messages using the Private API for much faster speed",
+                                backgroundColor: tileColor,
+                              );
+                            } else {
+                              return SizedBox.shrink();
+                            }
+                          }),
                         ],
                       )
                     ],

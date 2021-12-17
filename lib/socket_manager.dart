@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/crypto.dart';
@@ -17,9 +16,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/foundation.dart';
@@ -49,9 +46,8 @@ class SocketManager {
 
   SocketManager._internal();
 
-  Future<void> removeChatNotification(Chat chat) async {
-    await chat.toggleHasUnread(false);
-    ChatBloc().updateChat(chat);
+  void removeChatNotification(Chat chat) {
+    chat.toggleHasUnread(false);
   }
 
   List<String> processedGUIDS = <String>[];
@@ -92,6 +88,7 @@ class SocketManager {
   Stream<List<int>> get socketProcessUpdater => _socketProcessUpdater.stream;
 
   final StreamController<String> _attachmentSenderCompleter = StreamController<String>.broadcast();
+
   Stream<String> get attachmentSenderCompleter => _attachmentSenderCompleter.stream;
 
   void addAttachmentSender(AttachmentSender sender) {
@@ -133,6 +130,7 @@ class SocketManager {
             Logger.error(err);
           });
         }
+        SettingsManager().getMacOSVersion(refresh: true);
         return;
       case "connect_error":
         if (state.value != SocketState.ERROR && state.value != SocketState.FAILED) {
@@ -156,7 +154,7 @@ class SocketManager {
               value(true);
             }
             socketProcesses = {};
-            if (!LifeCycleManager().isAlive) {
+            if (!LifeCycleManager().isAlive && !kIsDesktop && !kIsWeb) {
               closeSocket(force: true);
             }
           });
@@ -167,12 +165,15 @@ class SocketManager {
         for (Function f in _manager.disconnectSubscribers.values) {
           f.call();
         }
-
+//androidx.sharetarget.ChooserTargetServiceCompat
         state.value = SocketState.DISCONNECTED;
         Timer t;
         t = Timer(const Duration(seconds: 5), () {
-          if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
-            showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
+          if (state.value == SocketState.DISCONNECTED &&
+              LifeCycleManager().isAlive &&
+              !Get.isSnackbarOpen &&
+              SettingsManager().settings.finishedSetup.value) {
+            showSnackbar('Socket Disconnected', 'You are no longer connected to the socket 🔌');
           }
         });
         LifeCycleManager().stream.listen((event) {
@@ -180,8 +181,11 @@ class SocketManager {
             t.cancel();
           } else {
             t = Timer(const Duration(seconds: 5), () {
-              if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
-                showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
+              if (state.value == SocketState.DISCONNECTED &&
+                  LifeCycleManager().isAlive &&
+                  !Get.isSnackbarOpen &&
+                  SettingsManager().settings.finishedSetup.value) {
+                showSnackbar('Socket Disconnected', 'You are no longer connected to the socket 🔌');
               }
             });
           }
@@ -323,23 +327,23 @@ class SocketManager {
         // If there are no chats, try to find it in the DB via the message
         Chat? chat;
         if (isNullOrEmpty(data["chats"])!) {
-          chat = await Message.getChat(message);
+          chat = message.getChat();
         } else {
           chat = Chat.fromMap(data['chats'][0]);
         }
 
         // Save the chat in-case is doesn't exist
         if (chat != null) {
-          await chat.save();
+          chat.save();
         }
 
         // Lastly, find the message
-        Message msg = (await Message.findOne({'guid': message.guid}))!;
+        Message msg = Message.findOne(guid: message.guid)!;
 
         // Check if we already have an error, and save if we don't
-        if (msg.error.value == 0) {
+        if (msg.error == 0) {
           // TODO: ADD NOTIFICATION TO USER IF FAILURE
-          await message.save();
+          message.save();
         }
 
         return Future.value("");
@@ -354,9 +358,9 @@ class SocketManager {
         Logger.info("Client received message timeout", tag: tag);
         Map<String, dynamic> data = _data;
 
-        Message? message = await Message.findOne({"guid": data["tempGuid"]});
+        Message? message = Message.findOne(guid: data["tempGuid"]);
         if (message == null) return Future.value("");
-        message.error.value = 1003;
+        message.error = 1003;
         message.guid = message.guid!.replaceAll("temp", "error-Message Timeout");
         await Message.replaceMessage(data["tempGuid"], message);
         return Future.value("");
@@ -370,8 +374,16 @@ class SocketManager {
         IncomingQueue().add(QueueItem(event: "handle-updated-message", item: {"data": _data}));
       });
 
-      Logger.info("Connecting to the socket at: $serverAddress");
-      _manager.socket!.connect();
+      if (serverAddress.contains("trycloudflare.com")) {
+        Logger.info("Detected Cloudflare URL, waiting 10 seconds before connecting to socket at: $serverAddress");
+        Future.delayed(Duration(seconds: 10), () {
+          Logger.info("Connecting to the socket at: $serverAddress");
+          _manager.socket!.connect();
+        });
+      } else {
+        Logger.info("Connecting to the socket at: $serverAddress");
+        _manager.socket!.connect();
+      }
     } catch (e) {
       if (!catchException) {
         throw ("[$tag] -> Failed to connect: ${e.toString()}");
@@ -423,7 +435,8 @@ class SocketManager {
     String? result;
 
     if (kIsWeb || kIsDesktop) {
-      Logger.debug("Platform ${kIsWeb ? "web" : Platform.operatingSystem} detected, not authing with FCM!", tag: 'FCM-Auth');
+      Logger.debug("Platform ${kIsWeb ? "web" : Platform.operatingSystem} detected, not authing with FCM!",
+          tag: 'FCM-Auth');
       isAuthingFcm = false;
       return;
     }
@@ -569,7 +582,7 @@ class SocketManager {
     Map<String, dynamic> params = {};
     params["chatGuid"] = chatGuid;
     params["withParticipants"] = withParticipants;
-    SocketManager().sendMessage("get-chat", params, (data) async {
+    SocketManager().sendMessage("get-chat", params, (data) {
       if (data['status'] != 200 && !completer.isCompleted) {
         return completer.completeError(Exception(data['error']['message']));
       }
@@ -584,7 +597,7 @@ class SocketManager {
       Chat newChat = Chat.fromMap(chatData);
 
       // Resave the chat after we've got the participants
-      await newChat.save();
+      newChat.save();
       completer.complete(newChat);
     });
 
@@ -640,7 +653,7 @@ class SocketManager {
         if (awaitResponse) _manager.finishSocketProcess(_processId);
       } else {
         if (path == null) {
-          _manager.socket!.emitWithAck(event, message, ack: (response) {
+          _manager.socket?.emitWithAck(event, message, ack: (response) {
             if (response.containsKey('encrypted') && response['encrypted']) {
               try {
                 response['data'] =

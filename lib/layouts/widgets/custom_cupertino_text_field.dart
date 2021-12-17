@@ -1138,7 +1138,7 @@ class _CustomCupertinoTextFieldState extends State<CustomCupertinoTextField>
       color: decorationColor,
     );
 
-    final Color selectionColor = CupertinoTheme.of(context).primaryColor.withOpacity(0.2);
+    final Color selectionColor = CupertinoTheme.of(context).primaryColor.withOpacity(0.8);
 
     final Widget paddedEditable = Padding(
       padding: widget.padding,

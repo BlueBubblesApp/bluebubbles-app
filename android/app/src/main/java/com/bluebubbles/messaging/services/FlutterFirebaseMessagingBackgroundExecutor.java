@@ -312,6 +312,9 @@ public class FlutterFirebaseMessagingBackgroundExecutor implements MethodCallHan
 
     /** Get the registered Dart callback handle for the messaging plugin. Returns 0 if not set. */
     private long getPluginCallbackHandle() {
+        if (ContextHolder.getApplicationContext() == null) {
+            return 0;
+        }
         SharedPreferences prefs =
                 ContextHolder.getApplicationContext().getSharedPreferences(BACKGROUND_SERVICE_SHARED_PREF, Context.MODE_PRIVATE);
         return prefs.getLong(BACKGROUND_HANDLE_SHARED_PREF_KEY, -1);

@@ -5,7 +5,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -21,6 +20,7 @@ class ContactAvatarWidget extends StatefulWidget {
     this.editable = true,
     this.onTap,
     required this.handle,
+    this.scaleSize = true,
   }) : super(key: key);
   final Handle? handle;
   final double? size;
@@ -28,6 +28,7 @@ class ContactAvatarWidget extends StatefulWidget {
   final double borderThickness;
   final bool editable;
   final Function? onTap;
+  final bool scaleSize;
 
   @override
   _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
@@ -95,7 +96,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                     didReset = true;
                     Get.back();
                     widget.handle!.color = null;
-                    await widget.handle!.update();
+                    widget.handle!.save();
                     EventDispatcher().emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
                   },
                   child: Text("RESET"),
@@ -136,7 +137,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       widget.handle!.color = color.value.toRadixString(16);
     }
 
-    await widget.handle!.update();
+    widget.handle!.save();
 
     EventDispatcher().emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
   }
@@ -149,8 +150,8 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       onTap: onAvatarTap,
       child: Container(
         key: Key("$keyPrefix-avatar-container"),
-        width: widget.size ?? 40,
-        height: widget.size ?? 40,
+        width: (widget.size ?? 40) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
+        height: (widget.size ?? 40) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
         padding: EdgeInsets.all(widget.borderThickness),
         decoration: BoxDecoration(
           color: SettingsManager().settings.skin.value == Skins.Samsung ? context.theme.colorScheme.secondary : context.theme.backgroundColor, // border color
@@ -168,7 +169,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
           }
           return CircleAvatar(
             key: Key("$keyPrefix-avatar"),
-            radius: (widget.size != null) ? widget.size! / 2 : 20,
+            radius: ((widget.size != null) ? widget.size! / 2 : 20) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
             backgroundImage:
             !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value) && contact?.avatar.value != null
                 ? MemoryImage(contact!.avatar.value!)
@@ -204,7 +205,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                         ? CupertinoIcons.person_fill
                         : Icons.person,
                     key: Key("$keyPrefix-avatar-icon"),
-                    size: (widget.size ?? 40) / 2,
+                    size: ((widget.size ?? 40) / 2) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
                   )
                       : Text(
                     getInitials(handle: widget.handle)!,

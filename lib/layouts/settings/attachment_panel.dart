@@ -32,7 +32,7 @@ class AttachmentPanel extends StatelessWidget {
 
     return SettingsScaffold(
       title: "Attachments & Media",
-      initialHeader: "Auto-download",
+      initialHeader: "Download & Save",
       iosSubtitle: iosSubtitle,
       materialSubtitle: materialSubtitle,
       tileColor: tileColor,
@@ -87,6 +87,25 @@ class AttachmentPanel extends StatelessWidget {
                       initialVal: SettingsManager().settings.autoSave.value,
                       title: "Auto-save Attachments",
                       subtitle: "Automatically saves all attachments to gallery or downloads folder",
+                      backgroundColor: tileColor,
+                    )),
+                  if (!kIsWeb && !kIsDesktop)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                  if (!kIsWeb && !kIsDesktop)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.askWhereToSave.value = val;
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.askWhereToSave.value,
+                      title: "Ask Where to Save Attachments",
+                      subtitle: "Ask where to save attachments when manually downloading",
                       backgroundColor: tileColor,
                     )),
                 ],

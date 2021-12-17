@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
@@ -11,9 +11,6 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:get/get.dart';
 import 'package:mime_type/mime_type.dart';
@@ -34,7 +31,7 @@ class AttachmentSender {
   late String _text;
   String? _attachmentName;
   Attachment? messageAttachment;
-  Message? sentMessage;
+  late Message sentMessage;
   Message? messageWithText;
   double progress = 0.0;
 
@@ -91,20 +88,20 @@ class AttachmentSender {
       } else {
         Logger.error("Failed to sendattachment");
 
-        String? tempGuid = sentMessage!.guid;
-        sentMessage!.guid = sentMessage!.guid!.replaceAll("temp", "error-${response['error']['message']}");
-        sentMessage!.error.value =
+        String? tempGuid = sentMessage.guid;
+        sentMessage.guid = sentMessage.guid!.replaceAll("temp", "error-${response['error']['message']}");
+        sentMessage.error =
             response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
-        await Message.replaceMessage(tempGuid, sentMessage);
-        NewMessageManager().updateMessage(_chat, tempGuid!, sentMessage!);
+        sentMessage = await Message.replaceMessage(tempGuid, sentMessage);
+        NewMessageManager().updateMessage(_chat, tempGuid!, sentMessage);
         if (messageWithText != null) {
           tempGuid = messageWithText!.guid;
           messageWithText!.guid = messageWithText!.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          messageWithText!.error.value =
+          messageWithText!.error =
               response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
-          await Message.replaceMessage(tempGuid, messageWithText);
+          await Message.replaceMessage(tempGuid, messageWithText!);
           NewMessageManager().updateMessage(_chat, tempGuid!, messageWithText!);
         }
         SocketManager().finishSender(_attachmentGuid);
@@ -142,7 +139,10 @@ class AttachmentSender {
         text: "",
         dateCreated: DateTime.now(),
         hasAttachments: true,
-        attachments: [messageAttachment]);
+        attachments: [messageAttachment],
+        isFromMe: true,
+        handleId: 0,
+    );
 
     if (_text != "") {
       messageWithText = Message(
@@ -150,6 +150,8 @@ class AttachmentSender {
         text: _text,
         dateCreated: DateTime.now(),
         hasAttachments: false,
+        isFromMe: true,
+        handleId: 0,
       );
     }
 
@@ -163,8 +165,8 @@ class AttachmentSender {
 
     // Add the message to the chat.
     // This will save the message, attachments, and chat
-    await _chat.addMessage(sentMessage!);
-    NewMessageManager().addMessage(_chat, sentMessage!, outgoing: true);
+    await _chat.addMessage(sentMessage);
+    NewMessageManager().addMessage(_chat, sentMessage, outgoing: true);
 
     // If there is any text, save the text too
     if (messageWithText != null) {

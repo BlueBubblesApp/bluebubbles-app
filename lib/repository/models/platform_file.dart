@@ -55,10 +55,7 @@ class PlatformFile {
 
   @override
   int get hashCode {
-    return path.hashCode ^
-    name.hashCode ^
-    bytes.hashCode ^
-    size.hashCode;
+    return path.hashCode ^ name.hashCode ^ bytes.hashCode ^ size.hashCode;
   }
 
   @override

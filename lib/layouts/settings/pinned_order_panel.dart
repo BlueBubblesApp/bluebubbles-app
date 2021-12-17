@@ -80,7 +80,7 @@ class PinnedOrderPanel extends StatelessWidget {
                 child: Container(
                   padding: EdgeInsets.only(top: 50.0),
                   child: Text(
-                    "You have no chats :(",
+                    "You have no pinned chats :(",
                     style: Theme.of(context).textTheme.subtitle1,
                   ),
                 ),

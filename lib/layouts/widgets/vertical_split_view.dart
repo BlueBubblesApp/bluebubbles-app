@@ -1,3 +1,4 @@
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +19,7 @@ class VerticalSplitView extends StatefulWidget {
         required this.right,
         this.initialRatio = 0.5,
         this.allowResize = true,
-        this.dividerWidth = 16.0,
+        this.dividerWidth = 7.0,
         this.minRatio = 0,
         this.maxRatio = 0})
       : assert(initialRatio >= 0),
@@ -66,38 +67,62 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
         _maxWidth = constraints.maxWidth - widget.dividerWidth;
       }
 
-      return SizedBox(
-        width: constraints.maxWidth,
-        child: Obx(() => Row(
-          children: <Widget>[
-            SizedBox(
-              width: _width1,
-              child: widget.left,
-            ),
-            (widget.allowResize) ? GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              child: Container(
-                  color: Theme.of(context).colorScheme.secondary,
-                  child: SizedBox(
-                    width: widget.dividerWidth,
-                    height: constraints.maxHeight,
-                    child: Icon(Icons.drag_indicator, color: Theme.of(context).textTheme.subtitle1?.color, size: 10),
-                  )),
-              onPanUpdate: (DragUpdateDetails details) {
-                _ratio.value = (_ratio.value + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
-              },
-            ) : SizedBox(
-              width: widget.dividerWidth,
-              height: constraints.maxHeight,
-              child: Container(color: Theme.of(context).colorScheme.secondary)
-            ),
-            SizedBox(
-              width: _width2,
-              child: widget.right,
-            ),
-          ],
-        ),
-      ));
+      return TitleBarWrapper(
+        child: SizedBox(
+          width: constraints.maxWidth,
+          child: Obx(() => Row(
+            children: <Widget>[
+              SizedBox(
+                width: _width1,
+                child: widget.left,
+              ),
+              (widget.allowResize) ? MouseRegion(
+                cursor: SystemMouseCursors.resizeLeftRight,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  child: Container(
+                      color: Theme.of(context).colorScheme.secondary,
+                      child: SizedBox(
+                        width: widget.dividerWidth,
+                        height: constraints.maxHeight,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(height: 4, width: 4, decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(25),
+                              color: Theme.of(context).textTheme.subtitle1?.color,
+                            )),
+                            SizedBox(height: 20,),
+                            Container(height: 4, width: 4, decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(25),
+                              color: Theme.of(context).textTheme.subtitle1?.color,
+                            )),
+                            SizedBox(height: 20,),
+                            Container(height: 4, width: 4, decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(25),
+                              color: Theme.of(context).textTheme.subtitle1?.color,
+                            )),
+                          ],
+                        ),
+                      )),
+                  onPanUpdate: (DragUpdateDetails details) {
+                    _ratio.value = (_ratio.value + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
+                  },
+                ),
+              ) : SizedBox(
+                width: widget.dividerWidth,
+                height: constraints.maxHeight,
+                child: Container(color: Theme.of(context).colorScheme.secondary)
+              ),
+              SizedBox(
+                width: _width2,
+                child: widget.right,
+              ),
+            ],
+          ),
+        )),
+      );
     });
   }
 }

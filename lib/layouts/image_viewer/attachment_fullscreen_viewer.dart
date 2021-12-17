@@ -1,8 +1,4 @@
 import 'dart:async';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
@@ -13,9 +9,12 @@ import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/custom_dismissible.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flutter/foundation.dart';
 import "package:flutter/material.dart";
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -58,13 +57,13 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
     }
   }
 
-  Future<void> init() async {
+  void init() async {
     getStartingIndex();
 
     // If the allAttachments is not updated
     if (startingIndex == null) {
       // Then fetch all of them and try again
-      await widget.currentChat?.updateChatAttachments(fetchAll: true);
+      await widget.currentChat?.updateChatAttachments();
       getStartingIndex();
     }
 
@@ -79,7 +78,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
         List<Attachment> older = widget.currentChat!.chatAttachments.sublist(0);
 
         // Update all of the attachments
-        widget.currentChat!.updateChatAttachments();
+        await widget.currentChat!.updateChatAttachments();
         List<Attachment> newer = widget.currentChat!.chatAttachments.sublist(0);
         if (newer.length > older.length) {
           Logger.info("Increasing currentIndex from " +
@@ -296,7 +295,14 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
               controller: controller,
             ),
           ),
-        ) : Container(),
+        ) : Container(
+          child: Center(
+            child: CircularProgressIndicator(
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+            ),
+          )
+        ),
       ),
     );
   }

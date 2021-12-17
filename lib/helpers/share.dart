@@ -3,9 +3,7 @@ import 'dart:convert';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:location/location.dart';
 import 'package:share_plus/share_plus.dart' as sp;
@@ -68,11 +66,14 @@ class Share {
 
     // Create the message object and link the attachment
     Message sentMessage = Message(
-        guid: _attachmentGuid,
-        text: "",
-        dateCreated: DateTime.now(),
-        hasAttachments: true,
-        attachments: [messageAttachment]);
+      guid: _attachmentGuid,
+      text: "",
+      dateCreated: DateTime.now(),
+      hasAttachments: true,
+      attachments: [messageAttachment],
+      isFromMe: true,
+      handleId: 0,
+    );
 
     // Add the message to the chat and save
     NewMessageManager().addMessage(chat, sentMessage);

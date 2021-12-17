@@ -7,8 +7,7 @@ import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -26,11 +25,12 @@ class ContactAvatarGroupWidget extends StatefulWidget {
 }
 
 class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
-  RxList<Handle> participants = RxList<Handle>();
+  late final List<Handle> participants;
 
   @override
-  Widget build(BuildContext context) {
-    participants = widget.chat.participants.obs;
+  void initState() {
+    super.initState();
+    participants = widget.chat.participants;
 
     participants.sort((a, b) {
       bool avatarA = ContactManager().getCachedContact(address: a.address)?.avatar.value?.isNotEmpty ?? false;
@@ -39,34 +39,34 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
       if (avatarA && !avatarB) return -1;
       return 0;
     });
+  }
 
-    for (Handle participant in participants) {
-      if (!(ContactManager().handleToContact[participant]?.avatar.value?.isNotEmpty ?? false)) {}
-    }
-
+  @override
+  Widget build(BuildContext context) {
     if (participants.isEmpty) {
       return Container(
-        width: widget.size,
-        height: widget.size,
+        width: widget.size * SettingsManager().settings.avatarScale.value,
+        height: widget.size * SettingsManager().settings.avatarScale.value,
       );
     }
 
     return Obx(
       () {
-        if (widget.chat.customAvatarPath.value != null) {
-          dynamic file = File(widget.chat.customAvatarPath.value!);
+        final avatarSize = widget.size * SettingsManager().settings.avatarScale.value;
+        if (widget.chat.customAvatarPath != null) {
+          dynamic file = File(widget.chat.customAvatarPath!);
           return Stack(
             children: [
               Container(
-                width: widget.size,
-                height: widget.size,
+                width: avatarSize,
+                height: avatarSize,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(widget.size / 2),
+                  borderRadius: BorderRadius.circular(avatarSize / 2),
                 ),
               ),
               CircleAvatar(
                 key: Key("${participants.first.address}-avatar"),
-                radius: widget.size / 2,
+                radius: avatarSize / 2,
                 backgroundImage: FileImage(file),
                 backgroundColor: Colors.transparent,
               ),
@@ -77,17 +77,17 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
         int maxAvatars = SettingsManager().settings.maxAvatarsInGroupWidget.value;
 
         return Container(
-          width: widget.size,
-          height: widget.size,
+          width: avatarSize,
+          height: avatarSize,
           child: participants.length > 1
               ? ThemeSwitcher(
                   iOSSkin: Stack(
                     children: [
                       Container(
-                        width: widget.size,
-                        height: widget.size,
+                        width: avatarSize,
+                        height: avatarSize,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(widget.size / 2),
+                          borderRadius: BorderRadius.circular(avatarSize / 2),
                           color: context.theme.colorScheme.secondary.withOpacity(0.6),
                         ),
                       ),
@@ -96,13 +96,13 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                         (index) {
                           // Trig really paying off here
                           int realLength = min(participants.length, maxAvatars);
-                          double padding = widget.size * 0.08;
+                          double padding = avatarSize * 0.08;
                           double angle = index / realLength * 2 * pi + pi / 4;
-                          double adjustedWidth = widget.size * (-0.07 * realLength + 1);
-                          double innerRadius = widget.size - adjustedWidth / 2 - 2 * padding;
+                          double adjustedWidth = avatarSize * (-0.07 * realLength + 1);
+                          double innerRadius = avatarSize - adjustedWidth / 2 - 2 * padding;
                           double size = adjustedWidth * 0.65;
-                          double top = (widget.size / 2) + (innerRadius / 2) * sin(angle + pi) - size / 2;
-                          double right = (widget.size / 2) + (innerRadius / 2) * cos(angle + pi) - size / 2;
+                          double top = (avatarSize / 2) + (innerRadius / 2) * sin(angle + pi) - size / 2;
+                          double right = (avatarSize / 2) + (innerRadius / 2) * cos(angle + pi) - size / 2;
                           if (index == maxAvatars - 1 && participants.length > maxAvatars) {
                             return Positioned(
                               top: top,
@@ -138,10 +138,11 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                               key: Key("${participants[index].address}-contact-avatar-group-widget"),
                               handle: participants[index],
                               size: size,
-                              borderThickness: widget.size * 0.01,
+                              borderThickness: avatarSize * 0.01,
                               fontSize: adjustedWidth * 0.3,
                               editable: false,
                               onTap: widget.onTap,
+                              scaleSize: false,
                             ),
                           );
                         },
@@ -157,20 +158,22 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                               alignment: Alignment.topRight,
                               child: ContactAvatarWidget(
                                 handle: participants[0],
-                                size: widget.size * 24.5 / 40,
-                                fontSize: widget.size * 10.5 / 40,
+                                size: avatarSize * 24.5 / 40,
+                                fontSize: avatarSize * 10.5 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                             Align(
                               alignment: Alignment.bottomLeft,
                               child: ContactAvatarWidget(
                                 handle: participants[1],
-                                size: widget.size * 24.5 / 40,
-                                fontSize: widget.size * 10.5 / 40,
+                                size: avatarSize * 24.5 / 40,
+                                fontSize: avatarSize * 10.5 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                           ],
@@ -182,30 +185,33 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                               alignment: Alignment.bottomRight,
                               child: ContactAvatarWidget(
                                 handle: participants[0],
-                                size: widget.size * 21.5 / 40,
-                                fontSize: widget.size * 9 / 40,
+                                size: avatarSize * 21.5 / 40,
+                                fontSize: avatarSize * 9 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                             Align(
                               alignment: Alignment.bottomLeft,
                               child: ContactAvatarWidget(
                                 handle: participants[1],
-                                size: widget.size * 21.5 / 40,
-                                fontSize: widget.size * 9 / 40,
+                                size: avatarSize * 21.5 / 40,
+                                fontSize: avatarSize * 9 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                             Align(
                               alignment: Alignment.topCenter,
                               child: ContactAvatarWidget(
                                 handle: participants[2],
-                                size: widget.size * 21.5 / 40,
-                                fontSize: widget.size * 9 / 40,
+                                size: avatarSize * 21.5 / 40,
+                                fontSize: avatarSize * 9 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                           ],
@@ -217,40 +223,44 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                               alignment: Alignment.bottomRight,
                               child: ContactAvatarWidget(
                                 handle: participants[0],
-                                size: widget.size / 2,
-                                fontSize: widget.size * 8.7 / 40,
+                                size: avatarSize / 2,
+                                fontSize: avatarSize * 8.7 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                             Align(
                               alignment: Alignment.bottomLeft,
                               child: ContactAvatarWidget(
                                 handle: participants[1],
-                                size: widget.size / 2,
-                                fontSize: widget.size * 8.7 / 40,
+                                size: avatarSize / 2,
+                                fontSize: avatarSize * 8.7 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                             Align(
                               alignment: Alignment.topLeft,
                               child: ContactAvatarWidget(
                                 handle: participants[2],
-                                size: widget.size / 2,
-                                fontSize: widget.size * 8.7 / 40,
+                                size: avatarSize / 2,
+                                fontSize: avatarSize * 8.7 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                             Align(
                               alignment: Alignment.topRight,
                               child: ContactAvatarWidget(
                                 handle: participants[3],
-                                size: widget.size / 2,
-                                fontSize: widget.size * 8.7 / 40,
+                                size: avatarSize / 2,
+                                fontSize: avatarSize * 8.7 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                           ],
@@ -267,20 +277,22 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                               alignment: Alignment.topRight,
                               child: ContactAvatarWidget(
                                 handle: participants[0],
-                                size: widget.size * 24.5 / 40,
-                                fontSize: widget.size * 10.5 / 40,
+                                size: avatarSize * 24.5 / 40,
+                                fontSize: avatarSize * 10.5 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                             Align(
                               alignment: Alignment.bottomLeft,
                               child: ContactAvatarWidget(
                                 handle: participants[1],
-                                size: widget.size * 24.5 / 40,
-                                fontSize: widget.size * 10.5 / 40,
+                                size: avatarSize * 24.5 / 40,
+                                fontSize: avatarSize * 10.5 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                           ],
@@ -292,30 +304,33 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                               alignment: Alignment.bottomRight,
                               child: ContactAvatarWidget(
                                 handle: participants[0],
-                                size: widget.size * 21.5 / 40,
-                                fontSize: widget.size * 9 / 40,
+                                size: avatarSize * 21.5 / 40,
+                                fontSize: avatarSize * 9 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                             Align(
                               alignment: Alignment.bottomLeft,
                               child: ContactAvatarWidget(
                                 handle: participants[1],
-                                size: widget.size * 21.5 / 40,
-                                fontSize: widget.size * 9 / 40,
+                                size: avatarSize * 21.5 / 40,
+                                fontSize: avatarSize * 9 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                             Align(
                               alignment: Alignment.topCenter,
                               child: ContactAvatarWidget(
                                 handle: participants[2],
-                                size: widget.size * 21.5 / 40,
-                                fontSize: widget.size * 9 / 40,
+                                size: avatarSize * 21.5 / 40,
+                                fontSize: avatarSize * 9 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                           ],
@@ -327,40 +342,44 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                               alignment: Alignment.bottomRight,
                               child: ContactAvatarWidget(
                                 handle: participants[0],
-                                size: widget.size / 2,
-                                fontSize: widget.size * 8.7 / 40,
+                                size: avatarSize / 2,
+                                fontSize: avatarSize * 8.7 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                             Align(
                               alignment: Alignment.bottomLeft,
                               child: ContactAvatarWidget(
                                 handle: participants[1],
-                                size: widget.size / 2,
-                                fontSize: widget.size * 8.7 / 40,
+                                size: avatarSize / 2,
+                                fontSize: avatarSize * 8.7 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                             Align(
                               alignment: Alignment.topLeft,
                               child: ContactAvatarWidget(
                                 handle: participants[2],
-                                size: widget.size / 2,
-                                fontSize: widget.size * 8.7 / 40,
+                                size: avatarSize / 2,
+                                fontSize: avatarSize * 8.7 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                             Align(
                               alignment: Alignment.topRight,
                               child: ContactAvatarWidget(
                                 handle: participants[3],
-                                size: widget.size / 2,
-                                fontSize: widget.size * 8.7 / 40,
+                                size: avatarSize / 2,
+                                fontSize: avatarSize * 8.7 / 40,
                                 editable: widget.editable,
                                 onTap: widget.onTap,
+                                scaleSize: false,
                               ),
                             ),
                           ],
@@ -372,10 +391,11 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
               : ContactAvatarWidget(
                   handle: participants.first,
                   borderThickness: 0.1,
-                  size: widget.size,
-                  fontSize: widget.size * 0.5,
+                  size: avatarSize,
+                  fontSize: avatarSize * 0.5,
                   editable: widget.editable,
                   onTap: widget.onTap,
+                  scaleSize: false,
                 ),
         );
       },

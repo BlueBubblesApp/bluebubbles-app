@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
@@ -10,9 +11,7 @@ import 'package:universal_io/io.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 
 class AttachmentDownloadService extends GetxService {
@@ -80,6 +79,13 @@ class AttachmentDownloadController extends GetxController {
     params["compress"] = false;
     if (kIsWeb) {
       var response = await api.downloadAttachment(attachment.guid!);
+      if (response.statusCode != 200) {
+        if (onError != null) onError!.call();
+
+        error.value = true;
+        Get.find<AttachmentDownloadService>().removeFromQueue(this);
+        return;
+      }
       attachment.webUrl = response.requestOptions.path;
       Logger.info("Finished fetching attachment");
       stopwatch.stop();
@@ -121,6 +127,7 @@ class AttachmentDownloadController extends GetxController {
         return;
       }
 
+      currentBytes += base64.decode(attachmentResponse["data"]);
       int? numBytes = attachmentResponse["byteLength"];
 
       if (numBytes == chunkSize) {
@@ -142,7 +149,7 @@ class AttachmentDownloadController extends GetxController {
           // Compress the attachment
           if (!kIsWeb) {
             await AttachmentHelper.compressAttachment(attachment, attachment.getPath());
-            await attachment.update();
+            attachment.save(null);
           } else if (CurrentChat.activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) ==
               null) {
             CurrentChat.activeChat?.chatAttachments.add(attachment);
@@ -154,7 +161,7 @@ class AttachmentDownloadController extends GetxController {
         // Finish the downloader
         Get.find<AttachmentDownloadService>().removeFromQueue(this);
         if (onComplete != null) onComplete!();
-        attachment.bytes = base64.decode(attachmentResponse['data']);
+        attachment.bytes = Uint8List.fromList(currentBytes);
         // Add attachment to sink based on if we got data
 
         file.value = PlatformFile(

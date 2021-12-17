@@ -22,7 +22,6 @@
 
 # Flutter/Dart/Pub related
 **/doc/api/
-.dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
@@ -41,3 +40,15 @@ pubspeck.lock
 **/android/key.properties
 **/android/.settings
 **/releases
+
+#objectbox
+.dart_tool/*
+!.dart_tool/build
+.dart_tool/build/entrypoint
+.dart_tool/build/*/error_cache/**
+!.dart_tool/build/generated
+!*.info
+
+#private keys
+*.env
+.vscode/launch.json

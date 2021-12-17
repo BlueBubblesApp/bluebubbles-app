@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
@@ -19,12 +20,7 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.da
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
@@ -138,6 +134,8 @@ bool sameAddress(List<String?> options, String? compared) {
       break;
     }
 
+    if (opt.isEmail && !compared.isEmail) continue;
+
     String formatted = slugify(compared, delimiter: '').toString().replaceAll('-', '');
     if (opt.endsWith(formatted) || formatted.endsWith(opt)) {
       match = true;
@@ -198,7 +196,7 @@ String randomString(int length) {
 }
 
 void showSnackbar(String title, String message,
-    {int animationMs = 250, int durationMs = 1500, Function(GetBar<Object>)? onTap, TextButton? button}) {
+    {int animationMs = 250, int durationMs = 1500, Function(GetSnackBar)? onTap, TextButton? button}) {
   Get.snackbar(title, message,
       snackPosition: SnackPosition.BOTTOM,
       colorText: Get.textTheme.bodyText1!.color,
@@ -210,8 +208,8 @@ void showSnackbar(String title, String message,
       animationDuration: Duration(milliseconds: animationMs),
       mainButton: button,
       onTap: onTap ??
-          (GetBar<Object> bar) {
-            if (Get.isSnackbarOpen ?? false) Get.back();
+          (GetSnackBar bar) {
+            if (Get.isSnackbarOpen) Get.back();
           });
 }
 
@@ -342,7 +340,7 @@ String uriToFilename(String? uri, String? mimeType) {
   return (ext != null && ext.isNotEmpty) ? '$filename.$ext' : filename;
 }
 
-Future<String> getGroupEventText(Message message) async {
+String getGroupEventText(Message message) {
   String text = "Unknown group event";
   String? handle = "You";
   if (!message.isFromMe! && message.handleId != null && message.handle != null) {
@@ -351,7 +349,7 @@ Future<String> getGroupEventText(Message message) async {
 
   String? other = "someone";
   if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
-    Handle? item = await Handle.findOne({"originalROWID": message.otherHandle});
+    Handle? item = Handle.findOne(originalROWID: message.otherHandle);
     if (item != null) {
       other = ContactManager().getContactTitle(item);
     }
@@ -687,72 +685,16 @@ Future<bool> rebuild(State s) async {
   return true;
 }
 
-final Uint8List kTransparentImage = Uint8List.fromList(<int>[
-  0x89,
-  0x50,
-  0x4E,
-  0x47,
-  0x0D,
-  0x0A,
-  0x1A,
-  0x0A,
-  0x00,
-  0x00,
-  0x00,
-  0x0D,
-  0x49,
-  0x48,
-  0x44,
-  0x52,
-  0x00,
-  0x00,
-  0x00,
-  0x01,
-  0x00,
-  0x00,
-  0x00,
-  0x01,
-  0x08,
-  0x06,
-  0x00,
-  0x00,
-  0x00,
-  0x1F,
-  0x15,
-  0xC4,
-  0x89,
-  0x00,
-  0x00,
-  0x00,
-  0x0A,
-  0x49,
-  0x44,
-  0x41,
-  0x54,
-  0x78,
-  0x9C,
-  0x63,
-  0x00,
-  0x01,
-  0x00,
-  0x00,
-  0x05,
-  0x00,
-  0x01,
-  0x0D,
-  0x0A,
-  0x2D,
-  0xB4,
-  0x00,
-  0x00,
-  0x00,
-  0x00,
-  0x49,
-  0x45,
-  0x4E,
-  0x44,
-  0xAE,
-]);
+/// Create a "fake" asynchronous task from a traditionally synchronous task
+///
+/// Used for heavy ObjectBox read/writes to avoid causing jank
+Future<T?> createAsyncTask<T>(AsyncTask<List<dynamic>, T> task) async {
+  final executor = AsyncExecutor(parallelism: 0, taskTypeRegister: () => [task]);
+  executor.logger.enabled = true;
+  executor.logger.enabledExecution = true;
+  await executor.execute(task);
+  return task.result;
+}
 
 extension PlatformSpecificCapitalize on String {
   String get psCapitalize {
@@ -783,5 +725,14 @@ extension WidgetLocation on GlobalKey {
   }
 }
 
+/// this extensions allows us to update an RxMap without re-rendering UI
+/// (to avoid getting the markNeedsBuild exception)
+extension ConditionlAdd on RxMap {
+  void conditionalAdd(Object? key, Object? value, bool shouldRefresh) {
+    // ignore this warning, for some reason value is a protected member
+    this.value[key] = value;
+    if (shouldRefresh) refresh();
+  }
+}
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;

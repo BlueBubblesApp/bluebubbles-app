@@ -1,0 +1,24 @@
+name: bluebubbles
+title: BlueBubbles
+version: 1.0.0.10
+summary: BlueBubbles client for Linux
+description: BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
+
+confinement: strict
+base: core18
+grade: devel
+
+apps:
+  bluebubbles:
+    command: bluebubbles
+    extensions: [flutter-stable]
+    plugs:
+      - network
+      - camera
+      - microphone
+
+parts:
+  bluebubbles:
+    source: .
+    plugin: flutter
+    flutter-target: lib/main.dart

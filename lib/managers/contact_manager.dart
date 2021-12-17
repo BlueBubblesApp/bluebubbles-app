@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
@@ -49,7 +49,7 @@ class ContactManager {
       int? sum = version?.split(".").mapIndexed((index, e) {
         if (index == 0) return int.parse(e) * 100;
         if (index == 1) return int.parse(e) * 21;
-        return int.parse(e);
+        return int.parse(e.split("-").firstOrNull ?? "0");
       }).sum;
       return (sum ?? 0) >= 42;
     }
@@ -107,47 +107,15 @@ class ContactManager {
         id: e.id,
       )).toList();
     } else {
-      try {
-        contacts.clear();
-        var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
-        if (vcfs['data'] != null) {
-          if (vcfs['data'] is String) {
-            vcfs['data'] = jsonDecode(vcfs['data']);
-          }
-          for (var c in vcfs['data']) {
-            contacts.add(Contact.fromMap(c));
-          }
-        }
-      } catch (e, s) {
-        print(e);
-        print(s);
-      }
-      if (contacts.isEmpty) {
-        try {
-          if (contacts.isEmpty) {
-            var response = await api.contacts();
-            for (Map<String, dynamic> map in response.data['data']) {
-              ContactManager().contacts.add(Contact(
-                id: randomString(8),
-                displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
-                emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-                phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-              ));
-            }
-          }
-        } catch (e, s) {
-          print(e);
-          print(s);
-        }
-      }
+      await fetchContactsDesktop();
     }
-    hasFetchedContacts = true;
 
     // Match handles in the database with contacts
     await matchHandles();
 
     Logger.info("Finished fetching contacts (${handleToContact.length})", tag: tag);
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
+      hasFetchedContacts = true;
       getContactsFuture!.complete(true);
     }
 
@@ -156,9 +124,55 @@ class ContactManager {
     return true;
   }
 
+  Future<void> fetchContactsDesktop({Function(String)? logger}) async {
+    try {
+      contacts.clear();
+      logger?.call("Trying to fetch contacts from Android...");
+      var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
+      if (vcfs['data'] != null) {
+        logger?.call("Found Android contacts!");
+        if (vcfs['data'] is String) {
+          logger?.call("Parsing string into JSON...");
+          vcfs['data'] = jsonDecode(vcfs['data']);
+        }
+        for (var c in vcfs['data']) {
+          logger?.call("Parsing contact: ${c['displayName']}");
+          contacts.add(Contact.fromMap(c));
+        }
+      }
+    } catch (e, s) {
+      print(e);
+      print(s);
+      logger?.call("Got exception: $e");
+      logger?.call(s.toString());
+    }
+    if (contacts.isEmpty) {
+      logger?.call("Android contacts didn't exist, falling back to macOS contacts...");
+      try {
+        var response = await api.contacts();
+        logger?.call("Found macOS contacts!");
+        for (Map<String, dynamic> map in response.data['data']) {
+          logger?.call("Parsing contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
+          contacts.add(Contact(
+            id: randomString(8),
+            displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
+            emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
+            phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
+          ));
+        }
+      } catch (e, s) {
+        print(e);
+        print(s);
+        logger?.call("Got exception: $e");
+        logger?.call(s.toString());
+      }
+    }
+    logger?.call("Finished contacts sync");
+  }
+
   Future<void> matchHandles() async {
     // Match handles to contacts
-    List<Handle> handles = kIsWeb ? ChatBloc().cachedHandles : await Handle.find({});
+    List<Handle> handles = kIsWeb ? ChatBloc().cachedHandles : Handle.find();
     for (Handle handle in handles) {
       // If we already have a "match", skip
       if (handleToContact.containsKey(handle.address) && handleToContact[handle.address] != null) {
@@ -210,7 +224,7 @@ class ContactManager {
     getAvatarsFuture!.complete();
   }
 
-  Contact? getContact(Handle handle, {bool fetchAvatar = false}) {
+  Contact? getContact(Handle handle) {
     Contact? contact;
 
     // Get a list of comparable options
@@ -233,14 +247,6 @@ class ContactManager {
             break;
           }
         }
-
-        // just in case our email parsing fails for whatever reason, if the
-        // contact is an exact match, accept it
-        if (c.phones.isEmpty && c.emails.isNotEmpty) {
-          if (c.emails.contains(handle.address)) {
-            contact = c;
-          }
-        }
       }
 
       // Get an email match
@@ -251,14 +257,6 @@ class ContactManager {
             break;
           }
         }
-
-        // just in case our email parsing fails for whatever reason, if the
-        // contact is an exact match, accept it
-        if (c.emails.isEmpty && c.phones.isNotEmpty) {
-          if (c.phones.map((e) => e.trim().numericOnly()).contains(handle.address.trim().numericOnly())) {
-            contact = c;
-          }
-        }
       }
 
       // If we have a match, break out of the loop
@@ -266,6 +264,10 @@ class ContactManager {
     }
 
     return contact;
+  }
+
+  Future<Uint8List?> getAvatar(String id) async {
+    return await FastContacts.getContactImage(id);
   }
 
   String getContactTitle(Handle? handle) {

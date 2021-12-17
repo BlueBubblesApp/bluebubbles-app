@@ -2,6 +2,7 @@ package com.bluebubbles.messaging.method_call_handler;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
+import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.content.Intent;
@@ -76,10 +77,10 @@ public class MethodCallHandler {
         } else if(call.method.equals(PushShareTargets.TAG)) {
             new PushShareTargets(context, call, result).Handle();
         } else if (call.method.equals("get-starting-intent")) {
-            String intent = ((MainActivity) context).getIntent().getStringExtra("chatGuid");
-            String bubble = ((MainActivity) context).getIntent().getStringExtra("bubble");
-            ((MainActivity) context).getIntent().putExtra("chatGuid", (String) null);
-            ((MainActivity) context).getIntent().putExtra("bubble", (String) null);
+            String intent = ((Activity) context).getIntent().getStringExtra("chatGuid");
+            String bubble = ((Activity) context).getIntent().getStringExtra("bubble");
+            ((Activity) context).getIntent().putExtra("chatGuid", (String) null);
+            ((Activity) context).getIntent().putExtra("bubble", (String) null);
             HashMap<String, Object> args = new HashMap<>();
             args.put("guid", intent);
             args.put("bubble", bubble);
