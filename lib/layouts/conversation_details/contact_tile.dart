@@ -159,7 +159,7 @@ class ContactTile extends StatelessWidget {
                 child: TextButton(
                   style: TextButton.styleFrom(
                     shape: CircleBorder(),
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    backgroundColor: context.theme.monetNeutralAccentColor(context),
                   ),
                   onLongPress: () => onPressContactTrailing(context, longPressed: true),
                   onPressed: () => onPressContactTrailing(context),

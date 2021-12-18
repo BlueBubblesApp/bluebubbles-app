@@ -802,7 +802,7 @@ extension MonetTheme on ThemeData {
   }
 }
 
-/// fast computeLuminance alternative
+/// fast computeLuminance alternative by taking simple average of r+g+b values
 extension FastLuminance on Color {
   double fastLuminance() {
     return (red+green+blue)/765.0;

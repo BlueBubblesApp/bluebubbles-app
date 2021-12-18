@@ -203,15 +203,18 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
         children: <Widget>[
           SizedBox(
             child: Hero(
-                tag: widget.attachment.guid!,
+              tag: widget.attachment.guid!,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(5),
                 child: (previewImage != null)
-                    ? Image.memory(
-                        previewImage!,
-                        fit: BoxFit.cover,
-                        filterQuality: FilterQuality.low,
-                        alignment: Alignment.center,
-                      )
-                    : Container()),
+                  ? Image.memory(
+                      previewImage!,
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.low,
+                      alignment: Alignment.center,
+                    )
+                  : Container())
+              ),
             width: CustomNavigator.width(context) / 2,
             height: CustomNavigator.width(context) / 2,
           ),

@@ -199,11 +199,11 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(primaryColor: chat.isTextForwarding ? Colors.green : Theme.of(context).primaryColor),
+        data: Theme.of(context).copyWith(primaryColor: chat.isTextForwarding ? context.theme.monetSmsColor(context) : context.theme.monetDarkAccentColor),
         child: Builder(
           builder: (context) {
             return Scaffold(
-              backgroundColor: Theme.of(context).backgroundColor,
+              backgroundColor: context.theme.monetBackgroundColor(context),
               appBar: (SettingsManager().settings.skin.value == Skins.iOS
                   ? CupertinoNavigationBar(
                       backgroundColor: Theme.of(context).colorScheme.secondary.withAlpha(125),
@@ -271,20 +271,23 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                             children: [
                               TextButton(
                                 child: Text("${(chat.displayName?.isNotEmpty ?? false) ? "Change" : "Add"} Name",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyText1!
-                                        .apply(color: Theme.of(context).primaryColor), textScaleFactor: 1.15,),
-                                  onPressed: () {
-                                    if (!SettingsManager().settings.enablePrivateAPI.value || !chat.isIMessage) {
-                                      showChangeName("local");
-                                    } else {
-                                      showChangeName("private-api");
-                                    }
-                                  },
-                                  onLongPress: () {
+                                  style: Theme.of(context)
+                                      .textTheme.bodyText1!
+                                      .apply(color: SettingsManager().settings.isMonetEnabled
+                                          ? null : context.theme.primaryColor
+                                      ),
+                                  textScaleFactor: 1.15,
+                                ),
+                                onPressed: () {
+                                  if (!SettingsManager().settings.enablePrivateAPI.value || !chat.isIMessage) {
                                     showChangeName("local");
-                                  },
+                                  } else {
+                                    showChangeName("private-api");
+                                  }
+                                },
+                                onLongPress: () {
+                                  showChangeName("local");
+                                },
                               ),
                               Container(
                                 child: IconButton(
@@ -389,7 +392,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              primary: Theme.of(context).colorScheme.secondary,
+                              primary: context.theme.monetNeutralAccentColor(context),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
                               ),
@@ -640,7 +643,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         child: ListTile(
                           leading: Text(
                             "Change chat avatar",
-                            style: TextStyle(
+                            style: SettingsManager().settings.isMonetEnabled ? null
+                                : TextStyle(
                               color: Theme.of(context).primaryColor,
                             ),
                           ),
@@ -668,7 +672,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       child: ListTile(
                         leading: Text(
                           "Fetch more messages",
-                          style: TextStyle(
+                          style: SettingsManager().settings.isMonetEnabled ? null
+                              : TextStyle(
                             color: Theme.of(context).primaryColor,
                           ),
                         ),
@@ -693,7 +698,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       child: ListTile(
                         leading: Text(
                           "Sync last 25 messages",
-                          style: TextStyle(
+                          style: SettingsManager().settings.isMonetEnabled ? null
+                              : TextStyle(
                             color: Theme.of(context).primaryColor,
                           ),
                         ),
@@ -711,7 +717,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                     SliverToBoxAdapter(
                         child: ListTile(
                             leading: Text("Pin Conversation",
-                                style: TextStyle(
+                                style: SettingsManager().settings.isMonetEnabled ? null
+                                    : TextStyle(
                                   color: Theme.of(context).primaryColor,
                                 )),
                             trailing: Switch(
@@ -729,7 +736,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                     SliverToBoxAdapter(
                         child: ListTile(
                             leading: Text("Mute Conversation",
-                                style: TextStyle(
+                                style: SettingsManager().settings.isMonetEnabled ? null
+                                    : TextStyle(
                                   color: Theme.of(context).primaryColor,
                                 )),
                             trailing: Switch(
@@ -748,7 +756,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                     SliverToBoxAdapter(
                         child: ListTile(
                             leading: Text("Archive Conversation",
-                                style: TextStyle(
+                                style: SettingsManager().settings.isMonetEnabled ? null
+                                    : TextStyle(
                                   color: Theme.of(context).primaryColor,
                                 )),
                             trailing: Switch(
@@ -833,7 +842,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         child: ListTile(
                           leading: Text(
                             "Clear Transcript (Local Only)",
-                            style: TextStyle(
+                            style: SettingsManager().settings.isMonetEnabled ? null
+                                : TextStyle(
                               color: Theme.of(context).primaryColor,
                             ),
                           ),
@@ -982,7 +992,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         child: ListTile(
                           leading: Text(
                             "Download Chat Transcript (Plaintext)",
-                            style: TextStyle(
+                            style: SettingsManager().settings.isMonetEnabled ? null
+                                : TextStyle(
                               color: Theme.of(context).primaryColor,
                             ),
                           ),
@@ -1184,7 +1195,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         child: ListTile(
                           leading: Text(
                             "Download Chat Transcript (PDF)",
-                            style: TextStyle(
+                            style: SettingsManager().settings.isMonetEnabled ? null
+                                : TextStyle(
                               color: Theme.of(context).primaryColor,
                             ),
                           ),
@@ -1206,7 +1218,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       (context, int index) {
                         return Container(
                           decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).backgroundColor, width: 3),
+                            border: Border.all(color: Colors.transparent, width: 3),
+                            borderRadius: BorderRadius.all(Radius.circular(10)),
                           ),
                           child: AttachmentDetailsCard(
                             attachment: attachmentsForChat[index],
