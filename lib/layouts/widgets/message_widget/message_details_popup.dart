@@ -287,7 +287,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                         height: reactionIconSize - 15,
                         decoration: BoxDecoration(
                           color: currentlySelectedReaction == e
-                              ? Theme.of(context).primaryColor
+                              ? context.theme.monetAccentColor(context)
                               : Theme.of(context).colorScheme.secondary.withAlpha(150),
                           borderRadius: BorderRadius.circular(
                             20,
