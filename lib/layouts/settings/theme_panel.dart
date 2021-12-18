@@ -39,12 +39,6 @@ class ThemePanelController extends GetxController {
   void onInit() {
     super.onInit();
     _settingsCopy = SettingsManager().settings;
-    // revert back to iOS skin since we disabled Samsung
-    if (SettingsManager().settings.skin.value == Skins.Samsung) {
-      SettingsManager().settings.skin.value = Skins.iOS;
-      ChatBloc().refreshChats();
-      SettingsManager().saveSettings(SettingsManager().settings);
-    }
   }
 
   @override
@@ -192,7 +186,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                         controller.update();
                         EventDispatcher().emit('theme-update', null);
                       },
-                      options: Skins.values.where((item) => item != Skins.Samsung).toList(),
+                      options: Skins.values,
                       textProcessing: (val) => val.toString().split(".").last,
                       capitalize: false,
                       title: "App Skin",
