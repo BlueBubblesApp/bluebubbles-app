@@ -745,19 +745,19 @@ extension MonetTheme on ThemeData {
         ? Colors.black
         : Colors.white;
   }
-  Color fabBackgroundColor(BuildContext context) {
+  Color monetLightAccentColor(BuildContext context) {
     return SettingsManager().settings.isMonetEnabled
         ? SettingsManager().monet!.primary
             [context.mediaQuery.platformBrightness == Brightness.light ? 100 : 700]!
         : primaryColor.oppositeLightenOrDarken(15);
   }
-  Color getBackgroundColor(BuildContext context) {
+  Color monetBackgroundColor(BuildContext context) {
     return SettingsManager().settings.isMonetEnabled
         ? SettingsManager().monet!.neutral
             [context.mediaQuery.platformBrightness == Brightness.light ? 10 : 900]!
         : backgroundColor;
   }
-  Color textFieldColor(BuildContext context) {
+  Color monetNeutralAccentColor(BuildContext context) {
     return SettingsManager().settings.isMonetEnabled
         ? context.mediaQuery.platformBrightness == Brightness.light
             ? Color.alphaBlend(
@@ -770,13 +770,13 @@ extension MonetTheme on ThemeData {
             )
         : backgroundColor.lightenOrDarken(20);
   }
-  Color messageColor(BuildContext context) {
+  Color monetAccentColor(BuildContext context) {
     return SettingsManager().settings.isMonetEnabled
         ? SettingsManager().monet!.primary
             [context.mediaQuery.platformBrightness == Brightness.light ? 400 : 600]!
         : primaryColor;
   }
-  Color smsColor(BuildContext context) {
+  Color monetSmsColor(BuildContext context) {
     return SettingsManager().settings.isMonetEnabled
         ? context.mediaQuery.platformBrightness == Brightness.light
             ? SettingsManager().monet!.primary[100]!

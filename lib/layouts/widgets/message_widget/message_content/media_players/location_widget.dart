@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get_utils/src/extensions/context_extensions.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -68,7 +70,7 @@ class _LocationWidgetState extends State<LocationWidget> {
           onTap: openMaps,
           child: Container(
               height: 240,
-              color: Theme.of(context).colorScheme.secondary,
+              color: context.theme.monetNeutralAccentColor(context),
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,

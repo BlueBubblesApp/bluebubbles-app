@@ -607,10 +607,10 @@ class _Material extends StatelessWidget {
           bottomLeft: Radius.circular(20),
         ),
         color: parent.shouldHighlight && (kIsWeb || kIsDesktop)
-            ? context.theme.getBackgroundColor(context).lightenOrDarken(20)
+            ? context.theme.monetBackgroundColor(context).lightenOrDarken(20)
             : parent.selected
-                ? context.theme.getBackgroundColor(context).lightenOrDarken(20)
-                : context.theme.getBackgroundColor(context),
+                ? context.theme.monetBackgroundColor(context).lightenOrDarken(20)
+                : context.theme.monetBackgroundColor(context),
         child: GestureDetector(
           onSecondaryTapUp: (details) async {
             if (kIsWeb) {

@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -75,7 +76,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
             ),
             child: Container(
               width: 200,
-              color: Theme.of(context).colorScheme.secondary,
+              color: Theme.of(context).monetNeutralAccentColor(context),
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
                 child: Column(

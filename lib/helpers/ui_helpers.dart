@@ -20,7 +20,7 @@ Widget buildBackButton(BuildContext context,
       icon: skin != null
           ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: Theme.of(context).primaryColor)
           : Obx(() => Icon(SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
-              color: context.theme.messageColor(context))),
+              color: context.theme.monetAccentColor(context))),
       onPressed: () {
         final result = callback?.call() ?? true;
         if (result) {
@@ -60,7 +60,7 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
   // If the image doesn't have a valid size, show the loader with static height/width
   if (!attachment.hasValidSize) {
     return Container(
-        width: placeholderWidth, height: placeholderHeight, color: Theme.of(context).colorScheme.secondary, child: child);
+        width: placeholderWidth, height: placeholderHeight, color: context.theme.monetNeutralAccentColor(context), child: child);
   }
 
   // If we have a valid size, we want to calculate the aspect ratio so the image doesn't "jitter" when loading

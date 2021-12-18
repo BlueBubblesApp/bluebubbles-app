@@ -711,7 +711,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         },
         child: Scaffold(
           backgroundColor: SettingsManager().settings.skin.value == Skins.Material
-              ? context.theme.getBackgroundColor(context)
+              ? context.theme.monetBackgroundColor(context)
               : context.theme.backgroundColor,
           body: Builder(
             builder: (BuildContext context) {

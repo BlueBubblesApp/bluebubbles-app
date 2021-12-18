@@ -541,7 +541,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         width: fileDragged ? size * 3 : size,
         margin: EdgeInsets.only(left: 5.0, right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
         decoration: BoxDecoration(
-          color: SettingsManager().settings.skin.value == Skins.Samsung ? null : context.theme.messageColor(context),
+          color: SettingsManager().settings.skin.value == Skins.Samsung ? null : context.theme.monetAccentColor(context),
           borderRadius: BorderRadius.circular(fileDragged ? 5 : 40),
         ),
         child: Stack(
@@ -603,7 +603,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         child: Material(
           color: SettingsManager().settings.skin.value == Skins.Samsung
               ? Colors.transparent
-              : context.theme.messageColor(context),
+              : context.theme.monetAccentColor(context),
           child: Theme(
             data: Theme.of(context).copyWith(
               bottomSheetTheme: BottomSheetThemeData(
@@ -1685,7 +1685,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       child: Material(
                         color: SettingsManager().settings.skin.value == Skins.Samsung
                             ? Colors.transparent
-                            : context.theme.messageColor(context),
+                            : context.theme.monetAccentColor(context),
                         child: GestureDetector(
                           onSecondaryTapUp: (_) async {
                             if (kIsWeb) {

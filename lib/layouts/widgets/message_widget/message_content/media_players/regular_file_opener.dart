@@ -68,7 +68,7 @@ class RegularFileOpener extends StatelessWidget {
           maxHeight: 140,
           maxWidth: 200,
         ),
-        color: Theme.of(context).colorScheme.secondary,
+        color: Theme.of(context).monetNeutralAccentColor(context),
         child: Padding(
           padding: const EdgeInsets.all(15.0),
           child: Column(

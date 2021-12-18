@@ -135,8 +135,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     ];
     if (SettingsManager().settings.isMonetEnabled && !message.isFromMe!) {
       bubbleColors = [
-        context.theme.textFieldColor(context),
-        context.theme.textFieldColor(context)
+        context.theme.monetNeutralAccentColor(context),
+        context.theme.monetNeutralAccentColor(context)
       ];
     }
     if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {

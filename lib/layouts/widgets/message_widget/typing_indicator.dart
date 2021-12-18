@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -76,7 +77,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       Container(
                         margin: EdgeInsets.only(left: widget.bigPin ? 18 : 2),
                         decoration: BoxDecoration(
-                          color: context.theme.colorScheme.secondary,
+                          color: context.theme.monetNeutralAccentColor(context),
                           borderRadius: BorderRadius.circular(40),
                         ),
                         width: 10,
@@ -86,7 +87,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       Container(
                         margin: EdgeInsets.only(left: 9, bottom: 10),
                         decoration: BoxDecoration(
-                          color: context.theme.colorScheme.secondary,
+                          color: context.theme.monetNeutralAccentColor(context),
                           borderRadius: BorderRadius.circular(40),
                         ),
                         width: 15,
@@ -107,7 +108,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        color: context.theme.colorScheme.secondary,
+                        color: context.theme.monetNeutralAccentColor(context),
                       ),
                       child: Stack(
                         alignment: Alignment.center,
@@ -137,7 +138,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
         builder: (context, child) {
           return Container(
             decoration: BoxDecoration(
-              color: context.theme.colorScheme.secondary.lightenOrDarken(
+              color: context.theme.monetNeutralAccentColor(context).lightenOrDarken(
                   (math.sin(animation.value + (index) * math.pi / 4).abs() * 20).clamp(1, 20).toDouble()),
               borderRadius: BorderRadius.circular(30),
             ),

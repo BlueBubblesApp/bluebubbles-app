@@ -199,7 +199,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
     hasPinnedChat();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.getBackgroundColor(context), // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.monetBackgroundColor(context), // navigation bar color
         systemNavigationBarIconBrightness:
         context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -233,7 +233,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                     Container(
                       height: 80,
                       width: context.width,
-                      color: context.theme.getBackgroundColor(context),
+                      color: context.theme.monetBackgroundColor(context),
                     ),
                     AnimatedSwitcher(
                       duration: Duration(milliseconds: 500),
@@ -252,7 +252,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(25),
-                                color: context.theme.textFieldColor(context),
+                                color: context.theme.monetNeutralAccentColor(context),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.only(left: 15.0, top: 5.0, bottom: 5.0),
@@ -790,7 +790,7 @@ class _FABStatefulWrapperState extends State<FABStatefulWrapper> {
           9,
         ),
       child: FloatingActionButton.extended(
-          backgroundColor: context.theme.fabBackgroundColor(context),
+          backgroundColor: context.theme.monetLightAccentColor(context),
           label: AnimatedSwitcher(
             duration: Duration(milliseconds: 150),
             transitionBuilder: (Widget child, Animation<double> animation) => SizeTransition(

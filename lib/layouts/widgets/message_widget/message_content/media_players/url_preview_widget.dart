@@ -246,7 +246,7 @@ class UrlPreviewWidget extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Material(
-                  color: Theme.of(context).colorScheme.secondary,
+                  color: context.theme.monetNeutralAccentColor(context),
                   child: InkResponse(
                     borderRadius: BorderRadius.circular(20),
                     onTap: () async {
