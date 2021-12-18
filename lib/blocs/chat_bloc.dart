@@ -84,7 +84,7 @@ class ChatBloc {
     Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
 
     // Get the contacts in case we haven't
-    if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
+    if (ContactManager().contacts.isEmpty) ContactManager().getContacts().then((e) => ChatBloc().chats.refresh());
 
     _messageSubscription ??= setupMessageListener();
 
@@ -200,7 +200,8 @@ class ChatBloc {
     chat.toggleHasUnread(isUnread);
 
     // Remove from notification shade
-    if (clearNotifications && !isUnread) MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    if (clearNotifications && !isUnread)
+      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
 
     updateChatPosition(chat);
   }
@@ -291,7 +292,11 @@ class ChatBloc {
     // Reset chat lists
     List<Chat> newChats = [];
 
-    int batches = count == 0 ? 1 : (count < batchSize) ? batchSize : (count / batchSize).ceil();
+    int batches = count == 0
+        ? 1
+        : (count < batchSize)
+            ? batchSize
+            : (count / batchSize).ceil();
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = [];
       if (kIsWeb) {
@@ -377,18 +382,12 @@ class ChatBloc {
     final item = _chats.bigPinHelper(true)[oldIndex];
     if (newIndex > oldIndex) {
       newIndex = newIndex - 1;
-      _chats
-          .bigPinHelper(true)
-          .where((p0) => p0.pinIndex != null && p0.pinIndex! <= newIndex)
-          .forEach((element) {
+      _chats.bigPinHelper(true).where((p0) => p0.pinIndex != null && p0.pinIndex! <= newIndex).forEach((element) {
         element.pinIndex = element.pinIndex! - 1;
       });
       item.pinIndex = newIndex;
     } else {
-      _chats
-          .bigPinHelper(true)
-          .where((p0) => p0.pinIndex != null && p0.pinIndex! >= newIndex)
-          .forEach((element) {
+      _chats.bigPinHelper(true).where((p0) => p0.pinIndex != null && p0.pinIndex! >= newIndex).forEach((element) {
         element.pinIndex = element.pinIndex! + 1;
       });
       item.pinIndex = newIndex;
@@ -466,13 +465,9 @@ extension Helpers on RxList<Chat> {
 
   RxList<Chat> bigPinHelper(bool pinned) {
     if (pinned) {
-      return where((e) => e.isPinned ?? false)
-          .toList()
-          .obs;
+      return where((e) => e.isPinned ?? false).toList().obs;
     } else {
-      return where((e) => !(e.isPinned ?? false))
-          .toList()
-          .obs;
+      return where((e) => !(e.isPinned ?? false)).toList().obs;
     }
   }
 

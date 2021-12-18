@@ -1,3 +1,4 @@
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -42,7 +43,7 @@ class BaseNavigator extends GetxService {
       Get.to(() => widget, transition: Transition.rightToLeft, id: 2);
     } else {
       Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
-        builder: (BuildContext context) => widget,
+        builder: (BuildContext context) => TitleBarWrapper(child: widget),
       ));
     }
   }
@@ -55,7 +56,7 @@ class BaseNavigator extends GetxService {
       Get.to(() => widget, transition: Transition.leftToRight, id: 1);
     } else {
       Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
-        builder: (BuildContext context) => widget,
+        builder: (BuildContext context) => TitleBarWrapper(child: widget),
       ));
     }
   }
@@ -69,7 +70,7 @@ class BaseNavigator extends GetxService {
     } else {
       binding?.dependencies();
       Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
-        builder: (BuildContext context) => widget,
+        builder: (BuildContext context) => TitleBarWrapper(child: widget),
       ));
     }
   }
@@ -89,7 +90,7 @@ class BaseNavigator extends GetxService {
           id: 2);
     } else {
       Navigator.of(context).pushAndRemoveUntil(ThemeSwitcher.buildPageRoute(
-        builder: (BuildContext context) => widget,
+        builder: (BuildContext context) => TitleBarWrapper(child: widget),
       ), predicate);
     }
   }
@@ -111,7 +112,7 @@ class BaseNavigator extends GetxService {
       binding?.dependencies();
       // only push here because we don't want to remove underlying routes when in portrait
       Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
-        builder: (BuildContext context) => widget,
+        builder: (BuildContext context) => TitleBarWrapper(child: widget),
       ));
     }
   }

@@ -1,4 +1,5 @@
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -24,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
       await Future.delayed(Duration(milliseconds: 100));
       Navigator.of(context).pushAndRemoveUntil(PageRouteBuilder(
           transitionDuration: Duration(seconds: 1),
-          pageBuilder: (_, __, ___) => SetupView()), (route) => route.isFirst);
+          pageBuilder: (_, __, ___) => TitleBarWrapper(child: SetupView())), (route) => route.isFirst);
     }
   }
 

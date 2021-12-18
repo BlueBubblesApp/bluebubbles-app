@@ -737,7 +737,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
     Widget chatList = buildChatList();
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);
-    } else if (kIsDesktop) {
+    } else if (!widget.parent.widget.showArchivedChats && !widget.parent.widget.showUnknownSenders) {
       return TitleBarWrapper(child: chatList);
     }
 
