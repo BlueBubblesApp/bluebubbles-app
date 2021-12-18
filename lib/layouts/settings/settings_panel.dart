@@ -1258,7 +1258,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   }
 
   Widget buildForDevice() {
-    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
+    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600;
     Widget settingsList = buildSettingsList();
     if (showAltLayout) {
       return buildForLandscape(context, settingsList);

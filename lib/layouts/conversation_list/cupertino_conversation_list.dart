@@ -573,7 +573,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
   Widget buildForDevice(BuildContext context) {
     bool showAltLayout =
-        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
+        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600;
     Widget chatList = buildChatList(context, showAltLayout);
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);

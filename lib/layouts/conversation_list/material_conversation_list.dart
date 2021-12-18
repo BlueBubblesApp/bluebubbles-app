@@ -733,7 +733,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
 
   Widget buildForDevice() {
     bool showAltLayout =
-        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
+        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600;
     Widget chatList = buildChatList();
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);
