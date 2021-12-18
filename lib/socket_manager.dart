@@ -367,16 +367,8 @@ class SocketManager {
         IncomingQueue().add(QueueItem(event: "handle-updated-message", item: {"data": _data}));
       });
 
-      if (serverAddress.contains("trycloudflare.com")) {
-        Logger.info("Detected Cloudflare URL, waiting 10 seconds before connecting to socket at: $serverAddress");
-        Future.delayed(Duration(seconds: 10), () {
-          Logger.info("Connecting to the socket at: $serverAddress");
-          _manager.socket!.connect();
-        });
-      } else {
-        Logger.info("Connecting to the socket at: $serverAddress");
-        _manager.socket!.connect();
-      }
+      Logger.info("Connecting to the socket at: $serverAddress");
+      _manager.socket!.connect();
     } catch (e) {
       if (!catchException) {
         throw ("[$tag] -> Failed to connect: ${e.toString()}");
@@ -748,7 +740,15 @@ class SocketManager {
           _settingsCopy.serverAddress.value = url ?? _settingsCopy.serverAddress.value;
           SettingsManager().saveSettings(_settingsCopy);
           if (connectToSocket) {
-            startSocketIO(forceNewConnection: connectToSocket);
+            final serverAddress = getServerAddress();
+            if (serverAddress?.contains("trycloudflare.com") ?? false) {
+              Logger.info("Detected Cloudflare URL, waiting 10 seconds before connecting to socket at: $serverAddress");
+              Future.delayed(Duration(seconds: 10), () {
+                startSocketIO(forceNewConnection: true);
+              });
+            } else {
+              startSocketIO(forceNewConnection: connectToSocket);
+            }
           }
         });
       } else {
@@ -763,7 +763,15 @@ class SocketManager {
         _settingsCopy.serverAddress.value = url ?? _settingsCopy.serverAddress.value;
         await SettingsManager().saveSettings(_settingsCopy);
         if (connectToSocket) {
-          startSocketIO(forceNewConnection: connectToSocket);
+          final serverAddress = getServerAddress();
+          if (serverAddress?.contains("trycloudflare.com") ?? false) {
+            Logger.info("Detected Cloudflare URL, waiting 10 seconds before connecting to socket at: $serverAddress");
+            Future.delayed(Duration(seconds: 10), () {
+              startSocketIO(forceNewConnection: true);
+            });
+          } else {
+            startSocketIO(forceNewConnection: connectToSocket);
+          }
         }
       }
     } catch (e, s) {
