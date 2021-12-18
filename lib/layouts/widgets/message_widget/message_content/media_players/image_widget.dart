@@ -132,7 +132,7 @@ class ImageWidget extends StatelessWidget {
           onTap: () async {
             controller.navigated = true;
             CurrentChat? currentChat = CurrentChat.activeChat;
-            await Navigator.of(context).push(
+            await Navigator.of(Get.context!).push(
               MaterialPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(
                   currentChat: currentChat,
@@ -160,8 +160,8 @@ class ImageWidget extends StatelessWidget {
                 // prevents the image widget from "refreshing" when the provider changes
                 gaplessPlayback: true,
                 filterQuality: FilterQuality.none,
-                cacheWidth: controller.attachment.width != null ? (controller.attachment.width! * Get.pixelRatio).round().abs() : null,
-                cacheHeight: controller.attachment.height != null ? (controller.attachment.height! * Get.pixelRatio).round().abs() : null,
+                cacheWidth: (controller.attachment.width != null ? (controller.attachment.width! * Get.pixelRatio).round().abs() : null).nonZero,
+                cacheHeight: (controller.attachment.height != null ? (controller.attachment.height! * Get.pixelRatio).round().abs() : null).nonZero,
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   return Stack(children: [
                     buildPlaceHolder(context, controller, isLoaded: wasSynchronouslyLoaded),
@@ -208,4 +208,8 @@ class ImageWidget extends StatelessWidget {
         controller.attachment.guid != "redacted-mode-demo-attachment"
             ? Center(child: buildProgressIndicator(context)) : Container());
   }
+}
+
+extension NonZero on int? {
+  int? get nonZero => (this ?? 0) == 0 ? null : this;
 }

@@ -159,7 +159,7 @@ class VideoWidget extends StatelessWidget {
       } else {
         controller.navigated = true;
         CurrentChat? currentChat = CurrentChat.activeChat;
-        await Navigator.of(context).push(
+        await Navigator.of(Get.context!).push(
           ThemeSwitcher.buildPageRoute(
             builder: (context) => AttachmentFullscreenViewer(
               currentChat: currentChat,

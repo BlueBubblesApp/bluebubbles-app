@@ -81,7 +81,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
 
             Attachment fakeAttachment =
                 Attachment(transferName: widget.file.path, mimeType: mimeType, bytes: widget.file.bytes);
-            await Navigator.of(context).push(
+            await Navigator.of(Get.context!).push(
               MaterialPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(
                   attachment: fakeAttachment,
