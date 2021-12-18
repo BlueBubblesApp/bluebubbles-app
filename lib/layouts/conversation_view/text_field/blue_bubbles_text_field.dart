@@ -542,7 +542,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         width: fileDragged ? size * 3 : size,
         margin: EdgeInsets.only(left: 5.0, right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
         decoration: BoxDecoration(
-          color: SettingsManager().settings.skin.value == Skins.Samsung ? null : context.theme.monetAccentColor(context),
+          color: SettingsManager().settings.skin.value == Skins.Samsung ? null : context.theme.monetKeyboardAccentColor(context),
           borderRadius: BorderRadius.circular(fileDragged ? 5 : 40),
         ),
         child: Stack(
@@ -581,7 +581,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     : Icons.share,
                             color: SettingsManager().settings.skin.value == Skins.Samsung
                                 ? context.theme.textTheme.bodyText1!.color
-                                : Colors.white,
+                                : SettingsManager().settings.isMonetEnabled ?
+                                    Colors.black : Colors.white,
                             size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                           ),
                   ),
@@ -604,7 +605,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         child: Material(
           color: SettingsManager().settings.skin.value == Skins.Samsung
               ? Colors.transparent
-              : context.theme.monetAccentColor(context),
+              : context.theme.monetKeyboardAccentColor(context),
           child: Theme(
             data: Theme.of(context).copyWith(
               bottomSheetTheme: BottomSheetThemeData(
@@ -1614,7 +1615,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             padding: EdgeInsets.only(
                               right: 0,
                             ),
-                            primary: Theme.of(context).primaryColor,
+                            primary: context.theme.monetKeyboardAccentColor(context),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(40),
                             ),
@@ -1631,7 +1632,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                   duration: Duration(milliseconds: 150),
                                   child: Icon(
                                     CupertinoIcons.waveform,
-                                    color: (isRecording.value) ? Colors.red : Colors.white,
+                                    color: (isRecording.value) ? Colors.red : SettingsManager().settings.isMonetEnabled
+                                        ? Colors.black : Colors.white,
                                     size: 22,
                                   ),
                                 )),
@@ -1679,7 +1681,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       child: Material(
                         color: SettingsManager().settings.skin.value == Skins.Samsung
                             ? Colors.transparent
-                            : context.theme.monetAccentColor(context),
+                            : context.theme.monetKeyboardAccentColor(context),
                         child: GestureDetector(
                           onSecondaryTapUp: (_) async {
                             if (kIsWeb) {
@@ -1714,7 +1716,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                             ? Colors.red
                                             : SettingsManager().settings.skin.value == Skins.Samsung
                                                 ? context.theme.textTheme.bodyText1!.color
-                                                : Colors.white,
+                                                : SettingsManager().settings.isMonetEnabled
+                                                    ? Colors.black : Colors.white,
                                         size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                                       ),
                                     )),

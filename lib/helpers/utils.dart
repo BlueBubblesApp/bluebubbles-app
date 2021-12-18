@@ -770,10 +770,16 @@ extension MonetTheme on ThemeData {
             [context.mediaQuery.platformBrightness == Brightness.light ? 300 : 600]!
         : dividerColor;
   }
+  Color monetKeyboardAccentColor(BuildContext context) {
+    return SettingsManager().settings.isMonetEnabled
+        ? SettingsManager().monet!.primary
+            [context.mediaQuery.platformBrightness == Brightness.light ? 200 : 100]!
+        : primaryColor;
+  }
   Color monetLightAccentColor(BuildContext context) {
     return SettingsManager().settings.isMonetEnabled
         ? SettingsManager().monet!.primary
-    [context.mediaQuery.platformBrightness == Brightness.light ? 100 : 700]!
+            [context.mediaQuery.platformBrightness == Brightness.light ? 100 : 700]!
         : primaryColor.oppositeLightenOrDarken(15);
   }
   Color monetAccentColor(BuildContext context) {
