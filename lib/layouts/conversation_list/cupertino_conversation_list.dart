@@ -500,7 +500,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
   Widget buildForLandscape(BuildContext context, Widget chatList) {
     return VerticalSplitView(
       initialRatio: 0.4,
-      minRatio: 0.33,
+      minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
       maxRatio: 0.5,
       allowResize: true,
       left: LayoutBuilder(builder: (context, constraints) {
