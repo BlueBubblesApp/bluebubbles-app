@@ -145,7 +145,7 @@ class SettingsScaffold extends StatelessWidget {
                               child: Align(
                                 alignment: Alignment.bottomLeft,
                                 child: Container(
-                                  padding: EdgeInsets.only(left: 40),
+                                  padding: EdgeInsets.only(left: 50),
                                   height: 50,
                                   child: Align(
                                     alignment: Alignment.centerLeft,
