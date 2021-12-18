@@ -203,7 +203,7 @@ class ConversationListState extends State<ConversationList> {
 
   Widget buildSettingsButton() => !widget.showArchivedChats && !widget.showUnknownSenders
       ? PopupMenuButton(
-          color: context.theme.colorScheme.secondary,
+          color: context.theme.monetNeutralAccentColor(context).lightenAmount(0.03),
           onSelected: (dynamic value) {
             if (value == 0) {
               ChatBloc().markAllAsRead();
@@ -341,6 +341,9 @@ class ConversationListState extends State<ConversationList> {
               size: 25,
             ),
           ),
+          shape: SettingsManager().settings.skin.value == Skins.Material ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(5),
+          ) : null,
         )
       : Container();
 

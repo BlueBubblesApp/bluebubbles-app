@@ -676,7 +676,7 @@ class _Material extends StatelessWidget {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(20),
                               color: parent.widget.chat.hasUnreadMessage!
-                                  ? Theme.of(context).primaryColor
+                                  ? context.theme.monetDarkAccentColor
                                   : Colors.transparent,
                             ),
                           ),
