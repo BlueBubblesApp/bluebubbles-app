@@ -326,11 +326,11 @@ class ConversationListState extends State<ConversationList> {
               height: 20,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(40),
-                color: context.theme.colorScheme.secondary,
+                color: context.theme.monetNeutralAccentColor(context),
               ),
               child: Icon(
                 Icons.more_horiz,
-                color: context.theme.primaryColor,
+                color: context.theme.monetDarkAccentColor,
                 size: 15,
               ),
             ),
@@ -371,8 +371,8 @@ class ConversationListState extends State<ConversationList> {
             height: 10,
           ),
         FloatingActionButton(
-            backgroundColor: context.theme.primaryColor,
-            child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
+            backgroundColor: context.theme.monetLightAccentColor(context),
+            child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: context.theme.fabTextColor(context), size: 25),
             onPressed: openNewChatCreator),
       ],
     );

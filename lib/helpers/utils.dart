@@ -762,7 +762,7 @@ extension MonetTheme on ThemeData {
               SettingsManager().monet!.primary[500]!.withAlpha(30),
               SettingsManager().monet!.neutral[800]!.darkenAmount(0.04)
             )
-        : backgroundColor.lightenOrDarken(20);
+        : colorScheme.secondary;
   }
   Color monetDividerColor(BuildContext context) {
     return SettingsManager().settings.isMonetEnabled

@@ -78,7 +78,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.monetBackgroundColor(context), // navigation bar color
         systemNavigationBarIconBrightness:
             context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -136,13 +136,13 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                         leading: Container(),
                         elevation: 0,
                         systemOverlayStyle: brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-                        backgroundColor: context.theme.backgroundColor,
+                        backgroundColor: context.theme.monetBackgroundColor(context),
                       ),
                     ),
                     )),
                 ),
         ),
-        backgroundColor: context.theme.backgroundColor,
+        backgroundColor: context.theme.monetBackgroundColor(context),
         extendBodyBehindAppBar: true,
         body: ImprovedScrolling(
           enableMMBScrolling: true,
@@ -203,12 +203,12 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                             if (!showArchived && !showUnknown)
                               ClipOval(
                                 child: Material(
-                                  color: context.theme.colorScheme.secondary, // button color
+                                  color: context.theme.monetNeutralAccentColor(context), // button color
                                   child: InkWell(
                                     child: SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: Icon(CupertinoIcons.search, color: context.theme.primaryColor, size: 12)),
+                                        child: Icon(CupertinoIcons.search, color: context.theme.monetDarkAccentColor, size: 12)),
                                     onTap: () async {
                                       CustomNavigator.pushLeft(context, SearchView());
                                     },
@@ -219,12 +219,12 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                             if (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
                               ClipOval(
                                 child: Material(
-                                  color: context.theme.colorScheme.secondary, // button color
+                                  color: context.theme.monetNeutralAccentColor(context), // button color
                                   child: InkWell(
                                     child: SizedBox(
                                       width: 20,
                                       height: 20,
-                                      child: Icon(CupertinoIcons.pencil, color: context.theme.primaryColor, size: 12),
+                                      child: Icon(CupertinoIcons.pencil, color: context.theme.monetDarkAccentColor, size: 12),
                                     ),
                                     onTap: widget.parent.openNewChatCreator,
                                   ),
@@ -239,12 +239,12 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                 !showUnknown)
                               ClipOval(
                                 child: Material(
-                                  color: context.theme.colorScheme.secondary, // button color
+                                  color: context.theme.monetNeutralAccentColor(context), // button color
                                   child: InkWell(
                                     child: SizedBox(
                                       width: 20,
                                       height: 20,
-                                      child: Icon(CupertinoIcons.camera, color: context.theme.primaryColor, size: 12),
+                                      child: Icon(CupertinoIcons.camera, color: context.theme.monetDarkAccentColor, size: 12),
                                     ),
                                     onTap: () async {
                                       bool camera = await Permission.camera.isGranted;
@@ -554,7 +554,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                 CupertinoPage(
                   name: "initial",
                   child: Scaffold(
-                    backgroundColor: context.theme.backgroundColor,
+                    backgroundColor: context.theme.monetBackgroundColor(context),
                     extendBodyBehindAppBar: true,
                     body: Center(
                       child: Container(

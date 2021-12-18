@@ -451,7 +451,7 @@ class _Cupertino extends StatelessWidget {
       Material(
         color: parent.shouldHighlight && (kIsWeb || kIsDesktop)
             ? Theme.of(context).primaryColor.withAlpha(120)
-            : Theme.of(context).backgroundColor,
+            : context.theme.monetBackgroundColor(context),
         borderRadius: BorderRadius.circular(parent.shouldHighlight ? 5 : 0),
         child: GestureDetector(
           onTapUp: (details) {
@@ -548,7 +548,7 @@ class _Cupertino extends StatelessWidget {
                               ? Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(35),
-                                    color: Theme.of(context).primaryColor.withOpacity(0.8),
+                                    color: context.theme.monetDarkAccentColor,
                                   ),
                                   width: 10,
                                   height: 10,
