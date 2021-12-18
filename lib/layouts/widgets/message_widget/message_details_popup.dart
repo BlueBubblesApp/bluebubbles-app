@@ -732,24 +732,82 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              final messageDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now().toLocal(),
-                  firstDate: DateTime.now().toLocal(),
-                  lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
-              if (messageDate != null) {
-                final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                if (messageTime != null) {
-                  final finalDate = DateTime(
-                      messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
-                  if (!finalDate.isAfter(DateTime.now().toLocal())) {
-                    showSnackbar("Error", "Select a date in the future");
-                    return;
-                  }
-                  NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate);
-                  Get.back();
-                  showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
+              DateTime? finalDate;
+              await showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      "Select Reminder Time",
+                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                    ),
+                    content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            children: [
+                              TextButton(
+                                child: Text("Cancel"),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: Text("1 Hour"),
+                                onPressed: () {
+                                  finalDate = DateTime.now().toLocal().add(Duration(hours: 1));
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: Text("1 Day"),
+                                onPressed: () {
+                                  finalDate = DateTime.now().toLocal().add(Duration(days: 1));
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: Text("1 Week"),
+                                onPressed: () {
+                                  finalDate = DateTime.now().toLocal().add(Duration(days: 7));
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: Text("Custom"),
+                                onPressed: () async {
+                                  final messageDate = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now().toLocal(),
+                                    firstDate: DateTime.now().toLocal(),
+                                    lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
+                                  if (messageDate != null) {
+                                    final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                                    if (messageTime != null) {
+                                      finalDate = DateTime(
+                                          messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+                                    }
+                                  }
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          )
+                        ]
+                    ),
+                    backgroundColor: Theme.of(context).backgroundColor,
+                  );
+                },
+              );
+              if (finalDate != null) {
+                if (!finalDate!.isAfter(DateTime.now().toLocal())) {
+                  showSnackbar("Error", "Select a date in the future");
+                  return;
                 }
+                NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate!);
+                Get.back();
+                showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
               }
             },
             child: ListTile(
