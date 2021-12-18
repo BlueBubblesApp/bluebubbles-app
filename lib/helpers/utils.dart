@@ -766,9 +766,15 @@ extension MonetTheme on ThemeData {
             )
             : Color.alphaBlend(
               SettingsManager().monet!.primary[500]!.withAlpha(30),
-              SettingsManager().monet!.neutral[800]!
+              SettingsManager().monet!.neutral[800]!.darkenAmount(0.04)
             )
         : backgroundColor.lightenOrDarken(20);
+  }
+  Color monetDividerColor(BuildContext context) {
+    return SettingsManager().settings.isMonetEnabled
+        ? SettingsManager().monet!.neutral
+            [context.mediaQuery.platformBrightness == Brightness.light ? 300 : 600]!
+        : dividerColor;
   }
   Color monetAccentColor(BuildContext context) {
     return SettingsManager().settings.isMonetEnabled

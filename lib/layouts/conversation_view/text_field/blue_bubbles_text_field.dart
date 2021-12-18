@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
@@ -871,7 +872,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 iOSSkin: Obx(
                   () => Container(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).backgroundColor,
+                      color: context.theme.monetBackgroundColor(context),
                       border: Border.fromBorderSide((SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true)) || replyToMessage.value != null
                           ? BorderSide(
                               color: Theme.of(context).dividerColor,
@@ -977,7 +978,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold),
                             autofocus: false,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).backgroundColor,
+                              color: context.theme.monetBackgroundColor(context),
                               borderRadius: BorderRadius.circular(20),
                             ),
                           ),
@@ -1035,7 +1036,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
                                   !widget.isCreator!,
                               decoration: BoxDecoration(
-                                color: Theme.of(context).backgroundColor,
+                                color: context.theme.monetBackgroundColor(context),
                                 border:
                                     Border.fromBorderSide((SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true)) || replyToMessage.value != null
                                         ? BorderSide.none
@@ -1056,15 +1057,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 materialSkin: Obx(
                   () => Container(
                     decoration: BoxDecoration(
-                      border: Border.fromBorderSide(
-                        (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true)) || replyToMessage.value != null
-                            ? BorderSide(
-                                color: Theme.of(context).dividerColor,
-                                width: 1.5,
-                                style: BorderStyle.solid,
-                              )
-                            : BorderSide.none,
-                      ),
+                      color: context.theme.monetNeutralAccentColor(context),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     clipBehavior: Clip.antiAlias,
@@ -1173,7 +1166,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               thickness: 1.5,
                               indent: 10,
                               endIndent: 10,
-                              color: Theme.of(context).dividerColor),
+                              color: context.theme.monetDividerColor(context),
+                          ),
                         TextField(
                           enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                           controller: controller,
