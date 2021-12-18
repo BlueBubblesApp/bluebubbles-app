@@ -8,6 +8,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as path;
 import 'package:universal_io/io.dart';
