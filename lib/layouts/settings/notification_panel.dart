@@ -64,19 +64,19 @@ class NotificationPanel extends StatelessWidget {
     Color tileColor;
     if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
+      headerColor = context.theme.monetNeutralAccentColor(context);
+      tileColor = context.theme.monetBackgroundColor(context);
     } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
+      headerColor = context.theme.monetBackgroundColor(context);
+      tileColor = context.theme.monetNeutralAccentColor(context);
     }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme) && !SettingsManager().settings.isMonetEnabled) {
       tileColor = headerColor;
     }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : tileColor, // navigation bar color
         systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
@@ -452,7 +452,7 @@ class NotificationPanel extends StatelessWidget {
               indicator: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: Colors.blue,
+                    color: context.theme.monetDarkAccentColor,
                     width: 3.0,
                   ),
                 ),

@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get_utils/src/extensions/context_extensions.dart';
 
 class ThemingColorOptionsList extends StatefulWidget {
   ThemingColorOptionsList({Key? key, required this.isDarkMode, required this.controller}) : super(key: key);
@@ -78,16 +79,15 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
     editable = currentTheme != null && !currentTheme!.isPreset;
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).colorScheme.secondary.computeLuminance() <
-            Theme.of(context).backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
+      headerColor = context.theme.monetNeutralAccentColor(context);
+      tileColor = context.theme.monetBackgroundColor(context);
     } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
+      headerColor = context.theme.monetBackgroundColor(context);
+      tileColor = context.theme.monetNeutralAccentColor(context);
     }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme) && !SettingsManager().settings.isMonetEnabled) {
       tileColor = headerColor;
     }
     return currentTheme != null

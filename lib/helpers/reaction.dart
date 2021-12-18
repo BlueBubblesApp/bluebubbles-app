@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -176,7 +177,7 @@ class Reaction {
                 margin: EdgeInsets.only(right: bigPin ? 10 : 0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100),
-                  color: messages[i].isFromMe! ? context.theme.primaryColor : context.theme.colorScheme.secondary,
+                  color: messages[i].isFromMe! ? context.theme.monetAccentColor(context) : context.theme.monetNeutralAccentColor(context),
                   boxShadow: isReactionPicker
                       ? null
                       : [

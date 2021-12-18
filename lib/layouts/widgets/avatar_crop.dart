@@ -58,13 +58,13 @@ class _AvatarCropState extends State<AvatarCrop> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.monetBackgroundColor(context), // navigation bar color
         systemNavigationBarIconBrightness:
         Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
-          backgroundColor: Theme.of(context).backgroundColor,
+          backgroundColor: context.theme.monetBackgroundColor(context),
           appBar: PreferredSize(
             preferredSize: Size(CustomNavigator.width(context), 80),
             child: ClipRRect(
@@ -75,7 +75,7 @@ class _AvatarCropState extends State<AvatarCrop> {
                   toolbarHeight: 100.0,
                   elevation: 0,
                   leading: buildBackButton(context),
-                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                  backgroundColor: context.theme.monetNeutralAccentColor(context),
                   title: Text(
                     "Select & Crop Image",
                     style: Theme.of(context).textTheme.headline1,
@@ -156,9 +156,9 @@ class _AvatarCropState extends State<AvatarCrop> {
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: Theme.of(context).primaryColor)
+                        side: BorderSide(color: context.theme.monetDarkAccentColor)
                     ),
-                    primary: Theme.of(context).backgroundColor,
+                    primary: context.theme.monetBackgroundColor(context),
                   ),
                   onPressed: () async {
                     final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ['png', 'jpg', 'jpeg']);

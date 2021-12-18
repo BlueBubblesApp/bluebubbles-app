@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
@@ -53,7 +54,7 @@ class SettingsScaffold extends StatelessWidget {
     });
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.monetBackgroundColor(context), // navigation bar color
         systemNavigationBarIconBrightness:
         headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -419,14 +420,18 @@ class SettingsSwitch extends StatelessWidget {
         )
             : null,
         value: initialVal,
-        activeColor: Theme.of(context).primaryColor,
-        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-        inactiveTrackColor: backgroundColor == Theme.of(context).colorScheme.secondary
-            ? Theme.of(context).backgroundColor.withOpacity(0.6)
-            : Theme.of(context).colorScheme.secondary.withOpacity(0.6),
-        inactiveThumbColor: backgroundColor == Theme.of(context).colorScheme.secondary
-            ? Theme.of(context).backgroundColor
-            : Theme.of(context).colorScheme.secondary,
+        activeColor: context.theme.monetDarkAccentColor,
+        activeTrackColor: context.theme.monetDarkAccentColor.withAlpha(200),
+        inactiveTrackColor: SettingsManager().settings.skin.value == Skins.iOS
+          && SettingsManager().settings.isMonetEnabled
+          && context.theme.monetNeutralAccentColor(context).fastLuminance() > context.theme.monetBackgroundColor(context).fastLuminance()
+            ? context.theme.monetBackgroundColor(context).withOpacity(0.6)
+            : context.theme.monetNeutralAccentColor(context).withOpacity(0.6),
+        inactiveThumbColor: SettingsManager().settings.skin.value == Skins.iOS
+          && SettingsManager().settings.isMonetEnabled
+          && context.theme.monetNeutralAccentColor(context).fastLuminance() > context.theme.monetBackgroundColor(context).fastLuminance()
+            ? context.theme.monetBackgroundColor(context)
+            : context.theme.monetNeutralAccentColor(context),
         onChanged: onChanged,
         isThreeLine: isThreeLine,
       ),
@@ -514,12 +519,12 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 9),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: Theme.of(context).colorScheme.secondary,
+                color: context.theme.monetNeutralAccentColor(context),
               ),
               child: Center(
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<T>(
-                    dropdownColor: Theme.of(context).colorScheme.secondary,
+                    dropdownColor: context.theme.monetNeutralAccentColor(context),
                     icon: Icon(
                       Icons.arrow_drop_down,
                       color: Theme.of(context).textTheme.bodyText1!.color,
@@ -585,15 +590,15 @@ class SettingsSlider extends StatelessWidget {
         trailing: Text(value),
         title: SettingsManager().settings.skin.value == Skins.iOS
             ? CupertinoSlider(
-          activeColor: Theme.of(context).primaryColor,
+          activeColor: context.theme.monetDarkAccentColor,
           value: startingVal,
           onChanged: update,
           divisions: divisions,
           min: min,
           max: max,
         ) : Slider(
-          activeColor: Theme.of(context).primaryColor,
-          inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
+          activeColor: context.theme.monetDarkAccentColor,
+          inactiveColor: context.theme.monetDarkAccentColor.withOpacity(0.2),
           value: startingVal,
           onChanged: update,
           label: value,

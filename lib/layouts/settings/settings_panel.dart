@@ -88,13 +88,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
     Color headerColor;
     if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).colorScheme.secondary;
+      headerColor = context.theme.monetNeutralAccentColor(context);
     } else {
-      headerColor = Theme.of(context).backgroundColor;
+      headerColor = context.theme.monetBackgroundColor(context);
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.monetBackgroundColor(context), // navigation bar color
         systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
@@ -123,13 +123,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
     Color tileColor;
     if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
+      headerColor = context.theme.monetNeutralAccentColor(context);
+      tileColor = context.theme.monetBackgroundColor(context);
     } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
+      headerColor = context.theme.monetBackgroundColor(context);
+      tileColor = context.theme.monetNeutralAccentColor(context);
     }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme) && !SettingsManager().settings.isMonetEnabled) {
       tileColor = headerColor;
     }
 

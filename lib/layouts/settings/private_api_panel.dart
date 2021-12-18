@@ -63,15 +63,14 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
     Color headerColor;
     Color tileColor;
     if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
-            SettingsManager().settings.skin.value == Skins.Material) &&
-        (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
+        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
+      headerColor = context.theme.monetNeutralAccentColor(context);
+      tileColor = context.theme.monetBackgroundColor(context);
     } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
+      headerColor = context.theme.monetBackgroundColor(context);
+      tileColor = context.theme.monetNeutralAccentColor(context);
     }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme) && !SettingsManager().settings.isMonetEnabled) {
       tileColor = headerColor;
     }
 
@@ -207,14 +206,18 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                                 style: Theme.of(context).textTheme.bodyText1,
                               ),
                               value: SettingsManager().settings.enableQuickTapback.value,
-                              activeColor: Theme.of(context).primaryColor,
-                              activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                              inactiveTrackColor: tileColor == Theme.of(context).colorScheme.secondary
-                                  ? Theme.of(context).backgroundColor.withOpacity(0.6)
-                                  : Theme.of(context).colorScheme.secondary.withOpacity(0.6),
-                              inactiveThumbColor: tileColor == Theme.of(context).colorScheme.secondary
-                                  ? Theme.of(context).backgroundColor
-                                  : Theme.of(context).colorScheme.secondary,
+                              activeColor: context.theme.monetDarkAccentColor,
+                              activeTrackColor: context.theme.monetDarkAccentColor.withAlpha(200),
+                              inactiveTrackColor: SettingsManager().settings.skin.value == Skins.iOS
+                                  && SettingsManager().settings.isMonetEnabled
+                                  && context.theme.monetNeutralAccentColor(context).fastLuminance() > context.theme.monetBackgroundColor(context).fastLuminance()
+                                  ? context.theme.monetBackgroundColor(context).withOpacity(0.6)
+                                  : context.theme.monetNeutralAccentColor(context).withOpacity(0.6),
+                              inactiveThumbColor: SettingsManager().settings.skin.value == Skins.iOS
+                                  && SettingsManager().settings.isMonetEnabled
+                                  && context.theme.monetNeutralAccentColor(context).fastLuminance() > context.theme.monetBackgroundColor(context).fastLuminance()
+                                  ? context.theme.monetBackgroundColor(context)
+                                  : context.theme.monetNeutralAccentColor(context),
                               onChanged: (bool val) {
                                 SettingsManager().settings.enableQuickTapback.value = val;
                                 if (val && SettingsManager().settings.doubleTapForDetails.value) {

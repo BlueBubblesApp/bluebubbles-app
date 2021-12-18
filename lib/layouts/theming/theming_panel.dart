@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -35,15 +36,15 @@ class _ThemingPanelState extends State<ThemingPanel> {
   Widget build(BuildContext context) {
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-        || SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
+      headerColor = context.theme.monetNeutralAccentColor(context);
+      tileColor = context.theme.monetBackgroundColor(context);
     } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
+      headerColor = context.theme.monetBackgroundColor(context);
+      tileColor = context.theme.monetNeutralAccentColor(context);
     }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme) && !SettingsManager().settings.isMonetEnabled) {
       tileColor = headerColor;
     }
 
@@ -95,7 +96,7 @@ class _ThemingPanelState extends State<ThemingPanel> {
           floatingActionButton: Padding(
             padding: const EdgeInsets.only(bottom: .0),
             child: FloatingActionButton(
-              backgroundColor: Colors.blue,
+              backgroundColor: context.theme.monetLightAccentColor(context),
               onPressed: () {
                 streamController.sink.add(null);
               },
@@ -104,14 +105,14 @@ class _ThemingPanelState extends State<ThemingPanel> {
                 children: [
                   Icon(
                     Icons.copy,
-                    color: Colors.white,
+                    color: context.theme.fabTextColor(context),
                   ),
                   PositionedDirectional(
                     start: 7.5,
                     top: 8,
                     child: Icon(
                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.edit,
-                      color: Colors.white,
+                      color: context.theme.fabTextColor(context),
                       size: 12,
                     ),
                   ),
@@ -126,7 +127,7 @@ class _ThemingPanelState extends State<ThemingPanel> {
               indicator: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: Colors.blue,
+                    color: context.theme.monetDarkAccentColor,
                     width: 3.0,
                   ),
                 ),
