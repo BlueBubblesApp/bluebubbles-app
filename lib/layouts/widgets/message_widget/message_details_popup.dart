@@ -1,11 +1,9 @@
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';

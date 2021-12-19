@@ -26,6 +26,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:version/version.dart';
 
 class ServerManagementPanelBinding extends Bindings {
   @override
@@ -68,11 +69,8 @@ class ServerManagementPanelController extends GetxController {
         latency.value = later - now;
         macOSVersion.value = res['data']['os_version'];
         serverVersion.value = res['data']['server_version'];
-        serverVersionCode.value = serverVersion.value?.split(".").mapIndexed((index, e) {
-          if (index == 0) return int.parse(e) * 100;
-          if (index == 1) return int.parse(e) * 21;
-          return int.parse(e.split("-").firstOrNull ?? '0');
-        }).sum;
+        Version version = Version.parse(serverVersion.value);
+        serverVersionCode.value = version.major * 100 + version.minor * 21 + version.patch;
         privateAPIStatus.value = res['data']['private_api'] ?? false;
         helperBundleStatus.value = res['data']['helper_connected'] ?? false;
         proxyService.value = res['data']['proxy_service'];

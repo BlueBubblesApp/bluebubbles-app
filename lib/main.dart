@@ -62,6 +62,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:version/version.dart' as ver;
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -542,13 +543,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       }
 
       if (kIsWeb) {
-        String? version = await SettingsManager().getServerVersion();
-        int? sum = version?.split(".").mapIndexed((index, e) {
-          if (index == 0) return int.parse(e) * 100;
-          if (index == 1) return int.parse(e) * 21;
-          return int.parse(e);
-        }).sum;
-        if (version == null || (sum ?? 0) < 42) {
+        String? str = await SettingsManager().getServerVersion();
+        ver.Version version = ver.Version.parse(str);
+        int sum = version.major * 100 + version.minor * 21 + version.patch;
+        if (sum < 42) {
           setState(() {
             serverCompatible = false;
           });

@@ -1,5 +1,4 @@
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/action_handler.dart';
@@ -14,7 +13,6 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 
 class MessagePopupHolder extends StatefulWidget {
   final Widget child;

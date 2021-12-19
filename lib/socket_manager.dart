@@ -734,6 +734,7 @@ class SocketManager {
     try {
       String? url;
       if (kIsWeb || kIsDesktop) {
+        if (SettingsManager().fcmData == null) return;
         var db = FirebaseDatabase(databaseURL: SettingsManager().fcmData?.firebaseURL);
         var ref = db.reference().child('config').child('serverUrl');
         ref.onValue.listen((event) {

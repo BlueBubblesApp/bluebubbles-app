@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:dio_http/dio_http.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
@@ -112,12 +112,13 @@ class ApiService extends GetxService {
   }
 
   /// Get the attachment data for the specified [guid]
-  Future<Response> downloadAttachment(String guid, {CancelToken? cancelToken}) async {
+  Future<Response> downloadAttachment(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
     return await dio.get(
         "$origin/attachment/$guid/download",
         queryParameters: buildQueryParams(),
         options: Options(responseType: ResponseType.bytes),
-        cancelToken: cancelToken
+        cancelToken: cancelToken,
+        onReceiveProgress: onReceiveProgress,
     );
   }
 
