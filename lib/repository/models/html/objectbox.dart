@@ -39,6 +39,9 @@ class Box<T> {
   /// Pass growableResult: true for the resulting list to be growable.
   List<T?> getMany(List<int> ids, {bool growableResult = false}) => throw Exception('Unsupported Platform');
 
+  /// Removes (deletes) by ID, returning a list of IDs of all removed Objects.
+  int removeMany(List<int> ids) => throw Exception('Unsupported Platform');
+
   /// Removes (deletes) ALL Objects in a single transaction.
   int removeAll() => throw Exception('Unsupported Platform');
 
