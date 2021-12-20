@@ -170,12 +170,13 @@ class _ConversationTileState extends State<ConversationTile> {
           ),
           endActionPane: ActionPane(
             motion: StretchMotion(),
-            extentRatio: 0.2,
+            extentRatio: 0.9,
             children: [
               if (!widget.chat.isArchived! && SettingsManager().settings.iosShowAlert.value)
                 SlidableAction(
-                  label: widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
+                  label: widget.chat.muteType == "mute" ? 'Unmute' : 'Mute',
                   backgroundColor: Colors.purple[700]!,
+                  flex: 2,
                   icon: widget.chat.muteType == "mute" ? CupertinoIcons.bell : CupertinoIcons.bell_slash,
                   onPressed: (context) {
                     widget.chat.toggleMute(widget.chat.muteType != "mute");
@@ -186,6 +187,7 @@ class _ConversationTileState extends State<ConversationTile> {
                 SlidableAction(
                   label: "Delete",
                   backgroundColor: Colors.red,
+                  flex: 2,
                   icon: CupertinoIcons.trash,
                   onPressed: (context) {
                     ChatBloc().deleteChat(widget.chat);
@@ -196,6 +198,7 @@ class _ConversationTileState extends State<ConversationTile> {
                 SlidableAction(
                   label: widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
                   backgroundColor: Colors.blue,
+                  flex: 3,
                   icon: widget.chat.hasUnreadMessage!
                       ? CupertinoIcons.person_crop_circle_badge_checkmark
                       : CupertinoIcons.person_crop_circle_badge_exclam,
@@ -207,6 +210,7 @@ class _ConversationTileState extends State<ConversationTile> {
                 SlidableAction(
                   label: widget.chat.isArchived! ? 'UnArchive' : 'Archive',
                   backgroundColor: widget.chat.isArchived! ? Colors.blue : Colors.red,
+                  flex: 2,
                   icon: widget.chat.isArchived! ? CupertinoIcons.tray_arrow_up : CupertinoIcons.tray_arrow_down,
                   onPressed: (context) {
                     if (widget.chat.isArchived!) {
@@ -237,26 +241,24 @@ class _ConversationTileState extends State<ConversationTile> {
 
     TextStyle? style = Theme.of(context).textTheme.bodyText1;
 
-    return FutureBuilder<String?>(
-        future: getOrUpdateChatTitle(),
-        builder: (context, snapshot) {
-          String title = snapshot.data ?? "Fake Person";
-          if (generateNames) {
-            title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
-          } else if (hideInfo) {
-            style = style?.copyWith(color: Colors.transparent);
-          }
-          return TextOneLine(title, style: style
-              ?.copyWith(fontWeight:
-                  SettingsManager().settings.skin.value == Skins.Material
-                  && (widget.chat.hasUnreadMessage ?? false)
-                    ? FontWeight.bold
-                    : null)
-              .apply(fontSizeFactor:
-                  SettingsManager().settings.skin.value == Skins.Material
-                      ? 1.1 : 1.0), overflow: TextOverflow.ellipsis);
-        }
-    );
+    return Obx(() {
+      widget.chat.getTitle();
+      String title = widget.chat.title ?? "Fake Person";
+      if (generateNames) {
+        title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
+      } else if (hideInfo) {
+        style = style?.copyWith(color: Colors.transparent);
+      }
+      return TextOneLine(title,
+          style: style
+              ?.copyWith(
+                  fontWeight:
+                      SettingsManager().settings.skin.value == Skins.Material && (widget.chat.hasUnreadMessage ?? false)
+                          ? FontWeight.bold
+                          : null)
+              .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0),
+          overflow: TextOverflow.ellipsis);
+    });
   }
 
   Widget buildSubtitle() {

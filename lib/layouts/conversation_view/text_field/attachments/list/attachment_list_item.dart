@@ -8,6 +8,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as path;
 import 'package:universal_io/io.dart';
@@ -81,7 +82,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
 
             Attachment fakeAttachment =
                 Attachment(transferName: widget.file.path, mimeType: mimeType, bytes: widget.file.bytes);
-            await Navigator.of(context).push(
+            await Navigator.of(Get.context!).push(
               MaterialPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(
                   attachment: fakeAttachment,

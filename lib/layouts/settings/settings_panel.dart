@@ -1142,7 +1142,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         SettingsManager().settings.finishedSetup.value = false;
                                         Get.offAll(() => WillPopScope(
                                           onWillPop: () async => false,
-                                          child: SetupView(),
+                                          child: TitleBarWrapper(child: SetupView()),
                                         ), duration: Duration.zero, transition: Transition.noTransition);
                                         SettingsManager().settings = Settings();
                                         SettingsManager().settings.save();
@@ -1216,7 +1216,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
     }
     return VerticalSplitView(
       initialRatio: 0.4,
-      minRatio: 0.33,
+      minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
       maxRatio: 0.5,
       allowResize: true,
       left: settingsList,
@@ -1258,15 +1258,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
   }
 
   Widget buildForDevice() {
-    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
+    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600;
     Widget settingsList = buildSettingsList();
     if (showAltLayout) {
       return buildForLandscape(context, settingsList);
-    } else if (kIsDesktop) {
-      return TitleBarWrapper(child: settingsList);
     }
-
-    return settingsList;
+    return TitleBarWrapper(child: settingsList);
   }
 
   void saveSettings() {

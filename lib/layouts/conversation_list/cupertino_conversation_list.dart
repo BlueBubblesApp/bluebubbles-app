@@ -78,7 +78,9 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.monetBackgroundColor(context), // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+            ? Colors.transparent
+            : context.theme.monetBackgroundColor(context), // navigation bar color
         systemNavigationBarIconBrightness:
             context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -106,42 +108,45 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                 ),
                 child: ClipRRect(
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: Obx(() => AnimatedCrossFade(
-                      crossFadeState: headerColor.value == Colors.transparent
-                          ? CrossFadeState.showFirst
-                          : CrossFadeState.showSecond,
-                      duration: Duration(milliseconds: 250),
-                      secondChild: AppBar(
-                        iconTheme: IconThemeData(color: context.theme.primaryColor),
-                        elevation: 0,
-                        backgroundColor: headerColor.value,
-                        centerTitle: true,
-                        systemOverlayStyle: brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-                        title: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: <Widget>[
-                            Text(
-                              showArchived
-                                  ? "Archive"
-                                  : showUnknown
-                                  ? "Unknown Senders"
-                                  : "Messages",
-                              style: context.textTheme.bodyText1,
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Obx(
+                        () => AnimatedCrossFade(
+                          crossFadeState: headerColor.value == Colors.transparent
+                              ? CrossFadeState.showFirst
+                              : CrossFadeState.showSecond,
+                          duration: Duration(milliseconds: 250),
+                          secondChild: AppBar(
+                            iconTheme: IconThemeData(color: context.theme.primaryColor),
+                            elevation: 0,
+                            backgroundColor: headerColor.value,
+                            centerTitle: true,
+                            systemOverlayStyle:
+                                brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget>[
+                                Text(
+                                  showArchived
+                                      ? "Archive"
+                                      : showUnknown
+                                          ? "Unknown Senders"
+                                          : "Messages",
+                                  style: context.textTheme.bodyText1,
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
+                          firstChild: AppBar(
+                            leading: Container(),
+                            elevation: 0,
+                            systemOverlayStyle:
+                                brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+                            backgroundColor: context.theme.monetBackgroundColor(context),
+                          ),
                         ),
-                      ),
-                      firstChild: AppBar(
-                        leading: Container(),
-                        elevation: 0,
-                        systemOverlayStyle: brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-                        backgroundColor: context.theme.monetBackgroundColor(context),
-                      ),
-                    ),
-                    )),
+                      )),
                 ),
-        ),
+              ),
         backgroundColor: context.theme.monetBackgroundColor(context),
         extendBodyBehindAppBar: true,
         body: ImprovedScrolling(
@@ -208,7 +213,8 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                     child: SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: Icon(CupertinoIcons.search, color: context.theme.monetDarkAccentColor, size: 12)),
+                                        child:
+                                            Icon(CupertinoIcons.search, color: context.theme.monetDarkAccentColor, size: 12)),
                                     onTap: () async {
                                       CustomNavigator.pushLeft(context, SearchView());
                                     },
@@ -216,7 +222,9 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                 ),
                               ),
                             if (!showArchived && !showUnknown) Container(width: 10.0),
-                            if (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
+                            if (SettingsManager().settings.moveChatCreatorToHeader.value &&
+                                !showArchived &&
+                                !showUnknown)
                               ClipOval(
                                 child: Material(
                                   color: context.theme.monetNeutralAccentColor(context), // button color
@@ -251,10 +259,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                       if (!camera) {
                                         bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
                                         if (!granted) {
-                                          showSnackbar(
-                                              "Error",
-                                              "Camera was denied"
-                                          );
+                                          showSnackbar("Error", "Camera was denied");
                                           return;
                                         }
                                       }
@@ -500,7 +505,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
   Widget buildForLandscape(BuildContext context, Widget chatList) {
     return VerticalSplitView(
       initialRatio: 0.4,
-      minRatio: 0.33,
+      minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
       maxRatio: 0.5,
       allowResize: true,
       left: LayoutBuilder(builder: (context, constraints) {
@@ -573,14 +578,13 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
   Widget buildForDevice(BuildContext context) {
     bool showAltLayout =
-        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
+        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600;
     Widget chatList = buildChatList(context, showAltLayout);
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);
-    } else if (kIsDesktop) {
+    } else if (!widget.parent.widget.showArchivedChats && !widget.parent.widget.showUnknownSenders) {
       return TitleBarWrapper(child: chatList);
     }
-
     return chatList;
   }
 }

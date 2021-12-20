@@ -39,12 +39,6 @@ class ThemePanelController extends GetxController {
   void onInit() {
     super.onInit();
     _settingsCopy = SettingsManager().settings;
-    // revert back to iOS skin since we disabled Samsung
-    if (SettingsManager().settings.skin.value == Skins.Samsung) {
-      SettingsManager().settings.skin.value = Skins.iOS;
-      ChatBloc().refreshChats();
-      SettingsManager().saveSettings(SettingsManager().settings);
-    }
   }
 
   @override
@@ -192,7 +186,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                         controller.update();
                         EventDispatcher().emit('theme-update', null);
                       },
-                      options: Skins.values.where((item) => item != Skins.Samsung).toList(),
+                      options: Skins.values,
                       textProcessing: (val) => val.toString().split(".").last,
                       capitalize: false,
                       title: "App Skin",
@@ -216,29 +210,31 @@ class ThemePanel extends GetView<ThemePanelController> {
                       backgroundColor: tileColor,
                       subtitle: "Enables tablet mode (split view) depending on screen width",
                     )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                    if (!kIsWeb && !kIsDesktop)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
                       ),
-                    ),
-                    Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        controller._settingsCopy.immersiveMode.value = val;
-                        saveSettings();
-                        if (val) {
-                          SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-                        } else {
-                          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
-                        }
-                        EventDispatcher().emit('theme-update', null);
-                      },
-                      initialVal: controller._settingsCopy.immersiveMode.value,
-                      title: "Immersive Mode",
-                      backgroundColor: tileColor,
-                      subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
-                    )),
+                    if (!kIsWeb && !kIsDesktop)
+                      Obx(() => SettingsSwitch(
+                        onChanged: (bool val) {
+                          controller._settingsCopy.immersiveMode.value = val;
+                          saveSettings();
+                          if (val) {
+                            SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+                          } else {
+                            SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
+                          }
+                          EventDispatcher().emit('theme-update', null);
+                        },
+                        initialVal: controller._settingsCopy.immersiveMode.value,
+                        title: "Immersive Mode",
+                        backgroundColor: tileColor,
+                        subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
+                      )),
                   ],
                 ),
                 SettingsHeader(

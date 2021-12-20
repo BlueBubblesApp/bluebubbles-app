@@ -6,6 +6,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 //ignore: implementation_imports
 import 'package:objectbox/src/transaction.dart';
@@ -256,6 +257,7 @@ class DBProvider {
           };
           element.id = null;
           if (element.handleId != null && element.handleId != 0) {
+            // we must have new handle ID if the current one is known to not be null or 0
             final newHandleId = handleIdsMigrationMap.values.firstWhere((e) => e['old'] == element.handleId)['new'];
             element.handleId = newHandleId!;
           }
@@ -294,6 +296,7 @@ class DBProvider {
         Logger.info("Migrating chat-handle joins...", tag: "OB Migration");
         List<ChatHandleJoin> chJoins = tableData[4].map((e) => ChatHandleJoin.fromMap(e)).toList();
         for (ChatHandleJoin chj in chJoins) {
+          // we will always have a new and an old form of ID, so these should never error
           final newChatId = chatIdsMigrationMap.values.firstWhere((e) => e['old'] == chj.chatId)['new'];
           final newHandleId = handleIdsMigrationMap.values.firstWhere((e) => e['old'] == chj.handleId)['new'];
           chj.chatId = newChatId!;
@@ -302,6 +305,8 @@ class DBProvider {
         Logger.info("Replaced old chat & handle IDs with new ObjectBox IDs", tag: "OB Migration");
         final chats2 = chatBox.getAll();
         for (int i = 0; i < chats2.length; i++) {
+          // this migration must happen cleanly, we cannot ignore any null errors
+          // the chats must retain all handleIDs previously associated with them
           final handleIds = chJoins.where((e) => e.chatId == chats2[i].id).map((e) => e.handleId).toList();
           final handles = handleBox.getMany(handleIds);
           chats2[i].handles.addAll(List<Handle>.from(handles));
@@ -312,6 +317,7 @@ class DBProvider {
         Logger.info("Migrating chat-message joins...", tag: "OB Migration");
         List<ChatMessageJoin> cmJoins = tableData[5].map((e) => ChatMessageJoin.fromMap(e)).toList();
         for (ChatMessageJoin cmj in cmJoins) {
+          // we will always have a new and an old form of ID, so these should never error
           final newChatId = chatIdsMigrationMap.values.firstWhere((e) => e['old'] == cmj.chatId)['new'];
           final newMessageId = messageIdsMigrationMap.values.firstWhere((e) => e['old'] == cmj.messageId)['new'];
           cmj.chatId = newChatId!;
@@ -319,17 +325,25 @@ class DBProvider {
         }
         Logger.info("Replaced old chat & message IDs with new ObjectBox IDs", tag: "OB Migration");
         final messages2 = messageBox.getAll();
+        final toDelete = <int>[];
         for (int i = 0; i < messages2.length; i++) {
-          final chatId = cmJoins.firstWhere((e) => e.messageId == messages2[i].id).chatId;
-          final chat = chatBox.get(chatId);
-          messages2[i].chat.target = chat;
+          // if we can't find a valid chatID to associate the message with, delete it
+          final chatId = cmJoins.firstWhereOrNull((e) => e.messageId == messages2[i].id)?.chatId;
+          if (chatId == null) {
+            toDelete.add(messages2[i].id!);
+          } else {
+            final chat = chatBox.get(chatId);
+            messages2[i].chat.target = chat;
+          }
         }
         messageBox.putMany(messages2);
+        messageBox.removeMany(toDelete);
         Logger.info("Inserted chat-message joins into ObjectBox", tag: "OB Migration");
         cmJoins.clear();
         Logger.info("Migrating attachment-message joins...", tag: "OB Migration");
         List<AttachmentMessageJoin> amJoins = tableData[6].map((e) => AttachmentMessageJoin.fromMap(e)).toList();
         for (AttachmentMessageJoin amj in amJoins) {
+          // we will always have a new and an old form of ID, so these should never error
           final newAttachmentId = attachmentIdsMigrationMap.values.firstWhere((e) => e['old'] == amj.attachmentId)['new'];
           final newMessageId = messageIdsMigrationMap.values.firstWhere((e) => e['old'] == amj.messageId)['new'];
           amj.attachmentId = newAttachmentId!;
@@ -337,12 +351,19 @@ class DBProvider {
         }
         Logger.info("Replaced old attachment & message IDs with new ObjectBox IDs", tag: "OB Migration");
         final attachments2 = attachmentBox.getAll();
+        final toDelete2 = <int>[];
         for (int i = 0; i < attachments2.length; i++) {
-          final messageId = amJoins.firstWhere((e) => e.attachmentId == attachments2[i].id).messageId;
-          final message = messageBox.get(messageId);
-          attachments2[i].message.target = message;
+          // if we can't find a valid messageID to associate the attachment with, delete it
+          final messageId = amJoins.firstWhereOrNull((e) => e.attachmentId == attachments2[i].id)?.messageId;
+          if (messageId == null) {
+            toDelete2.add(attachments2[i].id!);
+          } else {
+            final message = messageBox.get(messageId);
+            attachments2[i].message.target = message;
+          }
         }
         attachmentBox.putMany(attachments2);
+        attachmentBox.removeMany(toDelete2);
         Logger.info("Inserted attachment-message joins into ObjectBox", tag: "OB Migration");
         amJoins.clear();
         Logger.info("Migrating theme objects...", tag: "OB Migration");
@@ -369,6 +390,7 @@ class DBProvider {
         final themeEntries = tableData[8].map((e) => ThemeEntry.fromMap(e)).toList();
         final themeEntryIdsMigrationMap = <String, Map<String, int>>{};
         for (ThemeEntry element in themeEntries) {
+          // we will always have a new and an old form of ID, so these should never error
           final newThemeId = themeObjectIdsMigrationMap.values.firstWhere((e) => e['old'] == element.themeId)['new'];
           element.themeId = newThemeId!;
           themeEntryIdsMigrationMap["${element.name}-${element.themeId!}"] = {
@@ -390,6 +412,7 @@ class DBProvider {
         Logger.info("Migrating theme-value joins...", tag: "OB Migration");
         List<ThemeValueJoin> tvJoins = tableData[9].map((e) => ThemeValueJoin.fromMap(e)).toList();
         for (ThemeValueJoin tvj in tvJoins) {
+          // we will always have a new and an old form of ID, so these should never error
           final newThemeId = themeObjectIdsMigrationMap.values.firstWhere((e) => e['old'] == tvj.themeId)['new'];
           final newThemeValueId = themeEntryIdsMigrationMap.values.firstWhere((e) => e['old'] == tvj.themeValueId)['new'];
           tvj.themeId = newThemeId!;
@@ -398,6 +421,9 @@ class DBProvider {
         Logger.info("Replaced old theme object & theme entry IDs with new ObjectBox IDs", tag: "OB Migration");
         final themeValues2 = themeEntryBox.getAll();
         for (int i = 0; i < themeValues2.length; i++) {
+          // this migration must happen cleanly, we cannot ignore any null errors
+          // the theme values must all associate with a theme object, otherwise
+          // there will be errors when trying to load the theme
           final themeId = tvJoins.firstWhere((e) => e.themeValueId == themeValues2[i].id).themeId;
           final themeObject = themeObjectBox.get(themeId);
           themeValues2[i].themeObject.target = themeObject;

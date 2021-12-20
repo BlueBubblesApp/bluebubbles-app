@@ -594,7 +594,12 @@ class _QRScanState extends State<QRScan> {
   }
 
   void connect(String url, String password) async {
-    if (!url.isURL || password.isEmpty) {
+    bool isValid = url.isURL;
+    if (url.contains(":") && !isValid) {
+      final newUrl = url.split(":").first;
+      isValid = newUrl.isIPv6 || newUrl.isIPv4;
+    }
+    if (!isValid || password.isEmpty) {
       setState(() {
         error = "Please enter a valid URL and password!";
       });
@@ -650,10 +655,12 @@ class _QRScanState extends State<QRScan> {
         return;
       }
       FCMData? copy = SettingsManager().fcmData;
-      Map<String, dynamic> data = _data["data"];
-      copy = FCMData.fromMap(data);
+      Map<String, dynamic>? data = _data["data"];
+      if (data != null && data.isNotEmpty) {
+        copy = FCMData.fromMap(data);
 
-      SettingsManager().saveFCMData(copy);
+        SettingsManager().saveFCMData(copy);
+      }
       goToNextPage();
     });
   }

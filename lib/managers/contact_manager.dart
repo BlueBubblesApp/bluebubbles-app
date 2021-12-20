@@ -13,6 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:version/version.dart';
 
 class ContactManager {
   factory ContactManager() {
@@ -45,13 +46,10 @@ class ContactManager {
 
   Future<bool> canAccessContacts() async {
     if (kIsWeb || kIsDesktop) {
-      String? version = await SettingsManager().getServerVersion();
-      int? sum = version?.split(".").mapIndexed((index, e) {
-        if (index == 0) return int.parse(e) * 100;
-        if (index == 1) return int.parse(e) * 21;
-        return int.parse(e);
-      }).sum;
-      return (sum ?? 0) >= 42;
+      String? str = await SettingsManager().getServerVersion();
+      Version version = Version.parse(str);
+      int sum = version.major * 100 + version.minor * 21 + version.patch;
+      return sum >= 42;
     }
     try {
       PermissionStatus status = await Permission.contacts.status;

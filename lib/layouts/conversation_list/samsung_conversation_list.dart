@@ -652,7 +652,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
   Widget buildForLandscape(BuildContext context, Widget chatList) {
     return VerticalSplitView(
       initialRatio: 0.4,
-      minRatio: 0.33,
+      minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
       maxRatio: 0.5,
       allowResize: true,
       left: LayoutBuilder(
@@ -721,11 +721,11 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
   }
 
   Widget buildForDevice() {
-    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
+    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600;
     Widget chatList = buildChatList();
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);
-    } else if (kIsDesktop) {
+    } else if (!widget.parent.widget.showArchivedChats && !widget.parent.widget.showUnknownSenders) {
       return TitleBarWrapper(child: chatList);
     }
 
