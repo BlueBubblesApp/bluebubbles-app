@@ -319,7 +319,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildConversationViewHeader(BuildContext context) {
-    Color backgroundColor = context.theme.monetBackgroundColor(context);
+    Color backgroundColor = context.theme.monetNeutralAccentColor(context);
     Color? fontColor = Theme.of(context).textTheme.headline1!.color;
     Color? fontColor2 = Theme.of(context).textTheme.subtitle1!.color;
     String? title = chat!.title;
@@ -580,7 +580,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     return PreferredSize(
       preferredSize: Size.fromHeight(context.orientation == Orientation.landscape && context.isPhone ? 55 : 75),
       child: CupertinoNavigationBar(
-          backgroundColor: Theme.of(context).colorScheme.secondary.withAlpha(125),
+          backgroundColor: backgroundColor.withOpacity(0.5),
           border: Border(
             bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),
           ),
@@ -1118,11 +1118,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   Widget buildChatSelectorHeader() => AppBar(
         toolbarHeight: kIsDesktop ? 30 : 0,
-        backgroundColor: Theme.of(context).colorScheme.secondary,
+        backgroundColor: context.theme.monetNeutralAccentColor(context),
         leading: null,
         automaticallyImplyLeading: false,
         bottom: cupertino.CupertinoNavigationBar(
-          backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+          backgroundColor: context.theme.monetNeutralAccentColor(context).withOpacity(0.5),
           middle: Container(
             child: Text(
               widget.customHeading ?? "New Message",
