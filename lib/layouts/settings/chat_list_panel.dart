@@ -244,28 +244,30 @@ class ChatListPanel extends StatelessWidget {
                       return SizedBox.shrink();
                     }
                   }),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                  if (!kIsWeb)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
                     ),
-                  ),
-                  SettingsTile(
-                    title: "Pinned Order",
-                    subtitle: "Set the order for your pinned chats",
-                    backgroundColor: tileColor,
-                    onTap: () {
-                      CustomNavigator.pushSettings(
-                        context,
-                        PinnedOrderPanel(),
-                      );
-                    },
-                    trailing: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-                      color: Colors.grey,
+                  if (!kIsWeb)
+                    SettingsTile(
+                      title: "Pinned Order",
+                      subtitle: "Set the order for your pinned chats",
+                      backgroundColor: tileColor,
+                      onTap: () {
+                        CustomNavigator.pushSettings(
+                          context,
+                          PinnedOrderPanel(),
+                        );
+                      },
+                      trailing: Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+                        color: Colors.grey,
+                      ),
                     ),
-                  ),
                 ],
               ),
               if (!kIsWeb && !kIsDesktop)
