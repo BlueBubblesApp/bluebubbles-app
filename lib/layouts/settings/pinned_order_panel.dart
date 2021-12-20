@@ -9,19 +9,20 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 
 class PinnedOrderPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.monetBackgroundColor(context), // navigation bar color
         systemNavigationBarIconBrightness:
         Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: context.theme.monetBackgroundColor(context),
         appBar: PreferredSize(
           preferredSize: Size(CustomNavigator.width(context), 80),
           child: ClipRRect(
@@ -32,7 +33,7 @@ class PinnedOrderPanel extends StatelessWidget {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: buildBackButton(context),
-                backgroundColor: Theme.of(context).backgroundColor.withOpacity(0.5),
+                backgroundColor: context.theme.monetNeutralAccentColor(context).withOpacity(0.5),
                 title: Text(
                   "Pinned Chat Order",
                   style: Theme.of(context).textTheme.headline1,
@@ -43,7 +44,7 @@ class PinnedOrderPanel extends StatelessWidget {
                           style: Theme.of(context)
                               .textTheme
                               .subtitle1!
-                              .apply(color: Theme.of(context).primaryColor)),
+                              .apply(color: context.theme.monetDarkAccentColor)),
                       onPressed: () {
                         ChatBloc().removePinIndices();
                       }),
