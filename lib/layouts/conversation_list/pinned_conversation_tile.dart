@@ -198,12 +198,12 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                 double spaceBetween = (colCount - 1) * 30;
                 double maxWidth = ((availableWidth - spaceBetween) / colCount).floorToDouble();
 
+                Color accentColor = context.theme.monetDarkAccentColor;
                 Color alphaWithoutAlpha = Color.fromARGB(
                   255,
-                  (context.theme.primaryColor.red * 0.8).toInt() + (context.theme.backgroundColor.red * 0.2).toInt(),
-                  (context.theme.primaryColor.green * 0.8).toInt() +
-                      (context.theme.backgroundColor.green * 0.2).toInt(),
-                  (context.theme.primaryColor.blue * 0.8).toInt() + (context.theme.backgroundColor.blue * 0.2).toInt(),
+                  (accentColor.red * 0.8).toInt() + (context.theme.backgroundColor.red * 0.2).toInt(),
+                  (accentColor.green * 0.8).toInt() + (context.theme.backgroundColor.green * 0.2).toInt(),
+                  (accentColor.blue * 0.8).toInt() + (context.theme.backgroundColor.blue * 0.2).toInt(),
                 );
                 MessageMarkers? markers =
                     CurrentChat.getCurrentChat(widget.chat)?.messageMarkers;
@@ -313,7 +313,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                       width: maxWidth * 0.27,
                                       height: maxWidth * 0.27,
                                       decoration: BoxDecoration(
-                                        border: Border.all(color: Theme.of(context).backgroundColor, width: 1),
+                                        border: Border.all(color: context.theme.monetBackgroundColor(context), width: 1),
                                         borderRadius: BorderRadius.circular(30),
                                         color: (widget.chat.hasUnreadMessage ?? false)
                                             ? alphaWithoutAlpha

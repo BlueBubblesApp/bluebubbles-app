@@ -82,7 +82,7 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
   bool ios = SettingsManager().settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   await showMenu(
-    color: Theme.of(context).colorScheme.secondary,
+    color: Theme.of(context).monetNeutralAccentColor(context),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(ios ? 10 : 0)),
     context: context,
     position: RelativeRect.fromLTRB(

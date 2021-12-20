@@ -48,7 +48,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
     super.initState();
     widget.parent.scrollController.addListener(() {
       if (widget.parent.scrollController.hasClients && widget.parent.scrollController.offset > (125 - kToolbarHeight)) {
-        headerColor.value = Get.context!.theme.colorScheme.secondary.withOpacity(0.5);
+        headerColor.value = Get.context!.theme.monetNeutralAccentColor(Get.context!).withOpacity(0.5);
       } else {
         headerColor.value = Colors.transparent;
       }
