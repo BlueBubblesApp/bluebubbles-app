@@ -219,7 +219,7 @@ class UrlPreviewWidget extends StatelessWidget {
             if (hideContent)
               Positioned.fill(
                 child: Container(
-                  color: Theme.of(context).colorScheme.secondary,
+                  color: context.theme.monetNeutralAccentColor(context),
                 ),
               ),
             if (hideContent && !hideType)

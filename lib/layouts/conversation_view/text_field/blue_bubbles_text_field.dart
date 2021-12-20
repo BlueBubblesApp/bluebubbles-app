@@ -1645,7 +1645,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                   duration: Duration(milliseconds: 150),
                                   child: Icon(
                                     CupertinoIcons.arrow_up,
-                                    color: Colors.white,
+                                    color: SettingsManager().settings.isMonetEnabled
+                                        ? Colors.black : Colors.white,
                                     size: 20,
                                   ),
                                 )),

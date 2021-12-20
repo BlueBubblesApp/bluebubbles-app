@@ -75,7 +75,7 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
       constraints: BoxConstraints(maxHeight: height, maxWidth: width),
       child: AspectRatio(
           aspectRatio: ratio,
-          child: Container(width: width, height: height, color: Theme.of(context).colorScheme.secondary, child: child)));
+          child: Container(width: width, height: height, color: context.theme.monetNeutralAccentColor(context), child: child)));
 }
 
 Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textTheme) async {
