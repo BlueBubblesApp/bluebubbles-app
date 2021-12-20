@@ -331,7 +331,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                   return SliverToBoxAdapter(child: Container());
                 }
 
-                int rowCount = context.mediaQuery.orientation == Orientation.portrait
+                int rowCount = context.mediaQuery.orientation == Orientation.portrait || kIsDesktop
                     ? SettingsManager().settings.pinRowsPortrait.value
                     : SettingsManager().settings.pinRowsLandscape.value;
                 int colCount = SettingsManager().settings.pinColumnsPortrait.value;
