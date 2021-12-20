@@ -124,7 +124,6 @@ class ContactSelectorOption extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyText1,
           overflow: TextOverflow.ellipsis,
         ),
-        tileColor: SettingsManager().settings.skin.value == Skins.Samsung ? null : Theme.of(context).backgroundColor,
         subtitle: subtitle,
         leading: !item.isChat
             ? ContactAvatarWidget(

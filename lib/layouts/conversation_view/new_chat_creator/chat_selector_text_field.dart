@@ -135,7 +135,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                 fontSizeDelta: -0.25,
               ),
           decoration: BoxDecoration(
-            color: Theme.of(context).backgroundColor,
+            color: context.theme.monetBackgroundColor(context),
           ),
         ),
       ),

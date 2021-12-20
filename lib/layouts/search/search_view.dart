@@ -13,6 +13,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get_utils/src/extensions/context_extensions.dart';
 
 class SearchView extends StatefulWidget {
   SearchView({
@@ -138,7 +139,7 @@ class SearchViewState extends State<SearchView> {
       ),
       child: Scaffold(
         // extendBodyBehindAppBar: true,
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: context.theme.monetBackgroundColor(context),
         appBar: PreferredSize(
           preferredSize: Size(CustomNavigator.width(context), 80),
           child: ClipRRect(
@@ -149,7 +150,7 @@ class SearchViewState extends State<SearchView> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: buildBackButton(context),
-                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                backgroundColor: context.theme.monetNeutralAccentColor(context).withOpacity(0.5),
                 title: Text(
                   "Search",
                   style: Theme.of(context).textTheme.headline1,
@@ -184,9 +185,9 @@ class SearchViewState extends State<SearchView> {
                             style: Theme.of(context).textTheme.bodyText1,
                             placeholderStyle: Theme.of(context).textTheme.subtitle1,
                             decoration: BoxDecoration(
-                                color: Theme.of(context).backgroundColor,
+                                color: context.theme.monetBackgroundColor(context),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Theme.of(context).colorScheme.secondary)),
+                                border: Border.all(color: context.theme.monetNeutralAccentColor(context))),
                             maxLines: 1,
                           )),
                       (!isSearching)
@@ -253,7 +254,7 @@ class SearchViewState extends State<SearchView> {
                                   style: Theme.of(context)
                                       .textTheme
                                       .subtitle1!
-                                      .apply(color: Theme.of(context).primaryColor, fontWeightDelta: 2)));
+                                      .apply(color: context.theme.monetDarkAccentColor, fontWeightDelta: 2)));
 
                               // Add the ending string
                               spans.add(TextSpan(

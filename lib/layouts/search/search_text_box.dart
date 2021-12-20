@@ -1,6 +1,8 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get_utils/src/extensions/context_extensions.dart';
 
 class SearchTextBox extends StatelessWidget {
   SearchTextBox({Key? key, this.autoFocus = false}) : super(key: key);
@@ -9,10 +11,10 @@ class SearchTextBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoTextField(
-      cursorColor: Theme.of(context).primaryColor,
+      cursorColor: context.theme.primaryColor,
       autofocus: autoFocus,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary,
+        color: context.theme.colorScheme.secondary,
         borderRadius: BorderRadius.circular(10),
       ),
       placeholder: "Search",
