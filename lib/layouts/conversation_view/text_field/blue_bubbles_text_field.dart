@@ -314,31 +314,31 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
   }
 
-  // void onContentCommit(CommittedContent content) async {
-  //   // Add some debugging logs
-  //   Logger.info("[Content Commit] Keyboard received content");
-  //   Logger.info("  -> Content Type: ${content.mimeType}");
-  //   Logger.info("  -> URI: ${content.uri}");
-  //   Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
-  //
-  //   // Parse the filename from the URI and read the data as a List<int>
-  //   String filename = uriToFilename(content.uri, content.mimeType);
-  //
-  //   // Save the data to a location and add it to the file picker
-  //   if (content.hasData) {
-  //     addAttachments([PlatformFile(
-  //       name: filename,
-  //       size: content.data!.length,
-  //       bytes: content.data,
-  //     )]);
-  //
-  //     // Update the state
-  //     updateTextFieldAttachments();
-  //     if (mounted) setState(() {});
-  //   } else {
-  //     showSnackbar('Insertion Failed', 'Attachment has no data!');
-  //   }
-  // }
+  void onContentCommit(CommittedContent content) async {
+    // Add some debugging logs
+    Logger.info("[Content Commit] Keyboard received content");
+    Logger.info("  -> Content Type: ${content.mimeType}");
+    Logger.info("  -> URI: ${content.uri}");
+    Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
+
+    // Parse the filename from the URI and read the data as a List<int>
+    String filename = uriToFilename(content.uri, content.mimeType);
+
+    // Save the data to a location and add it to the file picker
+    if (content.hasData) {
+      addAttachments([PlatformFile(
+        name: filename,
+        size: content.data!.length,
+        bytes: content.data,
+      )]);
+
+      // Update the state
+      updateTextFieldAttachments();
+      if (mounted) setState(() {});
+    } else {
+      showSnackbar('Insertion Failed', 'Attachment has no data!');
+    }
+  }
 
   Future<void> reviewAudio(BuildContext originalContext, PlatformFile file) async {
     showDialog(
@@ -1012,7 +1012,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 focusNode!.requestFocus();
                                 sendMessage();
                               },
-                              // onContentCommitted: onContentCommit,
+                              onContentCommitted: onContentCommit,
                               textCapitalization: TextCapitalization.sentences,
                               focusNode: focusNode,
                               autocorrect: true,
@@ -1194,7 +1194,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     : Colors.white,
                                 fontSizeDelta: -0.25,
                               ),
-                          // onContentCommitted: onContentCommit,
+                          onContentCommitted: onContentCommit,
                           decoration: InputDecoration(
                             isDense: true,
                             enabledBorder: OutlineInputBorder(
@@ -1412,7 +1412,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     : Colors.white,
                                 fontSizeDelta: -0.25,
                               ),
-                          // onContentCommitted: onContentCommit,
+                          onContentCommitted: onContentCommit,
                           decoration: InputDecoration(
                             isDense: true,
                             enabledBorder: OutlineInputBorder(
