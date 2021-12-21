@@ -492,9 +492,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     // Initalize a bunch of managers
     MethodChannelInterface().init();
 
-    // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
-    LifeCycleManager().opened();
-
     if (!kIsWeb) {
       if (!LifeCycleManager().isBubble) {
         // This initialization sets the function address in the native code to be used later
@@ -531,6 +528,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       // Set a reference to the DB so it can be used in another isolate
       prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
     }
+
+    // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
+    LifeCycleManager().opened();
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
