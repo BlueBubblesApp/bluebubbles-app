@@ -71,14 +71,13 @@ class AttachmentDownloadController extends GetxController {
   }
 
   Future<void> getChunkRecursive(String guid, int index, int total, List<int> currentBytes) async {
-    // if (index <= total) {
     Map<String, dynamic> params = {};
     params["identifier"] = guid;
     params["start"] = index * chunkSize;
     params["chunkSize"] = chunkSize;
     params["compress"] = false;
     if (kIsWeb) {
-      var response = await api.downloadAttachment(attachment.guid!);
+      var response = await api.downloadAttachment(attachment.guid!, onReceiveProgress: (count, total) => setProgress(count / total));
       if (response.statusCode != 200) {
         if (onError != null) onError!.call();
 

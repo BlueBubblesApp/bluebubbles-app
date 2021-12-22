@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:version/version.dart';
 
 class PrivateAPIPanelBinding extends Bindings {
   @override
@@ -32,11 +33,8 @@ class PrivateAPIPanelController extends GetxController {
     _settingsCopy = SettingsManager().settings;
     SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
       final String? serverVersion = res['data']['server_version'];
-      serverVersionCode.value = serverVersion?.split(".").mapIndexed((index, e) {
-        if (index == 0) return int.parse(e) * 100;
-        if (index == 1) return int.parse(e) * 21;
-        return int.parse(e);
-      }).sum;
+      Version version = Version.parse(serverVersion);
+      serverVersionCode.value = version.major * 100 + version.minor * 21 + version.patch;
     });
   }
 
@@ -328,7 +326,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                                 },
                                 initialVal: controller._settingsCopy.privateAPISend.value,
                                 title: "Private API Send",
-                                subtitle: "Send regular text messages using the Private API for much faster speed",
+                                subtitle: "Send regular iMessages using the Private API for much faster speed",
                                 backgroundColor: tileColor,
                               );
                             } else {

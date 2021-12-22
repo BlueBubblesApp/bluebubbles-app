@@ -66,7 +66,7 @@ class _SetupViewState extends State<SetupView> {
         backgroundColor: Theme.of(context).backgroundColor,
         body: SafeArea(
           child: Padding(
-            padding: EdgeInsets.only(top: 20),
+            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
             child: Stack(
               fit: StackFit.passthrough,
               alignment: Alignment.topCenter,

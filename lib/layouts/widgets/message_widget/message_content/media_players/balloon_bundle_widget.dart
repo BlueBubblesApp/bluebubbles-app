@@ -56,7 +56,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.device_phone_portrait : Icons.phone_android;
     } else if (val.contains("mobileslideshow")) {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play_rectangle : Icons.slideshow;
-    } else if (val.contains("PeerPayment")) {
+    } else if (val.contains("peerpayment")) {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.money_dollar_circle : Icons.monetization_on;
     }
 

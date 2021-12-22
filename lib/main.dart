@@ -62,6 +62,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:version/version.dart' as ver;
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -491,9 +492,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     // Initalize a bunch of managers
     MethodChannelInterface().init();
 
-    // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
-    LifeCycleManager().opened();
-
     if (!kIsWeb) {
       if (!LifeCycleManager().isBubble) {
         // This initialization sets the function address in the native code to be used later
@@ -531,6 +529,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
     }
 
+    // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
+    LifeCycleManager().opened();
+
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
       await SettingsManager().getSavedSettings();
@@ -542,13 +543,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       }
 
       if (kIsWeb) {
-        String? version = await SettingsManager().getServerVersion();
-        int? sum = version?.split(".").mapIndexed((index, e) {
-          if (index == 0) return int.parse(e) * 100;
-          if (index == 1) return int.parse(e) * 21;
-          return int.parse(e);
-        }).sum;
-        if (version == null || (sum ?? 0) < 42) {
+        String? str = await SettingsManager().getServerVersion();
+        ver.Version version = ver.Version.parse(str);
+        int sum = version.major * 100 + version.minor * 21 + version.patch;
+        if (sum < 42) {
           setState(() {
             serverCompatible = false;
           });

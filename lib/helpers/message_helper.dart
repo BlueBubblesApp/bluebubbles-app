@@ -375,7 +375,7 @@ class MessageHelper {
       }
     } else if (val.contains("mobileslideshow")) {
       return "Photo Slideshow";
-    } else if (val.contains("PeerPayment")) {
+    } else if (val.contains("peerpayment")) {
       return "Payment Request";
     }
 

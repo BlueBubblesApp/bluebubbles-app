@@ -134,6 +134,10 @@ class BaseNavigator extends GetxService {
         Get.keys[2]?.currentContext != null &&
         (!context.isPhone || context.isLandscape) &&
         (SettingsManager().settings.tabletMode.value)) {
+      if (Get.currentRoute.isEmpty) {
+        Get.back();
+        return;
+      }
       Get.until((route) {
         bool id2result = false;
         // check if we should pop the left side first

@@ -200,8 +200,9 @@ class ChatBloc {
     chat.toggleHasUnread(isUnread);
 
     // Remove from notification shade
-    if (clearNotifications && !isUnread)
+    if (clearNotifications && !isUnread) {
       MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    }
 
     updateChatPosition(chat);
   }
