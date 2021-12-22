@@ -253,7 +253,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     double reactionIconSize = 50;
     double maxMenuWidth = (ReactionTypes.toList().length / (narrowScreen ? 2 : 1) * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize * 2).toDouble();
-    double topPadding = -40;
+    double topPadding = -reactionIconSize - 5;
     if (topMinimum > context.height - 120 - menuHeight) {
       topMinimum = context.height - 120 - menuHeight;
     }
@@ -269,7 +269,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     }
 
     return Positioned(
-      bottom: max(context.height - topOffset - topPadding - menuHeight, context.height - messageTopOffset - menuHeight),
+      bottom: max(context.height - topOffset - topPadding - menuHeight, context.height - messageTopOffset - menuHeight - topPadding),
       left: leftOffset,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(40.0),
