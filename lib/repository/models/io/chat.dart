@@ -278,7 +278,7 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
       for (Chat c in chats) {
         c.participants = List<Handle>.from(c.handles);
         c._deduplicateParticipants();
-        c.fakeParticipants = c.participants.map((p) => (stuff[3][p.address] ?? "Unknown") as String).toList();
+        c.fakeParticipants = c.participants.map((p) => (stuff[2][p.address] ?? "Unknown") as String).toList();
       }
       return chats;
     });
@@ -962,7 +962,7 @@ class Chat {
   static Future<List<Chat>> getChats({int limit = 15, int offset = 0, required Map fakeNames}) async {
     if (kIsWeb) throw Exception("Use socket to get chats on Web!");
 
-    final task = GetChats([limit, offset, prefs.getString("objectbox-reference")!, fakeNames]);    
+    final task = GetChats([limit, offset, fakeNames]);
     return (await createAsyncTask<List<Chat>>(task)) ?? [];
   }
 

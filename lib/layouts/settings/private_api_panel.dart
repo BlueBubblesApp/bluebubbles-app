@@ -329,7 +329,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                                 },
                                 initialVal: controller._settingsCopy.privateAPISend.value,
                                 title: "Private API Send",
-                                subtitle: "Send regular text messages using the Private API for much faster speed",
+                                subtitle: "Send regular iMessages using the Private API for much faster speed",
                                 backgroundColor: tileColor,
                               );
                             } else {

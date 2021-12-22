@@ -22,7 +22,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:dio_http/dio_http.dart';
+import 'package:dio/dio.dart';
 import 'package:faker/faker.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
