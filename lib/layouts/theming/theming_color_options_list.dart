@@ -10,7 +10,7 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 
 class ThemingColorOptionsList extends StatefulWidget {
@@ -30,6 +30,18 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
   @override
   void initState() {
     super.initState();
+    if (widget.isDarkMode) {
+      currentTheme = ThemeObject.getDarkTheme();
+    } else {
+      currentTheme = ThemeObject.getLightTheme();
+    }
+    currentTheme!.fetchData();
+
+    allThemes = ThemeObject.getThemes();
+    for (ThemeObject theme in allThemes) {
+      theme.fetchData();
+    }
+
     widget.controller.stream.listen((event) {
       if (!currentTheme!.isPreset) {
         showSnackbar('Customization', "Click on an item to customize");
@@ -46,9 +58,9 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
             allThemes.add(newTheme);
             currentTheme = newTheme;
             if (widget.isDarkMode) {
-              await SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: currentTheme);
+              SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: currentTheme);
             } else {
-              await SettingsManager().saveSelectedTheme(_context, selectedLightTheme: currentTheme);
+              SettingsManager().saveSelectedTheme(_context, selectedLightTheme: currentTheme);
             }
             setState(() {});
           },
@@ -62,29 +74,12 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
   }
 
   @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    if (widget.isDarkMode) {
-      currentTheme = await ThemeObject.getDarkTheme();
-    } else {
-      currentTheme = await ThemeObject.getLightTheme();
-    }
-    await currentTheme!.fetchData();
-
-    allThemes = await ThemeObject.getThemes();
-    for (ThemeObject theme in allThemes) {
-      await theme.fetchData();
-    }
-
-    if (mounted) setState(() {});
-  }
-
-  @override
   Widget build(BuildContext context) {
     editable = currentTheme != null && !currentTheme!.isPreset;
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() <
+            Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {
       headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
@@ -139,7 +134,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                                 .toList(),
                             onChanged: (value) async {
                               value!.data = value.themeData;
-                              await value.save();
+                              value.save();
 
                               if (value.name == "Music Theme (Light)" || value.name == "Music Theme (Dark)") {
                                 await MethodChannelInterface().invokeMethod("request-notif-permission");
@@ -158,13 +153,13 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                               }
 
                               if (value.name == "Music Theme (Light)" || value.name == "Music Theme (Dark)") {
-                                var allThemes = await ThemeObject.getThemes();
-                                var currentLight = await ThemeObject.getLightTheme();
-                                var currentDark = await ThemeObject.getDarkTheme();
+                                var allThemes = ThemeObject.getThemes();
+                                var currentLight = ThemeObject.getLightTheme();
+                                var currentDark = ThemeObject.getDarkTheme();
                                 currentLight.previousLightTheme = true;
                                 currentDark.previousDarkTheme = true;
-                                await currentLight.save();
-                                await currentDark.save();
+                                currentLight.save();
+                                currentDark.save();
                                 SettingsManager().saveSelectedTheme(context,
                                     selectedLightTheme:
                                         allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
@@ -173,11 +168,11 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                               } else if (currentTheme!.name == "Music Theme (Light)" ||
                                   currentTheme!.name == "Music Theme (Dark)") {
                                 if (!widget.isDarkMode) {
-                                  ThemeObject previousDark = await revertToPreviousDarkTheme();
+                                  ThemeObject previousDark = revertToPreviousDarkTheme();
                                   SettingsManager().saveSelectedTheme(context,
                                       selectedLightTheme: value, selectedDarkTheme: previousDark);
                                 } else {
-                                  ThemeObject previousLight = await revertToPreviousLightTheme();
+                                  ThemeObject previousLight = revertToPreviousLightTheme();
                                   SettingsManager().saveSelectedTheme(context,
                                       selectedLightTheme: previousLight, selectedDarkTheme: value);
                                 }
@@ -209,7 +204,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                     child: SettingsSwitch(
                   onChanged: (bool val) async {
                     currentTheme!.gradientBg = val;
-                    await currentTheme!.save();
+                    currentTheme!.save();
                     if (widget.isDarkMode) {
                       SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
                     } else {
@@ -234,7 +229,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   childCount: ThemeColors.Colors.length, // ThemeColors.values.length,
                 ),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
+                  crossAxisCount: kIsDesktop ? (CustomNavigator.width(context) / 150).floor() : 2,
                 ),
               ),
               if (!currentTheme!.isPreset)
@@ -249,14 +244,14 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                     ),
                     onPressed: () async {
                       allThemes.removeWhere((element) => element == currentTheme);
-                      await currentTheme!.delete();
+                      currentTheme!.delete();
                       currentTheme =
-                        widget.isDarkMode ? await revertToPreviousDarkTheme() : await revertToPreviousLightTheme();
-                      allThemes = await ThemeObject.getThemes();
+                        widget.isDarkMode ? revertToPreviousDarkTheme() : revertToPreviousLightTheme();
+                      allThemes = ThemeObject.getThemes();
                       if (widget.isDarkMode) {
-                        await SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
+                        SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
                       } else {
-                        await SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
+                        SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
                       }
                       setState(() {});
                     },
@@ -295,8 +290,8 @@ class _NewThemeCreateAlertState extends State<NewThemeCreateAlert> {
       actions: [
         TextButton(
           child: Text("OK"),
-          onPressed: () async {
-            if ((await ThemeObject.findOne({"name": controller.text})) != null || controller.text.isEmpty) {
+          onPressed: () {
+            if (ThemeObject.findOne(controller.text) != null || controller.text.isEmpty) {
               setState(() {
                 showError = true;
               });

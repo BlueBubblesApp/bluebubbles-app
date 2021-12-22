@@ -27,7 +27,8 @@ extension ColorHelpers on Color {
   Color darkenPercent([double percent = 10]) {
     assert(1 <= percent && percent <= 100);
     var f = 1 - percent / 100;
-    return Color.fromARGB(alpha, (red * f).round(), (green * f).round(), (blue * f).round());
+    return Color.fromARGB(
+        alpha, (red * f).round(), (green * f).round(), (blue * f).round());
   }
 
   Color lightenPercent([double percent = 10]) {
@@ -42,6 +43,15 @@ extension ColorHelpers on Color {
       return darkenPercent(percent);
     } else {
       return lightenPercent(percent);
+    }
+  }
+  
+  Color oppositeLightenOrDarken([double percent = 10]) {
+    if (computeLuminance() >= 0.5) {
+      return lightenPercent(percent);
+    } else {
+      return darkenPercent(percent);
+      
     }
   }
 
@@ -62,6 +72,9 @@ extension ColorHelpers on Color {
 
     return hslDark.toColor();
   }
+  //TODO Complete saturation color helper
+  Color withSaturation([double amount = .1]) =>
+      HSLColor.fromColor(this).withSaturation(amount).toColor();
 }
 
 MaterialColor createMaterialColor(Color color) {

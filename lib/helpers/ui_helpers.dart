@@ -2,8 +2,7 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 Widget buildBackButton(BuildContext context,
-    {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, Function()? callback}) {
+    {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, bool Function()? callback}) {
   return Container(
     padding: padding,
     width: 25,
@@ -22,11 +21,13 @@ Widget buildBackButton(BuildContext context,
           : Obx(() => Icon(SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
               color: Theme.of(context).primaryColor)),
       onPressed: () {
-        callback?.call();
-        while (Get.isOverlaysOpen) {
-          Get.back();
+        final result = callback?.call() ?? true;
+        if (result) {
+          while (Get.isOverlaysOpen) {
+            Get.back();
+          }
+          Navigator.of(context).pop();
         }
-        Navigator.of(context).pop();
       },
     ),
   );

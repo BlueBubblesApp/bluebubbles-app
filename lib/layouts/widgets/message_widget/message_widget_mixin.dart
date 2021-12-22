@@ -3,7 +3,7 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -164,7 +164,7 @@ abstract class MessageWidgetMixin {
     } else {
       textSpans.addAll(
           MessageHelper.buildEmojiText(
-            MessageHelper.getNotificationTextSync(message),
+            MessageHelper.getNotificationText(message),
             textStyle!,
           )
       );
@@ -333,7 +333,7 @@ abstract class MessageWidgetMixin {
     } else {
       textSpans.addAll(
         MessageHelper.buildEmojiText(
-          MessageHelper.getNotificationTextSync(message),
+          MessageHelper.getNotificationText(message),
           textStyle!,
         )
       );

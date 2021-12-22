@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:isolate';
@@ -26,8 +26,7 @@ import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -153,17 +152,17 @@ class MethodChannelInterface {
           TestingModeController controller = Get.find<TestingModeController>();
           controller.mostRecentReply.value = call.arguments["text"];
           // If `reply` is called when the app is in a background isolate, then we need to close it once we are done
-          closeThread();
+          await closeThread();
 
           return Future.value("");
         }
         // Find the chat to reply to
-        Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
+        Chat? chat = Chat.findOne(guid: call.arguments["chat"]);
 
         // If no chat is found, then we can't do anything
         if (chat == null) {
           // If `reply` is called when the app is in a background isolate, then we need to close it once we are done
-          closeThread();
+          await closeThread();
 
           return Future.value("");
         }
@@ -172,30 +171,30 @@ class MethodChannelInterface {
         // Send the message to that chat
         await ActionHandler.sendMessage(chat, call.arguments["text"], completer: completer);
 
-        closeThread();
+        await closeThread();
 
         return Future.value("");
       case "markAsRead":
         // Find the chat to mark as read
-        Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
+        Chat? chat = Chat.findOne(guid: call.arguments["chat"]);
 
         // If no chat is found, then we can't do anything
         if (chat == null) {
           // If `markAsRead` is called when the app is in a background isolate, then we need to close it once we are done
-          closeThread();
+          await closeThread();
 
           return Future.value("");
         }
 
         // Remove the notificaiton from that chat
-        await SocketManager().removeChatNotification(chat);
+        SocketManager().removeChatNotification(chat);
 
         if (SettingsManager().settings.privateMarkChatAsRead.value) {
-          SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+          await SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
         }
 
         // In case this method is called when the app is in a background isolate
-        closeThread();
+        await closeThread();
 
         return Future.value("");
       case "shareAttachments":
@@ -308,14 +307,14 @@ class MethodChannelInterface {
           print("primary color is $primary");
           print("light bg color is $lightBg");
           print("dark bg color is $darkBg");
-          var darkTheme = (await ThemeObject.getThemes()).firstWhere((e) => e.name == "Music Theme (Dark)");
-          var lightTheme = (await ThemeObject.getThemes()).firstWhere((e) => e.name == "Music Theme (Light)");
-          await darkTheme.fetchData();
+          var darkTheme = ThemeObject.getThemes().firstWhere((e) => e.name == "Music Theme (Dark)");
+          var lightTheme = ThemeObject.getThemes().firstWhere((e) => e.name == "Music Theme (Light)");
+          darkTheme.fetchData();
           var darkPrimaryEntry = darkTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
           var darkBgEntry = darkTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
           darkPrimaryEntry.color = primary;
           darkBgEntry.color = darkBg;
-          await lightTheme.fetchData();
+          lightTheme.fetchData();
           var lightPrimaryEntry = lightTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
           var lightBgEntry = lightTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
           lightPrimaryEntry.color = primary;
@@ -347,13 +346,15 @@ class MethodChannelInterface {
                 ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
             }
           }
-          await SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
+          SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
           isRunning = false;
         }
         return Future.value("");
       case "remove-sendPort":
         IsolateNameServer.removePortNameMapping('bg_isolate');
-        print("Removed sendPort because Activity was destroyed");
+        await prefs.remove('objectbox-reference');
+        print("Removed sendPort and objectbox reference because Activity was destroyed");
+        store.close();
         return Future.value("");
       default:
         return Future.value("");
@@ -361,11 +362,12 @@ class MethodChannelInterface {
   }
 
   /// [closeThread] closes the background isolate when the app is fully closed
-  void closeThread() {
+  Future<void> closeThread() async {
     // Only do this if we are indeed running in the background
     if (headless) {
       Logger.info("Closing the background isolate...", tag: "MCI-CloseThread");
-
+      await prefs.remove('objectbox-reference');
+      store.close();
       // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");
     }
@@ -375,6 +377,9 @@ class MethodChannelInterface {
     if (id == "-1") {
       NavigatorManager().navigatorKey.currentState!.popUntil((route) => route.isFirst);
       return;
+    }
+    if (!ContactManager().hasFetchedContacts) {
+      await ContactManager().getContacts();
     }
     if (CurrentChat.activeChat?.chat.guid == id) {
       NotificationManager().switchChat(CurrentChat.activeChat!.chat);
@@ -392,15 +397,15 @@ class MethodChannelInterface {
       return;
     }
     // Try to find the specified chat to open
-    Chat? openedChat = await Chat.findOne({"GUID": id});
+    Chat? openedChat = Chat.findOne(guid: id);
 
     // If we did find one, then we can move on
     if (openedChat != null) {
       // Get all of the participants of the chat so that it looks right when it is opened
-      await openedChat.getParticipants();
+      openedChat.getParticipants();
 
       // Make sure that the title is set
-      await openedChat.getTitle();
+      openedChat.getTitle();
 
       // Clear all notifications for this chat
       NotificationManager().switchChat(openedChat);

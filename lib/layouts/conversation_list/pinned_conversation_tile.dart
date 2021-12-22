@@ -7,18 +7,17 @@ import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_tile_text_bubble.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -68,16 +67,28 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
 
       setNewChatData(forceUpdate: true);
     });
+
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!["add-unread-chat", "remove-unread-chat"].contains(event["type"])) return;
+      if (!event["data"].containsKey("chatGuid")) return;
+
+      // Ignore any events having to do with this chat
+      String? chatGuid = event["data"]["chatGuid"];
+      if (widget.chat.guid != chatGuid) return;
+
+      // Only re-render if the newMessages count changes
+      if (mounted) setState(() {});
+    });
   }
 
-  void setNewChatData({forceUpdate = false}) async {
+  void setNewChatData({forceUpdate = false}) {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat.participants;
-    await widget.chat.getParticipants();
+    widget.chat.getParticipants();
 
     // Save the current title and generate the new one
     String? ogTitle = widget.chat.title;
-    await widget.chat.getTitle();
+    widget.chat.getTitle();
 
     // If the original data is different, update the state
     if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {
@@ -108,10 +119,11 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
 
     TextStyle? style = context.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
     if (widget.chat.title == null) widget.chat.getTitle();
+    if (widget.chat.title == null || kIsWeb || kIsDesktop) widget.chat.getTitle();
     String title = widget.chat.title ?? "Fake Person";
 
     if (generateNames) {
-      title = (widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat")!;
+      title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
     } else if (hideInfo) {
       style = style.copyWith(color: Colors.transparent);
     }
@@ -193,6 +205,8 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                       (context.theme.backgroundColor.green * 0.2).toInt(),
                   (context.theme.primaryColor.blue * 0.8).toInt() + (context.theme.backgroundColor.blue * 0.2).toInt(),
                 );
+                MessageMarkers? markers =
+                    CurrentChat.getCurrentChat(widget.chat)?.messageMarkers;
                 return ConstrainedBox(
                   constraints: BoxConstraints(
                     maxWidth: maxWidth,
@@ -272,8 +286,6 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                             showTypingIndicator.value = snapshot.data["data"];
                           }
                           return Obx(() {
-                            MessageMarkers? markers =
-                                CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers.value ?? null.obs.value;
                             if (showTypingIndicator.value) {
                               return Positioned(
                                 top: -sqrt(maxWidth / 2),
@@ -288,8 +300,8 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                 ),
                               );
                             }
-                            if (shouldShow(widget.chat.latestMessage, markers?.myLastMessage, markers?.lastReadMessage,
-                                    markers?.lastDeliveredMessage) !=
+                            if (!widget.chat.isGroup() && shouldShow(widget.chat.latestMessage, markers?.myLastMessage.value, markers?.lastReadMessage.value,
+                                    markers?.lastDeliveredMessage.value) !=
                                 Indicator.NONE) {
                               return Positioned(
                                 left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
@@ -309,18 +321,18 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                       ),
                                     ),
                                     Transform.rotate(
-                                      angle: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
-                                                  markers?.lastReadMessage, markers?.lastDeliveredMessage) !=
+                                      angle: shouldShow(widget.chat.latestMessage, markers?.myLastMessage.value,
+                                                  markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value) !=
                                               Indicator.SENT
                                           ? pi / 2
                                           : 0,
                                       child: Icon(
-                                        shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
-                                                    markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                        shouldShow(widget.chat.latestMessage, markers?.myLastMessage.value,
+                                                    markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value) ==
                                                 Indicator.DELIVERED
                                             ? CupertinoIcons.location_north_fill
-                                            : shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
-                                                        markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                            : shouldShow(widget.chat.latestMessage, markers?.myLastMessage.value,
+                                                        markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value) ==
                                                     Indicator.READ
                                                 ? CupertinoIcons.location_north
                                                 : CupertinoIcons.location_fill,
@@ -336,13 +348,11 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                           });
                         },
                       ),
-                      FutureBuilder<Message>(
-                        future: widget.chat.latestMessageFuture,
-                        builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      Builder(
+                        builder: (BuildContext context) {
                           if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
                           if (showTypingIndicator.value) return Container();
-                          if (!snapshot.hasData) return Container();
-                          Message message = snapshot.data;
+                          Message message = widget.chat.latestMessageGetter;
                           if ([null, ""].contains(message.associatedMessageGuid) || (message.isFromMe ?? false)) {
                             return Container();
                           }

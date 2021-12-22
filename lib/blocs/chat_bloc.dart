@@ -11,17 +11,12 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../repository/models/chat.dart';
-import '../repository/models/handle.dart';
 
 class ChatBloc {
   static StreamSubscription<NewMessageEvent>? _messageSubscription;
@@ -89,7 +84,13 @@ class ChatBloc {
     Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
 
     // Get the contacts in case we haven't
-    if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
+    if (ContactManager().contacts.isEmpty) {
+      if (!kIsDesktop) {
+        await ContactManager().getContacts();
+      } else {
+        ContactManager().getContacts().then((e) => ChatBloc().chats.refresh());
+      }
+    }
 
     _messageSubscription ??= setupMessageListener();
 
@@ -97,14 +98,14 @@ class ChatBloc {
     lastFetch = DateTime.now().toUtc().millisecondsSinceEpoch;
 
     // Fetch the first x chats
-    getChatBatches();
+    getChatBatches(fakeNames: ContactManager().handleToFakeName);
   }
 
   Future<void> resumeRefresh() async {
     Logger.info('Performing ChatBloc resume request...', tag: 'ChatBloc-Resume');
 
     // Get the last message date
-    DateTime? lastMsgDate = await Message.lastMessageDate();
+    DateTime? lastMsgDate = Message.lastMessageDate();
 
     // If there is no last message, don't do anything
     if (!kIsWeb && lastMsgDate == null) {
@@ -154,7 +155,7 @@ class ChatBloc {
     if (!shouldUpdate) return;
 
     if (isNullOrEmpty(chat.title)!) {
-      await chat.getTitle();
+      chat.getTitle();
     }
 
     // If the current chat isn't found in the bloc, let's insert it at the correct position
@@ -175,7 +176,7 @@ class ChatBloc {
 
     for (int i = 0; i < _chats.length; i++) {
       if (isNullOrEmpty(_chats[i].participants)!) {
-        await _chats[i].getParticipants();
+        _chats[i].getParticipants();
       }
     }
 
@@ -189,7 +190,7 @@ class ChatBloc {
 
     // Mark them as unread
     for (Chat chat in unread) {
-      await chat.toggleHasUnread(false);
+      chat.toggleHasUnread(false);
 
       // Remove from notification shade
       MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
@@ -202,10 +203,12 @@ class ChatBloc {
   }
 
   Future<void> toggleChatUnread(Chat chat, bool isUnread, {bool clearNotifications = true}) async {
-    await chat.toggleHasUnread(isUnread);
+    chat.toggleHasUnread(isUnread);
 
     // Remove from notification shade
-    if (clearNotifications) MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    if (clearNotifications && !isUnread) {
+      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    }
 
     updateChatPosition(chat);
   }
@@ -230,13 +233,18 @@ class ChatBloc {
         icon = contact.avatar.value;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
-        // If [defaultAvatar] is not loaded, load it from assets
-        if (NotificationManager().defaultAvatar == null) {
-          ByteData file = await loadAsset("assets/images/person64.png");
-          NotificationManager().defaultAvatar = file.buffer.asUint8List();
+        if (contact != null && (contact.avatar.value?.isEmpty ?? true)) {
+          icon = await ContactManager().getAvatar(contact.id);
         }
+        if (icon == null) {
+          // If [defaultAvatar] is not loaded, load it from assets
+          if (NotificationManager().defaultAvatar == null) {
+            ByteData file = await loadAsset("assets/images/person64.png");
+            NotificationManager().defaultAvatar = file.buffer.asUint8List();
+          }
 
-        icon = NotificationManager().defaultAvatar;
+          icon = NotificationManager().defaultAvatar;
+        }
       }
     } catch (ex) {
       Logger.error("Failed to load contact avatar: ${ex.toString()}");
@@ -244,7 +252,7 @@ class ChatBloc {
 
     // If we don't have a title, try to get it
     if (isNullOrEmpty(chat.title)!) {
-      await chat.getTitle();
+      chat.getTitle();
     }
 
     // If we still don't have a title, bye felicia
@@ -268,7 +276,7 @@ class ChatBloc {
       Chat updatedChat = event.event["chat"];
 
       // Update the tile values for the chat (basically just the title)
-      await initTileValsForChat(updatedChat);
+      initTileValsForChat(updatedChat);
 
       // Insert/move the chat to the correct position
       await updateChatPosition(updatedChat);
@@ -280,8 +288,8 @@ class ChatBloc {
     return NewMessageManager().stream.listen(handleMessageAction);
   }
 
-  Future<void> getChatBatches({int batchSize = 15}) async {
-    int count = (await Chat.count()) ?? (await api.chatCount()).data['data']['total'];
+  Future<void> getChatBatches({int batchSize = 15, required Map fakeNames}) async {
+    int count = Chat.count() ?? (await api.chatCount()).data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
     } else {
@@ -291,21 +299,25 @@ class ChatBloc {
     // Reset chat lists
     List<Chat> newChats = [];
 
-    int batches = count == 0 ? 1 : (count < batchSize) ? batchSize : (count / batchSize).ceil();
+    int batches = count == 0
+        ? 1
+        : (count < batchSize)
+            ? batchSize
+            : (count / batchSize).ceil();
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = [];
       if (kIsWeb) {
         chats = await SocketManager().getChats({"withLastMessage": true, "limit": batchSize, "offset": i * batchSize});
       } else {
-        chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
+        chats = await Chat.getChats(limit: batchSize, offset: i * batchSize, fakeNames: fakeNames);
       }
       if (chats.isEmpty) break;
       await ContactManager().matchHandles();
       for (Chat chat in chats) {
         newChats.add(chat);
-        await initTileValsForChat(chat);
+        initTileValsForChat(chat);
         if (isNullOrEmpty(chat.participants)!) {
-          await chat.getParticipants();
+          chat.getParticipants();
         }
         if (kIsWeb) {
           for (Handle element in chat.participants) {
@@ -313,14 +325,14 @@ class ChatBloc {
               cachedHandles.add(element);
             }
           }
-          final Message m = await chat.latestMessageFuture;
-          if (m.hasAttachments) {
-            m.fetchAttachments();
-          }
-          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) chat.latestMessage!.handle = await Handle.findOne({"originalROWID": chat.latestMessage!.handleId});
-          chat.latestMessageText = MessageHelper.getNotificationTextSync(m);
+          chat.latestMessageText = MessageHelper.getNotificationText(chat.latestMessageGetter);
           chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
-          chat.latestMessageDate = m.dateCreated;
+          chat.latestMessageDate = chat.latestMessageGetter.dateCreated;
+          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) {
+            chat.latestMessage!.handle = kIsWeb
+                ? Handle.findOne(originalROWID: chat.latestMessage!.handleId)
+                : Handle.findOne(id: chat.latestMessage!.handleId);
+          }
         }
       }
 
@@ -346,55 +358,49 @@ class ChatBloc {
 
   /// Get the values for the chat, specifically the title
   /// @param chat to initialize
-  Future<void> initTileValsForChat(Chat chat) async {
+  void initTileValsForChat(Chat chat) {
     if (chat.title == null) {
-      await chat.getTitle();
+      chat.getTitle();
     }
     AttachmentInfoBloc().initChat(chat);
   }
 
-  void archiveChat(Chat chat) async {
+  void archiveChat(Chat chat) {
     _chats.firstWhere((element) => element.guid == chat.guid).isArchived = true;
-    await chat.toggleArchived(true);
+    chat.toggleArchived(true);
     initTileValsForChat(chat);
   }
 
-  void unArchiveChat(Chat chat) async {
+  void unArchiveChat(Chat chat) {
     _chats.firstWhere((element) => element.guid == chat.guid).isArchived = false;
-    await chat.toggleArchived(false);
+    chat.toggleArchived(false);
     initTileValsForChat(chat);
   }
 
-  void removePinIndices() async {
+  void removePinIndices() {
     _chats.bigPinHelper(true).forEach((element) {
-      element.pinIndex.value = null;
-      element.save();
+      element.pinIndex = null;
+      element.save(updatePinIndex: true);
     });
     _chats.sort(Chat.sort);
   }
 
-  void updateChatPinIndex(int oldIndex, int newIndex) async {
+  void updateChatPinIndex(int oldIndex, int newIndex) {
     final item = _chats.bigPinHelper(true)[oldIndex];
     if (newIndex > oldIndex) {
       newIndex = newIndex - 1;
-      _chats
-          .bigPinHelper(true)
-          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! <= newIndex)
-          .forEach((element) {
-        element.pinIndex.value = element.pinIndex.value! - 1;
+      _chats.bigPinHelper(true).where((p0) => p0.pinIndex != null && p0.pinIndex! <= newIndex).forEach((element) {
+        element.pinIndex = element.pinIndex! - 1;
       });
-      item.pinIndex.value = newIndex;
+      item.pinIndex = newIndex;
     } else {
-      _chats
-          .bigPinHelper(true)
-          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! >= newIndex)
-          .forEach((element) {
-        element.pinIndex.value = element.pinIndex.value! + 1;
+      _chats.bigPinHelper(true).where((p0) => p0.pinIndex != null && p0.pinIndex! >= newIndex).forEach((element) {
+        element.pinIndex = element.pinIndex! + 1;
       });
-      item.pinIndex.value = newIndex;
+      item.pinIndex = newIndex;
     }
     _chats.sort(Chat.sort);
-    await item.save();
+    item.save(updatePinIndex: true);
   }
 
   void deleteChat(Chat chat) async {
@@ -417,32 +423,32 @@ class ChatBloc {
       Chat _chat = _chats[i];
       if (_chat.guid == chat.guid) {
         _chats[i] = chat;
-        await initTileValsForChat(chats[i]);
+        initTileValsForChat(chats[i]);
       }
     }
     for (int i = 0; i < _chats.length; i++) {
       if (isNullOrEmpty(_chats[i].participants)!) {
-        await _chats[i].getParticipants();
+        _chats[i].getParticipants();
       }
     }
     _chats.sort(Chat.sort);
   }
 
-  addChat(Chat chat) async {
+  addChat(Chat chat) {
     // Create the chat in the database
-    await chat.save();
+    chat.save();
     refreshChats();
   }
 
-  addParticipant(Chat chat, Handle participant) async {
+  addParticipant(Chat chat, Handle participant) {
     // Add the participant to the chat
-    await chat.addParticipant(participant);
+    chat.addParticipant(participant);
     refreshChats();
   }
 
-  removeParticipant(Chat chat, Handle participant) async {
+  removeParticipant(Chat chat, Handle participant) {
     // Add the participant to the chat
-    await chat.removeParticipant(participant);
+    chat.removeParticipant(participant);
     chat.participants.remove(participant);
     refreshChats();
   }
@@ -466,13 +472,9 @@ extension Helpers on RxList<Chat> {
 
   RxList<Chat> bigPinHelper(bool pinned) {
     if (pinned) {
-      return where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true)
-          .toList()
-          .obs;
+      return where((e) => e.isPinned ?? false).toList().obs;
     } else {
-      return where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
-          .toList()
-          .obs;
+      return where((e) => !(e.isPinned ?? false)).toList().obs;
     }
   }
 

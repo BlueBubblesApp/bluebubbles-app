@@ -2,8 +2,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/theme_entry.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -126,17 +125,17 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                           child: Text('CANCEL'),
                         ),
                         TextButton(
-                          onPressed: () async {
+                          onPressed: () {
                             Navigator.of(context).pop();
                             widget.entry.color = newColor;
                             widget.entry.fontWeight = fontWeight;
                             widget.entry.fontSize = fontSize;
-                            await widget.entry.save(widget.currentTheme);
-                            await widget.currentTheme.fetchData();
+                            widget.entry.save(widget.currentTheme);
+                            widget.currentTheme.fetchData();
                             if (widget.currentTheme.selectedDarkTheme) {
-                              await SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
+                              SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
                             } else if (widget.currentTheme.selectedLightTheme) {
-                              await SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
+                              SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
                             }
                           },
                           child: Text('SAVE'),
@@ -170,8 +169,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
               ),
             ),
           ),
-        ),
-      ),
+        ),),
     );
   }
 }

@@ -17,3 +17,4 @@ x86/
 !*.[Cc]ache/
 /out/
 /.vs/
+cmake-build-debug

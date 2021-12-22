@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 
 Map<String, Completer<Chat>> chatCache = {};

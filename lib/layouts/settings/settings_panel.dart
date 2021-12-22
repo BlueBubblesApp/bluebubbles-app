@@ -3,7 +3,7 @@ import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/intents.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -24,9 +24,9 @@ import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/settings/troubleshoot_panel.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
-import 'package:bluebubbles/repository/models/theme_entry.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -39,6 +39,8 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'desktop_panel.dart';
 
 List disconnectedStates = [SocketState.DISCONNECTED, SocketState.ERROR, SocketState.FAILED];
 
@@ -96,7 +98,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
         systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Obx(() => buildForDevice()),
+      child: Actions(
+        actions: {
+          GoBackIntent: GoBackAction(context),
+        },
+        child: Obx(() => buildForDevice())
+      ),
     );
   }
 
@@ -356,6 +363,31 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           child: SettingsDivider(color: headerColor),
                         ),
                       ),
+                      if (kIsDesktop)
+                        SettingsTile(
+                          backgroundColor: tileColor,
+                            title: "Desktop Settings",
+                          onTap: () {
+                            CustomNavigator.pushAndRemoveSettingsUntil(
+                              context,
+                              DesktopPanel(),
+                                (route) => route.isFirst,
+                            );
+                          },
+                          leading: SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.desktopcomputer,
+                            materialIcon: Icons.desktop_windows,
+                          ),
+                          trailing: nextIcon,
+                        ),
+                      if (kIsDesktop)
+                        Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 65.0),
+                            child: SettingsDivider(color: headerColor),
+                          ),
+                        ),
                       SettingsTile(
                         backgroundColor: tileColor,
                         title: "Misc and Advanced Settings",
@@ -525,7 +557,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                       ),
                                       onPressed: () async {
                                         DateTime now = DateTime.now().toLocal();
-                                        String name = "Android_${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}";
+                                        String name = "Android_${now.year}-${now.month}-${now.day}_${now.hour}-${now.minute}-${now.second}";
                                         Map<String, dynamic> json = SettingsManager().settings.toMap();
                                         var response = await api.setSettings(name, json);
                                         if (response.statusCode != 200) {
@@ -597,8 +629,39 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                   itemCount: json.length,
                                                                   physics: NeverScrollableScrollPhysics(),
                                                                   itemBuilder: (context, index) {
+                                                                    String finalName = "";
+                                                                    if(json[index]['name'].toString().contains("-")){
+                                                                      String date = json[index]['name'].toString().split("_")[1];
+                                                                      String time = json[index]['name'].toString().split("_")[2];
+                                                                      String year = date.split("-")[0];
+                                                                      String month = date.split("-")[1];
+                                                                      String day = date.split("-")[2];
+                                                                      String hour = time.split("-")[0];
+                                                                      String min = time.split("-")[1];
+                                                                      String sec = time.split("-")[2];
+                                                                      String timeType = "";
+                                                                      if(!SettingsManager().settings.use24HrFormat.value){
+                                                                        if(int.parse(hour) >= 12 && int.parse(hour) < 24){
+                                                                          timeType = "PM";
+                                                                        } else{
+                                                                          timeType = "AM";
+                                                                        }
+                                                                      }
+                                                                      if(int.parse(min) < 10){
+                                                                        min = "0" + min;
+                                                                      }
+                                                                      if(int.parse(sec) < 10){
+                                                                        sec = "0" + sec;
+                                                                      }
+                                                                      if(int.parse(hour) > 12 && !SettingsManager().settings.use24HrFormat.value){
+                                                                        hour = (int.parse(hour) -12).toString();
+                                                                      }
+                                                                      finalName = "$month/$day/$year at $hour:$min:$sec $timeType";
+                                                                    } else{
+                                                                      finalName = json[index]['name'].toString();
+                                                                    }
                                                                     return ListTile(
-                                                                      title: Text(json[index]['name'], style: Theme.of(context).textTheme.headline1),
+                                                                      title: Text(finalName, style: Theme.of(context).textTheme.headline1),
                                                                       onTap: () {
                                                                         Settings.updateFromMap(json[index]);
                                                                         Get.back();
@@ -647,10 +710,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             primary: Theme.of(context).primaryColor,
                                           ),
                                           onPressed: () async {
-                                            List<ThemeObject> allThemes = (await ThemeObject.getThemes()).where((element) => !element.isPreset).toList();
+                                            List<ThemeObject> allThemes = ThemeObject.getThemes().where((element) => !element.isPreset).toList();
                                             for (ThemeObject e in allThemes) {
                                               List<dynamic> entryJson = [];
-                                              await e.fetchData();
+                                              e.fetchData();
                                               for (ThemeEntry e2 in e.entries) {
                                                 entryJson.add(e2.toMap());
                                               }
@@ -744,8 +807,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                             }
                                                                             object.entries = entries;
                                                                             object.data = object.themeData;
-                                                                            await object.save();
-                                                                            await SettingsManager().saveSelectedTheme(context);
+                                                                            object.save();
+                                                                            SettingsManager().saveSelectedTheme(context);
                                                                             Get.back();
                                                                             showSnackbar("Success", "Theming restored successfully");
                                                                           },
@@ -888,11 +951,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                           primary: Theme.of(context).primaryColor,
                                         ),
                                         onPressed: () async {
-                                          List<ThemeObject> allThemes = await ThemeObject.getThemes();
+                                          List<ThemeObject> allThemes = ThemeObject.getThemes().where((element) => !element.isPreset).toList();
                                           String jsonStr = "[";
                                           allThemes.forEachIndexed((index, e) async {
                                             String entryJson = "[";
-                                            await e.fetchData();
+                                            e.fetchData();
                                             e.entries.forEachIndexed((index, e2) {
                                               entryJson = entryJson + jsonEncode(e2.toMap());
                                               if (index != e.entries.length - 1) {
@@ -977,9 +1040,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                               }
                                               object.entries = entries;
                                               object.data = object.themeData;
-                                              await object.save();
+                                              object.save();
                                             }
-                                            await SettingsManager().saveSelectedTheme(context);
+                                            SettingsManager().saveSelectedTheme(context);
                                             Get.back();
                                             showSnackbar("Success", "Theming restored successfully");
                                           } catch (_) {
@@ -1079,7 +1142,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         SettingsManager().settings.finishedSetup.value = false;
                                         Get.offAll(() => WillPopScope(
                                           onWillPop: () async => false,
-                                          child: SetupView(),
+                                          child: TitleBarWrapper(child: SetupView()),
                                         ), duration: Duration.zero, transition: Transition.noTransition);
                                         SettingsManager().settings = Settings();
                                         SettingsManager().settings.save();
@@ -1152,9 +1215,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
       tileColor = headerColor;
     }
     return VerticalSplitView(
-      dividerWidth: 10.0,
       initialRatio: 0.4,
-      minRatio: 0.33,
+      minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
       maxRatio: 0.5,
       allowResize: true,
       left: settingsList,
@@ -1196,13 +1258,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
   }
 
   Widget buildForDevice() {
-    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
+    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600;
     Widget settingsList = buildSettingsList();
     if (showAltLayout) {
       return buildForLandscape(context, settingsList);
     }
-
-    return settingsList;
+    return TitleBarWrapper(child: settingsList);
   }
 
   void saveSettings() {

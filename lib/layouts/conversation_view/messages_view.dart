@@ -17,13 +17,15 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:universal_io/io.dart';
 
 class MessagesView extends StatefulWidget {
   final MessageBloc? messageBloc;
@@ -59,6 +61,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
   CurrentChat? currentChat;
   bool keyboardOpen = false;
   bool widgetsBuilt = false;
+  final RxBool dragging = false.obs;
 
   List<Message> currentMessages = [];
   List<String> replies = [];
@@ -84,15 +87,6 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
     currentChat = CurrentChat.activeChat;
     if (widget.messageBloc != null) ever<MessageBlocEvent?>(widget.messageBloc!.event, (e) => handleNewMessage(e));
-
-    // See if we need to load anything from the message bloc
-    if (widget.messages.isNotEmpty) {
-      _messages = widget.messages;
-    } else if (_messages.isEmpty && widget.messageBloc!.messages.isEmpty) {
-      widget.messageBloc!.getMessages();
-    } else if (_messages.isEmpty && widget.messageBloc!.messages.isNotEmpty) {
-      widget.messageBloc!.emitLoaded();
-    }
 
     smartReplyController = StreamController<List<String>>.broadcast();
 
@@ -137,9 +131,18 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
     WidgetsBinding.instance!.addObserver(this);
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) async {
       widgetsBuilt = true;
       EventDispatcher().emit("update-highlight", widget.chat!.guid);
+      // See if we need to load anything from the message bloc
+      await Future.delayed(Duration(milliseconds: 100));
+      if (widget.messages.isNotEmpty) {
+        _messages = widget.messages;
+      } else if (_messages.isEmpty && widget.messageBloc!.messages.isEmpty) {
+        widget.messageBloc!.getMessages();
+      } else if (_messages.isEmpty && widget.messageBloc!.messages.isNotEmpty) {
+        widget.messageBloc!.emitLoaded();
+      }
     });
   }
 
@@ -402,163 +405,226 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-        behavior: HitTestBehavior.deferToChild,
-        onHorizontalDragStart: (details) {},
-        onHorizontalDragUpdate: (details) {
-          if (SettingsManager().settings.skin.value != Skins.Samsung) {
-            CurrentChat.activeChat!.timeStampOffset += details.delta.dx * 0.3;
-          }
-        },
-        onHorizontalDragEnd: (details) {
-          if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.activeChat!.timeStampOffset = 0;
-        },
-        onHorizontalDragCancel: () {
-          if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.activeChat!.timeStampOffset = 0;
-        },
-        child: CustomScrollView(
-          controller: scrollController ?? ScrollController(),
-          reverse: true,
-          physics: ThemeSwitcher.getScrollPhysics(),
-          slivers: <Widget>[
-            if (showSmartReplies)
-              StreamBuilder<List<String?>>(
-                stream: smartReplyController.stream,
-                builder: (context, snapshot) {
-                  return SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: SettingsManager().settings.skin.value != Skins.iOS ? 8.0 : 0.0),
-                      child: AnimatedSize(
-                        duration: Duration(milliseconds: 400),
-                        child: internalSmartReplies.isEmpty && replies.isNotEmpty
-                            ? Container(
-                              height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,
-                              child: ListView(
-                                  reverse: true,
-                                  scrollDirection: Axis.horizontal,
-                                  children: replies.map((e) => _buildReply(e).value).toList()))
-                            : internalSmartReplies.isNotEmpty ? Container(
-                                height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,
-                                child: ListView(
-                                    reverse: true,
-                                    scrollDirection: Axis.horizontal,
-                                    children: (internalSmartReplies..addEntries(replies.map((e) => _buildReply(e))))
-                                        .values
-                                        .toList()
-                                        .reversed
-                                        .toList()),
-                              ) : Container(),
-                      ),
-                    ),
-                  );
-                },
+    final _scrollController = scrollController ?? ScrollController();
+    final Widget child = Stack(
+      children: [
+        GestureDetector(
+            behavior: HitTestBehavior.deferToChild,
+            onHorizontalDragStart: (details) {},
+            onHorizontalDragUpdate: (details) {
+              if (SettingsManager().settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
+                CurrentChat.activeChat!.timeStampOffset += details.delta.dx * 0.3;
+              }
+            },
+            onHorizontalDragEnd: (details) {
+              if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.activeChat!.timeStampOffset = 0;
+            },
+            onHorizontalDragCancel: () {
+              if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.activeChat!.timeStampOffset = 0;
+            },
+            child: ImprovedScrolling(
+              enableMMBScrolling: true,
+              enableKeyboardScrolling: true,
+              // we use negative of the default values because the scrollview is reversed
+              keyboardScrollConfig: KeyboardScrollConfig(
+                  arrowsScrollAmount: -200,
+                  pageUpDownScrollAmount: -500,
+                  spaceScrollAmount: -600
               ),
-            if (SettingsManager().settings.enablePrivateAPI.value || widget.chat?.guid == "theme-selector")
-              SliverToBoxAdapter(
-                child: Row(
-                  children: <Widget>[
-                    if (widget.chat?.guid == "theme-selector" ||
-                        (currentChat!.showTypingIndicator &&
-                            (SettingsManager().settings.skin.value == Skins.Samsung ||
-                                SettingsManager().settings.alwaysShowAvatars.value)))
-                      Padding(
-                        padding: EdgeInsets.only(left: 10.0),
-                        child: ContactAvatarWidget(
-                          key: Key("${widget.chat!.participants[0].address}-messages-view"),
-                          handle: widget.chat!.participants[0],
-                          size: 30,
-                          fontSize: 14,
-                          borderThickness: 0.1,
+              mmbScrollConfig: MMBScrollConfig(
+                velocityBackpropagationPercent: -30.0 / 100.0,
+                customScrollCursor: DefaultCustomScrollCursor(
+                  cursorColor: context.textTheme.subtitle1!.color!,
+                  backgroundColor: Colors.white,
+                  borderColor: context.textTheme.headline1!.color!,
+                ),
+              ),
+              scrollController: _scrollController,
+              child: AnimatedOpacity(
+                opacity: _messages.isEmpty ? 0 : 1,
+                duration: Duration(milliseconds: 150),
+                curve: Curves.easeIn,
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  reverse: true,
+                  physics: ThemeSwitcher.getScrollPhysics(),
+                  slivers: <Widget>[
+                    if (showSmartReplies)
+                      StreamBuilder<List<String?>>(
+                        stream: smartReplyController.stream,
+                        builder: (context, snapshot) {
+                          return SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: SettingsManager().settings.skin.value != Skins.iOS ? 8.0 : 0.0),
+                              child: AnimatedSize(
+                                duration: Duration(milliseconds: 400),
+                                child: internalSmartReplies.isEmpty && replies.isNotEmpty
+                                    ? Container(
+                                    height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,
+                                    child: ListView(
+                                        reverse: true,
+                                        scrollDirection: Axis.horizontal,
+                                        children: replies.map((e) => _buildReply(e).value).toList()))
+                                    : internalSmartReplies.isNotEmpty ? Container(
+                                  height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,
+                                  child: ListView(
+                                      reverse: true,
+                                      scrollDirection: Axis.horizontal,
+                                      children: (internalSmartReplies..addEntries(replies.map((e) => _buildReply(e))))
+                                          .values
+                                          .toList()
+                                          .reversed
+                                          .toList()),
+                                ) : Container(),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    if (SettingsManager().settings.enablePrivateAPI.value || widget.chat?.guid == "theme-selector")
+                      SliverToBoxAdapter(
+                        child: Row(
+                          children: <Widget>[
+                            if (widget.chat?.guid == "theme-selector" ||
+                                (currentChat!.showTypingIndicator &&
+                                    (SettingsManager().settings.skin.value == Skins.Samsung ||
+                                        SettingsManager().settings.alwaysShowAvatars.value)))
+                              Padding(
+                                padding: EdgeInsets.only(left: 10.0),
+                                child: ContactAvatarWidget(
+                                  key: Key("${widget.chat!.participants[0].address}-messages-view"),
+                                  handle: widget.chat!.participants[0],
+                                  size: 30,
+                                  fontSize: 14,
+                                  borderThickness: 0.1,
+                                ),
+                              ),
+                            Padding(
+                              padding: EdgeInsets.only(top: 5),
+                              child: TypingIndicator(
+                                visible: widget.chat?.guid == "theme-selector" ? true : currentChat!.showTypingIndicator,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    Padding(
-                      padding: EdgeInsets.only(top: 5),
-                      child: TypingIndicator(
-                        visible: widget.chat?.guid == "theme-selector" ? true : currentChat!.showTypingIndicator,
-                      ),
+                    _listKey != null
+                        ? SliverAnimatedList(
+                        initialItemCount: _messages.length + 1,
+                        key: _listKey,
+                        itemBuilder: (BuildContext context, int index, Animation<double> animation) {
+                          // Load more messages if we are at the top and we aren't alrady loading
+                          // and we have more messages to load
+                          if (index == _messages.length) {
+                            if (!noMoreMessages &&
+                                (loader == null || !loader!.isCompleted || !loadedPages.contains(_messages.length))) {
+                              loadNextChunk();
+                              return NewMessageLoader();
+                            }
+
+                            return Container();
+                          } else if (index > _messages.length) {
+                            return Container();
+                          }
+
+                          Message? olderMessage;
+                          Message? newerMessage;
+                          if (index + 1 >= 0 && index + 1 < _messages.length) {
+                            olderMessage = _messages[index + 1];
+                          }
+                          if (index - 1 >= 0 && index - 1 < _messages.length) {
+                            newerMessage = _messages[index - 1];
+                          }
+
+                          bool fullAnimation =
+                              index == 0 && (!_messages[index].isFromMe! || _messages[index].originalROWID == null);
+
+                          Widget messageWidget = Padding(
+                              padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                              child: MessageWidget(
+                                key: Key(_messages[index].guid!),
+                                message: _messages[index],
+                                olderMessage: olderMessage,
+                                newerMessage: newerMessage,
+                                showHandle: widget.showHandle,
+                                isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                                showHero: fullAnimation,
+                                showReplies: true,
+                                onUpdate: (event) => onUpdateMessage(event),
+                                bloc: widget.messageBloc!,
+                                autoplayEffect: index == 0 && _messages[index].originalROWID != null,
+                              ));
+
+                          if (fullAnimation) {
+                            return SizeTransition(
+                              axis: Axis.vertical,
+                              sizeFactor:
+                              animation.drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut))),
+                              child: SlideTransition(
+                                position: animation.drive(
+                                  Tween(
+                                    begin: Offset(0.0, 1),
+                                    end: Offset(0.0, 0.0),
+                                  ).chain(
+                                    CurveTween(
+                                      curve: Curves.easeInOut,
+                                    ),
+                                  ),
+                                ),
+                                child: Opacity(
+                                  opacity: animation.isCompleted || !_messages[index].isFromMe! ? 1 : 0,
+                                  child: messageWidget,
+                                ),
+                              ),
+                            );
+                          }
+
+                          return messageWidget;
+                        })
+                        : SliverToBoxAdapter(child: Container()),
+                    SliverPadding(
+                      padding: EdgeInsets.all(70),
                     ),
                   ],
                 ),
               ),
-            _listKey != null
-                ? SliverAnimatedList(
-                    initialItemCount: _messages.length + 1,
-                    key: _listKey,
-                    itemBuilder: (BuildContext context, int index, Animation<double> animation) {
-                      // Load more messages if we are at the top and we aren't alrady loading
-                      // and we have more messages to load
-                      if (index == _messages.length) {
-                        if (!noMoreMessages &&
-                            (loader == null || !loader!.isCompleted || !loadedPages.contains(_messages.length))) {
-                          loadNextChunk();
-                          return NewMessageLoader();
-                        }
-
-                        return Container();
-                      } else if (index > _messages.length) {
-                        return Container();
-                      }
-
-                      Message? olderMessage;
-                      Message? newerMessage;
-                      if (index + 1 >= 0 && index + 1 < _messages.length) {
-                        olderMessage = _messages[index + 1];
-                      }
-                      if (index - 1 >= 0 && index - 1 < _messages.length) {
-                        newerMessage = _messages[index - 1];
-                      }
-
-                      bool fullAnimation =
-                          index == 0 && (!_messages[index].isFromMe! || _messages[index].originalROWID == null);
-
-                      Widget messageWidget = Padding(
-                          padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                          child: MessageWidget(
-                            key: Key(_messages[index].guid!),
-                            message: _messages[index],
-                            olderMessage: olderMessage,
-                            newerMessage: newerMessage,
-                            showHandle: widget.showHandle,
-                            isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
-                            showHero: fullAnimation,
-                            showReplies: true,
-                            onUpdate: (event) => onUpdateMessage(event),
-                            bloc: widget.messageBloc!,
-                            autoplayEffect: index == 0 && _messages[index].originalROWID != null,
-                          ));
-
-                      if (fullAnimation) {
-                        return SizeTransition(
-                          axis: Axis.vertical,
-                          sizeFactor:
-                              animation.drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut))),
-                          child: SlideTransition(
-                            position: animation.drive(
-                              Tween(
-                                begin: Offset(0.0, 1),
-                                end: Offset(0.0, 0.0),
-                              ).chain(
-                                CurveTween(
-                                  curve: Curves.easeInOut,
-                                ),
-                              ),
-                            ),
-                            child: Opacity(
-                              opacity: animation.isCompleted || !_messages[index].isFromMe! ? 1 : 0,
-                              child: messageWidget,
-                            ),
-                          ),
-                        );
-                      }
-
-                      return messageWidget;
-                    })
-                : SliverToBoxAdapter(child: Container()),
-            SliverPadding(
-              padding: EdgeInsets.all(70),
-            ),
-          ],
-        ));
+            )
+        ),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Obx(() => Container(
+              color: dragging.value ? Colors.blue.withAlpha(50) : Colors.transparent,
+            )),
+          ),
+        ),
+      ],
+    );
+    if (kIsWeb) return child;
+    return DropTarget(
+      onDragEntered: (details) {
+        dragging.value = true;
+      },
+      onDragExited: (details) {
+        dragging.value = false;
+      },
+      onDragDone: (details) {
+        List<Uri> uris = details.urls;
+        List<String> paths = uris.map((uri) => uri.pathSegments.join("/")).toList();
+        List<File> files = paths.map((path) => File(path)).where((file) => file.existsSync()).toList();
+        List<Map> _files = files.map((file) => {
+          "path": file.path,
+          "size": file.lengthSync(),
+          "name": file.path.split('/').last,
+          "bytes": file.readAsBytesSync(),
+        },
+        ).toList();
+        for (Map file in _files) {
+          EventDispatcher().emit('add-attachment', file);
+        }
+        dragging.value = false;
+      },
+      child: child,
+    );
   }
 
   @override

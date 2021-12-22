@@ -1,19 +1,15 @@
-import 'dart:async';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:collection/collection.dart';
 
 import 'package:bluebubbles/action_handler.dart';
@@ -34,9 +30,6 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/material.dart';
@@ -51,7 +44,8 @@ class MessageDetailsPopup extends StatefulWidget {
   MessageDetailsPopup({
     Key? key,
     required this.message,
-    required this.childOffset,
+    required this.newerMessage,
+    required this.childOffsetY,
     required this.childSize,
     required this.child,
     required this.currentChat,
@@ -59,7 +53,8 @@ class MessageDetailsPopup extends StatefulWidget {
   }) : super(key: key);
 
   final Message message;
-  final Offset childOffset;
+  final Message? newerMessage;
+  final double childOffsetY;
   final Size? childSize;
   final Widget child;
   final CurrentChat? currentChat;
@@ -74,7 +69,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   bool showTools = false;
   String? selfReaction;
   String? currentlySelectedReaction;
-  Completer? fetchRequest;
   CurrentChat? currentChat;
   Chat? dmChat;
 
@@ -88,8 +82,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     super.initState();
     currentChat = widget.currentChat;
 
-    messageTopOffset = widget.childOffset.dy;
-    topMinimum = CupertinoNavigationBar().preferredSize.height + (widget.message.hasReactions ? 110 : 50);
+    messageTopOffset = widget.childOffsetY;
+    topMinimum = CupertinoNavigationBar().preferredSize.height + 60 + (widget.message.hasReactions ? 110 : 50);
 
     dmChat = ChatBloc().chats.firstWhereOrNull(
           (chat) =>
@@ -116,8 +110,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
       if (mounted) {
         setState(() {
           double totalHeight = context.height - detailsMenuHeight! - 20;
-          double offset = (widget.childOffset.dy + widget.childSize!.height) - totalHeight;
-          messageTopOffset = widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
+          double offset = (widget.childOffsetY + widget.childSize!.height) - totalHeight;
+          messageTopOffset = widget.childOffsetY.clamp(topMinimum + 40, double.infinity);
           if (offset > 0) {
             messageTopOffset -= offset;
             messageTopOffset = messageTopOffset.clamp(topMinimum + 40, double.infinity);
@@ -127,26 +121,16 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     });
   }
 
-  Future<void> fetchReactions() async {
-    if (fetchRequest != null && !fetchRequest!.isCompleted) {
-      return fetchRequest!.future;
-    }
-
-    // Create a new fetch request
-    fetchRequest = Completer();
-
+  void fetchReactions() {
     // If there are no associated messages, return now
     List<Message> reactions = widget.message.getReactions();
-    if (reactions.isEmpty) {
-      return fetchRequest!.complete();
-    }
 
     // Filter down the messages to the unique ones (one per user, newest)
     List<Message> reactionMessages = Reaction.getUniqueReactionMessages(reactions);
 
     reactionWidgets = [];
     for (Message reaction in reactionMessages) {
-      await reaction.getHandle();
+      reaction.handle ??= reaction.getHandle();
       if (reaction.isFromMe!) {
         selfReaction = reaction.associatedMessageType;
         currentlySelectedReaction = selfReaction;
@@ -158,13 +142,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         ),
       );
     }
-
-    // If we aren't mounted, get out
-    if (!mounted) return fetchRequest!.complete();
-
-    // Tell the component to re-render
-    setState(() {});
-    return fetchRequest!.complete();
   }
 
   void sendReaction(String type) {
@@ -179,9 +156,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     bool hideReactions =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
 
+    double offsetX = widget.message.isFromMe! ? CustomNavigator.width(context) - widget.childSize!.width - 10 : 10;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+            ? Colors.transparent
+            : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -206,8 +187,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               AnimatedPositioned(
                 duration: Duration(milliseconds: 250),
                 curve: Curves.easeOut,
-                top: messageTopOffset,
-                left: widget.childOffset.dx,
+                top: messageTopOffset + 50,
+                left: offsetX,
                 child: Container(
                   width: widget.childSize!.width,
                   height: widget.childSize!.height,
@@ -254,7 +235,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 ),
               ),
               // Only show the reaction menu if it's enabled and the message isn't temporary
-              if (SettingsManager().settings.enablePrivateAPI.value && isSent && !hideReactions && (currentChat?.chat.isIMessage ?? true)) buildReactionMenu(),
+              if (SettingsManager().settings.enablePrivateAPI.value &&
+                  isSent &&
+                  !hideReactions &&
+                  (currentChat?.chat.isIMessage ?? true))
+                buildReactionMenu(),
               buildCopyPasteMenu(),
             ],
           ),
@@ -264,21 +249,20 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   }
 
   Widget buildReactionMenu() {
-    double reactionIconSize = ((8.5 /
-        10 *
-        min(context.isTablet ? max(CustomNavigator.width(context) / 2, 400) : CustomNavigator.width(context),
-            context.height)) /
-        (ReactionTypes.toList().length).toDouble());
-    double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
-    double menuHeight = (reactionIconSize).toDouble();
-    double topPadding = -20;
+    double narrowWidth = widget.message.isFromMe! || !SettingsManager().settings.alwaysShowAvatars.value ? 330 : 360;
+    bool narrowScreen = CustomNavigator.width(context) < narrowWidth;
+    double reactionIconSize = 50;
+    double maxMenuWidth = (ReactionTypes.toList().length / (narrowScreen ? 2 : 1) * reactionIconSize).toDouble();
+    double menuHeight = (reactionIconSize * 2).toDouble();
+    double topPadding = -10;
     if (topMinimum > context.height - 120 - menuHeight) {
       topMinimum = context.height - 120 - menuHeight;
     }
-    double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(topMinimum, context.height - 120 - menuHeight);
+    double topOffset = (messageTopOffset + 50 - menuHeight).toDouble().clamp(topMinimum, context.height - 120 - menuHeight);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0)).toDouble();
+        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 25 : 20 + (shiftRight ? 35 : 0))
+            .toDouble();
     Color iconColor = Colors.white;
 
     if (Theme.of(context).colorScheme.secondary.computeLuminance() >= 0.179) {
@@ -286,7 +270,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     }
 
     return Positioned(
-      top: topOffset + topPadding,
+      bottom: context.height - topOffset - topPadding - menuHeight,
       left: leftOffset,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(40.0),
@@ -294,17 +278,65 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Container(
             padding: const EdgeInsets.all(5),
-            height: menuHeight,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.secondary.withAlpha(150),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: ReactionTypes.toList()
-                  .map(
-                    (e) => Padding(
+            child: Column(
+              children: <Widget>[
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: ReactionTypes.toList().slice(0, narrowScreen ? 3 : null)
+                      .map(
+                        (e) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
+                          child: Container(
+                            width: reactionIconSize - 15,
+                            height: reactionIconSize - 15,
+                            decoration: BoxDecoration(
+                              color: currentlySelectedReaction == e
+                                  ? Theme.of(context).primaryColor
+                                  : Theme.of(context).colorScheme.secondary.withAlpha(150),
+                              borderRadius: BorderRadius.circular(
+                                20,
+                              ),
+                            ),
+                            child: GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                sendReaction(selfReaction == e ? "-$e" : e);
+                              },
+                              onTapDown: (TapDownDetails details) {
+                                if (currentlySelectedReaction == e) {
+                                  currentlySelectedReaction = null;
+                                } else {
+                                  currentlySelectedReaction = e;
+                                }
+                                if (mounted) setState(() {});
+                              },
+                              onTapUp: (details) {},
+                              onTapCancel: () {
+                                currentlySelectedReaction = selfReaction;
+                                if (mounted) setState(() {});
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(6),
+                                child: Reaction.getReactionIcon(e, iconColor),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+                if (narrowScreen)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: ReactionTypes.toList().slice(3)
+                      .map(
+                        (e) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
                       child: Container(
                         width: reactionIconSize - 15,
@@ -343,7 +375,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                       ),
                     ),
                   )
-                  .toList(),
+                      .toList(),
+                ),                
+              ],
             ),
           ),
         ),
@@ -369,10 +403,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   Widget buildCopyPasteMenu() {
     double maxMenuWidth = CustomNavigator.width(context) * 2 / 3;
 
-    double maxHeight = context.height - topMinimum - widget.childSize!.height;
+    double maxHeight = context.height - topMinimum - widget.childSize!.height - 100;
 
     List<Widget> allActions = [
-      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat != null && !LifeCycleManager().isBubble)
+      if (widget.currentChat!.chat.isGroup() &&
+          !widget.message.isFromMe! &&
+          dmChat != null &&
+          !LifeCycleManager().isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -394,13 +431,18 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_up_right_square : Icons.open_in_new,
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.arrow_up_right_square
+                    : Icons.open_in_new,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
           ),
         ),
-      if (widget.message.fullText.replaceAll("\n", " ").hasUrl && !kIsWeb && !kIsDesktop && !LifeCycleManager().isBubble)
+      if (widget.message.fullText.replaceAll("\n", " ").hasUrl &&
+          !kIsWeb &&
+          !kIsDesktop &&
+          !LifeCycleManager().isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -417,7 +459,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.macwindow : Icons.open_in_browser,
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.macwindow
+                    : Icons.open_in_browser,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -428,7 +472,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              await launch(widget.message.attachments.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
+              await launch(
+                  widget.message.attachments.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
             },
             child: ListTile(
               title: Text(
@@ -436,7 +481,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.macwindow : Icons.open_in_browser,
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.macwindow
+                    : Icons.open_in_browser,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -463,7 +510,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           ),
         ),
       if ((widget.message.threadOriginatorGuid != null ||
-          widget.messageBloc?.threadOriginators.values.firstWhereOrNull((e) => e == widget.message.guid) != null) &&
+              widget.messageBloc?.threadOriginators.values.firstWhereOrNull((e) => e == widget.message.guid) != null) &&
           isBigSur)
         Material(
           color: Colors.transparent,
@@ -477,13 +524,18 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.bubble_left_bubble_right : Icons.forum,
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.bubble_left_bubble_right
+                    : Icons.forum,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
           ),
         ),
-      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat == null && !LifeCycleManager().isBubble)
+      if (widget.currentChat!.chat.isGroup() &&
+          !widget.message.isFromMe! &&
+          dmChat == null &&
+          !LifeCycleManager().isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -518,7 +570,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.chat_bubble : Icons.message,
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.chat_bubble
+                    : Icons.message,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -536,13 +590,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   builder: (BuildContext context) {
                     List<PlatformFile> existingAttachments = [];
                     if (!widget.message.isUrlPreview()) {
-                      existingAttachments =
-                          widget.message.attachments.map((attachment) => PlatformFile(
-                            name: attachment!.transferName!,
-                            path: kIsWeb ? null : attachment.getPath(),
-                            bytes: attachment.bytes,
-                            size: attachment.totalBytes!,
-                          )).toList();
+                      existingAttachments = widget.message.attachments
+                          .map((attachment) => PlatformFile(
+                                name: attachment!.transferName!,
+                                path: kIsWeb ? null : attachment.getPath(),
+                                bytes: attachment.bytes,
+                                size: attachment.totalBytes!,
+                              ))
+                          .toList();
                     }
                     EventDispatcher().emit("update-highlight", null);
                     return ConversationView(
@@ -560,7 +615,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_right : Icons.forward,
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.arrow_right
+                    : Icons.forward,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -571,7 +628,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         child: InkWell(
           onTap: () async {
             NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
-            await Message.softDelete({"guid": widget.message.guid});
+            Message.softDelete(widget.message.guid!);
             Navigator.of(context).pop();
           },
           child: ListTile(
@@ -598,7 +655,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             child: ListTile(
               title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.doc_on_clipboard : Icons.content_copy,
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.doc_on_clipboard
+                    : Icons.content_copy,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -661,7 +720,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.doc_on_clipboard : Icons.content_copy,
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.doc_on_clipboard
+                    : Icons.content_copy,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -714,13 +775,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.cloud_download : Icons.file_download,
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.cloud_download
+                    : Icons.file_download,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
           ),
         ),
-      if ((widget.message.hasAttachments && !kIsWeb && !kIsDesktop) || widget.message.text!.isNotEmpty)
+      if ((widget.message.hasAttachments && !kIsWeb && !kIsDesktop) || (widget.message.text!.isNotEmpty && !kIsDesktop))
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -756,24 +819,82 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              final messageDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now().toLocal(),
-                  firstDate: DateTime.now().toLocal(),
-                  lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
-              if (messageDate != null) {
-                final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                if (messageTime != null) {
-                  final finalDate = DateTime(
-                      messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
-                  if (!finalDate.isAfter(DateTime.now().toLocal())) {
-                    showSnackbar("Error", "Select a date in the future");
-                    return;
-                  }
-                  NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate);
-                  Get.back();
-                  showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
+              DateTime? finalDate;
+              await showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      "Select Reminder Time",
+                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                    ),
+                    content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            children: [
+                              TextButton(
+                                child: Text("Cancel"),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: Text("1 Hour"),
+                                onPressed: () {
+                                  finalDate = DateTime.now().toLocal().add(Duration(hours: 1));
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: Text("1 Day"),
+                                onPressed: () {
+                                  finalDate = DateTime.now().toLocal().add(Duration(days: 1));
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: Text("1 Week"),
+                                onPressed: () {
+                                  finalDate = DateTime.now().toLocal().add(Duration(days: 7));
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: Text("Custom"),
+                                onPressed: () async {
+                                  final messageDate = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now().toLocal(),
+                                    firstDate: DateTime.now().toLocal(),
+                                    lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
+                                  if (messageDate != null) {
+                                    final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                                    if (messageTime != null) {
+                                      finalDate = DateTime(
+                                          messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+                                    }
+                                  }
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          )
+                        ]
+                    ),
+                    backgroundColor: Theme.of(context).backgroundColor,
+                  );
+                },
+              );
+              if (finalDate != null) {
+                if (!finalDate!.isAfter(DateTime.now().toLocal())) {
+                  showSnackbar("Error", "Select a date in the future");
+                  return;
                 }
+                NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate!);
+                Get.back();
+                showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
               }
             },
             child: ListTile(
@@ -848,7 +969,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                     child: ListTile(
                       title: Text("More...", style: Theme.of(context).textTheme.bodyText1),
                       trailing: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.ellipsis : Icons.more_vert,
+                        SettingsManager().settings.skin.value == Skins.iOS
+                            ? cupertino.CupertinoIcons.ellipsis
+                            : Icons.more_vert,
                         color: Theme.of(context).textTheme.bodyText1!.color,
                       ),
                     ),
@@ -868,9 +991,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 15 : 15 + (shiftRight ? 35 : 0)).toDouble();
+        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 15 : 20 + (shiftRight ? 35 : 0))
+            .toDouble();
     return Positioned(
-      top: topOffset + 5,
+      top: topOffset + 55,
       left: leftOffset,
       child: menu,
     );
