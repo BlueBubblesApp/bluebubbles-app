@@ -252,22 +252,22 @@ class ChatListPanel extends StatelessWidget {
                         child: SettingsDivider(color: headerColor),
                       ),
                     ),
-                  if (!kIsWeb)
-                    SettingsTile(
-                      title: "Pinned Order",
-                      subtitle: "Set the order for your pinned chats",
-                      backgroundColor: tileColor,
-                      onTap: () {
-                        CustomNavigator.pushSettings(
-                          context,
-                          PinnedOrderPanel(),
-                        );
-                      },
-                      trailing: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-                        color: Colors.grey,
-                      ),
-                    ),
+                  // if (!kIsWeb)
+                  //   SettingsTile(
+                  //     title: "Pinned Order",
+                  //     subtitle: "Set the order for your pinned chats",
+                  //     backgroundColor: tileColor,
+                  //     onTap: () {
+                  //       CustomNavigator.pushSettings(
+                  //         context,
+                  //         PinnedOrderPanel(),
+                  //       );
+                  //     },
+                  //     trailing: Icon(
+                  //       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+                  //       color: Colors.grey,
+                  //     ),
+                  //   ),
                 ],
               ),
               if (!kIsWeb && !kIsDesktop)
