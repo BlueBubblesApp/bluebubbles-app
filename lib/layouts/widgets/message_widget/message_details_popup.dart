@@ -960,6 +960,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                               );
                             }
                             return AlertDialog(
+                              contentPadding: EdgeInsets.all(5),
+                              shape: cupertino.RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                               backgroundColor: Theme.of(context).colorScheme.secondary,
                               content: content,
                             );
