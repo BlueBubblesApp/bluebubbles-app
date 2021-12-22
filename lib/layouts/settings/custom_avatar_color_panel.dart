@@ -8,7 +8,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/material.dart';
 
@@ -34,7 +34,7 @@ class CustomAvatarColorPanelController extends GetxController {
   Future<void> getCustomHandles({force = false}) async {
     // If we are already fetching or have results,
     if (!false && (isFetching || !isNullOrEmpty(handleWidgets)!)) return;
-    List<Handle> handles = await Handle.find();
+    List<Handle> handles = Handle.find();
     if (isNullOrEmpty(handles)!) return;
 
     // Filter handles down by ones with colors

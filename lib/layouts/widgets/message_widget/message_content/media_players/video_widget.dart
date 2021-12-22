@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
@@ -14,7 +13,7 @@ import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.da
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -53,7 +52,11 @@ class VideoWidgetController extends GetxController {
       controller = controllers[attachment.guid]!;
       createListener(controller!);
     } else {
-      getThumbnail();
+      if (CurrentChat.activeChat?.imageData[attachment.guid] != null) {
+        thumbnail = CurrentChat.activeChat?.imageData[attachment.guid];
+      } else {
+        getThumbnail();
+      }
     }
   }
 
@@ -98,6 +101,7 @@ class VideoWidgetController extends GetxController {
     if (!kIsWeb) {
       thumbnail = await AttachmentHelper.getVideoThumbnail(file.path!);
       if (thumbnail == null) return;
+      CurrentChat.activeChat?.imageData[attachment.guid!] = thumbnail!;
       await precacheImage(MemoryImage(thumbnail!), context);
       update();
     }
@@ -155,7 +159,7 @@ class VideoWidget extends StatelessWidget {
       } else {
         controller.navigated = true;
         CurrentChat? currentChat = CurrentChat.activeChat;
-        await Navigator.of(context).push(
+        await Navigator.of(Get.context!).push(
           ThemeSwitcher.buildPageRoute(
             builder: (context) => AttachmentFullscreenViewer(
               currentChat: currentChat,

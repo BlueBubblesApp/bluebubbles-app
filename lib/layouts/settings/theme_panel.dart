@@ -2,7 +2,6 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
@@ -14,7 +13,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -40,13 +39,6 @@ class ThemePanelController extends GetxController {
   void onInit() {
     super.onInit();
     _settingsCopy = SettingsManager().settings;
-    // revert back to iOS skin since we disabled Samsung
-    if (SettingsManager().settings.skin.value == Skins.Samsung) {
-      SettingsManager().settings.skin.value = Skins.iOS;
-      SettingsManager().settings.hideDividers.value = false;
-      ChatBloc().refreshChats();
-      SettingsManager().saveSettings(SettingsManager().settings);
-    }
   }
 
   @override
@@ -146,6 +138,33 @@ class ThemePanel extends GetView<ThemePanelController> {
                         },
                         backgroundColor: tileColor,
                       ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: tileColor,
+                      ),
+                      padding: EdgeInsets.only(left: 15),
+                      child: Text("Avatar Scale Factor"),
+                    ),
+                    Obx(() => SettingsSlider(
+                        text: "Avatar Scale Factor",
+                        startingVal: SettingsManager().settings.avatarScale.value.toDouble(),
+                        update: (double val) {
+                          SettingsManager().settings.avatarScale.value = val;
+                          saveSettings();
+                        },
+                        formatValue: ((double val) => val.toPrecision(2).toString()),
+                        backgroundColor: tileColor,
+                        min: 0.8,
+                        max: 1.2,
+                        divisions: 4
+                    )),
                   ],
                 ),
                 SettingsHeader(
@@ -162,18 +181,12 @@ class ThemePanel extends GetView<ThemePanelController> {
                       onChanged: (val) {
                         if (val == null) return;
                         controller._settingsCopy.skin.value = val;
-                        if (val == Skins.Material) {
-                          controller._settingsCopy.hideDividers.value = true;
-                        } else if (val == Skins.Samsung) {
-                          controller._settingsCopy.hideDividers.value = true;
-                        } else {
-                          controller._settingsCopy.hideDividers.value = false;
-                        }
                         ChatBloc().refreshChats();
                         saveSettings();
                         controller.update();
+                        EventDispatcher().emit('theme-update', null);
                       },
-                      options: Skins.values.where((item) => item != Skins.Samsung).toList(),
+                      options: Skins.values,
                       textProcessing: (val) => val.toString().split(".").last,
                       capitalize: false,
                       title: "App Skin",
@@ -197,29 +210,31 @@ class ThemePanel extends GetView<ThemePanelController> {
                       backgroundColor: tileColor,
                       subtitle: "Enables tablet mode (split view) depending on screen width",
                     )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                    if (!kIsWeb && !kIsDesktop)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
                       ),
-                    ),
-                    Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        controller._settingsCopy.immersiveMode.value = val;
-                        saveSettings();
-                        if (val) {
-                          SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-                        } else {
-                          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
-                        }
-                        EventDispatcher().emit('theme-update', null);
-                      },
-                      initialVal: controller._settingsCopy.immersiveMode.value,
-                      title: "Immersive Mode",
-                      backgroundColor: tileColor,
-                      subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
-                    )),
+                    if (!kIsWeb && !kIsDesktop)
+                      Obx(() => SettingsSwitch(
+                        onChanged: (bool val) {
+                          controller._settingsCopy.immersiveMode.value = val;
+                          saveSettings();
+                          if (val) {
+                            SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+                          } else {
+                            SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
+                          }
+                          EventDispatcher().emit('theme-update', null);
+                        },
+                        initialVal: controller._settingsCopy.immersiveMode.value,
+                        title: "Immersive Mode",
+                        backgroundColor: tileColor,
+                        subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
+                      )),
                   ],
                 ),
                 SettingsHeader(
@@ -239,26 +254,26 @@ class ThemePanel extends GetView<ThemePanelController> {
                             try {
                               await MethodChannelInterface().invokeMethod("start-notif-listener");
                               if (val) {
-                                var allThemes = await ThemeObject.getThemes();
-                                var currentLight = await ThemeObject.getLightTheme();
-                                var currentDark = await ThemeObject.getDarkTheme();
+                                var allThemes = ThemeObject.getThemes();
+                                var currentLight = ThemeObject.getLightTheme();
+                                var currentDark = ThemeObject.getDarkTheme();
                                 currentLight.previousLightTheme = true;
                                 currentDark.previousDarkTheme = true;
-                                await currentLight.save();
-                                await currentDark.save();
+                                currentLight.save();
+                                currentDark.save();
                                 SettingsManager().saveSelectedTheme(context,
                                     selectedLightTheme:
                                     allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
                                     selectedDarkTheme:
                                     allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
                               } else {
-                                var allThemes = await ThemeObject.getThemes();
+                                var allThemes = ThemeObject.getThemes();
                                 var previousLight = allThemes.firstWhere((e) => e.previousLightTheme);
                                 var previousDark = allThemes.firstWhere((e) => e.previousDarkTheme);
                                 previousLight.previousLightTheme = false;
                                 previousDark.previousDarkTheme = false;
-                                await previousLight.save();
-                                await previousDark.save();
+                                previousLight.save();
+                                previousDark.save();
                                 SettingsManager().saveSelectedTheme(context,
                                     selectedLightTheme: previousLight, selectedDarkTheme: previousDark);
                               }
@@ -412,36 +427,79 @@ class ThemePanel extends GetView<ThemePanelController> {
                           return SettingsTile(
                             onTap: () async {
                               Get.defaultDialog(
+                                backgroundColor: context.theme.colorScheme.secondary,
+                                radius: 15.0,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                titlePadding: EdgeInsets.only(top: 15),
                                 title: "Downloading font file...",
                                 titleStyle: Theme.of(context).textTheme.headline1,
-                                confirm: Container(height: 0, width: 0),
-                                cancel: Container(height: 0, width: 0),
-                                content: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: <Widget>[
-                                      SizedBox(
-                                        height: 15.0,
-                                      ),
-                                      buildProgressIndicator(context),
-                                      SizedBox(
-                                        height: 15.0,
-                                      ),
-                                      Text("The font file is over 30mb, this may take a moment")
-                                    ]
+                                confirm: Obx(() => downloadingFont.value
+                                  ? Container(height: 0, width: 0)
+                                  : Container(
+                                    margin: EdgeInsets.only(bottom: 10),
+                                    child: TextButton(
+                                      child: Text("CLOSE"),
+                                      onPressed: () {
+                                        progress.value = null;
+                                        totalSize.value = null;
+                                        Get.back();
+                                      },
+                                    ),
+                                  ),
                                 ),
-                                barrierDismissible: false,
-                                backgroundColor: Theme.of(context).backgroundColor,
+                                cancel: Container(height: 0, width: 0),
+                                content: ConstrainedBox(
+                                  constraints: BoxConstraints(maxWidth: 300),
+                                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                                    Obx(
+                                          () => Text(
+                                          '${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)'),
+                                    ),
+                                    SizedBox(height: 10.0),
+                                    Obx(
+                                          () => ClipRRect(
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: LinearProgressIndicator(
+                                          backgroundColor: Colors.white,
+                                          value: progress.value,
+                                          minHeight: 5,
+                                          valueColor:
+                                          AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: 15.0,
+                                    ),
+                                    Obx(() => Text(
+                                      progress.value == 1 ? "Download Complete!" : "You can close this dialog. The font will continue to download in the background.",
+                                      maxLines: 2,
+                                      textAlign: TextAlign.center,
+                                    ),),
+                                  ]),
+                                ),
                               );
                               final DynamicCachedFonts dynamicCachedFont = DynamicCachedFonts(
                                 fontFamily: "Apple Color Emoji",
-                                url: "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
+                                url:
+                                "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
                               );
-                              await dynamicCachedFont.load();
-                              fontExistsOnDisk.value = true;
-                              Get.back();
-                              showSnackbar("Notice", "Font loaded");
+                              dynamicCachedFont.load().listen((data) {
+                                if (data is FileInfo) {
+                                  fontExistsOnDisk.value = true;
+                                  showSnackbar("Notice", "Font loaded");
+                                } else if (data is DownloadProgress) {
+                                  downloadingFont.value = true;
+                                  progress.value = data.progress;
+                                  totalSize.value = data.totalSize;
+                                  if (progress.value == 1.0) {
+                                    downloadingFont.value = false;
+                                  }
+                                }
+                              });
                             },
-                            title: "Download iOS Emoji Font",
+                            title:
+                            "Download${downloadingFont.value ? "ing" : ""} iOS Emoji Font${downloadingFont.value ? " (${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)}) (${((progress.value ?? 0) * 100).floor()}%)" : ""}",
                             backgroundColor: tileColor,
                           );
                         } else {

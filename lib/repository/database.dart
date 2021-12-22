@@ -1,20 +1,20 @@
 import 'dart:async';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/repository/models/config_entry.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
+//ignore: implementation_imports
+import 'package:objectbox/src/transaction.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:universal_io/io.dart';
 
 enum Tables {
   chat,
@@ -27,9 +27,7 @@ enum Tables {
   themes,
   theme_values,
   theme_value_join,
-  config,
   fcm,
-  scheduled
 }
 
 class DBUpgradeItem {
@@ -41,11 +39,10 @@ class DBUpgradeItem {
 
 class DBProvider {
   DBProvider._();
+
   static final DBProvider db = DBProvider._();
 
-  static Database? _database;
-  static String _path = "";
-  static int currentVersion = 16;
+  static int currentVersion = 14;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
@@ -126,31 +123,9 @@ class DBProvider {
           s.save();
           db.execute("DELETE FROM config");
         }),
-    DBUpgradeItem(
-        addedInVersion: 15,
-        upgrade: (Database db) {
-          db.execute("ALTER TABLE message ADD COLUMN threadOriginatorGuid TEXT DEFAULT NULL;");
-          db.execute("ALTER TABLE message ADD COLUMN threadOriginatorPart TEXT DEFAULT NULL;");
-        }),
-    DBUpgradeItem(
-        addedInVersion: 16,
-        upgrade: (Database db) async {
-          db.execute("ALTER TABLE theme_values ADD COLUMN fontWeight INTEGER;");
-        }),
   ];
 
-  Future<Database?> get database async {
-    if (kIsWeb) return null;
-    if (_database != null) return _database!;
-
-    // if _database is null we instantiate it
-    _database = await initDB();
-    return _database!;
-  }
-
-  String get path => _path;
-
-  Future<Database> initDB() async {
+  Future<Database> initDB({Future<void> Function()? initStore}) async {
     if (Platform.isWindows || Platform.isLinux) {
       // Initialize FFI
       sqfliteFfiInit();
@@ -161,17 +136,10 @@ class DBProvider {
     Directory documentsDirectory = (await getApplicationDocumentsDirectory()) as Directory;
     //ignore: unnecessary_cast, we need this as a workaround
     if (kIsDesktop) documentsDirectory = (await getApplicationSupportDirectory()) as Directory;
-    _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path, version: currentVersion, onUpgrade: _onUpgrade, onOpen: (Database db) async {
+    String path = join(documentsDirectory.path, "chat.db");
+    return await openDatabase(path, version: currentVersion, onUpgrade: _onUpgrade, onOpen: (Database db) async {
       Logger.info("Database Opened");
-      _database = db;
-      await checkTableExistenceAndCreate(db);
-      _database = null;
-    }, onCreate: (Database db, int version) async {
-      Logger.info("creating database");
-      _database = db;
-      await buildDatabase(db);
-      _database = null;
+      await migrateToObjectBox(db, initStore);
     });
   }
 
@@ -195,294 +163,286 @@ class DBProvider {
 
   static Future<void> deleteDB() async {
     if (kIsWeb) return;
-    Database db = (await DBProvider.db.database)!;
-    // Remove base tables
-    await Handle.flush();
-    await Chat.flush();
-    await Attachment.flush();
-    await Message.flush();
-
-    // Remove join tables
-    await db.execute("DELETE FROM chat_handle_join");
-    await db.execute("DELETE FROM chat_message_join");
-    await db.execute("DELETE FROM attachment_message_join");
+    attachmentBox.removeAll();
+    chatBox.removeAll();
+    fcmDataBox.removeAll();
+    handleBox.removeAll();
+    messageBox.removeAll();
+    scheduledBox.removeAll();
+    themeEntryBox.removeAll();
+    themeObjectBox.removeAll();
   }
 
-  Future<void> checkTableExistenceAndCreate(Database db) async {
-    //this is to ensure that all tables are created on start
-    //this will allow us to also add more tables and make it so that users will not have to
-    for (Tables tableName in Tables.values) {
-      var table = await db.rawQuery(
-          "SELECT * FROM sqlite_master WHERE name ='${tableName.toString().split(".").last}' and type='table'; ");
-      if (table.isEmpty) {
-        switch (tableName) {
-          case Tables.chat:
-            await createChatTable(db);
-            break;
-          case Tables.handle:
-            await createHandleTable(db);
-            break;
-          case Tables.message:
-            await createMessageTable(db);
-            break;
-          case Tables.attachment:
-            await createAttachmentTable(db);
-            break;
-          case Tables.chat_handle_join:
-            await createChatHandleJoinTable(db);
-            break;
-          case Tables.chat_message_join:
-            await createChatMessageJoinTable(db);
-            break;
-          case Tables.attachment_message_join:
-            await createAttachmentMessageJoinTable(db);
-            break;
-          case Tables.themes:
-            await createThemeTable(db);
-            break;
-          case Tables.theme_values:
-            await createThemeValuesTable(db);
-            break;
-          case Tables.theme_value_join:
-            await createThemeValueJoin(db);
-            break;
-          case Tables.config:
-            await createConfigTable(db);
-            break;
-          case Tables.fcm:
-            await createFCMTable(db);
-            break;
-          case Tables.scheduled:
-            await createScheduledTable(db);
-            break;
-        }
-
-        Logger.info("Creating missing table " + tableName.toString().split(".").last);
+  Future<void> migrateToObjectBox(Database db, Future<void> Function()? initStore) async {
+    if (initStore != null) {
+      Stopwatch s = Stopwatch();
+      s.start();
+      List<List<dynamic>> tableData = [];
+      for (Tables tableName in Tables.values) {
+        final table = await db.rawQuery("SELECT * FROM ${tableName.toString().split(".").last}");
+        tableData.add(table);
       }
-    }
-  }
-
-  Future<void> buildDatabase(Database db) async {
-    await createHandleTable(db);
-    await createChatTable(db);
-    await createMessageTable(db);
-    await createAttachmentTable(db);
-    await createAttachmentMessageJoinTable(db);
-    await createChatHandleJoinTable(db);
-    await createChatMessageJoinTable(db);
-    await createIndexes(db);
-    await createConfigTable(db);
-    await createFCMTable(db);
-    await createThemeTable(db);
-    await createThemeValuesTable(db);
-    await createThemeValueJoin(db);
-    await createScheduledTable(db);
-  }
-
-  static Future<void> createHandleTable(Database db) async {
-    await db.execute("CREATE TABLE handle ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "originalROWID INTEGER DEFAULT NULL,"
-        "address TEXT UNIQUE NOT NULL,"
-        "country TEXT DEFAULT NULL,"
-        "color TEXT DEFAULT NULL,"
-        "defaultPhone TEXT DEFAULT NULL,"
-        "uncanonicalizedId TEXT DEFAULT NULL"
-        ");");
-  }
-
-  static Future<void> createChatTable(Database db) async {
-    await db.execute("CREATE TABLE chat ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "originalROWID INTEGER DEFAULT NULL,"
-        "guid TEXT UNIQUE NOT NULL,"
-        "style INTEGER NOT NULL,"
-        "chatIdentifier TEXT NOT NULL,"
-        "isArchived INTEGER DEFAULT 0,"
-        "isFiltered INTEGER DEFAULT 0,"
-        "isPinned INTEGER DEFAULT 0,"
-        "muteType TEXT DEFAULT NULL,"
-        "muteArgs TEXT DEFAULT NULL,"
-        "hasUnreadMessage INTEGER DEFAULT 0,"
-        "latestMessageDate INTEGER DEFAULT 0,"
-        "latestMessageText TEXT,"
-        "displayName TEXT DEFAULT NULL,"
-        "customAvatarPath TEXT DEFAULT NULL,"
-        "pinIndex INTEGER DEFAULT NULL"
-        ");");
-  }
-
-  static Future<void> createMessageTable(Database db) async {
-    await db.execute("CREATE TABLE message ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "originalROWID INTEGER DEFAULT NULL,"
-        "handleId INTEGER NOT NULL,"
-        "otherHandle INTEGER DEFAULT NULL,"
-        "guid TEXT UNIQUE NOT NULL,"
-        "text TEXT,"
-        "subject TEXT DEFAULT NULL,"
-        "country TEXT DEFAULT NULL,"
-        "error INTEGER DEFAULT 0,"
-        "dateCreated INTEGER,"
-        "dateRead INTEGER DEFAULT 0,"
-        "dateDelivered INTEGER DEFAULT 0,"
-        "isFromMe INTEGER DEFAULT 0,"
-        "isDelayed INTEGER DEFAULT 0,"
-        "isAutoReply INTEGER DEFAULT 0,"
-        "isSystemMessage INTEGER DEFAULT 0,"
-        "isServiceMessage INTEGER DEFAULT 0,"
-        "isForward INTEGER DEFAULT 0,"
-        "isArchived INTEGER DEFAULT 0,"
-        "hasDdResults INTEGER DEFAULT 0,"
-        "cacheRoomnames TEXT DEFAULT NULL,"
-        "isAudioMessage INTEGER DEFAULT 0,"
-        "datePlayed INTEGER DEFAULT 0,"
-        "itemType INTEGER NOT NULL,"
-        "groupTitle TEXT DEFAULT NULL,"
-        "groupActionType INTEGER DEFAULT 0,"
-        "isExpired INTEGER DEFAULT 0,"
-        "balloonBundleId INTEGER DEFAULT NULL,"
-        "associatedMessageGuid TEXT DEFAULT NULL,"
-        "associatedMessageType TEXT DEFAULT NULL,"
-        "expressiveSendStyleId TEXT DEFAULT NULL,"
-        "timeExpressiveSendStyleId INTEGER DEFAULT 0,"
-        "hasAttachments INTEGER DEFAULT 0,"
-        "hasReactions INTEGER DEFAULT 0,"
-        "metadata TEXT DEFAULT NULL,"
-        "dateDeleted INTEGER DEFAULT NULL,"
-        "threadOriginatorGuid TEXT DEFAULT NULL,"
-        "threadOriginatorPart TEXT DEFAULT NULL,"
-        "FOREIGN KEY(handleId) REFERENCES handle(ROWID)"
-        ");");
-  }
-
-  static Future<void> createAttachmentTable(Database db) async {
-    await db.execute("CREATE TABLE attachment ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "originalROWID INTEGER DEFAULT NULL,"
-        "guid TEXT UNIQUE NOT NULL,"
-        "uti TEXT NOT NULL,"
-        "mimeType TEXT DEFAULT NULL,"
-        "transferState INTEGER DEFAULT 0,"
-        "isOutgoing INTEGER DEFAULT 0,"
-        "transferName INTEGER NOT NULL,"
-        "totalBytes INTEGER NOT NULL,"
-        "isSticker INTEGER DEFAULT 0,"
-        "hideAttachment INTEGER DEFAULT 0,"
-        "blurhash VARCHAR(64) DEFAULT NULL,"
-        "height INTEGER DEFAULT NULL,"
-        "width INTEGER DEFAULT NULL,"
-        "metadata TEXT DEFAULT NULL"
-        ");");
-  }
-
-  static Future<void> createChatHandleJoinTable(Database db) async {
-    await db.execute("CREATE TABLE chat_handle_join ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "chatId INTEGER NOT NULL,"
-        "handleId INTEGER NOT NULL,"
-        "FOREIGN KEY(chatId) REFERENCES chat(ROWID),"
-        "FOREIGN KEY(handleId) REFERENCES handle(ROWID),"
-        "UNIQUE (chatId, handleId)"
-        ");");
-  }
-
-  static Future<void> createChatMessageJoinTable(Database db) async {
-    await db.execute("CREATE TABLE chat_message_join ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "chatId INTEGER NOT NULL,"
-        "messageId INTEGER NOT NULL,"
-        "FOREIGN KEY(chatId) REFERENCES chat(ROWID),"
-        "FOREIGN KEY(messageId) REFERENCES message(ROWID),"
-        "UNIQUE (chatId, messageId)"
-        ");");
-  }
-
-  static Future<void> createAttachmentMessageJoinTable(Database db) async {
-    await db.execute("CREATE TABLE attachment_message_join ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "attachmentId INTEGER NOT NULL,"
-        "messageId INTEGER NOT NULL,"
-        "FOREIGN KEY(attachmentId) REFERENCES attachment(ROWID),"
-        "FOREIGN KEY(messageId) REFERENCES message(ROWID),"
-        "UNIQUE (attachmentId, messageId)"
-        ");");
-  }
-
-  static Future<void> createIndexes(Database db) async {
-    await db.execute("CREATE UNIQUE INDEX idx_handle_address ON handle (address);");
-    await db.execute("CREATE UNIQUE INDEX idx_message_guid ON message (guid);");
-    await db.execute("CREATE UNIQUE INDEX idx_chat_guid ON chat (guid);");
-    await db.execute("CREATE UNIQUE INDEX idx_attachment_guid ON attachment (guid);");
-  }
-
-  static Future<void> createConfigTable(Database db) async {
-    await db.execute("CREATE TABLE config ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "name TEXT,"
-        "value TEXT,"
-        "type TEXT NOT NULL"
-        ");");
-  }
-
-  static Future<void> createFCMTable(Database db) async {
-    await db.execute("CREATE TABLE fcm ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "name TEXT,"
-        "value TEXT,"
-        "type TEXT NOT NULL"
-        ");");
-  }
-
-  static Future<void> createThemeValuesTable(Database db) async {
-    await db.execute("CREATE TABLE theme_values ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "themeId INTEGER NOT NULL,"
-        "name TEXT NOT NULL,"
-        "color TEXT NOT NULL,"
-        "isFont INTEGER DEFAULT 0,"
-        "fontSize INTEGER,"
-        "fontWeight INTEGER"
-        ");");
-  }
-
-  static Future<void> createThemeTable(Database db) async {
-    await db.execute("CREATE TABLE themes ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "name TEXT UNIQUE,"
-        "selectedLightTheme INTEGER DEFAULT 0,"
-        "selectedDarkTheme INTEGER DEFAULT 0,"
-        "gradientBg INTEGER DEFAULT 0,"
-        "previousLightTheme INTEGER DEFAULT 0,"
-        "previousDarkTheme INTEGER DEFAULT 0"
-        ");");
-  }
-
-  static Future<void> createThemeValueJoin(Database db) async {
-    await db.execute("CREATE TABLE theme_value_join ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "themeId INTEGER NOT NULL,"
-        "themeValueId INTEGER NOT NULL,"
-        "FOREIGN KEY(themeId) REFERENCES theme_values(ROWID),"
-        "FOREIGN KEY(themeValueId) REFERENCES themes(ROWID),"
-        "UNIQUE (themeId, themeValueId)"
-        ");");
-  }
-
-  static Future<void> createScheduledTable(Database db) async {
-    await db.execute("CREATE TABLE scheduled ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "chatGuid TEXT NOT NULL,"
-        "message TEXT NOT NULL,"
-        "epochTime INTEGER NOT NULL,"
-        "completed INTEGER DEFAULT 0,"
-        "UNIQUE (chatGuid, message, epochTime)"
-        ");");
-  }
-
-  static Future<void> setupConfigRows() async {
-    for (ThemeObject theme in Themes.themes) {
-      await theme.save(updateIfAbsent: false);
+      s.stop();
+      Logger.info("Pulled data in ${s.elapsedMilliseconds} ms");
+      await initStore.call();
+      attachmentBox.removeAll();
+      chatBox.removeAll();
+      fcmDataBox.removeAll();
+      handleBox.removeAll();
+      messageBox.removeAll();
+      scheduledBox.removeAll();
+      themeEntryBox.removeAll();
+      themeObjectBox.removeAll();
+      // The general premise of the migration is to transfer every single bit
+      // of data from SQLite into ObjectBox. The most important thing to keep
+      // track of are the IDs, since we have numerous queries that relate IDs
+      // from one table to IDs from another table.
+      //
+      // As such, this code will create a "migration map", which contains some
+      // unique identifying characteristic of the data item as the key, and
+      // then another map containing the old (SQLite) ID and the new (ObjectBox)
+      // ID as the value.
+      //
+      // This map is then used when saving the "join" tables, which would still
+      // have the old (SQLite) IDs for each data item. Using the map, we can
+      // update that old ID to the new ID and thus avoid creating an incorrect
+      // link due to the ID mismatch.
+      store.runInTransaction(TxMode.write, () {
+        Logger.info("Migrating chats...", tag: "OB Migration");
+        final chats = tableData[0].map((e) => Chat.fromMap(e)).toList();
+        final chatIdsMigrationMap = <String, Map<String, int>>{};
+        for (Chat element in chats) {
+          chatIdsMigrationMap[element.guid!] = {
+            "old": element.id!
+          };
+          element.id = null;
+        }
+        Logger.info("Created chat ID migration map, length ${chatIdsMigrationMap.length}", tag: "OB Migration");
+        chatBox.putMany(chats);
+        Logger.info("Inserted chats into ObjectBox", tag: "OB Migration");
+        final newChats = chatBox.getAll();
+        Logger.info("Fetched ObjectBox chats, length ${newChats.length}", tag: "OB Migration");
+        for (Chat element in newChats) {
+          chatIdsMigrationMap[element.guid!]!['new'] = element.id!;
+        }
+        Logger.info("Added new IDs to chat ID migration map", tag: "OB Migration");
+        chats.clear();
+        newChats.clear();
+        Logger.info("Migrating handles...", tag: "OB Migration");
+        final handles = tableData[1].map((e) => Handle.fromMap(e)).toList();
+        final handleIdsMigrationMap = <String, Map<String, int>>{};
+        for (Handle element in handles) {
+          handleIdsMigrationMap[element.address] = {
+            "old": element.id!
+          };
+          element.id = null;
+        }
+        Logger.info("Created handle ID migration map, length ${handleIdsMigrationMap.length}", tag: "OB Migration");
+        handleBox.putMany(handles);
+        Logger.info("Inserted handles into ObjectBox", tag: "OB Migration");
+        final newHandles = handleBox.getAll();
+        Logger.info("Fetched ObjectBox handles, length ${newHandles.length}", tag: "OB Migration");
+        for (Handle element in newHandles) {
+          handleIdsMigrationMap[element.address]!['new'] = element.id!;
+        }
+        Logger.info("Added new IDs to handle ID migration map", tag: "OB Migration");
+        handles.clear();
+        newHandles.clear();
+        Logger.info("Migrating messages...", tag: "OB Migration");
+        final messages = tableData[2].map((e) => Message.fromMap(e)).toList();
+        final messageIdsMigrationMap = <String, Map<String, int>>{};
+        for (Message element in messages) {
+          messageIdsMigrationMap[element.guid!] = {
+            "old": element.id!
+          };
+          element.id = null;
+          if (element.handleId != null && element.handleId != 0) {
+            // we must have new handle ID if the current one is known to not be null or 0
+            final newHandleId = handleIdsMigrationMap.values.firstWhere((e) => e['old'] == element.handleId)['new'];
+            element.handleId = newHandleId!;
+          }
+        }
+        Logger.info("Created message ID migration map, length ${messageIdsMigrationMap.length}", tag: "OB Migration");
+        messageBox.putMany(messages);
+        Logger.info("Inserted messages into ObjectBox", tag: "OB Migration");
+        final newMessages = messageBox.getAll();
+        Logger.info("Fetched ObjectBox messages, length ${newMessages.length}", tag: "OB Migration");
+        for (Message element in newMessages) {
+          messageIdsMigrationMap[element.guid!]!['new'] = element.id!;
+        }
+        Logger.info("Added new IDs to message ID migration map", tag: "OB Migration");
+        messages.clear();
+        newMessages.clear();
+        Logger.info("Migrating attachments....", tag: "OB Migration");
+        final attachments = tableData[3].map((e) => Attachment.fromMap(e)).toList();
+        final attachmentIdsMigrationMap = <String, Map<String, int>>{};
+        for (Attachment element in attachments) {
+          attachmentIdsMigrationMap[element.guid!] = {
+            "old": element.id!
+          };
+          element.id = null;
+        }
+        Logger.info("Created attachment ID migration map, length ${attachmentIdsMigrationMap.length}", tag: "OB Migration");
+        attachmentBox.putMany(attachments);
+        Logger.info("Inserted attachments into ObjectBox", tag: "OB Migration");
+        final newAttachments = attachmentBox.getAll();
+        Logger.info("Fetched ObjectBox attachments, length ${newAttachments.length}", tag: "OB Migration");
+        for (Attachment element in newAttachments) {
+          attachmentIdsMigrationMap[element.guid!]!['new'] = element.id!;
+        }
+        Logger.info("Added new IDs to attachment ID migration map", tag: "OB Migration");
+        attachments.clear();
+        newAttachments.clear();
+        Logger.info("Migrating chat-handle joins...", tag: "OB Migration");
+        List<ChatHandleJoin> chJoins = tableData[4].map((e) => ChatHandleJoin.fromMap(e)).toList();
+        for (ChatHandleJoin chj in chJoins) {
+          // we will always have a new and an old form of ID, so these should never error
+          final newChatId = chatIdsMigrationMap.values.firstWhere((e) => e['old'] == chj.chatId)['new'];
+          final newHandleId = handleIdsMigrationMap.values.firstWhere((e) => e['old'] == chj.handleId)['new'];
+          chj.chatId = newChatId!;
+          chj.handleId = newHandleId!;
+        }
+        Logger.info("Replaced old chat & handle IDs with new ObjectBox IDs", tag: "OB Migration");
+        final chats2 = chatBox.getAll();
+        for (int i = 0; i < chats2.length; i++) {
+          // this migration must happen cleanly, we cannot ignore any null errors
+          // the chats must retain all handleIDs previously associated with them
+          final handleIds = chJoins.where((e) => e.chatId == chats2[i].id).map((e) => e.handleId).toList();
+          final handles = handleBox.getMany(handleIds);
+          chats2[i].handles.addAll(List<Handle>.from(handles));
+        }
+        chatBox.putMany(chats2);
+        Logger.info("Inserted chat-handle joins into ObjectBox", tag: "OB Migration");
+        chJoins.clear();
+        Logger.info("Migrating chat-message joins...", tag: "OB Migration");
+        List<ChatMessageJoin> cmJoins = tableData[5].map((e) => ChatMessageJoin.fromMap(e)).toList();
+        for (ChatMessageJoin cmj in cmJoins) {
+          // we will always have a new and an old form of ID, so these should never error
+          final newChatId = chatIdsMigrationMap.values.firstWhere((e) => e['old'] == cmj.chatId)['new'];
+          final newMessageId = messageIdsMigrationMap.values.firstWhere((e) => e['old'] == cmj.messageId)['new'];
+          cmj.chatId = newChatId!;
+          cmj.messageId = newMessageId!;
+        }
+        Logger.info("Replaced old chat & message IDs with new ObjectBox IDs", tag: "OB Migration");
+        final messages2 = messageBox.getAll();
+        final toDelete = <int>[];
+        for (int i = 0; i < messages2.length; i++) {
+          // if we can't find a valid chatID to associate the message with, delete it
+          final chatId = cmJoins.firstWhereOrNull((e) => e.messageId == messages2[i].id)?.chatId;
+          if (chatId == null) {
+            toDelete.add(messages2[i].id!);
+          } else {
+            final chat = chatBox.get(chatId);
+            messages2[i].chat.target = chat;
+          }
+        }
+        messageBox.putMany(messages2);
+        messageBox.removeMany(toDelete);
+        Logger.info("Inserted chat-message joins into ObjectBox", tag: "OB Migration");
+        cmJoins.clear();
+        Logger.info("Migrating attachment-message joins...", tag: "OB Migration");
+        List<AttachmentMessageJoin> amJoins = tableData[6].map((e) => AttachmentMessageJoin.fromMap(e)).toList();
+        for (AttachmentMessageJoin amj in amJoins) {
+          // we will always have a new and an old form of ID, so these should never error
+          final newAttachmentId = attachmentIdsMigrationMap.values.firstWhere((e) => e['old'] == amj.attachmentId)['new'];
+          final newMessageId = messageIdsMigrationMap.values.firstWhere((e) => e['old'] == amj.messageId)['new'];
+          amj.attachmentId = newAttachmentId!;
+          amj.messageId = newMessageId!;
+        }
+        Logger.info("Replaced old attachment & message IDs with new ObjectBox IDs", tag: "OB Migration");
+        final attachments2 = attachmentBox.getAll();
+        final toDelete2 = <int>[];
+        for (int i = 0; i < attachments2.length; i++) {
+          // if we can't find a valid messageID to associate the attachment with, delete it
+          final messageId = amJoins.firstWhereOrNull((e) => e.attachmentId == attachments2[i].id)?.messageId;
+          if (messageId == null) {
+            toDelete2.add(attachments2[i].id!);
+          } else {
+            final message = messageBox.get(messageId);
+            attachments2[i].message.target = message;
+          }
+        }
+        attachmentBox.putMany(attachments2);
+        attachmentBox.removeMany(toDelete2);
+        Logger.info("Inserted attachment-message joins into ObjectBox", tag: "OB Migration");
+        amJoins.clear();
+        Logger.info("Migrating theme objects...", tag: "OB Migration");
+        final themeObjects = tableData[7].map((e) => ThemeObject.fromMap(e)).toList();
+        final themeObjectIdsMigrationMap = <String, Map<String, int>>{};
+        for (ThemeObject element in themeObjects) {
+          themeObjectIdsMigrationMap[element.name!] = {
+            "old": element.id!
+          };
+          element.id = null;
+        }
+        Logger.info("Created theme object ID migration map, length ${themeObjectIdsMigrationMap.length}", tag: "OB Migration");
+        themeObjectBox.putMany(themeObjects);
+        Logger.info("Inserted theme objects into ObjectBox", tag: "OB Migration");
+        final newThemeObjects = themeObjectBox.getAll();
+        Logger.info("Fetched ObjectBox theme objects, length ${newThemeObjects.length}", tag: "OB Migration");
+        for (ThemeObject element in newThemeObjects) {
+          themeObjectIdsMigrationMap[element.name]!['new'] = element.id!;
+        }
+        Logger.info("Added new IDs to theme object ID migration map", tag: "OB Migration");
+        themeObjects.clear();
+        newThemeObjects.clear();
+        Logger.info("Migrating theme entries...", tag: "OB Migration");
+        final themeEntries = tableData[8].map((e) => ThemeEntry.fromMap(e)).toList();
+        final themeEntryIdsMigrationMap = <String, Map<String, int>>{};
+        for (ThemeEntry element in themeEntries) {
+          // we will always have a new and an old form of ID, so these should never error
+          final newThemeId = themeObjectIdsMigrationMap.values.firstWhere((e) => e['old'] == element.themeId)['new'];
+          element.themeId = newThemeId!;
+          themeEntryIdsMigrationMap["${element.name}-${element.themeId!}"] = {
+            "old": element.id!
+          };
+          element.id = null;
+        }
+        Logger.info("Created theme entry ID migration map, length ${themeEntryIdsMigrationMap.length}", tag: "OB Migration");
+        themeEntryBox.putMany(themeEntries);
+        Logger.info("Inserted theme entries into ObjectBox", tag: "OB Migration");
+        final newThemeEntries = themeEntryBox.getAll();
+        Logger.info("Fetched ObjectBox theme entries, length ${newThemeEntries.length}", tag: "OB Migration");
+        for (ThemeEntry element in newThemeEntries) {
+          themeEntryIdsMigrationMap["${element.name}-${element.themeId!}"]!['new'] = element.id!;
+        }
+        Logger.info("Added new IDs to theme entry ID", tag: "OB Migration");
+        themeEntries.clear();
+        newThemeEntries.clear();
+        Logger.info("Migrating theme-value joins...", tag: "OB Migration");
+        List<ThemeValueJoin> tvJoins = tableData[9].map((e) => ThemeValueJoin.fromMap(e)).toList();
+        for (ThemeValueJoin tvj in tvJoins) {
+          // we will always have a new and an old form of ID, so these should never error
+          final newThemeId = themeObjectIdsMigrationMap.values.firstWhere((e) => e['old'] == tvj.themeId)['new'];
+          final newThemeValueId = themeEntryIdsMigrationMap.values.firstWhere((e) => e['old'] == tvj.themeValueId)['new'];
+          tvj.themeId = newThemeId!;
+          tvj.themeValueId = newThemeValueId!;
+        }
+        Logger.info("Replaced old theme object & theme entry IDs with new ObjectBox IDs", tag: "OB Migration");
+        final themeValues2 = themeEntryBox.getAll();
+        for (int i = 0; i < themeValues2.length; i++) {
+          // this migration must happen cleanly, we cannot ignore any null errors
+          // the theme values must all associate with a theme object, otherwise
+          // there will be errors when trying to load the theme
+          final themeId = tvJoins.firstWhere((e) => e.themeValueId == themeValues2[i].id).themeId;
+          final themeObject = themeObjectBox.get(themeId);
+          themeValues2[i].themeObject.target = themeObject;
+        }
+        themeEntryBox.putMany(themeValues2);
+        Logger.info("Inserted theme-value joins into ObjectBox", tag: "OB Migration");
+        tvJoins.clear();
+      });
+      Logger.info("Migrating FCM data...", tag: "OB Migration");
+      List<ConfigEntry> entries = [];
+      for (Map<String, dynamic> setting in tableData[10]) {
+        entries.add(ConfigEntry.fromMap(setting));
+      }
+      final fcm = FCMData.fromConfigEntries(entries);
+      Logger.info("Parsed FCM data from SQLite", tag: "OB Migration");
+      fcm.save();
+      Logger.info("Inserted FCM data into ObjectBox", tag: "OB Migration");
+      prefs.setBool('objectbox-migration', true);
+      Logger.info("Migration to ObjectBox complete!", tag: "OB Migration");
     }
   }
 }

@@ -11,8 +11,7 @@ import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -55,7 +54,7 @@ class UrlPreviewController extends GetxController {
 
   Future<void> fetchPreview() async {
     // Try to get any already loaded attachment data
-    if (CurrentChat.activeChat!.urlPreviews.containsKey(message.text)) {
+    if (CurrentChat.activeChat?.urlPreviews.containsKey(message.text) ?? false) {
       data.value = CurrentChat.activeChat!.urlPreviews[message.text];
     }
 

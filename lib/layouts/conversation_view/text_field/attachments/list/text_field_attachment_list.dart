@@ -16,29 +16,32 @@ class TextFieldAttachmentList extends StatefulWidget {
 class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> {
   @override
   Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: widget.attachments.isNotEmpty ? 100 : 0,
-        ),
-        child: GridView.builder(
-          itemCount: widget.attachments.length,
-          scrollDirection: Axis.horizontal,
-          physics: ThemeSwitcher.getScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 1,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5.0),
+      child: AnimatedSize(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: widget.attachments.isNotEmpty ? 100 : 0,
           ),
-          itemBuilder: (context, int index) {
-            return AttachmentListItem(
-              key: Key("attachmentList" + widget.attachments[index].name),
-              file: widget.attachments[index],
-              onRemove: () {
-                widget.onRemove(widget.attachments[index]);
-              },
-            );
-          },
+          child: GridView.builder(
+            itemCount: widget.attachments.length,
+            scrollDirection: Axis.horizontal,
+            physics: ThemeSwitcher.getScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1,
+            ),
+            itemBuilder: (context, int index) {
+              return AttachmentListItem(
+                key: Key("attachmentList" + widget.attachments[index].name),
+                file: widget.attachments[index],
+                onRemove: () {
+                  widget.onRemove(widget.attachments[index]);
+                },
+              );
+            },
+          ),
         ),
       ),
     );

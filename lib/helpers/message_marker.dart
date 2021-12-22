@@ -1,17 +1,14 @@
 import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:get/get.dart';
 
 class MessageMarkers {
   Chat chat;
-  Message? myLastMessage;
-  Message? lastReadMessage;
-  Message? lastDeliveredMessage;
-  late final Rx<MessageMarkers> markers;
+  final Rxn<Message> myLastMessage = Rxn();
+  final Rxn<Message> lastReadMessage = Rxn();
+  final Rxn<Message> lastDeliveredMessage = Rxn();
 
   MessageMarkers(this.chat) {
-    markers = Rx<MessageMarkers>(this);
     NewMessageManager().stream.listen((event) {
       // Ignore any events that don't have to do with the current chat
       if (event.chatGuid != chat.guid) return;
@@ -26,27 +23,26 @@ class MessageMarkers {
   updateMessageMarkers(Message msg) {
     if (!msg.isFromMe!) return;
 
-    if (myLastMessage == null ||
-        (myLastMessage?.dateCreated != null &&
+    if (myLastMessage.value == null ||
+        (myLastMessage.value?.dateCreated != null &&
             msg.dateCreated != null &&
-            msg.dateCreated!.millisecondsSinceEpoch > myLastMessage!.dateCreated!.millisecondsSinceEpoch)) {
-      myLastMessage = msg;
+            msg.dateCreated!.millisecondsSinceEpoch > myLastMessage.value!.dateCreated!.millisecondsSinceEpoch)) {
+      myLastMessage.value = msg;
     }
 
-    if ((lastReadMessage == null && msg.dateRead.value != null) ||
-        (lastReadMessage?.dateRead.value != null &&
-            msg.dateRead.value != null &&
-            msg.dateRead.value!.millisecondsSinceEpoch > lastReadMessage!.dateRead.value!.millisecondsSinceEpoch)) {
-      lastReadMessage = msg;
+    if ((lastReadMessage.value == null && msg.dateRead != null) ||
+        (lastReadMessage.value?.dateRead != null &&
+            msg.dateRead != null &&
+            msg.dateRead!.millisecondsSinceEpoch > lastReadMessage.value!.dateRead!.millisecondsSinceEpoch)) {
+      lastReadMessage.value = msg;
     }
 
-    if ((lastDeliveredMessage == null && msg.dateDelivered.value != null) ||
-        (lastDeliveredMessage?.dateDelivered.value != null &&
-            msg.dateDelivered.value != null &&
-            msg.dateDelivered.value!.millisecondsSinceEpoch >
-                lastDeliveredMessage!.dateDelivered.value!.millisecondsSinceEpoch)) {
-      lastDeliveredMessage = msg;
+    if ((lastDeliveredMessage.value == null && msg.dateDelivered != null) ||
+        (lastDeliveredMessage.value?.dateDelivered != null &&
+            msg.dateDelivered != null &&
+            msg.dateDelivered!.millisecondsSinceEpoch >
+                lastDeliveredMessage.value!.dateDelivered!.millisecondsSinceEpoch)) {
+      lastDeliveredMessage.value = msg;
     }
-    markers.value = this;
   }
 }

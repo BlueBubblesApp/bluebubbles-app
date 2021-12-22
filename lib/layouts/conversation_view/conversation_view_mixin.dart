@@ -13,9 +13,8 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
-import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -24,13 +23,12 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -90,7 +88,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     newMessages = ChatBloc()
         .chats
-        .where((element) => element != chat && (element.hasUnreadMessage ?? false))
+        .where((element) => element.guid != chat?.guid && (element.hasUnreadMessage ?? false))
         .map((e) => e.guid)
         .toList();
 
@@ -134,14 +132,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     });
   }
 
-  void setNewChatData({forceUpdate = false}) async {
+  void setNewChatData({forceUpdate = false}) {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat!.participants;
-    await widget.chat!.getParticipants();
+    widget.chat!.getParticipants();
 
     // Save the current title and generate the new one
     String? ogTitle = widget.chat!.title;
-    await widget.chat!.getTitle();
+    widget.chat!.getTitle();
 
     // If the original data is different, update the state
     if (ogTitle != widget.chat!.title || ogParticipants.length != widget.chat!.participants.length || forceUpdate) {
@@ -149,8 +147,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
   }
 
-  void didChangeDependenciesConversationView() {
+  void didChangeDependenciesConversationView() async {
     if (isCreator!) return;
+    if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+      // wait for the end of that frame.
+      await SchedulerBinding.instance!.endOfFrame;
+    }
     SocketManager().removeChatNotification(chat!);
   }
 
@@ -160,7 +162,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     currentChat!.stream.listen((event) {
       if (mounted) setState(() {});
     });
-    await currentChat!.updateChatAttachments();
   }
 
   MessageBloc initMessageBloc() {
@@ -186,7 +187,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     // If we don't have participants, get them
     if (chat!.participants.isEmpty) {
-      await chat!.getParticipants();
+      chat!.getParticipants();
 
       // If we have participants, refresh the state
       if (chat!.participants.isNotEmpty) {
@@ -201,7 +202,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         Chat? data = await fetchChatSingleton(chat!.guid!);
         // If we got data back, fetch the participants and update the state
         if (data != null) {
-          await chat!.getParticipants();
+          chat!.getParticipants();
           if (chat!.participants.isNotEmpty) {
             Logger.info("Got new chat participants. Updating state.", tag: "ConversationView");
             if (mounted) setState(() {});
@@ -218,7 +219,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     processingParticipants = false;
   }
 
-  Future<void> openDetails() async {
+  void openDetails() {
     Navigator.of(context).push(
       ThemeSwitcher.buildPageRoute(
         builder: (context) => ConversationDetails(
@@ -361,8 +362,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           preferredSize: Size.fromHeight(0.5),
         ),
         leading: buildBackButton(context, callback: () {
-          if (LifeCycleManager().isBubble) SystemNavigator.pop();
+          if (LifeCycleManager().isBubble) {
+            SystemNavigator.pop();
+            return false;
+          }
           EventDispatcher().emit("update-highlight", null);
+          return true;
         }),
         automaticallyImplyLeading: false,
         backgroundColor: backgroundColor,
@@ -446,35 +451,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       );
     }
 
-    // Build the stack
-    List<Widget> avatars = [];
-    for (Handle participant in chat!.participants) {
-      avatars.add(
-        Container(
-          height: 42.0, // 2 px larger than the diameter
-          width: 42.0, // 2 px larger than the diameter
-          child: CircleAvatar(
-            radius: 20,
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            child: ContactAvatarWidget(
-                key: Key("${participant.address}-conversation-view"),
-                handle: participant,
-                borderThickness: 0.1,
-                editable: false,
-                onTap: openDetails),
-          ),
-        ),
-      );
-    }
-
     TextStyle? titleStyle = Theme.of(context).textTheme.bodyText1;
     if (!generateTitle && hideTitle) titleStyle = titleStyle!.copyWith(color: Colors.transparent);
-
-    // Calculate separation factor
-    // Anything below -60 won't work due to the alignment
-    double distance = avatars.length * -4.0;
-    if (distance <= -30.0 && distance > -60) distance = -30.0;
-    if (distance <= -60.0) distance = -35.0;
 
     // NOTE: THIS IS ZACH TRYING TO FIX THE NAV BAR (REPLACE IT)
     // IT KINDA WORKED BUT ULTIMATELY FAILED
@@ -561,7 +539,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     final children = [
       ContactAvatarGroupWidget(
         chat: chat!,
-        size: avatars.length == 1 ? 40 : 45,
+        size: chat!.participants.length == 1 ? 40 : 45,
         onTap: openDetails,
       ),
       SizedBox(height: 5.0, width: 5.0),
@@ -608,21 +586,29 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           ),
           leading: GestureDetector(
             onTap: () {
-              if (LifeCycleManager().isBubble) SystemNavigator.pop();
+              if (LifeCycleManager().isBubble) {
+                NotificationManager().switchChat(null);
+                SystemNavigator.pop();
+                return;
+              }
               EventDispatcher().emit("update-highlight", null);
               Navigator.of(context).pop();
             },
             behavior: HitTestBehavior.translucent,
-            child: Container(
+            child: Obx(() => Container(
               width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
               child: Row(
                 mainAxisSize: cupertino.MainAxisSize.min,
                 mainAxisAlignment: cupertino.MainAxisAlignment.start,
                 children: [
-                  buildBackButton(context, callback: () async {
-                    if (LifeCycleManager().isBubble) SystemNavigator.pop();
+                  buildBackButton(context, callback: () {
+                    if (LifeCycleManager().isBubble) {
+                      SystemNavigator.pop();
+                      return false;
+                    }
                     EventDispatcher().emit("update-highlight", null);
-                    await SystemChannels.textInput.invokeMethod('TextInput.hide');
+                    SystemChannels.textInput.invokeMethod('TextInput.hide');
+                    return true;
                   }),
                   if (ChatBloc().unreads.value > 0)
                     Container(
@@ -639,7 +625,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 ],
               ),
             ),
-          ),
+          )),
           middle: cupertino.Padding(
             padding: EdgeInsets.only(right: newMessages.isNotEmpty ? 10 : 0),
             child: GestureDetector(
@@ -739,7 +725,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If it's just one recipient, try manual lookup
     if (selected.length == 1) {
       try {
-        Chat? existingChat = await Chat.findOne({"chatIdentifier": slugify(selected[0].address!, delimiter: '')});
+        Chat? existingChat;
+        if (kIsWeb) {
+          existingChat = await Chat.findOneWeb(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
+        } else {
+          existingChat = Chat.findOne(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
+        }
         if (existingChat != null) {
           matchingChats.add(existingChat);
         }
@@ -792,7 +783,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     messageBloc = initMessageBloc();
 
     // Tell the notification manager that we are looking at a specific chat
-    await NotificationManager().switchChat(chat);
+    NotificationManager().switchChat(chat);
     if (mounted) setState(() {});
   }
 
@@ -804,11 +795,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       await ChatBloc().refreshChats();
     }
 
-    Future<void> setChats(List<Chat> newChats) async {
+    void setChats(List<Chat> newChats) {
       conversations = newChats;
       for (int i = 0; i < conversations.length; i++) {
         if (isNullOrEmpty(conversations[i].participants)!) {
-          await conversations[i].getParticipants();
+          conversations[i].getParticipants();
         }
       }
 
@@ -823,13 +814,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       previousContactCount = chats.length;
 
       // Update and filter the chats
-      await setChats(chats);
+      setChats(chats);
     });
 
     // When the chat request is finished, set the chats
     if (ChatBloc().chatRequest != null) {
       await ChatBloc().chatRequest!.future;
-      await setChats(ChatBloc().chats);
+      setChats(ChatBloc().chats);
     }
   }
 
@@ -973,7 +964,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     Logger.info("Starting chat with participants: ${participants.join(", ")}");
 
     Future<void> returnChat(Chat newChat) async {
-      await newChat.save();
+      newChat.save();
       await ChatBloc().updateChatPosition(newChat);
       completer.complete(newChat);
       Navigator.of(context).pop();
@@ -982,7 +973,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If there is only 1 participant, try to find the chat
     Chat? existingChat;
     if (participants.length == 1) {
-      existingChat = await Chat.findOne({"chatIdentifier": slugify(participants[0], delimiter: '')});
+      if (kIsWeb) {
+        existingChat = await Chat.findOneWeb(chatIdentifier: slugify(participants[0], delimiter: ''));
+      } else {
+        existingChat = Chat.findOne(chatIdentifier: slugify(participants[0], delimiter: ''));
+      }
     }
 
     if (SettingsManager().settings.enablePrivateAPI.value && (await SettingsManager().getMacOSVersion() ?? 0) > 10 && existingChat == null) {
@@ -1121,9 +1116,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         }),
   );
 
-  Widget buildChatSelectorHeader() => PreferredSize(
-        preferredSize: Size.fromHeight(40),
-        child: cupertino.CupertinoNavigationBar(
+  Widget buildChatSelectorHeader() => AppBar(
+        toolbarHeight: kIsDesktop ? 30 : 0,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        leading: null,
+        automaticallyImplyLeading: false,
+        bottom: cupertino.CupertinoNavigationBar(
           backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
           middle: Container(
             child: Text(
@@ -1147,7 +1145,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 builder: (BuildContext context) {
                   return AlertDialog(
                       backgroundColor: Theme.of(context).colorScheme.secondary,
-                      title: Text("Group Naming",
+                      title: Text("Group Chat Creation",
                           style:
                           TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                       content: Column(

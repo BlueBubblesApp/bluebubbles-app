@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_html/html.dart' as html;
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -13,11 +11,12 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:universal_html/html.dart' as html;
+
 import 'emoji_regex.dart';
 
 class EmojiConst {
@@ -47,7 +46,7 @@ class MessageHelper {
     if (chat?.guid != null) {
       chats[chat!.guid!] = chat;
       if (chat.id == null) {
-        await chat.save();
+        chat = chat.save();
       }
     }
 
@@ -68,7 +67,7 @@ class MessageHelper {
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
           msgChat = chats[msgChat.guid];
         } else if (msgChat?.guid != null) {
-          await msgChat!.save();
+          msgChat!.save();
           chats[msgChat.guid!] = msgChat;
         }
       }
@@ -77,7 +76,7 @@ class MessageHelper {
       if (msgChat == null) continue;
 
       Message message = Message.fromMap(item);
-      Message? existing = await Message.findOne({"guid": message.guid});
+      Message? existing = Message.findOne(guid: message.guid);
       await msgChat.addMessage(
         message,
         changeUnreadStatus: notifyForNewMessage,
@@ -98,7 +97,7 @@ class MessageHelper {
       List<dynamic> attachments = item['attachments'];
       for (dynamic attachmentItem in attachments) {
         Attachment file = Attachment.fromMap(attachmentItem);
-        await file.save(message);
+        file.save(message);
       }
 
       // Add message to the "master list"
@@ -141,7 +140,7 @@ class MessageHelper {
     if (chat?.guid != null) {
       chats[chat!.guid!] = chat;
       if (chat.id == null) {
-        await chat.save();
+        chat = chat.save();
       }
     }
 
@@ -157,7 +156,7 @@ class MessageHelper {
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
           msgChat = chats[msgChat.guid];
         } else if (msgChat?.guid != null) {
-          await msgChat!.save();
+          msgChat!.save();
           chats[msgChat.guid!] = msgChat;
         }
       }
@@ -207,7 +206,7 @@ class MessageHelper {
       {bool force = false}) async {
     // See if there is an existing message for the given GUID
     Message? existingMessage;
-    if (!force) existingMessage = await Message.findOne({"guid": message.guid});
+    if (!force) existingMessage = Message.findOne(guid: message.guid);
     // If we've already processed the GUID, skip it
     if (NotificationManager().hasProcessed(message.guid!)) return;
     // Add the message to the "processed" list
@@ -215,62 +214,29 @@ class MessageHelper {
     // Handle all the cases that would mean we don't show the notification
     if (!SettingsManager().settings.finishedSetup.value) return; // Don't notify if not fully setup
     if (existingMessage != null) return;
-    if (await chat.shouldMuteNotification(message)) return; // Don''t notify if the chat is muted
+    if (chat.shouldMuteNotification(message)) return; // Don''t notify if the chat is muted
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
-
+    // Don't notify if window focused in desktop and chat list notifs off
+    if (!SettingsManager().settings.notifyOnChatList.value && kIsDesktop && LifeCycleManager().isAlive) return;
     CurrentChat? currChat = CurrentChat.activeChat;
 
     // add unread icon as long as it isn't the active chat
     if (currChat?.chat.guid != chat.guid) ChatBloc().toggleChatUnread(chat, true, clearNotifications: false);
 
-    if (((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) &&
-        ((!SettingsManager().settings.notifyOnChatList.value &&
-                currChat == null &&
-                !Get.currentRoute.contains("settings")) ||
-            currChat?.chat.guid == chat.guid)) {
-      // Don't notify if the the chat is the active chat
-      return;
+    if ((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) {
+      if (!SettingsManager().settings.notifyOnChatList.value
+          && currChat == null
+          && !Get.currentRoute.contains("settings")) return;
+      if (currChat?.chat.guid == chat.guid && !LifeCycleManager().isBubble) return;
     }
     await NotificationManager().createNotificationFromMessage(chat, message);
   }
 
-  /// A synchronous notification text method for big pins to display new attachments
-  /// Returns "" for any unsupported message or a message that usually requires an async call
-  static String getNotificationTextSync(Message message) {
-    // If the item type is not 0, it's a group event
-    if (message.isGroupEvent()) {
-      return "";
-    }
-
-    if (message.isInteractive()) {
-      return "Interactive: ${MessageHelper.getInteractiveText(message)}";
-    }
-
-    if (isNullOrEmpty(message.fullText, trimString: true)! && !message.hasAttachments) {
-      return "";
-    }
-
-    // Parse/search for links
-    List<RegExpMatch> matches = parseLinks(message.text!);
-
-    // If there are attachments, return the number of attachments
-    int aCount = (message.attachments).length;
-    if (message.hasAttachments && matches.isEmpty) {
-      // Build the attachment output by counting the attachments
-      String output = "Attachment${aCount > 1 ? "s" : ""}";
-
-      return "$output: ${getAttachmentText(message.attachments)}";
-    } else {
-      // It's all other message types
-      return message.fullText;
-    }
-  }
-
-  static Future<String> getNotificationText(Message message, {bool withSender = false}) async {
+  static String getNotificationText(Message message, {bool withSender = false}) {
     String sender = !withSender ? "" : message.isFromMe! ? "You: " : ContactManager().getContactTitle(message.handle) + ": ";
     // If the item type is not 0, it's a group event
     if (message.isGroupEvent()) {
-      return sender + (await getGroupEventText(message));
+      return sender + getGroupEventText(message);
     }
 
     if (message.isInteractive()) {
@@ -285,16 +251,20 @@ class MessageHelper {
     List<RegExpMatch> matches = parseLinks(message.text!);
 
     // If there are attachments, return the number of attachments
-    int aCount = message.attachments.length;
     if (message.hasAttachments && matches.isEmpty) {
+      List<Attachment?> attachments = message.dbAttachments;
+      if (attachments.isEmpty) {
+        attachments = message.attachments;
+      }
+      int aCount = attachments.length;
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
-      return "$output: ${getAttachmentText(message.attachments)}";
+      return "$output: ${getAttachmentText(attachments)}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the sender
       String? sender = message.isFromMe! ? "You" : ContactManager().getContactTitle(message.handle);
       // fetch the associated message object
-      Message? associatedMessage = await Message.findOne({'guid': message.associatedMessageGuid});
+      Message? associatedMessage = Message.findOne(guid: message.associatedMessageGuid);
       if (associatedMessage != null) {
         // grab the verb we'll use from the reactionToVerb map
         String? verb = ReactionTypes.reactionToVerb[message.associatedMessageType];
@@ -309,7 +279,7 @@ class MessageHelper {
           return '$sender $verb “${messageText.trim()}”';
         // if it has an attachment, we should fetch the attachments and get the attachment text
         } else if (associatedMessage.hasAttachments) {
-          return '$sender $verb ${getAttachmentText((await associatedMessage.fetchAttachments())!)}';
+          return '$sender $verb ${getAttachmentText(associatedMessage.fetchAttachments()!)}';
         }
       }
       // if we can't fetch the associated message for some reason
@@ -360,6 +330,7 @@ class MessageHelper {
 
   static bool shouldShowBigEmoji(String text) {
     if (isEmptyString(text)) return false;
+    if (text.codeUnits.length == 1 && text.codeUnits.first == 9786) return true;
 
     RegExp pattern = emojiRegex;
     List<RegExpMatch> matches = pattern.allMatches(text).toList();
@@ -379,7 +350,9 @@ class MessageHelper {
     List<Message> normalized = [];
 
     for (Message message in associatedMessages.reversed.toList()) {
-      if (guids.remove(message.handleId ?? 0)) {
+      if (!ReactionTypes.toList().contains(message.associatedMessageType)) {
+        normalized.add(message);
+      } else if (guids.remove(message.handleId ?? 0)) {
         normalized.add(message);
       }
     }
@@ -402,7 +375,7 @@ class MessageHelper {
       }
     } else if (val.contains("mobileslideshow")) {
       return "Photo Slideshow";
-    } else if (val.contains("PeerPayment")) {
+    } else if (val.contains("peerpayment")) {
       return "Payment Request";
     }
 
@@ -420,12 +393,12 @@ class MessageHelper {
     if (!sameSender(message, newerMessage)) return true;
     if (message!.isFromMe! &&
         newerMessage!.isFromMe! &&
-        message.dateDelivered.value != null &&
-        newerMessage.dateDelivered.value == null) return true;
+        message.dateDelivered != null &&
+        newerMessage.dateDelivered == null) return true;
 
-    Message? lastRead = CurrentChat.activeChat?.messageMarkers.lastReadMessage;
+    Message? lastRead = CurrentChat.activeChat?.messageMarkers.lastReadMessage.value;
     if (lastRead != null && lastRead.guid == message.guid) return true;
-    Message? lastDelivered = CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage;
+    Message? lastDelivered = CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage.value;
     if (lastDelivered != null && lastDelivered.guid == message.guid) return true;
 
     return false;

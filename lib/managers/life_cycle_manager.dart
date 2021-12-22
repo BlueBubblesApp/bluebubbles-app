@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/foundation.dart';
 
 /// [LifeCycleManager] is responsible for keeping track of when the app is open and when it is closed
 ///
@@ -33,8 +35,8 @@ class LifeCycleManager {
     // Listen to the socket processes that are updated
     SocketManager().socketProcessUpdater.listen((event) {
       // If there are no more socket processes, then we can safely close the socket
-      if (event.isEmpty && !_isAlive) {
-        SocketManager().closeSocket();
+      if (event.isEmpty && !_isAlive && !kIsDesktop && !kIsWeb) {
+        SocketManager().closeSocket(force: true);
       }
     });
   }
@@ -43,16 +45,18 @@ class LifeCycleManager {
   opened() {
     // If the app is not alive (was previously closed) and the curent chat is not null (a chat is already open)
     // Then mark the current chat as read.
-    if (!_isAlive && CurrentChat.activeChat != null) {
+    if (!_isAlive && CurrentChat.activeChat != null && !kIsDesktop && (recentIntent == null || recentIntent == CurrentChat.activeChat?.chat.guid)) {
       NotificationManager().switchChat(CurrentChat.activeChat!.chat);
     }
 
     // Set the app as open and start the socket
     updateStatus(true);
-    SocketManager().startSocketIO();
+    if (!kIsDesktop) {
+      SocketManager().startSocketIO();
+    }
 
     // Refresh all the chats assuming that the app has already finished setup
-    if (SettingsManager().settings.finishedSetup.value && recentIntent == null) {
+    if (SettingsManager().settings.finishedSetup.value && !kIsDesktop && recentIntent == null) {
       ChatBloc().resumeRefresh();
     }
   }
@@ -65,11 +69,13 @@ class LifeCycleManager {
       // NOTE: [closeSocket] does not necessarily close the socket, it simply requests the SocketManager to attempt to do so
       // If there are socket processes using the socket, then it will not close, and will wait until those tasks are done
       updateStatus(false);
-      SocketManager().closeSocket();
+      if (!kIsDesktop && !kIsWeb) {
+        SocketManager().closeSocket();
 
-      // Closes the backgroun thread when the app is fully closed
-      // This does not necessarily mean that the isolate will be closed (such as if the app is not fully closed), but it will attempt to do so
-      MethodChannelInterface().closeThread();
+        // Closes the background thread when the app is fully closed
+        // This does not necessarily mean that the isolate will be closed (such as if the app is not fully closed), but it will attempt to do so
+        MethodChannelInterface().closeThread();
+      }
     }
   }
 

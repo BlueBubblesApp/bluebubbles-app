@@ -1,7 +1,5 @@
-import 'dart:async';
-
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 
 class AttachmentInfoBloc {
   factory AttachmentInfoBloc() {
@@ -21,10 +19,10 @@ class AttachmentInfoBloc {
     return chatData[chatGuid];
   }
 
-  Future<void> init(List<Chat> chats) async {
+  void init(List<Chat> chats) {
     for (Chat chat in chats) {
       if (chat.guid != null && !chatData.containsKey(chat.guid)) {
-        chatData[chat.guid!] = await _initChat(chat);
+        chatData[chat.guid!] = _initChat(chat);
       }
     }
   }
@@ -34,20 +32,20 @@ class AttachmentInfoBloc {
     chatData[currentChat.chat.guid!] = currentChat;
   }
 
-  Future<CurrentChat?> initChat(Chat chat) async {
+  CurrentChat? initChat(Chat chat) {
     if (chat.guid == null) return null;
     if (!chatData.containsKey(chat.guid)) {
-      chatData[chat.guid!] = await _initChat(chat);
+      chatData[chat.guid!] = _initChat(chat);
     } else {
-      await chatData[chat.guid]!.preloadMessageAttachments();
+      chatData[chat.guid]!.preloadMessageAttachments();
     }
 
     return chatData[chat.guid];
   }
 
-  Future<CurrentChat> _initChat(Chat chat) async {
+  CurrentChat _initChat(Chat chat) {
     CurrentChat currentChat = CurrentChat(chat);
-    await currentChat.preloadMessageAttachments();
+    currentChat.preloadMessageAttachments();
     return currentChat;
   }
 }

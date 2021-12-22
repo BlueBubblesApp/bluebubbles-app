@@ -41,7 +41,7 @@ class MiscPanel extends StatelessWidget {
 
     return SettingsScaffold(
       title: "Miscellaneous & Advanced",
-      initialHeader: "Notifications",
+      initialHeader: SettingsManager().canAuthenticate ? "Security" : "Speed & Responsiveness",
       iosSubtitle: iosSubtitle,
       materialSubtitle: materialSubtitle,
       tileColor: tileColor,
@@ -50,47 +50,6 @@ class MiscPanel extends StatelessWidget {
         SliverList(
           delegate: SliverChildListDelegate(
             <Widget>[
-              SettingsSection(
-                backgroundColor: tileColor,
-                children: [
-                  Obx(() =>
-                      SettingsSwitch(
-                        onChanged: (bool val) {
-                          SettingsManager().settings.hideTextPreviews.value = val;
-                          saveSettings();
-                        },
-                        initialVal: SettingsManager().settings.hideTextPreviews.value,
-                        title: "Hide Message Text",
-                        subtitle: "Replaces message text with 'iMessage' in notifications",
-                        backgroundColor: tileColor,
-                      )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  Obx(() =>
-                      SettingsSwitch(
-                        onChanged: (bool val) {
-                          SettingsManager().settings.showIncrementalSync.value = val;
-                          saveSettings();
-                        },
-                        initialVal: SettingsManager().settings.showIncrementalSync.value,
-                        title: "Notify when incremental sync complete",
-                        subtitle: "Show a snackbar whenever a message sync is completed",
-                        backgroundColor: tileColor,
-                      )),
-                ],
-              ),
-              if (SettingsManager().canAuthenticate)
-                SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Security"),
               if (SettingsManager().canAuthenticate)
                 SettingsSection(
                   backgroundColor: tileColor,
@@ -217,12 +176,13 @@ class MiscPanel extends StatelessWidget {
                       )),
                   ],
                 ),
-              SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Speed & Responsiveness"),
+              if (SettingsManager().canAuthenticate)
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Speed & Responsiveness"),
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
@@ -346,7 +306,7 @@ class MiscPanel extends StatelessWidget {
                   Obx(() {
                     if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return SettingsTile(
-                        title: "Maximum Group Avatar Size",
+                        title: "Maximum Group Avatar Count",
                         subtitle: "Controls the maximum number of contact avatars in a group chat's widget",
                         backgroundColor: tileColor,
                       );
