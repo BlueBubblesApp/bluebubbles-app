@@ -84,7 +84,13 @@ class ChatBloc {
     Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
 
     // Get the contacts in case we haven't
-    if (ContactManager().contacts.isEmpty) ContactManager().getContacts().then((e) => ChatBloc().chats.refresh());
+    if (ContactManager().contacts.isEmpty) {
+      if (!kIsDesktop) {
+        await ContactManager().getContacts();
+      } else {
+        ContactManager().getContacts().then((e) => ChatBloc().chats.refresh());
+      }
+    }
 
     _messageSubscription ??= setupMessageListener();
 
