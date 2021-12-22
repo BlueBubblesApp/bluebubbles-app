@@ -407,34 +407,32 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     double maxHeight = context.height - messageTopOffset - widget.childSize!.height;
 
     List<Widget> allActions = [
-      if (widget.currentChat!.chat.isGroup() &&
-          !widget.message.isFromMe! &&
-          dmChat != null &&
-          !LifeCycleManager().isBubble)
+      if (showDownload)
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              Navigator.pushReplacement(
-                context,
-                cupertino.CupertinoPageRoute(
-                  builder: (BuildContext context) {
-                    return ConversationView(
-                      chat: dmChat,
-                    );
-                  },
-                ),
-              );
+              try {
+                for (Attachment? element in widget.message.attachments) {
+                  dynamic content = AttachmentHelper.getContent(element!);
+                  if (content is PlatformFile) {
+                    await AttachmentHelper.saveToGallery(content);
+                  }
+                }
+              } catch (ex, trace) {
+                Logger.error(trace.toString());
+                showSnackbar("Download Error", ex.toString());
+              }
             },
             child: ListTile(
               title: Text(
-                "Open Direct Message",
+                "Download to Device",
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.arrow_up_right_square
-                    : Icons.open_in_new,
+                    ? cupertino.CupertinoIcons.cloud_download
+                    : Icons.file_download,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -490,6 +488,91 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
+      if (!isEmptyString(widget.message.fullText))
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: widget.message.fullText));
+              Navigator.of(context).pop();
+              showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
+            },
+            child: ListTile(
+              title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.doc_on_clipboard
+                    : Icons.content_copy,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if (!isEmptyString(widget.message.fullText))
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              if (isEmptyString(widget.message.fullText)) return;
+              showDialog(
+                  context: context,
+                  builder: (_) {
+                    Widget title = Text(
+                      "Copy",
+                      style: Theme.of(context).textTheme.headline1,
+                    );
+                    Widget content = Container(
+                      constraints: BoxConstraints(
+                        maxHeight: context.height * 2 / 3,
+                      ),
+                      child: SingleChildScrollView(
+                        physics: ThemeSwitcher.getScrollPhysics(),
+                        child: SelectableText(
+                          widget.message.fullText,
+                          style: Theme.of(context).textTheme.bodyText1,
+                        ),
+                      ),
+                    );
+                    List<Widget> actions = <Widget>[
+                      TextButton(
+                        child: Text(
+                          "Done",
+                          // style: Theme.of(context).textTheme.bodyText1,
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop('dialog');
+                        },
+                      ),
+                    ];
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
+                      return CupertinoAlertDialog(
+                        title: title,
+                        backgroundColor: Theme.of(context).colorScheme.secondary,
+                        content: content,
+                      );
+                    }
+                    return AlertDialog(
+                      title: title,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      content: content,
+                      actions: actions,
+                    );
+                  });
+            },
+            child: ListTile(
+              title: Text(
+                "Copy Selection",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.doc_on_clipboard
+                    : Icons.content_copy,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
       if (SettingsManager().settings.enablePrivateAPI.value && isBigSur && (currentChat?.chat.isIMessage ?? true))
         Material(
           color: Colors.transparent,
@@ -505,6 +588,39 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.reply : Icons.reply,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if (widget.currentChat!.chat.isGroup() &&
+          !widget.message.isFromMe! &&
+          dmChat != null &&
+          !LifeCycleManager().isBubble)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              Navigator.pushReplacement(
+                context,
+                cupertino.CupertinoPageRoute(
+                  builder: (BuildContext context) {
+                    return ConversationView(
+                      chat: dmChat,
+                    );
+                  },
+                ),
+              );
+            },
+            child: ListTile(
+              title: Text(
+                "Open Direct Message",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.arrow_up_right_square
+                    : Icons.open_in_new,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -624,111 +740,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-      Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () async {
-            NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
-            Message.softDelete(widget.message.guid!);
-            Navigator.of(context).pop();
-          },
-          child: ListTile(
-            title: Text(
-              "Delete",
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-            trailing: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
-              color: Theme.of(context).textTheme.bodyText1!.color,
-            ),
-          ),
-        ),
-      ),
-      if (!isEmptyString(widget.message.fullText))
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              Clipboard.setData(ClipboardData(text: widget.message.fullText));
-              Navigator.of(context).pop();
-              showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
-            },
-            child: ListTile(
-              title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
-              trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.doc_on_clipboard
-                    : Icons.content_copy,
-                color: Theme.of(context).textTheme.bodyText1!.color,
-              ),
-            ),
-          ),
-        ),
-      if (!isEmptyString(widget.message.fullText))
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              if (isEmptyString(widget.message.fullText)) return;
-              showDialog(
-                  context: context,
-                  builder: (_) {
-                    Widget title = Text(
-                      "Copy",
-                      style: Theme.of(context).textTheme.headline1,
-                    );
-                    Widget content = Container(
-                      constraints: BoxConstraints(
-                        maxHeight: context.height * 2 / 3,
-                      ),
-                      child: SingleChildScrollView(
-                        physics: ThemeSwitcher.getScrollPhysics(),
-                        child: SelectableText(
-                          widget.message.fullText,
-                          style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                      ),
-                    );
-                    List<Widget> actions = <Widget>[
-                      TextButton(
-                        child: Text(
-                          "Done",
-                          // style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).pop('dialog');
-                        },
-                      ),
-                    ];
-                    if (SettingsManager().settings.skin.value == Skins.iOS) {
-                      return CupertinoAlertDialog(
-                        title: title,
-                        backgroundColor: Theme.of(context).colorScheme.secondary,
-                        content: content,
-                      );
-                    }
-                    return AlertDialog(
-                      title: title,
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                      content: content,
-                      actions: actions,
-                    );
-                  });
-            },
-            child: ListTile(
-              title: Text(
-                "Copy Selection",
-                style: Theme.of(context).textTheme.bodyText1,
-              ),
-              trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.doc_on_clipboard
-                    : Icons.content_copy,
-                color: Theme.of(context).textTheme.bodyText1!.color,
-              ),
-            ),
-          ),
-        ),
+
       if (showDownload && isSent)
         Material(
           color: Colors.transparent,
@@ -748,37 +760,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.refresh : Icons.refresh,
-                color: Theme.of(context).textTheme.bodyText1!.color,
-              ),
-            ),
-          ),
-        ),
-      if (showDownload)
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () async {
-              try {
-                for (Attachment? element in widget.message.attachments) {
-                  dynamic content = AttachmentHelper.getContent(element!);
-                  if (content is PlatformFile) {
-                    await AttachmentHelper.saveToGallery(content);
-                  }
-                }
-              } catch (ex, trace) {
-                Logger.error(trace.toString());
-                showSnackbar("Download Error", ex.toString());
-              }
-            },
-            child: ListTile(
-              title: Text(
-                "Download to Device",
-                style: Theme.of(context).textTheme.bodyText1,
-              ),
-              trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.cloud_download
-                    : Icons.file_download,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -908,6 +889,26 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
+      Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
+            Message.softDelete(widget.message.guid!);
+            Navigator.of(context).pop();
+          },
+          child: ListTile(
+            title: Text(
+              "Delete",
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
+            trailing: Icon(
+              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
+              color: Theme.of(context).textTheme.bodyText1!.color,
+            ),
+          ),
+        ),
+      ),
     ];
 
     List<Widget> detailsActions = [];
@@ -916,7 +917,17 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
     double actualHeight = 2 * itemHeight;
     int index = 0;
-    while (actualHeight <= maxHeight - itemHeight && index < allActions.length) {
+
+    int maxToShow = 0;
+    if (!isEmptyString(widget.message.fullText)) maxToShow++;
+    if (widget.message.fullText.replaceAll("\n", " ").hasUrl &&
+        !kIsWeb &&
+        !kIsDesktop &&
+        !LifeCycleManager().isBubble) maxToShow++;
+    if (showDownload && kIsWeb && widget.message.attachments.first?.webUrl != null) maxToShow++;
+    if (showDownload) maxToShow++;
+
+    while (actualHeight <= maxHeight - itemHeight && index < (maxToShow == 0 ? allActions.length : maxToShow)) {
       actualHeight += itemHeight;
       detailsActions.add(allActions[index++]);
     }
@@ -929,7 +940,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     }
 
     Widget menu = ClipRRect(
-      borderRadius: BorderRadius.circular(20.0),
+      borderRadius: BorderRadius.circular(10.0),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
