@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -82,8 +85,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     super.initState();
     currentChat = widget.currentChat;
 
-    messageTopOffset = widget.childOffsetY;
     topMinimum = CupertinoNavigationBar().preferredSize.height + 60 + (widget.message.hasReactions ? 110 : 50);
+    messageTopOffset = max(topMinimum, min(widget.childOffsetY, Get.height - widget.childSize!.height - 200));
 
     dmChat = ChatBloc().chats.firstWhereOrNull(
           (chat) =>
@@ -109,13 +112,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
-          double totalHeight = context.height - detailsMenuHeight! - 20;
-          double offset = (widget.childOffsetY + widget.childSize!.height) - totalHeight;
-          messageTopOffset = widget.childOffsetY.clamp(topMinimum + 40, double.infinity);
-          if (offset > 0) {
-            messageTopOffset -= offset;
-            messageTopOffset = messageTopOffset.clamp(topMinimum + 40, double.infinity);
-          }
+          messageTopOffset = max(topMinimum, min(widget.childOffsetY, context.height - widget.childSize!.height - 200));
         });
       }
     });
@@ -167,81 +164,83 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Container(
-          child: Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                  child: Container(
-                    color: oledDarkTheme.colorScheme.secondary.withOpacity(0.3),
+      child: TitleBarWrapper(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Container(
+            child: Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                    child: Container(
+                      color: oledDarkTheme.colorScheme.secondary.withOpacity(0.3),
+                    ),
                   ),
                 ),
-              ),
-              AnimatedPositioned(
-                duration: Duration(milliseconds: 250),
-                curve: Curves.easeOut,
-                top: messageTopOffset + 50,
-                left: offsetX,
-                child: Container(
-                  width: widget.childSize!.width,
-                  height: widget.childSize!.height,
-                  child: widget.child,
+                AnimatedPositioned(
+                  duration: Duration(milliseconds: 250),
+                  curve: Curves.easeOut,
+                  top: messageTopOffset + 50,
+                  left: offsetX,
+                  child: Container(
+                    width: widget.childSize!.width,
+                    height: widget.childSize!.height,
+                    child: widget.child,
+                  ),
                 ),
-              ),
-              Positioned(
-                top: 40,
-                left: 10,
-                child: AnimatedSize(
-                  duration: Duration(milliseconds: 500),
-                  curve: Sprung.underDamped,
-                  alignment: Alignment.center,
-                  child: reactionWidgets.isNotEmpty
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                            child: Container(
-                              alignment: Alignment.center,
-                              height: 120,
-                              width: CustomNavigator.width(context) - 20,
-                              color: Theme.of(context).colorScheme.secondary,
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 0),
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: ThemeSwitcher.getScrollPhysics(),
-                                  scrollDirection: Axis.horizontal,
-                                  itemBuilder: (context, index) {
-                                    if (index >= 0 && index < reactionWidgets.length) {
-                                      return reactionWidgets[index];
-                                    } else {
-                                      return Container();
-                                    }
-                                  },
-                                  itemCount: reactionWidgets.length,
+                Positioned(
+                  top: 40,
+                  left: 10,
+                  child: AnimatedSize(
+                    duration: Duration(milliseconds: 500),
+                    curve: Sprung.underDamped,
+                    alignment: Alignment.center,
+                    child: reactionWidgets.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                              child: Container(
+                                alignment: Alignment.center,
+                                height: 120,
+                                width: CustomNavigator.width(context) - 20,
+                                color: Theme.of(context).colorScheme.secondary,
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 0),
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: ThemeSwitcher.getScrollPhysics(),
+                                    scrollDirection: Axis.horizontal,
+                                    itemBuilder: (context, index) {
+                                      if (index >= 0 && index < reactionWidgets.length) {
+                                        return reactionWidgets[index];
+                                      } else {
+                                        return Container();
+                                      }
+                                    },
+                                    itemCount: reactionWidgets.length,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        )
-                      : Container(),
+                          )
+                        : Container(),
+                  ),
                 ),
-              ),
-              // Only show the reaction menu if it's enabled and the message isn't temporary
-              if (SettingsManager().settings.enablePrivateAPI.value &&
-                  isSent &&
-                  !hideReactions &&
-                  (currentChat?.chat.isIMessage ?? true))
-                buildReactionMenu(),
-              buildCopyPasteMenu(),
-            ],
+                // Only show the reaction menu if it's enabled and the message isn't temporary
+                if (SettingsManager().settings.enablePrivateAPI.value &&
+                    isSent &&
+                    !hideReactions &&
+                    (currentChat?.chat.isIMessage ?? true))
+                  buildReactionMenu(),
+                buildCopyPasteMenu(),
+              ],
+            ),
           ),
         ),
       ),
@@ -254,7 +253,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     double reactionIconSize = 50;
     double maxMenuWidth = (ReactionTypes.toList().length / (narrowScreen ? 2 : 1) * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize * 2).toDouble();
-    double topPadding = -10;
+    double topPadding = -40;
     if (topMinimum > context.height - 120 - menuHeight) {
       topMinimum = context.height - 120 - menuHeight;
     }
@@ -270,7 +269,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     }
 
     return Positioned(
-      bottom: context.height - topOffset - topPadding - menuHeight,
+      bottom: max(context.height - topOffset - topPadding - menuHeight, context.height - messageTopOffset - menuHeight),
       left: leftOffset,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(40.0),
@@ -287,7 +286,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.start,
-                  children: ReactionTypes.toList().slice(0, narrowScreen ? 3 : null)
+                  children: ReactionTypes.toList()
+                      .slice(0, narrowScreen ? 3 : null)
                       .map(
                         (e) => Padding(
                           padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
@@ -331,52 +331,53 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                       .toList(),
                 ),
                 if (narrowScreen)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: ReactionTypes.toList().slice(3)
-                      .map(
-                        (e) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
-                      child: Container(
-                        width: reactionIconSize - 15,
-                        height: reactionIconSize - 15,
-                        decoration: BoxDecoration(
-                          color: currentlySelectedReaction == e
-                              ? Theme.of(context).primaryColor
-                              : Theme.of(context).colorScheme.secondary.withAlpha(150),
-                          borderRadius: BorderRadius.circular(
-                            20,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: ReactionTypes.toList()
+                        .slice(3)
+                        .map(
+                          (e) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
+                            child: Container(
+                              width: reactionIconSize - 15,
+                              height: reactionIconSize - 15,
+                              decoration: BoxDecoration(
+                                color: currentlySelectedReaction == e
+                                    ? Theme.of(context).primaryColor
+                                    : Theme.of(context).colorScheme.secondary.withAlpha(150),
+                                borderRadius: BorderRadius.circular(
+                                  20,
+                                ),
+                              ),
+                              child: GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  sendReaction(selfReaction == e ? "-$e" : e);
+                                },
+                                onTapDown: (TapDownDetails details) {
+                                  if (currentlySelectedReaction == e) {
+                                    currentlySelectedReaction = null;
+                                  } else {
+                                    currentlySelectedReaction = e;
+                                  }
+                                  if (mounted) setState(() {});
+                                },
+                                onTapUp: (details) {},
+                                onTapCancel: () {
+                                  currentlySelectedReaction = selfReaction;
+                                  if (mounted) setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(6),
+                                  child: Reaction.getReactionIcon(e, iconColor),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            sendReaction(selfReaction == e ? "-$e" : e);
-                          },
-                          onTapDown: (TapDownDetails details) {
-                            if (currentlySelectedReaction == e) {
-                              currentlySelectedReaction = null;
-                            } else {
-                              currentlySelectedReaction = e;
-                            }
-                            if (mounted) setState(() {});
-                          },
-                          onTapUp: (details) {},
-                          onTapCancel: () {
-                            currentlySelectedReaction = selfReaction;
-                            if (mounted) setState(() {});
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(6),
-                            child: Reaction.getReactionIcon(e, iconColor),
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                      .toList(),
-                ),                
+                        )
+                        .toList(),
+                  ),
               ],
             ),
           ),
@@ -403,7 +404,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   Widget buildCopyPasteMenu() {
     double maxMenuWidth = CustomNavigator.width(context) * 2 / 3;
 
-    double maxHeight = context.height - topMinimum - widget.childSize!.height - 100;
+    double maxHeight = context.height - messageTopOffset - widget.childSize!.height;
 
     List<Widget> allActions = [
       if (widget.currentChat!.chat.isGroup() &&
@@ -828,61 +829,59 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                       "Select Reminder Time",
                       style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                     ),
-                    content: Column(
-                        mainAxisSize: MainAxisSize.min,
+                    content: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Wrap(
+                        alignment: WrapAlignment.center,
                         children: [
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            children: [
-                              TextButton(
-                                child: Text("Cancel"),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                              TextButton(
-                                child: Text("1 Hour"),
-                                onPressed: () {
-                                  finalDate = DateTime.now().toLocal().add(Duration(hours: 1));
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                              TextButton(
-                                child: Text("1 Day"),
-                                onPressed: () {
-                                  finalDate = DateTime.now().toLocal().add(Duration(days: 1));
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                              TextButton(
-                                child: Text("1 Week"),
-                                onPressed: () {
-                                  finalDate = DateTime.now().toLocal().add(Duration(days: 7));
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                              TextButton(
-                                child: Text("Custom"),
-                                onPressed: () async {
-                                  final messageDate = await showDatePicker(
-                                    context: context,
-                                    initialDate: DateTime.now().toLocal(),
-                                    firstDate: DateTime.now().toLocal(),
-                                    lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
-                                  if (messageDate != null) {
-                                    final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                                    if (messageTime != null) {
-                                      finalDate = DateTime(
-                                          messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
-                                    }
-                                  }
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            ],
-                          )
-                        ]
-                    ),
+                          TextButton(
+                            child: Text("Cancel"),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: Text("1 Hour"),
+                            onPressed: () {
+                              finalDate = DateTime.now().toLocal().add(Duration(hours: 1));
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: Text("1 Day"),
+                            onPressed: () {
+                              finalDate = DateTime.now().toLocal().add(Duration(days: 1));
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: Text("1 Week"),
+                            onPressed: () {
+                              finalDate = DateTime.now().toLocal().add(Duration(days: 7));
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: Text("Custom"),
+                            onPressed: () async {
+                              final messageDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now().toLocal(),
+                                  firstDate: DateTime.now().toLocal(),
+                                  lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
+                              if (messageDate != null) {
+                                final messageTime =
+                                    await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                                if (messageTime != null) {
+                                  finalDate = DateTime(messageDate.year, messageDate.month, messageDate.day,
+                                      messageTime.hour, messageTime.minute);
+                                }
+                              }
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      )
+                    ]),
                     backgroundColor: Theme.of(context).backgroundColor,
                   );
                 },
@@ -994,7 +993,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 15 : 20 + (shiftRight ? 35 : 0))
             .toDouble();
     return Positioned(
-      top: topOffset + 55,
+      top: topOffset > context.height - 100 ? null : topOffset + 55,
+      bottom: topOffset > context.height - 100 ? 45 : null,
       left: leftOffset,
       child: menu,
     );
