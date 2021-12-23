@@ -236,7 +236,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                         initialVal: controller._settingsCopy.immersiveMode.value,
                         title: "Immersive Mode",
                         backgroundColor: tileColor,
-                        subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
+                        subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation. Note: This option may cause slight choppiness in some animations due to an Android limitation",
                       )),
                   ],
                 ),
