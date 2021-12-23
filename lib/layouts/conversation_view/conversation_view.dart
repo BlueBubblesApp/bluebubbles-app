@@ -287,10 +287,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           resetCursor();
         }
         if (selected.length > 1) {
-          showSnackbar("Error", "Creating group chats is currently unsupported on Big Sur without Private API!");
+          showSnackbar("Error", "Creating group chats is currently unsupported on Big Sur!");
           return false;
         } else if (isNullOrEmpty(text, trimString: true)!) {
-          showSnackbar("Error", "Starting new chats with an attachment is currently unsupported on Big Sur without Private API! Please start the chat with a text instead.");
+          showSnackbar("Error", "Starting new chats with an attachment is currently unsupported on Big Sur! Please start the chat with a text instead.");
           return false;
         } else if (!isNullOrEmpty(cleansePhoneNumber(selected.firstOrNull?.address ?? ""))!) {
           chat = await ActionHandler.createChatBigSur(context, cleansePhoneNumber(selected.firstOrNull?.address ?? ""), text);
