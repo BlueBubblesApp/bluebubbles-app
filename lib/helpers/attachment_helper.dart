@@ -198,8 +198,16 @@ class AttachmentHelper {
       return;
     }
 
-    await ImageGallerySaver.saveFile(file.path!);
-    if (showAlert) showSnackbar('Success', 'Saved attachment!');
+    try {
+      await ImageGallerySaver.saveFile(file.path!);
+      if (showAlert) showSnackbar('Success', 'Saved attachment to gallery!');
+    } catch (_) {
+      File toSave = File("/storage/emulated/0/Download/${file.name}");
+      await toSave.create(recursive: true);
+      final bytes = await File(file.path!).readAsBytes();
+      await toSave.writeAsBytes(bytes);
+      if (showAlert) showSnackbar('Success', 'Saved attachment to downloads folder!');
+    }
   }
 
   static String getBaseAttachmentsPath() {
