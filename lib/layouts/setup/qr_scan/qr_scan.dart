@@ -587,10 +587,13 @@ class _QRScanState extends State<QRScan> {
       // Start syncing
       SocketManager().setup.startFullSync(SettingsManager().settings);
     }
-    widget.controller.nextPage(
-      duration: Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+
+    if (widget.controller.page == (kIsWeb || kIsDesktop ? 2 : 4)) {
+      widget.controller.nextPage(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   void connect(String url, String password) async {
