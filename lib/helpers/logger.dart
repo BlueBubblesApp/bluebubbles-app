@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
 
@@ -58,7 +59,7 @@ class BaseLogger extends GetxService {
     if (kIsDesktop) {
       filePath = (await getDownloadsDirectory())!.path;
       DateTime now = DateTime.now().toLocal();
-      filePath += "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" ".txt";
+      filePath = join(filePath, "BlueBubbles_Logs_${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
     }
     File file = File(filePath);
     await file.create(recursive: true);
@@ -76,7 +77,7 @@ class BaseLogger extends GetxService {
         onPressed: () {
           Share.file("BlueBubbles Logs", filePath);
         },
-        child: Text("SHARE", style: TextStyle(color: Theme.of(Get.context!).primaryColor)),
+        child: kIsDesktop || kIsWeb ? Container() : Text("SHARE", style: TextStyle(color: Theme.of(Get.context!).primaryColor)),
       ),
     );
   }
