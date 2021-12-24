@@ -133,6 +133,7 @@ dependencies:
   async_task: ^1.0.14
   filesystem_picker: ^2.0.0
   version: ^2.0.0
+  emojis: ^0.9.9
 
 dependency_overrides:
   rxdart: ^0.27.3

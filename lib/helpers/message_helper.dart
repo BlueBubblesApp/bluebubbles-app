@@ -12,12 +12,11 @@ import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:universal_html/html.dart' as html;
-
-import 'emoji_regex.dart';
 
 class EmojiConst {
   static final String charNonSpacingMark = String.fromCharCode(0xfe0f);
@@ -333,13 +332,14 @@ class MessageHelper {
     if (text.codeUnits.length == 1 && text.codeUnits.first == 9786) return true;
 
     RegExp pattern = emojiRegex;
+    RegExp darkSunglasses = RegExp('\u{1F576}');
+
     List<RegExpMatch> matches = pattern.allMatches(text).toList();
-    if (matches.isEmpty) return false;
+    if (matches.isEmpty && !text.contains(darkSunglasses)) return false;
 
     List<String> items = matches.map((m) => m.toString()).toList();
 
     String replaced = text.replaceAll(pattern, "").replaceAll(String.fromCharCode(65039), "");
-    RegExp darkSunglasses = RegExp('\u{1F576}');
     replaced = replaced.replaceAll(darkSunglasses, "").trim();
     return items.length <= 3 && replaced.isEmpty;
   }
