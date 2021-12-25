@@ -183,7 +183,7 @@ class ContactManager {
       try {
         contactMatch = getContact(handle);
         handleToContact[handle.address] = contactMatch;
-        if (!handle.address.isEmail) {
+        if (!handle.address.isEmail && contactMatch == null) {
           handleToFormattedAddress[handle.address] = await formatPhoneNumber(handle.address);
         }
       } catch (ex) {

@@ -182,10 +182,6 @@ class SetupBloc {
               addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
               if (!skipEmptyChats || (skipEmptyChats && messages.isNotEmpty)) {
                 chat.save();
-
-                // Re-match the handles with the contacts
-                await ContactManager().matchHandles();
-
                 await syncChat(chat, messages);
                 addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
               } else {
