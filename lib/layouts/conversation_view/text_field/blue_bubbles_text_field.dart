@@ -847,7 +847,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         child: Focus(
           onKey: (focus, event) {
             String text = controller!.text;
-            if ((kIsDesktop || kIsWeb) && text != previousText) {
+            if (text != previousText) {
               previousText = text;
               RegExp regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
               Iterable<RegExpMatch> matches = regExp.allMatches(text);
