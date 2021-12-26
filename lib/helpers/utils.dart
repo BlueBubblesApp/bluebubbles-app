@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
@@ -708,6 +709,13 @@ extension PlatformSpecificCapitalize on String {
 
 extension LastChars on String {
   String lastChars(int n) => substring(length - n);
+}
+
+extension IsEmoji on String {
+  bool get hasEmoji {
+    RegExp darkSunglasses = RegExp('\u{1F576}');
+    return RegExp("${emojiRegex.pattern}|${darkSunglasses.pattern}").hasMatch(this);
+  }
 }
 
 extension WidgetLocation on GlobalKey {

@@ -104,7 +104,6 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
         ),
         body: ImprovedScrolling(
           enableMMBScrolling: true,
-          enableKeyboardScrolling: true,
           mmbScrollConfig: MMBScrollConfig(
             customScrollCursor: DefaultCustomScrollCursor(
               cursorColor: context.textTheme.subtitle1!.color!,
