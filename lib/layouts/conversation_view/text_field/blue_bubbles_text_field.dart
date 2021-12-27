@@ -216,6 +216,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               controller!.text = _text;
               controller!.selection =
                   TextSelection.fromPosition(TextPosition(offset: match.start + allMatches.first.char.length));
+              allMatches = <Emoji>[];
             } else {
               allMatches = Emoji.byKeyword(emojiName).toList();
             }
