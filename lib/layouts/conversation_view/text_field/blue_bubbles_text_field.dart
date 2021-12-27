@@ -115,10 +115,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     EventDispatcher().stream.listen((event) {
       if (!event.containsKey("type")) return;
-      if (event['data']['chatGuid'] != widget.chatGuid) return;
       if (event['type'] == 'update-emoji-picker') {
+        if (event['data']['chatGuid'] != widget.chatGuid) return;
         emojiMatches.value = event['data']['emojiMatches'];
       } else if (event['type'] == 'replace-emoji') {
+        if (event['data']['chatGuid'] != widget.chatGuid) return;
         emojiSelectedIndex.value = 0;
         int index = event['data']['emojiMatchIndex'];
         String text = controller!.text;
