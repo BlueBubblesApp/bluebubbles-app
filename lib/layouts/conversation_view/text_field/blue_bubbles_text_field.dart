@@ -115,11 +115,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     EventDispatcher().stream.listen((event) {
       if (!event.containsKey("type")) return;
+      if (event['data']['chatGuid'] != widget.chatGuid) return;
       if (event['type'] == 'update-emoji-picker') {
-        emojiMatches.value = event['data'];
+        emojiMatches.value = event['data']['emojiMatches'];
       } else if (event['type'] == 'replace-emoji') {
         emojiSelectedIndex.value = 0;
-        int index = event['data'];
+        int index = event['data']['emojiMatchIndex'];
         String text = controller!.text;
         RegExp regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
         Iterable<RegExpMatch> matches = regExp.allMatches(text);
@@ -237,7 +238,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           }
           print("${allMatches.length} matches found for: $emojiName");
         }
-        EventDispatcher().emit('update-emoji-picker', allMatches.toList());
+        EventDispatcher().emit('update-emoji-picker', {'emojiMatches': allMatches.toList(), 'chatGuid': widget.chatGuid});
       }
     });
 
@@ -641,15 +642,20 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           child: DeferPointer(
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(20),
-                              child: ListView.builder(
+                              child: Container(
+                                color: context.theme.accentColor,
+                                child: ListView.builder(
                                 padding: EdgeInsets.symmetric(vertical: 2),
                                 controller: emojiController,
                                 physics: CustomBouncingScrollPhysics(),
                                 itemBuilder: (BuildContext context, int index) => Material(
                                   color: Colors.transparent,
                                   child: InkWell(
+                                    onTapDown: (details) {
+                                      emojiSelectedIndex.value = index;
+                                    },
                                     onTap: () {
-                                      EventDispatcher().emit('replace-emoji', index);
+                                      EventDispatcher().emit('replace-emoji', {'emojiMatchIndex': index, 'chatGuid': widget.chatGuid});
                                     },
                                     child: Obx(
                                       () => ListTile(
@@ -678,7 +684,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               ),
                             ),
                           ),
-                        ),
+                        ),),
                       ),
                     ),
                   ),
@@ -923,7 +929,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               // Tab
               if (data.keyCode == 9) {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
-                  EventDispatcher().emit('replace-emoji', emojiSelectedIndex.value);
+                  EventDispatcher().emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
                   emojiSelectedIndex.value = 0;
                   emojiController.jumpTo(0);
                   return KeyEventResult.handled;
@@ -933,7 +939,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               // Enter
               if (data.keyCode == 13) {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
-                  EventDispatcher().emit('replace-emoji', emojiSelectedIndex.value);
+                  EventDispatcher().emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
                   emojiSelectedIndex.value = 0;
                   emojiController.jumpTo(0);
                   return KeyEventResult.handled;
