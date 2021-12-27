@@ -193,6 +193,54 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       if (mounted) setState(() {});
     });
 
+    // Add a listener for emoji
+    controller!.addListener(() {
+      String text = controller!.text;
+      if (text != previousText) {
+        previousText = text;
+        RegExp regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
+        Iterable<RegExpMatch> matches = regExp.allMatches(text);
+        List<Emoji> allMatches = [];
+        String emojiName = "";
+        if (matches.isNotEmpty && matches.first.start < controller!.selection.start) {
+          RegExpMatch match = matches.lastWhere((m) => m.start < controller!.selection.start);
+          if (text[match.end - 1] == ":") {
+            // Full emoji text (do not search for partial matches
+            emojiName = text.substring(match.start + 1, match.end - 1).toLowerCase();
+            if (emojiNames.keys.contains(emojiName)) {
+              allMatches = [Emoji.byShortName(emojiName)!];
+              // We can replace the :emoji: with the actual emoji here
+              String _text = text.substring(0, match.start) + allMatches.first.char + text.substring(match.end);
+              controller!.text = _text;
+              controller!.selection =
+                  TextSelection.fromPosition(TextPosition(offset: match.start + allMatches.first.char.length));
+            } else {
+              allMatches = Emoji.byKeyword(emojiName).toList();
+            }
+          } else {
+            emojiName = text.substring(match.start + 1, match.end).toLowerCase();
+            Iterable<Emoji> emojiExactlyMatches =
+            emojiNames.containsKey(emojiName) ? [emojiNames[emojiName]!] : [];
+            Iterable<String> emojiNameMatches = emojiNames.keys.where((name) => name.startsWith(emojiName));
+            Iterable<String> emojiNameAnywhereMatches = emojiNames.keys
+                .where((name) => name.substring(1).contains(emojiName))
+                .followedBy(
+                emojiFullNames.keys.where((name) => name.contains(emojiName))); // Substring 1 to avoid dupes
+            Iterable<Emoji> emojiMatches = emojiNameMatches
+                .followedBy(emojiNameAnywhereMatches)
+                .map((n) => emojiNames[n] ?? emojiFullNames[n]!);
+            Iterable<Emoji> keywordMatches = Emoji.byKeyword(emojiName);
+            allMatches = emojiExactlyMatches.followedBy(emojiMatches.followedBy(keywordMatches)).toSet().toList();
+
+            // Remove tone variations
+            allMatches.removeWhere((e) => e.shortName.contains("_tone"));
+          }
+          print("${allMatches.length} matches found for: $emojiName");
+        }
+        EventDispatcher().emit('update-emoji-picker', allMatches.toList());
+      }
+    });
+
     // Create the focus node and then add a an event emitter whenever
     // the focus changes
     focusNode = FocusNode();
@@ -847,51 +895,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         child: Focus(
           onKey: (focus, event) {
             String text = controller!.text;
-            if (text != previousText) {
-              previousText = text;
-              RegExp regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
-              Iterable<RegExpMatch> matches = regExp.allMatches(text);
-              List<Emoji> allMatches = [];
-              String emojiName = "";
-              if (matches.isNotEmpty && matches.first.start < controller!.selection.start) {
-                RegExpMatch match = matches.lastWhere((m) => m.start < controller!.selection.start);
-                if (text[match.end - 1] == ":") {
-                  // Full emoji text (do not search for partial matches
-                  emojiName = text.substring(match.start + 1, match.end - 1).toLowerCase();
-                  if (emojiNames.keys.contains(emojiName)) {
-                    allMatches = [Emoji.byShortName(emojiName)!];
-                    // We can replace the :emoji: with the actual emoji here
-                    String _text = text.substring(0, match.start) + allMatches.first.char + text.substring(match.end);
-                    controller!.text = _text;
-                    controller!.selection =
-                        TextSelection.fromPosition(TextPosition(offset: match.start + allMatches.first.char.length));
-                  } else {
-                    allMatches = Emoji.byKeyword(emojiName).toList();
-                  }
-                } else {
-                  emojiName = text.substring(match.start + 1, match.end).toLowerCase();
-                  Iterable<Emoji> emojiExactlyMatches =
-                      emojiNames.containsKey(emojiName) ? [emojiNames[emojiName]!] : [];
-                  Iterable<String> emojiNameMatches = emojiNames.keys.where((name) => name.startsWith(emojiName));
-                  Iterable<String> emojiNameAnywhereMatches = emojiNames.keys
-                      .where((name) => name.substring(1).contains(emojiName))
-                      .followedBy(
-                          emojiFullNames.keys.where((name) => name.contains(emojiName))); // Substring 1 to avoid dupes
-                  Iterable<Emoji> emojiMatches = emojiNameMatches
-                      .followedBy(emojiNameAnywhereMatches)
-                      .map((n) => emojiNames[n] ?? emojiFullNames[n]!);
-                  Iterable<Emoji> keywordMatches = Emoji.byKeyword(emojiName);
-                  allMatches = emojiExactlyMatches.followedBy(emojiMatches.followedBy(keywordMatches)).toSet().toList();
-
-                  // Remove tone variations
-                  allMatches.removeWhere((e) => e.shortName.contains("_tone"));
-                }
-                print("${allMatches.length} matches found for: $emojiName");
-              }
-              EventDispatcher().emit('update-emoji-picker', allMatches.toList());
-            }
-
-            if (kIsDesktop && event is RawKeyDownEvent && event.data is RawKeyEventDataWindows) {
+            if (event is RawKeyDownEvent && event.data is RawKeyEventDataWindows) {
               var data = event.data as RawKeyEventDataWindows;
 
               // Down arrow
