@@ -22,6 +22,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:defer_pointer/defer_pointer.dart';
 import 'package:dio/dio.dart';
 import 'package:emojis/emoji.dart';
 import 'package:faker/faker.dart';
@@ -40,7 +41,6 @@ import 'package:record/record.dart';
 import 'package:transparent_pointer/transparent_pointer.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
-import 'package:defer_pointer/defer_pointer.dart';
 
 class BlueBubblesTextField extends StatefulWidget {
   final List<PlatformFile>? existingAttachments;
@@ -117,6 +117,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       if (!event.containsKey("type")) return;
       if (event['type'] == 'update-emoji-picker') {
         if (event['data']['chatGuid'] != widget.chatGuid) return;
+        emojiSelectedIndex.value = 0;
         emojiMatches.value = event['data']['emojiMatches'];
       } else if (event['type'] == 'replace-emoji') {
         if (event['data']['chatGuid'] != widget.chatGuid) return;
@@ -222,16 +223,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             }
           } else {
             emojiName = text.substring(match.start + 1, match.end).toLowerCase();
-            Iterable<Emoji> emojiExactlyMatches =
-            emojiNames.containsKey(emojiName) ? [emojiNames[emojiName]!] : [];
+            Iterable<Emoji> emojiExactlyMatches = emojiNames.containsKey(emojiName) ? [emojiNames[emojiName]!] : [];
             Iterable<String> emojiNameMatches = emojiNames.keys.where((name) => name.startsWith(emojiName));
             Iterable<String> emojiNameAnywhereMatches = emojiNames.keys
                 .where((name) => name.substring(1).contains(emojiName))
                 .followedBy(
-                emojiFullNames.keys.where((name) => name.contains(emojiName))); // Substring 1 to avoid dupes
-            Iterable<Emoji> emojiMatches = emojiNameMatches
-                .followedBy(emojiNameAnywhereMatches)
-                .map((n) => emojiNames[n] ?? emojiFullNames[n]!);
+                    emojiFullNames.keys.where((name) => name.contains(emojiName))); // Substring 1 to avoid dupes
+            Iterable<Emoji> emojiMatches =
+                emojiNameMatches.followedBy(emojiNameAnywhereMatches).map((n) => emojiNames[n] ?? emojiFullNames[n]!);
             Iterable<Emoji> keywordMatches = Emoji.byKeyword(emojiName);
             allMatches = emojiExactlyMatches.followedBy(emojiMatches.followedBy(keywordMatches)).toSet().toList();
 
@@ -240,7 +239,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           }
           print("${allMatches.length} matches found for: $emojiName");
         }
-        EventDispatcher().emit('update-emoji-picker', {'emojiMatches': allMatches.toList(), 'chatGuid': widget.chatGuid});
+        EventDispatcher()
+            .emit('update-emoji-picker', {'emojiMatches': allMatches.toList(), 'chatGuid': widget.chatGuid});
       }
     });
 
@@ -638,16 +638,23 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       child: Scrollbar(
                         radius: Radius.circular(4),
                         controller: emojiController,
-                        child: MediaQuery.removePadding(
-                          context: context,
-                          removeTop: false,
-                          child: DeferPointer(
+                        child: DeferPointer(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: context.theme.accentColor,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: context.theme.backgroundColor,
+                                  offset: Offset(0, 0),
+                                  blurRadius: 20,
+                                  blurStyle: BlurStyle.outer,
+                                ),
+                              ],
+                            ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                color: context.theme.accentColor,
-                                child: ListView.builder(
-                                padding: EdgeInsets.symmetric(vertical: 2),
+                              child: ListView.builder(
                                 controller: emojiController,
                                 physics: CustomBouncingScrollPhysics(),
                                 itemBuilder: (BuildContext context, int index) => Material(
@@ -657,7 +664,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       emojiSelectedIndex.value = index;
                                     },
                                     onTap: () {
-                                      EventDispatcher().emit('replace-emoji', {'emojiMatchIndex': index, 'chatGuid': widget.chatGuid});
+                                      EventDispatcher().emit(
+                                          'replace-emoji', {'emojiMatchIndex': index, 'chatGuid': widget.chatGuid});
                                     },
                                     child: Obx(
                                       () => ListTile(
@@ -686,7 +694,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               ),
                             ),
                           ),
-                        ),),
+                        ),
                       ),
                     ),
                   ),
@@ -906,32 +914,41 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             if (event is RawKeyDownEvent && event.data is RawKeyEventDataWindows) {
               var data = event.data as RawKeyEventDataWindows;
 
+              int maxShown = context.height / 3 ~/ 48;
+              int upMovementIndex = maxShown ~/ 3;
+              int downMovementIndex = maxShown * 2 ~/ 3;
+
               // Down arrow
               if (data.keyCode == 40) {
                 if (emojiSelectedIndex.value < emojiMatches.value.length - 1) {
                   emojiSelectedIndex.value++;
-                  if (emojiSelectedIndex.value >= 3 && emojiSelectedIndex < emojiMatches.value.length - 1) {
-                    emojiController.jumpTo((emojiSelectedIndex.value - 3) * 48);
+                  if (emojiSelectedIndex.value >= downMovementIndex &&
+                      emojiSelectedIndex < emojiMatches.value.length - maxShown + downMovementIndex + 1) {
+                    emojiController
+                        .jumpTo(max((emojiSelectedIndex.value - downMovementIndex) * 48, emojiController.offset));
                   }
-                  return KeyEventResult.handled;
                 }
+                return KeyEventResult.handled;
               }
 
               // Up arrow
               if (data.keyCode == 38) {
                 if (emojiSelectedIndex.value > 0) {
                   emojiSelectedIndex.value--;
-                  if (emojiSelectedIndex.value >= 3 && emojiSelectedIndex < emojiMatches.value.length - 1) {
-                    emojiController.jumpTo((emojiSelectedIndex.value - 3) * 48);
+                  if (emojiSelectedIndex.value >= upMovementIndex &&
+                      emojiSelectedIndex < emojiMatches.value.length - maxShown + upMovementIndex + 1) {
+                    emojiController
+                        .jumpTo(min((emojiSelectedIndex.value - upMovementIndex) * 48, emojiController.offset));
                   }
-                  return KeyEventResult.handled;
                 }
+                return KeyEventResult.handled;
               }
 
               // Tab
               if (data.keyCode == 9) {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
-                  EventDispatcher().emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
+                  EventDispatcher()
+                      .emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
                   emojiSelectedIndex.value = 0;
                   emojiController.jumpTo(0);
                   return KeyEventResult.handled;
@@ -941,7 +958,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               // Enter
               if (data.keyCode == 13) {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
-                  EventDispatcher().emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
+                  EventDispatcher()
+                      .emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
                   emojiSelectedIndex.value = 0;
                   emojiController.jumpTo(0);
                   return KeyEventResult.handled;
