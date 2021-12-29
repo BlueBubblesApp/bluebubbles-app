@@ -708,7 +708,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       ),
                     ),
                   ),
-                  if (!kIsWeb && SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateMarkChatAsRead.value)
+                  if (!kIsWeb && !widget.chat.isGroup() && SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateMarkChatAsRead.value)
                     SliverToBoxAdapter(
                         child: ListTile(
                             leading: Text("Send Read Receipts",
@@ -726,7 +726,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                   EventDispatcher().emit("refresh", null);
                                   if (mounted) setState(() {});
                                 }))),
-                  if (!kIsWeb && SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSendTypingIndicators.value)
+                  if (!kIsWeb && !widget.chat.isGroup() && SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSendTypingIndicators.value)
                     SliverToBoxAdapter(
                         child: ListTile(
                             leading: Text("Send Typing Indicators",
