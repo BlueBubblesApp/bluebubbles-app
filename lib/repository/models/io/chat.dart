@@ -982,8 +982,8 @@ class Chat {
     if (id == null) return this;
     this.autoSendTypingIndicators = autoSendTypingIndicators;
     save(updateAutoSendTypingIndicators: true);
-    if (autoSendTypingIndicators) {
-      SocketManager().sendMessage("update-typing-status", {"chatGuid": guid}, (data) {});
+    if (!autoSendTypingIndicators) {
+      SocketManager().sendMessage("stopped-typing", {"chatGuid": guid}, (data) {});
     }
     ChatBloc().updateChat(this);
     return this;

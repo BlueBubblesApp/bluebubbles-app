@@ -166,7 +166,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         SocketManager().sendMessage("stopped-typing", {"chatGuid": widget.chatGuid}, (data) {});
       } else if (!selfTyping && (controller!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
-        if (SettingsManager().settings.privateSendTypingIndicators.value) {
+        if (SettingsManager().settings.privateSendTypingIndicators.value && CurrentChat.forGuid(widget.chatGuid)!.chat.autoSendTypingIndicators!) {
           SocketManager().sendMessage("started-typing", {"chatGuid": widget.chatGuid}, (data) {});
         }
       }
@@ -188,7 +188,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         SocketManager().sendMessage("stopped-typing", {"chatGuid": widget.chatGuid}, (data) {});
       } else if (!selfTyping && (subjectController!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
-        if (SettingsManager().settings.privateSendTypingIndicators.value) {
+        if (SettingsManager().settings.privateSendTypingIndicators.value && CurrentChat.forGuid(widget.chatGuid)!.chat.autoSendTypingIndicators!) {
           SocketManager().sendMessage("started-typing", {"chatGuid": widget.chatGuid}, (data) {});
         }
       }
