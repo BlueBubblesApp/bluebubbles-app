@@ -282,12 +282,14 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
         c.participants = List<Handle>.from(c.handles);
         c._deduplicateParticipants();
         c.fakeParticipants = c.participants.map((p) => (stuff[2][p.address] ?? "Unknown") as String).toList();
-        c.autoSendReadReceipts ??= true;
-        c.autoSendTypingIndicators ??= true;
-        c.save(
-          updateAutoSendReadReceipts: true,
-          updateAutoSendTypingIndicators: true,
-        );
+        if ([c.autoSendReadReceipts, c.autoSendTypingIndicators].contains(null)) {
+          c.autoSendReadReceipts ??= true;
+          c.autoSendTypingIndicators ??= true;
+          c.save(
+            updateAutoSendReadReceipts: true,
+            updateAutoSendTypingIndicators: true,
+          );
+        }
       }
       return chats;
     });
