@@ -519,7 +519,7 @@ class Settings {
     SettingsManager().settings.immersiveMode.value = map['immersiveMode'] ?? false;
     SettingsManager().settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     SettingsManager().settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
-    SettingsManager().settings.closeToTray.value = map['closeToTray'] ?? false;
+    SettingsManager().settings.closeToTray.value = map['closeToTray'] ?? true;
     SettingsManager().settings.askWhereToSave.value = map['askWhereToSave'] ?? false;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.privateAPISend.value = map['privateAPISend'] ?? false;
