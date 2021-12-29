@@ -624,7 +624,7 @@ class Settings {
     s.immersiveMode.value = map['immersiveMode'] ?? false;
     s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
-    s.closeToTray.value = map['closeToTray'] ?? false;
+    s.closeToTray.value = map['closeToTray'] ?? true;
     s.askWhereToSave.value = map['askWhereToSave'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
