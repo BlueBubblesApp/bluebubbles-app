@@ -151,7 +151,6 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
         extendBodyBehindAppBar: true,
         body: ImprovedScrolling(
           enableMMBScrolling: true,
-          enableKeyboardScrolling: true,
           mmbScrollConfig: MMBScrollConfig(
             customScrollCursor: DefaultCustomScrollCursor(
               cursorColor: context.textTheme.subtitle1!.color!,

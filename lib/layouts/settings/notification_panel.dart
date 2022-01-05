@@ -22,7 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-class NotificationPanelController extends GetxController with GetSingleTickerProviderStateMixin {
+class NotificationPanelController extends GetxController with SingleGetTickerProviderMixin {
   late final TabController tabController;
   final List<Widget> tabs = [];
 
@@ -124,7 +124,6 @@ class NotificationPanel extends StatelessWidget {
                 },
                 child: ImprovedScrolling(
                   enableMMBScrolling: true,
-                  enableKeyboardScrolling: true,
                   mmbScrollConfig: MMBScrollConfig(
                     customScrollCursor: DefaultCustomScrollCursor(
                       cursorColor: context.textTheme.subtitle1!.color!,

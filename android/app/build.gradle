@@ -72,6 +72,13 @@ android {
     flavorDimensions "app"
 
     productFlavors {
+        joel {
+            dimension "app"
+            resValue "string", "app_name", "BlueBubbles Dev (Joel)"
+            resValue "color", "ic_launcher_background", "#4c49de"
+            resValue "string", "file_provider", "com.bluebubbles.messaging.joel.fileprovider"
+            applicationId "com.bluebubbles.messaging.joel"
+        }
         tanay {
             dimension "app"
             resValue "string", "app_name", "BlueBubbles (Tanay Special Sauce)"
@@ -105,6 +112,7 @@ android {
 
     buildTypes {
         release {
+            productFlavors.joel.signingConfig signingConfigs.debug
             productFlavors.tanay.signingConfig signingConfigs.debug
             productFlavors.alpha.signingConfig signingConfigs.release
             productFlavors.beta.signingConfig signingConfigs.release

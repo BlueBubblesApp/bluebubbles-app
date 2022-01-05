@@ -189,7 +189,7 @@ class MethodChannelInterface {
         // Remove the notificaiton from that chat
         SocketManager().removeChatNotification(chat);
 
-        if (SettingsManager().settings.privateMarkChatAsRead.value) {
+        if (SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
           await SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
         }
 

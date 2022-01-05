@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:collection/collection.dart';
+import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
@@ -196,7 +198,7 @@ String randomString(int length) {
 }
 
 void showSnackbar(String title, String message,
-    {int animationMs = 250, int durationMs = 1500, Function(GetSnackBar)? onTap, TextButton? button}) {
+    {int animationMs = 250, int durationMs = 1500, Function(GetBar)? onTap, TextButton? button}) {
   Get.snackbar(title, message,
       snackPosition: SnackPosition.BOTTOM,
       colorText: Get.textTheme.bodyText1!.color,
@@ -208,8 +210,8 @@ void showSnackbar(String title, String message,
       animationDuration: Duration(milliseconds: animationMs),
       mainButton: button,
       onTap: onTap ??
-          (GetSnackBar bar) {
-            if (Get.isSnackbarOpen) Get.back();
+          (GetBar bar) {
+            if (Get.isSnackbarOpen ?? false) Get.back();
           });
 }
 
@@ -708,6 +710,13 @@ extension PlatformSpecificCapitalize on String {
 
 extension LastChars on String {
   String lastChars(int n) => substring(length - n);
+}
+
+extension IsEmoji on String {
+  bool get hasEmoji {
+    RegExp darkSunglasses = RegExp('\u{1F576}');
+    return RegExp("${emojiRegex.pattern}|${darkSunglasses.pattern}").hasMatch(this);
+  }
 }
 
 extension WidgetLocation on GlobalKey {

@@ -104,7 +104,7 @@
     },
     {
       "id": "3:9017250848141753702",
-      "lastPropertyId": "19:4234470006262207812",
+      "lastPropertyId": "21:55197157095191277",
       "name": "Chat",
       "properties": [
         {
@@ -204,6 +204,16 @@
           "id": "19:4234470006262207812",
           "name": "pinIndex",
           "type": 6
+        },
+        {
+          "id": "20:2695161584801983484",
+          "name": "autoSendReadReceipts",
+          "type": 1
+        },
+        {
+          "id": "21:55197157095191277",
+          "name": "autoSendTypingIndicators",
+          "type": 1
         }
       ],
       "relations": [

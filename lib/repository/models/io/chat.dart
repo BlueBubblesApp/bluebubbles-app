@@ -16,10 +16,12 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
+
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
@@ -82,7 +84,8 @@ class GetChatAttachments extends AsyncTask<List<dynamic>, List<Attachment>> {
   GetChatAttachments(this.stuff);
 
   @override
-  AsyncTask<List<dynamic>, List<Attachment>> instantiate(List<dynamic> parameters, [Map<String, SharedData>? sharedData]) {
+  AsyncTask<List<dynamic>, List<Attachment>> instantiate(List<dynamic> parameters,
+      [Map<String, SharedData>? sharedData]) {
     return GetChatAttachments(parameters);
   }
 
@@ -99,8 +102,8 @@ class GetChatAttachments extends AsyncTask<List<dynamic>, List<Attachment>> {
       /// Query the [messageBox] for all the message IDs and order by date
       /// descending
       final query = (messageBox.query()
-        ..link(Message_.chat, Chat_.id.equals(chatId))
-        ..order(Message_.dateCreated, flags: Order.descending))
+            ..link(Message_.chat, Chat_.id.equals(chatId))
+            ..order(Message_.dateCreated, flags: Order.descending))
           .build();
       final messages = query.find();
       query.close();
@@ -149,11 +152,11 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
     return store.runInTransaction(TxMode.read, () {
       /// Get the message IDs for the chat by querying the [cmJoinBox]
       final query = (messageBox.query(includeDeleted
-            ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
-            : Message_.dateDeleted.isNull())
-          ..link(Message_.chat, Chat_.id.equals(chatId))
-          ..order(Message_.dateCreated, flags: Order.descending))
-        .build();
+              ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
+              : Message_.dateDeleted.isNull())
+            ..link(Message_.chat, Chat_.id.equals(chatId))
+            ..order(Message_.dateCreated, flags: Order.descending))
+          .build();
       query
         ..limit = limit
         ..offset = offset;
@@ -162,7 +165,7 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
 
       /// Fetch and match handles
       final handles =
-      handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
+          handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
       for (int i = 0; i < messages.length; i++) {
         Message message = messages[i];
         if (handles.isNotEmpty && message.handleId != 0) {
@@ -177,7 +180,7 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
       }
       final messageGuids = messages.map((e) => e.guid!).toList();
       final associatedMessagesQuery =
-      (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
+          (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
       List<Message> associatedMessages = associatedMessagesQuery.find();
       associatedMessagesQuery.close();
       associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
@@ -226,7 +229,7 @@ class AddMessages extends AsyncTask<List<dynamic>, List<Message>> {
       /// Query the [messageBox] for associated messages (reactions) matching the
       /// message IDs
       final associatedMessagesQuery =
-      (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
+          (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
       List<Message> associatedMessages = associatedMessagesQuery.find();
       associatedMessagesQuery.close();
       associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
@@ -264,8 +267,8 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
       /// Query the [chatBox] for chats with limit and offset, prioritize pinned
       /// chats and order by latest message date
       final query = (chatBox.query()
-        ..order(Chat_.isPinned, flags: Order.descending)
-        ..order(Chat_.latestMessageDate, flags: Order.descending))
+            ..order(Chat_.isPinned, flags: Order.descending)
+            ..order(Chat_.latestMessageDate, flags: Order.descending))
           .build();
       query
         ..limit = stuff[0]
@@ -279,6 +282,14 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
         c.participants = List<Handle>.from(c.handles);
         c._deduplicateParticipants();
         c.fakeParticipants = c.participants.map((p) => (stuff[2][p.address] ?? "Unknown") as String).toList();
+        if ([c.autoSendReadReceipts, c.autoSendTypingIndicators].contains(null)) {
+          c.autoSendReadReceipts ??= true;
+          c.autoSendTypingIndicators ??= true;
+          c.save(
+            updateAutoSendReadReceipts: true,
+            updateAutoSendTypingIndicators: true,
+          );
+        }
       }
       return chats;
     });
@@ -307,13 +318,19 @@ class Chat {
   List<Handle> participants = [];
   List<String> fakeParticipants = [];
   Message? latestMessage;
+  bool? autoSendReadReceipts = true;
+  bool? autoSendTypingIndicators = true;
 
   final RxnString _customAvatarPath = RxnString();
+
   String? get customAvatarPath => _customAvatarPath.value;
+
   set customAvatarPath(String? s) => _customAvatarPath.value = s;
 
   final RxnInt _pinIndex = RxnInt();
+
   int? get pinIndex => _pinIndex.value;
+
   set pinIndex(int? i) => _pinIndex.value = i;
 
   final handles = ToMany<Handle>();
@@ -342,6 +359,8 @@ class Chat {
     this.latestMessageDate,
     this.latestMessageText,
     this.fakeLatestMessageText,
+    this.autoSendReadReceipts = true,
+    this.autoSendTypingIndicators = true,
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -407,6 +426,16 @@ class Chat {
       pinnedIndex: json['_pinIndex'],
       participants: participants,
       fakeParticipants: fakeParticipants,
+      autoSendReadReceipts: json.containsKey("autoSendReadReceipts")
+          ? (json["autoSendReadReceipts"] is bool)
+              ? json['autoSendReadReceipts']
+              : ((json['autoSendReadReceipts'] == 1) ? true : false)
+          : true,
+      autoSendTypingIndicators: json.containsKey("autoSendTypingIndicators")
+          ? (json["autoSendTypingIndicators"] is bool)
+              ? json['autoSendTypingIndicators']
+              : ((json['autoSendTypingIndicators'] == 1) ? true : false)
+          : true,
     );
 
     // Adds fallback getter for the ID
@@ -422,7 +451,9 @@ class Chat {
     bool updateIsPinned = false,
     bool updatePinIndex = false,
     bool updateIsArchived = false,
-    bool updateHasUnreadMessage = false
+    bool updateHasUnreadMessage = false,
+    bool updateAutoSendReadReceipts = false,
+    bool updateAutoSendTypingIndicators = false,
   }) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -446,6 +477,12 @@ class Chat {
       }
       if (!updateHasUnreadMessage) {
         hasUnreadMessage = existing?.hasUnreadMessage ?? hasUnreadMessage;
+      }
+      if (!updateAutoSendReadReceipts) {
+        autoSendReadReceipts = existing?.autoSendReadReceipts ?? autoSendReadReceipts;
+      }
+      if (!updateAutoSendTypingIndicators) {
+        autoSendTypingIndicators = existing?.autoSendTypingIndicators ?? autoSendTypingIndicators;
       }
 
       /// Save the chat and add the participants
@@ -669,7 +706,7 @@ class Chat {
 
   /// Add a lot of messages for the single chat to avoid running [addMessage]
   /// in a loop
- /* Future<List<Message>> bulkAddMessages(List<Message> messages,
+  /* Future<List<Message>> bulkAddMessages(List<Message> messages,
       {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
     for (Message m in messages) {
       // If this is a message preview and we don't already have metadata for this, get it
@@ -794,10 +831,10 @@ class Chat {
     if (kIsWeb || chat.id == null) return [];
     return store.runInTransaction(TxMode.read, () {
       final query = (messageBox.query(includeDeleted
-          ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
-          : Message_.dateDeleted.isNull())
-        ..link(Message_.chat, Chat_.id.equals(chat.id!))
-        ..order(Message_.dateCreated, flags: Order.descending))
+              ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
+              : Message_.dateDeleted.isNull())
+            ..link(Message_.chat, Chat_.id.equals(chat.id!))
+            ..order(Message_.dateCreated, flags: Order.descending))
           .build();
       query
         ..limit = limit
@@ -848,7 +885,6 @@ class Chat {
   Chat getParticipants() {
     if (kIsWeb || id == null) return this;
     store.runInTransaction(TxMode.read, () {
-
       /// Find the handles themselves
       participants = List<Handle>.from(handles);
     });
@@ -927,6 +963,28 @@ class Chat {
     if (id == null) return this;
     this.isArchived = isArchived;
     save(updateIsArchived: true);
+    ChatBloc().updateChat(this);
+    return this;
+  }
+
+  Chat toggleAutoRead(bool autoSendReadReceipts) {
+    if (id == null) return this;
+    this.autoSendReadReceipts = autoSendReadReceipts;
+    save(updateAutoSendReadReceipts: true);
+    if (autoSendReadReceipts) {
+      SocketManager().sendMessage("mark-chat-read", {"chatGuid": guid}, (data) {});
+    }
+    ChatBloc().updateChat(this);
+    return this;
+  }
+
+  Chat toggleAutoType(bool autoSendTypingIndicators) {
+    if (id == null) return this;
+    this.autoSendTypingIndicators = autoSendTypingIndicators;
+    save(updateAutoSendTypingIndicators: true);
+    if (!autoSendTypingIndicators) {
+      SocketManager().sendMessage("stopped-typing", {"chatGuid": guid}, (data) {});
+    }
     ChatBloc().updateChat(this);
     return this;
   }
@@ -1029,5 +1087,7 @@ class Chat {
         "latestMessageText": latestMessageText,
         "_customAvatarPath": _customAvatarPath.value,
         "_pinIndex": _pinIndex.value,
+        "autoSendReadReceipts": autoSendReadReceipts! ? 1 : 0,
+        "autoSendTypingIndicators": autoSendTypingIndicators! ? 1 : 0,
       };
 }

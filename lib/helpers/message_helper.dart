@@ -12,12 +12,11 @@ import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:universal_html/html.dart' as html;
-
-import 'emoji_regex.dart';
 
 class EmojiConst {
   static final String charNonSpacingMark = String.fromCharCode(0xfe0f);
@@ -202,8 +201,7 @@ class MessageHelper {
     return chats;
   }
 
-  static Future<void> handleNotification(Message message, Chat chat,
-      {bool force = false}) async {
+  static Future<void> handleNotification(Message message, Chat chat, {bool force = false}) async {
     // See if there is an existing message for the given GUID
     Message? existingMessage;
     if (!force) existingMessage = Message.findOne(guid: message.guid);
@@ -224,16 +222,20 @@ class MessageHelper {
     if (currChat?.chat.guid != chat.guid) ChatBloc().toggleChatUnread(chat, true, clearNotifications: false);
 
     if ((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) {
-      if (!SettingsManager().settings.notifyOnChatList.value
-          && currChat == null
-          && !Get.currentRoute.contains("settings")) return;
+      if (!SettingsManager().settings.notifyOnChatList.value &&
+          currChat == null &&
+          !Get.currentRoute.contains("settings")) return;
       if (currChat?.chat.guid == chat.guid && !LifeCycleManager().isBubble) return;
     }
     await NotificationManager().createNotificationFromMessage(chat, message);
   }
 
   static String getNotificationText(Message message, {bool withSender = false}) {
-    String sender = !withSender ? "" : message.isFromMe! ? "You: " : ContactManager().getContactTitle(message.handle) + ": ";
+    String sender = !withSender
+        ? ""
+        : message.isFromMe!
+            ? "You: "
+            : ContactManager().getContactTitle(message.handle) + ": ";
     // If the item type is not 0, it's a group event
     if (message.isGroupEvent()) {
       return sender + getGroupEventText(message);
@@ -272,12 +274,12 @@ class MessageHelper {
         // game pigeon messages have the text "�"
         if (associatedMessage.isInteractive()) {
           return "$sender $verb ${getInteractiveText(associatedMessage)}";
-        // now we check if theres a subject or text and construct out message based off that
-        } else if (!isNullOrEmpty(associatedMessage.subject, trimString: true)!
-            || !isNullOrEmpty(associatedMessage.text, trimString: true)!) {
+          // now we check if theres a subject or text and construct out message based off that
+        } else if (!isNullOrEmpty(associatedMessage.subject, trimString: true)! ||
+            !isNullOrEmpty(associatedMessage.text, trimString: true)!) {
           String messageText = (associatedMessage.subject ?? "") + (associatedMessage.text ?? "");
           return '$sender $verb “${messageText.trim()}”';
-        // if it has an attachment, we should fetch the attachments and get the attachment text
+          // if it has an attachment, we should fetch the attachments and get the attachment text
         } else if (associatedMessage.hasAttachments) {
           return '$sender $verb ${getAttachmentText(associatedMessage.fetchAttachments()!)}';
         }
@@ -333,13 +335,14 @@ class MessageHelper {
     if (text.codeUnits.length == 1 && text.codeUnits.first == 9786) return true;
 
     RegExp pattern = emojiRegex;
+    RegExp darkSunglasses = RegExp('\u{1F576}');
+
     List<RegExpMatch> matches = pattern.allMatches(text).toList();
-    if (matches.isEmpty) return false;
+    if (matches.isEmpty && !text.contains(darkSunglasses)) return false;
 
     List<String> items = matches.map((m) => m.toString()).toList();
 
     String replaced = text.replaceAll(pattern, "").replaceAll(String.fromCharCode(65039), "");
-    RegExp darkSunglasses = RegExp('\u{1F576}');
     replaced = replaced.replaceAll(darkSunglasses, "").trim();
     return items.length <= 3 && replaced.isEmpty;
   }
@@ -405,30 +408,54 @@ class MessageHelper {
   }
 
   static List<TextSpan> buildEmojiText(String text, TextStyle style) {
-    final children = <TextSpan>[];
-    final runes = text.runes;
-    final List<int> excludeList = [8217, 400];
-    for (int i = 0; i < runes.length;) {
-      int current = runes.elementAt(i);
-      final isEmoji = current > 255 && !excludeList.contains(current);
-      final shouldBreak = isEmoji ? (x) => x <= 255 || excludeList.contains(x) : (x) => x > 255 && !excludeList.contains(x);
+    RegExp darkSunglasses = RegExp('\u{1F576}');
+    RegExp _emojiRegex = RegExp("${emojiRegex.pattern}|${darkSunglasses.pattern}");
+    List<RegExpMatch> matches = _emojiRegex.allMatches(text).toList();
+    if (matches.isEmpty) {
+      return [
+        TextSpan(
+          text: text,
+          style: style,
+        )
+      ];
+    }
 
-      final chunk = <int>[];
-      while (!shouldBreak(current)) {
-        chunk.add(current);
-        if (++i >= runes.length) break;
-        current = runes.elementAt(i);
+    final children = <TextSpan>[];
+    int previousEnd = 0;
+    for (int i = 0; i < matches.length; i++) {
+      // Before the emoji
+      if (previousEnd <= matches[i].start) {
+        String chunk = text.substring(previousEnd, matches[i].start);
+        children.add(
+          TextSpan(
+            text: chunk,
+            style: style,
+          ),
+        );
+        previousEnd += chunk.length;
+      }
+
+      // The emoji
+      String chunk = text.substring(matches[i].start, matches[i].end);
+
+      // Add stringed emoji
+      while (i + 1 < matches.length && matches[i + 1].start == matches[i].end) {
+        chunk += text.substring(matches[++i].start, matches[i].end);
       }
       children.add(
         TextSpan(
-          text: String.fromCharCodes(chunk),
-          style: style.apply(
-              fontFamily: (isEmoji)
-                  ? "Apple Color Emoji"
-                  : null,
-              heightFactor: isEmoji ? 0.5 : 1
-          ),
+          text: chunk,
+          style: style.apply(fontFamily: "Apple Color Emoji"),
         ),
+      );
+      previousEnd += chunk.length;
+    }
+    if (previousEnd < text.length) {
+      children.add(
+          TextSpan(
+            text: text.substring(previousEnd),
+            style: style,
+          )
       );
     }
 

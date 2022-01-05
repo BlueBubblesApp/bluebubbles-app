@@ -85,7 +85,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     super.initState();
     currentChat = widget.currentChat;
 
-    topMinimum = CupertinoNavigationBar().preferredSize.height + 60 + (widget.message.hasReactions ? 110 : 50);
+    topMinimum = (widget.message.hasReactions ? CupertinoNavigationBar().preferredSize.height + 170 : 110);
     messageTopOffset = max(topMinimum, min(widget.childOffsetY, Get.height - widget.childSize!.height - 200));
 
     dmChat = ChatBloc().chats.firstWhereOrNull(
@@ -578,6 +578,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
+              Get.back();
               Navigator.of(context).pop();
               EventDispatcher().emit("focus-keyboard", widget.message);
             },
@@ -895,6 +896,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           onTap: () async {
             NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
             Message.softDelete(widget.message.guid!);
+            Get.back();
             Navigator.of(context).pop();
           },
           child: ListTile(

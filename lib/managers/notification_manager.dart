@@ -71,11 +71,11 @@ class NotificationManager {
     chat.toggleHasUnread(false);
 
     if (SettingsManager().settings.enablePrivateAPI.value) {
-      if (SettingsManager().settings.privateMarkChatAsRead.value) {
+      if (SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
         SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
       }
 
-      if (!MethodChannelInterface().headless && SettingsManager().settings.privateSendTypingIndicators.value) {
+      if (!MethodChannelInterface().headless && SettingsManager().settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
         SocketManager().sendMessage("update-typing-status", {"chatGuid": chat.guid}, (data) {});
       }
     }

@@ -442,10 +442,13 @@ class ThemePanel extends GetView<ThemePanelController> {
                                     margin: EdgeInsets.only(bottom: 10),
                                     child: TextButton(
                                       child: Text("CLOSE"),
-                                      onPressed: () {
-                                        progress.value = null;
-                                        totalSize.value = null;
-                                        Get.back();
+                                      onPressed: () async {
+                                        Navigator.of(context).pop();
+                                        Future.delayed(Duration(milliseconds: 400), ()
+                                        {
+                                          progress.value = null;
+                                          totalSize.value = null;
+                                        });
                                       },
                                     ),
                                   ),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
+import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
@@ -14,7 +15,6 @@ import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -610,7 +610,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                           stopRestarting();
                         }
                       },
-                      trailing: (!controller.isRestartingMessages.value)
+                      trailing: Obx(() => (!controller.isRestartingMessages.value)
                           ? Icon(Icons.refresh, color: Colors.grey)
                           : Container(
                           constraints: BoxConstraints(
@@ -620,7 +620,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                           child: CircularProgressIndicator(
                             strokeWidth: 3,
                             valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                          )))),
+                          ))))),
                   Obx(() {
                     if (SettingsManager().settings.enablePrivateAPI.value) {
                       return Container(
@@ -725,8 +725,20 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
 
                         // Perform the restart
                         try {
-                          MethodChannelInterface().invokeMethod(
-                              "set-next-restart", {"value": DateTime.now().toUtc().millisecondsSinceEpoch});
+                          if (kIsDesktop || kIsWeb) {
+                            var db = FirebaseDatabase(databaseURL: SettingsManager().fcmData?.firebaseURL);
+                            var ref = db.reference().child('config').child('nextRestart');
+                            ref.set(DateTime
+                                .now()
+                                .toUtc()
+                                .millisecondsSinceEpoch);
+                          } else {
+                            MethodChannelInterface().invokeMethod(
+                                "set-next-restart", {"value": DateTime
+                                .now()
+                                .toUtc()
+                                .millisecondsSinceEpoch});
+                          }
                         } finally {
                           stopRestarting();
                         }

@@ -20,7 +20,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  get: ^4.6.1
+  get: ^4.3.8 # pinned because of snackbar issue
   cupertino_icons: ^1.0.4
   exif: ^3.0.1
   flutter_native_image: ^0.0.6+1 # mobile only
@@ -133,10 +133,13 @@ dependencies:
   async_task: ^1.0.14
   filesystem_picker: ^2.0.0
   version: ^2.0.0
+  emojis: ^0.9.9
+  defer_pointer: ^0.0.2
 
 dependency_overrides:
   rxdart: ^0.27.3
   path_parsing: ^1.0.0
+  get: 4.3.8 # pinned because of snackbar issue
 
 dev_dependencies:
   build_runner: ^2.1.7
@@ -231,7 +234,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: com.bluebubbles.app
-  msix_version: 1.0.0.11
+  msix_version: 1.7.1.2
   publisher: CN=BlueBubbles, O=BlueBubbles, C=US
   vs_generated_images_folder_path: windows/icons
   icons_background_color: transparent

@@ -4,6 +4,7 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.da
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
@@ -707,6 +708,42 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       ),
                     ),
                   ),
+                  if (!kIsWeb && !widget.chat.isGroup() && SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateMarkChatAsRead.value)
+                    SliverToBoxAdapter(
+                        child: ListTile(
+                            leading: Text("Send Read Receipts",
+                                style: TextStyle(
+                                  color: Theme.of(context).primaryColor,
+                                )),
+                            trailing: Switch(
+                                value: widget.chat.autoSendReadReceipts!,
+                                activeColor: Theme.of(context).primaryColor,
+                                activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                                inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                                inactiveThumbColor: Theme.of(context).colorScheme.secondary,
+                                onChanged: (value) {
+                                  widget.chat.toggleAutoRead(!widget.chat.autoSendReadReceipts!);
+                                  EventDispatcher().emit("refresh", null);
+                                  if (mounted) setState(() {});
+                                }))),
+                  if (!kIsWeb && !widget.chat.isGroup() && SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSendTypingIndicators.value)
+                    SliverToBoxAdapter(
+                        child: ListTile(
+                            leading: Text("Send Typing Indicators",
+                                style: TextStyle(
+                                  color: Theme.of(context).primaryColor,
+                                )),
+                            trailing: Switch(
+                                value: widget.chat.autoSendTypingIndicators!,
+                                activeColor: Theme.of(context).primaryColor,
+                                activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                                inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                                inactiveThumbColor: Theme.of(context).colorScheme.secondary,
+                                onChanged: (value) {
+                                  widget.chat.toggleAutoType(!widget.chat.autoSendTypingIndicators!);
+                                  EventDispatcher().emit("refresh", null);
+                                  if (mounted) setState(() {});
+                                }))),
                   if (!kIsWeb)
                     SliverToBoxAdapter(
                         child: ListTile(
