@@ -573,7 +573,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-      if (SettingsManager().settings.enablePrivateAPI.value && isBigSur && (currentChat?.chat.isIMessage ?? true))
+      if (SettingsManager().settings.enablePrivateAPI.value && isBigSur && (currentChat?.chat.isIMessage ?? true) && !widget.message.guid!.startsWith("temp"))
         Material(
           color: Colors.transparent,
           child: InkWell(
