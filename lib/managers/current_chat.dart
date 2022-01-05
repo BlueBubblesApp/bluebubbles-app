@@ -61,6 +61,8 @@ class CurrentChat {
 
   late MessageMarkers messageMarkers;
 
+  Timer? _debounce;
+
   double get timeStampOffset => _timeStampOffset;
 
   double get replyOffset => _replyOffset;
@@ -152,6 +154,10 @@ class CurrentChat {
 
       if (scrollController.offset >= 500 && !showScrollDown.value) {
         showScrollDown.value = true;
+        if (_debounce?.isActive ?? false) _debounce?.cancel();
+        _debounce = Timer(const Duration(seconds: 3), () {
+          showScrollDown.value = false;
+        });
       } else if (showScrollDown.value) {
         showScrollDown.value = false;
       }
