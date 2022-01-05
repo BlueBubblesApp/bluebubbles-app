@@ -40,6 +40,7 @@ class SetupBloc {
   final Rxn<SetupData> data = Rxn<SetupData>();
   final Rxn<SocketState> connectionStatus = Rxn<SocketState>();
   final RxBool isSyncing = false.obs;
+  final RxBool isIncrementalSyncing = false.obs;
   Worker? connectionSubscription;
 
   double _progress = 0.0;
@@ -261,7 +262,7 @@ class SetupBloc {
       {String? chatGuid, bool saveDate = true, Function? onConnectionError, Function? onComplete}) async {
     // If we are already syncing, don't sync again
     // Or, if we haven't finished setup, or we aren't connected, don't sync
-    if (isSyncing.value || !settings.finishedSetup.value || SocketManager().state.value != SocketState.CONNECTED) {
+    if (isIncrementalSyncing.value || !settings.finishedSetup.value || SocketManager().state.value != SocketState.CONNECTED) {
       return;
     }
 
@@ -272,7 +273,7 @@ class SetupBloc {
     processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
 
     // if (onConnectionError != null) this.onConnectionError = onConnectionError;
-    isSyncing.value = true;
+    isIncrementalSyncing.value = true;
     _progress = 1;
 
     // Store the time we started syncing
@@ -345,7 +346,8 @@ class SetupBloc {
   }
 
   void closeSync() {
-    isSyncing.value = false;
+    if (isSyncing.value) isSyncing.value = false;
+    if (isIncrementalSyncing.value) isIncrementalSyncing.value = false;
     if (processId != null) SocketManager().finishSocketProcess(processId);
     data.value = null;
     connectionStatus.value = null;

@@ -165,7 +165,6 @@ class SocketManager {
         for (Function f in _manager.disconnectSubscribers.values) {
           f.call();
         }
-//androidx.sharetarget.ChooserTargetServiceCompat
         state.value = SocketState.DISCONNECTED;
         Timer t;
         t = Timer(const Duration(seconds: 5), () {

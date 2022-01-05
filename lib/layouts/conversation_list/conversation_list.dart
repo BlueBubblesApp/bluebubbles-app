@@ -148,7 +148,7 @@ class ConversationListState extends State<ConversationList> {
   Widget getSyncIndicatorWidget() {
     return Obx(() {
       if (!SettingsManager().settings.showSyncIndicator.value) return SizedBox.shrink();
-      if (!SetupBloc().isSyncing.value) return Container();
+      if (!SetupBloc().isIncrementalSyncing.value) return Container();
       return buildProgressIndicator(context, size: 12);
     });
   }
