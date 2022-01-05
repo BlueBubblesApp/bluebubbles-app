@@ -12,11 +12,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ContactSelectorOption extends StatelessWidget {
-  const ContactSelectorOption({Key? key, required this.item, required this.onSelected, required this.index})
+  const ContactSelectorOption({Key? key, required this.item, required this.onSelected, required this.index, this.shouldShowChatType = false})
       : super(key: key);
   final UniqueContact item;
   final Function(UniqueContact item) onSelected;
   final int index;
+  final bool shouldShowChatType;
 
   String getTypeStr(String? type) {
     if (isNullOrEmpty(type)!) return "";
@@ -138,10 +139,34 @@ class ContactSelectorOption extends StatelessWidget {
                 editable: false,
               ),
         trailing: item.isChat
-            ? Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
-                color: Theme.of(context).primaryColor,
-              )
+            ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (shouldShowChatType)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 5.0),
+                    child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.all(Radius.circular(20)),
+                          border: Border.all(
+                              color: item.chat!.isIMessage ? Theme.of(context).primaryColor : Colors.green
+                          ),
+                        ),
+                        child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 3, horizontal: 7),
+                            child: Text(
+                                item.chat!.isIMessage ? "iMessage" : "SMS",
+                                style: TextStyle(color: item.chat!.isIMessage ? Theme.of(context).primaryColor : Colors.green)
+                            )
+                        )
+                    ),
+                  ),
+                Icon(
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
+                    color: shouldShowChatType && !item.chat!.isIMessage ? Colors.green : Theme.of(context).primaryColor,
+                  ),
+              ],
+            )
             : null,
       ),
     );

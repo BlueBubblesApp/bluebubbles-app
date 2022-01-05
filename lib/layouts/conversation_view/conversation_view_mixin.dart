@@ -25,6 +25,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1102,7 +1103,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         initialData: contacts,
         stream: contactStream,
         builder: (BuildContext context, AsyncSnapshot<List<UniqueContact>> snapshot) {
-          List? data = snapshot.hasData ? snapshot.data : [];
+          List<UniqueContact>? data = snapshot.hasData ? snapshot.data : [];
           return ListView.builder(
             physics: ThemeSwitcher.getScrollPhysics(),
             itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
@@ -1110,6 +1111,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               item: data[index],
               onSelected: onSelected,
               index: index,
+              shouldShowChatType: data.firstWhereOrNull((e) => !(e.chat?.isIMessage ?? true)) != null,
             ),
             itemCount: data?.length ?? 0,
           );
