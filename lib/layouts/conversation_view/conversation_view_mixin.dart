@@ -20,6 +20,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -341,19 +342,33 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       return AppBar(
         systemOverlayStyle: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.dark
                       ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title!,
-              style: Theme.of(context).textTheme.headline1!.apply(color: fontColor),
-            ),
-            if (SettingsManager().settings.skin.value == Skins.Samsung && (chat!.isGroup() || (!title.isPhoneNumber && !title.isEmail)))
+        title: GestureDetector(
+          onTap: () async {
+            if (!chat!.isGroup() && SettingsManager().settings.skin.value != Skins.iOS) {
+              final handle = chat!.handles.first;
+              final contact = ContactManager().handleToContact[handle.address];
+              if (contact == null) {
+                await MethodChannelInterface().invokeMethod("open-contact-form",
+                    {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+              } else {
+                await MethodChannelInterface().invokeMethod("view-contact-form", {'id': contact.id});
+              }
+            }
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                chat!.isGroup() ? "${chat!.participants.length} recipients" : chat!.participants[0].address,
-                style: Theme.of(context).textTheme.subtitle1!.apply(color: fontColor2),
+                title!,
+                style: Theme.of(context).textTheme.headline1!.apply(color: fontColor),
               ),
-          ],
+              if (SettingsManager().settings.skin.value == Skins.Samsung && (chat!.isGroup() || (!title.isPhoneNumber && !title.isEmail)))
+                Text(
+                  chat!.isGroup() ? "${chat!.participants.length} recipients" : chat!.participants[0].address,
+                  style: Theme.of(context).textTheme.subtitle1!.apply(color: fontColor2),
+                ),
+            ],
+          ),
         ),
         bottom: PreferredSize(
           child: Container(
