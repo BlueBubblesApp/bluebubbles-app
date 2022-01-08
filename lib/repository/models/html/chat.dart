@@ -94,6 +94,8 @@ class Chat {
   final RxnInt _pinIndex = RxnInt();
   int? get pinIndex => _pinIndex.value;
   set pinIndex(int? i) => _pinIndex.value = i;
+  bool? autoSendReadReceipts = true;
+  bool? autoSendTypingIndicators = true;
 
   final List<Handle> handles = [];
 
@@ -118,6 +120,8 @@ class Chat {
     this.latestMessageDate,
     this.latestMessageText,
     this.fakeLatestMessageText,
+    this.autoSendReadReceipts = true,
+    this.autoSendTypingIndicators = true,
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -490,6 +494,14 @@ class Chat {
     save();
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     ChatBloc().updateChat(this);
+    return this;
+  }
+
+  Chat toggleAutoRead(bool autoSendReadReceipts) {
+    return this;
+  }
+
+  Chat toggleAutoType(bool autoSendTypingIndicators) {
     return this;
   }
 
