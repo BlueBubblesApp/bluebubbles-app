@@ -234,7 +234,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: com.bluebubbles.app
-  msix_version: 1.7.1.2
+  msix_version: 1.7.1.3
   publisher: CN=BlueBubbles, O=BlueBubbles, C=US
   vs_generated_images_folder_path: windows/icons
   icons_background_color: transparent

@@ -18,17 +18,29 @@ enum LogLevel { INFO, WARN, ERROR, DEBUG }
 
 class BaseLogger extends GetxService {
   final RxBool saveLogs = false.obs;
+  final RxBool startup = false.obs;
   final int lineLimit = 5000;
   List<String> logs = [];
   List<LogLevel> enabledLevels = [LogLevel.INFO, LogLevel.WARN, LogLevel.DEBUG, LogLevel.ERROR];
+  final String _directoryPath = "/storage/emulated/0/Download/BlueBubbles-log-";
 
   String get logPath {
-    String directoryPath = "/storage/emulated/0/Download/BlueBubbles-log-";
     DateTime now = DateTime.now().toLocal();
-    return directoryPath + "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" + ".txt";
+    return _directoryPath + "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" + ".txt";
   }
 
   set setEnabledLevels(List<LogLevel> levels) => enabledLevels = levels;
+
+  init() {
+    // For now, only do startup logs on desktop
+    if (kIsDesktop) {
+      startup.listen((val) async {
+        if (val) {
+          await writeToStartupFile('----------------${DateTime.now().toLocal()}----------------');
+        }
+      });
+    }
+  }
 
   void startSavingLogs() {
     saveLogs.value = true;
@@ -42,6 +54,17 @@ class BaseLogger extends GetxService {
 
     // Clear the logs
     logs.clear();
+  }
+
+  Future<void> writeToStartupFile(String log) async {
+    if (kIsWeb) return;
+    String filePath = _directoryPath + "startup.txt";
+    if (kIsDesktop) {
+      filePath = (await getDownloadsDirectory())!.path;
+      filePath = join(filePath, "BlueBubbles_Logs_Startup.txt");
+    }
+    File file = File(filePath);
+    file.writeAsStringSync(log + '\n', mode: FileMode.append);
   }
 
   Future<void> writeLogToFile() async {
@@ -96,6 +119,11 @@ class BaseLogger extends GetxService {
 
       // Log the data normally
       debugPrint(theLog);
+
+      // If we are in startup, write the log to the startup file
+      if (startup.value) {
+        writeToStartupFile(theLog);
+      }
 
       // If we aren't saving logs, return here
       if (!saveLogs.value) return;

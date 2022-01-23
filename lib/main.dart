@@ -123,11 +123,14 @@ Future<Null> bubble() async {
 
 //ignore: prefer_void_to_null
 Future<Null> initApp(bool isBubble) async {
+    Logger.init();
+  Logger.startup.value = true;
+  Logger.info('Startup Logs');
   HttpOverrides.global = MyHttpOverrides();
   LifeCycleManager().isBubble = isBubble;
 
   // This captures errors reported by the Flutter framework.
-  FlutterError.onError = (FlutterErrorDetails details) {
+  FlutterError.onError = (FlutterErrorDetails details) async {
     Logger.error(details.exceptionAsString());
     Logger.error(details.stack.toString());
     if (isInDebugMode) {
@@ -155,15 +158,15 @@ Future<Null> initApp(bool isBubble) async {
       Future<void> initStore({bool saveThemes = false}) async {
         String? storeRef = prefs.getString("objectbox-reference");
         if (storeRef != null) {
-          debugPrint("Opening ObjectBox store from reference");
+          Logger.info("Opening ObjectBox store from reference");
           try {
             store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
           } catch (_) {
-            debugPrint("Failed to open store from reference, opening from path");
+            Logger.info("Failed to open store from reference, opening from path");
             store = await openStore(directory: documentsDirectory.path + '/objectbox');
           }
         } else {
-          debugPrint("Opening ObjectBox store from path");
+          Logger.info("Opening ObjectBox store from path");
           store = await openStore(directory: documentsDirectory.path + '/objectbox');
         }
         attachmentBox = store.box<Attachment>();
@@ -289,6 +292,7 @@ Future<Null> initApp(bool isBubble) async {
     stacktrace = s;
   }
 
+  Logger.startup.value = false;
   if (exception == null) {
     ThemeObject light = ThemeObject.getLightTheme();
     ThemeObject dark = ThemeObject.getDarkTheme();

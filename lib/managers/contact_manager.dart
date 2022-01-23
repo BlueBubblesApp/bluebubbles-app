@@ -110,6 +110,7 @@ class ContactManager {
 
     // Match handles in the database with contacts
     await matchHandles();
+    await ChatBloc().getChatBatches(fakeNames: ContactManager().handleToFakeName);
 
     Logger.info("Finished fetching contacts (${handleToContact.length})", tag: tag);
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
