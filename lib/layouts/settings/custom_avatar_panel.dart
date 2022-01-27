@@ -145,7 +145,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                       File file = File(ChatBloc().chats[index].customAvatarPath!);
                                       file.delete();
                                       ChatBloc().chats[index].customAvatarPath = null;
-                                      ChatBloc().chats[index].save();
+                                      ChatBloc().chats[index].save(updateCustomAvatarPath: true);
                                       Get.back();
                                     }),
                                 TextButton(

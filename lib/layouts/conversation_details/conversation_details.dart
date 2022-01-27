@@ -618,7 +618,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                             File file = File(chat.customAvatarPath!);
                                             file.delete();
                                             chat.customAvatarPath = null;
-                                            chat.save();
+                                            chat.save(updateCustomAvatarPath: true);
                                             Get.back();
                                           }),
                                       TextButton(

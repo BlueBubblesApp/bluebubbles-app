@@ -454,6 +454,7 @@ class Chat {
     bool updateHasUnreadMessage = false,
     bool updateAutoSendReadReceipts = false,
     bool updateAutoSendTypingIndicators = false,
+    bool updateCustomAvatarPath = false,
   }) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -483,6 +484,9 @@ class Chat {
       }
       if (!updateAutoSendTypingIndicators) {
         autoSendTypingIndicators = existing?.autoSendTypingIndicators ?? autoSendTypingIndicators;
+      }
+      if (!updateCustomAvatarPath) {
+        customAvatarPath = existing?.customAvatarPath ?? customAvatarPath;
       }
 
       /// Save the chat and add the participants
