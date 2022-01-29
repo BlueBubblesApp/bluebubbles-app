@@ -38,7 +38,7 @@ class _AvatarCropState extends State<AvatarCrop> {
       }
       await file.writeAsBytes(croppedData);
       ChatBloc().chats[widget.index!].customAvatarPath = file.path;
-      ChatBloc().chats[widget.index!].save();
+      ChatBloc().chats[widget.index!].save(updateCustomAvatarPath: true);
       CustomNavigator.backSettings(context, closeOverlays: true);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
@@ -48,7 +48,7 @@ class _AvatarCropState extends State<AvatarCrop> {
       }
       await file.writeAsBytes(croppedData);
       widget.chat!.customAvatarPath = file.path;
-      widget.chat!.save();
+      widget.chat!.save(updateCustomAvatarPath: true);
       Get.back(closeOverlays: true);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     }
