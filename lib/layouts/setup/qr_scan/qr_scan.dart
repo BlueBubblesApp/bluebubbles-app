@@ -602,6 +602,10 @@ class _QRScanState extends State<QRScan> {
       final newUrl = url.split(":").first;
       isValid = newUrl.isIPv6 || newUrl.isIPv4;
     }
+    if (url.endsWith(".network") && !isValid) {
+      final newUrl = url.split(".network").first;
+      isValid = (newUrl + ".com").isURL;
+    }
     if (!isValid || password.isEmpty) {
       setState(() {
         error = "Please enter a valid URL and password!";
