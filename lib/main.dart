@@ -123,7 +123,7 @@ Future<Null> bubble() async {
 
 //ignore: prefer_void_to_null
 Future<Null> initApp(bool isBubble) async {
-    Logger.init();
+  Logger.init();
   Logger.startup.value = true;
   Logger.info('Startup Logs');
   HttpOverrides.global = MyHttpOverrides();
@@ -166,7 +166,7 @@ Future<Null> initApp(bool isBubble) async {
             store = await openStore(directory: documentsDirectory.path + '/objectbox');
           }
         } else {
-          Logger.info("Opening ObjectBox store from path");
+          Logger.info("Opening ObjectBox store from path: ${documentsDirectory.path + '/objectbox'}");
           store = await openStore(directory: documentsDirectory.path + '/objectbox');
         }
         attachmentBox = store.box<Attachment>();

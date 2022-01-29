@@ -5,12 +5,13 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/html/launch_at_startup.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'dart:io';
 
 class DesktopPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+    Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context)
         .textTheme
         .subtitle1
@@ -19,8 +20,8 @@ class DesktopPanel extends StatelessWidget {
     Color headerColor;
     Color tileColor;
     if ((Theme.of(context).colorScheme.secondary.computeLuminance() <
-                Theme.of(context).backgroundColor.computeLuminance() ||
-            SettingsManager().settings.skin.value == Skins.Material) &&
+        Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value == Skins.Material) &&
         (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
       headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
@@ -46,45 +47,47 @@ class DesktopPanel extends StatelessWidget {
                 backgroundColor: tileColor,
                 children: [
                   Obx(() => SettingsSwitch(
+                    onChanged: (bool val) async {
+                      SettingsManager().settings.launchAtStartup.value = val;
+                      saveSettings();
+                      if (val) {
+                        await LaunchAtStartup.enable();
+                      } else {
+                        await LaunchAtStartup.disable();
+                      }
+                    },
+                    initialVal: SettingsManager().settings.launchAtStartup.value,
+                    title: "Launch on Startup",
+                    subtitle: "Automatically open the desktop app on startup.",
+                    backgroundColor: tileColor,
+                  )),
+                  if (!Platform.isLinux)
+                    Obx(() {
+                      if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        return Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 65.0),
+                            child: SettingsDivider(color: headerColor),
+                          ),
+                        );
+                      } else {
+                        return SizedBox.shrink();
+                      }
+                    }),
+                  if (!Platform.isLinux)
+                    Obx(
+                          () => SettingsSwitch(
                         onChanged: (bool val) async {
-                          SettingsManager().settings.launchAtStartup.value = val;
+                          SettingsManager().settings.closeToTray.value = val;
                           saveSettings();
-                          if (val) {
-                            await LaunchAtStartup.enable();
-                          } else {
-                            await LaunchAtStartup.disable();
-                          }
                         },
-                        initialVal: SettingsManager().settings.launchAtStartup.value,
-                        title: "Launch on Startup",
-                        subtitle: "Automatically open the desktop app on startup.",
+                        initialVal: SettingsManager().settings.closeToTray.value,
+                        title: "Close to Tray",
+                        subtitle: "When enabled, clicking the close button will minimize the app to the system tray",
                         backgroundColor: tileColor,
-                      )),
-                  Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS) {
-                      return Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
-                        ),
-                      );
-                    } else {
-                      return SizedBox.shrink();
-                    }
-                  }),
-                  Obx(
-                    () => SettingsSwitch(
-                      onChanged: (bool val) async {
-                        SettingsManager().settings.closeToTray.value = val;
-                        saveSettings();
-                      },
-                      initialVal: SettingsManager().settings.closeToTray.value,
-                      title: "Close to Tray",
-                      subtitle: "When enabled, clicking the close button will minimize the app to the system tray",
-                      backgroundColor: tileColor,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],

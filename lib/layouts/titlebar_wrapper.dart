@@ -2,7 +2,9 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get_utils/src/extensions/context_extensions.dart';
+import 'dart:io';
 
 class TitleBarWrapper extends StatelessWidget {
   TitleBarWrapper({Key? key, required this.child}) : super(key: key);
@@ -11,12 +13,12 @@ class TitleBarWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return kIsDesktop
+    return kIsDesktop && !Platform.isLinux
         ? WindowBorder(
-            color: Colors.transparent,
-            width: 0,
-            child: Stack(children: <Widget>[child, TitleBar()]),
-          )
+      color: Colors.transparent,
+      width: 0,
+      child: Stack(children: <Widget>[child, TitleBar()]),
+    )
         : child;
   }
 }
@@ -61,8 +63,8 @@ class WindowButtons extends StatelessWidget {
         MinimizeWindowButton(colors: buttonColors),
         MaximizeWindowButton(colors: buttonColors),
         CloseWindowButton(colors: closeButtonColors, onPressed: () =>
-          SettingsManager().settings.closeToTray.value
-              ? appWindow.hide() : appWindow.close()),
+        SettingsManager().settings.closeToTray.value
+            ? appWindow.hide() : appWindow.close()),
       ],
     );
   }
