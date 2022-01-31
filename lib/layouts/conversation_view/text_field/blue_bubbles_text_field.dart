@@ -201,7 +201,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       String text = controller!.text;
       if (text != previousText) {
         previousText = text;
-        RegExp regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
+        RegExp regExp = RegExp(r"(?<=^| |\n):[^: \n]{2,}((?=[ \n]|$)|:)", multiLine: true);
         Iterable<RegExpMatch> matches = regExp.allMatches(text);
         List<Emoji> allMatches = [];
         String emojiName = "";
@@ -221,7 +221,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             } else {
               allMatches = Emoji.byKeyword(emojiName).toList();
             }
-          } else {
+          } else if (match.end >= controller!.selection.start) {
             emojiName = text.substring(match.start + 1, match.end).toLowerCase();
             Iterable<Emoji> emojiExactlyMatches = emojiNames.containsKey(emojiName) ? [emojiNames[emojiName]!] : [];
             Iterable<String> emojiNameMatches = emojiNames.keys.where((name) => name.startsWith(emojiName));

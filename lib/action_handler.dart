@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -504,6 +505,7 @@ class ActionHandler {
     }
 
     if (!headless && chat != null) NewMessageManager().updateMessage(chat, updatedMessage.guid!, updatedMessage);
+    if (!headless && (kIsDesktop || kIsWeb)) EventDispatcher().emit('update-highlight', updatedMessage.getChat()?.guid);
   }
 
   /// Handles marking a chat by [chatGuid], with a new [status] of read or unread.

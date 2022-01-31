@@ -13,6 +13,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -222,9 +223,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   void openDetails() {
     Navigator.of(context).push(
       ThemeSwitcher.buildPageRoute(
-        builder: (context) => ConversationDetails(
-          chat: chat!,
-          messageBloc: messageBloc ?? initMessageBloc(),
+        builder: (context) => TitleBarWrapper(
+          child: ConversationDetails(
+            chat: chat!,
+            messageBloc: messageBloc ?? initMessageBloc(),
+          ),
         ),
       ),
     );
@@ -580,12 +583,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                     ])))));
 
     final children = [
+      if (kIsDesktop) SizedBox(height: 8.0, width: 5.0),
       ContactAvatarGroupWidget(
         chat: chat!,
         size: chat!.participants.length == 1 ? 40 : 45,
         onTap: openDetails,
       ),
-      SizedBox(height: 5.0, width: 5.0),
+      if (!kIsDesktop) SizedBox(height: 5.0, width: 5.0),
       Row(mainAxisSize: MainAxisSize.min, children: [
         Container(
           constraints: BoxConstraints(
