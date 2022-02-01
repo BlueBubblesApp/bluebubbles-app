@@ -234,10 +234,10 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: com.bluebubbles.app
-  msix_version: 1.7.1.4
+  msix_version: 1.7.1.5
   publisher: CN=BlueBubbles, O=BlueBubbles, C=US
   vs_generated_images_folder_path: windows/icons
   icons_background_color: transparent
-  languages: en-us # todo
-  architecture: x64 # todo
-  capabilities: internetClient, location, microphone, webcam # todo
+  languages: en-us
+  architecture: x64
+  capabilities: internetClient, location, microphone, webcam
