@@ -38,7 +38,7 @@ class Handle {
     return data;
   }
 
-  Handle save() {
+  Handle save({updateColor = false}) {
     return this;
   }
 

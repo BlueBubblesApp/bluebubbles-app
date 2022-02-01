@@ -912,14 +912,18 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       child: FocusScope(
         child: Focus(
           onKey: (focus, event) {
-            String text = controller!.text;
             if (event is RawKeyDownEvent) {
+              print(event.physicalKey);
               RawKeyEventDataWindows? windowsData;
               RawKeyEventDataLinux? linuxData;
+              RawKeyEventDataWeb? webData;
               if (event.data is RawKeyEventDataWindows) {
                 windowsData = event.data as RawKeyEventDataWindows;
               } else if (event.data is RawKeyEventDataLinux) {
                 linuxData = event.data as RawKeyEventDataLinux;
+              } else if (event.data is RawKeyEventDataWeb) {
+                webData = event.data as RawKeyEventDataWeb;
+                print(webData.code);
               }
 
               int maxShown = context.height / 3 ~/ 48;
@@ -927,7 +931,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               int downMovementIndex = maxShown * 2 ~/ 3;
 
               // Down arrow
-              if (windowsData?.keyCode == 40 || linuxData?.keyCode == 65364) {
+              if (windowsData?.keyCode == 40 || linuxData?.keyCode == 65364 || webData?.code == "ArrowDown") {
                 if (emojiSelectedIndex.value < emojiMatches.value.length - 1) {
                   emojiSelectedIndex.value++;
                   if (emojiSelectedIndex.value >= downMovementIndex &&
@@ -940,7 +944,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
 
               // Up arrow
-              if (windowsData?.keyCode == 38 || linuxData?.keyCode == 65362) {
+              if (windowsData?.keyCode == 38 || linuxData?.keyCode == 65362 || webData?.code == "ArrowUp") {
                 if (emojiSelectedIndex.value > 0) {
                   emojiSelectedIndex.value--;
                   if (emojiSelectedIndex.value >= upMovementIndex &&
@@ -953,7 +957,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
 
               // Tab
-              if (windowsData?.keyCode == 9 || linuxData?.keyCode == 65289) {
+              if (windowsData?.keyCode == 9 || linuxData?.keyCode == 65289 || webData?.code == "Tab") {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
                   EventDispatcher()
                       .emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
@@ -964,7 +968,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
 
               // Enter
-              if (windowsData?.keyCode == 13 || linuxData?.keyCode == 65293) {
+              if (windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
                   EventDispatcher()
                       .emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
@@ -978,23 +982,21 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
             RawKeyEventDataWindows? windowsData;
             RawKeyEventDataLinux? linuxData;
+            RawKeyEventDataWeb? webData;
             if (event.data is RawKeyEventDataWindows) {
               windowsData = event.data as RawKeyEventDataWindows;
             } else if (event.data is RawKeyEventDataLinux) {
               linuxData = event.data as RawKeyEventDataLinux;
+            } else if (event.data is RawKeyEventDataWeb) {
+              webData = event.data as RawKeyEventDataWeb;
             }
-            if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293) && !event.isShiftPressed) {
+            if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !event.isShiftPressed) {
               sendMessage();
               focusNode!.requestFocus();
               return KeyEventResult.handled;
             }
             if (event.data is RawKeyEventDataWeb) {
               var data = event.data as RawKeyEventDataWeb;
-              if (data.code == "Enter" && !event.isShiftPressed) {
-                sendMessage();
-                focusNode!.requestFocus();
-                return KeyEventResult.handled;
-              }
               if ((data.physicalKey == PhysicalKeyboardKey.keyV || data.logicalKey == LogicalKeyboardKey.keyV) &&
                   (event.isControlPressed || previousKeyCode == 0x1700000000)) {
                 getPastedImageWeb().then((value) {
@@ -1201,7 +1203,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     ? Colors.black
                                     : Colors.white,
                                 fontSizeDelta: -0.25,
-                                fontFamily: "Apple Color Emoji",
+                                fontFamily: kIsDesktop ? "Apple Color Emoji" : null,
                               ),
                           keyboardType: TextInputType.multiline,
                           maxLines: 14,

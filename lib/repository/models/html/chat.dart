@@ -196,7 +196,10 @@ class Chat {
     bool updateIsPinned = false,
     bool updatePinIndex = false,
     bool updateIsArchived = false,
-    bool updateHasUnreadMessage = false
+    bool updateHasUnreadMessage = false,
+    bool updateAutoSendReadReceipts = false,
+    bool updateAutoSendTypingIndicators = false,
+    bool updateCustomAvatarPath = false,
   }) {
     return this;
   }

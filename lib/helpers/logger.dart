@@ -127,7 +127,7 @@ class BaseLogger extends GetxService {
       debugPrint(theLog);
 
       // If we are in startup, write the log to the startup file
-      if (startup.value) {
+      if (kIsDesktop && startup.value) {
         writeToStartupFile(theLog);
       }
 
