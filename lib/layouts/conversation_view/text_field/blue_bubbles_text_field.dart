@@ -915,7 +915,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             String text = controller!.text;
             if (event is RawKeyDownEvent) {
               RawKeyEventDataWindows? windowsData;
-              RawKeyEventDataLinux linuxData;
+              RawKeyEventDataLinux? linuxData;
               if (event.data is RawKeyEventDataWindows) {
                 windowsData = event.data as RawKeyEventDataWindows;
               } else if (event.data is RawKeyEventDataLinux) {
@@ -928,7 +928,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               int downMovementIndex = maxShown * 2 ~/ 3;
 
               // Down arrow
-              if (windowsData?.keyCode == 40) {
+              if (windowsData?.keyCode == 40 || linuxData?.keyCode == 65364) {
                 if (emojiSelectedIndex.value < emojiMatches.value.length - 1) {
                   emojiSelectedIndex.value++;
                   if (emojiSelectedIndex.value >= downMovementIndex &&
@@ -941,7 +941,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
 
               // Up arrow
-              if (windowsData?.keyCode == 38) {
+              if (windowsData?.keyCode == 38 || linuxData?.keyCode == 65362) {
                 if (emojiSelectedIndex.value > 0) {
                   emojiSelectedIndex.value--;
                   if (emojiSelectedIndex.value >= upMovementIndex &&
@@ -954,7 +954,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
 
               // Tab
-              if (windowsData?.keyCode == 9) {
+              if (windowsData?.keyCode == 9 || linuxData?.keyCode == 65289) {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
                   EventDispatcher()
                       .emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
@@ -965,7 +965,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
 
               // Enter
-              if (windowsData?.keyCode == 13) {
+              if (windowsData?.keyCode == 13 || linuxData?.keyCode == 65293) {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
                   EventDispatcher()
                       .emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
