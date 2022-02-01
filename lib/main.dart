@@ -123,7 +123,7 @@ Future<Null> bubble() async {
 
 //ignore: prefer_void_to_null
 Future<Null> initApp(bool isBubble) async {
-  Logger.init();
+  await Logger.init();
   Logger.startup.value = true;
   Logger.info('Startup Logs');
   HttpOverrides.global = MyHttpOverrides();
@@ -292,7 +292,6 @@ Future<Null> initApp(bool isBubble) async {
     stacktrace = s;
   }
 
-  Logger.startup.value = false;
   if (exception == null) {
     ThemeObject light = ThemeObject.getLightTheme();
     ThemeObject dark = ThemeObject.getDarkTheme();
@@ -707,6 +706,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           body: Builder(
             builder: (BuildContext context) {
               if (SettingsManager().settings.finishedSetup.value) {
+                Logger.startup.value = false;
                 SystemChrome.setPreferredOrientations([
                   DeviceOrientation.landscapeRight,
                   DeviceOrientation.landscapeLeft,
