@@ -2,6 +2,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:get/get_utils/src/extensions/context_extensions.dart';
 import 'dart:io';
 
@@ -12,13 +13,13 @@ class TitleBarWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return kIsDesktop || (Platform.isLinux && SettingsManager().settings.useCustomTitleBar.value)
+    return Obx(() => SettingsManager().settings.useCustomTitleBar.value || (!Platform.isLinux && kIsDesktop)
         ? WindowBorder(
             color: Colors.transparent,
             width: 0,
             child: Stack(children: <Widget>[child, TitleBar()]),
           )
-        : child;
+        : child);
   }
 }
 

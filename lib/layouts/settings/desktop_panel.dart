@@ -61,19 +61,6 @@ class DesktopPanel extends StatelessWidget {
                         subtitle: "Automatically open the desktop app on startup.",
                         backgroundColor: tileColor,
                       )),
-                  Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS) {
-                      return Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
-                        ),
-                      );
-                    } else {
-                      return SizedBox.shrink();
-                    }
-                  }),
                   if (Platform.isLinux)
                     Obx(
                       () => SettingsSwitch(
