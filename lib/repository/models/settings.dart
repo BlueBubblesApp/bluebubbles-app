@@ -65,8 +65,6 @@ class Settings {
   final RxBool highlightSelectedChat = true.obs;
   final RxBool immersiveMode = false.obs;
   final RxDouble avatarScale = 1.0.obs;
-  final RxBool launchAtStartup = false.obs;
-  final RxBool closeToTray = true.obs;
   final RxBool askWhereToSave = false.obs;
 
   // final RxString emojiFontFamily;
@@ -122,6 +120,14 @@ class Settings {
   final RxInt pinColumnsLandscape = RxInt(6);
 
   final RxInt maxAvatarsInGroupWidget = RxInt(4);
+
+  // Desktop settings
+  final RxBool launchAtStartup = false.obs;
+  final RxBool minimizeToTray = false.obs;
+  final RxBool closeToTray = true.obs;
+
+  // Linux settings
+  final RxBool useCustomTitleBar = RxBool(true);
 
   Settings();
 
@@ -302,10 +308,14 @@ class Settings {
         settings.avatarScale.value = entry.value;
       } else if (entry.name == "launchAtStartup") {
         settings.launchAtStartup.value = entry.value;
+      } else if (entry.name == "minimizeToTray") {
+        settings.minimizeToTray.value = entry.value;
       } else if (entry.name == "closeToTray") {
         settings.closeToTray.value = entry.value;
       } else if (entry.name == "askWhereToSave") {
         settings.askWhereToSave.value = entry.value;
+      } else if (entry.name == "useCustomTitleBar") {
+        settings.useCustomTitleBar.value = entry.value;
       }
     }
     settings.save();
@@ -416,6 +426,7 @@ class Settings {
       'avatarScale': avatarScale.value,
       'launchAtStartup': launchAtStartup.value,
       'closeToTray': closeToTray.value,
+      'minimizeToTray': minimizeToTray.value,
       'askWhereToSave': askWhereToSave.value,
       'swipeToReply': swipeToReply.value,
       'privateAPISend': privateAPISend.value,
@@ -456,6 +467,7 @@ class Settings {
       'pinRowsLandscape': pinRowsLandscape.value,
       'pinColumnsLandscape': pinColumnsLandscape.value,
       'maxAvatarsInGroupWidget': maxAvatarsInGroupWidget.value,
+      'useCustomTitleBar': useCustomTitleBar.value,
     };
     if (includeAll) {
       map.addAll({
@@ -520,6 +532,7 @@ class Settings {
     SettingsManager().settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     SettingsManager().settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
     SettingsManager().settings.closeToTray.value = map['closeToTray'] ?? true;
+    SettingsManager().settings.minimizeToTray.value = map['minimizeToTray'] ?? false;
     SettingsManager().settings.askWhereToSave.value = map['askWhereToSave'] ?? false;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.privateAPISend.value = map['privateAPISend'] ?? false;
@@ -566,6 +579,7 @@ class Settings {
     SettingsManager().settings.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
     SettingsManager().settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     SettingsManager().settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
+    SettingsManager().settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     SettingsManager().settings.save();
   }
 
@@ -625,6 +639,7 @@ class Settings {
     s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
     s.closeToTray.value = map['closeToTray'] ?? true;
+    s.minimizeToTray.value = map['minimizeToTray'] ?? false;
     s.askWhereToSave.value = map['askWhereToSave'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
@@ -671,6 +686,7 @@ class Settings {
     s.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
     s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
+    s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     return s;
   }
 }

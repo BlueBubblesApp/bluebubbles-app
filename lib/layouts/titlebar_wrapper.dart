@@ -2,7 +2,6 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get_utils/src/extensions/context_extensions.dart';
 import 'dart:io';
 
@@ -13,12 +12,12 @@ class TitleBarWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return kIsDesktop && !Platform.isLinux
+    return kIsDesktop || (Platform.isLinux && SettingsManager().settings.useCustomTitleBar.value)
         ? WindowBorder(
-      color: Colors.transparent,
-      width: 0,
-      child: Stack(children: <Widget>[child, TitleBar()]),
-    )
+            color: Colors.transparent,
+            width: 0,
+            child: Stack(children: <Widget>[child, TitleBar()]),
+          )
         : child;
   }
 }
@@ -60,11 +59,14 @@ class WindowButtons extends StatelessWidget {
         iconMouseOver: Colors.white);
     return Row(
       children: [
-        MinimizeWindowButton(colors: buttonColors),
+        MinimizeWindowButton(
+          colors: buttonColors,
+          onPressed: () => SettingsManager().settings.minimizeToTray.value ? appWindow.hide() : appWindow.minimize(),
+        ),
         MaximizeWindowButton(colors: buttonColors),
-        CloseWindowButton(colors: closeButtonColors, onPressed: () =>
-        SettingsManager().settings.closeToTray.value
-            ? appWindow.hide() : appWindow.close()),
+        CloseWindowButton(
+            colors: closeButtonColors,
+            onPressed: () => SettingsManager().settings.closeToTray.value ? appWindow.hide() : appWindow.close()),
       ],
     );
   }

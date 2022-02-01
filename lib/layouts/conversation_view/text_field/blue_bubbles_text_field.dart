@@ -920,7 +920,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 windowsData = event.data as RawKeyEventDataWindows;
               } else if (event.data is RawKeyEventDataLinux) {
                 linuxData = event.data as RawKeyEventDataLinux;
-                print(linuxData.keyCode);
               }
 
               int maxShown = context.height / 3 ~/ 48;

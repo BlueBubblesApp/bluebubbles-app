@@ -265,12 +265,12 @@ Future<Null> initApp(bool isBubble) async {
       await FlutterLibphonenumber().init();
     }
     if (kIsDesktop) {
-      await WindowManager.instance.setTitle('BlueBubbles (Beta)');
+      await WindowManager.instance.setTitle('BlueBubbles');
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() {
         appWindow.minSize = Size(300, 300);
         appWindow.alignment = Alignment.center;
-        appWindow.title = 'BlueBubbles (Beta)';
+        appWindow.title = 'BlueBubbles';
         appWindow.show();
       });
     }
@@ -753,7 +753,7 @@ Future<void> initSystemTray() async {
   }
 
   // We first init the systray menu and then add the menu entries
-  await _systemTray.initSystemTray("BlueBubbles", iconPath: path, toolTip: "BlueBubbles (Beta)");
+  await _systemTray.initSystemTray("BlueBubbles", iconPath: path, toolTip: "BlueBubbles");
 
   await _systemTray.setContextMenu(
     [
@@ -782,6 +782,7 @@ Future<void> initSystemTray() async {
 
   // handle system tray event
   _systemTray.registerSystemTrayEventHandler((eventName) {
+    print(eventName);
     switch (eventName) {
       case 'leftMouseUp':
         appWindow.show();

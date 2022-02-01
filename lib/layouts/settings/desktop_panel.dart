@@ -11,7 +11,7 @@ class DesktopPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-    Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context)
         .textTheme
         .subtitle1
@@ -20,8 +20,8 @@ class DesktopPanel extends StatelessWidget {
     Color headerColor;
     Color tileColor;
     if ((Theme.of(context).colorScheme.secondary.computeLuminance() <
-        Theme.of(context).backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value == Skins.Material) &&
+                Theme.of(context).backgroundColor.computeLuminance() ||
+            SettingsManager().settings.skin.value == Skins.Material) &&
         (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
       headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
@@ -47,47 +47,82 @@ class DesktopPanel extends StatelessWidget {
                 backgroundColor: tileColor,
                 children: [
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) async {
-                      SettingsManager().settings.launchAtStartup.value = val;
-                      saveSettings();
-                      if (val) {
-                        await LaunchAtStartup.enable();
-                      } else {
-                        await LaunchAtStartup.disable();
-                      }
-                    },
-                    initialVal: SettingsManager().settings.launchAtStartup.value,
-                    title: "Launch on Startup",
-                    subtitle: "Automatically open the desktop app on startup.",
-                    backgroundColor: tileColor,
-                  )),
-                  if (!Platform.isLinux)
-                    Obx(() {
-                      if (SettingsManager().settings.skin.value == Skins.iOS) {
-                        return Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 65.0),
-                            child: SettingsDivider(color: headerColor),
-                          ),
-                        );
-                      } else {
-                        return SizedBox.shrink();
-                      }
-                    }),
-                  if (!Platform.isLinux)
-                    Obx(
-                          () => SettingsSwitch(
                         onChanged: (bool val) async {
-                          SettingsManager().settings.closeToTray.value = val;
+                          SettingsManager().settings.launchAtStartup.value = val;
+                          saveSettings();
+                          if (val) {
+                            await LaunchAtStartup.enable();
+                          } else {
+                            await LaunchAtStartup.disable();
+                          }
+                        },
+                        initialVal: SettingsManager().settings.launchAtStartup.value,
+                        title: "Launch on Startup",
+                        subtitle: "Automatically open the desktop app on startup.",
+                        backgroundColor: tileColor,
+                      )),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
+                      return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      );
+                    } else {
+                      return SizedBox.shrink();
+                    }
+                  }),
+                  if (Platform.isLinux)
+                    Obx(
+                      () => SettingsSwitch(
+                        onChanged: (bool val) async {
+                          SettingsManager().settings.useCustomTitleBar.value = val;
                           saveSettings();
                         },
-                        initialVal: SettingsManager().settings.closeToTray.value,
-                        title: "Close to Tray",
-                        subtitle: "When enabled, clicking the close button will minimize the app to the system tray",
+                        initialVal: SettingsManager().settings.useCustomTitleBar.value,
+                        title: "Use Custom TitleBar",
+                        subtitle:
+                            "Enable the custom titlebar. This is necessary on non-GNOME systems, and will not look good on GNOME systems. This is also necessary for 'Close to Tray' to work correctly.",
                         backgroundColor: tileColor,
                       ),
                     ),
+                  Obx(() {
+                    if (SettingsManager().settings.useCustomTitleBar.value || !Platform.isLinux) {
+                      return Obx(
+                        () => SettingsSwitch(
+                          onChanged: (bool val) async {
+                            SettingsManager().settings.minimizeToTray.value = val;
+                            saveSettings();
+                          },
+                          initialVal: SettingsManager().settings.minimizeToTray.value,
+                          title: "Minimize to Tray",
+                          subtitle:
+                              "When enabled, clicking the minimize button will minimize the app to the system tray",
+                          backgroundColor: tileColor,
+                        ),
+                      );
+                    }
+                    return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (SettingsManager().settings.useCustomTitleBar.value || !Platform.isLinux) {
+                      return Obx(
+                        () => SettingsSwitch(
+                          onChanged: (bool val) async {
+                            SettingsManager().settings.closeToTray.value = val;
+                            saveSettings();
+                          },
+                          initialVal: SettingsManager().settings.closeToTray.value,
+                          title: "Close to Tray",
+                          subtitle: "When enabled, clicking the close button will minimize the app to the system tray",
+                          backgroundColor: tileColor,
+                        ),
+                      );
+                    }
+                    return SizedBox.shrink();
+                  }),
                 ],
               ),
             ],
