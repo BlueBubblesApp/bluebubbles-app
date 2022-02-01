@@ -71,7 +71,7 @@ class DesktopPanel extends StatelessWidget {
                         initialVal: SettingsManager().settings.useCustomTitleBar.value,
                         title: "Use Custom TitleBar",
                         subtitle:
-                            "Enable the custom titlebar. This is necessary on non-GNOME systems, and will not look good on GNOME systems. This is also necessary for 'Close to Tray' to work correctly.",
+                            "Enable the custom titlebar. This is necessary on non-GNOME systems, and will not look good on GNOME systems. This is also necessary for 'Close to Tray' and 'Minimize to Tray' to work correctly.",
                         backgroundColor: tileColor,
                       ),
                     ),
