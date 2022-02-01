@@ -967,8 +967,8 @@ ModelDefinition getObjectBoxModel() {
               latestMessageDate: latestMessageDateValue == null ? null : DateTime.fromMillisecondsSinceEpoch(latestMessageDateValue),
               latestMessageText: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 28),
               fakeLatestMessageText: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 30),
-              autoSendReadReceipts: const fb.BoolReader().vTableGet(buffer, rootOffset, 42, true),
-              autoSendTypingIndicators: const fb.BoolReader().vTableGet(buffer, rootOffset, 44, true))
+              autoSendReadReceipts: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 42),
+              autoSendTypingIndicators: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44))
             ..title = const fb.StringReader()
                 .vTableGetNullable(buffer, rootOffset, 32)
             ..customAvatarPath = const fb.StringReader()
