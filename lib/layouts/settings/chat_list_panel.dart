@@ -259,7 +259,7 @@ class ChatListPanel extends StatelessWidget {
                           return SettingsTile(
                             title:
                                 "Pinned Chat Configuration (${SettingsManager().settings.pinRowsPortrait.value} row${SettingsManager().settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${SettingsManager().settings.pinColumnsLandscape})",
-                            subtitle: "The number of pinned rows and columns",
+                            subtitle: "Pinned chats will overflow onto multiple pages if they do not fit in this configuration. Keep in mind that you cannot access different pages of the pinned chats without a touchscreen or horizontal scrolling capability.",
                             backgroundColor: tileColor,
                           );
                         } else {

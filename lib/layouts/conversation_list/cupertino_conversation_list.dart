@@ -333,7 +333,9 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                 int rowCount = context.mediaQuery.orientation == Orientation.portrait || kIsDesktop
                     ? SettingsManager().settings.pinRowsPortrait.value
                     : SettingsManager().settings.pinRowsLandscape.value;
-                int colCount = kIsDesktop ? SettingsManager().settings.pinColumnsLandscape.value : SettingsManager().settings.pinColumnsPortrait.value;
+                int colCount = kIsDesktop
+                    ? SettingsManager().settings.pinColumnsLandscape.value
+                    : SettingsManager().settings.pinColumnsPortrait.value;
                 int pinCount = ChatBloc()
                     .chats
                     .archivedHelper(showArchived)
