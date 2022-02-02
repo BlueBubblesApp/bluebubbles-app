@@ -194,7 +194,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
               () {
                 // Great math right here
                 double availableWidth = constraints.maxWidth;
-                int colCount = SettingsManager().settings.pinColumnsPortrait.value;
+                int colCount = kIsDesktop ? SettingsManager().settings.pinColumnsLandscape.value : SettingsManager().settings.pinColumnsPortrait.value;
                 double spaceBetween = (colCount - 1) * 30;
                 double maxWidth = ((availableWidth - spaceBetween) / colCount).floorToDouble();
 

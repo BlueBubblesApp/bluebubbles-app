@@ -18,6 +18,8 @@ class BaseNavigator extends GetxService {
   /// width of settings right side split screen
   double? _widthSettings;
 
+  final Rx listener = Rxn();
+
   set maxWidthLeft(double w) => _widthChatListLeft = w;
   set maxWidthRight(double w) => _widthChatListRight = w;
   set maxWidthSettings(double w) => _widthSettings = w;
