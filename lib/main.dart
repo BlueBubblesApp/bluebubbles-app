@@ -782,7 +782,6 @@ Future<void> initSystemTray() async {
 
   // handle system tray event
   _systemTray.registerSystemTrayEventHandler((eventName) {
-    print(eventName);
     switch (eventName) {
       case 'leftMouseUp':
         appWindow.show();

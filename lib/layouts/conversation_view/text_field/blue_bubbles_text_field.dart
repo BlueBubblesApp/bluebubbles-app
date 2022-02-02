@@ -913,7 +913,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         child: Focus(
           onKey: (focus, event) {
             if (event is RawKeyDownEvent) {
-              print(event.physicalKey);
               RawKeyEventDataWindows? windowsData;
               RawKeyEventDataLinux? linuxData;
               RawKeyEventDataWeb? webData;
