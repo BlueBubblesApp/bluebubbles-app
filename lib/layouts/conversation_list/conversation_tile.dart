@@ -254,7 +254,7 @@ class _ConversationTileState extends State<ConversationTile> {
                           : shouldHighlight.value
                               ? FontWeight.w600
                               : null, color: shouldHighlight.value
-              ? Colors.white
+              ? SettingsManager().settings.skin.value == Skins.iOS ? Colors.white : null
               : null)
               .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0),
           overflow: TextOverflow.ellipsis);
@@ -273,10 +273,9 @@ class _ConversationTileState extends State<ConversationTile> {
             SettingsManager().settings.generateFakeMessageContent.value;
 
         TextStyle style = Theme.of(context).textTheme.subtitle1!.apply(
-              color: shouldHighlight.value
-                  ? Colors.white.withOpacity(0.75)
-                  : context.textTheme.subtitle1!.color!.withOpacity(0.85),
-            );
+            ).copyWith(fontWeight: shouldHighlight.value ? FontWeight.bold : null, color: shouldHighlight.value
+            ? SettingsManager().settings.skin.value == Skins.iOS ? Colors.white.withOpacity(0.75) : null
+            : context.textTheme.subtitle1!.color!.withOpacity(0.85),);
 
         if (generateContent) {
           latestText = widget.chat.fakeLatestMessageText ?? "";
@@ -388,19 +387,19 @@ class _ConversationTileState extends State<ConversationTile> {
                   message.error > 0
                       ? "Error"
                       : ((show == Indicator.READ
-                              ? "Read\n${buildDate(message.dateRead)}"
-                              : show == Indicator.DELIVERED
-                                  ? "Delivered\n${buildDate(message.dateDelivered)}"
-                                  : show == Indicator.SENT
-                                      ? "Sent\n${buildDate(message.dateCreated)}"
-                                      : buildDate(message.dateCreated))),
+                          ? "Read\n${buildDate(message.dateRead)}"
+                          : show == Indicator.DELIVERED
+                              ? "Delivered\n${buildDate(message.dateDelivered)}"
+                              : show == Indicator.SENT
+                                  ? "Sent\n${buildDate(message.dateCreated)}"
+                                  : buildDate(message.dateCreated))),
                   textAlign: TextAlign.right,
                   style: Theme.of(context).textTheme.subtitle2!.copyWith(
                         color: message.error > 0
                             ? Colors.red
                             : shouldHighlight.value
-                            ? Colors.white.withOpacity(0.75)
-                            : context.textTheme.subtitle1!.color!.withOpacity(0.85),
+                                ? Colors.white.withOpacity(0.75)
+                                : context.textTheme.subtitle1!.color!.withOpacity(0.85),
                       ),
                   overflow: TextOverflow.clip);
             }),
@@ -529,9 +528,8 @@ class _Cupertino extends StatelessWidget {
                                   SettingsManager().settings.skin.value == Skins.iOS
                                       ? CupertinoIcons.forward
                                       : Icons.arrow_forward,
-                                  color: parent.shouldHighlight.value
-                                      ? Colors.white
-                                      : context.textTheme.subtitle1!.color!,
+                                  color:
+                                      parent.shouldHighlight.value ? Colors.white : context.textTheme.subtitle1!.color!,
                                   size: 15,
                                 ),
                               ],
