@@ -253,9 +253,12 @@ class _ConversationTileState extends State<ConversationTile> {
                           ? FontWeight.bold
                           : shouldHighlight.value
                               ? FontWeight.w600
-                              : null, color: shouldHighlight.value
-              ? SettingsManager().settings.skin.value == Skins.iOS ? Colors.white : null
-              : null)
+                              : null,
+                  color: shouldHighlight.value
+                      ? SettingsManager().settings.skin.value == Skins.iOS
+                          ? Colors.white
+                          : null
+                      : null)
               .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0),
           overflow: TextOverflow.ellipsis);
     });
@@ -272,10 +275,14 @@ class _ConversationTileState extends State<ConversationTile> {
         final generateContent = SettingsManager().settings.redactedMode.value &&
             SettingsManager().settings.generateFakeMessageContent.value;
 
-        TextStyle style = Theme.of(context).textTheme.subtitle1!.apply(
-            ).copyWith(fontWeight: shouldHighlight.value ? FontWeight.bold : null, color: shouldHighlight.value
-            ? SettingsManager().settings.skin.value == Skins.iOS ? Colors.white.withOpacity(0.75) : null
-            : context.textTheme.subtitle1!.color!.withOpacity(0.85),);
+        TextStyle style = Theme.of(context).textTheme.subtitle1!.apply().copyWith(
+              fontWeight: shouldHighlight.value ? FontWeight.w500 : null,
+              color: shouldHighlight.value
+                  ? SettingsManager().settings.skin.value == Skins.iOS
+                      ? Colors.white.withOpacity(0.75)
+                      : null
+                  : context.textTheme.subtitle1!.color!.withOpacity(0.85),
+            );
 
         if (generateContent) {
           latestText = widget.chat.fakeLatestMessageText ?? "";
@@ -373,7 +380,9 @@ class _ConversationTileState extends State<ConversationTile> {
             textAlign: TextAlign.right,
             style: Theme.of(context).textTheme.subtitle2!.copyWith(
                   color: shouldHighlight.value
-                      ? Colors.white.withOpacity(0.75)
+                      ? SettingsManager().settings.skin.value == Skins.iOS
+                          ? Colors.white.withOpacity(0.75)
+                          : null
                       : context.textTheme.subtitle1!.color!.withOpacity(0.85),
                 ),
             overflow: TextOverflow.clip)
@@ -398,7 +407,9 @@ class _ConversationTileState extends State<ConversationTile> {
                         color: message.error > 0
                             ? Colors.red
                             : shouldHighlight.value
-                                ? Colors.white.withOpacity(0.75)
+                                ? SettingsManager().settings.skin.value == Skins.iOS
+                                    ? Colors.white.withOpacity(0.75)
+                                    : null
                                 : context.textTheme.subtitle1!.color!.withOpacity(0.85),
                       ),
                   overflow: TextOverflow.clip);
@@ -607,17 +618,149 @@ class _Material extends StatelessWidget {
         0,
         3,
       ),
-      child: Material(
-        clipBehavior: Clip.hardEdge,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          bottomLeft: Radius.circular(20),
+      child: Obx(
+        () => Material(
+          clipBehavior: Clip.hardEdge,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            bottomLeft: Radius.circular(20),
+          ),
+          color: parent.shouldHighlight.value && (kIsWeb || kIsDesktop)
+              ? Theme.of(context).accentColor
+              : parent.selected
+                  ? Theme.of(context).backgroundColor.lightenOrDarken(20)
+                  : Theme.of(context).backgroundColor,
+          child: GestureDetector(
+            onSecondaryTapUp: (details) async {
+              if (kIsWeb) {
+                (await html.document.onContextMenu.first).preventDefault();
+              }
+              final shouldCancelHighlight = !parent.shouldHighlight.value;
+              parent.shouldHighlight.value = true;
+              parent.update();
+              await showConversationTileMenu(
+                context,
+                parent,
+                parent.widget.chat,
+                details.globalPosition,
+                context.textTheme,
+              );
+              if (shouldCancelHighlight) {
+                parent.shouldHighlight.value = false;
+                parent.update();
+              }
+            },
+            child: InkWell(
+              onTap: () {
+                if (parent.selected) {
+                  parent.onSelect();
+                  HapticFeedback.lightImpact();
+                } else if (parent.widget.inSelectMode) {
+                  parent.onSelect();
+                  HapticFeedback.lightImpact();
+                } else {
+                  parent.onTap();
+                }
+              },
+              onLongPress: () {
+                parent.onSelect();
+              },
+              child: Obx(
+                () => Padding(
+                  padding: EdgeInsets.only(left: kIsDesktop ? 5 : 0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: (!SettingsManager().settings.hideDividers.value)
+                          ? Border(
+                              top: BorderSide(
+                                color: Theme.of(context).dividerColor,
+                                width: 0.5,
+                              ),
+                            )
+                          : null,
+                    ),
+                    child: ListTile(
+                      dense: SettingsManager().settings.denseChatTiles.value,
+                      title: parent.buildTitle(),
+                      subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
+                      minVerticalPadding: 10,
+                      leading: Stack(
+                        alignment: Alignment.topRight,
+                        children: [
+                          parent.buildLeading(),
+                          if (parent.widget.chat.muteType != "mute")
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                color: parent.widget.chat.hasUnreadMessage!
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.transparent,
+                              ),
+                            ),
+                        ],
+                      ),
+                      trailing: Container(
+                        padding: EdgeInsets.only(right: 3),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Container(
+                                padding: EdgeInsets.only(right: 2, left: 2),
+                                child: parent._buildDate(),
+                              ),
+                              SizedBox(height: 5),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (parent.widget.chat.isPinned!)
+                                    Icon(Icons.push_pin, size: 15, color: Theme.of(context).textTheme.subtitle1!.color),
+                                  SizedBox(width: 5),
+                                  if (parent.widget.chat.muteType == "mute")
+                                    Icon(
+                                      Icons.notifications_off,
+                                      color: parent.widget.chat.hasUnreadMessage!
+                                          ? Theme.of(context).primaryColor.withOpacity(0.8)
+                                          : Theme.of(context).textTheme.subtitle1!.color,
+                                      size: 15,
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _Samsung extends StatelessWidget {
+  const _Samsung({Key? key, required this.parent, required this.parentProps}) : super(key: key);
+  final _ConversationTileState parent;
+  final ConversationTile parentProps;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () => Material(
         color: parent.shouldHighlight.value && (kIsWeb || kIsDesktop)
-            ? Theme.of(context).backgroundColor.lightenOrDarken(20)
+            ? Theme.of(context).backgroundColor.lightenOrDarken(10)
             : parent.selected
-                ? Theme.of(context).backgroundColor.lightenOrDarken(20)
-                : Theme.of(context).backgroundColor,
+                ? Theme.of(context).primaryColor.withAlpha(120)
+                : Colors.transparent,
         child: GestureDetector(
           onSecondaryTapUp: (details) async {
             if (kIsWeb) {
@@ -654,188 +797,60 @@ class _Material extends StatelessWidget {
               parent.onSelect();
             },
             child: Obx(
-              () => Padding(
-                padding: EdgeInsets.only(left: kIsDesktop ? 5 : 0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: (!SettingsManager().settings.hideDividers.value)
-                        ? Border(
-                            top: BorderSide(
-                              color: Theme.of(context).dividerColor,
-                              width: 0.5,
-                            ),
-                          )
-                        : null,
-                  ),
-                  child: ListTile(
-                    dense: SettingsManager().settings.denseChatTiles.value,
-                    title: parent.buildTitle(),
-                    subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
-                    minVerticalPadding: 10,
-                    leading: Stack(
-                      alignment: Alignment.topRight,
-                      children: [
-                        parent.buildLeading(),
-                        if (parent.widget.chat.muteType != "mute")
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              color: parent.widget.chat.hasUnreadMessage!
-                                  ? Theme.of(context).primaryColor
-                                  : Colors.transparent,
-                            ),
+              () => Container(
+                decoration: BoxDecoration(
+                  border: (!SettingsManager().settings.hideDividers.value)
+                      ? Border(
+                          top: BorderSide(
+                            color: Color(0xff2F2F2F),
+                            width: 0.5,
                           ),
-                      ],
-                    ),
-                    trailing: Container(
-                      padding: EdgeInsets.only(right: 3),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Container(
-                              padding: EdgeInsets.only(right: 2, left: 2),
-                              child: parent._buildDate(),
-                            ),
-                            SizedBox(height: 5),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (parent.widget.chat.isPinned!)
-                                  Icon(Icons.push_pin, size: 15, color: Theme.of(context).textTheme.subtitle1!.color),
-                                SizedBox(width: 5),
-                                if (parent.widget.chat.muteType == "mute")
-                                  Icon(
-                                    Icons.notifications_off,
-                                    color: parent.widget.chat.hasUnreadMessage!
-                                        ? Theme.of(context).primaryColor.withOpacity(0.8)
-                                        : Theme.of(context).textTheme.subtitle1!.color,
-                                    size: 15,
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                        )
+                      : null,
                 ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Samsung extends StatelessWidget {
-  const _Samsung({Key? key, required this.parent, required this.parentProps}) : super(key: key);
-  final _ConversationTileState parent;
-  final ConversationTile parentProps;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: parent.shouldHighlight.value && (kIsWeb || kIsDesktop)
-          ? Theme.of(context).backgroundColor.lightenOrDarken(20)
-          : parent.selected
-              ? Theme.of(context).primaryColor.withAlpha(120)
-              : Colors.transparent,
-      child: GestureDetector(
-        onSecondaryTapUp: (details) async {
-          if (kIsWeb) {
-            (await html.document.onContextMenu.first).preventDefault();
-          }
-          final shouldCancelHighlight = !parent.shouldHighlight.value;
-          parent.shouldHighlight.value = true;
-          parent.update();
-          await showConversationTileMenu(
-            context,
-            parent,
-            parent.widget.chat,
-            details.globalPosition,
-            context.textTheme,
-          );
-          if (shouldCancelHighlight) {
-            parent.shouldHighlight.value = false;
-            parent.update();
-          }
-        },
-        child: InkWell(
-          onTap: () {
-            if (parent.selected) {
-              parent.onSelect();
-              HapticFeedback.lightImpact();
-            } else if (parent.widget.inSelectMode) {
-              parent.onSelect();
-              HapticFeedback.lightImpact();
-            } else {
-              parent.onTap();
-            }
-          },
-          onLongPress: () {
-            parent.onSelect();
-          },
-          child: Obx(
-            () => Container(
-              decoration: BoxDecoration(
-                border: (!SettingsManager().settings.hideDividers.value)
-                    ? Border(
-                        top: BorderSide(
-                          color: Color(0xff2F2F2F),
-                          width: 0.5,
-                        ),
-                      )
-                    : null,
-              ),
-              child: ListTile(
-                dense: SettingsManager().settings.denseChatTiles.value,
-                title: parent.buildTitle(),
-                subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
-                minVerticalPadding: 10,
-                leading: Stack(
-                  alignment: Alignment.topRight,
-                  children: [
-                    parent.buildLeading(),
-                    if (parent.widget.chat.muteType != "mute")
-                      Container(
-                        width: 15,
-                        height: 15,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          color: parent.widget.chat.hasUnreadMessage!
-                              ? Theme.of(context).primaryColor
-                              : Colors.transparent,
-                        ),
-                      ),
-                  ],
-                ),
-                trailing: Container(
-                  padding: EdgeInsets.only(right: 3),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: <Widget>[
-                        if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
-                        if (parent.widget.chat.muteType == "mute")
-                          Icon(
-                            Icons.notifications_off,
-                            color: Theme.of(context).textTheme.subtitle1!.color,
-                            size: 15,
-                          ),
+                child: ListTile(
+                  dense: SettingsManager().settings.denseChatTiles.value,
+                  title: parent.buildTitle(),
+                  subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
+                  minVerticalPadding: 10,
+                  leading: Stack(
+                    alignment: Alignment.topRight,
+                    children: [
+                      parent.buildLeading(),
+                      if (parent.widget.chat.muteType != "mute")
                         Container(
-                          padding: EdgeInsets.only(right: 2, left: 2),
-                          child: parent._buildDate(),
+                          width: 15,
+                          height: 15,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            color: parent.widget.chat.hasUnreadMessage!
+                                ? Theme.of(context).primaryColor
+                                : Colors.transparent,
+                          ),
                         ),
-                      ],
+                    ],
+                  ),
+                  trailing: Container(
+                    padding: EdgeInsets.only(right: 3),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: <Widget>[
+                          if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
+                          if (parent.widget.chat.muteType == "mute")
+                            Icon(
+                              Icons.notifications_off,
+                              color: Theme.of(context).textTheme.subtitle1!.color,
+                              size: 15,
+                            ),
+                          Container(
+                            padding: EdgeInsets.only(right: 2, left: 2),
+                            child: parent._buildDate(),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
