@@ -10,7 +10,7 @@ import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
 import 'package:metadata_fetch/metadata_fetch.dart';
 
-/// Adds getter/setter for the original [Response.request.url]
+/// Adds getter/setter for the original [Response?.request.url]
 extension HttpRequestData on Document? {
   static String _requestUrl = "";
 

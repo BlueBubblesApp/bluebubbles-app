@@ -989,7 +989,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             } else if (event.data is RawKeyEventDataWeb) {
               webData = event.data as RawKeyEventDataWeb;
             }
-            if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !event.isShiftPressed) {
+            if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") &&
+                !event.isShiftPressed) {
               sendMessage();
               focusNode!.requestFocus();
               return KeyEventResult.handled;
@@ -1018,6 +1019,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               previousKeyCode = data.logicalKey.keyId;
               return KeyEventResult.ignored;
             }
+            if (kIsDesktop || kIsWeb) return KeyEventResult.ignored;
             if (event.physicalKey == PhysicalKeyboardKey.enter && SettingsManager().settings.sendWithReturn.value) {
               if (!isNullOrEmpty(controller!.text)!) {
                 sendMessage();

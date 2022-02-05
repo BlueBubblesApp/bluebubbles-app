@@ -14,7 +14,8 @@ class TitleBarWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() => (SettingsManager().settings.useCustomTitleBar.value && !kIsWeb && Platform.isLinux) || (kIsDesktop && !Platform.isLinux)
+    return Obx(() => (SettingsManager().settings.useCustomTitleBar.value && !kIsWeb && Platform.isLinux) ||
+            (kIsDesktop && !Platform.isLinux)
         ? WindowBorder(
             color: Colors.transparent,
             width: 0,
@@ -64,11 +65,17 @@ class WindowButtons extends StatelessWidget {
         MinimizeWindowButton(
           colors: buttonColors,
           onPressed: () => SettingsManager().settings.minimizeToTray.value ? appWindow.hide() : appWindow.minimize(),
+          animate: true,
         ),
-        MaximizeWindowButton(colors: buttonColors),
+        MaximizeWindowButton(
+          colors: buttonColors,
+          animate: true,
+        ),
         CloseWindowButton(
-            colors: closeButtonColors,
-            onPressed: () => SettingsManager().settings.closeToTray.value ? appWindow.hide() : appWindow.close()),
+          colors: closeButtonColors,
+          onPressed: () => SettingsManager().settings.closeToTray.value ? appWindow.hide() : appWindow.close(),
+          animate: true,
+        ),
       ],
     );
   }

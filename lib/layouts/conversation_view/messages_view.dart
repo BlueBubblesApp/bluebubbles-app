@@ -25,7 +25,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
-import 'package:universal_io/io.dart';
+import 'package:cross_file/cross_file.dart';
 
 class MessagesView extends StatefulWidget {
   final MessageBloc? messageBloc;
@@ -600,18 +600,17 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
       onDragExited: (details) {
         dragging.value = false;
       },
-      onDragDone: (details) {
-        List<Uri> uris = details.urls;
-        List<String> paths = uris.map((uri) => uri.pathSegments.join("/")).toList();
-        List<File> files = paths.map((path) => File(path)).where((file) => file.existsSync()).toList();
-        List<Map> _files = files.map((file) => {
-          "path": file.path,
-          "size": file.lengthSync(),
-          "name": file.path.split('/').last,
-          "bytes": file.readAsBytesSync(),
-        },
-        ).toList();
-        for (Map file in _files) {
+      onDragDone: (details) async {
+        List<Map> files = [];
+        for (XFile file in details.files) {
+          files.add({
+            "path": file.path,
+            "size": await file.length(),
+            "name": file.name,
+            "bytes": await file.readAsBytes(),
+          });
+        }
+        for (Map file in files) {
           EventDispatcher().emit('add-attachment', file);
         }
         dragging.value = false;

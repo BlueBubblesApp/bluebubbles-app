@@ -31,9 +31,9 @@ import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
-import 'package:collection/collection.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:firebase_dart/firebase_dart.dart';
+
 // ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:flutter/foundation.dart';
@@ -150,8 +150,8 @@ Future<Null> initApp(bool isBubble) async {
     prefs = await SharedPreferences.getInstance();
     if (!kIsWeb) {
       Directory documentsDirectory =
-      //ignore: unnecessary_cast, we need this as a workaround
-      (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+          //ignore: unnecessary_cast, we need this as a workaround
+          (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
       final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
@@ -240,22 +240,19 @@ Future<Null> initApp(bool isBubble) async {
     // this is to avoid a fade-in transition between the android native splash screen
     // and our dummy splash screen
     if (!SettingsManager().settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
-      runApp(
-          MaterialApp(
-              home: SplashScreen(shouldNavigate: false),
-              theme: ThemeData(
-                  backgroundColor: SchedulerBinding.instance!.window.platformBrightness == Brightness.dark
-                      ? Colors.black : Colors.white
-              )
-          )
-      );
+      runApp(MaterialApp(
+          home: SplashScreen(shouldNavigate: false),
+          theme: ThemeData(
+              backgroundColor: SchedulerBinding.instance!.window.platformBrightness == Brightness.dark
+                  ? Colors.black
+                  : Colors.white)));
     }
     Get.put(AttachmentDownloadService());
     if (!kIsWeb && !kIsDesktop) {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
       final InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid);
+          InitializationSettings(android: initializationSettingsAndroid);
       await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
       tz.initializeTimeZones();
       tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
@@ -277,8 +274,8 @@ Future<Null> initApp(bool isBubble) async {
     if (!kIsWeb) {
       try {
         DynamicCachedFonts.loadCachedFont(
-            "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
-            fontFamily: "Apple Color Emoji")
+                "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
+                fontFamily: "Apple Color Emoji")
             .then((_) {
           fontExistsOnDisk.value = true;
         });
@@ -335,16 +332,8 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
     return AdaptiveTheme(
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
-      light: lightTheme.copyWith(
-        textSelectionTheme: TextSelectionThemeData(
-          selectionColor: lightTheme.primaryColor
-        )
-      ),
-      dark: darkTheme.copyWith(
-        textSelectionTheme: TextSelectionThemeData(
-          selectionColor: darkTheme.primaryColor
-        )
-      ),
+      light: lightTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.primaryColor)),
+      dark: darkTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: darkTheme.primaryColor)),
 
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
@@ -374,25 +363,31 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
             LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): const OpenSearchIntent(),
           LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
-          if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
+          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
           LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
           if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): const StartIncrementalSyncIntent(),
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR):
+                const StartIncrementalSyncIntent(),
           if (kIsDesktop)
             LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation): const HeartRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at): const LikeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign): const DislikeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar): const LaughRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent): const EmphasizeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret): const QuestionRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation):
+              const HeartRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at):
+              const LikeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign):
+              const DislikeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar):
+              const LaughRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent):
+              const EmphasizeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret):
+              const QuestionRecentIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowDown): const OpenNextChatIntent(),
-          if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.tab): const OpenNextChatIntent(),
+          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.tab): const OpenNextChatIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowUp): const OpenPreviousChatIntent(),
           if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab): const OpenPreviousChatIntent(),
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab):
+                const OpenPreviousChatIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
           LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
         },
@@ -593,7 +588,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 existingAttachments: attachments,
                 isCreator: true,
               ),
-                  (route) => route.isFirst,
+              (route) => route.isFirst,
             );
           });
 
@@ -609,7 +604,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 existingText: text,
                 isCreator: true,
               ),
-                  (route) => route.isFirst,
+              (route) => route.isFirst,
             );
           });
         }
@@ -678,7 +673,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+          ? Colors.transparent
+          : Theme.of(context).backgroundColor, // navigation bar color
       systemNavigationBarIconBrightness:
           Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       statusBarColor: Colors.transparent, // status bar color
@@ -686,7 +683,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+            ? Colors.transparent
+            : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -729,8 +728,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 ]);
                 return WillPopScope(
                   onWillPop: () async => false,
-                  child: TitleBarWrapper(child: kIsWeb || kIsDesktop
-                      ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
+                  child: TitleBarWrapper(
+                      child: kIsWeb || kIsDesktop ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
                 );
               }
             },
@@ -753,7 +752,7 @@ Future<void> initSystemTray() async {
   }
 
   // We first init the systray menu and then add the menu entries
-  await _systemTray.initSystemTray("BlueBubbles", iconPath: path, toolTip: "BlueBubbles");
+  await _systemTray.initSystemTray(title: "BlueBubbles", iconPath: path, toolTip: "BlueBubbles");
 
   await _systemTray.setContextMenu(
     [
