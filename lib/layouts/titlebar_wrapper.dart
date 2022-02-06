@@ -8,14 +8,17 @@ import 'package:get/get_utils/src/extensions/context_extensions.dart';
 import 'dart:io';
 
 class TitleBarWrapper extends StatelessWidget {
-  TitleBarWrapper({Key? key, required this.child}) : super(key: key);
+  TitleBarWrapper({Key? key, required this.child, this.hideInSplitView = false}) : super(key: key);
 
   final Widget child;
+  final bool hideInSplitView;
 
   @override
   Widget build(BuildContext context) {
+    bool showAltLayout =
+        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600;
     return Obx(() => (SettingsManager().settings.useCustomTitleBar.value && !kIsWeb && Platform.isLinux) ||
-            (kIsDesktop && !Platform.isLinux)
+            (kIsDesktop && !Platform.isLinux) && (!showAltLayout || !hideInSplitView)
         ? WindowBorder(
             color: Colors.transparent,
             width: 0,

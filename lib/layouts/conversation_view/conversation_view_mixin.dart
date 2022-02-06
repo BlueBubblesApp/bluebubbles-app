@@ -224,6 +224,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     Navigator.of(context).push(
       ThemeSwitcher.buildPageRoute(
         builder: (context) => TitleBarWrapper(
+          hideInSplitView: true,
           child: ConversationDetails(
             chat: chat!,
             messageBloc: messageBloc ?? initMessageBloc(),

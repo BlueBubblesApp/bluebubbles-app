@@ -527,7 +527,6 @@ class Settings {
     SettingsManager().settings.globalTextDetection.value = map['globalTextDetection'] ?? "";
     SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
-    SettingsManager().settings.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     SettingsManager().settings.immersiveMode.value = map['immersiveMode'] ?? false;
     SettingsManager().settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     SettingsManager().settings.launchAtStartup.value = map['launchAtStartup'] ?? false;

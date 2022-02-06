@@ -205,21 +205,13 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
           builder: (context) {
             return Scaffold(
               backgroundColor: Theme.of(context).backgroundColor,
-              appBar: (SettingsManager().settings.skin.value == Skins.iOS
-                  ? CupertinoNavigationBar(
-                      backgroundColor: Theme.of(context).colorScheme.secondary.withAlpha(125),
-                      leading: buildBackButton(context),
-                      middle: Text(
-                        "Details",
-                        style: Theme.of(context).textTheme.headline1,
-                      ),
-                    )
-                  : AppBar(
+              appBar: AppBar(
+                leading: SettingsManager().settings.skin.value == Skins.iOS ? buildBackButton(context, padding: EdgeInsets.only(left: kIsDesktop ? 5 : 0, top: kIsDesktop ? 15 : 0)) : null,
                       iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-                      title: Text(
+                      title: Padding(padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0), child: Text(
                         "Details",
                         style: Theme.of(context).textTheme.headline1,
-                      ),
+                      ),),
                       backgroundColor: Theme.of(context).backgroundColor,
                       bottom: PreferredSize(
                         child: Container(
@@ -228,7 +220,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         ),
                         preferredSize: Size.fromHeight(0.5),
                       ),
-                    )) as PreferredSizeWidget?,
+                    ),
               extendBodyBehindAppBar: SettingsManager().settings.skin.value == Skins.iOS ? true : false,
               body: CustomScrollView(
                 physics: ThemeSwitcher.getScrollPhysics(),

@@ -60,6 +60,7 @@ class _ConversationTileState extends State<ConversationTile> {
   // Typing indicator
   bool showTypingIndicator = false;
   RxBool shouldHighlight = false.obs;
+  RxBool shouldPartialHighlight = false.obs;
 
   bool get selected {
     if (widget.selected.isEmpty) return false;
@@ -69,6 +70,9 @@ class _ConversationTileState extends State<ConversationTile> {
   @override
   void initState() {
     super.initState();
+
+    shouldHighlight.value = CurrentChat.activeChat?.chat.guid == widget.chat.guid;
+
     // Listen for changes in the group
     NewMessageManager().stream.listen((NewMessageEvent event) async {
       // Make sure we have the required data to qualify for this tile
@@ -93,9 +97,7 @@ class _ConversationTileState extends State<ConversationTile> {
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'update-highlight' && mounted) {
-        if ((kIsDesktop || kIsWeb) &&
-            SettingsManager().settings.highlightSelectedChat.value &&
-            event['data'] == widget.chat.guid) {
+        if ((kIsDesktop || kIsWeb) && event['data'] == widget.chat.guid) {
           shouldHighlight.value = true;
         } else if (shouldHighlight.value = true) {
           shouldHighlight.value = false;
@@ -465,10 +467,15 @@ class _Cupertino extends StatelessWidget {
     return parent.buildSlider(
       Obx(
         () => Material(
-          color: parent.shouldHighlight.value && (kIsWeb || kIsDesktop)
-              ? Theme.of(context).primaryColor
-              : Theme.of(context).backgroundColor,
-          borderRadius: BorderRadius.circular(parent.shouldHighlight.value ? 5 : 0),
+          color: !(kIsWeb || kIsDesktop)
+              ? context.theme.backgroundColor
+              : parent.shouldPartialHighlight.value
+                  ? context.theme.primaryColor.withAlpha(100)
+                  : parent.shouldHighlight.value
+                      ? context.theme.primaryColor
+                      : context.theme.backgroundColor,
+          borderRadius:
+              BorderRadius.circular(parent.shouldHighlight.value || parent.shouldPartialHighlight.value ? 8 : 0),
           child: GestureDetector(
             onTapUp: (details) {
               parent.onTapUp(details);
@@ -477,11 +484,7 @@ class _Cupertino extends StatelessWidget {
               if (kIsWeb) {
                 (await html.document.onContextMenu.first).preventDefault();
               }
-              final shouldCancelHighlight = !parent.shouldHighlight.value;
-              if ((kIsDesktop || kIsWeb) && SettingsManager().settings.highlightSelectedChat.value) {
-                parent.shouldHighlight.value = true;
-              }
-              parent.update();
+              parent.shouldPartialHighlight.value = true;
               await showConversationTileMenu(
                 context,
                 parent,
@@ -489,10 +492,7 @@ class _Cupertino extends StatelessWidget {
                 details.globalPosition,
                 context.textTheme,
               );
-              if (shouldCancelHighlight) {
-                parent.shouldHighlight.value = false;
-                parent.update();
-              }
+              parent.shouldPartialHighlight.value = false;
             },
             onLongPress: () async {
               HapticFeedback.mediumImpact();

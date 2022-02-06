@@ -505,7 +505,6 @@ class ActionHandler {
     }
 
     if (!headless && chat != null) NewMessageManager().updateMessage(chat, updatedMessage.guid!, updatedMessage);
-    if (!headless && (kIsDesktop || kIsWeb)) EventDispatcher().emit('update-highlight', updatedMessage.getChat()?.guid);
   }
 
   /// Handles marking a chat by [chatGuid], with a new [status] of read or unread.
