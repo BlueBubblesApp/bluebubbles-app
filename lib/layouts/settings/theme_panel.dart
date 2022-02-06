@@ -443,7 +443,10 @@ class ThemePanel extends GetView<ThemePanelController> {
                                     child: TextButton(
                                       child: Text("CLOSE"),
                                       onPressed: () async {
-                                        Navigator.of(context).pop();
+                                        if (Get.isSnackbarOpen ?? false) {
+                                          Get.close(1);
+                                        }
+                                        Get.back();
                                         Future.delayed(Duration(milliseconds: 400), ()
                                         {
                                           progress.value = null;
