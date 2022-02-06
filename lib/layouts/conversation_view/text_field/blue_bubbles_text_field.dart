@@ -981,7 +981,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
 
               // Escape
-              print(linuxData?.keyCode);
               if (windowsData?.keyCode == 27 || linuxData?.keyCode == 65307 || webData?.code == "Escape") {
                 if (replyToMessage.value != null) {
                   replyToMessage.value = null;
