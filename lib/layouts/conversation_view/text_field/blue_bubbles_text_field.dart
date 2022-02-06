@@ -126,14 +126,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         String text = controller!.text;
         RegExp regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
         Iterable<RegExpMatch> matches = regExp.allMatches(text);
-        if (matches.isNotEmpty) {
+        if (matches.isNotEmpty && matches.any((m) => m.start < controller!.selection.start)) {
           RegExpMatch match = matches.lastWhere((m) => m.start < controller!.selection.start);
           String char = emojiMatches.value[index].char;
           emojiMatches.value = <Emoji>[];
           String _text = text.substring(0, match.start) + char + " " + text.substring(match.end);
           controller!.text = _text;
           controller!.selection = TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1));
+        } else {
+          // If the user moved the cursor before trying to insert an emoji, reset the picker
+          emojiSelectedIndex.value = 0;
+          emojiMatches.value = <Emoji>[];
         }
+        EventDispatcher().emit('focus-keyboard', null);
       }
     });
 
@@ -302,7 +307,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       } else if (event["type"] == "focus-keyboard" && !focusNode!.hasFocus && !subjectFocusNode!.hasFocus) {
         Logger.info("(EVENT) Focus Keyboard");
         focusNode!.requestFocus();
-        if (event['data'] != null) {
+        if (event['data'] is Message) {
           replyToMessage.value = event['data'];
         }
       } else if (event["type"] == "text-field-update-attachments") {

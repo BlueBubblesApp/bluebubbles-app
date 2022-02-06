@@ -71,7 +71,9 @@ class _ConversationTileState extends State<ConversationTile> {
   void initState() {
     super.initState();
 
-    shouldHighlight.value = CurrentChat.activeChat?.chat.guid == widget.chat.guid;
+    if (kIsDesktop || kIsWeb) {
+      shouldHighlight.value = CurrentChat.activeChat?.chat.guid == widget.chat.guid;
+    }
 
     // Listen for changes in the group
     NewMessageManager().stream.listen((NewMessageEvent event) async {
@@ -467,9 +469,7 @@ class _Cupertino extends StatelessWidget {
     return parent.buildSlider(
       Obx(
         () => Material(
-          color: !(kIsWeb || kIsDesktop)
-              ? context.theme.backgroundColor
-              : parent.shouldPartialHighlight.value
+          color: parent.shouldPartialHighlight.value
                   ? context.theme.primaryColor.withAlpha(100)
                   : parent.shouldHighlight.value
                       ? context.theme.primaryColor
@@ -756,7 +756,7 @@ class _Samsung extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(
       () => Material(
-        color: parent.shouldHighlight.value && (kIsWeb || kIsDesktop)
+        color: parent.shouldHighlight.value
             ? Theme.of(context).backgroundColor.lightenOrDarken(10)
             : parent.selected
                 ? Theme.of(context).primaryColor.withAlpha(120)
