@@ -4,7 +4,8 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:path/path.dart';
-import 'package:universal_io/io.dart';
+import 'package:universal_io/io.dart' hide File;
+import 'dart:io' show File;
 import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
 import 'dart:typed_data';
@@ -32,6 +33,7 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 class AppleLocation {
   double? longitude;
   double? latitude;
+
   AppleLocation({required this.latitude, required this.longitude});
 }
 
@@ -140,8 +142,7 @@ class AttachmentHelper {
   static Future<void> saveToGallery(PlatformFile file, {bool showAlert = true}) async {
     if (kIsWeb) {
       final content = base64.encode(file.bytes!);
-      html.AnchorElement(
-          href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+      html.AnchorElement(href: "data:application/octet-stream;charset=utf-16le;base64,$content")
         ..setAttribute("download", file.name)
         ..click();
       return;
@@ -242,9 +243,10 @@ class AttachmentHelper {
     String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
     if (Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
       return Get.find<AttachmentDownloadController>(tag: attachment.guid);
-    } else if (!kIsWeb && (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
-        attachment.guid == "redacted-mode-demo-attachment" ||
-        (attachment.guid != null && attachment.guid!.contains("theme-selector")))) {
+    } else if (!kIsWeb &&
+        (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
+            attachment.guid == "redacted-mode-demo-attachment" ||
+            (attachment.guid != null && attachment.guid!.contains("theme-selector")))) {
       return PlatformFile(
         name: attachment.transferName!,
         path: pathName,
@@ -258,7 +260,10 @@ class AttachmentHelper {
   }
 
   static IconData getIcon(String mimeType) {
-    if (mimeType.isEmpty) return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
+    if (mimeType.isEmpty)
+      return SettingsManager().settings.skin.value == Skins.iOS
+          ? CupertinoIcons.arrow_up_right_square
+          : Icons.open_in_new;
     if (mimeType == "application/pdf") {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf;
     } else if (mimeType == "application/zip") {
@@ -272,7 +277,9 @@ class AttachmentHelper {
     } else if (mimeType.startsWith("text")) {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note;
     }
-    return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
+    return SettingsManager().settings.skin.value == Skins.iOS
+        ? CupertinoIcons.arrow_up_right_square
+        : Icons.open_in_new;
   }
 
   static Future<bool> canAutoDownload() async {
@@ -423,15 +430,17 @@ class AttachmentHelper {
 
     Uint8List previewData = await originalFile.readAsBytes();
 
-    if ((attachment.mimeType?.endsWith("tif") ?? false)
-        || (attachment.mimeType?.endsWith("tiff") ?? false)) {
+    if ((attachment.mimeType?.endsWith("tif") ?? false) || (attachment.mimeType?.endsWith("tiff") ?? false)) {
       final receivePort = ReceivePort();
       await Isolate.spawn(
-          unsupportedToPngIsolate, IsolateData(PlatformFile(
-        name: randomString(8),
-        path: originalFile.path,
-        size: 0,
-      ), receivePort.sendPort));
+          unsupportedToPngIsolate,
+          IsolateData(
+              PlatformFile(
+                name: randomString(8),
+                path: originalFile.path,
+                size: 0,
+              ),
+              receivePort.sendPort));
       // Get the processed image from the isolate.
       final image = await receivePort.first as Uint8List?;
       previewData = image ?? previewData;
@@ -504,8 +513,7 @@ class AttachmentHelper {
 
 void unsupportedToPngIsolate(IsolateData param) {
   try {
-    final bytes = param.file.bytes
-        ?? (kIsWeb ? null : File(param.file.path!).readAsBytesSync());
+    final bytes = param.file.bytes ?? (kIsWeb ? null : File(param.file.path!).readAsBytesSync());
     if (bytes == null) {
       param.sendPort.send(null);
       return;
@@ -521,6 +529,7 @@ void unsupportedToPngIsolate(IsolateData param) {
 class IsolateData {
   final PlatformFile file;
   final SendPort sendPort;
+
   IsolateData(this.file, this.sendPort);
 }
 

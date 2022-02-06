@@ -133,7 +133,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           String _text = text.substring(0, match.start) + char + " " + text.substring(match.end);
           controller!.text = _text;
           controller!.selection = TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1));
-          focusNode!.requestFocus();
         }
       }
     });
@@ -237,7 +236,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             allMatches = emojiExactlyMatches.followedBy(emojiMatches.followedBy(keywordMatches)).toSet().toList();
 
             // Remove tone variations
-            allMatches.removeWhere((e) => e.shortName.contains("_tone"));
+            List<Emoji> withoutTones = allMatches.toList();
+            withoutTones.removeWhere((e) => e.shortName.contains("_tone"));
+            if (withoutTones.isNotEmpty) {
+              allMatches = withoutTones;
+            }
           }
           print("${allMatches.length} matches found for: $emojiName");
         }
@@ -973,6 +976,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       .emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
                   emojiSelectedIndex.value = 0;
                   emojiController.jumpTo(0);
+                  return KeyEventResult.handled;
+                }
+              }
+
+              // Escape
+              print(linuxData?.keyCode);
+              if (windowsData?.keyCode == 27 || linuxData?.keyCode == 0 || webData?.code == "Escape") {
+                if (replyToMessage.value != null) {
+                  replyToMessage.value = null;
                   return KeyEventResult.handled;
                 }
               }

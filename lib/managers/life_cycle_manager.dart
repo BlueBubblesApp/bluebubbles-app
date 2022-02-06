@@ -4,6 +4,7 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -53,6 +54,10 @@ class LifeCycleManager {
     updateStatus(true);
     if (!kIsDesktop) {
       SocketManager().startSocketIO();
+    }
+
+    if (kIsDesktop) {
+      EventDispatcher().emit('focus-keyboard', null);
     }
 
     // Refresh all the chats assuming that the app has already finished setup
