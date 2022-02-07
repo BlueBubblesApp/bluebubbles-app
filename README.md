@@ -24,7 +24,7 @@ Private API Features:
 - Rename group chats
 - Add and remove participants from group chats
 
-**Private API Features are not enabled by default and require extra configurations. Details can be found in the settings page of the app.**
+**Private API Features are not enabled by default and require extra configurations. Learn how to set up Private API Features [here](https://docs.bluebubbles.app/private-api/installation)**
 
 Screenshots:
 
@@ -62,4 +62,4 @@ After downloading both, follow our tutorial [here](https://bluebubbles.app/insta
 
 ## Contributing
 
-Please check out our contribution guide here: [Contribution Guide](https://github.com/BlueBubblesApp/BlueBubbles-Android-App/wiki/Contribution-Guide)
+Please check out our contribution guide here: [Contribution Guide](https://docs.bluebubbles.app/client/build-yourself-contribution-guide)
