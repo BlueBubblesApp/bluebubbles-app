@@ -62,4 +62,4 @@ After downloading both, follow our tutorial [here](https://bluebubbles.app/insta
 
 ## Contributing
 
-Please check out our contribution guide here: [Contribution Guide](https://github.com/BlueBubblesApp/BlueBubbles-Android-App/wiki/Contribution-Guide)
+Please check out our contribution guide here: [Contribution Guide](https://docs.bluebubbles.app/client/build-yourself-contribution-guide)
