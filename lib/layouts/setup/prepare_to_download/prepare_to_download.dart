@@ -207,7 +207,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                               SizedBox(width: 10),
                               Text(
                                   "Start Sync",
-                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
+                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)
                               ),
                             ],
                           ),
