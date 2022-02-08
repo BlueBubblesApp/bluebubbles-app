@@ -408,16 +408,13 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
     final _node = FocusScopeNode();
     final _scrollController = scrollController ?? ScrollController();
     final Widget child = FocusScope(
-      onKey: (node, event) {
-        EventDispatcher().emit('focus-keyboard', null);
-        return KeyEventResult.ignored;
-      },
       node: _node,
       child: Stack(
         children: [
           GestureDetector(
               behavior: HitTestBehavior.deferToChild,
-              onTap: kIsDesktop || kIsWeb ? () => _node.requestFocus() : null,
+              // I have no idea why this works
+              onPanDown: kIsDesktop || kIsWeb ? (details) => _node.requestFocus() : null,
               onHorizontalDragStart: (details) {},
               onHorizontalDragUpdate: (details) {
                 if (SettingsManager().settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
