@@ -341,29 +341,44 @@ class DBProvider {
         Logger.info("Inserted chat-message joins into ObjectBox", tag: "OB Migration");
         cmJoins.clear();
         Logger.info("Migrating attachment-message joins...", tag: "OB Migration");
+
         List<AttachmentMessageJoin> amJoins = tableData[6].map((e) => AttachmentMessageJoin.fromMap(e)).toList();
-        for (AttachmentMessageJoin amj in amJoins) {
-          // we will always have a new and an old form of ID, so these should never error
-          final newAttachmentId = attachmentIdsMigrationMap.values.firstWhere((e) => e['old'] == amj.attachmentId)['new'];
-          final newMessageId = messageIdsMigrationMap.values.firstWhere((e) => e['old'] == amj.messageId)['new'];
-          amj.attachmentId = newAttachmentId!;
-          amj.messageId = newMessageId!;
+        final amjToRemove = <int>[];
+        for (int i = 0; i < amJoins.length; i++) {
+          // If messages were deleted, these can be null
+          final newAttachmentId = attachmentIdsMigrationMap.values.firstWhereOrNull((e) => e['old'] == amJoins[i].attachmentId)?['new'];
+          final newMessageId = messageIdsMigrationMap.values.firstWhereOrNull((e) => e['old'] == amJoins[i].messageId)?['new'];
+          
+          // If we don't have new message or attachment IDs, we need to add the index to a list
+          // to be deleted later
+          if (newAttachmentId != null && newMessageId != null) {
+            amJoins[i].attachmentId = newAttachmentId;
+            amJoins[i].messageId = newMessageId;
+          } else {
+            amjToRemove.add(i);
+          }
         }
+
+        // Remove all the join rows that do not have an associated message or attachment
+        for (int i in amjToRemove) {
+          amJoins.removeAt(i);
+        }
+
         Logger.info("Replaced old attachment & message IDs with new ObjectBox IDs", tag: "OB Migration");
         final attachments2 = attachmentBox.getAll();
-        final toDelete2 = <int>[];
+        final toDelete3 = <int>[];
         for (int i = 0; i < attachments2.length; i++) {
           // if we can't find a valid messageID to associate the attachment with, delete it
           final messageId = amJoins.firstWhereOrNull((e) => e.attachmentId == attachments2[i].id)?.messageId;
           if (messageId == null) {
-            toDelete2.add(attachments2[i].id!);
+            toDelete3.add(attachments2[i].id!);
           } else {
             final message = messageBox.get(messageId);
             attachments2[i].message.target = message;
           }
         }
         attachmentBox.putMany(attachments2);
-        attachmentBox.removeMany(toDelete2);
+        attachmentBox.removeMany(toDelete3);
         Logger.info("Inserted attachment-message joins into ObjectBox", tag: "OB Migration");
         amJoins.clear();
         Logger.info("Migrating theme objects...", tag: "OB Migration");

@@ -10,10 +10,11 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Base64;
+import android.util.Base64;
 
 public class DownloadHandler implements Handler {
     public static String TAG = "download-file";
@@ -37,7 +38,7 @@ public class DownloadHandler implements Handler {
             return;
         }
 
-        final byte[] decoded = Base64.getDecoder().decode(data.toString());
+        final byte[] decoded = Base64.decode(data.toString(), Base64.DEFAULT);
         if (decoded == null || decoded.length == 0) {
             result.success("");
             return;
@@ -52,7 +53,16 @@ public class DownloadHandler implements Handler {
                         outputFile.getParentFile().mkdirs();
                         outputFile.createNewFile();
                     }
-                    Files.write(Paths.get(call.argument("path").toString()), decoded, StandardOpenOption.APPEND);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        Files.write(Paths.get(call.argument("path").toString()), decoded, StandardOpenOption.APPEND);
+                    } else {
+                        FileOutputStream stream = new FileOutputStream(outputFile);
+                        try {
+                            stream.write(decoded);
+                        } finally {
+                            stream.close();
+                        }
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

@@ -187,7 +187,10 @@ class ThemePanel extends GetView<ThemePanelController> {
                         EventDispatcher().emit('theme-update', null);
                       },
                       options: Skins.values,
-                      textProcessing: (val) => val.toString().split(".").last,
+                      textProcessing: (val) {
+                        var output = val.toString().split(".").last;
+                        return output == 'Samsung' ? 'Samsung (Beta)' : output;
+                      },
                       capitalize: false,
                       title: "App Skin",
                       backgroundColor: tileColor,
