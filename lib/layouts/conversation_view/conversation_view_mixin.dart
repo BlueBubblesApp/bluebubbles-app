@@ -28,6 +28,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -83,7 +84,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   /// ===========================================================
   void initConversationViewState() {
     if (isCreator!) return;
-    NotificationManager().switchChat(chat);
 
     fetchParticipants();
 
@@ -352,7 +352,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
           child: GestureDetector(
             onTap: () async {
-              if (!chat!.isGroup() && SettingsManager().settings.skin.value != Skins.iOS) {
+              if (!chat!.isGroup()) {
                 final handle = chat!.handles.first;
                 final contact = ContactManager().handleToContact[handle.address];
                 if (contact == null) {
@@ -373,7 +373,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 if (SettingsManager().settings.skin.value == Skins.Samsung &&
                     (chat!.isGroup() || (!title.isPhoneNumber && !title.isEmail)))
                   Text(
-                    chat!.isGroup() ? "${chat!.participants.length} recipients" : chat!.participants[0].address,
+                    generateTitle
+                        ? ContactManager().handleToFakeAddress[chat!.handles.first.address] ?? ""
+                        : chat!.isGroup()
+                            ? "${chat!.participants.length} recipients"
+                            : chat!.participants[0].address,
                     style: Theme.of(context).textTheme.subtitle1!.apply(color: fontColor2),
                   ),
               ],
@@ -458,8 +462,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               }
             }),
           ),
-          if (!chat!.isGroup() &&
-              (chat!.participants[0].address.isPhoneNumber || chat!.participants[0].address.isEmail))
+          if ((!chat!.isGroup() &&
+                  (chat!.participants[0].address.isPhoneNumber || chat!.participants[0].address.isEmail)) &&
+              !kIsDesktop &&
+              !kIsWeb)
             Padding(
               padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
               child: Padding(

@@ -35,6 +35,10 @@ import 'package:supercharged/supercharged.dart';
 class ReceivedMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
+  final String fakeOlderSubject;
+  final String fakeSubject;
+  final String fakeOlderText;
+  final String fakeText;
   final Message? olderMessage;
   final Message? newerMessage;
   final bool showHandle;
@@ -58,6 +62,10 @@ class ReceivedMessage extends StatefulWidget {
     required this.olderMessage,
     required this.newerMessage,
     required this.message,
+    this.fakeOlderSubject = "",
+    this.fakeOlderText = "",
+    this.fakeSubject = "",
+    this.fakeText = "",
     required this.showHandle,
     required this.messageBloc,
     required this.hasTimestampAbove,
@@ -81,7 +89,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   bool checkedHandle = false;
   late String contactTitle;
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
-  late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null);
+  late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null, fakeSubject: widget.fakeSubject, fakeText: widget.fakeText);
   Size? threadOriginatorSize;
   Size? messageSize;
   bool showReplies = false;
@@ -288,8 +296,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                             SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
                         final bool hideContent =
                         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
-                        final subject = generateContent ? faker.lorem.words(message.subject?.split(" ").length).join(" ") : message.subject;
-                        final text = generateContent ? faker.lorem.words(message.text?.split(" ").length).join(" ") : message.text;
+                        final subject = generateContent ? widget.fakeSubject : message.subject;
+                        final text = generateContent ? widget.fakeText : message.text;
                         return GestureDetector(
                           onHorizontalDragEnd: (DragEndDetails details) {
                             if ((details.primaryVelocity ?? 0) < 0 && effect == MessageEffect.invisibleInk) {
@@ -364,15 +372,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 }
             ) : FutureBuilder<List<InlineSpan>>(
                 future: SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape)
-                    ? MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null)
+                    ? MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null, fakeSubject: widget.fakeSubject, fakeText: widget.fakeText)
                     : spanFuture,
                 initialData: MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                    colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null),
+                    colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null, fakeSubject: widget.fakeSubject, fakeText: widget.fakeText),
                 builder: (context, snapshot) {
                   return RichText(
                     text: TextSpan(
                       children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                          colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null),
+                          colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null, fakeSubject: widget.fakeSubject, fakeText: widget.fakeText),
                       style: Theme.of(context).textTheme.bodyText2,
                     ),
                   );
@@ -854,14 +862,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                 : null,
                           ),
                           child: FutureBuilder<List<InlineSpan>>(
-                              future: MessageWidgetMixin.buildMessageSpansAsync(context, msg, colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30)),
+                              future: MessageWidgetMixin.buildMessageSpansAsync(context, msg, colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30), fakeSubject: widget.fakeOlderSubject, fakeText: widget.fakeOlderText),
                               initialData: MessageWidgetMixin.buildMessageSpans(context, msg,
-                                  colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30)),
+                                  colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30), fakeSubject: widget.fakeOlderSubject, fakeText: widget.fakeOlderText ),
                               builder: (context, snapshot) {
                                 return RichText(
                                   text: TextSpan(
                                     children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, msg,
-                                        colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30)),
+                                        colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30), fakeSubject: widget.fakeOlderSubject, fakeText: widget.fakeOlderText),
                                   ),
                                 );
                               }

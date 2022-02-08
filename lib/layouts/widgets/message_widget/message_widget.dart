@@ -20,6 +20,7 @@ import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -54,6 +55,11 @@ class MessageWidget extends StatefulWidget {
   final MessageBloc? bloc;
   final bool autoplayEffect;
 
+  late final _fakeOlderSubject = faker.lorem.words(olderMessage?.subject?.split(" ").length ?? 0).join(" ");
+  late final _fakeOlderText = faker.lorem.words(olderMessage?.text?.split(" ").length ?? 0).join(" ");
+  late final _fakeSubject = faker.lorem.words(message.subject?.split(" ").length ?? 0).join(" ");
+  late final _fakeText = faker.lorem.words(message.text?.split(" ").length ?? 0).join(" ");
+
   @override
   _MessageState createState() => _MessageState();
 }
@@ -73,11 +79,20 @@ class _MessageState extends State<MessageWidget> {
   final RxDouble offset = 0.0.obs;
   bool gaveHapticFeedback = false;
 
+  late final String _fakeOlderSubject;
+  late final String _fakeOlderText;
+  late final String _fakeSubject;
+  late final String _fakeText;
+
   @override
   void initState() {
     super.initState();
     currentChat = CurrentChat.activeChat;
     _message = widget.message;
+    _fakeOlderSubject = widget._fakeOlderSubject;
+    _fakeSubject = widget._fakeSubject;
+    _fakeOlderText = widget._fakeOlderText;
+    _fakeText = widget._fakeText;
     _newerMessage = widget.newerMessage;
     _olderMessage = widget.olderMessage;
     init();
@@ -300,6 +315,10 @@ class _MessageState extends State<MessageWidget> {
             olderMessage: widget.olderMessage,
             newerMessage: widget.newerMessage,
             message: _message,
+            fakeOlderSubject: _fakeOlderSubject,
+            fakeOlderText: _fakeOlderText,
+            fakeSubject: _fakeSubject,
+            fakeText: _fakeText,
             messageBloc: widget.bloc,
             hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
             hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,

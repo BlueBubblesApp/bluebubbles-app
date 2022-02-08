@@ -25,9 +25,7 @@ class ChatBloc {
   final RxList<Chat> _chats = <Chat>[].obs;
 
   RxList<Chat> get chats => _chats;
-  final RxInt _unreads = 0.obs;
-
-  RxInt get unreads => _unreads;
+  final RxInt unreads = 0.obs;
 
   final RxBool hasChats = false.obs;
   final RxBool loadedChatBatch = false.obs;
@@ -37,7 +35,7 @@ class ChatBloc {
   final Map<String, Size> cachedMessageBubbleSizes = {};
 
   void updateUnreads() {
-    _unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
+    unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
   }
 
   Completer<void>? chatRequest;

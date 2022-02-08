@@ -301,11 +301,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     EventDispatcher().stream.listen((event) {
       if (!event.containsKey("type")) return;
       if (event["type"] == "unfocus-keyboard" && (focusNode!.hasFocus || subjectFocusNode!.hasFocus)) {
-        Logger.info("(EVENT) Unfocus Keyboard");
         focusNode!.unfocus();
         subjectFocusNode!.unfocus();
       } else if (event["type"] == "focus-keyboard" && !focusNode!.hasFocus && !subjectFocusNode!.hasFocus) {
-        Logger.info("(EVENT) Focus Keyboard");
         focusNode!.requestFocus();
         if (event['data'] is Message) {
           replyToMessage.value = event['data'];

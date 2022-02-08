@@ -417,7 +417,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
         children: [
           GestureDetector(
               behavior: HitTestBehavior.deferToChild,
-              onTap: () => _node.requestFocus(),
+              onTap: kIsDesktop || kIsWeb ? () => _node.requestFocus() : null,
               onHorizontalDragStart: (details) {},
               onHorizontalDragUpdate: (details) {
                 if (SettingsManager().settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {

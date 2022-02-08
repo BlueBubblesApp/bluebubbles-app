@@ -237,6 +237,9 @@ msix_config:
   msix_version: 1.7.1.6
   publisher: CN=BlueBubbles, O=BlueBubbles, C=US
   vs_generated_images_folder_path: windows/icons
+  logo_path: assets/icon/icon.ico
+  certificate_path: ../bluebubbles.pfx
+  certificate_password: BlueBubbles
   icons_background_color: transparent
   languages: en-us
   architecture: x64

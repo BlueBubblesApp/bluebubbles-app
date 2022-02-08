@@ -29,6 +29,7 @@ class ContactManager {
   bool hasFetchedContacts = false;
   Map<String, Contact?> handleToContact = {};
   Map<String, String?> handleToFakeName = {};
+  Map<String, String?> handleToFakeAddress = {};
   Map<String, String> handleToFormattedAddress = {};
 
   // We need these so we don't have threads fetching at the same time
@@ -97,13 +98,15 @@ class ContactManager {
     // Fetch the current list of contacts
     Logger.info("Fetching contacts", tag: tag);
     if (!kIsWeb && !kIsDesktop) {
-      contacts = (await FastContacts.allContacts).map((e) => Contact(
-        displayName: e.displayName,
-        emails: e.emails,
-        phones: e.phones,
-        structuredName: e.structuredName,
-        id: e.id,
-      )).toList();
+      contacts = (await FastContacts.allContacts)
+          .map((e) => Contact(
+                displayName: e.displayName,
+                emails: e.emails,
+                phones: e.phones,
+                structuredName: e.structuredName,
+                id: e.id,
+              ))
+          .toList();
     } else {
       await fetchContactsDesktop();
     }
@@ -151,7 +154,8 @@ class ContactManager {
         var response = await api.contacts();
         logger?.call("Found macOS contacts!");
         for (Map<String, dynamic> map in response.data['data']) {
-          logger?.call("Parsing contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
+          logger?.call(
+              "Parsing contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
           contacts.add(Contact(
             id: randomString(8),
             displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
@@ -196,6 +200,9 @@ class ContactManager {
         !handleToFakeName.keys.contains(entry.key) || handleToFakeName[entry.key] == null
             ? MapEntry(entry.key, faker.person.name())
             : MapEntry(entry.key, handleToFakeName[entry.key])));
+
+    handleToFakeAddress = handleToFakeName
+        .map((key, value) => MapEntry(key, key.isEmail ? faker.internet.email() : faker.phoneNumber.random.fromPattern(["+###########", "+# ###-###-####", "+# (###) ###-####"])));
   }
 
   Future<void> getAvatars() async {
