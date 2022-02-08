@@ -164,6 +164,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     WidgetsBinding.instance!.addObserver(this);
 
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      NotificationManager().switchChat(chat);
       if (widget.isCreator) {
         setState(() {
           getShowAlert();
@@ -454,7 +455,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   @override
   Widget build(BuildContext context) {
     Future.delayed(Duration.zero, () {
-      NotificationManager().switchChat(chat);
       widgetsBuilt = true;
     });
     currentChat?.isAlive = true;
