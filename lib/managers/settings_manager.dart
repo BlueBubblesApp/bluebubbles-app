@@ -53,6 +53,11 @@ class SettingsManager {
     if (!kIsWeb) {
       //ignore: unnecessary_cast, we need this as a workaround
       appDocDir = (await getApplicationSupportDirectory()) as Directory;
+      bool? useCustomPath = prefs.getBool("use-custom-path");
+      String? customStorePath = prefs.getString("custom-path");
+      if (useCustomPath == true) {
+        appDocDir = customStorePath == null ? await getApplicationDocumentsDirectory() : Directory(customStorePath);
+      }
     }
     try {
       canAuthenticate = !kIsWeb && !kIsDesktop && await LocalAuthentication().isDeviceSupported();
@@ -93,8 +98,10 @@ class SettingsManager {
     // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't
     if (!headless) {
       try {
-        SocketManager().startSocketIO();
-        SocketManager().authFCM();
+        if (settings.finishedSetup.value) {
+          SocketManager().startSocketIO();
+          SocketManager().authFCM();
+        }
       } catch (_) {}
     }
   }

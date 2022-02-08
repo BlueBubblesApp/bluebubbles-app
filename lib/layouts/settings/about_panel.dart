@@ -21,7 +21,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class AboutPanel extends StatelessWidget {
   // Not sure how to do this other than manually yet
-  final desktopVersion = "1.7.1.6";
+  final desktopVersion = "1.7.1.7";
   final desktopPre = true;
 
   @override

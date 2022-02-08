@@ -635,7 +635,6 @@ class _QRScanState extends State<QRScan> {
       barrierDismissible: false,
     );
     SocketManager().closeSocket(force: true);
-    Settings copy = SettingsManager().settings;
     String? addr = getServerAddress(address: url);
     if (addr == null) {
       error = "Server address is invalid!";
@@ -643,9 +642,9 @@ class _QRScanState extends State<QRScan> {
       return;
     }
 
-    copy.serverAddress.value = addr;
-    copy.guidAuthKey.value = password;
-    await SettingsManager().saveSettings(copy);
+    SettingsManager().settings.serverAddress.value = addr;
+    SettingsManager().settings.guidAuthKey.value = password;
+    SettingsManager().settings.save();
     try {
       SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     } catch (e) {

@@ -68,7 +68,9 @@ class SocketManager {
     socketProcesses[processId] = cb;
     Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
       if (state.value == SocketState.DISCONNECTED || state.value == SocketState.FAILED) {
-        _manager.startSocketIO();
+        if (SettingsManager().settings.finishedSetup.value) {
+          _manager.startSocketIO();
+        }
       } else if (state.value == SocketState.CONNECTED) {
         cb();
       }
@@ -182,8 +184,7 @@ class SocketManager {
             t = Timer(const Duration(seconds: 5), () {
               if (state.value == SocketState.DISCONNECTED &&
                   LifeCycleManager().isAlive &&
-                  !(Get.isSnackbarOpen ?? false) &&
-                  SettingsManager().settings.finishedSetup.value) {
+                  !(Get.isSnackbarOpen ?? false)) {
                 showSnackbar('Socket Disconnected', 'You are no longer connected to the socket 🔌');
               }
             });
@@ -244,16 +245,19 @@ class SocketManager {
       /*_manager.socket = SocketIOManager().createSocketIO(serverAddress, "/",
           query: "guid=${encodeUri(SettingsManager().settings.guidAuthKey)}",
           socketStatusCallback: (data) => socketStatusUpdate(data));*/
-      _manager.socket = io.io(
-          serverAddress,
-          OptionBuilder()
-              .setQuery({"guid": encodeUri(SettingsManager().settings.guidAuthKey.value)})
-              .setTransports(['websocket', 'polling'])
-              // Disable so that we can create the listeners first
-              .disableAutoConnect()
-              .disableForceNewConnection()
-              .enableReconnection()
-              .build());
+      OptionBuilder options = OptionBuilder()
+          .setQuery({"guid": encodeUri(SettingsManager().settings.guidAuthKey.value)})
+          .setTransports(['websocket', 'polling'])
+          // Disable so that we can create the listeners first
+          .disableAutoConnect()
+          .enableReconnection();
+      if (!SettingsManager().settings.finishedSetup.value) {
+        // Necessary so that auth works after a failed attempt
+        options.enableForceNewConnection();
+      } else {
+        options.disableForceNewConnection();
+      }
+      _manager.socket = io.io(serverAddress, options.build());
 
       if (_manager.socket == null) {
         Logger.error("Socket was never created. Can't connect to server...", tag: tag);

@@ -41,22 +41,41 @@ callbackHandler() async {
     var documentsDirectory =
       //ignore: unnecessary_cast, we need this as a workaround
       (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
-    final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
+    Directory objectBoxDirectory = Directory(join(documentsDirectory.path,'objectbox'));
     final sqlitePath = join(documentsDirectory.path, "chat.db");
 
     Future<void> initStore({bool saveThemes = false}) async {
       String? storeRef = prefs.getString("objectbox-reference");
-      if (storeRef != null) {
+      bool? useCustomPath = prefs.getBool("use-custom-path");
+      String? customStorePath = prefs.getString("custom-path");
+      if (useCustomPath != true && storeRef != null) {
         debugPrint("Opening ObjectBox store from reference");
         try {
           store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
         } catch (_) {
-          debugPrint("Failed to open store from reference, opening from path");
-          store = await openStore(directory: documentsDirectory.path + '/objectbox');
+          try {
+            debugPrint("Failed to open store from reference, opening from path");
+            if (kIsDesktop) {
+              Future.delayed(Duration(seconds: 5), () => throw Error());
+            }
+            store = await openStore(directory: join(documentsDirectory.path,'objectbox'));
+          } catch (_) {
+            debugPrint("Failed to open store from default path. Using custom path");
+            customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
+            prefs.setBool("use-custom-path", true);
+            objectBoxDirectory = Directory(join(customStorePath,'objectbox'));
+            debugPrint("Opening ObjectBox store from custom path: ${join(customStorePath,'objectbox')}");
+            store = await openStore(directory: join(customStorePath,'objectbox'));
+          }
         }
+      } else if (useCustomPath == true) {
+        customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
+        objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+        debugPrint("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
+        store = await openStore(directory: join(customStorePath, "objectbox"));
       } else {
-        debugPrint("Opening ObjectBox store from path");
-        store = await openStore(directory: documentsDirectory.path + '/objectbox');
+        debugPrint("Opening ObjectBox store from path: ${join(documentsDirectory.path,'objectbox')}");
+        store = await openStore(directory: join(documentsDirectory.path,'objectbox'));
       }
       prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
       debugPrint("Opening boxes");
