@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -241,21 +242,22 @@ class Message {
       if (awaitNewMessageEvent) {
         await Future.delayed(Duration(milliseconds: 500));
         return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false, chat: chat);
-      } else {
-        if (chat != null) {
-          await chat.addMessage(newMessage);
-          // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-          NewMessageManager().addMessage(chat, newMessage, outgoing: false);
-          return newMessage;
-        }
+      }
+
+      if (chat != null) {
+        await chat.addMessage(newMessage);
+        // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+        NewMessageManager().addMessage(chat, newMessage, outgoing: false);
       }
 
       return newMessage;
     }
 
-    newMessage.id = existing.id;
+    existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
+    existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
+    existing._error.value = newMessage._error.value;
 
-    return newMessage;
+    return existing;
   }
 
   Message updateMetadata(Metadata? metadata) {
@@ -285,7 +287,9 @@ class Message {
   }
 
   Message fetchAssociatedMessages({MessageBloc? bloc, bool shouldRefresh = false}) {
-    associatedMessages = (bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? []).cast<Message>();
+    associatedMessages =
+        (bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [])
+            .cast<Message>();
     if (threadOriginatorGuid != null) {
       final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
       final threadOriginator = existing;
@@ -294,7 +298,8 @@ class Message {
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       if (threadOriginator != null) associatedMessages.add(threadOriginator);
       if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
-      if (!guid!.startsWith("temp")) bloc?.threadOriginators.conditionalAdd(guid!, threadOriginatorGuid!, shouldRefresh);
+      if (!guid!.startsWith("temp"))
+        bloc?.threadOriginators.conditionalAdd(guid!, threadOriginatorGuid!, shouldRefresh);
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     return this;
