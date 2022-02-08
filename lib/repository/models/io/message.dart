@@ -384,38 +384,35 @@ class Message {
       {bool awaitNewMessageEvent = true, Chat? chat}) async {
     Message? existing = Message.findOne(guid: oldGuid);
 
-    if (existing == null || existing.handleId == null
-        || (existing.handle == null && (existing.handleId ?? 0) > 0)) {
+    // Create or wait for the new message
+    if (existing == null || existing.handleId == null || (existing.handle == null && (existing.handleId ?? 0) > 0)) {
+      // If we want to "await" the new message event, wait 500 milliseconds and then see if the message exists in the database
+      // This is not actually awaiting the event, just the milliseconds.
       if (awaitNewMessageEvent) {
         await Future.delayed(Duration(milliseconds: 500));
         return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false, chat: chat);
-      } else {
-        if (chat != null) {
-          await chat.addMessage(newMessage);
-          NewMessageManager().addMessage(chat, newMessage, outgoing: false);
-          return newMessage;
-        }
       }
-
-      return newMessage;
-    } else {
-      existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
-      existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
+  
+      // If we have a chat and the message doesn't exist, let's add the message as new
+      if (chat != null) {
+        await chat.addMessage(newMessage);
+        NewMessageManager().addMessage(chat, newMessage, outgoing: false);
+        return newMessage;
+      } else {
+        // If we don't have a chat, we just want to add the message
+        messageBox.put(newMessage);
+        return newMessage;
+      }
     }
 
-    newMessage.id = existing.id;
-    newMessage.handleId = existing.handleId;
-    if (existing.handle != null) {
-      newMessage.handle = Handle.findOne(address: existing.handle!.address) ?? existing.handle;
-    }
-    newMessage.hasAttachments = existing.hasAttachments;
-    newMessage.hasReactions = existing.hasReactions;
-    newMessage.metadata = existing.metadata;
-    newMessage.chat.target = existing.chat.target;
+    // This is what happens whenever the existing message already exists.
+    // We just need to update the timestamps & error
+    existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
+    existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
+    existing._error.value = newMessage._error.value;
+    messageBox.put(existing);
 
-    messageBox.put(newMessage);
-
-    return newMessage;
+    return existing;
   }
 
   Message updateMetadata(Metadata? metadata) {
