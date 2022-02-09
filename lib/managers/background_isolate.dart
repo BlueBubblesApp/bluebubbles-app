@@ -24,10 +24,8 @@ import 'package:universal_io/io.dart';
 
 abstract class BackgroundIsolateInterface {
   static void initialize() {
-    CallbackHandle callbackHandle =
-        PluginUtilities.getCallbackHandle(callbackHandler)!;
-    MethodChannelInterface().invokeMethod("initialize-background-handle",
-        {"handle": callbackHandle.toRawHandle()});
+    CallbackHandle callbackHandle = PluginUtilities.getCallbackHandle(callbackHandler)!;
+    MethodChannelInterface().invokeMethod("initialize-background-handle", {"handle": callbackHandle.toRawHandle()});
   }
 }
 
@@ -39,9 +37,9 @@ callbackHandler() async {
   prefs = await SharedPreferences.getInstance();
   if (!kIsWeb) {
     var documentsDirectory =
-      //ignore: unnecessary_cast, we need this as a workaround
-      (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
-    Directory objectBoxDirectory = Directory(join(documentsDirectory.path,'objectbox'));
+        //ignore: unnecessary_cast, we need this as a workaround
+        (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+    Directory objectBoxDirectory = Directory(join(documentsDirectory.path, 'objectbox'));
     final sqlitePath = join(documentsDirectory.path, "chat.db");
 
     Future<void> initStore({bool saveThemes = false}) async {
@@ -53,19 +51,21 @@ callbackHandler() async {
         try {
           store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
         } catch (_) {
-          try {
-            debugPrint("Failed to open store from reference, opening from path");
-            if (kIsDesktop) {
-              Future.delayed(Duration(seconds: 5), () => throw Error());
-            }
-            store = await openStore(directory: join(documentsDirectory.path,'objectbox'));
-          } catch (_) {
-            debugPrint("Failed to open store from default path. Using custom path");
-            customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
-            prefs.setBool("use-custom-path", true);
-            objectBoxDirectory = Directory(join(customStorePath,'objectbox'));
-            debugPrint("Opening ObjectBox store from custom path: ${join(customStorePath,'objectbox')}");
-            store = await openStore(directory: join(customStorePath,'objectbox'));
+          debugPrint("Failed to open store from reference, opening from path");
+          if (kIsDesktop) {
+            store = await Future.any<Store>([
+              Future.delayed(Duration(seconds: 5), () => throw Error()),
+              openStore(directory: join(documentsDirectory.path, 'objectbox'))
+            ]).then((value) => store = value).onError((e, s) async {
+              debugPrint("Failed to open store from default path. Using custom path");
+              customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
+              prefs.setBool("use-custom-path", true);
+              objectBoxDirectory = Directory(join(customStorePath!, "objectbox"));
+              debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
+              return await openStore(directory: join(customStorePath!, 'objectbox'));
+            });
+          } else {
+            store = await openStore(directory: join(customStorePath!, 'objectbox'));
           }
         }
       } else if (useCustomPath == true) {
@@ -74,8 +74,8 @@ callbackHandler() async {
         debugPrint("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
         store = await openStore(directory: join(customStorePath, "objectbox"));
       } else {
-        debugPrint("Opening ObjectBox store from path: ${join(documentsDirectory.path,'objectbox')}");
-        store = await openStore(directory: join(documentsDirectory.path,'objectbox'));
+        debugPrint("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
+        store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
       }
       prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
       debugPrint("Opening boxes");

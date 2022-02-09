@@ -164,19 +164,21 @@ Future<Null> initApp(bool isBubble) async {
           try {
             store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
           } catch (_) {
-            try {
-              Logger.info("Failed to open store from reference, opening from path");
-              if (kIsDesktop) {
-                Future.delayed(Duration(seconds: 5), () => throw Error());
-              }
+            Logger.info("Failed to open store from reference, opening from path");
+            if (kIsDesktop) {
+              store = await Future.any<Store>([
+                Future.delayed(Duration(seconds: 5), () => throw Error()),
+                openStore(directory: join(documentsDirectory.path, 'objectbox'))
+              ]).then((value) => store = value).onError((e, s) async {
+                Logger.info("Failed to open store from default path. Using custom path");
+                customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
+                prefs.setBool("use-custom-path", true);
+                objectBoxDirectory = Directory(join(customStorePath!, "objectbox"));
+                Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
+                return await openStore(directory: join(customStorePath!, 'objectbox'));
+              });
+            } else {
               store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
-            } catch (_) {
-              Logger.info("Failed to open store from default path. Using custom path");
-              customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
-              prefs.setBool("use-custom-path", true);
-              objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-              Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-              store = await openStore(directory: join(customStorePath, 'objectbox'));
             }
           }
         } else if (useCustomPath == true) {
