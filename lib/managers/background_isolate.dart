@@ -53,17 +53,17 @@ callbackHandler() async {
         } catch (_) {
           debugPrint("Failed to open store from reference, opening from path");
           if (kIsDesktop) {
-            store = await Future.any<Store>([
-              Future.delayed(Duration(seconds: 5), () => throw Error()),
-              openStore(directory: join(documentsDirectory.path, 'objectbox'))
-            ]).onError((e, s) async {
-              debugPrint("Failed to open store from default path. Using custom path");
-              customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
-              prefs.setBool("use-custom-path", true);
-              objectBoxDirectory = Directory(join(customStorePath!, "objectbox"));
-              debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-              return await openStore(directory: join(customStorePath!, 'objectbox'));
-            });
+            store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
+            if (kIsDesktop) {
+              if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
+                debugPrint("Failed to open store from default path. Using custom path");
+                customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
+                prefs.setBool("use-custom-path", true);
+                objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+                debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
+                store = await openStore(directory: join(customStorePath, 'objectbox'));
+              }
+            }
           } else {
             store = await openStore(directory: join(customStorePath!, 'objectbox'));
           }

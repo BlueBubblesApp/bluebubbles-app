@@ -165,20 +165,16 @@ Future<Null> initApp(bool isBubble) async {
             store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
           } catch (_) {
             Logger.info("Failed to open store from reference, opening from path");
+            store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
             if (kIsDesktop) {
-              store = await Future.any<Store>([
-                Future.delayed(Duration(seconds: 5), () => throw Error()),
-                openStore(directory: join(documentsDirectory.path, 'objectbox'))
-              ]).onError((e, s) async {
+              if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
                 Logger.info("Failed to open store from default path. Using custom path");
                 customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
                 prefs.setBool("use-custom-path", true);
-                objectBoxDirectory = Directory(join(customStorePath!, "objectbox"));
+                objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
                 Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-                return await openStore(directory: join(customStorePath!, 'objectbox'));
-              });
-            } else {
-              store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
+                store = await openStore(directory: join(customStorePath, 'objectbox'));
+              }
             }
           }
         } else if (useCustomPath == true) {
