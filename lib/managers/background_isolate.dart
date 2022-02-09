@@ -56,7 +56,7 @@ callbackHandler() async {
             store = await Future.any<Store>([
               Future.delayed(Duration(seconds: 5), () => throw Error()),
               openStore(directory: join(documentsDirectory.path, 'objectbox'))
-            ]).then((value) => store = value).onError((e, s) async {
+            ]).onError((e, s) async {
               debugPrint("Failed to open store from default path. Using custom path");
               customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
               prefs.setBool("use-custom-path", true);
