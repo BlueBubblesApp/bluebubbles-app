@@ -253,6 +253,7 @@ class Message {
       return newMessage;
     }
 
+    existing.guid = newMessage.guid;
     existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
     existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
     existing._error.value = newMessage._error.value;
