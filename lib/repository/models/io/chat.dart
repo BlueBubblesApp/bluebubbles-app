@@ -9,8 +9,9 @@ import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
@@ -301,7 +302,7 @@ class Chat {
   int? id;
   int? originalROWID;
   @Unique()
-  String? guid;
+  String guid;
   int? style;
   String? chatIdentifier;
   bool? isArchived;
@@ -341,7 +342,7 @@ class Chat {
   Chat({
     this.id,
     this.originalROWID,
-    this.guid,
+    required this.guid,
     this.style,
     this.chatIdentifier,
     this.isArchived,
@@ -366,7 +367,7 @@ class Chat {
     pinIndex = pinnedIndex;
   }
 
-  bool get isTextForwarding => guid?.startsWith("SMS") ?? false;
+  bool get isTextForwarding => guid.startsWith("SMS");
 
   bool get isSMS => false;
 
@@ -594,7 +595,7 @@ class Chat {
 
   Chat toggleHasUnread(bool hasUnread) {
     if (hasUnread) {
-      if (CurrentChat.isActive(guid!)) {
+      if (ChatManager().isChatActive(this)) {
         return this;
       }
     }
@@ -688,7 +689,7 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
         toggleHasUnread(false);
-      } else if (!CurrentChat.isActive(guid!)) {
+      } else if (!ChatManager().isChatActive(this)) {
         toggleHasUnread(true);
       }
     }
@@ -751,7 +752,7 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (newer.isFromMe!) {
         toggleHasUnread(false);
-      } else if (!CurrentChat.isActive(guid!)) {
+      } else if (!ChatController.isActive(guid!)) {
         toggleHasUnread(true);
       }
     }

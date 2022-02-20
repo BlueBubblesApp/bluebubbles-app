@@ -8,7 +8,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:chewie_audio/chewie_audio.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
@@ -39,7 +39,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   void initState() {
     super.initState();
 
-    CurrentChat? thisChat = CurrentChat.of(widget.context);
+    ChatController? thisChat = ChatController.of(widget.context);
     if (!kIsWeb && thisChat != null && thisChat.audioPlayers.containsKey(widget.file.path)) {
       audioController = thisChat.audioPlayers[widget.file.path]!.item2;
       controller = thisChat.audioPlayers[widget.file.path]!.item1;
@@ -74,9 +74,9 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         cupertinoColumnAlignment: widget.isFromMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       );
 
-      thisChat = CurrentChat.of(widget.context);
+      thisChat = ChatController.of(widget.context);
       if (!kIsWeb && thisChat != null && widget.file.path != null) {
-        CurrentChat.of(widget.context)!.audioPlayers[widget.file.path!] = Tuple2(controller, audioController);
+        ChatController.of(widget.context)!.audioPlayers[widget.file.path!] = Tuple2(controller, audioController);
       }
     }
   }

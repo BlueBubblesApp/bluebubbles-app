@@ -9,7 +9,8 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -227,7 +228,7 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
 
   @override
   Object? invoke(covariant OpenNextChatIntent intent) {
-    final chat = CurrentChat.activeChat?.chat;
+    final chat = ChatManager().activeChat?.chat;
     if (chat != null) {
       final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
       if (index > -1 && index < ChatBloc().chats.length - 1) {
@@ -239,8 +240,8 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
           ),
           (route) => route.isFirst,
         );
-        CurrentChat.activeChat!.isAlive = false;
-        CurrentChat.getCurrentChat(_chat)!.isAlive = true;
+
+        ChatManager().setActiveChat(_chat);
       }
     }
   }
@@ -257,7 +258,7 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
 
   @override
   Object? invoke(covariant OpenPreviousChatIntent intent) {
-    final chat = CurrentChat.activeChat?.chat;
+    final chat = ChatManager().activeChat?.chat;
     if (chat != null) {
       final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
       if (index > 0 && index < ChatBloc().chats.length) {
@@ -269,8 +270,8 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
           ),
           (route) => route.isFirst,
         );
-        CurrentChat.activeChat!.isAlive = false;
-        CurrentChat.getCurrentChat(_chat)!.isAlive = true;
+        
+        ChatManager().setActiveChat(_chat);
       }
     }
   }

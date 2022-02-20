@@ -212,7 +212,7 @@ class DBProvider {
         final chats = tableData[0].map((e) => Chat.fromMap(e)).toList();
         final chatIdsMigrationMap = <String, Map<String, int>>{};
         for (Chat element in chats) {
-          chatIdsMigrationMap[element.guid!] = {
+          chatIdsMigrationMap[element.guid] = {
             "old": element.id!
           };
           element.id = null;
@@ -223,7 +223,7 @@ class DBProvider {
         final newChats = chatBox.getAll();
         Logger.info("Fetched ObjectBox chats, length ${newChats.length}", tag: "OB Migration");
         for (Chat element in newChats) {
-          chatIdsMigrationMap[element.guid!]!['new'] = element.id!;
+          chatIdsMigrationMap[element.guid]!['new'] = element.id!;
         }
         Logger.info("Added new IDs to chat ID migration map", tag: "OB Migration");
         chats.clear();

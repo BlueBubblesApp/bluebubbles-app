@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
@@ -15,12 +16,12 @@ class MessageTimeStamp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (CurrentChat.activeChat == null) return Container();
+    if (ChatManager().activeChat == null) return Container();
 
     return StreamBuilder<double>(
-        stream: CurrentChat.activeChat?.timeStampOffsetStream.stream,
+        stream: ChatManager().activeChat?.timeStampOffsetStream.stream,
         builder: (context, snapshot) {
-          double offset = CurrentChat.activeChat?.timeStampOffset ?? 0;
+          double offset = ChatManager().activeChat?.timeStampOffset ?? 0;
           String text = buildTime(message.dateCreated).toLowerCase();
           if (!message.dateCreated!.isToday()) {
             String formatted = buildDate(message.dateCreated);

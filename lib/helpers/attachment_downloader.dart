@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -91,9 +92,9 @@ class AttachmentDownloadController extends GetxController {
       stopwatch.stop();
       Logger.info("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
-      if (CurrentChat.activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) ==
-          null) {
-        CurrentChat.activeChat?.chatAttachments.add(attachment);
+
+      if (ChatManager().activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) == null) {
+        ChatManager().activeChat?.chatAttachments.add(attachment);
       }
 
       // Finish the downloader
@@ -150,9 +151,9 @@ class AttachmentDownloadController extends GetxController {
           if (!kIsWeb) {
             await AttachmentHelper.compressAttachment(attachment, attachment.getPath());
             attachment.save(null);
-          } else if (CurrentChat.activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) ==
+          } else if (ChatManager().activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) ==
               null) {
-            CurrentChat.activeChat?.chatAttachments.add(attachment);
+            ChatManager().activeChat?.chatAttachments.add(attachment);
           }
         } catch (ex) {
           // So what if it crashes here.... I don't care...

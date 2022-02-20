@@ -11,7 +11,7 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/chat.dart';
@@ -265,19 +265,19 @@ class Message {
     return this;
   }
 
-  List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
+  List<Attachment?>? fetchAttachments({ChatController? currentChat}) {
     return attachments;
   }
 
   static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages,
-      {CurrentChat? currentChat}) {
+      {ChatController? currentChat}) {
     final Map<String, List<Attachment?>> map = {};
     map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
     return map;
   }
 
   static Future<Map<String, List<Attachment?>>> fetchAttachmentsByMessagesAsync(List<Message?> messages,
-      {CurrentChat? currentChat}) async {
+      {ChatController? currentChat}) async {
     final Map<String, List<Attachment?>> map = {};
     map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
     return map;

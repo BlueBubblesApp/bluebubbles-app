@@ -188,7 +188,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
             Navigator.of(context).push(
               ThemeSwitcher.buildPageRoute(
                 builder: (BuildContext context) {
-                  return SchedulePanel(chat: Chat());
+                  return SchedulePanel(chat: Chat(guid: 'tmp'));
                 },
               ),
             );

@@ -5,7 +5,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -363,7 +363,7 @@ class ChatBloc {
     if (chat.title == null) {
       chat.getTitle();
     }
-    AttachmentInfoBloc().initChat(chat);
+    ChatManager().createChatController(chat);
   }
 
   void archiveChat(Chat chat) {
@@ -412,9 +412,7 @@ class ChatBloc {
     if (map.containsKey(chat.guid)) {
       map.remove(chat.guid);
     }
-    if (chat.guid != null) {
-      map[chat.guid!] = chatMap;
-    }
+    map[chat.guid] = chatMap;
   }
 
   void updateChat(Chat chat) async {

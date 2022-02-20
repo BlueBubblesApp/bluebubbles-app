@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/message.dart';
@@ -199,10 +199,10 @@ class Attachment {
       throw ("Old GUID does not exist!");
     }
     // update current chat image data to prevent the image or video thumbnail from reloading
-    final data = CurrentChat.activeChat?.getImageData(existing);
+    final data = ChatManager().activeChat?.getImageData(existing);
     if (data != null) {
-      CurrentChat.activeChat?.clearImageData(existing);
-      CurrentChat.activeChat?.saveImageData(data, newAttachment);
+      ChatManager().activeChat?.clearImageData(existing);
+      ChatManager().activeChat?.saveImageData(data, newAttachment);
     }
     // update values and save
     existing.guid = newAttachment.guid;

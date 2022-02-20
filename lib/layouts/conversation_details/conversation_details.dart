@@ -145,7 +145,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                             ]),
                           );
                         });
-                    final response = await api.updateChat(chat.guid!, controller.text);
+                    final response = await api.updateChat(chat.guid, controller.text);
                     if (response.statusCode == 200) {
                       Get.back();
                       Get.back();
@@ -527,7 +527,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                                   ]),
                                                 );
                                               });
-                                          final response = await api.chatParticipant("add", chat.guid!, participantController.text);
+                                          final response = await api.chatParticipant("add", chat.guid, participantController.text);
                                           if (response.statusCode == 200) {
                                             Get.back();
                                             Get.back();

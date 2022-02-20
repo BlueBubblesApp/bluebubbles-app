@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:chewie/chewie.dart';
 import 'package:get/get.dart';
@@ -176,7 +177,7 @@ class _VideoViewerState extends State<VideoViewer> {
           onTap: () async {
             Navigator.pop(context);
             isReloading.value = true;
-            CurrentChat.activeChat?.clearImageData(widget.attachment);
+            ChatManager().activeChat?.clearImageData(widget.attachment);
 
             showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
             AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
@@ -390,7 +391,7 @@ class _VideoViewerState extends State<VideoViewer> {
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
                       isReloading.value = true;
-                      CurrentChat.activeChat?.clearImageData(widget.attachment);
+                      ChatManager().activeChat?.clearImageData(widget.attachment);
 
                       showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
                       AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {

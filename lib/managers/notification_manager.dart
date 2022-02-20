@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:quick_notify/quick_notify.dart';
@@ -13,7 +14,7 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -55,32 +56,6 @@ class NotificationManager {
     processedItems.insert(0, guid);
     if (processedItems.length > 100) {
       processedItems = processedItems.sublist(0, 100);
-    }
-  }
-
-  /// Sets the currently active [chat]. As a result,
-  /// the chat will be marked as read, and the notifications
-  /// for the chat will be cleared
-  void switchChat(Chat? chat) {
-    if (chat == null) {
-      // CurrentChat.getCurrentChat(chat)?.dispose();
-      return;
-    }
-
-    CurrentChat.getCurrentChat(chat)?.isAlive = true;
-    chat.toggleHasUnread(false);
-
-    if (SettingsManager().settings.enablePrivateAPI.value) {
-      if (SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
-        SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
-      }
-
-      if (!MethodChannelInterface().headless && SettingsManager().settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
-        SocketManager().sendMessage("update-typing-status", {"chatGuid": chat.guid}, (data) {});
-      }
-    }
-    if (!LifeCycleManager().isBubble) {
-      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
     }
   }
 
@@ -214,7 +189,7 @@ class NotificationManager {
     chatTitle ??= isGroup ? 'Group Chat' : 'iMessage Chat';
 
     await createNewMessageNotification(
-        chat.guid!,
+        chat.guid,
         isGroup,
         chatTitle,
         contactIcon,

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -30,7 +31,7 @@ import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/helpers/darty.dart';
@@ -60,7 +61,7 @@ class MessageDetailsPopup extends StatefulWidget {
   final double childOffsetY;
   final Size? childSize;
   final Widget child;
-  final CurrentChat? currentChat;
+  final ChatController? currentChat;
   final MessageBloc? messageBloc;
 
   @override
@@ -72,7 +73,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   bool showTools = false;
   String? selfReaction;
   String? currentlySelectedReaction;
-  CurrentChat? currentChat;
+  ChatController? currentChat;
   Chat? dmChat;
 
   late double messageTopOffset;
@@ -748,7 +749,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           child: InkWell(
             onTap: () {
               for (Attachment? element in widget.message.attachments) {
-                CurrentChat.activeChat?.clearImageData(element!);
+                ChatManager().activeChat?.clearImageData(element!);
                 AttachmentHelper.redownloadAttachment(element!);
               }
               setState(() {});

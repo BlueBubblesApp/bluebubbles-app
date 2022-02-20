@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:flutter/foundation.dart';
@@ -19,7 +20,7 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
@@ -230,7 +231,7 @@ class MethodChannelInterface {
             Chat chat = chats.first!;
 
             // Open the chat
-            openChat(chat.guid!, existingAttachments: attachments);
+            openChat(chat.guid, existingAttachments: attachments);
 
             // Nothing else to do
             return Future.value("");
@@ -270,7 +271,7 @@ class MethodChannelInterface {
             Chat chat = chats.first!;
 
             // Open the chat
-            openChat(chat.guid!, existingText: text);
+            openChat(chat.guid, existingText: text);
 
             // Nothing else to do
             return Future.value("");
@@ -374,32 +375,46 @@ class MethodChannelInterface {
   }
 
   Future<void> openChat(String id, {List<PlatformFile> existingAttachments = const [], String? existingText}) async {
+    // If the ID is -1, it means the notification grouping header was tapped
     if (id == "-1") {
       NavigatorManager().navigatorKey.currentState!.popUntil((route) => route.isFirst);
       return;
     }
+
+    // If we haven't fetched contacts, we should get them, just in case we don't already have them
+    // If we decide that we don't need to wait for them to fully load, we can remove the await
+    // This is only feasible if we truly had reactive widgets for the contacts.
     if (!ContactManager().hasFetchedContacts) {
       await ContactManager().getContacts();
     }
-    if (CurrentChat.activeChat?.chat.guid == id) {
-      NotificationManager().switchChat(CurrentChat.activeChat!.chat);
+
+    // If the currently active chat is the same as the tapped notification, we
+    // clear notifications for it and update the text field data
+    if (ChatManager().activeChat?.chat.guid == id) {
+      ChatManager().setActiveChat(ChatManager().activeChat!.chat);
+  
+      // Get the current text field and update the attachments/text
       TextFieldData? data = TextFieldBloc().getTextField(id);
-      if (existingAttachments.isNotEmpty && data != null) {
-        data.attachments.addAll(existingAttachments);
-        final ids = data.attachments.map((e) => e.path).toSet();
-        data.attachments.retainWhere((element) => ids.remove(element.path));
-        EventDispatcher().emit("text-field-update-attachments", null);
+      if (data != null) {
+        if (existingAttachments.isNotEmpty) {
+          data.attachments.addAll(existingAttachments);
+          final ids = data.attachments.map((e) => e.path).toSet();
+          data.attachments.retainWhere((element) => ids.remove(element.path));
+          EventDispatcher().emit("text-field-update-attachments", null);
+        }
+
+        if (existingText != null) {
+          data.controller.text = existingText;
+          EventDispatcher().emit("text-field-update-text", null);
+        }
       }
-      if (existingText != null) {
-        data?.controller.text = existingText;
-        EventDispatcher().emit("text-field-update-text", null);
-      }
+
       return;
     }
-    // Try to find the specified chat to open
-    Chat? openedChat = Chat.findOne(guid: id);
 
-    // If we did find one, then we can move on
+    // If the chat is not active, we should find the respective chat in the 
+    // database and then switch to that chat
+    Chat? openedChat = Chat.findOne(guid: id);
     if (openedChat != null) {
       // Get all of the participants of the chat so that it looks right when it is opened
       openedChat.getParticipants();
@@ -407,10 +422,7 @@ class MethodChannelInterface {
       // Make sure that the title is set
       openedChat.getTitle();
 
-      // Clear all notifications for this chat
-      NotificationManager().switchChat(openedChat);
-
-      // if (!CurrentChat.isActive(openedChat.guid))
+      // if (!ChatController.isActive(openedChat.guid))
       // Actually navigate to the chat page
       CustomNavigator.pushAndRemoveUntil(
           Get.context!,
@@ -426,8 +438,10 @@ class MethodChannelInterface {
       // Because we are pushing AND removing until it is the first route,
       // the [dispose] methods of the previous conversation views will be called and thus will override the switch chat we just called
       // Thus we need to add a delay here to wait for the animation to finish
-      await Future.delayed(Duration(milliseconds: 500));
-      NotificationManager().switchChat(openedChat);
+      await Future.delayed(Duration(milliseconds: 1000));
+
+      // We already cleared the notifications, so we don't need to
+      ChatManager().setActiveChat(openedChat, clearNotifications: true);
     } else {
       Logger.warn("Failed to find chat", tag: "MCI-OpenChat");
     }

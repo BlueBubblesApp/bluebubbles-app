@@ -18,8 +18,9 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -112,8 +113,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       }
     });
 
-    /*if (CurrentChat.activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
-      CurrentChat.activeChat?.autoplayGuid = null;
+    /*if (ChatManager().activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
+      ChatManager().activeChat?.autoplayGuid = null;
       SchedulerBinding.instance!.addPostFrameCallback((_) {
         if (ModalRoute.of(context)?.animation?.status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
           setState(() {
@@ -195,8 +196,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           .getReactions().isNotEmpty;
       child = Padding(
         padding: EdgeInsets.only(
-          left: CurrentChat
-              .activeChat?.chat.isGroup() ?? false ? 5.0 : 0.0,
+          left: ChatManager().activeChat?.chat.isGroup() ?? false ? 5.0 : 0.0,
           right: (hasReactions) ? 15.0 : 0.0,
           top: widget.message
               .getReactions().isNotEmpty ? 15 : 0,
@@ -501,7 +501,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     final msg = widget.message.associatedMessages.firstWhereOrNull((e) => e.guid == widget.message.threadOriginatorGuid);
 
     // First, add the message sender (if applicable)
-    bool isGroup = CurrentChat
+    bool isGroup = ChatController
         .of(context)
         ?.chat
         .isGroup() ?? false;
@@ -595,7 +595,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         messageSize ??= widget.message.getBubbleSize(context);
         messageColumn.add(
           StreamBuilder<dynamic>(
-            stream: CurrentChat.of(context)?.totalOffsetStream.stream,
+            stream: ChatController.of(context)?.totalOffsetStream.stream,
             builder: (context, snapshot) {
               double? data;
               if (snapshot.data is double) {
@@ -805,7 +805,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                   children: [
                     if ((SettingsManager().settings.alwaysShowAvatars.value ||
-                        (CurrentChat.activeChat?.chat.isGroup() ?? false)) && !msg.isFromMe!)
+                        (ChatManager().activeChat?.chat.isGroup() ?? false)) && !msg.isFromMe!)
                       Padding(
                         padding: EdgeInsets.only(top: 5),
                         child: ContactAvatarWidget(

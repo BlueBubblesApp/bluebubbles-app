@@ -1,7 +1,8 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:faker/faker.dart';
@@ -227,11 +228,11 @@ abstract class MessageWidgetMixin {
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
       List<Tuple2<String, int>> linkIndexMatches = <Tuple2<String, int>>[];
       if (!kIsWeb && !kIsDesktop) {
-        if (CurrentChat.activeChat?.mlKitParsedText[message.guid!] == null) {
-          CurrentChat.activeChat?.mlKitParsedText[message.guid!] =
+        if (ChatManager().activeChat?.mlKitParsedText[message.guid!] == null) {
+          ChatManager().activeChat?.mlKitParsedText[message.guid!] =
               await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
         }
-        final entities = CurrentChat.activeChat?.mlKitParsedText[message.guid!] ?? [];
+        final entities = ChatManager().activeChat?.mlKitParsedText[message.guid!] ?? [];
         List<EntityAnnotation> normalizedEntities = [];
         if (entities.isNotEmpty) {
           for (int i = 0; i < entities.length; i++) {

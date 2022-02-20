@@ -92,11 +92,24 @@ late final Box<Message> messageBox;
 late final Box<ScheduledMessage> scheduledBox;
 late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
-String? recentIntent;
 final RxBool fontExistsOnDisk = false.obs;
 final RxBool downloadingFont = false.obs;
 final RxnDouble progress = RxnDouble();
 final RxnInt totalSize = RxnInt();
+
+String? _recentIntent;
+
+String? get recentIntent => _recentIntent;
+set recentIntent(String? intent) {
+  _recentIntent = intent;
+
+  // After 5 seconds, we want to set the intent to null
+  if (intent != null) {
+    Future.delayed(Duration(seconds: 5), () {
+      _recentIntent = null;
+    });
+  }
+}
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -324,7 +337,7 @@ Future<Null> initApp(bool isBubble) async {
 class DesktopWindowListener extends WindowListener {
   @override
   void onWindowFocus() {
-    LifeCycleManager().opened();
+    LifeCycleManager().opened(null);
   }
 
   @override
@@ -547,7 +560,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     }
 
     // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
-    LifeCycleManager().opened();
+    LifeCycleManager().opened(context);
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
@@ -675,7 +688,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       });
       LifeCycleManager().close();
     } else if (state == AppLifecycleState.resumed) {
-      LifeCycleManager().opened();
+      LifeCycleManager().opened(context);
     }
   }
 
@@ -778,7 +791,7 @@ Future<void> initSystemTray() async {
       MenuItem(
         label: 'Open App',
         onClicked: () {
-          LifeCycleManager().opened();
+          LifeCycleManager().opened(null);
           appWindow.show();
         },
       ),

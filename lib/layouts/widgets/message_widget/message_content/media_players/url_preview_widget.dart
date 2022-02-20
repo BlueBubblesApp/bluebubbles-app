@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
@@ -9,7 +10,7 @@ import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
@@ -54,8 +55,8 @@ class UrlPreviewController extends GetxController {
 
   Future<void> fetchPreview() async {
     // Try to get any already loaded attachment data
-    if (CurrentChat.activeChat?.urlPreviews.containsKey(message.text) ?? false) {
-      data.value = CurrentChat.activeChat!.urlPreviews[message.text];
+    if (ChatManager().activeChat?.urlPreviews.containsKey(message.text) ?? false) {
+      data.value = ChatManager().activeChat!.urlPreviews[message.text];
     }
 
     if (data.value != null || MetadataHelper.isNotEmpty(data.value)) return;
@@ -91,7 +92,7 @@ class UrlPreviewController extends GetxController {
 
     // Save the metadata
     if (data.value != null) {
-      CurrentChat.activeChat?.urlPreviews[message.text!] = data.value!;
+      ChatManager().activeChat?.urlPreviews[message.text!] = data.value!;
     }
   }
 }

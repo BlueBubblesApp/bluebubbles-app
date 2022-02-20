@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
@@ -13,7 +14,7 @@ import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.da
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
@@ -219,7 +220,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                CurrentChat? currentChat = CurrentChat.activeChat;
+                ChatController? currentChat = ChatManager().activeChat;
                 Navigator.of(Get.context!).push(
                   ThemeSwitcher.buildPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(

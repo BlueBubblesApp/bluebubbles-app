@@ -17,7 +17,8 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -72,7 +73,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     super.initState();
 
     if (kIsDesktop || kIsWeb) {
-      shouldHighlight.value = CurrentChat.activeChat?.chat.guid == widget.chat.guid;
+      shouldHighlight.value = ChatManager().activeChat?.chat.guid == widget.chat.guid;
     }
 
     // Listen for changes in the group
@@ -80,14 +81,13 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       // Make sure we have the required data to qualify for this tile
       if (event.chatGuid != widget.chat.guid) return;
       if (!event.event.containsKey("message")) return;
-      if (widget.chat.guid == null) return;
       // Make sure the message is a group event
       Message message = event.event["message"];
       if (!message.isGroupEvent()) return;
 
       // If it's a group event, let's fetch the new information and save it
       try {
-        await fetchChatSingleton(widget.chat.guid!);
+        await fetchChatSingleton(widget.chat.guid);
       } catch (ex) {
         Logger.error(ex.toString());
       }
@@ -328,11 +328,11 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   Widget buildLeading() {
     return StreamBuilder<Map<String, dynamic>>(
-        stream: CurrentChat.getCurrentChat(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
+        stream: ChatManager().getChatController(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState == ConnectionState.active &&
               snapshot.hasData &&
-              snapshot.data["type"] == CurrentChatEvent.TypingStatus) {
+              snapshot.data["type"] == ChatControllerEvent.TypingStatus) {
             showTypingIndicator = snapshot.data["data"];
           }
           double height = Theme.of(context).textTheme.subtitle1!.fontSize! * 1.25;
@@ -383,7 +383,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget _buildDate() {
-    MessageMarkers? markers = CurrentChat.getCurrentChat(widget.chat)!.messageMarkers;
+    MessageMarkers? markers = ChatManager().getChatController(widget.chat)!.messageMarkers;
     return kIsWeb
         ? Text(buildDate(widget.chat.latestMessageDate),
             textAlign: TextAlign.right,

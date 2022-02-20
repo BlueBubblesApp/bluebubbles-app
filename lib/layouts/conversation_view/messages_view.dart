@@ -11,7 +11,8 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -58,7 +59,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
   final smartReply = GoogleMlKit.nlp.smartReply();
   bool initializedList = false;
   List<int> loadedPages = [];
-  CurrentChat? currentChat;
+  ChatController? currentChat;
   bool keyboardOpen = false;
   bool widgetsBuilt = false;
   final RxBool dragging = false.obs;
@@ -85,7 +86,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
   void initState() {
     super.initState();
 
-    currentChat = CurrentChat.activeChat;
+    currentChat = ChatManager().activeChat;
     if (widget.messageBloc != null) ever<MessageBlocEvent?>(widget.messageBloc!.event, (e) => handleNewMessage(e));
 
     smartReplyController = StreamController<List<String>>.broadcast();
@@ -229,7 +230,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
     int originalMessageLength = _messages.length;
     if (event.type == MessageBlocEventType.insert && mounted) {
       if (LifeCycleManager().isAlive && !event.outGoing) {
-        NotificationManager().switchChat(CurrentChat.activeChat?.chat);
+        ChatManager().setActiveChat(ChatManager().activeChat?.chat);
       }
 
       bool isNewMessage = true;
@@ -385,7 +386,9 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
           ),
           onTap: onTap ??
               () {
-                ActionHandler.sendMessage(currentChat!.chat, text);
+                if (currentChat?.chat != null) {
+                  ActionHandler.sendMessage(currentChat!.chat, text);
+                }
               },
           child: Center(
             child: Padding(
@@ -418,14 +421,14 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
               onHorizontalDragStart: (details) {},
               onHorizontalDragUpdate: (details) {
                 if (SettingsManager().settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
-                  CurrentChat.activeChat!.timeStampOffset += details.delta.dx * 0.3;
+                  ChatManager().activeChat!.timeStampOffset += details.delta.dx * 0.3;
                 }
               },
               onHorizontalDragEnd: (details) {
-                if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.activeChat!.timeStampOffset = 0;
+                if (SettingsManager().settings.skin.value != Skins.Samsung) ChatManager().activeChat!.timeStampOffset = 0;
               },
               onHorizontalDragCancel: () {
-                if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.activeChat!.timeStampOffset = 0;
+                if (SettingsManager().settings.skin.value != Skins.Samsung) ChatManager().activeChat!.timeStampOffset = 0;
               },
               child: ImprovedScrolling(
                 enableMMBScrolling: true,

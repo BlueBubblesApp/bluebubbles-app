@@ -1,4 +1,5 @@
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/action_handler.dart';
@@ -6,7 +7,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -49,9 +50,9 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     Size size = renderBox.size;
     Offset offset = renderBox.localToGlobal(Offset.zero);
     bool increaseWidth = !MessageHelper.getShowTail(context, widget.message, widget.newerMessage) &&
-        (SettingsManager().settings.alwaysShowAvatars.value || (CurrentChat.activeChat?.chat.isGroup() ?? false));
+        (SettingsManager().settings.alwaysShowAvatars.value || (ChatManager().activeChat?.chat.isGroup() ?? false));
     bool doNotIncreaseHeight = ((widget.message.isFromMe ?? false) ||
-        !(CurrentChat.activeChat?.chat.isGroup() ?? false) ||
+        !(ChatManager().activeChat?.chat.isGroup() ?? false) ||
         !sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
 
@@ -77,7 +78,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     HapticFeedback.lightImpact();
     getOffset();
 
-    CurrentChat? currentChat = CurrentChat.activeChat;
+    ChatController? currentChat = ChatManager().activeChat;
     if (mounted) {
       setState(() {
         visible = false;
@@ -123,7 +124,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
 
   void sendReaction(String type) {
     Logger.info("Sending reaction type: " + type);
-    ActionHandler.sendReaction(CurrentChat.activeChat!.chat, widget.message, type);
+    ActionHandler.sendReaction(ChatManager().activeChat!.chat, widget.message, type);
   }
 
   @override
@@ -132,14 +133,14 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       key: containerKey,
       onDoubleTap: SettingsManager().settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
           ? openMessageDetails
-          : SettingsManager().settings.enableQuickTapback.value && (CurrentChat.activeChat?.chat.isIMessage ?? true)
+          : SettingsManager().settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
               ? () {
                   if (widget.message.guid!.startsWith('temp')) return;
                   HapticFeedback.lightImpact();
                   sendReaction(SettingsManager().settings.quickTapbackType.value);
                 }
               : null,
-      onLongPress: SettingsManager().settings.doubleTapForDetails.value && SettingsManager().settings.enableQuickTapback.value && (CurrentChat.activeChat?.chat.isIMessage ?? true)
+      onLongPress: SettingsManager().settings.doubleTapForDetails.value && SettingsManager().settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
           ? () {
               if (widget.message.guid!.startsWith('temp')) return;
               HapticFeedback.lightImpact();

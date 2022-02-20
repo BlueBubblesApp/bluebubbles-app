@@ -21,7 +21,8 @@ import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_te
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -108,14 +109,14 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     // Initialize the current chat state
     if (widget.chat != null) {
-      initCurrentChat(widget.chat!);
+      initChatController(widget.chat!);
     }
 
     isCreator = widget.isCreator;
     chat = widget.chat;
 
     if (chat != null) {
-      prefs.setString('lastOpenedChat', chat!.guid!);
+      prefs.setString('lastOpenedChat', chat!.guid);
     }
 
     if (widget.selected.isEmpty) {
@@ -125,11 +126,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     LifeCycleManager().stream.listen((event) {
       if (!mounted) return;
-      currentChat?.isAlive = true;
+      currentChat?.isActive = true;
     });
 
     ever(ChatBloc().chats, (List<Chat> chats) {
-      currentChat ??= CurrentChat.getCurrentChat(widget.chat);
+      currentChat = ChatManager().activeChat;
 
       if (currentChat != null) {
         Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat?.guid);
@@ -164,7 +165,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     WidgetsBinding.instance!.addObserver(this);
 
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      NotificationManager().switchChat(chat);
+      ChatManager().setActiveChat(chat);
       if (widget.isCreator) {
         setState(() {
           getShowAlert();
@@ -246,17 +247,17 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    if (CurrentChat.activeChat != null) didChangeDependenciesConversationView();
+    if (ChatManager().hasActiveChat) didChangeDependenciesConversationView();
   }
 
   /// Called when the app is either closed or opened or paused
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused && mounted) {
-      Logger.info("Removing CurrentChat imageData");
-      CurrentChat.activeChat?.imageData.clear();
+      Logger.info("Removing ChatController imageData");
+      ChatManager().activeChat?.imageData.clear();
     }
-    if (widgetsBuilt && CurrentChat.activeChat != null) didChangeDependenciesConversationView();
+    if (widgetsBuilt && ChatManager().hasActiveChat) didChangeDependenciesConversationView();
   }
 
   @override
@@ -267,12 +268,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     }
 
     // Switching chat to null will clear the currently active chat
-    NotificationManager().switchChat(null);
+    ChatManager().setActiveChat(null);
     super.dispose();
   }
 
   Future<bool> send(
       List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
+    print(currentChat);
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
     bool alreadySent = false;
     if (isCreator!) {
@@ -318,11 +320,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       // If the chat is still null, return false
       if (chat == null) return false;
 
-      prefs.setString('lastOpenedChat', chat!.guid!);
+      prefs.setString('lastOpenedChat', chat!.guid);
 
       // If the current chat is null, set it
       if (isDifferentChat) {
-        initCurrentChat(chat!);
+        initChatController(chat!);
       }
 
       bool isDifferentBloc = messageBloc == null || messageBloc?.currentChat?.guid != chat!.guid;
@@ -338,7 +340,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     } else {
       if (isDifferentChat) {
-        initCurrentChat(chat!);
+        initChatController(chat!);
       }
     }
 
@@ -457,7 +459,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     Future.delayed(Duration.zero, () {
       widgetsBuilt = true;
     });
-    currentChat?.isAlive = true;
+    currentChat?.isActive = true;
 
     if (messageBloc == null && !isCreator!) {
       messageBloc = initMessageBloc();
@@ -498,7 +500,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   } else {
                     selected.removeWhere((e) => e.address == item.address);
                   }
-                  fetchCurrentChat();
+                  fetchChatController();
                   filterContacts();
                   resetCursor();
                   if (mounted) setState(() {});
@@ -540,7 +542,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   Column(mainAxisAlignment: MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
                     Expanded(
                       child: Obx(
-                        () => fetchingCurrentChat.value
+                        () => fetchingChatController.value
                             ? Center(
                                 child: Container(
                                   padding: EdgeInsets.symmetric(vertical: 20.0),
@@ -682,7 +684,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           return WillPopScope(
             onWillPop: () async {
               if (LifeCycleManager().isBubble) {
-                NotificationManager().switchChat(null);
+                ChatManager().setActiveChat(null);
                 SystemNavigator.pop();
               }
               return !LifeCycleManager().isBubble;

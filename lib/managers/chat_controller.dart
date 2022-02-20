@@ -5,7 +5,7 @@ import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
-import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -18,7 +18,7 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
 
-enum CurrentChatEvent {
+enum ChatControllerEvent {
   TypingStatus,
   VideoPlaying,
 }
@@ -26,7 +26,7 @@ enum CurrentChatEvent {
 /// Holds cached metadata for the currently opened chat
 ///
 /// This allows us to get around passing data through the trees and we can just store it here
-class CurrentChat {
+class ChatController {
   StreamController<Map<String, dynamic>> _stream = StreamController.broadcast();
 
   Stream get stream => _stream.stream;
@@ -48,6 +48,7 @@ class CurrentChat {
   bool keyboardOpen = false;
   double keyboardOpenOffset = 0;
 
+  bool isActive = false;
   bool isAlive = false;
 
   Map<String, List<Attachment?>> messageAttachments = {};
@@ -88,8 +89,8 @@ class CurrentChat {
   ScrollController scrollController = ScrollController();
   final RxBool showScrollDown = false.obs;
 
-  CurrentChat(this.chat) {
-    messageMarkers = MessageMarkers(chat);
+  ChatController(this.chat) {
+    messageMarkers = MessageMarkers(chat.guid);
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
@@ -104,35 +105,9 @@ class CurrentChat {
     });
   }
 
-  static CurrentChat? getCurrentChat(Chat? chat) {
-    if (chat?.guid == null) return null;
-
-    CurrentChat? currentChat = AttachmentInfoBloc().getCurrentChat(chat!.guid!);
-    if (currentChat == null) {
-      currentChat = CurrentChat(chat);
-      AttachmentInfoBloc().addCurrentChat(currentChat);
-    }
-
-    return currentChat;
-  }
-
-  static CurrentChat? forGuid(String? guid) {
+  static ChatController? forGuid(String? guid) {
     if (guid == null) return null;
-    return AttachmentInfoBloc().getCurrentChat(guid);
-  }
-
-  static bool isActive(String chatGuid) => AttachmentInfoBloc().getCurrentChat(chatGuid)?.isAlive ?? false;
-
-  static CurrentChat? get activeChat {
-    if (AttachmentInfoBloc().chatData.isNotEmpty) {
-      var res = AttachmentInfoBloc().chatData.values.where((element) => element.isAlive);
-
-      if (res.isNotEmpty) return res.first;
-
-      return null;
-    } else {
-      return null;
-    }
+    return ChatManager().getChatControllerByGuid(guid);
   }
 
   void initScrollController() {
@@ -188,7 +163,7 @@ class CurrentChat {
     chatAttachments = [];
     sentMessages = [];
     entry = null;
-    isAlive = true;
+    isActive = true;
     showTypingIndicator = false;
     indicatorHideTimer = null;
     _timeStampOffset = 0;
@@ -200,7 +175,7 @@ class CurrentChat {
     // checkTypingIndicator();
   }
 
-  static CurrentChat? of(BuildContext context) {
+  static ChatController? of(BuildContext context) {
     return context.findAncestorStateOfType<ConversationViewState>()?.currentChat ??
         context.findAncestorStateOfType<MessageDetailsPopupState>()?.currentChat;
   }
@@ -261,12 +236,18 @@ class CurrentChat {
     imageData.remove(attachment.guid);
   }
 
-  void preloadMessageAttachments({List<Message?>? specificMessages}) {
+  Future<void> preloadMessageAttachments({List<Message?>? specificMessages}) async {
+    // We don't want this to be called twice, so we should get outta here if we already have attachments.
+    // The only caveat being if we get passed specific messages to load
+    if (messageAttachments.isNotEmpty && specificMessages != null && specificMessages.isEmpty) return;
     List<Message?> messages = specificMessages ?? Chat.getMessages(chat, limit: 25);
     messageAttachments = Message.fetchAttachmentsByMessages(messages);
   }
 
   Future<void> preloadMessageAttachmentsAsync({List<Message?>? specificMessages}) async {
+    // We don't want this to be called twice, so we should get outta here if we already have attachments.
+    // The only caveat being if we get passed specific messages to load
+    if (messageAttachments.isNotEmpty && specificMessages != null && specificMessages.isEmpty) return;
     List<Message?> messages = specificMessages ?? await Chat.getMessagesAsync(chat, limit: 25);
     messageAttachments = await Message.fetchAttachmentsByMessagesAsync(messages);
   }
@@ -275,7 +256,7 @@ class CurrentChat {
     showTypingIndicator = true;
     _stream.sink.add(
       {
-        "type": CurrentChatEvent.TypingStatus,
+        "type": ChatControllerEvent.TypingStatus,
         "data": true,
       },
     );
@@ -287,7 +268,7 @@ class CurrentChat {
     showTypingIndicator = false;
     _stream.sink.add(
       {
-        "type": CurrentChatEvent.TypingStatus,
+        "type": ChatControllerEvent.TypingStatus,
         "data": false,
       },
     );
@@ -307,7 +288,7 @@ class CurrentChat {
     currentPlayingVideo = video;
     _stream.sink.add(
       {
-        "type": CurrentChatEvent.VideoPlaying,
+        "type": ChatControllerEvent.VideoPlaying,
         "data": video,
       },
     );
@@ -347,7 +328,7 @@ class CurrentChat {
     });
     chatAttachments = [];
     sentMessages = [];
-    isAlive = false;
+    isActive = false;
     showTypingIndicator = false;
     scrollController.dispose();
 

@@ -880,8 +880,7 @@ ModelDefinition getObjectBoxModel() {
           object.id = id;
         },
         objectToFB: (Chat object, fb.Builder fbb) {
-          final guidOffset =
-              object.guid == null ? null : fbb.writeString(object.guid!);
+          final guidOffset = fbb.writeString(object.guid);
           final chatIdentifierOffset = object.chatIdentifier == null
               ? null
               : fbb.writeString(object.chatIdentifier!);
@@ -945,7 +944,7 @@ ModelDefinition getObjectBoxModel() {
               originalROWID: const fb.Int64Reader()
                   .vTableGetNullable(buffer, rootOffset, 6),
               guid: const fb.StringReader()
-                  .vTableGetNullable(buffer, rootOffset, 8),
+                  .vTableGetNullable(buffer, rootOffset, 8) ?? 'tmp',
               style: const fb.Int64Reader()
                   .vTableGetNullable(buffer, rootOffset, 10),
               chatIdentifier: const fb.StringReader()

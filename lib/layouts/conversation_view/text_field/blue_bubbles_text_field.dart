@@ -17,7 +17,7 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/layouts/widgets/send_effect_picker.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -78,7 +78,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   TextFieldData? textFieldData;
   final StreamController _streamController = StreamController.broadcast();
   DropzoneViewController? dropZoneController;
-  CurrentChat? safeChat;
+  ChatController? safeChat;
   Chat? chat;
   Rxn<Message?> replyToMessage = Rxn();
 
@@ -146,8 +146,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     emojiFullNames = Map.fromEntries(Emoji.all().map((e) => MapEntry(e.name, e)));
 
     getPlaceholder();
-    chat = CurrentChat.forGuid(widget.chatGuid)?.chat;
-    if (CurrentChat.forGuid(widget.chatGuid) != null) {
+    chat = ChatController.forGuid(widget.chatGuid)?.chat;
+    if (ChatController.forGuid(widget.chatGuid) != null) {
       textFieldData = TextFieldBloc().getTextField(widget.chatGuid!);
     }
 
@@ -157,7 +157,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     // Add the text listener to detect when we should send the typing indicators
     controller!.addListener(() {
       setCanRecord();
-      if (!mounted || CurrentChat.forGuid(widget.chatGuid)?.chat == null) return;
+      if (!mounted || ChatController.forGuid(widget.chatGuid)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI.value ||
@@ -171,7 +171,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       } else if (!selfTyping && (controller!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
         if (SettingsManager().settings.privateSendTypingIndicators.value &&
-            CurrentChat.forGuid(widget.chatGuid)!.chat.autoSendTypingIndicators!) {
+            ChatController.forGuid(widget.chatGuid)!.chat.autoSendTypingIndicators!) {
           SocketManager().sendMessage("started-typing", {"chatGuid": widget.chatGuid}, (data) {});
         }
       }
@@ -180,7 +180,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     });
     subjectController!.addListener(() {
       setCanRecord();
-      if (!mounted || CurrentChat.forGuid(widget.chatGuid)?.chat == null) return;
+      if (!mounted || ChatController.forGuid(widget.chatGuid)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI.value ||
@@ -194,7 +194,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       } else if (!selfTyping && (subjectController!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
         if (SettingsManager().settings.privateSendTypingIndicators.value &&
-            CurrentChat.forGuid(widget.chatGuid)!.chat.autoSendTypingIndicators!) {
+            ChatController.forGuid(widget.chatGuid)!.chat.autoSendTypingIndicators!) {
           SocketManager().sendMessage("started-typing", {"chatGuid": widget.chatGuid}, (data) {});
         }
       }
@@ -259,7 +259,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     focusNode = FocusNode();
     subjectFocusNode = FocusNode();
     focusNode!.addListener(() {
-      CurrentChat.forGuid(widget.chatGuid)?.keyboardOpen = focusNode?.hasFocus ?? false;
+      ChatController.forGuid(widget.chatGuid)?.keyboardOpen = focusNode?.hasFocus ?? false;
 
       if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
@@ -269,7 +269,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
     });
     subjectFocusNode!.addListener(() {
-      CurrentChat.forGuid(widget.chatGuid)?.keyboardOpen = focusNode?.hasFocus ?? false;
+      ChatController.forGuid(widget.chatGuid)?.keyboardOpen = focusNode?.hasFocus ?? false;
 
       if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
@@ -372,7 +372,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    safeChat = CurrentChat.forGuid(widget.chatGuid);
+    safeChat = ChatController.forGuid(widget.chatGuid);
   }
 
   @override
@@ -399,40 +399,40 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   void disposeAudioFile(BuildContext context, PlatformFile file) {
     // Dispose of the audio controller
-    CurrentChat.forGuid(widget.chatGuid)?.audioPlayers[file.path]?.item1.dispose();
-    CurrentChat.forGuid(widget.chatGuid)?.audioPlayers[file.path]?.item2.pause();
-    CurrentChat.forGuid(widget.chatGuid)?.audioPlayers.removeWhere((key, _) => key == file.path);
+    ChatController.forGuid(widget.chatGuid)?.audioPlayers[file.path]?.item1.dispose();
+    ChatController.forGuid(widget.chatGuid)?.audioPlayers[file.path]?.item2.pause();
+    ChatController.forGuid(widget.chatGuid)?.audioPlayers.removeWhere((key, _) => key == file.path);
     if (file.path != null) {
       // Delete the file
       File(file.path!).delete();
     }
   }
 
-  void onContentCommit(CommittedContent content) async {
-    // Add some debugging logs
-    Logger.info("[Content Commit] Keyboard received content");
-    Logger.info("  -> Content Type: ${content.mimeType}");
-    Logger.info("  -> URI: ${content.uri}");
-    Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
+  // void onContentCommit(CommittedContent content) async {
+  //   // Add some debugging logs
+  //   Logger.info("[Content Commit] Keyboard received content");
+  //   Logger.info("  -> Content Type: ${content.mimeType}");
+  //   Logger.info("  -> URI: ${content.uri}");
+  //   Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
 
-    // Parse the filename from the URI and read the data as a List<int>
-    String filename = uriToFilename(content.uri, content.mimeType);
+  //   // Parse the filename from the URI and read the data as a List<int>
+  //   String filename = uriToFilename(content.uri, content.mimeType);
 
-    // Save the data to a location and add it to the file picker
-    if (content.hasData) {
-      addAttachments([PlatformFile(
-        name: filename,
-        size: content.data!.length,
-        bytes: content.data,
-      )]);
+  //   // Save the data to a location and add it to the file picker
+  //   if (content.hasData) {
+  //     addAttachments([PlatformFile(
+  //       name: filename,
+  //       size: content.data!.length,
+  //       bytes: content.data,
+  //     )]);
 
-      // Update the state
-      updateTextFieldAttachments();
-      if (mounted) setState(() {});
-    } else {
-      showSnackbar('Insertion Failed', 'Attachment has no data!');
-    }
-  }
+  //     // Update the state
+  //     updateTextFieldAttachments();
+  //     if (mounted) setState(() {});
+  //   } else {
+  //     showSnackbar('Insertion Failed', 'Attachment has no data!');
+  //   }
+  // }
 
   Future<void> reviewAudio(BuildContext originalContext, PlatformFile file) async {
     showDialog(
@@ -470,7 +470,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               onPressed: () async {
-                CurrentChat? thisChat = CurrentChat.of(originalContext);
+                ChatController? thisChat = ChatController.of(originalContext);
                 if (thisChat == null) {
                   addAttachments([file]);
                 } else {
@@ -531,7 +531,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           ListTile(
             title: Text("Send location", style: Theme.of(context).textTheme.bodyText1),
             onTap: () async {
-              Share.location(CurrentChat.forGuid(widget.chatGuid)!.chat);
+              Share.location(ChatController.forGuid(widget.chatGuid)!.chat);
               Get.back();
             },
           ),
@@ -863,25 +863,25 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
         // If it's a group chat, get the title of the chat
-        if (CurrentChat.forGuid(widget.chatGuid)?.chat.isGroup() ?? false) {
+        if (ChatController.forGuid(widget.chatGuid)?.chat.isGroup() ?? false) {
           if (generateNames) {
             placeholder = "Group Chat";
           } else if (hideInfo) {
             placeholder = chat?.isTextForwarding ?? false ? "Text Forwarding" : "iMessage";
           } else {
-            String? title = CurrentChat.forGuid(widget.chatGuid)?.chat.getTitle();
+            String? title = ChatController.forGuid(widget.chatGuid)?.chat.getTitle();
             if (!isNullOrEmpty(title)!) {
               placeholder = title!;
             }
           }
-        } else if (!isNullOrEmpty(CurrentChat.forGuid(widget.chatGuid)?.chat.participants)!) {
+        } else if (!isNullOrEmpty(ChatController.forGuid(widget.chatGuid)?.chat.participants)!) {
           if (generateNames) {
-            placeholder = CurrentChat.forGuid(widget.chatGuid)!.chat.fakeParticipants[0];
+            placeholder = ChatController.forGuid(widget.chatGuid)!.chat.fakeParticipants[0];
           } else if (hideInfo) {
             placeholder = chat?.isTextForwarding ?? false ? "Text Forwarding" : "iMessage";
           } else {
             // If it's not a group chat, get the participant's contact info
-            Handle? handle = CurrentChat.forGuid(widget.chatGuid)?.chat.participants[0];
+            Handle? handle = ChatController.forGuid(widget.chatGuid)?.chat.participants[0];
             Contact? contact = ContactManager().getCachedContact(address: handle?.address ?? "");
             if (contact == null) {
               placeholder = await formatPhoneNumber(handle);
@@ -1206,7 +1206,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             focusNode!.requestFocus();
                             sendMessage();
                           },
-                          onContentCommitted: onContentCommit,
+                          // onContentCommitted: onContentCommit,
                           textCapitalization: TextCapitalization.sentences,
                           focusNode: focusNode,
                           autocorrect: true,
@@ -1408,7 +1408,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                             fontSizeDelta: -0.25,
                           ),
-                      onContentCommitted: onContentCommit,
+                      // onContentCommitted: onContentCommit,
                       decoration: InputDecoration(
                         isDense: true,
                         enabledBorder: OutlineInputBorder(
@@ -1639,7 +1639,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                             fontSizeDelta: -0.25,
                           ),
-                      onContentCommitted: onContentCommit,
+                      // onContentCommitted: onContentCommit,
                       decoration: InputDecoration(
                         isDense: true,
                         enabledBorder: OutlineInputBorder(

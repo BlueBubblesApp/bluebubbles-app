@@ -6,13 +6,14 @@ import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/attachment.dart';
@@ -407,11 +408,20 @@ class Message {
 
     // This is what happens whenever the existing message already exists.
     // We just need to update the timestamps & error
-    existing.guid = newMessage.guid;
+    if (existing.guid != newMessage.guid) {
+      existing.guid = newMessage.guid;
+    }
+    
     existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
     existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
     existing._error.value = newMessage._error.value;
-    messageBox.put(existing);
+
+    try {
+      messageBox.put(existing, mode: PutMode.update);
+    } catch (ex) {
+      Logger.error('Failed to replace message! This is likely due to a unique constraint being violated. See error below:');
+      Logger.error(ex.toString());
+    }
 
     return existing;
   }
@@ -428,14 +438,14 @@ class Message {
   /// method in performance-sensitive areas, prefer using
   /// [fetchAttachmentsByMessagesAsync]
   static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages,
-      {CurrentChat? currentChat}) {
+      {ChatController? currentChat}) {
     final Map<String, List<Attachment?>> map = {};
     if (kIsWeb) {
       map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
       return map;
     }
 
-    /// If we have a [CurrentChat] just return the attachments stored in it
+    /// If we have a [ChatController] just return the attachments stored in it
     if (currentChat != null) {
       map.addEntries(messages.map((e) => MapEntry(e!.guid!, currentChat.getAttachmentsForMessage(e))));
       return map;
@@ -458,7 +468,7 @@ class Message {
 
   /// Fetch message attachments for a list of messages, but async
   static Future<Map<String, List<Attachment?>>> fetchAttachmentsByMessagesAsync(List<Message?> messages,
-      {CurrentChat? currentChat}) async {
+      {ChatController? currentChat}) async {
     final Map<String, List<Attachment?>> map = {};
     if (kIsWeb) {
       map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
@@ -479,7 +489,7 @@ class Message {
 
   /// Fetch attachments for a single message. Prefer using [fetchAttachmentsByMessages]
   /// or [fetchAttachmentsByMessagesAsync] when working with a list of messages.
-  List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
+  List<Attachment?>? fetchAttachments({ChatController? currentChat}) {
     if (kIsWeb || (hasAttachments && attachments.isNotEmpty)) {
       return attachments;
     }

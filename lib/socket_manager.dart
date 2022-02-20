@@ -8,8 +8,8 @@ import 'package:bluebubbles/helpers/crypto.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/attachment_info_bloc.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -311,7 +311,7 @@ class SocketManager {
         if (!SettingsManager().settings.enablePrivateAPI.value) return;
 
         Map<String, dynamic> data = _data;
-        CurrentChat? currentChat = AttachmentInfoBloc().getCurrentChat(data["guid"]);
+        ChatController? currentChat = ChatManager().getChatControllerByGuid(data["guid"]);
         if (currentChat == null) return;
         if (data["display"]) {
           currentChat.displayTypingIndicator();

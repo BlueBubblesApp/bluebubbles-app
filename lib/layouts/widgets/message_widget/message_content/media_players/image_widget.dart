@@ -1,4 +1,5 @@
 import 'dart:isolate';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
@@ -7,7 +8,7 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:flutter/services.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
@@ -54,7 +55,7 @@ class ImageWidgetController extends GetxController {
     if (!runForcefully && data.value != null) return;
 
     // Try to get the image data from the "cache"
-    Uint8List? tmpData = CurrentChat.activeChat?.getImageData(attachment);
+    Uint8List? tmpData = ChatManager().activeChat?.getImageData(attachment);
     if (tmpData == null) {
       // If it's an image, compress the image when loading it
       if (kIsWeb || file.path == null) {
@@ -86,8 +87,8 @@ class ImageWidgetController extends GetxController {
         tmpData = await File(file.path!).readAsBytes();
       }
 
-      if (tmpData == null || CurrentChat.activeChat == null) return;
-      CurrentChat.activeChat?.saveImageData(tmpData, attachment);
+      if (tmpData == null || !ChatManager().hasActiveChat) return;
+      ChatManager().activeChat!.saveImageData(tmpData, attachment);
       if (!(attachment.mimeType?.endsWith("heic") ?? false) && !(attachment.mimeType?.endsWith("heif") ?? false)) {
         await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
       }
@@ -120,7 +121,7 @@ class ImageWidget extends StatelessWidget {
           if (!SettingsManager().settings.lowMemoryMode.value) return;
           if (info.visibleFraction == 0 && controller.visible && !controller.navigated) {
             controller.visible = false;
-            CurrentChat.activeChat?.clearImageData(controller.attachment);
+            ChatManager().activeChat?.clearImageData(controller.attachment);
             controller.update();
           } else if (!controller.visible) {
             controller.visible = true;
@@ -131,7 +132,7 @@ class ImageWidget extends StatelessWidget {
           child: buildSwitcher(context, controller),
           onTap: () async {
             controller.navigated = true;
-            CurrentChat? currentChat = CurrentChat.activeChat;
+            ChatController? currentChat = ChatManager().activeChat;
             await Navigator.of(Get.context!).push(
               MaterialPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(

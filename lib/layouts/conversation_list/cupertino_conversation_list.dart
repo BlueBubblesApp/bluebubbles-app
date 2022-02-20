@@ -1,3 +1,4 @@
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -17,7 +18,7 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
@@ -60,7 +61,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
         prefs.getString('lastOpenedChat') != null &&
         (!context.isPhone || context.isLandscape) &&
         (SettingsManager().settings.tabletMode.value || kIsDesktop) &&
-        CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
+        ChatManager().activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
         context,

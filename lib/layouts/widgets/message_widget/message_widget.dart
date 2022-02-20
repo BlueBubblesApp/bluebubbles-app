@@ -14,7 +14,8 @@ import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -69,7 +70,7 @@ class _MessageState extends State<MessageWidget> {
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
-  CurrentChat? currentChat;
+  ChatController? currentChat;
   StreamSubscription<NewMessageEvent>? subscription;
   late Message _message;
   Message? _newerMessage;
@@ -87,7 +88,7 @@ class _MessageState extends State<MessageWidget> {
   @override
   void initState() {
     super.initState();
-    currentChat = CurrentChat.activeChat;
+    currentChat = ChatManager().activeChat;
     _message = widget.message;
     _fakeOlderSubject = widget._fakeOlderSubject;
     _fakeSubject = widget._fakeSubject;
@@ -334,7 +335,7 @@ class _MessageState extends State<MessageWidget> {
         }
 
         double replyThreshold = 40;
-        final Chat? chat = CurrentChat.of(context)?.chat;
+        final Chat? chat = ChatController.of(context)?.chat;
 
         return Obx(
           () => GestureDetector(
@@ -356,7 +357,7 @@ class _MessageState extends State<MessageWidget> {
               } else if (offset.value < replyThreshold) {
                 gaveHapticFeedback = false;
               }
-              CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
+              ChatController.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
             },
             onHorizontalDragEnd: !SettingsManager().settings.enablePrivateAPI.value
                 || !SettingsManager().settings.swipeToReply.value
@@ -365,7 +366,7 @@ class _MessageState extends State<MessageWidget> {
                 EventDispatcher().emit("focus-keyboard", _message);
               }
               offset.value = 0;
-              CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
+              ChatController.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
             },
             child: AnimatedContainer(
               duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),

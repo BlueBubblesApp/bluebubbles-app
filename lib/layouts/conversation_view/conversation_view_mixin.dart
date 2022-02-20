@@ -17,8 +17,9 @@ import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -58,14 +59,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   List<UniqueContact> prevSelected = [];
   String searchQuery = "";
   bool currentlyProcessingDeleteKey = false;
-  CurrentChat? currentChat;
+  ChatController? currentChat;
   bool markingAsRead = false;
   bool markedAsRead = false;
   String previousSearch = '';
   int previousContactCount = 0;
   bool shouldShowAlert = false;
 
-  final RxBool fetchingCurrentChat = false.obs;
+  final RxBool fetchingChatController = false.obs;
 
   final _contactStreamController = StreamController<List<UniqueContact>>.broadcast();
 
@@ -124,7 +125,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       // If it's a group event, let's fetch the new information and save it
       try {
-        await fetchChatSingleton(widget.chat!.guid!);
+        await fetchChatSingleton(widget.chat!.guid);
       } catch (ex) {
         Logger.error(ex.toString());
       }
@@ -157,8 +158,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     SocketManager().removeChatNotification(chat!);
   }
 
-  void initCurrentChat(Chat chat) async {
-    currentChat = CurrentChat.getCurrentChat(chat);
+  void initChatController(Chat chat) async {
+    currentChat = ChatManager().createChatController(chat, active: true, loadAttachments: true);
     currentChat!.init();
     currentChat!.stream.listen((event) {
       if (mounted) setState(() {});
@@ -175,7 +176,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     _debounce?.cancel();
     messageBloc?.dispose();
     _contactStreamController.close();
-    // NotificationManager().leaveChat();
+    
+    ChatManager().setActiveChat(null);
     super.dispose();
   }
 
@@ -200,7 +202,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       try {
         // If we don't have participants, we should fetch them from the server
-        Chat? data = await fetchChatSingleton(chat!.guid!);
+        Chat? data = await fetchChatSingleton(chat!.guid);
         // If we got data back, fetch the participants and update the state
         if (data != null) {
           chat!.getParticipants();
@@ -393,14 +395,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
         leading: Padding(
           padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-          child: buildBackButton(context, callback: () {
-            if (LifeCycleManager().isBubble) {
-              SystemNavigator.pop();
-              return false;
-            }
-            EventDispatcher().emit("update-highlight", null);
-            return true;
-          }),
+          // child: buildBackButton(context, callback: () {
+          //   if (LifeCycleManager().isBubble) {
+          //     SystemNavigator.pop();
+          //     return false;
+          //   }
+          //   EventDispatcher().emit("update-highlight", null);
+          //   return true;
+          // }),
         ),
         automaticallyImplyLeading: false,
         backgroundColor: backgroundColor,
@@ -641,7 +643,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           leading: GestureDetector(
               onTap: () {
                 if (LifeCycleManager().isBubble) {
-                  NotificationManager().switchChat(null);
+                  ChatManager().setActiveChat(null);
                   SystemNavigator.pop();
                   return;
                 }
@@ -656,15 +658,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     mainAxisSize: cupertino.MainAxisSize.min,
                     mainAxisAlignment: cupertino.MainAxisAlignment.start,
                     children: [
-                      buildBackButton(context, callback: () {
-                        if (LifeCycleManager().isBubble) {
-                          SystemNavigator.pop();
-                          return false;
-                        }
-                        EventDispatcher().emit("update-highlight", null);
-                        SystemChannels.textInput.invokeMethod('TextInput.hide');
-                        return true;
-                      }),
+                      buildBackButton(context),
                       if (ChatBloc().unreads.value > 0)
                         Container(
                           width: 25.0,
@@ -722,7 +716,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             currentlyProcessingDeleteKey = true;
             selected.removeLast();
             resetCursor();
-            fetchCurrentChat();
+            fetchChatController();
             setState(() {});
             // Prevent deletes from occuring multiple times
             Future.delayed(Duration(milliseconds: 100), () {
@@ -753,7 +747,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     );
   }
 
-  Future<void> fetchCurrentChat() async {
+  Future<void> fetchChatController() async {
     if (!isCreator!) return;
     if (selected.length == 1 && selected.first.isChat) {
       chat = selected.first.chat;
@@ -830,11 +824,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     chat = matchingChats.first;
 
     // Re-initialize the current chat and message bloc for the found chats
-    currentChat = CurrentChat.getCurrentChat(chat);
-    messageBloc = initMessageBloc();
-
-    // Tell the notification manager that we are looking at a specific chat
-    NotificationManager().switchChat(chat);
+    if (chat != null) {
+      currentChat = ChatManager().createChatController(chat!, active: true, loadAttachments: true);
+      messageBloc = initMessageBloc();
+    }
     if (mounted) setState(() {});
   }
 
@@ -951,7 +944,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         String title = slugText(chat.title ?? chat.displayName!);
         if (title.contains(tempSearchQuery)) {
           if (!cache.contains(chat.guid)) {
-            cache.add(chat.guid!);
+            cache.add(chat.guid);
             _conversations.add(
               UniqueContact(
                 chat: chat,
@@ -1117,7 +1110,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   void onSelected(UniqueContact item) async {
-    fetchingCurrentChat.value = true;
+    fetchingChatController.value = true;
     if (item.isChat) {
       if (widget.type == ChatSelectorTypes.ONLY_EXISTING) {
         selected.add(item);
@@ -1132,22 +1125,22 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           selected.add(contact);
         }
 
-        await fetchCurrentChat();
+        await fetchChatController();
       }
 
       resetCursor();
       if (mounted) setState(() {});
-      fetchingCurrentChat.value = false;
+      fetchingChatController.value = false;
       return;
     }
     // Add the selected item
     selected.add(item);
-    fetchCurrentChat();
+    fetchChatController();
 
     // Reset the controller text
     resetCursor();
     if (mounted) setState(() {});
-    fetchingCurrentChat.value = false;
+    fetchingChatController.value = false;
   }
 
   Widget buildChatSelectorBody() => ClipRRect(
@@ -1186,7 +1179,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               style: Theme.of(context).textTheme.headline2,
             ),
           ),
-          leading: buildBackButton(context, iconSize: 20),
+          // leading: buildBackButton(context, iconSize: 20),
           trailing: shouldShowAlert
               ? IconButton(
                   icon: Icon(
