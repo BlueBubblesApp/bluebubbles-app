@@ -287,7 +287,7 @@ class ChatBloc {
     return NewMessageManager().stream.listen(handleMessageAction);
   }
 
-  Future<void> getChatBatches({int batchSize = 15, required Map fakeNames}) async {
+  Future<void> getChatBatches({int batchSize = 15, required Map fakeNames, bool headless = false}) async {
     int count = Chat.count() ?? (await api.chatCount()).data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
@@ -311,7 +311,9 @@ class ChatBloc {
         chats = await Chat.getChats(limit: batchSize, offset: i * batchSize, fakeNames: fakeNames);
       }
       if (chats.isEmpty) break;
-      await ContactManager().matchHandles();
+      if (!headless) {
+        await ContactManager().matchHandles();
+      }
       for (Chat chat in chats) {
         newChats.add(chat);
         initTileValsForChat(chat);
