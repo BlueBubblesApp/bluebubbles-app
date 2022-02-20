@@ -1,9 +1,9 @@
+import 'package:battery_optimization/battery_optimization.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/stateful_wrapper.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:battery_optimization/battery_optimization.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 

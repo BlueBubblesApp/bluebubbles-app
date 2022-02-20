@@ -1,13 +1,11 @@
-import 'package:bluebubbles/managers/chat_manager.dart';
-import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as p;
+import 'package:universal_io/io.dart';
 
 class MessageAttachments extends StatelessWidget {
   MessageAttachments({

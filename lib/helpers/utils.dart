@@ -1,38 +1,38 @@
 import 'dart:async';
-import 'package:async_task/async_task.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:collection/collection.dart';
-import 'package:emojis/emoji.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
-import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:emojis/emoji.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:get/get.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
 import 'package:intl/intl.dart' as intl;
+import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
 import 'package:slugify/slugify.dart';
+import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
 DateTime? parseDate(dynamic value) {

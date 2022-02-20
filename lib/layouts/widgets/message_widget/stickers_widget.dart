@@ -1,16 +1,15 @@
 import 'dart:async';
 import 'dart:isolate';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
-import 'package:collection/collection.dart';
-import 'package:image/image.dart' as img;
-import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image/image.dart' as img;
+import 'package:universal_io/io.dart';
 
 class StickersWidget extends StatefulWidget {
   StickersWidget({Key? key, required this.messages, required this.size}) : super(key: key);

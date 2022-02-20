@@ -1,8 +1,3 @@
-import 'package:bluebubbles/managers/chat_manager.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -18,17 +13,21 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:universal_io/io.dart';
 
 class CupertinoConversationList extends StatefulWidget {
   const CupertinoConversationList({Key? key, required this.parent}) : super(key: key);

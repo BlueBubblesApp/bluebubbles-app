@@ -1,16 +1,14 @@
-import 'package:universal_html/html.dart' as html;
-
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:chewie_audio/chewie_audio.dart';
 import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:chewie_audio/chewie_audio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
 class AudioPlayerWidget extends StatefulWidget {

@@ -1,18 +1,18 @@
 import 'dart:isolate';
-import 'package:bluebubbles/managers/chat_manager.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:flutter/services.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class ImageWidgetController extends GetxController {

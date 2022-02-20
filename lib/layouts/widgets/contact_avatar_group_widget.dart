@@ -1,4 +1,3 @@
-import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -11,6 +10,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class ContactAvatarGroupWidget extends StatefulWidget {
   ContactAvatarGroupWidget({Key? key, this.size = 40, this.editable = true, this.onTap, required this.chat})
