@@ -829,7 +829,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
                   padding: EdgeInsets.only(
                     // add extra padding when showing contact avatars
                     left: max(
-                        ((ChatController.of(context)?.chat.isGroup() ?? false) ||
+                        ((ChatManager().activeChat?.chat.isGroup() ?? false) ||
                                     SettingsManager().settings.alwaysShowAvatars.value
                                 ? 75
                                 : 40) -

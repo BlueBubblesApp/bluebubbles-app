@@ -500,10 +500,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     final msg = widget.message.associatedMessages.firstWhereOrNull((e) => e.guid == widget.message.threadOriginatorGuid);
 
     // First, add the message sender (if applicable)
-    bool isGroup = ChatController
-        .of(context)
-        ?.chat
-        .isGroup() ?? false;
+    bool isGroup = ChatManager().activeChat?.chat.isGroup() ?? false;
     bool addedSender = false;
     bool showSender = SettingsManager().settings.alwaysShowAvatars.value ||
         isGroup ||
