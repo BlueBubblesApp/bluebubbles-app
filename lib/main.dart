@@ -174,6 +174,8 @@ Future<Null> initApp(bool isBubble) async {
                 objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
                 Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
                 store = await openStore(directory: join(customStorePath, 'objectbox'));
+              } else {
+                Logger.info("Objectbox directory exists.");
               }
             }
           }

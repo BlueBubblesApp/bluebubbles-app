@@ -52,20 +52,18 @@ callbackHandler() async {
           store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
         } catch (_) {
           debugPrint("Failed to open store from reference, opening from path");
+          store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
           if (kIsDesktop) {
-            store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
-            if (kIsDesktop) {
-              if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
-                debugPrint("Failed to open store from default path. Using custom path");
-                customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
-                prefs.setBool("use-custom-path", true);
-                objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-                debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-                store = await openStore(directory: join(customStorePath, 'objectbox'));
-              }
+            if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
+              debugPrint("Failed to open store from default path. Using custom path");
+              customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
+              prefs.setBool("use-custom-path", true);
+              objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+              debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
+              store = await openStore(directory: join(customStorePath, 'objectbox'));
+            } else {
+              debugPrint("Objectbox directory exists.");
             }
-          } else {
-            store = await openStore(directory: join(customStorePath!, 'objectbox'));
           }
         }
       } else if (useCustomPath == true) {
