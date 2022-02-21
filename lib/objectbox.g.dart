@@ -943,8 +943,8 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 4),
               originalROWID: const fb.Int64Reader()
                   .vTableGetNullable(buffer, rootOffset, 6),
-              guid: const fb.StringReader()
-                  .vTableGetNullable(buffer, rootOffset, 8) ?? 'tmp',
+              guid:
+                  const fb.StringReader().vTableGet(buffer, rootOffset, 8, ''),
               style: const fb.Int64Reader()
                   .vTableGetNullable(buffer, rootOffset, 10),
               chatIdentifier: const fb.StringReader()
@@ -961,7 +961,8 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 20),
               hasUnreadMessage: const fb.BoolReader()
                   .vTableGetNullable(buffer, rootOffset, 24),
-              displayName: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 34),
+              displayName: const fb.StringReader()
+                  .vTableGetNullable(buffer, rootOffset, 34),
               fakeParticipants: const fb.ListReader<String>(fb.StringReader(), lazy: false).vTableGet(buffer, rootOffset, 36, []),
               latestMessageDate: latestMessageDateValue == null ? null : DateTime.fromMillisecondsSinceEpoch(latestMessageDateValue),
               latestMessageText: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 28),
