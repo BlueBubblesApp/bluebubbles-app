@@ -235,6 +235,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                         return Obx(() {
                           // don't remove!! needed to prevent Obx from exception
                           // improper use of GetX
+                          // ignore: unused_local_variable
                           final placeholderVar = null.obs.value;
                           if (content.error.value = true) {
                             return Text(

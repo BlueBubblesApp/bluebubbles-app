@@ -446,6 +446,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return ThemeSwitcher(
       iOSSkin: _Cupertino(
         parent: this,
@@ -640,7 +641,7 @@ class _Material extends StatelessWidget {
                 : shouldPartialHighlight
                     ? context.theme.primaryColor.withAlpha(100)
                     : shouldHighlight
-                        ? context.theme.accentColor
+                        ? context.theme.colorScheme.secondary
                         : context.theme.backgroundColor,
             child: GestureDetector(
               onSecondaryTapUp: (details) async {

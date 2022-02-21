@@ -62,16 +62,12 @@ ThemeData oledDarkTheme = ThemeData(
       fontWeight: FontWeight.normal,
     ),
   ),
-  accentColor: HexColor('26262a'),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: Colors.blue,
     backgroundColor: Colors.black,
     accentColor: HexColor('26262a'),
-  ).copyWith(
-    secondary: HexColor('26262a'),
   ),
   dividerColor: HexColor('27272a'),
-  buttonColor: HexColor("666666"),
   backgroundColor: Colors.black,
   splashColor: Colors.white.withOpacity(0.35),
 );
@@ -111,16 +107,12 @@ ThemeData nordDarkTheme = ThemeData(
       fontWeight: FontWeight.normal,
     ),
   ),
-  accentColor: HexColor('4C566A'),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: Colors.blue,
     backgroundColor: HexColor('2E3440'),
     accentColor: HexColor('4C566A'),
-  ).copyWith(
-    secondary: HexColor("4C566A"),
   ),
   dividerColor: HexColor('4C566A'),
-  buttonColor: HexColor("4C566A"),
   backgroundColor: HexColor('2E3440'),
   splashColor: Colors.white.withOpacity(0.35),
 );
@@ -160,7 +152,6 @@ ThemeData whiteLightTheme = ThemeData(
       fontWeight: FontWeight.normal,
     ),
   ),
-  accentColor: HexColor('e5e5ea'),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: Colors.blue,
     backgroundColor: Colors.white,

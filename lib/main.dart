@@ -129,6 +129,7 @@ Future<Null> main() async {
 }
 
 @pragma('vm:entry-point')
+// ignore: prefer_void_to_null
 Future<Null> bubble() async {
   await initApp(true);
 }

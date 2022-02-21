@@ -147,7 +147,7 @@ class DesktopPanel extends StatelessWidget {
                                 ),
                                 content: Text(
                                     "All of your data and settings will be deleted, and you will have to set the app up again from scratch."),
-                                backgroundColor: context.theme.accentColor,
+                                backgroundColor: context.theme.colorScheme.secondary,
                                 actions: <Widget>[
                                   TextButton(
                                     child: Text("Yes"),
@@ -197,7 +197,6 @@ class DesktopPanel extends StatelessWidget {
                           if (prefs.getBool("use-custom-path") == true && path == customPath.value) {
                             return;
                           }
-                          customPath.value = path;
                           await showDialog(
                             barrierDismissible: false,
                             context: context,
@@ -208,12 +207,13 @@ class DesktopPanel extends StatelessWidget {
                                   style: Theme.of(context).textTheme.bodyText1,
                                 ),
                                 content: Text(
-                                    "The database will now be stored at ${customPath.value}\n\nAll of your data and settings will be deleted, and you will have to set the app up again from scratch."),
-                                backgroundColor: context.theme.accentColor,
+                                    "The database will now be stored at $path\n\nAll of your data and settings will be deleted, and you will have to set the app up again from scratch."),
+                                backgroundColor: context.theme.colorScheme.secondary,
                                 actions: <Widget>[
                                   TextButton(
                                     child: Text("Yes"),
                                     onPressed: () async {
+                                      customPath.value = path;
                                       await DBProvider.deleteDB();
                                       await SettingsManager().resetConnection();
                                       SettingsManager().settings.finishedSetup.value = false;

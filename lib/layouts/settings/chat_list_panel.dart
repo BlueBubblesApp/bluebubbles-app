@@ -292,7 +292,7 @@ class ChatListPanel extends StatelessWidget {
                                             },
                                             title: "Pin Rows",
                                             backgroundColor: tileColor,
-                                            secondaryColor: context.theme.accentColor,
+                                            secondaryColor: context.theme.colorScheme.secondary,
                                             textProcessing: (val) => val.toString(),
                                           ),
                                         ),
@@ -316,7 +316,7 @@ class ChatListPanel extends StatelessWidget {
                                             },
                                             title: "Pins Per Row",
                                             backgroundColor: tileColor,
-                                            secondaryColor: context.theme.accentColor,
+                                            secondaryColor: context.theme.colorScheme.secondary,
                                             textProcessing: (val) => val.toString(),
                                           ),
                                         ),
@@ -341,7 +341,7 @@ class ChatListPanel extends StatelessWidget {
                                     children: <Widget>[
                                       Flexible(
                                         child: Container(
-                                          color: context.theme.accentColor,
+                                          color: context.theme.colorScheme.secondary,
                                           padding: EdgeInsets.symmetric(horizontal: 2),
                                           child: AbsorbPointer(
                                             child: Obx(
@@ -389,7 +389,7 @@ class ChatListPanel extends StatelessWidget {
                                                                             .settings
                                                                             .pinColumnsLandscape
                                                                             .value)),
-                                                                color: context.theme.accentColor.lightenOrDarken(10)),
+                                                                color: context.theme.colorScheme.secondary.lightenOrDarken(10)),
                                                           ),
                                                           childCount:
                                                               SettingsManager().settings.pinColumnsLandscape.value *
@@ -418,7 +418,7 @@ class ChatListPanel extends StatelessWidget {
                                                               height: 12,
                                                               margin: EdgeInsets.symmetric(vertical: 1),
                                                               decoration: BoxDecoration(
-                                                                  color: context.theme.accentColor.lightenOrDarken(10),
+                                                                  color: context.theme.colorScheme.secondary.lightenOrDarken(10),
                                                                   borderRadius: BorderRadius.circular(3))),
                                                           itemCount: 8),
                                                     ),
@@ -431,11 +431,11 @@ class ChatListPanel extends StatelessWidget {
                                       Container(
                                           width: 1,
                                           height: 108,
-                                          color: context.theme.accentColor.oppositeLightenOrDarken(40)),
+                                          color: context.theme.colorScheme.secondary.oppositeLightenOrDarken(40)),
                                       Container(
                                           width: CustomNavigator.width(context) / context.width * width - 1,
                                           height: 108,
-                                          color: context.theme.accentColor),
+                                          color: context.theme.colorScheme.secondary),
                                     ],
                                   ),
                                 );

@@ -683,6 +683,7 @@ Future<bool> rebuild(State s) async {
   }
 
   // ignore protected member use error - that's the whole point of this function
+  //ignore:, invalid_use_of_protected_member
   s.setState(() {});
   return true;
 }
@@ -739,6 +740,7 @@ extension WidgetLocation on GlobalKey {
 extension ConditionlAdd on RxMap {
   void conditionalAdd(Object? key, Object? value, bool shouldRefresh) {
     // ignore this warning, for some reason value is a protected member
+    // ignore: invalid_use_of_protected_member
     this.value[key] = value;
     if (shouldRefresh) refresh();
   }

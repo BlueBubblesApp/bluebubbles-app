@@ -650,7 +650,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           child: Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(20),
-                              color: context.theme.accentColor,
+                              color: context.theme.colorScheme.secondary,
                               boxShadow: [
                                 BoxShadow(
                                   color: context.theme.backgroundColor,
@@ -677,8 +677,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     },
                                     child: Obx(
                                       () => ListTile(
-                                        selectedTileColor: context.theme.accentColor.lightenOrDarken(20),
-                                        tileColor: context.theme.accentColor,
+                                        selectedTileColor: context.theme.colorScheme.secondary.lightenOrDarken(20),
+                                        tileColor: context.theme.colorScheme.secondary,
                                         selected: emojiSelectedIndex.value == index,
                                         title: Row(
                                           children: <Widget>[

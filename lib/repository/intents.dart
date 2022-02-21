@@ -37,6 +37,7 @@ class OpenSettingsAction extends Action<OpenSettingsIntent> {
         ),
       );
     }
+    return null;
   }
 }
 
@@ -61,6 +62,7 @@ class OpenNewChatCreatorAction extends Action<OpenNewChatCreatorIntent> {
         (route) => route.isFirst,
       );
     }
+    return null;
   }
 }
 
@@ -81,6 +83,7 @@ class OpenSearchAction extends Action<OpenSearchIntent> {
         SearchView(),
       );
     }
+    return null;
   }
 }
 
@@ -99,6 +102,7 @@ class ReplyRecentAction extends Action<ReplyRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       EventDispatcher().emit("focus-keyboard", message);
     }
+    return null;
   }
 }
 
@@ -118,6 +122,7 @@ class HeartRecentAction extends Action<HeartRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "love");
     }
+    return null;
   }
 }
 
@@ -137,6 +142,7 @@ class LikeRecentAction extends Action<LikeRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "like");
     }
+    return null;
   }
 }
 
@@ -156,6 +162,7 @@ class DislikeRecentAction extends Action<DislikeRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "dislike");
     }
+    return null;
   }
 }
 
@@ -175,6 +182,7 @@ class LaughRecentAction extends Action<LaughRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "laugh");
     }
+    return null;
   }
 }
 
@@ -194,6 +202,7 @@ class EmphasizeRecentAction extends Action<EmphasizeRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "emphasize");
     }
+    return null;
   }
 }
 
@@ -213,6 +222,7 @@ class QuestionRecentAction extends Action<QuestionRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "question");
     }
+    return null;
   }
 }
 
@@ -243,6 +253,7 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
         ChatManager().setActiveChat(_chat);
       }
     }
+    return null;
   }
 }
 
@@ -273,6 +284,7 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
         ChatManager().setActiveChat(_chat);
       }
     }
+    return null;
   }
 }
 
@@ -293,6 +305,7 @@ class OpenChatDetailsAction extends Action<OpenChatDetailsIntent> {
       context,
       ConversationDetails(messageBloc: bloc, chat: chat),
     );
+    return null;
   }
 }
 
@@ -309,6 +322,7 @@ class StartIncrementalSyncAction extends Action<StartIncrementalSyncIntent> {
         Logger.error(err);
       });
     }
+    return null;
   }
 }
 
@@ -326,5 +340,6 @@ class GoBackAction extends Action<GoBackIntent> {
     if (SettingsManager().settings.finishedSetup.value && !(Get.isDialogOpen ?? true)) {
       CustomNavigator.backConversationView(context);
     }
+    return null;
   }
 }
