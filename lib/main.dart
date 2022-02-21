@@ -261,12 +261,17 @@ Future<Null> initApp(bool isBubble) async {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
     if (kIsDesktop) {
-      PackageInfo packageInfo = await PackageInfo.fromPlatform();
-      LaunchAtStartup.setup(packageInfo.appName);
-      if (SettingsManager().settings.launchAtStartup.value) {
-        await LaunchAtStartup.enable();
-      } else {
-        await LaunchAtStartup.disable();
+      try {
+        PackageInfo packageInfo = await PackageInfo.fromPlatform();
+        LaunchAtStartup.setup(packageInfo.appName);
+        if (SettingsManager().settings.launchAtStartup.value) {
+          await LaunchAtStartup.enable();
+        } else {
+          await LaunchAtStartup.disable();
+        }
+      } catch (e, s) {
+        Logger.error(e.toString());
+        Logger.error(s.toString());
       }
     }
     // this is to avoid a fade-in transition between the android native splash screen

@@ -33,7 +33,7 @@ dependencies:
   assorted_layout_widgets: ^5.3.0-dev.0
   record: ^3.0.2 # mobile and web
   fast_contacts: ^1.1.0 # mobile only
-  permission_handler: ^8.3.0 # mobile only
+  permission_handler: ^9.1.0 # mobile only
   path_provider: ^2.0.8 # no web support
   sqflite: ^2.0.1 # mobile only
   sqflite_common_ffi: ^2.1.0 # desktop
@@ -111,7 +111,7 @@ dependencies:
   objectbox_flutter_libs: any
   js: ^0.6.3
   bitsdojo_window: ^0.1.1+1
-  system_tray: ^0.0.7
+  system_tray: ^0.1.0
   flutter_improved_scrolling: ^0.0.3
   desktop_drop: ^0.3.2
   particles_flutter: ^0.1.4
@@ -126,7 +126,7 @@ dependencies:
   printing: ^5.6.5
   shimmer: ^2.0.0
   # pinned to 2.0.2 because chewie is on provider 5.0.0
-  giphy_get: ^2.0.2
+  giphy_get: ^3.0.4
   flutter_dotenv: ^5.0.2
   image: ^3.1.0
   launch_at_startup: ^0.1.1
@@ -147,7 +147,7 @@ dev_dependencies:
   flutter_launcher_icons: ^0.9.1
   flutter_native_splash: ^2.0.1+1
   flutter_lints: ^1.0.4
-  msix: ^2.6.6
+  msix: ^3.1.6
   peanut: ^4.1.1
   objectbox_generator: any
   flutter_test:
