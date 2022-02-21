@@ -200,8 +200,23 @@ Future<Null> initApp(bool isBubble) async {
           Logger.info("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
           store = await openStore(directory: join(customStorePath, 'objectbox'));
         } else {
-          Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
-          store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
+          try {
+            Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
+            store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
+          } catch (_) {
+            if (kIsDesktop) {
+              if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
+                Logger.info("Failed to open store from default path. Using custom path");
+                customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
+                prefs.setBool("use-custom-path", true);
+                objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+                Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
+                store = await openStore(directory: join(customStorePath, 'objectbox'));
+              } else {
+                Logger.info("Objectbox directory exists.");
+              }
+            }
+          }
         }
         attachmentBox = store.box<Attachment>();
         chatBox = store.box<Chat>();
@@ -267,7 +282,7 @@ Future<Null> initApp(bool isBubble) async {
       try {
         packageInfo = await PackageInfo.fromPlatform();
       } catch (_) {
-        Logger.error("Getting packagInfo failed, using bluebubbles_app");
+        Logger.error("Getting packageInfo failed, using bluebubbles_app");
       }
       LaunchAtStartup.setup(packageInfo?.appName ?? "bluebubbles_app");
       if (SettingsManager().settings.launchAtStartup.value) {
@@ -324,6 +339,8 @@ Future<Null> initApp(bool isBubble) async {
       await dotenv.load();
     }
   } catch (e, s) {
+    Logger.error(e);
+    Logger.error(s);
     exception = e;
     stacktrace = s;
   }

@@ -27,7 +27,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
-  LPCWSTR szTitle = L"BlueBubbles (Beta)";
+  LPCWSTR szTitle = L"BlueBubbles";
   LPCWSTR szWindowClass = L"FLUTTER_RUNNER_WIN32_WINDOW";
 
   HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, 0, szTitle);
@@ -54,7 +54,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.CreateAndShow(szTitle, origin, size)) {
+if (!window.CreateAndShow(L"BlueBubbles", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
