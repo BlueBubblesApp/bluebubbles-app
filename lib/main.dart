@@ -33,6 +33,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:firebase_dart/firebase_dart.dart';
+
 // ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:flutter/foundation.dart';
@@ -99,6 +100,7 @@ final RxnInt totalSize = RxnInt();
 String? _recentIntent;
 
 String? get recentIntent => _recentIntent;
+
 set recentIntent(String? intent) {
   _recentIntent = intent;
 
@@ -261,17 +263,17 @@ Future<Null> initApp(bool isBubble) async {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
     if (kIsDesktop) {
+      PackageInfo? packageInfo;
       try {
-        PackageInfo packageInfo = await PackageInfo.fromPlatform();
-        LaunchAtStartup.setup(packageInfo.appName);
-        if (SettingsManager().settings.launchAtStartup.value) {
-          await LaunchAtStartup.enable();
-        } else {
-          await LaunchAtStartup.disable();
-        }
-      } catch (e, s) {
-        Logger.error(e.toString());
-        Logger.error(s.toString());
+        packageInfo = await PackageInfo.fromPlatform();
+      } catch (_) {
+        Logger.error("Getting packagInfo failed, using bluebubbles_app");
+      }
+      LaunchAtStartup.setup(packageInfo?.appName ?? "bluebubbles_app");
+      if (SettingsManager().settings.launchAtStartup.value) {
+        await LaunchAtStartup.enable();
+      } else {
+        await LaunchAtStartup.disable();
       }
     }
     // this is to avoid a fade-in transition between the android native splash screen
