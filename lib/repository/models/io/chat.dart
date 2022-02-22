@@ -263,7 +263,7 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
 
   @override
   FutureOr<List<Chat>> run() {
-    return store.runInTransaction(TxMode.read, () {
+    return store.runInTransaction(TxMode.write, () {
       /// Query the [chatBox] for chats with limit and offset, prioritize pinned
       /// chats and order by latest message date
       final query = (chatBox.query()
