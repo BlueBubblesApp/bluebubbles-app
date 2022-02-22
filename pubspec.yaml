@@ -91,7 +91,7 @@ dependencies:
   flutter_local_notifications: ^9.1.5 # mobile only
   flutter_native_timezone: ^2.0.0 # no desktop support
   package_info_plus: ^1.3.0
-  shared_preferences: ^2.0.11
+  shared_preferences: ^2.0.9
   location: ^4.3.0 # no desktop support, todo desktop
   universal_io: ^2.0.4 # cross-platform dart:io implementation
   universal_html: ^2.0.8 # cross-platform dart:html implementation
