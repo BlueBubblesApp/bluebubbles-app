@@ -188,7 +188,7 @@ public class FlutterFirebaseMessagingBackgroundExecutor implements MethodCallHan
             if (callbackHandle != 0) {
                 Log.i(TAG, "Found background isolate callback handle");
                 startBackgroundIsolate(callbackHandle, null);
-            }else {
+            } else {
                 Log.i(TAG, "No callback handler available for background isolate");
             }
         }
