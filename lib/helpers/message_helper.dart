@@ -74,7 +74,7 @@ class MessageHelper {
       // If we can't get a chat from the data, skip the message
       if (msgChat == null) continue;
 
-      Message message = Message.fromMap(item);
+      Message message = item is Message ? item : Message.fromMap(item);
       Message? existing = Message.findOne(guid: message.guid);
       await msgChat.addMessage(
         message,
@@ -93,11 +93,13 @@ class MessageHelper {
       }
 
       // Create the attachments
-      List<dynamic> attachments = item['attachments'];
-      for (dynamic attachmentItem in attachments) {
-        Attachment file = Attachment.fromMap(attachmentItem);
-        file.save(message);
-      }
+     if (item is! Message) {
+       List<dynamic> attachments = item['attachments'];
+       for (dynamic attachmentItem in attachments) {
+         Attachment file = Attachment.fromMap(attachmentItem);
+         file.save(message);
+       }
+     }
 
       // Add message to the "master list"
       _messages.add(message);

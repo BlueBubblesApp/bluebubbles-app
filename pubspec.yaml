@@ -135,6 +135,11 @@ dependencies:
   version: ^2.0.0
   emojis: ^0.9.9
   defer_pointer: ^0.0.2
+  # git dependency because original package does not work with compileSdk 31
+  telephony:
+    git:
+      url: https://github.com/tneotia/Telephony
+      ref: develop
 
 dependency_overrides:
   rxdart: ^0.27.3

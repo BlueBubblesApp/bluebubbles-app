@@ -7,6 +7,7 @@ import 'package:bluebubbles/layouts/setup/prepare_to_download/prepare_to_downloa
 import 'package:bluebubbles/layouts/setup/qr_scan/qr_scan.dart';
 import 'package:bluebubbles/layouts/setup/request_contact/request_contacts.dart';
 import 'package:bluebubbles/layouts/setup/setup_mac_app/setup_mac_app.dart';
+import 'package:bluebubbles/layouts/setup/sms/integration_chooser.dart';
 import 'package:bluebubbles/layouts/setup/syncing_messages/syncing_messages.dart';
 import 'package:bluebubbles/layouts/setup/welcome_page/welcome_page.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -25,6 +26,7 @@ class SetupView extends StatefulWidget {
 class _SetupViewState extends State<SetupView> {
   final controller = PageController(initialPage: 0);
   int currentPage = 1;
+  int integration = 1;
 
   @override
   void initState() {
@@ -84,17 +86,23 @@ class _SetupViewState extends State<SetupView> {
                     ),
                     if (!kIsWeb && !kIsDesktop) RequestContacts(controller: controller),
                     if (!kIsWeb && !kIsDesktop) BatteryOptimizationPage(controller: controller),
-                    SetupMacApp(controller: controller),
-                    QRScan(
-                      controller: controller,
-                    ),
-                    if (!kIsWeb)
+                    if (!kIsWeb && !kIsDesktop) IntegrationChooser(controller: controller, onIntegrationSelected: (selected) {
+                      integration = selected;
+                      setState(() {});
+                    }),
+                    if (integration != 2) SetupMacApp(controller: controller),
+                    if (integration != 2)
+                      QRScan(
+                        controller: controller,
+                      ),
+                    if (!kIsWeb && integration != 2)
                       PrepareToDownload(
                         controller: controller,
                       ),
-                    SyncingMessages(
-                      controller: controller,
-                    ),
+                    if (integration != 2)
+                      SyncingMessages(
+                        controller: controller,
+                      ),
                     //ThemeSelector(),
                   ],
                 ),
@@ -141,7 +149,7 @@ class _SetupViewState extends State<SetupView> {
                                           .bodyText1!
                                           .copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
                                   TextSpan(
-                                      text: " of ${kIsWeb ? "4" : kIsDesktop ? "5" : "7"}",
+                                      text: " of ${kIsWeb ? "4" : kIsDesktop ? "5" : integration == 1 ? "8" : integration == 2 ? "5" : "9"}",
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyText1!

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -12,6 +13,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:telephony/telephony.dart' as sms hide randomString;
 
 enum SetupOutputType { ERROR, LOG }
 
@@ -41,6 +43,7 @@ class SetupBloc {
   final Rxn<SocketState> connectionStatus = Rxn<SocketState>();
   final RxBool isSyncing = false.obs;
   final RxBool isIncrementalSyncing = false.obs;
+  final RxBool isSmsSyncing = false.obs;
   Worker? connectionSubscription;
 
   double _progress = 0.0;
@@ -222,6 +225,109 @@ class SetupBloc {
 
     // Start an incremental sync to catch any messages we missed during setup
     startIncrementalSync(settings);
+  }
+
+  Future<void> startSmsSync(Settings settings) async {
+    // Make sure we aren't already syncing
+    if (isSmsSyncing.value) return;
+
+    // Setup syncing process
+    processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
+    isSmsSyncing.value = true;
+
+    try {
+      addOutput("Getting contacts...", SetupOutputType.LOG);
+      Stopwatch s = Stopwatch();
+      s.start();
+      await ContactManager().getContacts(force: true);
+      s.stop();
+      addOutput("Received contacts list. Size: ${ContactManager().contacts.length}, speed: ${s.elapsedMilliseconds} ms", SetupOutputType.LOG);
+      addOutput("Getting Chats...", SetupOutputType.LOG);
+      List<sms.Conversation> smsChats = await sms.Telephony.instance.getConversations();
+      List<Chat> chats = [];
+      for (sms.Conversation e in smsChats) {
+        final addresses = await sms.Telephony.instance.getAddressesForConversation(e.recipientIds);
+        chats.add(Chat(
+          originalROWID: e.threadId,
+          guid: "sms-${randomString(9)}",
+          chatIdentifier: "sms-${e.threadId}",
+          isArchived: e.archived,
+          isPinned: e.pinToTop,
+          hasUnreadMessage: !(e.read ?? true),
+          participants: addresses.mapIndexed((index, e2) => Handle(
+            originalROWID: e.recipientIds[index],
+            address: e2,
+          )).toList(),
+        ));
+      }
+      if (chats.isEmpty) {
+        addOutput("Received no chats, finishing up...", SetupOutputType.LOG);
+        finishSetup();
+        return;
+      }
+
+      addOutput("Received initial chat list. Size: ${chats.length}", SetupOutputType.LOG);
+      for (Chat chat in chats) {
+        try {
+          List<sms.Message> smsMessages = await sms.Telephony.instance.getMessagesForConversation(chat.originalROWID!);
+          final messages = <Message>[];
+          for (sms.Message e in smsMessages) {
+            e.mmsData = e.method == sms.MessageMethod.MMS ? await sms.Telephony.instance.getMmsData(e.id!) : null;
+            messages.add(Message(
+              originalROWID: e.id,
+              guid: "smsmessage-${randomString(9)}",
+              handleId: chat.handles.firstWhereOrNull((element) => element.address == e.address)?.originalROWID,
+              text: e.body,
+              subject: e.subject,
+              dateCreated: e.dateSent,
+              dateDelivered2: e.date,
+              isFromMe: e.type == sms.MessageType.MESSAGE_TYPE_OUTBOX,
+              handle: chat.handles.firstWhereOrNull((element) => element.address == e.address),
+              hasAttachments: e.mmsData?.attachments.isNotEmpty ?? false,
+              attachments: e.mmsData?.attachments.map((e2) => Attachment(
+                originalROWID: Random().nextInt(100000),
+                guid: "smsattachment-${randomString(9)}",
+                mimeType: e2.mimeType,
+                isOutgoing: e.type == sms.MessageType.MESSAGE_TYPE_OUTBOX,
+                transferName: e2.name,
+                totalBytes: e2.data.length,
+              )).toList() ?? [],
+            ));
+          }
+          addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
+          if (!skipEmptyChats || (skipEmptyChats && messages.isNotEmpty)) {
+            chat.save();
+            await syncChat(chat, messages);
+            addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+          } else {
+            addOutput("Skipping syncing chat (empty chat), '${chat.chatIdentifier}'", SetupOutputType.LOG);
+          }
+        } catch (ex, stacktrace) {
+          addOutput("Failed to sync chat, '${chat.chatIdentifier}'", SetupOutputType.ERROR);
+          addOutput(stacktrace.toString(), SetupOutputType.ERROR);
+        }
+
+        // If we have no chats, we can't divide by 0
+        // Also means there are not chats to sync
+        // It should never be 0... but still want to check to be safe.
+        if (chats.isEmpty) {
+          break;
+        } else {
+          // Set the new progress
+          _currentIndex += 1;
+          _progress = (_currentIndex / chats.length) * 100;
+        }
+      }
+
+      // If everything passes, finish the setup
+      _progress = 100;
+    } catch (ex) {
+      addOutput("Failed to sync chats!", SetupOutputType.ERROR);
+      addOutput("Error: ${ex.toString()}", SetupOutputType.ERROR);
+    } finally {
+      await ContactManager().matchHandles();
+      finishSetup();
+    }
   }
 
   Future<void> syncChat(Chat chat, List<dynamic> messages) async {

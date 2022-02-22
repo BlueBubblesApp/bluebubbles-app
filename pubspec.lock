@@ -1863,6 +1863,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.0.7"
+  telephony:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: develop
+      resolved-ref: "51d15811c10e0606b14f13f4eb7d6964094e6ab1"
+      url: "https://github.com/tneotia/Telephony"
+    source: git
+    version: "0.1.4"
   term_glyph:
     dependency: transitive
     description:
