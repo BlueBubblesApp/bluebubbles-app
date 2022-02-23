@@ -372,25 +372,7 @@ class ConversationListState extends State<ConversationList> {
         FloatingActionButton(
             backgroundColor: context.theme.primaryColor,
             child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
-            onPressed: () async {
-              List<int> results = [];
-              print("(TEST) Starting Tests...");
-              for (var i = 0; i < 10; i++) {
-                Stopwatch watch = Stopwatch();
-                
-                watch.start();
-
-                await ContactManager().loadContacts(force: true);
-
-                watch.stop();
-                results.add(watch.elapsedMilliseconds);
-              }
-
-              print("(TEST) Stopped Tests...");
-              var result = results.reduce((a, b) => a + b) / results.length;
-              print("(TEST) Took: $result ms");
-            }),
-            // onPressed: openNewChatCreator),
+            onPressed: openNewChatCreator),
       ],
     );
   }
