@@ -281,7 +281,6 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
       for (Chat c in chats) {
         c.participants = List<Handle>.from(c.handles);
         c._deduplicateParticipants();
-        // c.fakeParticipants = c.participants.map((p) => (stuff[2][p.address] ?? "Unknown") as String).toList();
         if ([c.autoSendReadReceipts, c.autoSendTypingIndicators].contains(null)) {
           c.autoSendReadReceipts ??= true;
           c.autoSendTypingIndicators ??= true;
@@ -316,6 +315,7 @@ class Chat {
   String? title;
   String? displayName;
   List<Handle> participants = [];
+  @Transient()
   List<String> fakeParticipants = [];
   Message? latestMessage;
   bool? autoSendReadReceipts = true;
@@ -364,6 +364,9 @@ class Chat {
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
+  
+    // Map the participant fake names
+    fakeParticipants = participants.map((e) => ContactManager().getContact(e.address)?.fakeName ?? 'Unknown').toList();
   }
 
   bool get isTextForwarding => guid.startsWith("SMS");
@@ -378,9 +381,9 @@ class Chat {
     if (json.containsKey('participants')) {
       for (dynamic item in (json['participants'] as List<dynamic>)) {
         participants.add(Handle.fromMap(item));
-        fakeParticipants.add(ContactManager().getContact(participants.last.address)?.fakeName ?? "Unknown");
       }
     }
+
     Message? message;
     if (json['lastMessage'] != null) {
       message = Message.fromMap(json['lastMessage']);

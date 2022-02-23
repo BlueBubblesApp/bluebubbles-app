@@ -321,6 +321,10 @@ class ChatBloc {
         if (isNullOrEmpty(chat.participants)!) {
           chat.getParticipants();
         }
+
+        // Set the fake participants when we load the chats
+        chat.fakeParticipants = chat.participants.map((e) => ContactManager().getContact(e.address)?.fakeName ?? 'Unknown').toList();
+
         if (kIsWeb) {
           for (Handle element in chat.participants) {
             if (cachedHandles.firstWhereOrNull((e) => e.address == element.address) == null) {

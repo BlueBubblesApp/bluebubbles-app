@@ -206,11 +206,6 @@ final _entities = <ModelEntity>[
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(17, 8308083337629235136),
-            name: 'fakeParticipants',
-            type: 30,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(18, 3666111733726849006),
             name: 'customAvatarPath',
             type: 9,
@@ -770,7 +765,8 @@ ModelDefinition getObjectBoxModel() {
         4510870919779209192,
         5203631054946486128,
         2649653758394363860,
-        1439376349402210172
+        1439376349402210172,
+        8308083337629235136
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -902,9 +898,6 @@ ModelDefinition getObjectBoxModel() {
           final displayNameOffset = object.displayName == null
               ? null
               : fbb.writeString(object.displayName!);
-          final fakeParticipantsOffset = fbb.writeList(object.fakeParticipants
-              .map(fbb.writeString)
-              .toList(growable: false));
           final customAvatarPathOffset = object.customAvatarPath == null
               ? null
               : fbb.writeString(object.customAvatarPath!);
@@ -925,7 +918,6 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(13, fakeLatestMessageTextOffset);
           fbb.addOffset(14, titleOffset);
           fbb.addOffset(15, displayNameOffset);
-          fbb.addOffset(16, fakeParticipantsOffset);
           fbb.addOffset(17, customAvatarPathOffset);
           fbb.addInt64(18, object.pinIndex);
           fbb.addBool(19, object.autoSendReadReceipts);
@@ -963,7 +955,6 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 24),
               displayName: const fb.StringReader()
                   .vTableGetNullable(buffer, rootOffset, 34),
-              fakeParticipants: const fb.ListReader<String>(fb.StringReader(), lazy: false).vTableGet(buffer, rootOffset, 36, []),
               latestMessageDate: latestMessageDateValue == null ? null : DateTime.fromMillisecondsSinceEpoch(latestMessageDateValue),
               latestMessageText: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 28),
               fakeLatestMessageText: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 30),
@@ -1550,25 +1541,21 @@ class Chat_ {
   static final displayName =
       QueryStringProperty<Chat>(_entities[1].properties[15]);
 
-  /// see [Chat.fakeParticipants]
-  static final fakeParticipants =
-      QueryStringVectorProperty<Chat>(_entities[1].properties[16]);
-
   /// see [Chat.customAvatarPath]
   static final customAvatarPath =
-      QueryStringProperty<Chat>(_entities[1].properties[17]);
+      QueryStringProperty<Chat>(_entities[1].properties[16]);
 
   /// see [Chat.pinIndex]
   static final pinIndex =
-      QueryIntegerProperty<Chat>(_entities[1].properties[18]);
+      QueryIntegerProperty<Chat>(_entities[1].properties[17]);
 
   /// see [Chat.autoSendReadReceipts]
   static final autoSendReadReceipts =
-      QueryBooleanProperty<Chat>(_entities[1].properties[19]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[18]);
 
   /// see [Chat.autoSendTypingIndicators]
   static final autoSendTypingIndicators =
-      QueryBooleanProperty<Chat>(_entities[1].properties[20]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[19]);
 
   /// see [Chat.handles]
   static final handles =
