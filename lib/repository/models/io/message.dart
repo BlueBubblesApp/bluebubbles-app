@@ -458,9 +458,10 @@ class Message {
       /// matching those message IDs
 
       /// Add the attachments with some fancy list operations
+      /// The conditional is in case objectbox hasn't persisted the dbAttachments yet
       map.addEntries(messages.where((element) => element?.id != null).map((e) => MapEntry(
           e!.guid!,
-          e.dbAttachments
+          e.dbAttachments.isEmpty ? e.attachments : e.dbAttachments
       )));
       return map;
     });

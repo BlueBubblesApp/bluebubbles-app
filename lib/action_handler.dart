@@ -615,6 +615,10 @@ class ActionHandler {
           }
           message.attachments.add(file);
         }
+        // if this message is for the active chat, preload its attachments into the chat manager
+        if (chats.first.guid == ChatManager().activeChat?.chat.guid) {
+          ChatManager().activeChat?.preloadMessageAttachments(specificMessages: [message]);
+        }
         Logger.info("Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}", tag: "MessageStatus");
 
         if (!isHeadless) NewMessageManager().updateMessage(chats.first, data['tempGuid'], message);
