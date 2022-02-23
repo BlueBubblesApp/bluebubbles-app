@@ -84,10 +84,8 @@ class ChatBloc {
 
     // Get the contacts in case we haven't
     if (ContactManager().contacts.isEmpty) {
-      if (!kIsDesktop) {
-        await ContactManager().getContacts();
-      } else {
-        ContactManager().getContacts().then((e) => ChatBloc().chats.refresh());
+      if (kIsDesktop) {
+        ContactManager().loadContacts().then((e) => ChatBloc().chats.refresh());
       }
     }
 
@@ -97,7 +95,7 @@ class ChatBloc {
     lastFetch = DateTime.now().toUtc().millisecondsSinceEpoch;
 
     // Fetch the first x chats
-    getChatBatches(fakeNames: ContactManager().handleToFakeName);
+    getChatBatches();
   }
 
   Future<void> resumeRefresh() async {
@@ -225,7 +223,7 @@ class ChatBloc {
   Future<void> updateShareTarget(Chat chat) async {
     Uint8List? icon;
     Contact? contact =
-        chat.participants.length == 1 ? ContactManager().getCachedContact(handle: chat.participants.first) : null;
+        chat.participants.length == 1 ? ContactManager().getContact(chat.participants.first.address) : null;
     try {
       // If there is a contact specified, we can use it's avatar
       if (contact != null && contact.avatar.value != null && contact.avatar.value!.isNotEmpty) {
@@ -233,8 +231,10 @@ class ChatBloc {
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         if (contact != null && (contact.avatar.value?.isEmpty ?? true)) {
-          icon = await ContactManager().getAvatar(contact.id);
+          await ContactManager().loadContactAvatar(contact);
+          icon = contact.avatar.value;
         }
+
         if (icon == null) {
           // If [defaultAvatar] is not loaded, load it from assets
           if (NotificationManager().defaultAvatar == null) {
@@ -287,7 +287,7 @@ class ChatBloc {
     return NewMessageManager().stream.listen(handleMessageAction);
   }
 
-  Future<void> getChatBatches({int batchSize = 15, required Map fakeNames, bool headless = false}) async {
+  Future<void> getChatBatches({int batchSize = 15, bool headless = false}) async {
     int count = Chat.count() ?? (await api.chatCount()).data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
@@ -308,12 +308,9 @@ class ChatBloc {
       if (kIsWeb) {
         chats = await SocketManager().getChats({"withLastMessage": true, "limit": batchSize, "offset": i * batchSize});
       } else {
-        chats = await Chat.getChats(limit: batchSize, offset: i * batchSize, fakeNames: fakeNames);
+        chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       }
       if (chats.isEmpty) break;
-      if (!headless) {
-        await ContactManager().matchHandles();
-      }
       for (Chat chat in chats) {
         newChats.add(chat);
         initTileValsForChat(chat);
@@ -481,13 +478,13 @@ extension Helpers on RxList<Chat> {
     if (!SettingsManager().settings.filterUnknownSenders.value) return this;
     if (unknown) {
       return where(
-              (e) => e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] == null)
+              (e) => e.participants.length == 1 && ContactManager().getContact(e.participants[0].address) == null)
           .toList()
           .obs;
     } else {
       return where((e) =>
               e.participants.length > 1 ||
-              (e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] != null))
+              (e.participants.length == 1 && ContactManager().getContact(e.participants[0].address) != null))
           .toList()
           .obs;
     }

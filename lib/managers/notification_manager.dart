@@ -142,7 +142,7 @@ class NotificationManager {
     }
 
     // Get the actual contact metadata
-    Contact? contact = ContactManager().getCachedContact(handle: message.handle);
+    Contact? contact = ContactManager().getContact(message.handle?.address);
 
     // Build the message text for the notification
     String? messageText = MessageHelper.getNotificationText(message);
@@ -156,7 +156,7 @@ class NotificationManager {
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         if (contact != null) {
-          contact.avatar.value = await ContactManager().getAvatar(contact.id);
+          await ContactManager().loadContactAvatar(contact);
         }
         // If [defaultAvatar] is not loaded, load it from assets
         if ((contact?.avatar.value == null || contact!.avatar.value!.isEmpty) && defaultAvatar == null) {

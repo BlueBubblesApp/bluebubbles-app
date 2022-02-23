@@ -20,6 +20,7 @@ import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -274,6 +275,7 @@ Future<Null> initApp(bool isBubble) async {
     await initializeDateFormatting();
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
+    if (!ContactManager().hasFetchedContacts) await ContactManager().loadContacts(headless: true);
     if (SettingsManager().settings.immersiveMode.value) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }

@@ -2,9 +2,11 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:fast_contacts/fast_contacts.dart' hide Contact;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -370,7 +372,25 @@ class ConversationListState extends State<ConversationList> {
         FloatingActionButton(
             backgroundColor: context.theme.primaryColor,
             child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
-            onPressed: openNewChatCreator),
+            onPressed: () async {
+              List<int> results = [];
+              print("(TEST) Starting Tests...");
+              for (var i = 0; i < 10; i++) {
+                Stopwatch watch = Stopwatch();
+                
+                watch.start();
+
+                await ContactManager().loadContacts(force: true);
+
+                watch.stop();
+                results.add(watch.elapsedMilliseconds);
+              }
+
+              print("(TEST) Stopped Tests...");
+              var result = results.reduce((a, b) => a + b) / results.length;
+              print("(TEST) Took: $result ms");
+            }),
+            // onPressed: openNewChatCreator),
       ],
     );
   }

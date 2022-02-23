@@ -662,7 +662,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             onTap: () async {
               Handle? handle = widget.message.handle;
               String? address = handle?.address ?? "";
-              Contact? contact = ContactManager().getCachedContact(address: address);
+              Contact? contact = ContactManager().getContact(address);
               UniqueContact uniqueContact;
               if (contact == null) {
                 uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(handle)));

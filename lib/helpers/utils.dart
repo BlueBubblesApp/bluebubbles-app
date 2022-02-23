@@ -379,18 +379,6 @@ String getGroupEventText(Message message) {
   return text;
 }
 
-MemoryImage? loadAvatar(Chat chat, Handle? handle) {
-  // Get the contact
-  Contact? contact = ContactManager().getCachedContact(handle: handle);
-  Uint8List? avatar = contact?.avatar.value;
-  if (isNullOrEmpty(avatar)!) return null;
-
-  // Set the contact image
-  // NOTE: Don't compress this. It will increase load time significantly
-  // NOTE: These don't need to be compressed. They are usually already small
-  return MemoryImage(avatar!);
-}
-
 List<RegExpMatch> parseLinks(String text) {
   return urlRegex.allMatches(text).toList();
 }

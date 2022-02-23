@@ -129,7 +129,7 @@ class SetupBloc {
       addOutput("Getting contacts...", SetupOutputType.LOG);
       Stopwatch s = Stopwatch();
       s.start();
-      await ContactManager().getContacts(force: true);
+      await ContactManager().loadContacts(force: true);
       s.stop();
       addOutput("Received contacts list. Size: ${ContactManager().contacts.length}, speed: ${s.elapsedMilliseconds} ms", SetupOutputType.LOG);
       addOutput("Getting Chats...", SetupOutputType.LOG);
@@ -161,10 +161,9 @@ class SetupBloc {
           _progress = (_currentIndex / chats.length) * 100;
         }
         addOutput("Fetching contacts from server...", SetupOutputType.LOG);
-        await ContactManager().getContacts(force: true);
+        await ContactManager().loadContacts(force: true);
         addOutput("Received contacts list. Size: ${ContactManager().contacts.length}", SetupOutputType.LOG);
         addOutput("Matching contacts to chats...", SetupOutputType.LOG);
-        await ContactManager().matchHandles();
         _progress = 100;
         finishSetup();
         startIncrementalSync(settings);
@@ -216,7 +215,6 @@ class SetupBloc {
       addOutput("Failed to sync chats!", SetupOutputType.ERROR);
       addOutput("Error: ${ex.toString()}", SetupOutputType.ERROR);
     } finally {
-      await ContactManager().matchHandles();
       finishSetup();
     }
 
@@ -246,7 +244,6 @@ class SetupBloc {
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup.value = true;
     await SettingsManager().saveSettings(_settingsCopy);
-    if (!kIsWeb) await ContactManager().getContacts(force: true);
     if (!kIsWeb) await ChatBloc().refreshChats(force: true);
     await SocketManager().authFCM(force: true);
     closeSync();

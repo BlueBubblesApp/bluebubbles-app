@@ -37,6 +37,8 @@ class Contact {
     this.phones = const [],
     this.emails = const [],
     this.structuredName,
+    this.fakeName,
+    this.fakeAddress,
     Uint8List? avatarBytes,
   }) {
     avatar.value = avatarBytes;
@@ -47,6 +49,8 @@ class Contact {
   List<String> phones;
   List<String> emails;
   StructuredName? structuredName;
+  String? fakeName;
+  String? fakeAddress;
   final Rxn<Uint8List> avatar = Rxn<Uint8List>();
 
   Map<String, dynamic> toMap() {
@@ -55,6 +59,8 @@ class Contact {
       'displayName': displayName,
       'phones': phones,
       'emails': emails,
+      'fakeName': fakeName,
+      'fakeAddress': fakeAddress
     };
   }
 
@@ -71,6 +77,8 @@ class Contact {
       displayName: map['displayName'] as String,
       phones: map['phones'].cast<String>(),
       emails: map['emails'].cast<String>(),
+      fakeName: map['fakeName'],
+      fakeAddress: map['fakeAddress']
     );
   }
 }

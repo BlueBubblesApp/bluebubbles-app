@@ -42,7 +42,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
   @override
   void initState() {
     super.initState();
-    contact = ContactManager().getCachedContact(handle: widget.handle);
+    contact = ContactManager().getContact(widget.handle?.address);
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 

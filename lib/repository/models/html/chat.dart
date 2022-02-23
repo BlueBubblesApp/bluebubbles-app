@@ -133,7 +133,7 @@ class Chat {
     if (json.containsKey('participants')) {
       for (dynamic item in (json['participants'] as List<dynamic>)) {
         participants.add(Handle.fromMap(item));
-        fakeParticipants.add(ContactManager().handleToFakeName[participants.last.address] ?? "Unknown");
+        fakeParticipants.add(ContactManager().getContact(participants.last.address)?.fakeName ?? "Unknown");
       }
     }
     Message? message;
@@ -221,7 +221,7 @@ class Chat {
   bool shouldMuteNotification(Message? message) {
     if (SettingsManager().settings.filterUnknownSenders.value &&
         participants.length == 1 &&
-        ContactManager().handleToContact[participants[0].address] == null) {
+        ContactManager().getContact(participants[0].address) == null) {
       return true;
     } else if (SettingsManager().settings.globalTextDetection.value.isNotEmpty) {
       List<String> text = SettingsManager().settings.globalTextDetection.value.split(",");

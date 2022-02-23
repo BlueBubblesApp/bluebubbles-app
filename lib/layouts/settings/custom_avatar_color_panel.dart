@@ -43,7 +43,7 @@ class CustomAvatarColorPanelController extends GetxController {
     List<Widget> items = [];
     for (var item in handles) {
       items.add(SettingsTile(
-        title: ContactManager().getCachedContact(address: item.address)?.displayName ?? await formatPhoneNumber(item),
+        title: ContactManager().getContact(item.address)?.displayName ?? await formatPhoneNumber(item),
         subtitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));

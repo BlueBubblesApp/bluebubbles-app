@@ -133,7 +133,7 @@ callbackHandler() async {
   }
   await SettingsManager().init();
   await SettingsManager().getSavedSettings(headless: true);
-  await ContactManager().getContacts(headless: true);
+  if (!ContactManager().hasFetchedContacts) await ContactManager().loadContacts(headless: true);
   MethodChannelInterface().init(customChannel: _backgroundChannel);
   await SocketManager().refreshConnection(connectToSocket: false);
   Get.put(AttachmentDownloadService());

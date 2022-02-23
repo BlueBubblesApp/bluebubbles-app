@@ -36,8 +36,8 @@ class ContactTile extends StatelessWidget {
     required this.updateChat,
     required this.canBeRemoved,
   }) : super(key: key) {
-    contact = ContactManager().getCachedContact(handle: handle);
-    contactImage = loadAvatar(chat, handle);
+    contact = ContactManager().getContact(handle.address);
+    if (contact != null) ContactManager().loadContactAvatar(contact!);
   }
 
   Future<void> makeCall(String phoneNumber) async {
@@ -112,7 +112,7 @@ class ContactTile extends StatelessWidget {
                 }),
         subtitle: (contact == null || hideInfo || generateName)
             ? Text(
-                generateName ? ContactManager().handleToFakeAddress[handle.address] ?? "" : "",
+                generateName ? ContactManager().getContact(handle.address)?.fakeAddress ?? "" : "",
                 style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -0.5),
               )
             : FutureBuilder<String>(

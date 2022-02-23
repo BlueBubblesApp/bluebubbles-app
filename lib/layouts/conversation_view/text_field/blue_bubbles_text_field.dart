@@ -882,7 +882,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           } else {
             // If it's not a group chat, get the participant's contact info
             Handle? handle = ChatController.forGuid(widget.chatGuid)?.chat.participants[0];
-            Contact? contact = ContactManager().getCachedContact(address: handle?.address ?? "");
+            Contact? contact = ContactManager().getContact(handle?.address);
             if (contact == null) {
               placeholder = await formatPhoneNumber(handle);
             } else {
@@ -1105,9 +1105,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                           text: reply.isFromMe!
                                               ? "You"
                                               : generateContactInfo
-                                                  ? ContactManager().handleToFakeName[reply.handle?.address] ?? "You"
+                                                  ? ContactManager().getContact(reply.handle?.address)?.fakeName ?? "You"
                                                   : ContactManager()
-                                                          .handleToContact[reply.handle?.address ?? ""]
+                                                          .getContact(reply.handle?.address ?? "")
                                                           ?.displayName ??
                                                       reply.handle?.address ??
                                                       "You",
@@ -1305,7 +1305,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                           TextSpan(text: "Replying to "),
                                           TextSpan(
                                               text: ContactManager()
-                                                      .handleToContact[reply.handle?.address ?? ""]
+                                                      .getContact(reply.handle?.address)
                                                       ?.displayName ??
                                                   replyToMessage.value!.handle?.address ??
                                                   "You",
@@ -1520,7 +1520,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                           TextSpan(text: "Replying to "),
                                           TextSpan(
                                               text: ContactManager()
-                                                      .handleToContact[reply.handle?.address ?? ""]
+                                                      .getContact(reply.handle?.address)
                                                       ?.displayName ??
                                                   reply.handle?.address ??
                                                   "You",

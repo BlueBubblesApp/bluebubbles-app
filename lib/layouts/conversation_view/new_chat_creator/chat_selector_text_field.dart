@@ -71,7 +71,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   children: <Widget>[
                     Text(
                         generateName
-                            ? ContactManager().handleToFakeName[contact.address] ?? "Person ${index + 1}"
+                            ? ContactManager().getContact(contact.address)?.fakeName ?? "Person ${index + 1}"
                             : hideInfo
                                 ? "          "
                                 : contact.displayName!.trim(),
@@ -105,7 +105,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             if (done.isEmpty) return;
             done = done.trim();
             if (done.isEmail || done.isPhoneNumber) {
-              Contact? contact = ContactManager().getCachedContact(address: done);
+              Contact? contact = ContactManager().getContact(done);
               if (contact == null) {
                 widget.onSelected(UniqueContact(address: done, displayName: done.isEmail ? done : await formatPhoneNumber(done)));
               } else {

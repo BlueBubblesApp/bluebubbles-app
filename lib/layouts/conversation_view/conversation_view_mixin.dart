@@ -354,7 +354,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             onTap: () async {
               if (!chat!.isGroup()) {
                 final handle = chat!.handles.first;
-                final contact = ContactManager().handleToContact[handle.address];
+                final contact = ContactManager().getContact(handle.address);
                 if (contact == null) {
                   await MethodChannelInterface().invokeMethod("open-contact-form",
                       {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
@@ -374,7 +374,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     (chat!.isGroup() || (!title.isPhoneNumber && !title.isEmail)))
                   Text(
                     generateTitle
-                        ? ContactManager().handleToFakeAddress[chat!.handles.first.address] ?? ""
+                        ? ContactManager().getContact(chat!.handles.first.address)?.fakeAddress ?? ""
                         : chat!.isGroup()
                             ? "${chat!.participants.length} recipients"
                             : chat!.participants[0].address,
@@ -1119,7 +1119,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           UniqueContact contact = UniqueContact(
               address: e.address,
               displayName:
-                  ContactManager().getCachedContact(address: e.address)?.displayName ?? await formatPhoneNumber(e));
+                  ContactManager().getContact(e.address)?.displayName ?? await formatPhoneNumber(e));
           selected.add(contact);
         }
 

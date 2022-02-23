@@ -379,13 +379,6 @@ class MethodChannelInterface {
       return;
     }
 
-    // If we haven't fetched contacts, we should get them, just in case we don't already have them
-    // If we decide that we don't need to wait for them to fully load, we can remove the await
-    // This is only feasible if we truly had reactive widgets for the contacts.
-    if (!ContactManager().hasFetchedContacts) {
-      await ContactManager().getContacts();
-    }
-
     // If the currently active chat is the same as the tapped notification, we
     // clear notifications for it and update the text field data
     if (ChatManager().activeChat?.chat.guid == id) {

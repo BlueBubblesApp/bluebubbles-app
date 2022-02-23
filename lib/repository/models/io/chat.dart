@@ -281,7 +281,7 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
       for (Chat c in chats) {
         c.participants = List<Handle>.from(c.handles);
         c._deduplicateParticipants();
-        c.fakeParticipants = c.participants.map((p) => (stuff[2][p.address] ?? "Unknown") as String).toList();
+        // c.fakeParticipants = c.participants.map((p) => (stuff[2][p.address] ?? "Unknown") as String).toList();
         if ([c.autoSendReadReceipts, c.autoSendTypingIndicators].contains(null)) {
           c.autoSendReadReceipts ??= true;
           c.autoSendTypingIndicators ??= true;
@@ -378,7 +378,7 @@ class Chat {
     if (json.containsKey('participants')) {
       for (dynamic item in (json['participants'] as List<dynamic>)) {
         participants.add(Handle.fromMap(item));
-        fakeParticipants.add(ContactManager().handleToFakeName[participants.last] ?? "Unknown");
+        fakeParticipants.add(ContactManager().getContact(participants.last.address)?.fakeName ?? "Unknown");
       }
     }
     Message? message;
@@ -533,7 +533,7 @@ class Chat {
     /// Filter unknown senders & sender doesn't have a contact, then don't notify
     if (SettingsManager().settings.filterUnknownSenders.value &&
         participants.length == 1 &&
-        ContactManager().handleToContact[participants[0].address] == null) {
+        ContactManager().getContact(participants[0].address) == null) {
       return true;
 
       /// Check if global text detection is on and notify accordingly
@@ -895,7 +895,7 @@ class Chat {
 
     /// Deduplicate and generate fake participants for redacted mode
     _deduplicateParticipants();
-    fakeParticipants = participants.map((p) => ContactManager().handleToFakeName[p.address] ?? "Unknown").toList();
+    fakeParticipants = participants.map((p) => ContactManager().getContact(p.address)?.fakeName ?? "Unknown").toList();
     return this;
   }
 
@@ -1021,10 +1021,10 @@ class Chat {
     return null;
   }
 
-  static Future<List<Chat>> getChats({int limit = 15, int offset = 0, required Map fakeNames}) async {
+  static Future<List<Chat>> getChats({int limit = 15, int offset = 0}) async {
     if (kIsWeb) throw Exception("Use socket to get chats on Web!");
 
-    final task = GetChats([limit, offset, fakeNames]);
+    final task = GetChats([limit, offset]);
     return (await createAsyncTask<List<Chat>>(task)) ?? [];
   }
 

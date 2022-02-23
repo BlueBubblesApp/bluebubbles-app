@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
 import 'package:flutter/foundation.dart';
@@ -25,33 +24,35 @@ class ContactManager {
 
   ContactManager._internal();
 
+  /// The master list of contact objects
   List<Contact> contacts = [];
+
+  /// A flag letting everyone know if we've fetched contacts at least once
   bool hasFetchedContacts = false;
-  Map<String, Contact?> handleToContact = {};
-  Map<String, String?> handleToFakeName = {};
-  Map<String, String?> handleToFakeAddress = {};
-  Map<String, String> handleToFormattedAddress = {};
+
+  /// Maps emails to contact objects
+  final Map<String, Contact> _emailToContactMap = {};
+
+  /// Maps phone numbers to contact objects
+  final Map<String, Contact> _phoneToContactMap = {};
+
+  /// Maps addresses to formatted versions
+  final Map<String, String> _addressToFormatted = {};
+
 
   // We need these so we don't have threads fetching at the same time
   Completer<bool>? getContactsFuture;
   Completer? getAvatarsFuture;
   int lastRefresh = 0;
 
-  Contact? getCachedContact({String? address, Handle? handle}) {
-    if (handle != null) {
-      return handleToContact[handle.address];
-    } else {
-      return handleToContact[address];
-    }
-  }
-
-  Future<bool> canAccessContacts() async {
+  Future<bool> canAccessContacts({ headless = false }) async {
     if (kIsWeb || kIsDesktop) {
       String? str = await SettingsManager().getServerVersion();
       Version version = Version.parse(str);
       int sum = version.major * 100 + version.minor * 21 + version.patch;
       return sum >= 42;
     }
+
     try {
       PermissionStatus status = await Permission.contacts.status;
       if (status.isGranted) return true;
@@ -59,10 +60,14 @@ class ContactManager {
 
       // If it's not permanently denied, request access
       if (!status.isPermanentlyDenied) {
-        return (await Permission.contacts.request()).isGranted;
+        if (headless) {
+          Logger.warn('Unable to prompt for contact access since headless = true');
+        } else {
+          return (await Permission.contacts.request()).isGranted;
+        }
+      } else {
+        Logger.info("Contacts permissions are permanently denied...", tag: tag);
       }
-
-      Logger.info("Contacts permissions are permanently denied...", tag: tag);
     } catch (ex) {
       Logger.error("Error getting access to contacts!", tag: tag);
       Logger.error(ex.toString(), tag: tag);
@@ -71,7 +76,47 @@ class ContactManager {
     return false;
   }
 
-  Future<bool> getContacts({bool headless = false, bool force = false}) async {
+  String? findAddressMatch(String address) {
+    // If the address exists in the map, return it as-is
+    if (_phoneToContactMap.containsKey(address)) return address;
+
+    // If the address doesn't exist, we need to match the last 'x' digits.
+    // We are going to try as many times as indexes in `matchList`.
+    // For each number in `matchList` we try and match the last 'x' digits
+    List<int> matchList = [7, 6, 5];
+    for (int i in matchList) {
+      if (address.length < i) continue;
+      String lastDigits = address.substring(address.length - i, address.length);
+      String? addressMatch = _phoneToContactMap.keys.firstWhereOrNull((i) => i.endsWith(lastDigits));
+      if (addressMatch == null) continue;
+      return addressMatch;
+    }
+
+    // If no matches are found, return null
+    return null;
+  }
+
+  /// Fetches contact from the cache maps
+  Contact? getContact(String? address) {
+    if (address == null || address.isEmpty) return null;
+    if (address.contains('@')) {
+      return _emailToContactMap[address];
+    } else {
+      Contact? match = _phoneToContactMap[address];
+
+      // If we can't find the match, we want to match based on last 7 digits
+      if (match == null) {
+        String? matchedAddress = findAddressMatch(address);
+        if (matchedAddress != null) {
+          match = _phoneToContactMap[matchedAddress];
+        }
+      }
+
+      return match;
+    }
+  }
+
+  Future<bool> loadContacts({headless = false, force = false, loadAvatars = true}) async {
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
       Logger.info("Already fetching contacts, returning future...", tag: tag);
@@ -87,7 +132,7 @@ class ContactManager {
     }
 
     // Make sure we have contacts access
-    if (!(await canAccessContacts())) return false;
+    if (!(await canAccessContacts(headless: headless))) return false;
 
     // Set the last refresh time
     lastRefresh = now;
@@ -111,24 +156,35 @@ class ContactManager {
       await fetchContactsDesktop();
     }
 
-    // Match handles in the database with contacts
-    if (!headless) {
-      await matchHandles();
-    }
-    await ChatBloc().getChatBatches(fakeNames: ContactManager().handleToFakeName, headless: headless);
-    if (headless) {
-      await matchHandles();
-    }
+    await buildCacheMap();
 
-    Logger.info("Finished fetching contacts (${handleToContact.length})", tag: tag);
+    Logger.info("Finished fetching contacts (${contacts.length})", tag: tag);
+    Logger.info("Contacts map size: ${_emailToContactMap.length + _phoneToContactMap.length}", tag: tag);
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
       hasFetchedContacts = true;
       getContactsFuture!.complete(true);
     }
 
     // Lazy load thumbnails after rendering initial contacts.
-    getAvatars();
-    return true;
+    if (loadAvatars) {
+      getAvatars();
+    }
+
+    return getContactsFuture!.future;
+  }
+
+  Future<void> buildCacheMap({loadFormatted = true}) async {
+    for (Contact c in contacts) {
+      for (String p in c.phones) {
+        String saniPhone = p.numericOnly();
+        _phoneToContactMap[saniPhone] = c;
+        _addressToFormatted[saniPhone] = await formatPhoneNumber(saniPhone);
+      }
+
+      for (String e in c.emails) {
+        _emailToContactMap[e] = c;
+      }
+    }
   }
 
   Future<void> fetchContactsDesktop({Function(String)? logger}) async {
@@ -178,39 +234,16 @@ class ContactManager {
     logger?.call("Finished contacts sync");
   }
 
-  Future<void> matchHandles() async {
-    // Match handles to contacts
-    List<Handle> handles = kIsWeb ? ChatBloc().cachedHandles : Handle.find();
-    for (Handle handle in handles) {
-      // If we already have a "match", skip
-      if (handleToContact.containsKey(handle.address) && handleToContact[handle.address] != null) {
-        continue;
-      }
+  void loadFakeInfo() {
+    for (Contact c in contacts) {
+      c.fakeName ??= faker.person.name();
 
-      // Find a contact match
-      Contact? contactMatch;
-
-      try {
-        contactMatch = getContact(handle);
-        handleToContact[handle.address] = contactMatch;
-        if (!handle.address.isEmail && contactMatch == null) {
-          handleToFormattedAddress[handle.address] = await formatPhoneNumber(handle.address);
-        }
-      } catch (ex) {
-        Logger.error('Failed to match handle for address, "${handle.address}": ${ex.toString()}', tag: tag);
+      if (c.phones.isNotEmpty || c.emails.isEmpty) {
+        c.fakeAddress ??= faker.phoneNumber.random.fromPattern(["+###########", "+# ###-###-####", "+# (###) ###-####"]);
+      } else if (c.emails.isNotEmpty) {
+        c.fakeAddress ??= faker.internet.email();
       }
     }
-
-    handleToFakeName = Map.fromEntries(handleToContact.entries.map((entry) =>
-        !handleToFakeName.keys.contains(entry.key) || handleToFakeName[entry.key] == null
-            ? MapEntry(entry.key, faker.person.name())
-            : MapEntry(entry.key, handleToFakeName[entry.key])));
-
-    handleToFakeAddress = handleToFakeName.map((key, value) => MapEntry(
-        key,
-        key.isEmail
-            ? faker.internet.email()
-            : faker.phoneNumber.random.fromPattern(["+###########", "+# ###-###-####", "+# (###) ###-####"])));
   }
 
   Future<void> getAvatars() async {
@@ -222,109 +255,47 @@ class ContactManager {
     getAvatarsFuture = Completer();
 
     Logger.info("Fetching Avatars", tag: tag);
-    for (String address in handleToContact.keys) {
-      Contact? contact = handleToContact[address];
-      if (handleToContact[address] == null || kIsWeb || kIsDesktop) continue;
-
-      FastContacts.getContactImage(contact!.id, size: ContactImageSize.fullSize).then((avatar) {
-        if (avatar == null) return;
-
-        contact.avatar.value = avatar;
-        handleToContact[address] = contact;
-      }).onError((_, __) {
-        FastContacts.getContactImage(contact.id).then((avatar) {
-          if (avatar == null) return;
-
-          contact.avatar.value = avatar;
-          handleToContact[address] = contact;
-        });
-      });
+    for (Contact c in contacts) {
+      try {
+        await loadContactAvatar(c);
+      } catch (ex) {
+        Logger.warn('Failed to fetch avatar for contact (${c.displayName}): ${ex.toString()}');
+      }
     }
 
     Logger.info("Finished fetching avatars", tag: tag);
     getAvatarsFuture!.complete();
+    return getAvatarsFuture!.future;
   }
 
-  Contact? getContact(Handle handle) {
-    Contact? contact;
-
-    // Get a list of comparable options
-    bool isEmailAddr = handle.address.isEmail;
-    String? lastDigits = handle.address.length < 4
-        ? handle.address.numericOnly()
-        : handle.address.substring(handle.address.length - 4, handle.address.length).numericOnly();
-
-    for (Contact c in contacts) {
-      // Get a phone number match
-      if (!isEmailAddr) {
-        for (String item in c.phones) {
-          String compStr = item.replaceAll(" ", "").trim().numericOnly();
-          String? formattedAddress = handleToFormattedAddress[handle.address];
-          if (!compStr.endsWith(lastDigits)) continue;
-          List<String> compareOpts = [handle.address.replaceAll(" ", "").trim().numericOnly()];
-          if (formattedAddress != null) compareOpts.add(formattedAddress.replaceAll(" ", "").trim().numericOnly());
-          if (sameAddress(compareOpts, compStr)) {
-            contact = c;
-            break;
-          }
-        }
-      }
-
-      // Get an email match
-      if (isEmailAddr) {
-        for (String item in c.emails) {
-          if (item.replaceAll(" ", "").trim() == handle.address.replaceAll(" ", "").trim()) {
-            contact = c;
-            break;
-          }
-        }
-      }
-
-      // If we have a match, break out of the loop
-      if (contact != null) break;
+  Future<void> loadContactAvatar(Contact contact) async {
+    try {
+      contact.avatar.value ??= await FastContacts.getContactImage(contact.id, size: ContactImageSize.fullSize);
+    } catch (_) {
+      contact.avatar.value ??= await FastContacts.getContactImage(contact.id);
     }
-
-    return contact;
-  }
-
-  Future<Uint8List?> getAvatar(String id) async {
-    return (await FastContacts.getContactImage(id, size: ContactImageSize.fullSize)) ??
-        await FastContacts.getContactImage(id, size: ContactImageSize.thumbnail);
   }
 
   String getContactTitle(Handle? handle) {
     if (handle == null) return "You";
-
-    String? address = handle.address;
-    if (handleToContact.containsKey(address) && handleToContact[address] != null) {
-      return handleToContact[address]!.displayName;
-    }
+    Contact? contact = getContact(handle.address);
+    if (contact != null) return contact.displayName;
 
     try {
-      Contact? contact = getContact(handle);
-      if (contact != null) return contact.displayName;
-    } catch (ex) {
-      Logger.error('Failed to getContact() in getContactTitle(), for address, "$address": ${ex.toString()}', tag: tag);
-    }
-
-    try {
-      String contactTitle = address;
-      bool isEmailAddr = contactTitle.isEmail;
-      if (contactTitle == address && !isEmailAddr) {
-        return handleToFormattedAddress[handle.address] ?? handle.address;
+      bool isEmailAddr = handle.address.isEmail;
+      if (!isEmailAddr) {
+        String? addressMatch = findAddressMatch(handle.address);
+        return addressMatch != null ? (_addressToFormatted[addressMatch] ?? handle.address) : handle.address;
       }
 
       // If it's an email and starts with "e:", strip it out
-      if (isEmailAddr && contactTitle.startsWith("e:")) {
-        contactTitle = contactTitle.substring(2);
+      if (isEmailAddr && handle.address.startsWith("e:")) {
+        return handle.address.substring(2);
       }
-
-      return contactTitle;
     } catch (ex) {
-      Logger.error('Failed to formatPhoneNumber() in getContactTitle(), for address, "$address": ${ex.toString()}',
-          tag: tag);
+      Logger.error('Failed to getContactTitle(), for address, "${handle.address}": ${ex.toString()}', tag: tag);
     }
 
-    return address;
+    return handle.address;
   }
 }
