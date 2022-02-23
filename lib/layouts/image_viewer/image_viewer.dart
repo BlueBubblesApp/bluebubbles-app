@@ -1,22 +1,22 @@
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:universal_io/io.dart';
 
 class ImageViewer extends StatefulWidget {
   ImageViewer({
@@ -181,7 +181,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                     child: CupertinoButton(
                       padding: EdgeInsets.symmetric(horizontal: 5),
                       onPressed: () async {
-                        CurrentChat.activeChat?.clearImageData(widget.attachment);
+                        ChatManager().activeChat?.clearImageData(widget.attachment);
 
                         showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
                         AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {

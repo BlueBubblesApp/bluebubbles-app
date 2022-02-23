@@ -4,7 +4,7 @@ import 'dart:collection';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:get/get.dart';
@@ -265,7 +265,7 @@ class MessageBloc {
   }
 
   Future<LoadMessageResult> loadMessageChunk(int offset,
-      {bool includeReactions = true, bool checkLocal = true, CurrentChat? currentChat}) async {
+      {bool includeReactions = true, bool checkLocal = true, ChatController? currentChat}) async {
     int reactionCnt = includeReactions ? _reactions : 0;
     Completer<LoadMessageResult> completer = Completer();
     if (!_canLoadMore) {

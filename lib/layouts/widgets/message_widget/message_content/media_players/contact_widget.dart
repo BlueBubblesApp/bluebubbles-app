@@ -1,19 +1,18 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
-
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 
 class ContactWidget extends StatefulWidget {
   ContactWidget({

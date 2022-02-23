@@ -31,9 +31,9 @@ import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
-import 'package:collection/collection.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:firebase_dart/firebase_dart.dart';
+
 // ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:flutter/foundation.dart';
@@ -61,8 +61,8 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
-import 'package:window_manager/window_manager.dart';
 import 'package:version/version.dart' as ver;
+import 'package:window_manager/window_manager.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -92,11 +92,25 @@ late final Box<Message> messageBox;
 late final Box<ScheduledMessage> scheduledBox;
 late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
-String? recentIntent;
 final RxBool fontExistsOnDisk = false.obs;
 final RxBool downloadingFont = false.obs;
 final RxnDouble progress = RxnDouble();
 final RxnInt totalSize = RxnInt();
+
+String? _recentIntent;
+
+String? get recentIntent => _recentIntent;
+
+set recentIntent(String? intent) {
+  _recentIntent = intent;
+
+  // After 5 seconds, we want to set the intent to null
+  if (intent != null) {
+    Future.delayed(Duration(seconds: 5), () {
+      _recentIntent = null;
+    });
+  }
+}
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -117,17 +131,21 @@ Future<Null> main() async {
 }
 
 @pragma('vm:entry-point')
+// ignore: prefer_void_to_null
 Future<Null> bubble() async {
   await initApp(true);
 }
 
 //ignore: prefer_void_to_null
 Future<Null> initApp(bool isBubble) async {
+  await Logger.init();
+  Logger.startup.value = true;
+  Logger.info('Startup Logs');
   HttpOverrides.global = MyHttpOverrides();
   LifeCycleManager().isBubble = isBubble;
 
   // This captures errors reported by the Flutter framework.
-  FlutterError.onError = (FlutterErrorDetails details) {
+  FlutterError.onError = (FlutterErrorDetails details) async {
     Logger.error(details.exceptionAsString());
     Logger.error(details.stack.toString());
     if (isInDebugMode) {
@@ -147,24 +165,58 @@ Future<Null> initApp(bool isBubble) async {
     prefs = await SharedPreferences.getInstance();
     if (!kIsWeb) {
       Directory documentsDirectory =
-      //ignore: unnecessary_cast, we need this as a workaround
-      (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
-      final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
+          //ignore: unnecessary_cast, we need this as a workaround
+          (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+      Directory objectBoxDirectory = Directory(join(documentsDirectory.path, 'objectbox'));
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
       Future<void> initStore({bool saveThemes = false}) async {
         String? storeRef = prefs.getString("objectbox-reference");
-        if (storeRef != null) {
-          debugPrint("Opening ObjectBox store from reference");
+        bool? useCustomPath = prefs.getBool("use-custom-path");
+        String? customStorePath = prefs.getString("custom-path");
+        if (useCustomPath != true && storeRef != null) {
+          Logger.info("Opening ObjectBox store from reference");
           try {
             store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
           } catch (_) {
-            debugPrint("Failed to open store from reference, opening from path");
-            store = await openStore(directory: documentsDirectory.path + '/objectbox');
+            Logger.info("Failed to open store from reference, opening from path");
+            store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
+            if (Platform.isWindows) {
+              if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
+                Logger.info("Failed to open store from default path. Using custom path");
+                customStorePath ??= "C:\\bluebubbles_app";
+                prefs.setBool("use-custom-path", true);
+                objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+                Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
+                store = await openStore(directory: join(customStorePath, 'objectbox'));
+              } else {
+                Logger.info("Objectbox directory exists.");
+              }
+            }
           }
+        } else if (useCustomPath == true && Platform.isWindows) {
+          customStorePath ??= "C:\\bluebubbles_app";
+          objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+          Logger.info("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
+          store = await openStore(directory: join(customStorePath, 'objectbox'));
         } else {
-          debugPrint("Opening ObjectBox store from path");
-          store = await openStore(directory: documentsDirectory.path + '/objectbox');
+          try {
+            Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
+            store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
+          } catch (_) {
+            if (Platform.isWindows) {
+              if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
+                Logger.info("Failed to open store from default path. Using custom path");
+                customStorePath ??= "C:\\bluebubbles_app";
+                prefs.setBool("use-custom-path", true);
+                objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+                Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
+                store = await openStore(directory: join(customStorePath, 'objectbox'));
+              } else {
+                Logger.info("Objectbox directory exists.");
+              }
+            }
+          }
         }
         attachmentBox = store.box<Attachment>();
         chatBox = store.box<Chat>();
@@ -226,8 +278,13 @@ Future<Null> initApp(bool isBubble) async {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
     if (kIsDesktop) {
-      PackageInfo packageInfo = await PackageInfo.fromPlatform();
-      LaunchAtStartup.setup(packageInfo.appName);
+      PackageInfo? packageInfo;
+      try {
+        packageInfo = await PackageInfo.fromPlatform();
+      } catch (_) {
+        Logger.error("Getting packageInfo failed, using bluebubbles_app");
+      }
+      LaunchAtStartup.setup(packageInfo?.appName ?? "bluebubbles_app");
       if (SettingsManager().settings.launchAtStartup.value) {
         await LaunchAtStartup.enable();
       } else {
@@ -237,22 +294,19 @@ Future<Null> initApp(bool isBubble) async {
     // this is to avoid a fade-in transition between the android native splash screen
     // and our dummy splash screen
     if (!SettingsManager().settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
-      runApp(
-          MaterialApp(
-              home: SplashScreen(shouldNavigate: false),
-              theme: ThemeData(
-                  backgroundColor: SchedulerBinding.instance!.window.platformBrightness == Brightness.dark
-                      ? Colors.black : Colors.white
-              )
-          )
-      );
+      runApp(MaterialApp(
+          home: SplashScreen(shouldNavigate: false),
+          theme: ThemeData(
+              backgroundColor: SchedulerBinding.instance!.window.platformBrightness == Brightness.dark
+                  ? Colors.black
+                  : Colors.white)));
     }
     Get.put(AttachmentDownloadService());
     if (!kIsWeb && !kIsDesktop) {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
       final InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid);
+          InitializationSettings(android: initializationSettingsAndroid);
       await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
       tz.initializeTimeZones();
       tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
@@ -262,20 +316,20 @@ Future<Null> initApp(bool isBubble) async {
       await FlutterLibphonenumber().init();
     }
     if (kIsDesktop) {
-      await WindowManager.instance.setTitle('BlueBubbles (Beta)');
+      await WindowManager.instance.setTitle('BlueBubbles');
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() {
         appWindow.minSize = Size(300, 300);
         appWindow.alignment = Alignment.center;
-        appWindow.title = 'BlueBubbles (Beta)';
+        appWindow.title = 'BlueBubbles';
         appWindow.show();
       });
     }
     if (!kIsWeb) {
       try {
         DynamicCachedFonts.loadCachedFont(
-            "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
-            fontFamily: "Apple Color Emoji")
+                "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
+                fontFamily: "Apple Color Emoji")
             .then((_) {
           fontExistsOnDisk.value = true;
         });
@@ -285,6 +339,8 @@ Future<Null> initApp(bool isBubble) async {
       await dotenv.load();
     }
   } catch (e, s) {
+    Logger.error(e);
+    Logger.error(s);
     exception = e;
     stacktrace = s;
   }
@@ -305,7 +361,7 @@ Future<Null> initApp(bool isBubble) async {
 class DesktopWindowListener extends WindowListener {
   @override
   void onWindowFocus() {
-    LifeCycleManager().opened();
+    LifeCycleManager().opened(null);
   }
 
   @override
@@ -332,16 +388,8 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
     return AdaptiveTheme(
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
-      light: lightTheme.copyWith(
-        textSelectionTheme: TextSelectionThemeData(
-          selectionColor: lightTheme.primaryColor
-        )
-      ),
-      dark: darkTheme.copyWith(
-        textSelectionTheme: TextSelectionThemeData(
-          selectionColor: darkTheme.primaryColor
-        )
-      ),
+      light: lightTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.primaryColor)),
+      dark: darkTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: darkTheme.primaryColor)),
 
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
@@ -371,25 +419,31 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
             LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): const OpenSearchIntent(),
           LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
-          if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
+          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
           LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
           if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): const StartIncrementalSyncIntent(),
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR):
+                const StartIncrementalSyncIntent(),
           if (kIsDesktop)
             LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation): const HeartRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at): const LikeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign): const DislikeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar): const LaughRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent): const EmphasizeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret): const QuestionRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation):
+              const HeartRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at):
+              const LikeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign):
+              const DislikeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar):
+              const LaughRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent):
+              const EmphasizeRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret):
+              const QuestionRecentIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowDown): const OpenNextChatIntent(),
-          if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.tab): const OpenNextChatIntent(),
+          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.tab): const OpenNextChatIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowUp): const OpenPreviousChatIntent(),
           if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab): const OpenPreviousChatIntent(),
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab):
+                const OpenPreviousChatIntent(),
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
           LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
         },
@@ -530,7 +584,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     }
 
     // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
-    LifeCycleManager().opened();
+    LifeCycleManager().opened(context);
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
@@ -590,7 +644,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 existingAttachments: attachments,
                 isCreator: true,
               ),
-                  (route) => route.isFirst,
+              (route) => route.isFirst,
             );
           });
 
@@ -606,7 +660,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 existingText: text,
                 isCreator: true,
               ),
-                  (route) => route.isFirst,
+              (route) => route.isFirst,
             );
           });
         }
@@ -658,7 +712,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       });
       LifeCycleManager().close();
     } else if (state == AppLifecycleState.resumed) {
-      LifeCycleManager().opened();
+      LifeCycleManager().opened(context);
     }
   }
 
@@ -675,7 +729,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+          ? Colors.transparent
+          : Theme.of(context).backgroundColor, // navigation bar color
       systemNavigationBarIconBrightness:
           Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       statusBarColor: Colors.transparent, // status bar color
@@ -683,7 +739,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+            ? Colors.transparent
+            : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -703,6 +761,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           body: Builder(
             builder: (BuildContext context) {
               if (SettingsManager().settings.finishedSetup.value) {
+                Logger.startup.value = false;
                 SystemChrome.setPreferredOrientations([
                   DeviceOrientation.landscapeRight,
                   DeviceOrientation.landscapeLeft,
@@ -725,8 +784,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 ]);
                 return WillPopScope(
                   onWillPop: () async => false,
-                  child: TitleBarWrapper(child: kIsWeb || kIsDesktop
-                      ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
+                  child: TitleBarWrapper(
+                      child: kIsWeb || kIsDesktop ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
                 );
               }
             },
@@ -749,14 +808,14 @@ Future<void> initSystemTray() async {
   }
 
   // We first init the systray menu and then add the menu entries
-  await _systemTray.initSystemTray("BlueBubbles", iconPath: path, toolTip: "BlueBubbles (Beta)");
+  await _systemTray.initSystemTray(title: "BlueBubbles", iconPath: path, toolTip: "BlueBubbles");
 
   await _systemTray.setContextMenu(
     [
       MenuItem(
         label: 'Open App',
         onClicked: () {
-          LifeCycleManager().opened();
+          LifeCycleManager().opened(null);
           appWindow.show();
         },
       ),
@@ -777,10 +836,13 @@ Future<void> initSystemTray() async {
   );
 
   // handle system tray event
-  _systemTray.registerSystemTrayEventHandler((eventName) {
+  _systemTray.registerSystemTrayEventHandler((eventName) async {
     switch (eventName) {
       case 'leftMouseUp':
         appWindow.show();
+        break;
+      case "rightMouseUp":
+        await _systemTray.popUpContextMenu();
         break;
     }
   });

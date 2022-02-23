@@ -1,40 +1,40 @@
 import 'dart:math';
-
-import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:flutter/foundation.dart';
 import 'dart:ui';
-import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/metadata_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
-import 'package:collection/collection.dart';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/metadata_helper.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_alert_dialog.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -60,7 +60,7 @@ class MessageDetailsPopup extends StatefulWidget {
   final double childOffsetY;
   final Size? childSize;
   final Widget child;
-  final CurrentChat? currentChat;
+  final ChatController? currentChat;
   final MessageBloc? messageBloc;
 
   @override
@@ -72,7 +72,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   bool showTools = false;
   String? selfReaction;
   String? currentlySelectedReaction;
-  CurrentChat? currentChat;
+  ChatController? currentChat;
   Chat? dmChat;
 
   late double messageTopOffset;
@@ -85,7 +85,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     super.initState();
     currentChat = widget.currentChat;
 
-    topMinimum = CupertinoNavigationBar().preferredSize.height + 60 + (widget.message.hasReactions ? 110 : 50);
+    topMinimum = (widget.message.hasReactions ? CupertinoNavigationBar().preferredSize.height + 170 : 110);
     messageTopOffset = max(topMinimum, min(widget.childOffsetY, Get.height - widget.childSize!.height - 200));
 
     dmChat = ChatBloc().chats.firstWhereOrNull(
@@ -573,11 +573,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-      if (SettingsManager().settings.enablePrivateAPI.value && isBigSur && (currentChat?.chat.isIMessage ?? true))
+      if (SettingsManager().settings.enablePrivateAPI.value && isBigSur && (currentChat?.chat.isIMessage ?? true) && !widget.message.guid!.startsWith("temp"))
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
+              Get.back();
               Navigator.of(context).pop();
               EventDispatcher().emit("focus-keyboard", widget.message);
             },
@@ -747,7 +748,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           child: InkWell(
             onTap: () {
               for (Attachment? element in widget.message.attachments) {
-                CurrentChat.activeChat?.clearImageData(element!);
+                ChatManager().activeChat?.clearImageData(element!);
                 AttachmentHelper.redownloadAttachment(element!);
               }
               setState(() {});
@@ -895,6 +896,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           onTap: () async {
             NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
             Message.softDelete(widget.message.guid!);
+            Get.back();
             Navigator.of(context).pop();
           },
           child: ListTile(

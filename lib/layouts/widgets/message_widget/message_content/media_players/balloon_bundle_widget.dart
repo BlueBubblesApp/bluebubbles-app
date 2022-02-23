@@ -1,9 +1,9 @@
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 Map<String, IconData> iconMap = {

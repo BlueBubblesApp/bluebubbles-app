@@ -10,7 +10,7 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/chat.dart';
@@ -241,40 +241,42 @@ class Message {
       if (awaitNewMessageEvent) {
         await Future.delayed(Duration(milliseconds: 500));
         return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false, chat: chat);
-      } else {
-        if (chat != null) {
-          await chat.addMessage(newMessage);
-          // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-          NewMessageManager().addMessage(chat, newMessage, outgoing: false);
-          return newMessage;
-        }
+      }
+
+      if (chat != null) {
+        await chat.addMessage(newMessage);
+        // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+        NewMessageManager().addMessage(chat, newMessage, outgoing: false);
       }
 
       return newMessage;
     }
 
-    newMessage.id = existing.id;
+    existing.guid = newMessage.guid;
+    existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
+    existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
+    existing._error.value = newMessage._error.value;
 
-    return newMessage;
+    return existing;
   }
 
   Message updateMetadata(Metadata? metadata) {
     return this;
   }
 
-  List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
+  List<Attachment?>? fetchAttachments({ChatController? currentChat}) {
     return attachments;
   }
 
   static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages,
-      {CurrentChat? currentChat}) {
+      {ChatController? currentChat}) {
     final Map<String, List<Attachment?>> map = {};
     map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
     return map;
   }
 
   static Future<Map<String, List<Attachment?>>> fetchAttachmentsByMessagesAsync(List<Message?> messages,
-      {CurrentChat? currentChat}) async {
+      {ChatController? currentChat}) async {
     final Map<String, List<Attachment?>> map = {};
     map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
     return map;
@@ -285,7 +287,9 @@ class Message {
   }
 
   Message fetchAssociatedMessages({MessageBloc? bloc, bool shouldRefresh = false}) {
-    associatedMessages = (bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? []).cast<Message>();
+    associatedMessages =
+        (bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [])
+            .cast<Message>();
     if (threadOriginatorGuid != null) {
       final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
       final threadOriginator = existing;
@@ -294,7 +298,9 @@ class Message {
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       if (threadOriginator != null) associatedMessages.add(threadOriginator);
       if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
-      if (!guid!.startsWith("temp")) bloc?.threadOriginators.conditionalAdd(guid!, threadOriginatorGuid!, shouldRefresh);
+      if (!guid!.startsWith("temp")) {
+        bloc?.threadOriginators.conditionalAdd(guid!, threadOriginatorGuid!, shouldRefresh);
+      }
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     return this;

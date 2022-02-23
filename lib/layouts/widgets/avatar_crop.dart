@@ -1,5 +1,3 @@
-import 'package:file_picker/file_picker.dart';
-import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -10,9 +8,11 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:crop_your_image/crop_your_image.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class AvatarCrop extends StatefulWidget {
   final int? index;
@@ -32,23 +32,23 @@ class _AvatarCropState extends State<AvatarCrop> {
   void onCropped(Uint8List croppedData) async {
     String appDocPath = SettingsManager().appDocDir.path;
     if (widget.index != null) {
-      File file = File(ChatBloc().chats[widget.index!].customAvatarPath ?? "$appDocPath/avatars/${ChatBloc().chats[widget.index!].guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
+      File file = File(ChatBloc().chats[widget.index!].customAvatarPath ?? "$appDocPath/avatars/${ChatBloc().chats[widget.index!].guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
       if (ChatBloc().chats[widget.index!].customAvatarPath == null) {
         await file.create(recursive: true);
       }
       await file.writeAsBytes(croppedData);
       ChatBloc().chats[widget.index!].customAvatarPath = file.path;
-      ChatBloc().chats[widget.index!].save();
+      ChatBloc().chats[widget.index!].save(updateCustomAvatarPath: true);
       CustomNavigator.backSettings(context, closeOverlays: true);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
-      File file = File(widget.chat!.customAvatarPath ?? "$appDocPath/avatars/${widget.chat!.guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
+      File file = File(widget.chat!.customAvatarPath ?? "$appDocPath/avatars/${widget.chat!.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
       if (widget.chat!.customAvatarPath == null) {
         await file.create(recursive: true);
       }
       await file.writeAsBytes(croppedData);
       widget.chat!.customAvatarPath = file.path;
-      widget.chat!.save();
+      widget.chat!.save(updateCustomAvatarPath: true);
       Get.back(closeOverlays: true);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     }

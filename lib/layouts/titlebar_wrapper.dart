@@ -1,23 +1,31 @@
+import 'dart:io';
+
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:get/get_utils/src/extensions/context_extensions.dart';
 
 class TitleBarWrapper extends StatelessWidget {
-  TitleBarWrapper({Key? key, required this.child}) : super(key: key);
+  TitleBarWrapper({Key? key, required this.child, this.hideInSplitView = false}) : super(key: key);
 
   final Widget child;
+  final bool hideInSplitView;
 
   @override
   Widget build(BuildContext context) {
-    return kIsDesktop
+    bool showAltLayout =
+        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600;
+    return Obx(() => (SettingsManager().settings.useCustomTitleBar.value && !kIsWeb && Platform.isLinux) ||
+            (kIsDesktop && !Platform.isLinux) && (!showAltLayout || !hideInSplitView)
         ? WindowBorder(
             color: Colors.transparent,
             width: 0,
             child: Stack(children: <Widget>[child, TitleBar()]),
           )
-        : child;
+        : child);
   }
 }
 
@@ -58,11 +66,20 @@ class WindowButtons extends StatelessWidget {
         iconMouseOver: Colors.white);
     return Row(
       children: [
-        MinimizeWindowButton(colors: buttonColors),
-        MaximizeWindowButton(colors: buttonColors),
-        CloseWindowButton(colors: closeButtonColors, onPressed: () =>
-          SettingsManager().settings.closeToTray.value
-              ? appWindow.hide() : appWindow.close()),
+        MinimizeWindowButton(
+          colors: buttonColors,
+          onPressed: () => SettingsManager().settings.minimizeToTray.value ? appWindow.hide() : appWindow.minimize(),
+          animate: true,
+        ),
+        MaximizeWindowButton(
+          colors: buttonColors,
+          animate: true,
+        ),
+        CloseWindowButton(
+          colors: closeButtonColors,
+          onPressed: () => SettingsManager().settings.closeToTray.value ? appWindow.hide() : appWindow.close(),
+          animate: true,
+        ),
       ],
     );
   }

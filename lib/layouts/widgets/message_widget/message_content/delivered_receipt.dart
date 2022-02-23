@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
@@ -23,10 +23,10 @@ class DeliveredReceipt extends StatefulWidget {
 
 class _DeliveredReceiptState extends State<DeliveredReceipt> {
   bool shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
-    if (CurrentChat.activeChat != null) {
-      lastReadMessage ??= CurrentChat.activeChat?.messageMarkers.lastReadMessage.value;
-      lastDeliveredMessage ??= CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage.value;
-      myLastMessage ??= CurrentChat.activeChat?.messageMarkers.myLastMessage.value;
+    if (ChatManager().activeChat != null) {
+      lastReadMessage ??= ChatManager().activeChat?.messageMarkers.lastReadMessage.value;
+      lastDeliveredMessage ??= ChatManager().activeChat?.messageMarkers.lastDeliveredMessage.value;
+      myLastMessage ??= ChatManager().activeChat?.messageMarkers.myLastMessage.value;
     }
 
     // If the message is the same as the last read message, we want to show it
@@ -79,7 +79,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> {
     return text;
   }
 
-  MessageMarkers? markers = CurrentChat.activeChat?.messageMarkers;
+  MessageMarkers? markers = ChatManager().activeChat?.messageMarkers;
 
   @override
   Widget build(BuildContext context) {

@@ -1,8 +1,4 @@
 import 'dart:async';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -13,17 +9,23 @@ import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:universal_io/io.dart';
+
+import 'managers/chat_manager.dart';
 
 /// This helper class allows us to section off all socket "actions"
 /// These actions allow us to interact with the server, whether it
@@ -36,13 +38,14 @@ class ActionHandler {
   /// ```dart
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
-  static Future<void> sendMessage(Chat chat, String text, {
+  static Future<void> sendMessage(Chat? chat, String text, {
     MessageBloc? messageBloc,
     List<Attachment> attachments = const [],
     String? subject, String? replyGuid,
     String? effectId,
     Completer<void>? completer
   }) async {
+    if (chat == null) return;
     if (isNullOrEmpty(text, trimString: true)! && isNullOrEmpty(subject ?? "", trimString: true)!) return;
 
     if ((await SettingsManager().getMacOSVersion() ?? 10) < 11) {
@@ -247,7 +250,7 @@ class ActionHandler {
           || message.threadOriginatorGuid != null
           || message.expressiveSendStyleId != null) {
         api.sendMessage(
-            chat.guid!,
+            chat.guid,
             message.guid!,
             message.text!,
             subject: message.subject,
@@ -320,7 +323,7 @@ class ActionHandler {
         message.guid = message.guid!
             .replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
         message.error = MessageError.BAD_REQUEST.code;
-        CurrentChat? currChat = CurrentChat.activeChat;
+        ChatController? currChat = ChatManager().activeChat;
         if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
           NotificationManager().createFailedToSendMessage();
         }
@@ -563,7 +566,7 @@ class ActionHandler {
 
     // Fetch chat data from server
     try {
-      newChat = await SocketManager().fetchChat(newChat.guid!);
+      newChat = await SocketManager().fetchChat(newChat.guid);
       if (newChat == null) return;
       await ChatBloc().updateChatPosition(newChat);
     } catch (ex) {
@@ -619,7 +622,7 @@ class ActionHandler {
     } else if (forceProcess || !NotificationManager().hasProcessed(data["guid"])) {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
-        Logger.info("Client received new message " + chats[i].guid!);
+        Logger.info("Client received new message " + chats[i].guid);
 
         // Gets the chat from the chat bloc
         Chat? chat = await ChatBloc().getChat(chats[i].guid);

@@ -121,7 +121,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(3, 9017250848141753702),
       name: 'Chat',
-      lastPropertyId: const IdUid(19, 4234470006262207812),
+      lastPropertyId: const IdUid(21, 55197157095191277),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -219,6 +219,16 @@ final _entities = <ModelEntity>[
             id: const IdUid(19, 4234470006262207812),
             name: 'pinIndex',
             type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(20, 2695161584801983484),
+            name: 'autoSendReadReceipts',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(21, 55197157095191277),
+            name: 'autoSendTypingIndicators',
+            type: 1,
             flags: 0)
       ],
       relations: <ModelRelation>[
@@ -870,8 +880,7 @@ ModelDefinition getObjectBoxModel() {
           object.id = id;
         },
         objectToFB: (Chat object, fb.Builder fbb) {
-          final guidOffset =
-              object.guid == null ? null : fbb.writeString(object.guid!);
+          final guidOffset = fbb.writeString(object.guid);
           final chatIdentifierOffset = object.chatIdentifier == null
               ? null
               : fbb.writeString(object.chatIdentifier!);
@@ -899,7 +908,7 @@ ModelDefinition getObjectBoxModel() {
           final customAvatarPathOffset = object.customAvatarPath == null
               ? null
               : fbb.writeString(object.customAvatarPath!);
-          fbb.startTable(20);
+          fbb.startTable(22);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -919,6 +928,8 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(16, fakeParticipantsOffset);
           fbb.addOffset(17, customAvatarPathOffset);
           fbb.addInt64(18, object.pinIndex);
+          fbb.addBool(19, object.autoSendReadReceipts);
+          fbb.addBool(20, object.autoSendTypingIndicators);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -932,8 +943,8 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 4),
               originalROWID: const fb.Int64Reader()
                   .vTableGetNullable(buffer, rootOffset, 6),
-              guid: const fb.StringReader()
-                  .vTableGetNullable(buffer, rootOffset, 8),
+              guid:
+                  const fb.StringReader().vTableGet(buffer, rootOffset, 8, ''),
               style: const fb.Int64Reader()
                   .vTableGetNullable(buffer, rootOffset, 10),
               chatIdentifier: const fb.StringReader()
@@ -950,12 +961,14 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 20),
               hasUnreadMessage: const fb.BoolReader()
                   .vTableGetNullable(buffer, rootOffset, 24),
-              displayName:
-                  const fb.StringReader().vTableGetNullable(buffer, rootOffset, 34),
+              displayName: const fb.StringReader()
+                  .vTableGetNullable(buffer, rootOffset, 34),
               fakeParticipants: const fb.ListReader<String>(fb.StringReader(), lazy: false).vTableGet(buffer, rootOffset, 36, []),
               latestMessageDate: latestMessageDateValue == null ? null : DateTime.fromMillisecondsSinceEpoch(latestMessageDateValue),
               latestMessageText: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 28),
-              fakeLatestMessageText: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 30))
+              fakeLatestMessageText: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 30),
+              autoSendReadReceipts: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 42),
+              autoSendTypingIndicators: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44))
             ..title = const fb.StringReader()
                 .vTableGetNullable(buffer, rootOffset, 32)
             ..customAvatarPath = const fb.StringReader()
@@ -1548,6 +1561,14 @@ class Chat_ {
   /// see [Chat.pinIndex]
   static final pinIndex =
       QueryIntegerProperty<Chat>(_entities[1].properties[18]);
+
+  /// see [Chat.autoSendReadReceipts]
+  static final autoSendReadReceipts =
+      QueryBooleanProperty<Chat>(_entities[1].properties[19]);
+
+  /// see [Chat.autoSendTypingIndicators]
+  static final autoSendTypingIndicators =
+      QueryBooleanProperty<Chat>(_entities[1].properties[20]);
 
   /// see [Chat.handles]
   static final handles =

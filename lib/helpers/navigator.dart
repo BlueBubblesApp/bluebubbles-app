@@ -18,6 +18,8 @@ class BaseNavigator extends GetxService {
   /// width of settings right side split screen
   double? _widthSettings;
 
+  final Rx listener = Rxn();
+
   set maxWidthLeft(double w) => _widthChatListLeft = w;
   set maxWidthRight(double w) => _widthChatListRight = w;
   set maxWidthSettings(double w) => _widthSettings = w;
@@ -76,11 +78,11 @@ class BaseNavigator extends GetxService {
   }
 
   /// Push a new route, popping all previous routes, on the chat list right side navigator
-  void pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate) {
+  Future<void> pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate) async {
     if (Get.keys.containsKey(2) &&
         (!context.isPhone || context.isLandscape) &&
         (SettingsManager().settings.tabletMode.value)) {
-      Get.offUntil(
+      await Get.offUntil(
           GetPageRoute(
             page: () => widget,
             transition: Transition.noTransition,
@@ -89,7 +91,7 @@ class BaseNavigator extends GetxService {
           predicate,
           id: 2);
     } else {
-      Navigator.of(context).pushAndRemoveUntil(ThemeSwitcher.buildPageRoute(
+      await Navigator.of(context).pushAndRemoveUntil(ThemeSwitcher.buildPageRoute(
         builder: (BuildContext context) => TitleBarWrapper(child: widget),
       ), predicate);
     }

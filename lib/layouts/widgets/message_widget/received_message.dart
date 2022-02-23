@@ -18,13 +18,13 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
-import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -35,6 +35,10 @@ import 'package:supercharged/supercharged.dart';
 class ReceivedMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
+  final String fakeOlderSubject;
+  final String fakeSubject;
+  final String fakeOlderText;
+  final String fakeText;
   final Message? olderMessage;
   final Message? newerMessage;
   final bool showHandle;
@@ -58,6 +62,10 @@ class ReceivedMessage extends StatefulWidget {
     required this.olderMessage,
     required this.newerMessage,
     required this.message,
+    this.fakeOlderSubject = "",
+    this.fakeOlderText = "",
+    this.fakeSubject = "",
+    this.fakeText = "",
     required this.showHandle,
     required this.messageBloc,
     required this.hasTimestampAbove,
@@ -81,7 +89,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   bool checkedHandle = false;
   late String contactTitle;
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
-  late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null);
+  late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null, fakeSubject: widget.fakeSubject, fakeText: widget.fakeText);
   Size? threadOriginatorSize;
   Size? messageSize;
   bool showReplies = false;
@@ -104,8 +112,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       }
     });
 
-    /*if (CurrentChat.activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
-      CurrentChat.activeChat?.autoplayGuid = null;
+    /*if (ChatManager().activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
+      ChatManager().activeChat?.autoplayGuid = null;
       SchedulerBinding.instance!.addPostFrameCallback((_) {
         if (ModalRoute.of(context)?.animation?.status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
           setState(() {
@@ -187,8 +195,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           .getReactions().isNotEmpty;
       child = Padding(
         padding: EdgeInsets.only(
-          left: CurrentChat
-              .activeChat?.chat.isGroup() ?? false ? 5.0 : 0.0,
+          left: ChatManager().activeChat?.chat.isGroup() ?? false ? 5.0 : 0.0,
           right: (hasReactions) ? 15.0 : 0.0,
           top: widget.message
               .getReactions().isNotEmpty ? 15 : 0,
@@ -288,8 +295,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                             SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
                         final bool hideContent =
                         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
-                        final subject = generateContent ? faker.lorem.words(message.subject?.split(" ").length).join(" ") : message.subject;
-                        final text = generateContent ? faker.lorem.words(message.text?.split(" ").length).join(" ") : message.text;
+                        final subject = generateContent ? widget.fakeSubject : message.subject;
+                        final text = generateContent ? widget.fakeText : message.text;
                         return GestureDetector(
                           onHorizontalDragEnd: (DragEndDetails details) {
                             if ((details.primaryVelocity ?? 0) < 0 && effect == MessageEffect.invisibleInk) {
@@ -364,15 +371,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 }
             ) : FutureBuilder<List<InlineSpan>>(
                 future: SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape)
-                    ? MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null)
+                    ? MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null, fakeSubject: widget.fakeSubject, fakeText: widget.fakeText)
                     : spanFuture,
                 initialData: MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                    colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null),
+                    colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null, fakeSubject: widget.fakeSubject, fakeText: widget.fakeText),
                 builder: (context, snapshot) {
                   return RichText(
                     text: TextSpan(
                       children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                          colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null),
+                          colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null, fakeSubject: widget.fakeSubject, fakeText: widget.fakeText),
                       style: Theme.of(context).textTheme.bodyText2,
                     ),
                   );
@@ -493,10 +500,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     final msg = widget.message.associatedMessages.firstWhereOrNull((e) => e.guid == widget.message.threadOriginatorGuid);
 
     // First, add the message sender (if applicable)
-    bool isGroup = CurrentChat
-        .of(context)
-        ?.chat
-        .isGroup() ?? false;
+    bool isGroup = ChatManager().activeChat?.chat.isGroup() ?? false;
     bool addedSender = false;
     bool showSender = SettingsManager().settings.alwaysShowAvatars.value ||
         isGroup ||
@@ -587,7 +591,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         messageSize ??= widget.message.getBubbleSize(context);
         messageColumn.add(
           StreamBuilder<dynamic>(
-            stream: CurrentChat.of(context)?.totalOffsetStream.stream,
+            stream: ChatController.of(context)?.totalOffsetStream.stream,
             builder: (context, snapshot) {
               double? data;
               if (snapshot.data is double) {
@@ -797,7 +801,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                   children: [
                     if ((SettingsManager().settings.alwaysShowAvatars.value ||
-                        (CurrentChat.activeChat?.chat.isGroup() ?? false)) && !msg.isFromMe!)
+                        (ChatManager().activeChat?.chat.isGroup() ?? false)) && !msg.isFromMe!)
                       Padding(
                         padding: EdgeInsets.only(top: 5),
                         child: ContactAvatarWidget(
@@ -854,14 +858,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                 : null,
                           ),
                           child: FutureBuilder<List<InlineSpan>>(
-                              future: MessageWidgetMixin.buildMessageSpansAsync(context, msg, colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30)),
+                              future: MessageWidgetMixin.buildMessageSpansAsync(context, msg, colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30), fakeSubject: widget.fakeOlderSubject, fakeText: widget.fakeOlderText),
                               initialData: MessageWidgetMixin.buildMessageSpans(context, msg,
-                                  colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30)),
+                                  colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30), fakeSubject: widget.fakeOlderSubject, fakeText: widget.fakeOlderText ),
                               builder: (context, snapshot) {
                                 return RichText(
                                   text: TextSpan(
                                     children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, msg,
-                                        colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30)),
+                                        colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30), fakeSubject: widget.fakeOlderSubject, fakeText: widget.fakeOlderText),
                                   ),
                                 );
                               }

@@ -19,7 +19,8 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -45,7 +46,7 @@ class SentMessageHelper {
     Future<List<InlineSpan>> msgSpanFuture, {
     Widget? customContent,
     Message? olderMessage,
-    CurrentChat? currentChat,
+    ChatController? currentChat,
     Color? customColor,
     bool padding = true,
     bool margin = true,
@@ -317,7 +318,7 @@ class SentMessageHelper {
             getErrorWidget(
               context,
               message,
-              currentChat != null ? currentChat.chat : CurrentChat.activeChat?.chat,
+              currentChat != null ? currentChat.chat : ChatManager().activeChat?.chat,
             ),
           ],
         ));
@@ -559,8 +560,8 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
     super.initState();
     showReplies = widget.showReplies;
 
-    /*if (CurrentChat.activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
-      CurrentChat.activeChat?.autoplayGuid = null;
+    /*if (ChatManager().activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
+      ChatManager().activeChat?.autoplayGuid = null;
       SchedulerBinding.instance!.addPostFrameCallback((_) {
         if (ModalRoute.of(context)?.animation?.status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
           setState(() {
@@ -615,7 +616,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
             showReplyThread(context, widget.message, widget.messageBloc);
           },
           child: StreamBuilder<dynamic>(
-              stream: CurrentChat.of(context)?.totalOffsetStream.stream,
+              stream: ChatController.of(context)?.totalOffsetStream.stream,
               builder: (context, snapshot) {
                 dynamic data;
                 if (snapshot.data is double) {
@@ -638,7 +639,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
                       mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                       children: [
                         if ((SettingsManager().settings.alwaysShowAvatars.value ||
-                                (CurrentChat.of(context)?.chat.isGroup() ?? false)) &&
+                                (ChatController.of(context)?.chat.isGroup() ?? false)) &&
                             !msg.isFromMe!)
                           Padding(
                             padding: EdgeInsets.only(top: 5, left: 6),
@@ -802,7 +803,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
         messageSize ??= widget.message.getBubbleSize(context);
         messageColumn.add(
           StreamBuilder<dynamic>(
-              stream: CurrentChat.of(context)?.totalOffsetStream.stream,
+              stream: ChatController.of(context)?.totalOffsetStream.stream,
               builder: (context, snapshot) {
                 double? data;
                 if (snapshot.data is double) {
@@ -828,7 +829,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
                   padding: EdgeInsets.only(
                     // add extra padding when showing contact avatars
                     left: max(
-                        ((CurrentChat.of(context)?.chat.isGroup() ?? false) ||
+                        ((ChatManager().activeChat?.chat.isGroup() ?? false) ||
                                     SettingsManager().settings.alwaysShowAvatars.value
                                 ? 75
                                 : 40) -

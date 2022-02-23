@@ -1,18 +1,18 @@
 import 'dart:async';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:universal_io/io.dart';
 
 /// [SettingsManager] is responsible for making the current settings accessible to other managers and for saving new settings
 ///
@@ -53,6 +53,11 @@ class SettingsManager {
     if (!kIsWeb) {
       //ignore: unnecessary_cast, we need this as a workaround
       appDocDir = (await getApplicationSupportDirectory()) as Directory;
+      bool? useCustomPath = prefs.getBool("use-custom-path");
+      String? customStorePath = prefs.getString("custom-path");
+      if (useCustomPath == true) {
+        appDocDir = customStorePath == null ? await getApplicationDocumentsDirectory() : Directory(customStorePath);
+      }
     }
     try {
       canAuthenticate = !kIsWeb && !kIsDesktop && await LocalAuthentication().isDeviceSupported();
@@ -93,8 +98,10 @@ class SettingsManager {
     // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't
     if (!headless) {
       try {
-        SocketManager().startSocketIO();
-        SocketManager().authFCM();
+        if (settings.finishedSetup.value) {
+          SocketManager().startSocketIO();
+          SocketManager().authFCM();
+        }
       } catch (_) {}
     }
   }

@@ -1,17 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:faker/faker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:version/version.dart';
 
@@ -29,6 +29,7 @@ class ContactManager {
   bool hasFetchedContacts = false;
   Map<String, Contact?> handleToContact = {};
   Map<String, String?> handleToFakeName = {};
+  Map<String, String?> handleToFakeAddress = {};
   Map<String, String> handleToFormattedAddress = {};
 
   // We need these so we don't have threads fetching at the same time
@@ -97,19 +98,27 @@ class ContactManager {
     // Fetch the current list of contacts
     Logger.info("Fetching contacts", tag: tag);
     if (!kIsWeb && !kIsDesktop) {
-      contacts = (await FastContacts.allContacts).map((e) => Contact(
-        displayName: e.displayName,
-        emails: e.emails,
-        phones: e.phones,
-        structuredName: e.structuredName,
-        id: e.id,
-      )).toList();
+      contacts = (await FastContacts.allContacts)
+          .map((e) => Contact(
+                displayName: e.displayName,
+                emails: e.emails,
+                phones: e.phones,
+                structuredName: e.structuredName,
+                id: e.id,
+              ))
+          .toList();
     } else {
       await fetchContactsDesktop();
     }
 
     // Match handles in the database with contacts
-    await matchHandles();
+    if (!headless) {
+      await matchHandles();
+    }
+    await ChatBloc().getChatBatches(fakeNames: ContactManager().handleToFakeName, headless: headless);
+    if (headless) {
+      await matchHandles();
+    }
 
     Logger.info("Finished fetching contacts (${handleToContact.length})", tag: tag);
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
@@ -150,7 +159,8 @@ class ContactManager {
         var response = await api.contacts();
         logger?.call("Found macOS contacts!");
         for (Map<String, dynamic> map in response.data['data']) {
-          logger?.call("Parsing contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
+          logger?.call(
+              "Parsing contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
           contacts.add(Contact(
             id: randomString(8),
             displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
@@ -183,7 +193,7 @@ class ContactManager {
       try {
         contactMatch = getContact(handle);
         handleToContact[handle.address] = contactMatch;
-        if (!handle.address.isEmail) {
+        if (!handle.address.isEmail && contactMatch == null) {
           handleToFormattedAddress[handle.address] = await formatPhoneNumber(handle.address);
         }
       } catch (ex) {
@@ -195,6 +205,12 @@ class ContactManager {
         !handleToFakeName.keys.contains(entry.key) || handleToFakeName[entry.key] == null
             ? MapEntry(entry.key, faker.person.name())
             : MapEntry(entry.key, handleToFakeName[entry.key])));
+
+    handleToFakeAddress = handleToFakeName.map((key, value) => MapEntry(
+        key,
+        key.isEmail
+            ? faker.internet.email()
+            : faker.phoneNumber.random.fromPattern(["+###########", "+# ###-###-####", "+# (###) ###-####"])));
   }
 
   Future<void> getAvatars() async {
@@ -210,11 +226,18 @@ class ContactManager {
       Contact? contact = handleToContact[address];
       if (handleToContact[address] == null || kIsWeb || kIsDesktop) continue;
 
-      FastContacts.getContactImage(contact!.id).then((avatar) {
+      FastContacts.getContactImage(contact!.id, size: ContactImageSize.fullSize).then((avatar) {
         if (avatar == null) return;
 
         contact.avatar.value = avatar;
         handleToContact[address] = contact;
+      }).onError((_, __) {
+        FastContacts.getContactImage(contact.id).then((avatar) {
+          if (avatar == null) return;
+
+          contact.avatar.value = avatar;
+          handleToContact[address] = contact;
+        });
       });
     }
 
@@ -265,7 +288,8 @@ class ContactManager {
   }
 
   Future<Uint8List?> getAvatar(String id) async {
-    return await FastContacts.getContactImage(id);
+    return (await FastContacts.getContactImage(id, size: ContactImageSize.fullSize)) ??
+        await FastContacts.getContactImage(id, size: ContactImageSize.thumbnail);
   }
 
   String getContactTitle(Handle? handle) {

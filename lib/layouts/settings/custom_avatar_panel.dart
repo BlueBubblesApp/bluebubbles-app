@@ -1,17 +1,16 @@
-import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
-import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class CustomAvatarPanelBinding implements Bindings {
   @override
@@ -145,7 +144,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                       File file = File(ChatBloc().chats[index].customAvatarPath!);
                                       file.delete();
                                       ChatBloc().chats[index].customAvatarPath = null;
-                                      ChatBloc().chats[index].save();
+                                      ChatBloc().chats[index].save(updateCustomAvatarPath: true);
                                       Get.back();
                                     }),
                                 TextButton(

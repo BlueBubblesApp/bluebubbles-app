@@ -10,6 +10,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
@@ -78,7 +79,7 @@ class ThemeObject {
         ThemeEntry.fromStyle(ThemeColors.Bodytext2, data!.textTheme.bodyText2!),
         ThemeEntry.fromStyle(ThemeColors.Subtitle1, data!.textTheme.subtitle1!),
         ThemeEntry.fromStyle(ThemeColors.Subtitle2, data!.textTheme.subtitle2!),
-        ThemeEntry(name: ThemeColors.AccentColor, color: data!.accentColor, isFont: false),
+        ThemeEntry(name: ThemeColors.AccentColor, color: data!.colorScheme.secondary, isFont: false),
         ThemeEntry(name: ThemeColors.DividerColor, color: data!.dividerColor, isFont: false),
         ThemeEntry(name: ThemeColors.BackgroundColor, color: data!.backgroundColor, isFont: false),
         ThemeEntry(name: ThemeColors.PrimaryColor, color: data!.primaryColor, isFont: false),
@@ -269,7 +270,10 @@ class ThemeObject {
           subtitle1: data[ThemeColors.Subtitle1]!.style,
           subtitle2: data[ThemeColors.Subtitle2]!.style,
         ),
-        accentColor: data[ThemeColors.AccentColor]!.style,
+        colorScheme: ColorScheme.fromSwatch(
+          accentColor: data[ThemeColors.AccentColor]!.style,
+          backgroundColor: data[ThemeColors.BackgroundColor]!.style,
+        ),
         dividerColor: data[ThemeColors.DividerColor]!.style,
         backgroundColor: data[ThemeColors.BackgroundColor]!.style,
         primaryColor: data[ThemeColors.PrimaryColor]!.style);

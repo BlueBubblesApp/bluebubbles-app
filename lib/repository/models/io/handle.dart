@@ -1,5 +1,6 @@
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Condition;
 // (needed when generating objectbox model code)
@@ -51,12 +52,15 @@ class Handle {
 
   /// Save a single handle - prefer [bulkSave] for multiple handles rather
   /// than iterating through them
-  Handle save() {
+  Handle save({bool updateColor = false}) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
       Handle? existing = Handle.findOne(address: address);
       if (existing != null) {
         id = existing.id;
+      }
+      if (!updateColor) {
+        color = existing?.color ?? color;
       }
       try {
         id = handleBox.put(this);

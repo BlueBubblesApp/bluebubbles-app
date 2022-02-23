@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -108,6 +109,7 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
                       )),
                   onPanUpdate: (DragUpdateDetails details) {
                     _ratio.value = (_ratio.value + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
+                    CustomNavigator.listener.refresh();
                   },
                 ),
               ) : SizedBox(

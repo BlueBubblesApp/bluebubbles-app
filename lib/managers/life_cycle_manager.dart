@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 /// [LifeCycleManager] is responsible for keeping track of when the app is open and when it is closed
 ///
@@ -42,12 +44,16 @@ class LifeCycleManager {
   }
 
   /// Public method called from [Home] when the app is opened or resumed
-  opened() {
+  opened(BuildContext? context) {
+    ChatController? chat = ChatManager().getActiveDeadController();
+
     // If the app is not alive (was previously closed) and the curent chat is not null (a chat is already open)
     // Then mark the current chat as read.
-    if (!_isAlive && CurrentChat.activeChat != null && !kIsDesktop && (recentIntent == null || recentIntent == CurrentChat.activeChat?.chat.guid)) {
-      NotificationManager().switchChat(CurrentChat.activeChat!.chat);
+    if (!_isAlive && ChatManager().activeChat != null && !kIsDesktop && chat != null) {
+      ChatManager().clearChatNotifications(ChatManager().activeChat!.chat);
     }
+
+    ChatManager().setActiveToAlive();
 
     // Set the app as open and start the socket
     updateStatus(true);
@@ -55,14 +61,21 @@ class LifeCycleManager {
       SocketManager().startSocketIO();
     }
 
+    if (kIsDesktop) {
+      EventDispatcher().emit('focus-keyboard', null);
+    }
+
     // Refresh all the chats assuming that the app has already finished setup
-    if (SettingsManager().settings.finishedSetup.value && !kIsDesktop && recentIntent == null) {
+    if (SettingsManager().settings.finishedSetup.value && !kIsDesktop) {
       ChatBloc().resumeRefresh();
     }
   }
 
   /// Public method called from [Home] when the app is closed or paused
   close() {
+    // When we close we want to set the currently active chat to be un-alive
+    ChatManager().setActiveToDead();
+
     if (SettingsManager().settings.finishedSetup.value) {
       // Close the socket and set the isAlive to false
       //

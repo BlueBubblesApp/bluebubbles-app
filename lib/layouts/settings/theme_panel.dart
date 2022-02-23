@@ -2,8 +2,8 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
@@ -12,8 +12,8 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -236,7 +236,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                         initialVal: controller._settingsCopy.immersiveMode.value,
                         title: "Immersive Mode",
                         backgroundColor: tileColor,
-                        subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
+                        subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation. Note: This option may cause slight choppiness in some animations due to an Android limitation",
                       )),
                   ],
                 ),
@@ -442,10 +442,16 @@ class ThemePanel extends GetView<ThemePanelController> {
                                     margin: EdgeInsets.only(bottom: 10),
                                     child: TextButton(
                                       child: Text("CLOSE"),
-                                      onPressed: () {
-                                        progress.value = null;
-                                        totalSize.value = null;
+                                      onPressed: () async {
+                                        if (Get.isSnackbarOpen ?? false) {
+                                          Get.close(1);
+                                        }
                                         Get.back();
+                                        Future.delayed(Duration(milliseconds: 400), ()
+                                        {
+                                          progress.value = null;
+                                          totalSize.value = null;
+                                        });
                                       },
                                     ),
                                   ),

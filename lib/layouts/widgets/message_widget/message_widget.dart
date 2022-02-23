@@ -14,12 +14,14 @@ import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -54,6 +56,11 @@ class MessageWidget extends StatefulWidget {
   final MessageBloc? bloc;
   final bool autoplayEffect;
 
+  late final _fakeOlderSubject = faker.lorem.words(olderMessage?.subject?.split(" ").length ?? 0).join(" ");
+  late final _fakeOlderText = faker.lorem.words(olderMessage?.text?.split(" ").length ?? 0).join(" ");
+  late final _fakeSubject = faker.lorem.words(message.subject?.split(" ").length ?? 0).join(" ");
+  late final _fakeText = faker.lorem.words(message.text?.split(" ").length ?? 0).join(" ");
+
   @override
   _MessageState createState() => _MessageState();
 }
@@ -63,7 +70,7 @@ class _MessageState extends State<MessageWidget> {
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
-  CurrentChat? currentChat;
+  ChatController? currentChat;
   StreamSubscription<NewMessageEvent>? subscription;
   late Message _message;
   Message? _newerMessage;
@@ -73,11 +80,20 @@ class _MessageState extends State<MessageWidget> {
   final RxDouble offset = 0.0.obs;
   bool gaveHapticFeedback = false;
 
+  late final String _fakeOlderSubject;
+  late final String _fakeOlderText;
+  late final String _fakeSubject;
+  late final String _fakeText;
+
   @override
   void initState() {
     super.initState();
-    currentChat = CurrentChat.activeChat;
+    currentChat = ChatManager().activeChat;
     _message = widget.message;
+    _fakeOlderSubject = widget._fakeOlderSubject;
+    _fakeSubject = widget._fakeSubject;
+    _fakeOlderText = widget._fakeOlderText;
+    _fakeText = widget._fakeText;
     _newerMessage = widget.newerMessage;
     _olderMessage = widget.olderMessage;
     init();
@@ -300,6 +316,10 @@ class _MessageState extends State<MessageWidget> {
             olderMessage: widget.olderMessage,
             newerMessage: widget.newerMessage,
             message: _message,
+            fakeOlderSubject: _fakeOlderSubject,
+            fakeOlderText: _fakeOlderText,
+            fakeSubject: _fakeSubject,
+            fakeText: _fakeText,
             messageBloc: widget.bloc,
             hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
             hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
@@ -315,7 +335,7 @@ class _MessageState extends State<MessageWidget> {
         }
 
         double replyThreshold = 40;
-        final Chat? chat = CurrentChat.of(context)?.chat;
+        final Chat? chat = ChatController.of(context)?.chat;
 
         return Obx(
           () => GestureDetector(
@@ -337,7 +357,7 @@ class _MessageState extends State<MessageWidget> {
               } else if (offset.value < replyThreshold) {
                 gaveHapticFeedback = false;
               }
-              CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
+              ChatController.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
             },
             onHorizontalDragEnd: !SettingsManager().settings.enablePrivateAPI.value
                 || !SettingsManager().settings.swipeToReply.value
@@ -346,7 +366,7 @@ class _MessageState extends State<MessageWidget> {
                 EventDispatcher().emit("focus-keyboard", _message);
               }
               offset.value = 0;
-              CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
+              ChatController.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
             },
             child: AnimatedContainer(
               duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),

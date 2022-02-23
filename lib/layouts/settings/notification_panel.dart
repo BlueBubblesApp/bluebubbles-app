@@ -1,7 +1,4 @@
 import 'dart:ui';
-import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
-import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
-import 'package:universal_html/html.dart' as uh;
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -11,6 +8,7 @@ import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -20,9 +18,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
+import 'package:universal_html/html.dart' as uh;
 
-class NotificationPanelController extends GetxController with GetSingleTickerProviderStateMixin {
+class NotificationPanelController extends GetxController with SingleGetTickerProviderMixin {
   late final TabController tabController;
   final List<Widget> tabs = [];
 
@@ -124,7 +124,6 @@ class NotificationPanel extends StatelessWidget {
                 },
                 child: ImprovedScrolling(
                   enableMMBScrolling: true,
-                  enableKeyboardScrolling: true,
                   mmbScrollConfig: MMBScrollConfig(
                     customScrollCursor: DefaultCustomScrollCursor(
                       cursorColor: context.textTheme.subtitle1!.color!,

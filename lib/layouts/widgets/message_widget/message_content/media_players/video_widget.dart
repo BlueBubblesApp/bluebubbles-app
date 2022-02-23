@@ -1,9 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
-
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -11,12 +7,16 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
@@ -44,7 +44,7 @@ class VideoWidgetController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    Map<String, VideoPlayerController> controllers = CurrentChat.activeChat!.currentPlayingVideo;
+    Map<String, VideoPlayerController> controllers = ChatManager().activeChat!.currentPlayingVideo;
     showPlayPauseOverlay =
         RxBool(!controllers.containsKey(attachment.guid) || !controllers[attachment.guid]!.value.isPlaying);
 
@@ -52,8 +52,8 @@ class VideoWidgetController extends GetxController {
       controller = controllers[attachment.guid]!;
       createListener(controller!);
     } else {
-      if (CurrentChat.activeChat?.imageData[attachment.guid] != null) {
-        thumbnail = CurrentChat.activeChat?.imageData[attachment.guid];
+      if (ChatManager().activeChat?.imageData[attachment.guid] != null) {
+        thumbnail = ChatManager().activeChat?.imageData[attachment.guid];
       } else {
         getThumbnail();
       }
@@ -72,7 +72,7 @@ class VideoWidgetController extends GetxController {
     }
     await controller!.initialize();
     createListener(controller!);
-    CurrentChat.activeChat?.changeCurrentPlayingVideo({attachment.guid!: controller!});
+    ChatManager().activeChat?.changeCurrentPlayingVideo({attachment.guid!: controller!});
   }
 
   void createListener(VideoPlayerController controller) {
@@ -101,7 +101,7 @@ class VideoWidgetController extends GetxController {
     if (!kIsWeb) {
       thumbnail = await AttachmentHelper.getVideoThumbnail(file.path!);
       if (thumbnail == null) return;
-      CurrentChat.activeChat?.imageData[attachment.guid!] = thumbnail!;
+      ChatManager().activeChat?.imageData[attachment.guid!] = thumbnail!;
       await precacheImage(MemoryImage(thumbnail!), context);
       update();
     }
@@ -158,7 +158,7 @@ class VideoWidget extends StatelessWidget {
         controller.showPlayPauseOverlay.value = true;
       } else {
         controller.navigated = true;
-        CurrentChat? currentChat = CurrentChat.activeChat;
+        ChatController? currentChat = ChatManager().activeChat;
         await Navigator.of(Get.context!).push(
           ThemeSwitcher.buildPageRoute(
             builder: (context) => AttachmentFullscreenViewer(

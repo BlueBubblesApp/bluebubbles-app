@@ -7,14 +7,15 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/handle.dart';
 import 'package:bluebubbles/repository/models/html/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -70,7 +71,7 @@ String getFullChatTitle(Chat _chat) {
 class Chat {
   int? id;
   int? originalROWID;
-  String? guid;
+  String guid;
   int? style;
   String? chatIdentifier;
   bool? isArchived;
@@ -93,13 +94,15 @@ class Chat {
   final RxnInt _pinIndex = RxnInt();
   int? get pinIndex => _pinIndex.value;
   set pinIndex(int? i) => _pinIndex.value = i;
+  bool? autoSendReadReceipts = true;
+  bool? autoSendTypingIndicators = true;
 
   final List<Handle> handles = [];
 
   Chat({
     this.id,
     this.originalROWID,
-    this.guid,
+    required this.guid,
     this.style,
     this.chatIdentifier,
     this.isArchived,
@@ -117,6 +120,8 @@ class Chat {
     this.latestMessageDate,
     this.latestMessageText,
     this.fakeLatestMessageText,
+    this.autoSendReadReceipts = true,
+    this.autoSendTypingIndicators = true,
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -191,7 +196,10 @@ class Chat {
     bool updateIsPinned = false,
     bool updatePinIndex = false,
     bool updateIsArchived = false,
-    bool updateHasUnreadMessage = false
+    bool updateHasUnreadMessage = false,
+    bool updateAutoSendReadReceipts = false,
+    bool updateAutoSendTypingIndicators = false,
+    bool updateCustomAvatarPath = false,
   }) {
     return this;
   }
@@ -257,7 +265,7 @@ class Chat {
 
   Chat toggleHasUnread(bool hasUnread) {
     if (hasUnread) {
-      if (CurrentChat.isActive(guid!)) {
+      if (ChatManager().isChatActiveByGuid(guid)) {
         return this;
       }
     }
@@ -328,7 +336,7 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
         toggleHasUnread(false);
-      } else if (!CurrentChat.isActive(guid!)) {
+      } else if (!ChatManager().isChatActiveByGuid(guid)) {
         toggleHasUnread(true);
       }
     }
@@ -492,6 +500,14 @@ class Chat {
     return this;
   }
 
+  Chat toggleAutoRead(bool autoSendReadReceipts) {
+    return this;
+  }
+
+  Chat toggleAutoType(bool autoSendTypingIndicators) {
+    return this;
+  }
+
   static Future<Chat?> findOneWeb({String? guid, String? chatIdentifier}) async {
     await ChatBloc().chatRequest!.future;
     if (guid != null) {
@@ -518,7 +534,7 @@ class Chat {
     return;
   }
 
-  bool get isTextForwarding => guid?.startsWith("SMS") ?? false;
+  bool get isTextForwarding => guid.startsWith("SMS");
 
   bool get isSMS => false;
 

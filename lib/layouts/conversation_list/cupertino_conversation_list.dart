@@ -1,7 +1,3 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -17,17 +13,21 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:universal_io/io.dart';
 
 class CupertinoConversationList extends StatefulWidget {
   const CupertinoConversationList({Key? key, required this.parent}) : super(key: key);
@@ -60,7 +60,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
         prefs.getString('lastOpenedChat') != null &&
         (!context.isPhone || context.isLandscape) &&
         (SettingsManager().settings.tabletMode.value || kIsDesktop) &&
-        CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
+        ChatManager().activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
         context,
@@ -151,7 +151,6 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
         extendBodyBehindAppBar: true,
         body: ImprovedScrolling(
           enableMMBScrolling: true,
-          enableKeyboardScrolling: true,
           mmbScrollConfig: MMBScrollConfig(
             customScrollCursor: DefaultCustomScrollCursor(
               cursorColor: context.textTheme.subtitle1!.color!,
@@ -334,7 +333,9 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                 int rowCount = context.mediaQuery.orientation == Orientation.portrait || kIsDesktop
                     ? SettingsManager().settings.pinRowsPortrait.value
                     : SettingsManager().settings.pinRowsLandscape.value;
-                int colCount = SettingsManager().settings.pinColumnsPortrait.value;
+                int colCount = kIsDesktop
+                    ? SettingsManager().settings.pinColumnsLandscape.value
+                    : SettingsManager().settings.pinColumnsPortrait.value;
                 int pinCount = ChatBloc()
                     .chats
                     .archivedHelper(showArchived)

@@ -51,7 +51,7 @@ class Box<T> {
 class ToOne<EntityT> {
 
   /// Get target object. If it's the first access, this reads from DB.
-  EntityT? get target {}
+  EntityT? get target => null;
 
   /// Set relation target object. Note: this does not store the change yet, use
   /// [Box.put()] on the containing (relation source) object.

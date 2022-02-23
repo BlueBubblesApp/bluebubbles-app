@@ -1,32 +1,34 @@
-import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:printing/printing.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:slugify/slugify.dart';
-import 'package:universal_io/io.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
 import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:slugify/slugify.dart';
+import 'package:universal_io/io.dart';
 
 class ConversationDetails extends StatefulWidget {
   final Chat chat;
@@ -144,7 +146,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                             ]),
                           );
                         });
-                    final response = await api.updateChat(chat.guid!, controller.text);
+                    final response = await api.updateChat(chat.guid, controller.text);
                     if (response.statusCode == 200) {
                       Get.back();
                       Get.back();
@@ -204,21 +206,13 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
           builder: (context) {
             return Scaffold(
               backgroundColor: Theme.of(context).backgroundColor,
-              appBar: (SettingsManager().settings.skin.value == Skins.iOS
-                  ? CupertinoNavigationBar(
-                      backgroundColor: Theme.of(context).colorScheme.secondary.withAlpha(125),
-                      leading: buildBackButton(context),
-                      middle: Text(
-                        "Details",
-                        style: Theme.of(context).textTheme.headline1,
-                      ),
-                    )
-                  : AppBar(
+              appBar: AppBar(
+                leading: SettingsManager().settings.skin.value == Skins.iOS ? buildBackButton(context, padding: EdgeInsets.only(left: kIsDesktop ? 5 : 0, top: kIsDesktop ? 15 : 0)) : null,
                       iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-                      title: Text(
+                      title: Padding(padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0), child: Text(
                         "Details",
                         style: Theme.of(context).textTheme.headline1,
-                      ),
+                      ),),
                       backgroundColor: Theme.of(context).backgroundColor,
                       bottom: PreferredSize(
                         child: Container(
@@ -227,7 +221,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         ),
                         preferredSize: Size.fromHeight(0.5),
                       ),
-                    )) as PreferredSizeWidget?,
+                    ),
               extendBodyBehindAppBar: SettingsManager().settings.skin.value == Skins.iOS ? true : false,
               body: CustomScrollView(
                 physics: ThemeSwitcher.getScrollPhysics(),
@@ -383,7 +377,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                   SliverPadding(
                     padding: EdgeInsets.symmetric(vertical: 10),
                   ),
-                  if (SettingsManager().settings.enablePrivateAPI.value && chat.isIMessage)
+                  if (SettingsManager().settings.enablePrivateAPI.value && chat.isIMessage && chat.isGroup())
                     SliverToBoxAdapter(
                       child: Padding(
                           padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
@@ -534,7 +528,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                                   ]),
                                                 );
                                               });
-                                          final response = await api.chatParticipant("add", chat.guid!, participantController.text);
+                                          final response = await api.chatParticipant("add", chat.guid, participantController.text);
                                           if (response.statusCode == 200) {
                                             Get.back();
                                             Get.back();
@@ -617,7 +611,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                             File file = File(chat.customAvatarPath!);
                                             file.delete();
                                             chat.customAvatarPath = null;
-                                            chat.save();
+                                            chat.save(updateCustomAvatarPath: true);
                                             Get.back();
                                           }),
                                       TextButton(
@@ -707,6 +701,42 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       ),
                     ),
                   ),
+                  if (!kIsWeb && !widget.chat.isGroup() && SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateMarkChatAsRead.value)
+                    SliverToBoxAdapter(
+                        child: ListTile(
+                            leading: Text("Send Read Receipts",
+                                style: TextStyle(
+                                  color: Theme.of(context).primaryColor,
+                                )),
+                            trailing: Switch(
+                                value: widget.chat.autoSendReadReceipts!,
+                                activeColor: Theme.of(context).primaryColor,
+                                activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                                inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                                inactiveThumbColor: Theme.of(context).colorScheme.secondary,
+                                onChanged: (value) {
+                                  widget.chat.toggleAutoRead(!widget.chat.autoSendReadReceipts!);
+                                  EventDispatcher().emit("refresh", null);
+                                  if (mounted) setState(() {});
+                                }))),
+                  if (!kIsWeb && !widget.chat.isGroup() && SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSendTypingIndicators.value)
+                    SliverToBoxAdapter(
+                        child: ListTile(
+                            leading: Text("Send Typing Indicators",
+                                style: TextStyle(
+                                  color: Theme.of(context).primaryColor,
+                                )),
+                            trailing: Switch(
+                                value: widget.chat.autoSendTypingIndicators!,
+                                activeColor: Theme.of(context).primaryColor,
+                                activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                                inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                                inactiveThumbColor: Theme.of(context).colorScheme.secondary,
+                                onChanged: (value) {
+                                  widget.chat.toggleAutoType(!widget.chat.autoSendTypingIndicators!);
+                                  EventDispatcher().emit("refresh", null);
+                                  if (mounted) setState(() {});
+                                }))),
                   if (!kIsWeb)
                     SliverToBoxAdapter(
                         child: ListTile(
@@ -951,7 +981,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               .reversed
                               .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
-                            Navigator.of(context).pop();
+                            Get.back();
                             showSnackbar("Error", "No messages found!");
                             return;
                           }
@@ -972,11 +1002,11 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           if (kIsDesktop) {
                             filePath = (await getDownloadsDirectory())!.path;
                           }
-                          filePath = filePath + "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt";
+                          filePath = p.join(filePath, "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
                           File file = File(filePath);
                           await file.create(recursive: true);
                           await file.writeAsString(lines.join('\n'));
-                          Navigator.of(context).pop();
+                          Get.back();
                           showSnackbar("Success", "Saved transcript to the downloads folder");
                         },
                         child: ListTile(
@@ -1091,7 +1121,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               .reversed
                               .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
-                            Navigator.of(context).pop();
+                            Get.back();
                             showSnackbar("Error", "No messages found!");
                             return;
                           }
@@ -1174,11 +1204,11 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           if (kIsDesktop) {
                             filePath = (await getDownloadsDirectory())!.path;
                           }
-                          filePath = filePath + "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.pdf";
+                          filePath = p.join(filePath,"${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.pdf");
                           File file = File(filePath);
                           await file.create(recursive: true);
                           await file.writeAsBytes(await doc.save());
-                          Navigator.of(context).pop();
+                          Get.back();
                           showSnackbar("Success", "Saved transcript to the downloads folder");
                         },
                         child: ListTile(

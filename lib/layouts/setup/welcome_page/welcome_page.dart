@@ -9,8 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get_utils/src/extensions/context_extensions.dart';
-import 'package:simple_animations/simple_animations.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:simple_animations/simple_animations.dart';
 
 class WelcomePage extends StatefulWidget {
   WelcomePage({Key? key, this.controller}) : super(key: key);

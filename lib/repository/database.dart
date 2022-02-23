@@ -212,7 +212,7 @@ class DBProvider {
         final chats = tableData[0].map((e) => Chat.fromMap(e)).toList();
         final chatIdsMigrationMap = <String, Map<String, int>>{};
         for (Chat element in chats) {
-          chatIdsMigrationMap[element.guid!] = {
+          chatIdsMigrationMap[element.guid] = {
             "old": element.id!
           };
           element.id = null;
@@ -223,7 +223,7 @@ class DBProvider {
         final newChats = chatBox.getAll();
         Logger.info("Fetched ObjectBox chats, length ${newChats.length}", tag: "OB Migration");
         for (Chat element in newChats) {
-          chatIdsMigrationMap[element.guid!]!['new'] = element.id!;
+          chatIdsMigrationMap[element.guid]!['new'] = element.id!;
         }
         Logger.info("Added new IDs to chat ID migration map", tag: "OB Migration");
         chats.clear();
@@ -258,8 +258,8 @@ class DBProvider {
           element.id = null;
           if (element.handleId != null && element.handleId != 0) {
             // we must have new handle ID if the current one is known to not be null or 0
-            final newHandleId = handleIdsMigrationMap.values.firstWhere((e) => e['old'] == element.handleId)['new'];
-            element.handleId = newHandleId!;
+            final newHandleId = handleIdsMigrationMap.values.firstWhereOrNull((e) => e['old'] == element.handleId)?['new'];
+            element.handleId = newHandleId ?? 0;
           }
         }
         Logger.info("Created message ID migration map, length ${messageIdsMigrationMap.length}", tag: "OB Migration");
@@ -298,9 +298,9 @@ class DBProvider {
         for (ChatHandleJoin chj in chJoins) {
           // we will always have a new and an old form of ID, so these should never error
           final newChatId = chatIdsMigrationMap.values.firstWhere((e) => e['old'] == chj.chatId)['new'];
-          final newHandleId = handleIdsMigrationMap.values.firstWhere((e) => e['old'] == chj.handleId)['new'];
+          final newHandleId = handleIdsMigrationMap.values.firstWhereOrNull((e) => e['old'] == chj.handleId)?['new'];
           chj.chatId = newChatId!;
-          chj.handleId = newHandleId!;
+          chj.handleId = newHandleId ?? 0;
         }
         Logger.info("Replaced old chat & handle IDs with new ObjectBox IDs", tag: "OB Migration");
         final chats2 = chatBox.getAll();

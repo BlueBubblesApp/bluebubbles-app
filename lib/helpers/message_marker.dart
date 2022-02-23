@@ -3,15 +3,15 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:get/get.dart';
 
 class MessageMarkers {
-  Chat chat;
+  String guid;
   final Rxn<Message> myLastMessage = Rxn();
   final Rxn<Message> lastReadMessage = Rxn();
   final Rxn<Message> lastDeliveredMessage = Rxn();
 
-  MessageMarkers(this.chat) {
+  MessageMarkers(this.guid) {
     NewMessageManager().stream.listen((event) {
       // Ignore any events that don't have to do with the current chat
-      if (event.chatGuid != chat.guid) return;
+      if (event.chatGuid != guid) return;
 
       // If it's the event we want
       if (event.type == NewMessageType.UPDATE || event.type == NewMessageType.ADD) {

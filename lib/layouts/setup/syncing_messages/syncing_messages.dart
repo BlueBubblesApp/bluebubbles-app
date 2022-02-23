@@ -1,16 +1,16 @@
 import 'dart:math';
 
+import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:confetti/confetti.dart';
-import 'package:get/get.dart';
-import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:simple_animations/stateless_animation/custom_animation.dart';
 

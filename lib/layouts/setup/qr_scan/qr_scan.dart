@@ -7,7 +7,6 @@ import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -602,6 +601,10 @@ class _QRScanState extends State<QRScan> {
       final newUrl = url.split(":").first;
       isValid = newUrl.isIPv6 || newUrl.isIPv4;
     }
+    if (url.endsWith(".network") && !isValid) {
+      final newUrl = url.split(".network").first;
+      isValid = (newUrl + ".com").isURL;
+    }
     if (!isValid || password.isEmpty) {
       setState(() {
         error = "Please enter a valid URL and password!";
@@ -631,7 +634,6 @@ class _QRScanState extends State<QRScan> {
       barrierDismissible: false,
     );
     SocketManager().closeSocket(force: true);
-    Settings copy = SettingsManager().settings;
     String? addr = getServerAddress(address: url);
     if (addr == null) {
       error = "Server address is invalid!";
@@ -639,9 +641,9 @@ class _QRScanState extends State<QRScan> {
       return;
     }
 
-    copy.serverAddress.value = addr;
-    copy.guidAuthKey.value = password;
-    await SettingsManager().saveSettings(copy);
+    SettingsManager().settings.serverAddress.value = addr;
+    SettingsManager().settings.guidAuthKey.value = password;
+    SettingsManager().settings.save();
     try {
       SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     } catch (e) {

@@ -9,7 +9,7 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -37,6 +37,7 @@ class OpenSettingsAction extends Action<OpenSettingsIntent> {
         ),
       );
     }
+    return null;
   }
 }
 
@@ -61,6 +62,7 @@ class OpenNewChatCreatorAction extends Action<OpenNewChatCreatorIntent> {
         (route) => route.isFirst,
       );
     }
+    return null;
   }
 }
 
@@ -81,6 +83,7 @@ class OpenSearchAction extends Action<OpenSearchIntent> {
         SearchView(),
       );
     }
+    return null;
   }
 }
 
@@ -99,6 +102,7 @@ class ReplyRecentAction extends Action<ReplyRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       EventDispatcher().emit("focus-keyboard", message);
     }
+    return null;
   }
 }
 
@@ -118,6 +122,7 @@ class HeartRecentAction extends Action<HeartRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "love");
     }
+    return null;
   }
 }
 
@@ -137,6 +142,7 @@ class LikeRecentAction extends Action<LikeRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "like");
     }
+    return null;
   }
 }
 
@@ -156,6 +162,7 @@ class DislikeRecentAction extends Action<DislikeRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "dislike");
     }
+    return null;
   }
 }
 
@@ -175,6 +182,7 @@ class LaughRecentAction extends Action<LaughRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "laugh");
     }
+    return null;
   }
 }
 
@@ -194,6 +202,7 @@ class EmphasizeRecentAction extends Action<EmphasizeRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "emphasize");
     }
+    return null;
   }
 }
 
@@ -213,6 +222,7 @@ class QuestionRecentAction extends Action<QuestionRecentIntent> {
     if (message != null && SettingsManager().settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "question");
     }
+    return null;
   }
 }
 
@@ -227,7 +237,7 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
 
   @override
   Object? invoke(covariant OpenNextChatIntent intent) {
-    final chat = CurrentChat.activeChat?.chat;
+    final chat = ChatManager().activeChat?.chat;
     if (chat != null) {
       final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
       if (index > -1 && index < ChatBloc().chats.length - 1) {
@@ -239,10 +249,11 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
           ),
           (route) => route.isFirst,
         );
-        CurrentChat.activeChat!.isAlive = false;
-        CurrentChat.getCurrentChat(_chat)!.isAlive = true;
+
+        ChatManager().setActiveChat(_chat);
       }
     }
+    return null;
   }
 }
 
@@ -257,7 +268,7 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
 
   @override
   Object? invoke(covariant OpenPreviousChatIntent intent) {
-    final chat = CurrentChat.activeChat?.chat;
+    final chat = ChatManager().activeChat?.chat;
     if (chat != null) {
       final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
       if (index > 0 && index < ChatBloc().chats.length) {
@@ -269,10 +280,11 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
           ),
           (route) => route.isFirst,
         );
-        CurrentChat.activeChat!.isAlive = false;
-        CurrentChat.getCurrentChat(_chat)!.isAlive = true;
+        
+        ChatManager().setActiveChat(_chat);
       }
     }
+    return null;
   }
 }
 
@@ -293,6 +305,7 @@ class OpenChatDetailsAction extends Action<OpenChatDetailsIntent> {
       context,
       ConversationDetails(messageBloc: bloc, chat: chat),
     );
+    return null;
   }
 }
 
@@ -309,6 +322,7 @@ class StartIncrementalSyncAction extends Action<StartIncrementalSyncIntent> {
         Logger.error(err);
       });
     }
+    return null;
   }
 }
 
@@ -326,5 +340,6 @@ class GoBackAction extends Action<GoBackIntent> {
     if (SettingsManager().settings.finishedSetup.value && !(Get.isDialogOpen ?? true)) {
       CustomNavigator.backConversationView(context);
     }
+    return null;
   }
 }

@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:faker/faker.dart';
@@ -43,13 +43,16 @@ abstract class MessageWidgetMixin {
     );
   }
 
-  static List<InlineSpan> buildMessageSpans(BuildContext context, Message? message, {List<Color>? colors = const [], Color? colorOverride}) {
+  static List<InlineSpan> buildMessageSpans(BuildContext context, Message? message,
+      {List<Color>? colors = const [], Color? colorOverride, String? fakeSubject, String? fakeText}) {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
-        (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
+        (SettingsManager().settings.redactedMode.value &&
+            SettingsManager().settings.hideMessageContent.value &&
+            !generateContent);
 
     TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
     if (!message!.isFromMe!) {
@@ -75,7 +78,12 @@ abstract class MessageWidgetMixin {
         textStyle = textStyle!.apply(color: Colors.transparent);
       }
     } else {
-      textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
+      textStyle = textStyle!.apply(
+          color: hideContent
+              ? Colors.transparent
+              : Theme.of(context).primaryColor.computeLuminance() > 0.8
+                  ? Colors.black
+                  : Colors.white);
     }
     if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
     if ((!isEmptyString(message.text) || !isEmptyString(message.subject))) {
@@ -96,30 +104,24 @@ abstract class MessageWidgetMixin {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
         if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
-        textSpans.addAll(
-            MessageHelper.buildEmojiText(
-              "${message.subject}\n",
-              _textStyle,
-            )
-        );
+        textSpans.addAll(MessageHelper.buildEmojiText(
+          "${message.subject}\n",
+          _textStyle,
+        ));
       }
 
       if (linkIndexMatches.isNotEmpty) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
-            textSpans.addAll(
-                MessageHelper.buildEmojiText(
-                  message.text!.substring(0, linkIndexMatches[i]),
-                  textStyle!,
-                )
-            );
+            textSpans.addAll(MessageHelper.buildEmojiText(
+              message.text!.substring(0, linkIndexMatches[i]),
+              textStyle!,
+            ));
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
-            textSpans.addAll(
-                MessageHelper.buildEmojiText(
-                  message.text!.substring(linkIndexMatches[i - 1], message.text!.length),
-                  textStyle!,
-                )
-            );
+            textSpans.addAll(MessageHelper.buildEmojiText(
+              message.text!.substring(linkIndexMatches[i - 1], message.text!.length),
+              textStyle!,
+            ));
           } else if (i - 1 >= 0) {
             String text = message.text!.substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
             if (exp.hasMatch(text)) {
@@ -139,47 +141,53 @@ abstract class MessageWidgetMixin {
                 ),
               );
             } else {
-              textSpans.addAll(
-                  MessageHelper.buildEmojiText(
-                    text,
-                    textStyle!,
-                  )
-              );
+              textSpans.addAll(MessageHelper.buildEmojiText(
+                text,
+                textStyle!,
+              ));
             }
           }
         }
       } else {
-        textSpans.addAll(
-            MessageHelper.buildEmojiText(
-              message.text!,
-              textStyle!,
-            )
-        );
+        textSpans.addAll(MessageHelper.buildEmojiText(
+          message.text!,
+          textStyle!,
+        ));
       }
 
       if (generateContent) {
-        String generatedText = faker.lorem.words(message.text!.split(" ").length).join(" ");
-        return [TextSpan(text: generatedText, style: textStyle)];
+        String generatedSubject = fakeSubject ?? faker.lorem.words(message.subject?.split(" ").length ?? 0).join(" ");
+        String generatedText = fakeText ?? faker.lorem.words(message.text?.split(" ").length ?? 0).join(" ");
+        return [
+          if (message.subject != null)
+            TextSpan(
+                text: "$generatedSubject\n",
+                style: message.isFromMe!
+                    ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
+                    : textStyle!.apply(fontWeightDelta: 2)),
+          TextSpan(text: generatedText, style: textStyle),
+        ];
       }
     } else {
-      textSpans.addAll(
-          MessageHelper.buildEmojiText(
-            MessageHelper.getNotificationText(message),
-            textStyle!,
-          )
-      );
+      textSpans.addAll(MessageHelper.buildEmojiText(
+        MessageHelper.getNotificationText(message),
+        textStyle!,
+      ));
     }
 
     return textSpans;
   }
 
-  static Future<List<InlineSpan>> buildMessageSpansAsync(BuildContext context, Message? message, {List<Color>? colors = const [], Color? colorOverride}) async {
+  static Future<List<InlineSpan>> buildMessageSpansAsync(BuildContext context, Message? message,
+      {List<Color>? colors = const [], Color? colorOverride, String? fakeSubject, String? fakeText}) async {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
-        (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
+        (SettingsManager().settings.redactedMode.value &&
+            SettingsManager().settings.hideMessageContent.value &&
+            !generateContent);
 
     TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
     if (message == null) return [];
@@ -206,7 +214,12 @@ abstract class MessageWidgetMixin {
         textStyle = textStyle!.apply(color: Colors.transparent);
       }
     } else {
-      textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
+      textStyle = textStyle!.apply(
+          color: hideContent
+              ? Colors.transparent
+              : Theme.of(context).primaryColor.computeLuminance() > 0.8
+                  ? Colors.black
+                  : Colors.white);
     }
     if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
     if ((!isEmptyString(message.text) || !isEmptyString(message.subject))) {
@@ -214,10 +227,11 @@ abstract class MessageWidgetMixin {
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
       List<Tuple2<String, int>> linkIndexMatches = <Tuple2<String, int>>[];
       if (!kIsWeb && !kIsDesktop) {
-        if (CurrentChat.activeChat?.mlKitParsedText[message.guid!] == null) {
-          CurrentChat.activeChat?.mlKitParsedText[message.guid!] = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
+        if (ChatManager().activeChat?.mlKitParsedText[message.guid!] == null) {
+          ChatManager().activeChat?.mlKitParsedText[message.guid!] =
+              await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
         }
-        final entities = CurrentChat.activeChat?.mlKitParsedText[message.guid!] ?? [];
+        final entities = ChatManager().activeChat?.mlKitParsedText[message.guid!] ?? [];
         List<EntityAnnotation> normalizedEntities = [];
         if (entities.isNotEmpty) {
           for (int i = 0; i < entities.length; i++) {
@@ -256,30 +270,24 @@ abstract class MessageWidgetMixin {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
         if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
-        textSpans.addAll(
-          MessageHelper.buildEmojiText(
-            "${message.subject}\n",
-            _textStyle,
-          )
-        );
+        textSpans.addAll(MessageHelper.buildEmojiText(
+          "${message.subject}\n",
+          _textStyle,
+        ));
       }
 
       if (linkIndexMatches.isNotEmpty) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
-            textSpans.addAll(
-                MessageHelper.buildEmojiText(
-                  message.text!.substring(0, linkIndexMatches[i].item2),
-                  textStyle!,
-                )
-            );
+            textSpans.addAll(MessageHelper.buildEmojiText(
+              message.text!.substring(0, linkIndexMatches[i].item2),
+              textStyle!,
+            ));
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
-            textSpans.addAll(
-                MessageHelper.buildEmojiText(
-                  message.text!.substring(linkIndexMatches[i - 1].item2, message.text!.length),
-                  textStyle!,
-                )
-            );
+            textSpans.addAll(MessageHelper.buildEmojiText(
+              message.text!.substring(linkIndexMatches[i - 1].item2, message.text!.length),
+              textStyle!,
+            ));
           } else if (i - 1 >= 0) {
             String type = linkIndexMatches[i].item1;
             String text = message.text!.substring(linkIndexMatches[i - 1].item2, linkIndexMatches[i].item2);
@@ -308,35 +316,38 @@ abstract class MessageWidgetMixin {
                 ),
               );
             } else {
-              textSpans.addAll(
-                  MessageHelper.buildEmojiText(
-                    text,
-                    textStyle!,
-                  )
-              );
+              textSpans.addAll(MessageHelper.buildEmojiText(
+                text,
+                textStyle!,
+              ));
             }
           }
         }
       } else {
-        textSpans.addAll(
-          MessageHelper.buildEmojiText(
-            message.text!,
-            textStyle!,
-          )
-        );
+        textSpans.addAll(MessageHelper.buildEmojiText(
+          message.text!,
+          textStyle!,
+        ));
       }
 
       if (generateContent) {
-        String generatedText = faker.lorem.words(message.text!.split(" ").length).join(" ");
-        return [TextSpan(text: generatedText, style: textStyle)];
+        String generatedSubject = fakeSubject ?? faker.lorem.words(message.subject?.split(" ").length ?? 0).join(" ");
+        String generatedText = fakeText ?? faker.lorem.words(message.text?.split(" ").length ?? 0).join(" ");
+        return [
+          if (message.subject != null)
+            TextSpan(
+                text: "$generatedSubject\n",
+                style: message.isFromMe!
+                    ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
+                    : textStyle!.apply(fontWeightDelta: 2)),
+          TextSpan(text: generatedText, style: textStyle),
+        ];
       }
     } else {
-      textSpans.addAll(
-        MessageHelper.buildEmojiText(
-          MessageHelper.getNotificationText(message),
-          textStyle!,
-        )
-      );
+      textSpans.addAll(MessageHelper.buildEmojiText(
+        MessageHelper.getNotificationText(message),
+        textStyle!,
+      ));
     }
 
     return textSpans;

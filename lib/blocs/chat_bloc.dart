@@ -5,7 +5,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -13,6 +13,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -24,9 +25,7 @@ class ChatBloc {
   final RxList<Chat> _chats = <Chat>[].obs;
 
   RxList<Chat> get chats => _chats;
-  final RxInt _unreads = 0.obs;
-
-  RxInt get unreads => _unreads;
+  final RxInt unreads = 0.obs;
 
   final RxBool hasChats = false.obs;
   final RxBool loadedChatBatch = false.obs;
@@ -36,7 +35,7 @@ class ChatBloc {
   final Map<String, Size> cachedMessageBubbleSizes = {};
 
   void updateUnreads() {
-    _unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
+    unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
   }
 
   Completer<void>? chatRequest;
@@ -288,7 +287,7 @@ class ChatBloc {
     return NewMessageManager().stream.listen(handleMessageAction);
   }
 
-  Future<void> getChatBatches({int batchSize = 15, required Map fakeNames}) async {
+  Future<void> getChatBatches({int batchSize = 15, required Map fakeNames, bool headless = false}) async {
     int count = Chat.count() ?? (await api.chatCount()).data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
@@ -312,7 +311,9 @@ class ChatBloc {
         chats = await Chat.getChats(limit: batchSize, offset: i * batchSize, fakeNames: fakeNames);
       }
       if (chats.isEmpty) break;
-      await ContactManager().matchHandles();
+      if (!headless) {
+        await ContactManager().matchHandles();
+      }
       for (Chat chat in chats) {
         newChats.add(chat);
         initTileValsForChat(chat);
@@ -362,7 +363,7 @@ class ChatBloc {
     if (chat.title == null) {
       chat.getTitle();
     }
-    AttachmentInfoBloc().initChat(chat);
+    ChatManager().createChatController(chat);
   }
 
   void archiveChat(Chat chat) {
@@ -411,9 +412,7 @@ class ChatBloc {
     if (map.containsKey(chat.guid)) {
       map.remove(chat.guid);
     }
-    if (chat.guid != null) {
-      map[chat.guid!] = chatMap;
-    }
+    map[chat.guid] = chatMap;
   }
 
   void updateChat(Chat chat) async {
