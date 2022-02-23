@@ -181,10 +181,10 @@ Future<Null> initApp(bool isBubble) async {
           } catch (_) {
             Logger.info("Failed to open store from reference, opening from path");
             store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
-            if (kIsDesktop) {
+            if (Platform.isWindows) {
               if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
                 Logger.info("Failed to open store from default path. Using custom path");
-                customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
+                customStorePath ??= "C:\\bluebubbles_app";
                 prefs.setBool("use-custom-path", true);
                 objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
                 Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
@@ -194,8 +194,8 @@ Future<Null> initApp(bool isBubble) async {
               }
             }
           }
-        } else if (useCustomPath == true) {
-          customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
+        } else if (useCustomPath == true && Platform.isWindows) {
+          customStorePath ??= "C:\\bluebubbles_app";
           objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
           Logger.info("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
           store = await openStore(directory: join(customStorePath, 'objectbox'));
@@ -204,10 +204,10 @@ Future<Null> initApp(bool isBubble) async {
             Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
             store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
           } catch (_) {
-            if (kIsDesktop) {
+            if (Platform.isWindows) {
               if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
                 Logger.info("Failed to open store from default path. Using custom path");
-                customStorePath ??= join((await getApplicationDocumentsDirectory()).path, "bluebubbles_app");
+                customStorePath ??= "C:\\bluebubbles_app";
                 prefs.setBool("use-custom-path", true);
                 objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
                 Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
