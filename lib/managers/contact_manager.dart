@@ -206,8 +206,11 @@ class ContactManager {
             ? MapEntry(entry.key, faker.person.name())
             : MapEntry(entry.key, handleToFakeName[entry.key])));
 
-    handleToFakeAddress = handleToFakeName
-        .map((key, value) => MapEntry(key, key.isEmail ? faker.internet.email() : faker.phoneNumber.random.fromPattern(["+###########", "+# ###-###-####", "+# (###) ###-####"])));
+    handleToFakeAddress = handleToFakeName.map((key, value) => MapEntry(
+        key,
+        key.isEmail
+            ? faker.internet.email()
+            : faker.phoneNumber.random.fromPattern(["+###########", "+# ###-###-####", "+# (###) ###-####"])));
   }
 
   Future<void> getAvatars() async {
@@ -223,11 +226,18 @@ class ContactManager {
       Contact? contact = handleToContact[address];
       if (handleToContact[address] == null || kIsWeb || kIsDesktop) continue;
 
-      FastContacts.getContactImage(contact!.id).then((avatar) {
+      FastContacts.getContactImage(contact!.id, size: ContactImageSize.fullSize).then((avatar) {
         if (avatar == null) return;
 
         contact.avatar.value = avatar;
         handleToContact[address] = contact;
+      }).onError((_, __) {
+        FastContacts.getContactImage(contact.id).then((avatar) {
+          if (avatar == null) return;
+
+          contact.avatar.value = avatar;
+          handleToContact[address] = contact;
+        });
       });
     }
 
@@ -278,7 +288,8 @@ class ContactManager {
   }
 
   Future<Uint8List?> getAvatar(String id) async {
-    return await FastContacts.getContactImage(id);
+    return (await FastContacts.getContactImage(id, size: ContactImageSize.fullSize)) ??
+        await FastContacts.getContactImage(id, size: ContactImageSize.thumbnail);
   }
 
   String getContactTitle(Handle? handle) {

@@ -23,6 +23,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -980,7 +981,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               .reversed
                               .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
-                            Navigator.of(context).pop();
+                            Get.back();
                             showSnackbar("Error", "No messages found!");
                             return;
                           }
@@ -1001,11 +1002,11 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           if (kIsDesktop) {
                             filePath = (await getDownloadsDirectory())!.path;
                           }
-                          filePath = filePath + "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt";
+                          filePath = p.join(filePath, "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
                           File file = File(filePath);
                           await file.create(recursive: true);
                           await file.writeAsString(lines.join('\n'));
-                          Navigator.of(context).pop();
+                          Get.back();
                           showSnackbar("Success", "Saved transcript to the downloads folder");
                         },
                         child: ListTile(
@@ -1120,7 +1121,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               .reversed
                               .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
-                            Navigator.of(context).pop();
+                            Get.back();
                             showSnackbar("Error", "No messages found!");
                             return;
                           }
@@ -1203,11 +1204,11 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           if (kIsDesktop) {
                             filePath = (await getDownloadsDirectory())!.path;
                           }
-                          filePath = filePath + "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.pdf";
+                          filePath = p.join(filePath,"${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.pdf");
                           File file = File(filePath);
                           await file.create(recursive: true);
                           await file.writeAsBytes(await doc.save());
-                          Navigator.of(context).pop();
+                          Get.back();
                           showSnackbar("Success", "Saved transcript to the downloads folder");
                         },
                         child: ListTile(
