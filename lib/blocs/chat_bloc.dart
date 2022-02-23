@@ -57,12 +57,16 @@ class ChatBloc {
 
   Future<Chat?> getChat(String? guid) async {
     if (guid == null) return null;
-    if (_chats.isEmpty) {
-      await refreshChats();
-    }
 
+    // Try to find the corresponding chat in the bloc and return it
     for (Chat? chat in _chats) {
       if (chat!.guid == guid) return chat;
+    }
+
+    // If we can't find one, let's check the database, then add to the bloc
+    Chat? chat = Chat.findOne(guid: guid);
+    if (chat != null) {
+      _chats.add(chat);
     }
 
     return null;
