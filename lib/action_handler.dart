@@ -303,7 +303,7 @@ class ActionHandler {
             NewMessageManager().updateMessage(chat, tempGuid!, message);
           }
 
-          completer.complete();
+          if (!completer.isCompleted) completer.complete();
         });
       }
     }
