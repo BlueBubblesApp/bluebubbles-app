@@ -122,7 +122,7 @@ class ChatManager {
   }
 
   ChatController? getActiveDeadController() {
-    return activeChat != null && activeChat!.isAlive ? activeChat : null;
+    return activeChat != null && !activeChat!.isAlive ? activeChat : null;
   }
 
   void setActiveToDead() {
