@@ -80,7 +80,7 @@ class SentMessageHelper {
 
     // If we haven't played the effect, we should apply it from the start.
     // This must come before we set the bubbleSize variable or else we get a box constraints errors
-    if (message?.datePlayed == null) {
+    if (message?.datePlayed == null && effect != MessageEffect.none) {
       controller = CustomAnimationControl.playFromStart;
       if (effect != MessageEffect.invisibleInk) {
         Timer(Duration(milliseconds: 500), () {
