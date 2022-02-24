@@ -146,6 +146,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     ActionHandler.sendReaction(widget.currentChat!.chat, widget.message, type);
     Navigator.of(context).pop();
   }
+  
+  void popDetails() {
+    bool dialogOpen = Get.isDialogOpen ?? false;
+    if (dialogOpen) {
+      Navigator.of(context).pop();
+    }
+    Navigator.of(context).pop();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -404,11 +412,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              bool dialogOpen = Get.isDialogOpen ?? false;
-              if (dialogOpen) {
-                Navigator.of(context).pop();
-              }
-              Navigator.of(context).pop();
+              popDetails();
               EventDispatcher().emit("focus-keyboard", widget.message);
             },
             child: ListTile(
@@ -440,11 +444,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Logger.error(trace.toString());
                 showSnackbar("Download Error", ex.toString());
               }
-              bool dialogOpen = Get.isDialogOpen ?? false;
-              if (dialogOpen) {
-                Navigator.of(context).pop();
-              }
-              Navigator.of(context).pop();
+              popDetails();
             },
             child: ListTile(
               dense: !kIsDesktop && !kIsWeb,
@@ -474,11 +474,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 "open-link",
                 {"link": data?.url ?? widget.message.text, "forceBrowser": true},
               );
-              bool dialogOpen = Get.isDialogOpen ?? false;
-              if (dialogOpen) {
-                Navigator.of(context).pop();
-              }
-              Navigator.of(context).pop();
+              popDetails();
             },
             child: ListTile(
               dense: !kIsDesktop && !kIsWeb,
@@ -502,11 +498,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             onTap: () async {
               await launch(
                   widget.message.attachments.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
-              bool dialogOpen = Get.isDialogOpen ?? false;
-              if (dialogOpen) {
-                Navigator.of(context).pop();
-              }
-              Navigator.of(context).pop();
+              popDetails();
             },
             child: ListTile(
               dense: !kIsDesktop && !kIsWeb,
@@ -529,11 +521,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           child: InkWell(
             onTap: () {
               Clipboard.setData(ClipboardData(text: widget.message.fullText));
-              bool dialogOpen = Get.isDialogOpen ?? false;
-              if (dialogOpen) {
-                Navigator.of(context).pop();
-              }
-              Navigator.of(context).pop();
+              popDetails();
               showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
             child: ListTile(
@@ -598,11 +586,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                       actions: actions,
                     );
                   });
-              bool dialogOpen = Get.isDialogOpen ?? false;
-              if (dialogOpen) {
-                Navigator.of(context).pop();
-              }
-              Navigator.of(context).pop();
+              popDetails();
             },
             child: ListTile(
               dense: !kIsDesktop && !kIsWeb,
@@ -627,11 +611,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              bool dialogOpen = Get.isDialogOpen ?? false;
-              if (dialogOpen) {
-                Navigator.of(context).pop();
-              }
-              Navigator.of(context).pop();
+              popDetails();
               Navigator.pushReplacement(
                 context,
                 cupertino.CupertinoPageRoute(
@@ -665,11 +645,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              bool dialogOpen = Get.isDialogOpen ?? false;
-              if (dialogOpen) {
-                Navigator.of(context).pop();
-              }
-              Navigator.of(context).pop();
+              popDetails();
               showReplyThread(context, widget.message, widget.messageBloc);
             },
             child: ListTile(
@@ -706,11 +682,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               } else {
                 uniqueContact = UniqueContact(address: address, displayName: contact.displayName);
               }
-              bool dialogOpen = Get.isDialogOpen ?? false;
-              if (dialogOpen) {
-                Navigator.of(context).pop();
-              }
-              Navigator.of(context).pop();
+              popDetails();
               Navigator.pushReplacement(
                 context,
                 cupertino.CupertinoPageRoute(
@@ -761,11 +733,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                           .toList();
                     }
                     EventDispatcher().emit("update-highlight", null);
-                    bool dialogOpen = Get.isDialogOpen ?? false;
-                    if (dialogOpen) {
-                      Navigator.of(context).pop();
-                    }
-                    Navigator.of(context).pop();
+                    popDetails();
                     return ConversationView(
                       isCreator: true,
                       existingText: widget.message.text,
@@ -800,11 +768,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 AttachmentHelper.redownloadAttachment(element!);
               }
               setState(() {});
-              bool dialogOpen = Get.isDialogOpen ?? false;
-              if (dialogOpen) {
-                Navigator.of(context).pop();
-              }
-              Navigator.of(context).pop();
+              popDetails();
             },
             child: ListTile(
               dense: !kIsDesktop && !kIsWeb,
@@ -837,11 +801,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   widget.message.text!,
                 );
               }
-              bool dialogOpen = Get.isDialogOpen ?? false;
-              if (dialogOpen) {
-                Navigator.of(context).pop();
-              }
-              Navigator.of(context).pop();
+              popDetails();
             },
             child: ListTile(
               dense: !kIsDesktop && !kIsWeb,
@@ -933,11 +893,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   return;
                 }
                 NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate!);
-                bool dialogOpen = Get.isDialogOpen ?? false;
-                if (dialogOpen) {
-                  Navigator.of(context).pop();
-                }
-                Navigator.of(context).pop();
+                popDetails();
                 showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
               }
             },
@@ -960,11 +916,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           onTap: () async {
             NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
             Message.softDelete(widget.message.guid!);
-            bool dialogOpen = Get.isDialogOpen ?? false;
-            if (dialogOpen) {
-              Navigator.of(context).pop();
-            }
-            Navigator.of(context).pop();
+            popDetails();
           },
           child: ListTile(
             dense: !kIsDesktop && !kIsWeb,
