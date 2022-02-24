@@ -82,11 +82,13 @@ class SentMessageHelper {
     // This must come before we set the bubbleSize variable or else we get a box constraints errors
     if (message?.datePlayed == null) {
       controller = CustomAnimationControl.playFromStart;
-      Timer(Duration(milliseconds: 500), () {
-        if (message?.datePlayed == null) {
-          message?.setPlayedDate();
-        }
-      });
+      if (effect != MessageEffect.invisibleInk) {
+        Timer(Duration(milliseconds: 500), () {
+          if (message?.datePlayed == null) {
+            message?.setPlayedDate();
+          }
+        });
+      }
     }
 
     if (controller != CustomAnimationControl.stop) {
