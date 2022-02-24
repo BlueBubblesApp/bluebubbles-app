@@ -67,7 +67,8 @@ class ChatBloc {
     Chat? chat = Chat.findOne(guid: guid);
     if (chat != null) {
       _chats.add(chat);
-      ContactManager().getAvatarsForChat(chat);
+      await ContactManager().getAvatarsForChat(chat);
+      return chat;
     }
 
     return null;
