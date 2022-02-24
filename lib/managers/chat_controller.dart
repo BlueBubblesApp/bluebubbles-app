@@ -241,7 +241,11 @@ class ChatController {
     // The only caveat being if we get passed specific messages to load
     if (messageAttachments.isNotEmpty && specificMessages != null && specificMessages.isEmpty) return;
     List<Message?> messages = specificMessages ?? Chat.getMessages(chat, limit: 25);
-    messageAttachments = Message.fetchAttachmentsByMessages(messages);
+    if (specificMessages != null) {
+      messageAttachments.addAll(Message.fetchAttachmentsByMessages(messages));
+    } else {
+      messageAttachments = Message.fetchAttachmentsByMessages(messages);
+    }
   }
 
   Future<void> preloadMessageAttachmentsAsync({List<Message?>? specificMessages}) async {
@@ -249,7 +253,11 @@ class ChatController {
     // The only caveat being if we get passed specific messages to load
     if (messageAttachments.isNotEmpty && specificMessages != null && specificMessages.isEmpty) return;
     List<Message?> messages = specificMessages ?? await Chat.getMessagesAsync(chat, limit: 25);
-    messageAttachments = await Message.fetchAttachmentsByMessagesAsync(messages);
+    if (specificMessages != null) {
+      messageAttachments.addAll(await Message.fetchAttachmentsByMessagesAsync(messages));
+    } else {
+      messageAttachments = await Message.fetchAttachmentsByMessagesAsync(messages);
+    }
   }
 
   void displayTypingIndicator() {

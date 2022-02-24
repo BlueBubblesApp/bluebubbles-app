@@ -52,7 +52,9 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
   void initState() {
     super.initState();
 
-    shouldHighlight.value = ChatManager().activeChat?.chat.guid == widget.chat.guid;
+    if (kIsDesktop || kIsWeb) {
+      shouldHighlight.value = ChatManager().activeChat?.chat.guid == widget.chat.guid;
+    }
 
     // Listen for changes in the group
     NewMessageManager().stream.listen((NewMessageEvent event) async {

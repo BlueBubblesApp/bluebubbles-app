@@ -611,11 +611,12 @@ class _QRScanState extends State<QRScan> {
       });
       return;
     }
-    showDialog(
-      context: context,
-      builder: (connectContext) => ConnectingAlert(
+    Get.dialog(
+      ConnectingAlert(
         onConnect: (bool result) {
-          Get.back();
+          if (Get.isDialogOpen ?? false) {
+            Get.back();
+          }
           if (result) {
             setState(() {
               showManualEntry = false;
