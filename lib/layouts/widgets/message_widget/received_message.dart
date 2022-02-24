@@ -87,13 +87,14 @@ class ReceivedMessage extends StatefulWidget {
   _ReceivedMessageState createState() => _ReceivedMessageState();
 }
 
-class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMixin {
+class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMixin, WidgetsBindingObserver {
   bool checkedHandle = false;
   late String contactTitle;
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null, fakeSubject: widget.fakeSubject, fakeText: widget.fakeText);
   Size? threadOriginatorSize;
   Size? messageSize;
+  late String effect;
   bool showReplies = false;
   CustomAnimationControl controller = CustomAnimationControl.stop;
   final GlobalKey key = GlobalKey();
@@ -104,6 +105,11 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     showReplies = widget.showReplies;
     contactTitle = ContactManager().getContactTitle(widget.message.handle);
 
+    effect = widget.message.expressiveSendStyleId == null
+        ? "none"
+        : effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ??
+            "unknown";
+
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
@@ -111,6 +117,18 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           event["data"][0] == widget.message.handle?.address && mounted) {
         widget.message.handle?.color = event['data'][1];
         setState(() {});
+      }
+    });
+
+    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance!.addPostFrameCallback((_) async {
+      if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble && widget.message.datePlayed == null) {
+        EventDispatcher().emit('play-effect', {
+          'type': effect,
+          'size': key.globalPaintBounds(context),
+        });
+
+        widget.message.setPlayedDate();
       }
     });
 
@@ -164,7 +182,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // If we haven't played the effect, we should apply it from the start.
     // This must come before we set the bubbleSize variable or else we get a box constraints errors
-    if (message.datePlayed == null) {
+    if (message.datePlayed == null && effect != MessageEffect.none) {
       controller = CustomAnimationControl.playFromStart;
       if (effect != MessageEffect.invisibleInk) {
         Timer(Duration(milliseconds: 500), () {
@@ -569,9 +587,6 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // Third, let's add the actual message we want to show
     Widget? message;
-    String effect = widget.message.expressiveSendStyleId == null
-        ? "none"
-        : effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ?? "unknown";
     if (widget.message.isInteractive()) {
       message = Padding(padding: EdgeInsets.only(left: 10.0), child: BalloonBundleWidget(message: widget.message));
     } else if (widget.message.hasText()) {
