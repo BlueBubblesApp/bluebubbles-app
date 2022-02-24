@@ -67,6 +67,7 @@ class ChatBloc {
     Chat? chat = Chat.findOne(guid: guid);
     if (chat != null) {
       _chats.add(chat);
+      ContactManager().getAvatarsForChat(chat);
     }
 
     return null;
@@ -324,6 +325,9 @@ class ChatBloc {
 
         // Set the fake participants when we load the chats
         chat.fakeParticipants = chat.participants.map((e) => ContactManager().getContact(e.address)?.fakeName ?? 'Unknown').toList();
+
+        // Fetch the avatars for the chat so they load in first.
+        await ContactManager().getAvatarsForChat(chat);
 
         if (kIsWeb) {
           for (Handle element in chat.participants) {
