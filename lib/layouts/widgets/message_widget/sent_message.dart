@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -31,6 +32,7 @@ import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:particles_flutter/particles_flutter.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -75,9 +77,22 @@ class SentMessageHelper {
     bool hasReactions = (message?.getReactions() ?? []).isNotEmpty;
     Skins currentSkin = Skin.of(context)?.skin ?? SettingsManager().settings.skin.value;
     Size bubbleSize = Size(0, 0);
+
+    // If we haven't played the effect, we should apply it from the start.
+    // This must come before we set the bubbleSize variable or else we get a box constraints errors
+    if (message?.datePlayed == null) {
+      controller = CustomAnimationControl.playFromStart;
+      Timer(Duration(milliseconds: 500), () {
+        if (message?.datePlayed == null) {
+          message?.setPlayedDate();
+        }
+      });
+    }
+
     if (controller != CustomAnimationControl.stop) {
       bubbleSize = message!.getBubbleSize(context);
-    }
+    }    
+
     if (message?.isBigEmoji() ?? false) {
       // this stack is necessary for layouting width properly
       msg = Stack(alignment: AlignmentDirectional.bottomEnd, children: [
@@ -201,8 +216,10 @@ class SentMessageHelper {
                               double value = anim.get("size");
                               return StatefulBuilder(builder: (context, setState) {
                                 return GestureDetector(
-                                  onHorizontalDragEnd: (DragEndDetails details) {
-                                    if ((details.primaryVelocity ?? 0) > 0 && effect == MessageEffect.invisibleInk) {
+                                  onHorizontalDragUpdate: (DragUpdateDetails details) {
+                                    if (effect != MessageEffect.invisibleInk) return;
+                                    if ((details.primaryDelta ?? 0).abs() > 1) {
+                                      message?.setPlayedDate();
                                       setState(() {
                                         opacity = 1 - opacity;
                                       });
@@ -374,6 +391,10 @@ class SentMessageHelper {
                       : 1800),
           animationStatusListener: (status) {
             if (status == AnimationStatus.completed) {
+              if (message?.datePlayed == null) {
+                message?.setPlayedDate();
+              }
+
               updateController?.call();
             }
           },
@@ -900,6 +921,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
         if (widget.message.expressiveSendStyleId != null)
           GestureDetector(
             onTap: () {
+              HapticFeedback.mediumImpact();
               if ((stringToMessageEffect[effect] ?? MessageEffect.none).isBubble) {
                 if (effect == "invisible ink" && animController == CustomAnimationControl.playFromStart) {
                   setState(() {
