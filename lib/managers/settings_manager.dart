@@ -100,7 +100,7 @@ class SettingsManager {
       try {
         if (settings.finishedSetup.value) {
           SocketManager().startSocketIO();
-          SocketManager().authFCM();
+          SocketManager().registerFcmDevice();
         }
       } catch (_) {}
     }
@@ -145,13 +145,13 @@ class SettingsManager {
     );
   }
 
-  /// Updates FCM data and saves to disk. It will also run [authFCM] automatically
+  /// Updates FCM data and saves to disk. It will also run [registerFcmDevice] automatically
   ///
   /// @param [data] is the [FCMData] to save
   void saveFCMData(FCMData data) {
     fcmData = data;
     fcmData!.save();
-    SocketManager().authFCM();
+    SocketManager().registerFcmDevice();
   }
 
   Future<void> resetConnection() async {

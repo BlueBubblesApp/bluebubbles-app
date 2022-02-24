@@ -405,7 +405,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         builder: (connectContext) => TextInputURL(
                           onConnect: () {
                             Get.back();
-                            SocketManager().authFCM();
+                            SocketManager().registerFcmDevice();
                             SocketManager()
                                 .startSocketIO(forceNewConnection: true);
                           },
@@ -421,7 +421,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         builder: (connectContext) => TextInputURL(
                           onConnect: () {
                             Get.back();
-                            SocketManager().authFCM();
+                            SocketManager().registerFcmDevice();
                             SocketManager()
                                 .startSocketIO(forceNewConnection: true);
                           },
@@ -459,7 +459,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
 
                         SettingsManager().saveSettings(controller._settingsCopy);
                         SettingsManager().saveFCMData(controller._fcmDataCopy!);
-                        SocketManager().authFCM();
+                        SocketManager().registerFcmDevice();
                       }
                     },
                   ),
