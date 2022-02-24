@@ -116,7 +116,7 @@ class ContactManager {
     }
   }
 
-  Future<bool> loadContacts({headless = false, force = false, loadAvatars = true}) async {
+  Future<bool> loadContacts({headless = false, force = false, loadAvatars = false}) async {
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
       Logger.info("Already fetching contacts, returning future...", tag: tag);
@@ -270,6 +270,19 @@ class ContactManager {
     Logger.info("Finished fetching avatars", tag: tag);
     getAvatarsFuture!.complete();
     return getAvatarsFuture!.future;
+  }
+
+  Future<void> getAvatarsForChat(Chat chat) async {
+    if (chat.participants.isEmpty) {
+      chat.getParticipants();
+    }
+
+    for (Handle h in chat.participants) {
+      Contact? contact = getContact(h.address);
+      if (contact != null) {
+        await loadContactAvatar(contact);
+      }
+    }
   }
 
   Future<void> loadContactAvatar(Contact contact) async {
