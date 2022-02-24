@@ -93,7 +93,7 @@ class SentMessageHelper {
 
     if (controller != CustomAnimationControl.stop) {
       bubbleSize = message!.getBubbleSize(context);
-    }    
+    }
 
     if (message?.isBigEmoji() ?? false) {
       // this stack is necessary for layouting width properly
@@ -569,12 +569,13 @@ class SentMessage extends StatefulWidget {
   _SentMessageState createState() => _SentMessageState();
 }
 
-class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
+class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, WidgetsBindingObserver {
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message);
   Size? threadOriginatorSize;
   Size? messageSize;
   bool showReplies = false;
+  late String effect;
   CustomAnimationControl animController = CustomAnimationControl.stop;
   final GlobalKey key = GlobalKey();
 
@@ -582,6 +583,23 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
   void initState() {
     super.initState();
     showReplies = widget.showReplies;
+
+    effect = widget.message.expressiveSendStyleId == null
+        ? "none"
+        : effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ??
+            "unknown";
+
+    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance!.addPostFrameCallback((_) async {
+      if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble && widget.message.datePlayed == null) {
+        EventDispatcher().emit('play-effect', {
+          'type': effect,
+          'size': key.globalPaintBounds(context),
+        });
+
+        widget.message.setPlayedDate();
+      }
+    });
 
     /*if (ChatManager().activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
       ChatManager().activeChat?.autoplayGuid = null;
@@ -765,10 +783,6 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
 
     // Third, let's add the message or URL preview
     Widget? message;
-    String effect = widget.message.expressiveSendStyleId == null
-        ? "none"
-        : effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ??
-            "unknown";
     if (widget.message.balloonBundleId != null &&
         widget.message.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
       message = BalloonBundleWidget(message: widget.message);
@@ -917,6 +931,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
         );
       }
     }
+
     messageColumn.add(Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
