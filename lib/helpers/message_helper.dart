@@ -250,6 +250,10 @@ class MessageHelper {
       return sender + "Empty message";
     }
 
+    if (message.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
+      return "Message sent with Invisible Ink";
+    }
+
     // Parse/search for links
     List<RegExpMatch> matches = parseLinks(message.text!);
 
