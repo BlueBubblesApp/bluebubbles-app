@@ -30,7 +30,7 @@ class Settings {
   final RxBool colorfulBubbles = false.obs;
   final RxBool hideDividers = false.obs;
   final RxDouble scrollVelocity = 1.00.obs;
-  final RxBool sendWithReturn = (kIsWeb || kIsDesktop).obs;
+  final RxBool sendWithReturn = false.obs;
   final RxBool doubleTapForDetails = false.obs;
   final RxBool denseChatTiles = false.obs;
   final RxBool smartReply = false.obs;
@@ -496,7 +496,7 @@ class Settings {
     SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'] is int?
         ? (map['scrollVelocity'] as int? ?? 1).toDouble()
         : map['scrollVelocity'] as double? ?? 1.0;
-    SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'] ?? (kIsWeb || kIsDesktop);
+    SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'] ?? false;
     SettingsManager().settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     SettingsManager().settings.denseChatTiles.value = map['denseChatTiles'] ?? false;
     SettingsManager().settings.smartReply.value = map['smartReply'] ?? false;
@@ -601,7 +601,7 @@ class Settings {
     s.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     s.hideDividers.value = map['hideDividers'] ?? false;
     s.scrollVelocity.value = map['scrollVelocity']?.toDouble() ?? 1;
-    s.sendWithReturn.value = map['sendWithReturn'] ?? (kIsWeb || kIsDesktop);
+    s.sendWithReturn.value = map['sendWithReturn'] ?? false;
     s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     s.denseChatTiles.value = map['denseChatTiles'] ?? false;
     s.smartReply.value = map['smartReply'] ?? false;

@@ -77,7 +77,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
   late double messageTopOffset;
   late double topMinimum;
-  double? height;
+  double? detailsMenuHeight;
   bool isBigSur = true;
 
   @override
@@ -185,11 +185,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 AnimatedPositioned(
                   duration: Duration(milliseconds: 250),
                   curve: Curves.easeOut,
-                  top: messageTopOffset + 50,
+                  top: messageTopOffset,
                   left: offsetX,
                   child: Container(
                     width: widget.childSize!.width,
-                    height: widget.childSize!.height,
+                    height: widget.childSize!.height + 5,
                     child: widget.child,
                   ),
                 ),
@@ -238,7 +238,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                     !hideReactions &&
                     (currentChat?.chat.isIMessage ?? true))
                   buildReactionMenu(),
-                buildCopyPasteMenu(),
+                buildDetailsMenu(),
               ],
             ),
           ),
@@ -253,11 +253,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     double reactionIconSize = 50;
     double maxMenuWidth = (ReactionTypes.toList().length / (narrowScreen ? 2 : 1) * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize * 2).toDouble();
-    double topPadding = -reactionIconSize - 5;
     if (topMinimum > context.height - 120 - menuHeight) {
       topMinimum = context.height - 120 - menuHeight;
     }
-    double topOffset = (messageTopOffset + 50 - menuHeight).toDouble().clamp(topMinimum, context.height - 120 - menuHeight);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
         (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 25 : 20 + (shiftRight ? 35 : 0))
@@ -269,7 +267,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     }
 
     return Positioned(
-      bottom: max(context.height - topOffset - topPadding - menuHeight, context.height - messageTopOffset - menuHeight - topPadding),
+      bottom: context.height - messageTopOffset + 10,
       left: leftOffset,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(40.0),
@@ -393,20 +391,36 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
   bool get isSent => !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
 
-  double? get detailsMenuHeight {
-    return height;
-  }
-
-  set detailsMenuHeight(double? value) {
-    height = value;
-  }
-
-  Widget buildCopyPasteMenu() {
-    double maxMenuWidth = CustomNavigator.width(context) * 2 / 3;
-
+  Widget buildDetailsMenu() {
+    double maxMenuWidth = min(max(CustomNavigator.width(context) * 3 / 5, 200), CustomNavigator.width(context) * 4 / 5);
     double maxHeight = context.height - messageTopOffset - widget.childSize!.height;
 
     List<Widget> allActions = [
+      if (SettingsManager().settings.enablePrivateAPI.value &&
+          isBigSur &&
+          (currentChat?.chat.isIMessage ?? true) &&
+          !widget.message.guid!.startsWith("temp"))
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              Get.back();
+              Navigator.of(context).pop();
+              EventDispatcher().emit("focus-keyboard", widget.message);
+            },
+            child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Reply",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.reply : Icons.reply,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
       if (showDownload)
         Material(
           color: Colors.transparent,
@@ -425,6 +439,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               }
             },
             child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Download to Device",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -453,6 +468,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open In Browser",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -475,6 +491,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   widget.message.attachments.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
             },
             child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open In New Tab",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -498,6 +515,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
             child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
               title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
@@ -560,6 +578,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   });
             },
             child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Copy Selection",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -568,27 +587,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.doc_on_clipboard
                     : Icons.content_copy,
-                color: Theme.of(context).textTheme.bodyText1!.color,
-              ),
-            ),
-          ),
-        ),
-      if (SettingsManager().settings.enablePrivateAPI.value && isBigSur && (currentChat?.chat.isIMessage ?? true) && !widget.message.guid!.startsWith("temp"))
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () async {
-              Get.back();
-              Navigator.of(context).pop();
-              EventDispatcher().emit("focus-keyboard", widget.message);
-            },
-            child: ListTile(
-              title: Text(
-                "Reply",
-                style: Theme.of(context).textTheme.bodyText1,
-              ),
-              trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.reply : Icons.reply,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -614,6 +612,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open Direct Message",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -637,6 +636,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               showReplyThread(context, widget.message, widget.messageBloc);
             },
             child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "View Thread",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -683,6 +683,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Start Conversation",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -728,6 +729,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Forward",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -741,7 +743,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-
       if (showDownload && isSent)
         Material(
           color: Colors.transparent,
@@ -755,6 +756,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               Navigator.of(context).pop();
             },
             child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Re-download from Server",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -786,6 +788,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               }
             },
             child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Share",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -879,6 +882,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               }
             },
             child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Remind Later",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -900,6 +904,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             Navigator.of(context).pop();
           },
           child: ListTile(
+            dense: !kIsDesktop && !kIsWeb,
             title: Text(
               "Delete",
               style: Theme.of(context).textTheme.bodyText1,
@@ -915,9 +920,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
     List<Widget> detailsActions = [];
     List<Widget> moreActions = [];
-    double itemHeight = 56;
+    double itemHeight = kIsDesktop || kIsWeb ? 56 : 48;
 
-    double actualHeight = 2 * itemHeight;
+    double actualHeight = itemHeight;
     int index = 0;
 
     int maxToShow = 0;
@@ -925,9 +930,17 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     if (widget.message.fullText.replaceAll("\n", " ").hasUrl &&
         !kIsWeb &&
         !kIsDesktop &&
-        !LifeCycleManager().isBubble) maxToShow++;
+        !LifeCycleManager().isBubble) {
+      maxToShow++;
+    }
     if (showDownload && kIsWeb && widget.message.attachments.first?.webUrl != null) maxToShow++;
     if (showDownload) maxToShow++;
+    if (SettingsManager().settings.enablePrivateAPI.value &&
+        isBigSur &&
+        (currentChat?.chat.isIMessage ?? true) &&
+        !widget.message.guid!.startsWith("temp")) {
+      maxToShow++;
+    }
 
     while (actualHeight <= maxHeight - itemHeight && index < (maxToShow == 0 ? allActions.length : maxToShow)) {
       actualHeight += itemHeight;
@@ -981,6 +994,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                           });
                     },
                     child: ListTile(
+                      dense: !kIsDesktop && !kIsWeb,
                       title: Text("More...", style: Theme.of(context).textTheme.bodyText1),
                       trailing: Icon(
                         SettingsManager().settings.skin.value == Skins.iOS
@@ -1008,7 +1022,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 15 : 20 + (shiftRight ? 35 : 0))
             .toDouble();
     return Positioned(
-      top: topOffset > context.height - 100 ? null : topOffset + 55,
+      top: topOffset > context.height - 100 ? null : topOffset + (widget.message.isFromMe! ? 5 : 10),
       bottom: topOffset > context.height - 100 ? 45 : null,
       left: leftOffset,
       child: menu,
