@@ -115,47 +115,68 @@ class SocketManager {
 
     switch (status) {
       case "connect":
-        authFCM();
+        // Make sure we set the state value first so that listeners can show the correct
+        // status as quickly as possible. This was lower before and was causing some lag
+        // time between when we actually connected and when the connection dot showed that.
+        state.value = SocketState.CONNECTED;
+
+        // Once we connect, we need to make sure that we register the device with the server.
+        // This is to ensure we always will be registered to receive notifications
+        registerFcmDevice();
+
+        // Clear the errored socket notification (if any)
         NotificationManager().clearSocketWarning();
+
+        // Remove any disconnected subscribers
         _manager.disconnectSubscribers.forEach((key, value) {
           value();
           _manager.disconnectSubscribers.remove(key);
         });
-
-        state.value = SocketState.CONNECTED;
         for (Function element in _manager.socketProcesses.values) {
           element();
         }
+
+        // Start an incremental sync 
         if (SettingsManager().settings.finishedSetup.value) {
           setup.startIncrementalSync(SettingsManager().settings, onConnectionError: (String err) {
             Logger.error("Error performing incremental sync. Not saving last sync date.", tag: "IncrementalSync");
             Logger.error(err);
           });
         }
+
+        // Make sure we have the correct macOS version loaded so that we can show UI elements accurately
         SettingsManager().getMacOSVersion(refresh: true);
         return;
       case "connect_error":
+        // If we are already errored or failed, we don't need to re-set the variable
         if (state.value != SocketState.ERROR && state.value != SocketState.FAILED) {
           state.value = SocketState.ERROR;
+
+          // After 5 seconds of an error, we should retry the connection
           Timer(Duration(seconds: 5), () {
-            if (state.value != SocketState.ERROR) return;
+            if (state.value != SocketState.ERROR && state.value != SocketState.FAILED) return;
             refreshConnection(connectToSocket: true);
           });
+
+          // After 20 seconds, if we still aren't connected, show the warning notification
           Timer(Duration(seconds: 20), () {
-            if (state.value != SocketState.ERROR) return;
+            if (state.value != SocketState.ERROR && state.value != SocketState.FAILED) return;
+            state.value = SocketState.FAILED;
             Logger.error("Unable to connect", tag: tag);
 
             // Only show the notification if setup is finished
             if (SettingsManager().settings.finishedSetup.value) {
               NotificationManager().createSocketWarningNotification();
             }
-
-            state.value = SocketState.FAILED;
+            
+            // Clear any socket processes
             List<Function> processes = socketProcesses.values.toList();
             for (Function value in processes) {
               value(true);
-            }
+            }            
             socketProcesses = {};
+
+            // If we aren't alive and we are on Android, close the socket
             if (!LifeCycleManager().isAlive && !kIsDesktop && !kIsWeb) {
               closeSocket(force: true);
             }
@@ -163,11 +184,15 @@ class SocketManager {
         }
         return;
       case "disconnect":
-        if (state.value == SocketState.FAILED) return;
+        // If we already knew we were disconnected or failed, don't do anything
+        if (state.value == SocketState.DISCONNECTED || state.value == SocketState.FAILED) return;
+        state.value = SocketState.DISCONNECTED;
+
         for (Function f in _manager.disconnectSubscribers.values) {
           f.call();
         }
-        state.value = SocketState.DISCONNECTED;
+        
+        // If we are still disconnected after 5 seconds, show the disconnected snackbar
         Timer t;
         t = Timer(const Duration(seconds: 5), () {
           if (state.value == SocketState.DISCONNECTED &&
@@ -191,8 +216,9 @@ class SocketManager {
           }
         });
         return;
+      case "reconnecting":
       case "reconnect":
-        Logger.info("RECONNECTED");
+        Logger.info("Reconnecting to socket...");
         state.value = SocketState.CONNECTING;
         for (Function element in _manager.socketProcesses.values) {
           element.call();
@@ -378,6 +404,7 @@ class SocketManager {
       });
 
       Logger.info("Connecting to the socket at: $serverAddress");
+      socketStatusUpdate("reconnecting", null);
       _manager.socket!.connect();
     } catch (e) {
       if (!catchException) {
@@ -403,7 +430,7 @@ class SocketManager {
     NotificationManager().clearSocketWarning();
   }
 
-  Future<void> authFCM({bool catchException = true, bool force = false}) async {
+  Future<void> registerFcmDevice({bool catchException = true, bool force = false}) async {
     if (!SettingsManager().settings.finishedSetup.value) return;
 
     if (isAuthingFcm && !force) {

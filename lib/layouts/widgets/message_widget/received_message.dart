@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -27,6 +28,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:particles_flutter/particles_flutter.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -159,6 +161,18 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     Animatable<TimelineValue<String>>? tween;
     Size bubbleSize = Size(0, 0);
     double opacity = 0;
+
+    // If we haven't played the effect, we should apply it from the start.
+    // This must come before we set the bubbleSize variable or else we get a box constraints errors
+    if (message.datePlayed == null) {
+      controller = CustomAnimationControl.playFromStart;
+      Timer(Duration(milliseconds: 500), () {
+        if (message.datePlayed == null) {
+          message.setPlayedDate();
+        }
+      });
+    }
+
     if (controller != CustomAnimationControl.stop) {
       bubbleSize = message.getBubbleSize(context);
     }
@@ -298,8 +312,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                         final subject = generateContent ? widget.fakeSubject : message.subject;
                         final text = generateContent ? widget.fakeText : message.text;
                         return GestureDetector(
-                          onHorizontalDragEnd: (DragEndDetails details) {
-                            if ((details.primaryVelocity ?? 0) < 0 && effect == MessageEffect.invisibleInk) {
+                          onHorizontalDragUpdate: (DragUpdateDetails details) {
+                            if (effect != MessageEffect.invisibleInk) return;
+                            if ((details.primaryDelta ?? 0).abs() > 1) {
+                              message.setPlayedDate();
                               setState(() {
                                 opacity = 1 - opacity;
                                 controller = CustomAnimationControl.stop;
@@ -429,6 +445,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           duration: Duration(milliseconds: effect == MessageEffect.loud ? 900 : effect == MessageEffect.slam ? 500 : 1800),
           animationStatusListener: (status) {
             if (status == AnimationStatus.completed) {
+              if (message.datePlayed == null) {
+                message.setPlayedDate();
+              }
+
               setState(() {
                 controller = CustomAnimationControl.stop;
               });
@@ -916,6 +936,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                         if (widget.message.expressiveSendStyleId != null)
                           GestureDetector(
                             onTap: () {
+                              HapticFeedback.mediumImpact();
                               if ((stringToMessageEffect[effect] ?? MessageEffect.none).isBubble) {
                                 if (effect == "invisible ink" && controller == CustomAnimationControl.playFromStart) {
                                   setState(() {

@@ -433,6 +433,12 @@ class Message {
     return this;
   }
 
+  Message setPlayedDate({ DateTime? timestamp }) {
+    datePlayed = timestamp ?? DateTime.now().toUtc();
+    save();
+    return this;
+  }
+
   /// Fetch attachments with a bulk list of messages. Returns a map with the
   /// message guid as key and a list of attachments as the value. DO NOT use this
   /// method in performance-sensitive areas, prefer using
