@@ -438,28 +438,13 @@ class ActionHandler {
     // If we sent attachments, return because we finished sending
     if (message.attachments.isNotEmpty) return;
 
-    // Generate the temp GUID for the message to be used
-    message.generateTempGuid();
-
-    // Build request parameters
-    Map<String, dynamic> params = {};
-    params["guid"] = chat.guid;
-    params["message"] = message.text!.trim();
-
     // Pull the Old GUID (substring so we "make a copy")
     String? oldGuid = (message.guid ?? "").substring(0);
-
-    // Generate new GUID
-    message.generateTempGuid();
-
-    // Update the new GUID
-    String tempGuid = message.guid!;
-    params["tempGuid"] = tempGuid;
 
     // Reset error, guid, and send date
     message.id = null;
     message.error = 0;
-    message.guid = tempGuid;
+    message.generateTempGuid();
     message.dateCreated = DateTime.now();
 
     // Delete the old message
@@ -470,16 +455,7 @@ class ActionHandler {
     await chat.addMessage(message);
     NewMessageManager().addMessage(chat, message);
 
-    SocketManager().sendMessage("send-message", params, (response) async {
-      // If there is an error, replace the temp value with an error
-      if (response['status'] != 200) {
-        NewMessageManager().removeMessage(chat, message.guid);
-        message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-        message.error = response['status'] == 400 ? 1001 : 1002;
-        await Message.replaceMessage(tempGuid, message);
-        NewMessageManager().addMessage(chat, message);
-      }
-    });
+    await sendMessageHelper(chat, message);
   }
 
   /// Handles the ingestion of a 'updated-message' event. It takes the
