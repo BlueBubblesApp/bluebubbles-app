@@ -634,7 +634,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       (replyToMessage.value != null ? 40 : 0) +
                       (SettingsManager().settings.enablePrivateAPI.value &&
                               SettingsManager().settings.privateSubjectLine.value
-                          ? 48
+                          ? 40
                           : 0),
                   child: Container(
                     decoration: BoxDecoration(
@@ -677,6 +677,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     },
                                     child: Obx(
                                       () => ListTile(
+                                        dense: true,
                                         selectedTileColor: context.theme.colorScheme.secondary.lightenOrDarken(20),
                                         tileColor: context.theme.colorScheme.secondary,
                                         selected: emojiSelectedIndex.value == index,
