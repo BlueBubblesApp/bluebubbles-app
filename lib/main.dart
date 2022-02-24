@@ -311,7 +311,10 @@ Future<Null> initApp(bool isBubble) async {
           InitializationSettings(android: initializationSettingsAndroid);
       await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
       tz.initializeTimeZones();
-      tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
+      // it doesn't matter if this errors
+      try {
+        tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
+      } catch(_) {}
       if (!await GoogleMlKit.nlp.entityModelManager().isModelDownloaded(EntityExtractorOptions.ENGLISH)) {
         GoogleMlKit.nlp.entityModelManager().downloadModel(EntityExtractorOptions.ENGLISH, isWifiRequired: false);
       }

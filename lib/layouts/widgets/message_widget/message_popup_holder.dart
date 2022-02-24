@@ -12,6 +12,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:universal_html/html.dart' as html;
 
 class MessagePopupHolder extends StatefulWidget {
@@ -72,7 +73,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
                     : 23.0));
   }
 
-  void openMessageDetails() async {
+  void openMessageDetails(bool keyboardStatus) async {
     EventDispatcher().emit("unfocus-keyboard", null);
     HapticFeedback.lightImpact();
     getOffset();
@@ -113,7 +114,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       ),
     );
     widget.popupPushed.call(false);
-    EventDispatcher().emit('focus-keyboard', null);
+    if (keyboardStatus) EventDispatcher().emit('focus-keyboard', null);
     if (mounted) {
       setState(() {
         visible = true;
@@ -128,35 +129,39 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      key: containerKey,
-      onDoubleTap: SettingsManager().settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
-          ? openMessageDetails
-          : SettingsManager().settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
+    return KeyboardVisibilityBuilder(
+      builder: (context, isVisible) {
+        return GestureDetector(
+          key: containerKey,
+          onDoubleTap: SettingsManager().settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
+              ? () => openMessageDetails(isVisible)
+              : SettingsManager().settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
+                  ? () {
+                      if (widget.message.guid!.startsWith('temp')) return;
+                      HapticFeedback.lightImpact();
+                      sendReaction(SettingsManager().settings.quickTapbackType.value);
+                    }
+                  : null,
+          onLongPress: SettingsManager().settings.doubleTapForDetails.value && SettingsManager().settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
               ? () {
                   if (widget.message.guid!.startsWith('temp')) return;
                   HapticFeedback.lightImpact();
                   sendReaction(SettingsManager().settings.quickTapbackType.value);
                 }
-              : null,
-      onLongPress: SettingsManager().settings.doubleTapForDetails.value && SettingsManager().settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
-          ? () {
-              if (widget.message.guid!.startsWith('temp')) return;
-              HapticFeedback.lightImpact();
-              sendReaction(SettingsManager().settings.quickTapbackType.value);
+              : () => openMessageDetails(isVisible),
+          onSecondaryTapUp: (details) async {
+            if (!kIsWeb && !kIsDesktop) return;
+            if (kIsWeb) {
+              (await html.document.onContextMenu.first).preventDefault();
             }
-          : openMessageDetails,
-      onSecondaryTapUp: (details) async {
-        if (!kIsWeb && !kIsDesktop) return;
-        if (kIsWeb) {
-          (await html.document.onContextMenu.first).preventDefault();
-        }
-        openMessageDetails();
-      },
-      child: Opacity(
-        child: widget.child,
-        opacity: visible ? 1 : 0,
-      ),
+            openMessageDetails(isVisible);
+          },
+          child: Opacity(
+            child: widget.child,
+            opacity: visible ? 1 : 0,
+          ),
+        );
+      }
     );
   }
 }

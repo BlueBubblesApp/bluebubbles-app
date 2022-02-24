@@ -592,7 +592,7 @@ class _Cupertino extends StatelessWidget {
                         parent.widget.chat.muteType == "mute"
                             ? SvgPicture.asset(
                                 "assets/icon/moon.svg",
-                                color: parentProps.chat.hasUnreadMessage!
+                                color: parent.shouldHighlight.value ? Colors.white : parentProps.chat.hasUnreadMessage!
                                     ? Theme.of(context).primaryColor.withOpacity(0.8)
                                     : Theme.of(context).textTheme.subtitle1!.color,
                                 width: 10,
