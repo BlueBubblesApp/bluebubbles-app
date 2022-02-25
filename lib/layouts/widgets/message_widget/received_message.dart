@@ -349,36 +349,18 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                 opacity: 1 - opacity,
                                 child: RichText(
                                   text: TextSpan(
-                                    children: [
-                                      if (!isNullOrEmpty(message.subject)!)
-                                        TextSpan(
-                                          text: "$subject\n",
-                                          style: Theme.of(context).textTheme.bodyText2!.apply(fontWeightDelta: 2, color: hideContent ? Colors.transparent : Colors.white),
-                                        ),
-                                      TextSpan(
-                                        text: text,
-                                        style: Theme.of(context).textTheme.bodyText2!.apply(color: hideContent ? Colors.transparent : Colors.white),
-                                      ),
-                                    ],
-                                    style: Theme.of(context).textTheme.bodyText2!.apply(color: hideContent ? Colors.transparent : Colors.white),
+                                    children: MessageWidgetMixin.buildMessageSpans(context, widget.message,
+                                        colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null, fakeSubject: widget.fakeSubject, fakeText: widget.fakeText),
+                                    style: Theme.of(context).textTheme.bodyText2,
                                   ),
                                 ),
                               ),
                               if (effect == MessageEffect.gentle)
                                 RichText(
                                   text: TextSpan(
-                                    children: [
-                                      if (!isNullOrEmpty(message.subject)!)
-                                        TextSpan(
-                                          text: "$subject\n",
-                                          style: Theme.of(context).textTheme.bodyText2!.apply(fontWeightDelta: 2, fontSizeFactor: value, color: hideContent ? Colors.transparent : Colors.white),
-                                        ),
-                                      TextSpan(
-                                        text: text,
-                                        style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: value, color: hideContent ? Colors.transparent : Colors.white),
-                                      ),
-                                    ],
-                                    style: Theme.of(context).textTheme.bodyText2!.apply(color: hideContent ? Colors.transparent : Colors.white),
+                                    children: MessageWidgetMixin.buildMessageSpans(context, widget.message,
+                                        colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null, fakeSubject: widget.fakeSubject, fakeText: widget.fakeText),
+                                    style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: value),
                                   ),
                                 ),
                               if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop)

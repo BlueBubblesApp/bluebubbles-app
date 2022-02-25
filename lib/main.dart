@@ -341,8 +341,8 @@ Future<Null> initApp(bool isBubble) async {
       } on StateError catch (_) {
         fontExistsOnDisk.value = false;
       }
-      await dotenv.load();
     }
+    await dotenv.load(fileName: 'env');
   } catch (e, s) {
     Logger.error(e);
     Logger.error(s);
