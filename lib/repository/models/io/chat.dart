@@ -1046,9 +1046,11 @@ class Chat {
     });
   }
 
-  Message get latestMessageGetter {
+  Message? get latestMessageGetter {
     if (latestMessage != null) return latestMessage!;
     List<Message> latest = Chat.getMessages(this, limit: 1);
+    if (latest.isEmpty) return null;
+
     Message message = latest.first;
     latestMessage = message;
     if (message.hasAttachments) {

@@ -336,9 +336,11 @@ class ChatBloc {
               cachedHandles.add(element);
             }
           }
-          chat.latestMessageText = MessageHelper.getNotificationText(chat.latestMessageGetter);
+
+          Message? lastMessage = chat.latestMessageGetter;
+          chat.latestMessageText = lastMessage == null ? '' : MessageHelper.getNotificationText(lastMessage);
           chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
-          chat.latestMessageDate = chat.latestMessageGetter.dateCreated;
+          chat.latestMessageDate = lastMessage == null ? DateTime.fromMillisecondsSinceEpoch(0) : lastMessage.dateCreated;
           if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) {
             chat.latestMessage!.handle = kIsWeb
                 ? Handle.findOne(originalROWID: chat.latestMessage!.handleId)
