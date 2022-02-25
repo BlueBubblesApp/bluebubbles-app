@@ -56,7 +56,8 @@ class SettingsManager {
       bool? useCustomPath = prefs.getBool("use-custom-path");
       String? customStorePath = prefs.getString("custom-path");
       if (useCustomPath == true) {
-        appDocDir = customStorePath == null ? await getApplicationDocumentsDirectory() : Directory(customStorePath);
+        //ignore: unnecessary_cast, we need this as a workaround
+        appDocDir = customStorePath == null ? (await getApplicationDocumentsDirectory() as Directory) : Directory(customStorePath);
       }
     }
     try {
