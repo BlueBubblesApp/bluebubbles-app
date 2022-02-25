@@ -269,6 +269,7 @@ class ApiService extends GetxService {
         queryParameters: buildQueryParams(),
         data: {
           "chatGuid": chatGuid,
+          "tempGuid": tempGuid,
           "message": message.isEmpty && (subject?.isNotEmpty ?? false) ? " " : message,
           "method": method,
           "effectId": effectId,
