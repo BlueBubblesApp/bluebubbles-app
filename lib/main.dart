@@ -344,7 +344,7 @@ Future<Null> initApp(bool isBubble) async {
     }
 
     if (kIsDesktop || kIsWeb) {
-      await dotenv.load(fileName: 'env');
+      await dotenv.load(fileName: '.env');
     }
   } catch (e, s) {
     Logger.error(e);
