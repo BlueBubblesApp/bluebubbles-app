@@ -53,6 +53,27 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
     });
   }
 
+  String? getInitials({Handle? handle, double size = 30}) {
+    if (handle == null) return "Y";
+    String? name = ContactManager().getContactTitle(handle);
+    if (name.isEmail) return name[0].toUpperCase();
+
+    // Check if it's just a regular number, no contact
+    if (name.isPhoneNumber) return null;
+    List<String> items = name.split(" ").where((element) => element.isNotEmpty).toList();
+    switch (items.length) {
+      case 1:
+        return items[0][0].toUpperCase();
+      default:
+        if (items.length - 1 < 0 || items[items.length - 1].isEmpty) return "";
+        String first = items[0][0].toUpperCase();
+        String last = items[items.length - 1][0].toUpperCase();
+        if (!last.contains(RegExp('[A-Za-z]'))) last = items[1][0];
+        if (!last.contains(RegExp('[A-Za-z]'))) last = "";
+        return first + last;
+    }
+  }
+
   void onAvatarTap() async {
     if (widget.onTap != null) {
       widget.onTap!();
@@ -124,7 +145,6 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    String? initials = ContactManager().getContactInitials(widget.handle);
 
     return GestureDetector(
       onTap: onAvatarTap,
@@ -179,7 +199,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                 child: Container(
                   child: (SettingsManager().settings.redactedMode.value &&
                       SettingsManager().settings.removeLetterAvatars.value) ||
-                      initials == null
+                      getInitials(handle: widget.handle) == null
                       ? Icon(
                     SettingsManager().settings.skin.value == Skins.iOS
                         ? CupertinoIcons.person_fill
@@ -188,7 +208,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                     size: ((widget.size ?? 40) / 2) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
                   )
                       : Text(
-                    initials,
+                    getInitials(handle: widget.handle)!,
                     key: Key("$keyPrefix-avatar-text"),
                     style: TextStyle(
                       fontSize: widget.fontSize ?? 18,

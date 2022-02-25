@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -78,18 +77,16 @@ class ContactManager {
   }
 
   String? findAddressMatch(String address) {
-    String addr = address.numericOnly();
-
     // If the address exists in the map, return it as-is
-    if (_phoneToContactMap.containsKey(addr)) return address;
+    if (_phoneToContactMap.containsKey(address)) return address;
 
     // If the address doesn't exist, we need to match the last 'x' digits.
     // We are going to try as many times as indexes in `matchList`.
     // For each number in `matchList` we try and match the last 'x' digits
     List<int> matchList = [7, 6, 5];
     for (int i in matchList) {
-      if (addr.length < i) continue;
-      String lastDigits = addr.substring(addr.length - i, addr.length);
+      if (address.length < i) continue;
+      String lastDigits = address.substring(address.length - i, address.length);
       String? addressMatch = _phoneToContactMap.keys.firstWhereOrNull((i) => i.endsWith(lastDigits));
       if (addressMatch == null) continue;
       return addressMatch;
@@ -105,12 +102,11 @@ class ContactManager {
     if (address.contains('@')) {
       return _emailToContactMap[address];
     } else {
-      String saniAddress = address.numericOnly();
-      Contact? match = _phoneToContactMap[saniAddress];
+      Contact? match = _phoneToContactMap[address];
 
       // If we can't find the match, we want to match based on last 7 digits
       if (match == null) {
-        String? matchedAddress = findAddressMatch(saniAddress);
+        String? matchedAddress = findAddressMatch(address);
         if (matchedAddress != null) {
           match = _phoneToContactMap[matchedAddress];
         }
@@ -160,7 +156,6 @@ class ContactManager {
       await fetchContactsDesktop();
     }
 
-    // This is _reuquired_ for the `getContacts()` function to be used
     await buildCacheMap();
     
     if (SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value) {
@@ -182,35 +177,16 @@ class ContactManager {
     return getContactsFuture!.future;
   }
 
-
-  Future<void> buildCacheMap({loadFromChats = true, loadFormatted = true}) async {
+  Future<void> buildCacheMap({loadFormatted = true}) async {
     for (Contact c in contacts) {
       for (String p in c.phones) {
         String saniPhone = p.numericOnly();
         _phoneToContactMap[saniPhone] = c;
-
-        if (loadFormatted) {
-          _addressToFormatted[saniPhone] = await formatPhoneNumber(saniPhone);
-        }
+        _addressToFormatted[saniPhone] = await formatPhoneNumber(saniPhone);
       }
 
       for (String e in c.emails) {
         _emailToContactMap[e] = c;
-      }
-    }
-
-    // Get loaded chats and add participants to the formatted address cache.
-    // This is in case any members of chats that don't have associated contacts,
-    // still get their address formatted correctly.
-    List<Chat> chats = ChatBloc().chats.isEmpty ? await Chat.getChats(limit: 1000) : ChatBloc().chats;
-    for (Chat c in chats) {
-      for (Handle h in c.participants) {
-        if (!h.address.contains('@')) {
-          String saniPhone = h.address.numericOnly();
-          if (!_addressToFormatted.containsKey(saniPhone)) {
-            _addressToFormatted[saniPhone] = await formatPhoneNumber(saniPhone);
-          }
-        }
       }
     }
   }
@@ -309,7 +285,6 @@ class ContactManager {
     }
   }
 
-  /// Fetch a contact's avatar, first trying the full size image, then the thumbnail if unavailable
   Future<void> loadContactAvatar(Contact contact) async {
     try {
       contact.avatar.value ??= await FastContacts.getContactImage(contact.id, size: ContactImageSize.fullSize);
@@ -326,7 +301,8 @@ class ContactManager {
     try {
       bool isEmailAddr = handle.address.isEmail;
       if (!isEmailAddr) {
-        return _addressToFormatted[handle.address.numericOnly()] ?? handle.address;
+        String? addressMatch = findAddressMatch(handle.address);
+        return addressMatch != null ? (_addressToFormatted[addressMatch] ?? handle.address) : handle.address;
       }
 
       // If it's an email and starts with "e:", strip it out
@@ -338,49 +314,5 @@ class ContactManager {
     }
 
     return handle.address;
-  }
-
-  /// Converts a string into initials
-  /// 
-  /// Transform something like "John Doe" to "JD"
-  String? _getInitials(String value, {int maxCharCount = 2}) {
-    // Remove any numbers, certain symbols, and non-alphabet characters
-    String importantChars = value.replaceAll(RegExp(r'[^a-zA-Z _-]'), "").trim();
-    if (importantChars.isEmpty) return null;
-
-    // Split by a space or special character delimiter, take each of the items and
-    // reduce it to just the capitalized first letter. Then join the array by an empty char
-    String reduced = importantChars
-                      .split(RegExp(r' |-|_'))
-                      .take(maxCharCount)
-                      .map((e) => e.isEmpty ? '' : e[0].toUpperCase())
-                      .join('');
-    return reduced.isEmpty ? null : reduced;
-  }
-
-  String? getContactInitials(Handle? handle) {
-    if (handle == null) return "Y";
-    Contact? contact = getContact(handle.address);
-    late String comparedTo;
-
-    // If we have a contact, use the display name to get the initials
-    if (contact != null) {
-      comparedTo = contact.displayName;
-    } else if (handle.address.contains('@')) {
-      // If we don't have a contact and the address is an email, return the first letter.
-      // Remove the `e:` prefix if necessary
-      String saniAddr = handle.address;
-      if (saniAddr.startsWith('e:')) {
-        saniAddr = saniAddr.substring(2);
-      }
-      
-      return saniAddr[0].toUpperCase();
-    } else {
-      // If we don't have a contact, and it's not an email, use the address
-      // to generate the initials
-      comparedTo = handle.address;
-    }
-
-    return _getInitials(comparedTo);
   }
 }
