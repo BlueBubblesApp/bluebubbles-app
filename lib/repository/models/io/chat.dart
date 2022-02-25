@@ -49,7 +49,7 @@ String getFullChatTitle(Chat _chat) {
     for (int i = 0; i < chat.participants.length; i++) {
       String? name = ContactManager().getContactTitle(chat.participants[i]);
 
-      if (chat.participants.length > 1 && !name.isPhoneNumber) {
+      if (chat.participants.length > 1 && !name.numericOnly().isPhoneNumber) {
         name = name.trim().split(" ")[0];
       } else {
         name = name.trim();
