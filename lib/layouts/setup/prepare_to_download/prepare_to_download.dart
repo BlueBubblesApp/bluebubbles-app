@@ -124,9 +124,9 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                                 });
                               },
                               label: numberOfMessages == 0 ? "1" : numberOfMessages.toString(),
-                              divisions: 50,
+                              divisions: 10,
                               min: 0,
-                              max: 250,
+                              max: 50,
                             ),
                             SizedBox(height: 10),
                             Padding(
