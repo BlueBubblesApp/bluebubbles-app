@@ -297,6 +297,7 @@ class ContactManager {
   }
 
   Future<void> getAvatarsForChat(Chat chat) async {
+    if (kIsDesktop || kIsWeb) return;
     if (chat.participants.isEmpty) {
       chat.getParticipants();
     }
@@ -311,6 +312,7 @@ class ContactManager {
 
   /// Fetch a contact's avatar, first trying the full size image, then the thumbnail if unavailable
   Future<void> loadContactAvatar(Contact contact) async {
+    if (kIsDesktop || kIsWeb) return;
     try {
       contact.avatar.value ??= await FastContacts.getContactImage(contact.id, size: ContactImageSize.fullSize);
     } catch (_) {

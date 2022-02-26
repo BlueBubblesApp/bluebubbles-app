@@ -181,27 +181,41 @@ Future<Null> initApp(bool isBubble) async {
             store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
           } catch (_) {
             Logger.info("Failed to open store from reference, opening from path");
-            store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
-            if (Platform.isWindows) {
-              if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
-                Logger.info("Failed to open store from default path. Using custom path");
-                customStorePath ??= "C:\\bluebubbles_app";
-                prefs.setBool("use-custom-path", true);
-                objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-                Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-                store = await openStore(directory: join(customStorePath, 'objectbox'));
-              } else {
-                Logger.info("Objectbox directory exists.");
+            try {
+              if (kIsDesktop) {
+                Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
               }
+              store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
+            } catch (_) {
+              if (Platform.isWindows) {
+                if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
+                  Logger.info("Failed to open store from default path. Using custom path");
+                  customStorePath ??= "C:\\bluebubbles_app";
+                  prefs.setBool("use-custom-path", true);
+                  objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+                  Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
+                  store = await openStore(directory: join(customStorePath, 'objectbox'));
+                } else {
+                  Logger.info("Objectbox directory exists.");
+                }
+              }
+
+              // TODO Linux fallback
             }
           }
         } else if (useCustomPath == true && Platform.isWindows) {
           customStorePath ??= "C:\\bluebubbles_app";
           objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+          if (kIsDesktop) {
+            objectBoxDirectory.createSync(recursive: true);
+          }
           Logger.info("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
-          store = await openStore(directory: join(customStorePath, 'objectbox'));
+          store = await openStore(directory: join(customStorePath, "objectbox"));
         } else {
           try {
+            if (kIsDesktop) {
+              Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
+            }
             Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
             store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
           } catch (_) {
@@ -217,6 +231,7 @@ Future<Null> initApp(bool isBubble) async {
                 Logger.info("Objectbox directory exists.");
               }
             }
+            // TODO Linux fallback
           }
         }
         attachmentBox = store.box<Attachment>();
@@ -314,7 +329,7 @@ Future<Null> initApp(bool isBubble) async {
       // it doesn't matter if this errors
       try {
         tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
-      } catch(_) {}
+      } catch (_) {}
       if (!await GoogleMlKit.nlp.entityModelManager().isModelDownloaded(EntityExtractorOptions.ENGLISH)) {
         GoogleMlKit.nlp.entityModelManager().downloadModel(EntityExtractorOptions.ENGLISH, isWifiRequired: false);
       }

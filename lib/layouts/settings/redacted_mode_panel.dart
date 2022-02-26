@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
@@ -122,10 +123,6 @@ class RedactedModePanel extends StatelessWidget {
                 children: [
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      if (val) {
-                        ContactManager().loadFakeInfo();
-                      }
-
                       SettingsManager().settings.redactedMode.value = val;
                       saveSettings();
                     },
