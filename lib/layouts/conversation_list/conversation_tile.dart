@@ -397,22 +397,22 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         : ConstrainedBox(
             constraints: BoxConstraints(maxWidth: 100.0),
             child: Obx(() {
-              Message message = widget.chat.latestMessageGetter;
+              Message? message = widget.chat.latestMessageGetter;
               Indicator show = shouldShow(message, markers.myLastMessage.value, markers.lastReadMessage.value,
                   markers.lastDeliveredMessage.value);
               return Text(
-                  message.error > 0
+                  (message?.error ?? 0) > 0
                       ? "Error"
                       : ((show == Indicator.READ
-                          ? "Read\n${buildDate(message.dateRead)}"
+                          ? "Read\n${buildDate(message?.dateRead)}"
                           : show == Indicator.DELIVERED
-                              ? "Delivered\n${buildDate(message.dateDelivered)}"
+                              ? "Delivered\n${buildDate(message?.dateDelivered)}"
                               : show == Indicator.SENT
-                                  ? "Sent\n${buildDate(message.dateCreated)}"
-                                  : buildDate(message.dateCreated))),
+                                  ? "Sent\n${buildDate(message?.dateCreated)}"
+                                  : buildDate(message?.dateCreated))),
                   textAlign: TextAlign.right,
                   style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                        color: message.error > 0
+                        color: (message?.error ?? 0) > 0
                             ? Colors.red
                             : shouldHighlight.value
                                 ? SettingsManager().settings.skin.value == Skins.iOS

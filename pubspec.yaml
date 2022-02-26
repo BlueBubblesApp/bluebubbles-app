@@ -11,7 +11,7 @@ description: Send iMessages on Android using BlueBubbles!
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.8.0+25
+version: 1.8.0+26
 publish_to: none
 
 environment:
@@ -207,7 +207,7 @@ flutter:
     - assets/icon/icon.png
     - assets/changelog/changelog.md
     - assets/icon/icon.ico
-    - env
+    - .env
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
   # For details regarding adding assets from package dependencies, see

@@ -22,15 +22,15 @@ class PinnedTileTextBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     bool showTail = !chat.isGroup();
     if (!(chat.hasUnreadMessage ?? false)) return Container();
-    Message message = chat.latestMessageGetter;
-    bool leftSide = Random(message.id).nextBool();
+    Message? lastMessage = chat.latestMessageGetter;
+    bool leftSide = Random(lastMessage?.id).nextBool();
     bool hide = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
     bool generate =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
 
-    String messageText = MessageHelper.getNotificationText(message);
+    String messageText = lastMessage == null ? '' : MessageHelper.getNotificationText(lastMessage);
     if (generate) messageText = chat.fakeLatestMessageText ?? "";
-    if (message.associatedMessageGuid != null || message.isFromMe! || isNullOrEmpty(messageText, trimString: true)!) {
+    if (lastMessage?.associatedMessageGuid != null || (lastMessage?.isFromMe ?? false) || isNullOrEmpty(messageText, trimString: true)!) {
       return Container();
     }
 
