@@ -162,9 +162,7 @@ class ContactManager {
     // This is _reuquired_ for the `getContacts()` function to be used
     await buildCacheMap();
 
-    if (SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value) {
-      loadFakeInfo();
-    }
+    loadFakeInfo();
 
     Logger.info("Finished fetching contacts (${contacts.length})", tag: tag);
     Logger.info("Contacts map size: ${_emailToContactMap.length + _phoneToContactMap.length}", tag: tag);
