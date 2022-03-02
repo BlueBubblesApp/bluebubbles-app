@@ -659,7 +659,7 @@ class SocketManager {
 
   Future<Map<String, dynamic>> sendMessage(
       String event, Map<String, dynamic>? message, Function(Map<String, dynamic>) cb,
-      {String? reason, bool awaitResponse = true, String? path}) {
+      {String? reason, bool awaitResponse = true}) {
     Completer<Map<String, dynamic>> completer = Completer();
     int _processId = 0;
     void socketCB([bool finishWithError = false]) {
@@ -674,38 +674,23 @@ class SocketManager {
         });
         if (awaitResponse) _manager.finishSocketProcess(_processId);
       } else {
-        if (path == null) {
-          _manager.socket?.emitWithAck(event, message, ack: (response) {
-            if (response.containsKey('encrypted') && response['encrypted']) {
-              try {
-                response['data'] =
-                    jsonDecode(decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey.value));
-              } catch (ex) {
-                response['data'] = decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey.value);
-              }
+        _manager.socket?.emitWithAck(event, message, ack: (response) {
+          if (response.containsKey('encrypted') && response['encrypted']) {
+            try {
+              response['data'] =
+                  jsonDecode(decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey.value));
+            } catch (ex) {
+              response['data'] = decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey.value);
             }
+          }
 
-            cb(response);
-            if (!completer.isCompleted) {
-              completer.complete(response);
-            }
-
-            if (awaitResponse) _manager.finishSocketProcess(_processId);
-          });
-        } else {
-          _manager.socket!.emitWithAck(event, message, ack: (response) async {
-            if (!kIsWeb && !kIsDesktop) {
-              await MethodChannelInterface().invokeMethod("download-file", {
-                "data": response['data'],
-                "path": path,
-              });
-            }
-            response['byteLength'] = base64.decode(response['data']).length;
-            cb(response);
+          cb(response);
+          if (!completer.isCompleted) {
             completer.complete(response);
-            if (awaitResponse) _manager.finishSocketProcess(_processId);
-          });
-        }
+          }
+
+          if (awaitResponse) _manager.finishSocketProcess(_processId);
+        });
       }
     }
 
