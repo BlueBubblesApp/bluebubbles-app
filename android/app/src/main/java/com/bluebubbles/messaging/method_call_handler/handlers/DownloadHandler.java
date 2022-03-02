@@ -32,14 +32,13 @@ public class DownloadHandler implements Handler {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void Handle() {
-        String data = call.argument("data");
+        final byte[] data = call.argument("data");
         if (data == null) {
             result.error("1", "Attachment data was null, no data to decode!", null);
             return;
         }
 
-        final byte[] decoded = Base64.decode(data.toString(), Base64.DEFAULT);
-        if (decoded == null || decoded.length == 0) {
+        if (data == null || data.length == 0) {
             result.success("");
             return;
         }
@@ -54,11 +53,11 @@ public class DownloadHandler implements Handler {
                         outputFile.createNewFile();
                     }
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        Files.write(Paths.get(call.argument("path").toString()), decoded, StandardOpenOption.APPEND);
+                        Files.write(Paths.get(call.argument("path").toString()), data, StandardOpenOption.APPEND);
                     } else {
                         FileOutputStream stream = new FileOutputStream(outputFile);
                         try {
-                            stream.write(decoded);
+                            stream.write(data);
                         } finally {
                             stream.close();
                         }
@@ -66,11 +65,11 @@ public class DownloadHandler implements Handler {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                result.success("");
             }
         };
 
         Thread t = new Thread(r);
         t.start();
-        result.success("");
     }
 }
