@@ -122,10 +122,6 @@ class RedactedModePanel extends StatelessWidget {
                 children: [
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      if (val) {
-                        ContactManager().loadFakeInfo();
-                      }
-
                       SettingsManager().settings.redactedMode.value = val;
                       saveSettings();
                     },
