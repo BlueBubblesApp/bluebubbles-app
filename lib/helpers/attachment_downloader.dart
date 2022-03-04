@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -16,7 +13,7 @@ import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
 class AttachmentDownloadService extends GetxService {
-  int maxDownloads = 10;
+  int maxDownloads = 2;
   final List<String> downloaders = [];
   final List<AttachmentDownloadController> _downloaders = [];
 
