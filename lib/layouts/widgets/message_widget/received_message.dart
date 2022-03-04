@@ -120,17 +120,17 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       }
     });
 
-    WidgetsBinding.instance!.addObserver(this);
-    WidgetsBinding.instance!.addPostFrameCallback((_) async {
-      if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble && widget.message.datePlayed == null) {
+    if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble && widget.message.datePlayed == null) {
+      WidgetsBinding.instance!.addObserver(this);
+      WidgetsBinding.instance!.addPostFrameCallback((_) async {
         EventDispatcher().emit('play-effect', {
           'type': effect,
           'size': key.globalPaintBounds(context),
         });
 
         widget.message.setPlayedDate();
-      }
-    });
+      });
+    }
 
     /*if (ChatManager().activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
       ChatManager().activeChat?.autoplayGuid = null;
