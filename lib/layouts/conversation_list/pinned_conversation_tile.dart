@@ -385,15 +385,16 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                           builder: (BuildContext context) {
                             if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
                             if (showTypingIndicator.value) return Container();
-                            Message message = widget.chat.latestMessageGetter;
-                            if ([null, ""].contains(message.associatedMessageGuid) || (message.isFromMe ?? false)) {
+                            Message? message = widget.chat.latestMessageGetter;
+                            if ([null, ""].contains(message?.associatedMessageGuid) || (message?.isFromMe ?? false)) {
                               return Container();
                             }
+
                             return Positioned(
                               top: -sqrt(maxWidth / 2),
                               right: -sqrt(maxWidth / 2) - maxWidth * 0.15,
                               child: ReactionsWidget(
-                                associatedMessages: [message],
+                                associatedMessages: [message!],
                                 bigPin: true,
                               ),
                             );
