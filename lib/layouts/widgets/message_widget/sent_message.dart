@@ -589,9 +589,10 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
         : effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ??
             "unknown";
 
-    if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble && widget.message.datePlayed == null) {
+    if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble && widget.message.datePlayed == null && mounted) {
       WidgetsBinding.instance!.addObserver(this);
       WidgetsBinding.instance!.addPostFrameCallback((_) async {
+        if (!mounted) return;
         EventDispatcher().emit('play-effect', {
           'type': effect,
           'size': key.globalPaintBounds(context),
