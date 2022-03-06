@@ -24,7 +24,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(1, 2065429213543838585),
       name: 'Attachment',
-      lastPropertyId: const IdUid(17, 5777776419087046056),
+      lastPropertyId: const IdUid(18, 4627777114429677812),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -114,7 +114,12 @@ final _entities = <ModelEntity>[
             type: 11,
             flags: 520,
             indexId: const IdUid(8, 2010461783272999439),
-            relationTarget: 'Message')
+            relationTarget: 'Message'),
+        ModelProperty(
+            id: const IdUid(18, 4627777114429677812),
+            name: 'dbMetadata',
+            type: 9,
+            flags: 0)
       ],
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
@@ -803,7 +808,10 @@ ModelDefinition getObjectBoxModel() {
               object.bytes == null ? null : fbb.writeListInt8(object.bytes!);
           final webUrlOffset =
               object.webUrl == null ? null : fbb.writeString(object.webUrl!);
-          fbb.startTable(18);
+          final dbMetadataOffset = object.dbMetadata == null
+              ? null
+              : fbb.writeString(object.dbMetadata!);
+          fbb.startTable(19);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -821,6 +829,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(14, bytesOffset);
           fbb.addOffset(15, webUrlOffset);
           fbb.addInt64(16, object.message.targetId);
+          fbb.addOffset(17, dbMetadataOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -852,11 +861,13 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 22),
               hideAttachment: const fb.BoolReader()
                   .vTableGetNullable(buffer, rootOffset, 24),
-              blurhash: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 26),
+              blurhash:
+                  const fb.StringReader().vTableGetNullable(buffer, rootOffset, 26),
               height: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 28),
               width: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 30),
               bytes: bytesValue == null ? null : Uint8List.fromList(bytesValue),
-              webUrl: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 34));
+              webUrl: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 34))
+            ..dbMetadata = const fb.StringReader().vTableGetNullable(buffer, rootOffset, 38);
           object.message.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 36, 0);
           object.message.attach(store);
@@ -1479,6 +1490,10 @@ class Attachment_ {
   /// see [Attachment.message]
   static final message =
       QueryRelationToOne<Attachment, Message>(_entities[0].properties[16]);
+
+  /// see [Attachment.dbMetadata]
+  static final dbMetadata =
+      QueryStringProperty<Attachment>(_entities[0].properties[17]);
 }
 
 /// [Chat] entity fields to define ObjectBox queries.
