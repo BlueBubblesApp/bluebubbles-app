@@ -54,6 +54,7 @@ class ConversationView extends StatefulWidget {
   ConversationView({
     Key? key,
     this.chat,
+    this.previousChat,
     this.existingAttachments = const [],
     this.existingText,
     this.isCreator = false,
@@ -67,6 +68,7 @@ class ConversationView extends StatefulWidget {
   }) : super(key: key);
 
   final Chat? chat;
+  final Chat? previousChat;
   final Function(List<UniqueContact> items)? onSelect;
   final Widget? selectIcon;
   final String? customHeading;
@@ -112,6 +114,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     isCreator = widget.isCreator;
     chat = widget.chat;
+    previousChat = widget.previousChat;
 
     if (chat != null) {
       prefs.setString('lastOpenedChat', chat!.guid);
@@ -264,9 +267,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       currentChat!.disposeControllers();
       currentChat!.dispose();
     }
-
-    // Switching chat to null will clear the currently active chat
-    ChatManager().setActiveChat(null);
     super.dispose();
   }
 

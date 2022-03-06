@@ -733,11 +733,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                           .toList();
                     }
                     EventDispatcher().emit("update-highlight", null);
-                    popDetails();
                     return ConversationView(
                       isCreator: true,
                       existingText: widget.message.text,
                       existingAttachments: existingAttachments,
+                      previousChat: widget.currentChat?.chat,
                     );
                   },
                 ),

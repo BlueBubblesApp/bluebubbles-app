@@ -41,6 +41,7 @@ import 'package:url_launcher/url_launcher.dart';
 mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on State<ConversationView> {
   /// Commonly shared variables
   Chat? chat;
+  Chat? previousChat;
   bool? isCreator;
   MessageBloc? messageBloc;
 
@@ -175,7 +176,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     messageBloc?.dispose();
     _contactStreamController.close();
     
-    ChatManager().setActiveChat(null);
+    ChatManager().setActiveChat(previousChat);
     super.dispose();
   }
 
