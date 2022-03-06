@@ -181,7 +181,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               children: <Widget>[
                 GestureDetector(
                   onTap: () {
-                    Navigator.of(context).pop();
+                    popDetails();
                   },
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
