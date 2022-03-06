@@ -40,13 +40,12 @@ class ContactManager {
   /// Maps addresses to formatted versions
   final Map<String, String> _addressToFormatted = {};
 
-
   // We need these so we don't have threads fetching at the same time
   Completer<bool>? getContactsFuture;
   Completer? getAvatarsFuture;
   int lastRefresh = 0;
 
-  Future<bool> canAccessContacts({ headless = false }) async {
+  Future<bool> canAccessContacts({headless = false}) async {
     if (kIsWeb || kIsDesktop) {
       String? str = await SettingsManager().getServerVersion();
       Version version = Version.parse(str);
@@ -101,23 +100,23 @@ class ContactManager {
 
   /// Fetches contact from the cache maps
   Contact? getContact(String? address) {
-    if (address == null || address.isEmpty) return null;
+    if (address == null || address.isEmpty || address == "John Doe") return null;
     if (address.contains('@')) {
       return _emailToContactMap[address];
-    } else {
-      String saniAddress = address.numericOnly();
-      Contact? match = _phoneToContactMap[saniAddress];
-
-      // If we can't find the match, we want to match based on last 7 digits
-      if (match == null) {
-        String? matchedAddress = findAddressMatch(saniAddress);
-        if (matchedAddress != null) {
-          match = _phoneToContactMap[matchedAddress];
-        }
-      }
-
-      return match;
     }
+
+    String saniAddress = address.numericOnly();
+    Contact? match = _phoneToContactMap[saniAddress];
+
+    // If we can't find the match, we want to match based on last 7 digits
+    if (match == null) {
+      String? matchedAddress = findAddressMatch(saniAddress);
+      if (matchedAddress != null) {
+        match = _phoneToContactMap[matchedAddress];
+      }
+    }
+
+    return match;
   }
 
   Future<bool> loadContacts({headless = false, force = false, loadAvatars = false}) async {
@@ -162,10 +161,8 @@ class ContactManager {
 
     // This is _reuquired_ for the `getContacts()` function to be used
     await buildCacheMap();
-    
-    if (SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value) {
-      loadFakeInfo();
-    }
+
+    loadFakeInfo();
 
     Logger.info("Finished fetching contacts (${contacts.length})", tag: tag);
     Logger.info("Contacts map size: ${_emailToContactMap.length + _phoneToContactMap.length}", tag: tag);
@@ -181,7 +178,6 @@ class ContactManager {
 
     return getContactsFuture!.future;
   }
-
 
   Future<void> buildCacheMap({loadFromChats = true, loadFormatted = true}) async {
     for (Contact c in contacts) {
@@ -267,7 +263,8 @@ class ContactManager {
       c.fakeName ??= faker.person.name();
 
       if (c.phones.isNotEmpty || c.emails.isEmpty) {
-        c.fakeAddress ??= faker.phoneNumber.random.fromPattern(["+###########", "+# ###-###-####", "+# (###) ###-####"]);
+        c.fakeAddress ??=
+            faker.phoneNumber.random.fromPattern(["+###########", "+# ###-###-####", "+# (###) ###-####"]);
       } else if (c.emails.isNotEmpty) {
         c.fakeAddress ??= faker.internet.email();
       }
@@ -297,6 +294,7 @@ class ContactManager {
   }
 
   Future<void> getAvatarsForChat(Chat chat) async {
+    if (kIsDesktop || kIsWeb) return;
     if (chat.participants.isEmpty) {
       chat.getParticipants();
     }
@@ -311,6 +309,7 @@ class ContactManager {
 
   /// Fetch a contact's avatar, first trying the full size image, then the thumbnail if unavailable
   Future<void> loadContactAvatar(Contact contact) async {
+    if (kIsDesktop || kIsWeb) return;
     try {
       contact.avatar.value ??= await FastContacts.getContactImage(contact.id, size: ContactImageSize.fullSize);
     } catch (_) {
@@ -320,28 +319,29 @@ class ContactManager {
 
   String getContactTitle(Handle? handle) {
     if (handle == null) return "You";
-    Contact? contact = getContact(handle.address);
+    String address = handle.address;
+    Contact? contact = getContact(address);
     if (contact != null) return contact.displayName;
 
-    try {
-      bool isEmailAddr = handle.address.isEmail;
-      if (!isEmailAddr) {
-        return _addressToFormatted[handle.address.numericOnly()] ?? handle.address;
-      }
 
-      // If it's an email and starts with "e:", strip it out
-      if (isEmailAddr && handle.address.startsWith("e:")) {
-        return handle.address.substring(2);
+    if (address.startsWith("e:")) {
+      address = address.substring(2);
+    }
+
+    try {
+      bool isEmailAddr = address.isEmail;
+      if (!isEmailAddr) {
+        return _addressToFormatted[address.numericOnly()] ?? address;
       }
     } catch (ex) {
       Logger.error('Failed to getContactTitle(), for address, "${handle.address}": ${ex.toString()}', tag: tag);
     }
 
-    return handle.address;
+    return address;
   }
 
   /// Converts a string into initials
-  /// 
+  ///
   /// Transform something like "John Doe" to "JD"
   String? _getInitials(String value, {int maxCharCount = 2}) {
     // Remove any numbers, certain symbols, and non-alphabet characters
@@ -351,10 +351,10 @@ class ContactManager {
     // Split by a space or special character delimiter, take each of the items and
     // reduce it to just the capitalized first letter. Then join the array by an empty char
     String reduced = importantChars
-                      .split(RegExp(r' |-|_'))
-                      .take(maxCharCount)
-                      .map((e) => e.isEmpty ? '' : e[0].toUpperCase())
-                      .join('');
+        .split(RegExp(r' |-|_'))
+        .take(maxCharCount)
+        .map((e) => e.isEmpty ? '' : e[0].toUpperCase())
+        .join('');
     return reduced.isEmpty ? null : reduced;
   }
 
@@ -373,7 +373,7 @@ class ContactManager {
       if (saniAddr.startsWith('e:')) {
         saniAddr = saniAddr.substring(2);
       }
-      
+
       return saniAddr[0].toUpperCase();
     } else {
       // If we don't have a contact, and it's not an email, use the address

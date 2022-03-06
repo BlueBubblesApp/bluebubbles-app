@@ -116,7 +116,7 @@ class ApiService extends GetxService {
     return await dio.get(
         "$origin/attachment/$guid/download",
         queryParameters: buildQueryParams(),
-        options: Options(responseType: ResponseType.bytes),
+        options: Options(responseType: ResponseType.bytes, receiveTimeout: 1800000),
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
     );

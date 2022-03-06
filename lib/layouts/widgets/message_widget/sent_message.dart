@@ -589,17 +589,17 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
         : effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ??
             "unknown";
 
-    WidgetsBinding.instance!.addObserver(this);
-    WidgetsBinding.instance!.addPostFrameCallback((_) async {
-      if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble && widget.message.datePlayed == null) {
+    if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble && widget.message.datePlayed == null) {
+      WidgetsBinding.instance!.addObserver(this);
+      WidgetsBinding.instance!.addPostFrameCallback((_) async {
         EventDispatcher().emit('play-effect', {
           'type': effect,
           'size': key.globalPaintBounds(context),
         });
 
         widget.message.setPlayedDate();
-      }
-    });
+      });
+    }
 
     /*if (ChatManager().activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
       ChatManager().activeChat?.autoplayGuid = null;
