@@ -187,7 +187,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
 
     try {
       // If we already errored, throw an error to load the error logo
-      if (widget.attachment.metadata?['thumnail_status'] == 'error') {
+      if (widget.attachment.metadata?['thumbnail_status'] == 'error') {
         throw Exception('No video preview');
       }
 
@@ -203,9 +203,9 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
       widget.attachment.height = 800;
       aspectRatio = 1;
 
-      if (widget.attachment.metadata?['thumnail_status'] != 'error') {
+      if (widget.attachment.metadata?['thumbnail_status'] != 'error') {
           widget.attachment.metadata ??= {};
-          widget.attachment.metadata!['thumnail_status'] = 'error';
+          widget.attachment.metadata!['thumbnail_status'] = 'error';
           widget.attachment.save(null);
         }
     }

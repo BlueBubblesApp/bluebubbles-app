@@ -101,7 +101,7 @@ class VideoWidgetController extends GetxController {
     if (!kIsWeb) {
       try {
         // If we already errored, throw an error to load the error logo
-        if (attachment.metadata?['thumnail_status'] == 'error') {
+        if (attachment.metadata?['thumbnail_status'] == 'error') {
           throw Exception('No video preview');
         }
 
@@ -111,9 +111,9 @@ class VideoWidgetController extends GetxController {
         // If an error occurs, set the thumnail to the cached no preview image.
         // Only save to DB if the status wasn't already `error` somehow
         thumbnail = ChatManager().noVideoPreviewIcon;
-        if (attachment.metadata?['thumnail_status'] != 'error') {
+        if (attachment.metadata?['thumbnail_status'] != 'error') {
           attachment.metadata ??= {};
-          attachment.metadata!['thumnail_status'] = 'error';
+          attachment.metadata!['thumbnail_status'] = 'error';
           attachment.save(null);
         }
       }
