@@ -320,14 +320,21 @@ class AttachmentHelper {
         return cachedFile.readAsBytes();
       }
     }
+
     Uint8List? thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
       imageFormat: ImageFormat.JPEG,
       quality: SettingsManager().compressionQuality,
     );
-    if (useCachedFile && thumbnail != null) {
+
+    if (thumbnail == null || thumbnail.isEmpty || thumbnail.lengthInBytes == 0) {
+      throw Exception('Video thumbnail is empty!');
+    }
+  
+    if (useCachedFile) {
       cachedFile.writeAsBytes(thumbnail);
     }
+
     return thumbnail;
   }
 
