@@ -241,7 +241,7 @@ class AttachmentHelper {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
     if (Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
-      return Get.find<AttachmentDownloadController>(tag: attachment.guid);
+      return Get.find<AttachmentDownloadService>().getController(attachment.guid);
     } else if (!kIsWeb &&
         (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
             attachment.guid == "redacted-mode-demo-attachment" ||

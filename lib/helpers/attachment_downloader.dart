@@ -17,6 +17,10 @@ class AttachmentDownloadService extends GetxService {
   final List<String> downloaders = [];
   final List<AttachmentDownloadController> _downloaders = [];
 
+  AttachmentDownloadController? getController(String? guid) {
+    return _downloaders.firstWhereOrNull((element) => element.attachment.guid == guid);
+  }
+
   void addToQueue(AttachmentDownloadController downloader) {
     downloaders.add(downloader.attachment.guid!);
     _downloaders.add(downloader);
