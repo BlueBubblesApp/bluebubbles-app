@@ -148,17 +148,17 @@ bool sameAddress(List<String?> options, String? compared) {
   return match;
 }
 
-String getInitials(Contact contact) {
+String? getInitials(Contact contact) {
   // Set default initials
   String initials = (contact.structuredName?.givenName.isNotEmpty == true ? contact.structuredName!.givenName[0] : "") +
       (contact.structuredName?.familyName.isNotEmpty == true ? contact.structuredName!.familyName[0] : "");
 
   // If the initials are empty, get them from the display name
-  if (initials.trim().isEmpty) {
+  if (initials.trim().isEmpty && contact.displayName.isNotEmpty) {
     initials = contact.displayName[0];
   }
 
-  return initials.toUpperCase();
+  return initials.isEmpty ? null : initials.toUpperCase();
 }
 
 // Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
