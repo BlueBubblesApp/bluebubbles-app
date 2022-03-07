@@ -399,21 +399,28 @@ class ChatBloc {
   }
 
   void updateChatPinIndex(int oldIndex, int newIndex) {
-    final item = _chats.bigPinHelper(true)[oldIndex];
-    if (newIndex > oldIndex) {
-      newIndex = newIndex - 1;
-      _chats.bigPinHelper(true).where((p0) => p0.pinIndex != null && p0.pinIndex! <= newIndex).forEach((element) {
-        element.pinIndex = element.pinIndex! - 1;
-      });
-      item.pinIndex = newIndex;
-    } else {
-      _chats.bigPinHelper(true).where((p0) => p0.pinIndex != null && p0.pinIndex! >= newIndex).forEach((element) {
-        element.pinIndex = element.pinIndex! + 1;
-      });
-      item.pinIndex = newIndex;
+    final items = _chats.bigPinHelper(true);
+    final item = items[oldIndex];
+
+    // Remove the item at the old index, and re-add it at the newIndex
+    // We dynamically subtract 1 from the new index depending on if the newIndex is > the oldIndex
+    items.removeAt(oldIndex);
+    items.insert(newIndex + (oldIndex < newIndex ? -1 : 0), item);
+
+    // Create a map of each chat that needs to move to what pinIndex
+    Map<String, int> newIndexes = {item.guid: newIndex};
+    for (int i = 0; i < items.length; i++) {
+      newIndexes[items[i].guid] = i;
     }
+
+    // Move the pinIndex for each of the chats, and save the pinIndex in the DB
+    items.where((p0) => newIndexes.containsKey(p0.guid)).forEach((element) {
+      element.pinIndex = newIndexes[element.guid];
+      element.save(updatePinIndex: true);
+    });
+
+    // Sort the chats again to make sure everything is in order for the chat list
     _chats.sort(Chat.sort);
-    item.save(updatePinIndex: true);
   }
 
   void deleteChat(Chat chat) async {

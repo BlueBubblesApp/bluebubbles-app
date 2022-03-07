@@ -1060,13 +1060,21 @@ class Chat {
   }
 
   static int sort(Chat? a, Chat? b) {
-    if (a!._pinIndex.value != null && b!._pinIndex.value != null) {
-      return a._pinIndex.value!.compareTo(b._pinIndex.value!);
+    // If they both are pinned & ordered, reflect the order
+    if (a!.isPinned! && b!.isPinned! && a.pinIndex != null && b.pinIndex != null) {
+      return a.pinIndex!.compareTo(b.pinIndex!);
     }
-    if (b!._pinIndex.value != null) return 1;
-    if (a._pinIndex.value != null) return -1;
+
+    // If b is pinned & ordered, but a isn't either pinned or ordered, return accordingly
+    if (b!.isPinned! && b.pinIndex != null && (!a.isPinned! || a.pinIndex == null)) return 1;
+    // If a is pinned & ordered, but b isn't either pinned or ordered, return accordingly
+    if (a.isPinned! && a.pinIndex != null && (!b.isPinned! || b.pinIndex == null)) return -1;
+
+    // Compare when one is pinned and the other isn't
     if (!a.isPinned! && b.isPinned!) return 1;
     if (a.isPinned! && !b.isPinned!) return -1;
+
+    // Compare the last message dates
     if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
     if (a.latestMessageDate == null) return 1;
     if (b.latestMessageDate == null) return -1;
