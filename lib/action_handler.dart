@@ -115,26 +115,35 @@ class ActionHandler {
 
       // Make sure to save the chat
       // If we already have the ID, we don't have to wait to resave it
-      chat.save();
+      if (chat.id == null) {
+        chat.save();
+      }
 
       // Send all the messages
       List<Completer<void>> completerList = List.generate(messages.length, (_) => Completer());
       messages.forEachIndexed((index, message) async {
         // Add the message to the UI and DB
         NewMessageManager().addMessage(chat, message, outgoing: true);
-        chat.addMessage(message);
-
-        // Create params for the queue item
-        Map<String, dynamic> params = {"chat": chat, "message": message};
-
-        // Add the message send to the queue
-        await OutgoingQueue().add(QueueItem(event: "send-message", item: params), completer: completer != null ? completerList[index] : null);
-
-        if (index == messages.length - 1) {
-          completer?.complete();
-        }
       });
 
+      Future.delayed(Duration(milliseconds: 100), () {
+        messages.forEachIndexed((index, message) async {
+          // Add the message to the UI and DB
+          // NewMessageManager().addMessage(chat, message, outgoing: true);
+          chat.addMessage(message);
+
+          // Create params for the queue item
+          Map<String, dynamic> params = {"chat": chat, "message": message};
+
+          // Add the message send to the queue
+          OutgoingQueue().add(QueueItem(event: "send-message", item: params), completer: completer != null ? completerList[index] : null);
+
+          if (index == messages.length - 1) {
+            completer?.complete();
+          }
+        });
+      });
+      
       return completer?.future;
     } else {
       // Create the main message
