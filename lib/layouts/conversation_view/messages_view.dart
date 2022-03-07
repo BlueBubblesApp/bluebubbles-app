@@ -244,9 +244,6 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
         }
       }
 
-      print("(INDEX)");
-      print("(INDEX) ${event.message?.text ?? 'no text'}");
-      print("(INDEX) ${event.index}");
       _messages = event.messages;
       if (_listKey != null && _listKey!.currentState != null) {
         _listKey!.currentState!.insertItem(
