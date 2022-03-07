@@ -39,6 +39,12 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
   void initState() {
     super.initState();
     updateContent();
+
+    ever(Get.find<AttachmentDownloadService>().downloaders, (List<String> downloaders) {
+      if (downloaders.contains(widget.attachment.guid)) {
+        if (mounted) setState(() {});
+      }
+    });
   }
 
   void updateContent() async {

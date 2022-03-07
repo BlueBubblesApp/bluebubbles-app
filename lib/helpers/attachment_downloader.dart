@@ -14,7 +14,7 @@ import 'package:universal_io/io.dart';
 
 class AttachmentDownloadService extends GetxService {
   int maxDownloads = 2;
-  final List<String> downloaders = [];
+  final RxList<String> downloaders = <String>[].obs;
   final List<AttachmentDownloadController> _downloaders = [];
 
   AttachmentDownloadController? getController(String? guid) {
