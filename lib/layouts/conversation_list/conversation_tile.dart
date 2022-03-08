@@ -382,8 +382,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget _buildDate() {
-    MessageMarkers? markers = ChatManager().getChatController(widget.chat)!.messageMarkers;
-    return kIsWeb
+    MessageMarkers? markers = ChatManager().getChatController(widget.chat)?.messageMarkers;
+    return kIsWeb || markers == null
         ? Text(buildDate(widget.chat.latestMessageDate),
             textAlign: TextAlign.right,
             style: Theme.of(context).textTheme.subtitle2!.copyWith(

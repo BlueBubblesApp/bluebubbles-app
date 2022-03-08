@@ -199,7 +199,7 @@ class ContactManager {
     // Get loaded chats and add participants to the formatted address cache.
     // This is in case any members of chats that don't have associated contacts,
     // still get their address formatted correctly.
-    List<Chat> chats = ChatBloc().chats.isEmpty ? await Chat.getChats(limit: 1000) : ChatBloc().chats;
+    List<Chat> chats = ChatBloc().chats.isEmpty && !kIsWeb ? await Chat.getChats(limit: 1000) : ChatBloc().chats;
     for (Chat c in chats) {
       for (Handle h in c.participants) {
         if (!h.address.contains('@')) {

@@ -291,7 +291,9 @@ Future<Null> initApp(bool isBubble) async {
     await initializeDateFormatting();
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
-    if (!ContactManager().hasFetchedContacts && !kIsDesktop) await ContactManager().loadContacts(headless: true);
+    if (!ContactManager().hasFetchedContacts && !kIsDesktop && !kIsWeb) {
+      await ContactManager().loadContacts(headless: true);
+    }
     if (SettingsManager().settings.immersiveMode.value) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
@@ -359,7 +361,7 @@ Future<Null> initApp(bool isBubble) async {
       }
     }
 
-    if (kIsDesktop || kIsWeb) {
+    if (kIsDesktop) {
       await dotenv.load(fileName: '.env');
     }
   } catch (e, s) {

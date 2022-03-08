@@ -150,7 +150,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   void popDetails() {
     bool dialogOpen = Get.isDialogOpen ?? false;
     if (dialogOpen) {
-      Navigator.of(context).pop();
+      if (kIsWeb) {
+        Get.back();
+      } else {
+        Navigator.of(context).pop();
+      }
     }
     Navigator.of(context).pop();
   }

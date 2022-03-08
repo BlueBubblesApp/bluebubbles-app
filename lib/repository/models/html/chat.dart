@@ -14,13 +14,13 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/handle.dart';
 import 'package:bluebubbles/repository/models/html/message.dart';
+import 'package:bluebubbles/repository/models/models.dart' show Contact;
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:objectbox/objectbox.dart';
 import 'package:universal_io/io.dart';
 
 String getFullChatTitle(Chat _chat) {
@@ -87,8 +87,7 @@ class Chat {
   String? title;
   String? displayName;
   List<Handle> participants = [];
-  @Transient()
-  List<String> fakeParticipants = [];
+  List<Contact?> fakeParticipants = [];
   Message? latestMessage;
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
@@ -183,7 +182,7 @@ class Chat {
       customAvatar: json['_customAvatarPath'],
       pinnedIndex: json['_pinIndex'],
       participants: participants,
-      fakeParticipants: fakeParticipants,
+      fakeParticipants: [],
     );
 
     // Adds fallback getter for the ID
@@ -524,7 +523,7 @@ class Chat {
     return null;
   }
 
-  static List<Chat> getChats({int limit = 15, int offset = 0, required Map fakeNames}) {
+  static List<Chat> getChats({int limit = 15, int offset = 0}) {
     throw Exception("Use socket to get chats on Web!");
   }
 
@@ -542,9 +541,22 @@ class Chat {
 
   bool get isIMessage => !isTextForwarding && !isSMS;
 
-  Message get latestMessageGetter {
+  List<String> get fakeNames {
+    if (fakeParticipants.whereNotNull().length == fakeParticipants.length) {
+      return fakeParticipants.map((p) => p!.fakeName ?? "Unknown").toList();
+    }
+
+    fakeParticipants =
+        participants.mapIndexed((i, e) => fakeParticipants[i] ?? ContactManager().getContact(e.address)).toList();
+
+    return fakeParticipants.map((p) => p?.fakeName ?? "Unknown").toList();
+  }
+
+  Message? get latestMessageGetter {
     if (latestMessage != null) return latestMessage!;
     List<Message> latest = Chat.getMessages(this, limit: 1);
+    if (latest.isEmpty) return null;
+
     Message message = latest.first;
     latestMessage = message;
     if (message.hasAttachments) {
