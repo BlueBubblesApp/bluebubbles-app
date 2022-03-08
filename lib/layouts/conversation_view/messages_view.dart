@@ -260,7 +260,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
       if (event.outGoing) {
         currentChat!.sentMessages.add(event.message);
-        Future.delayed(Duration(milliseconds: 250) * 2, () {
+        Future.delayed(Duration(milliseconds: 300) * 2, () {
           currentChat!.sentMessages.removeWhere((element) => element!.guid == event.message!.guid);
         });
       }
