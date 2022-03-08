@@ -603,7 +603,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       }),
                   ]),
                   AnimatedPositioned(
-                    duration: Duration(milliseconds: 450),
+                    duration: Duration(milliseconds: 400),
                     bottom: message != null ? 62 + offset : 10 + offset,
                     right: 5,
                     curve: Curves.easeIn,
