@@ -12,10 +12,10 @@ String getContactName(BuildContext context, String? contactTitle, String? contac
   if (hideInfo || generateName) {
     currentChat = ChatManager().activeChat?.chat ?? currentChat;
     int index = (currentChat?.participants ?? []).indexWhere((h) => h.address == contactAddress);
-    List<String?> fakeNames = currentChat?.fakeParticipants ?? [];
+    List<String> fakeNames = currentChat?.fakeNames ?? [];
     if (generateName && fakeNames.isNotEmpty) {
       if (index >= 0 && index < fakeNames.length) {
-        contactName = currentChat?.fakeParticipants[index] ?? "Fake Name";
+        contactName = fakeNames[index];
       }
     } else if (generateName) {
       contactName = "Fake Name";

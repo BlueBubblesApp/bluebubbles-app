@@ -1,19 +1,18 @@
 import 'dart:async';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/widgets/screen_effects_widget.dart';
 import 'dart:math';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
@@ -21,6 +20,8 @@ import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_te
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
+import 'package:bluebubbles/layouts/widgets/screen_effects_widget.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -29,7 +30,6 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:collection/collection.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/foundation.dart';
@@ -677,52 +677,63 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       child: Theme(
         data: Theme.of(context)
             .copyWith(primaryColor: chat?.isTextForwarding ?? false ? Colors.green : Theme.of(context).primaryColor),
-        child: Builder(builder: (context) {
-          return WillPopScope(
-            onWillPop: () async {
-              if (LifeCycleManager().isBubble) {
-                ChatManager().setActiveChat(null);
-                SystemNavigator.pop();
-              }
-              return !LifeCycleManager().isBubble;
-            },
-            child: Scaffold(
-              backgroundColor: Theme.of(context).backgroundColor,
-              extendBodyBehindAppBar: !isCreator!,
-              appBar: !isCreator!
-                  ? buildConversationViewHeader(context) as PreferredSizeWidget?
-                  : buildChatSelectorHeader() as PreferredSizeWidget?,
-              body: Obx(() => adjustBackground.value
-                  ? MirrorAnimation<MultiTweenValues<String>>(
-                      tween: ConversationViewMixin.gradientTween.value,
-                      curve: Curves.fastOutSlowIn,
-                      duration: Duration(seconds: 3),
-                      builder: (context, child, anim) {
-                        return Container(
-                          decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
-                              ? BoxDecoration(
-                                  gradient:
-                                      LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
-                                  anim.get("color1"),
-                                  anim.get("color2")
-                                ], colors: [
-                                  AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
-                                      ? Theme.of(context).primaryColor.lightenPercent(20)
-                                      : Theme.of(context).primaryColor.darkenPercent(20),
-                                  Theme.of(context).backgroundColor
-                                ]))
-                              : null,
-                          child: child,
-                        );
-                      },
-                      child: child,
-                    )
-                  : child),
-              floatingActionButton: AnimatedOpacity(
-                  duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
-            ),
-          );
-        }),
+        child: Builder(
+          builder: (context) {
+            return WillPopScope(
+              onWillPop: () async {
+                if (LifeCycleManager().isBubble) {
+                  ChatManager().setActiveChat(null);
+                  SystemNavigator.pop();
+                }
+                return !LifeCycleManager().isBubble;
+              },
+              child: Obx(
+                () {
+                  widget.chat!.getTitle();
+                  return Scaffold(
+                    backgroundColor: Theme.of(context).backgroundColor,
+                    extendBodyBehindAppBar: !isCreator!,
+                    appBar: !isCreator!
+                        ? buildConversationViewHeader(context) as PreferredSizeWidget?
+                        : buildChatSelectorHeader() as PreferredSizeWidget?,
+                    body: Obx(() => adjustBackground.value
+                        ? MirrorAnimation<MultiTweenValues<String>>(
+                            tween: ConversationViewMixin.gradientTween.value,
+                            curve: Curves.fastOutSlowIn,
+                            duration: Duration(seconds: 3),
+                            builder: (context, child, anim) {
+                              return Container(
+                                decoration:
+                                    (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
+                                        ? BoxDecoration(
+                                            gradient: LinearGradient(
+                                                begin: Alignment.topRight,
+                                                end: Alignment.bottomLeft,
+                                                stops: [
+                                                anim.get("color1"),
+                                                anim.get("color2")
+                                              ],
+                                                colors: [
+                                                AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
+                                                    ? Theme.of(context).primaryColor.lightenPercent(20)
+                                                    : Theme.of(context).primaryColor.darkenPercent(20),
+                                                Theme.of(context).backgroundColor
+                                              ]))
+                                        : null,
+                                child: child,
+                              );
+                            },
+                            child: child,
+                          )
+                        : child),
+                    floatingActionButton: AnimatedOpacity(
+                        duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
+                  );
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
   }

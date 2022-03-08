@@ -877,7 +877,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           }
         } else if (!isNullOrEmpty(ChatController.forGuid(widget.chatGuid)?.chat.participants)!) {
           if (generateNames) {
-            placeholder = ChatController.forGuid(widget.chatGuid)!.chat.fakeParticipants[0];
+            placeholder = ChatController.forGuid(widget.chatGuid)!.chat.fakeNames[0];
           } else if (hideInfo) {
             placeholder = chat?.isTextForwarding ?? false ? "Text Forwarding" : "iMessage";
           } else {

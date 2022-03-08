@@ -131,7 +131,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
     String title = widget.chat.title ?? "Fake Person";
 
     if (generateNames) {
-      title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
+      title = widget.chat.fakeNames.length == 1 ? widget.chat.fakeNames[0] : "Group Chat";
     } else if (hideInfo) {
       style = style.copyWith(color: Colors.transparent);
     }

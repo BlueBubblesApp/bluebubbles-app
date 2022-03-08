@@ -336,7 +336,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     if (generateTitle) {
-      title = chat!.fakeParticipants.length > 1 ? "Group Chat" : chat!.fakeParticipants[0];
+      title = chat!.fakeNames.length > 1 ? "Group Chat" : chat!.fakeNames[0];
     } else if (hideTitle) {
       fontColor = Colors.transparent;
       fontColor2 = Colors.transparent;

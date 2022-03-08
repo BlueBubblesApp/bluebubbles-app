@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/darty.dart';
@@ -520,6 +521,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
   @override
   Widget build(BuildContext context) {
+    contactTitle = ContactManager().getContactTitle(widget.message.handle);
+
     if (Skin.of(context) != null) {
       skin.value = Skin.of(context)!.skin;
     }
