@@ -325,7 +325,7 @@ class ChatBloc {
         }
 
         // Set the fake participants when we load the chats
-        chat.fakeParticipants = chat.participants.map((e) => ContactManager().getContact(e.address)?.fakeName ?? 'Unknown').toList();
+        chat.fakeParticipants = chat.participants.map((e) => ContactManager().getContact(e.address)).toList();
 
         // Fetch the avatars for the chat so they load in first.
         await ContactManager().getAvatarsForChat(chat);

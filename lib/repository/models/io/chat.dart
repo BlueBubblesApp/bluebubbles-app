@@ -14,7 +14,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/repository/models/io/attachment.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
@@ -316,7 +316,7 @@ class Chat {
   String? displayName;
   List<Handle> participants = [];
   @Transient()
-  List<String> fakeParticipants = [];
+  List<Contact?> fakeParticipants = [];
   Message? latestMessage;
   bool? autoSendReadReceipts = true;
   bool? autoSendTypingIndicators = true;
@@ -364,9 +364,9 @@ class Chat {
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
-  
+
     // Map the participant fake names
-    fakeParticipants = participants.map((e) => ContactManager().getContact(e.address)?.fakeName ?? 'Unknown').toList();
+    fakeParticipants = participants.map((e) => ContactManager().getContact(e.address)).toList();
   }
 
   bool get isTextForwarding => guid.startsWith("SMS");
@@ -375,9 +375,20 @@ class Chat {
 
   bool get isIMessage => !isTextForwarding && !isSMS;
 
+  List<String> get fakeNames {
+    if (fakeParticipants.whereNotNull().length == fakeParticipants.length) {
+      return fakeParticipants.map((p) => p!.fakeName ?? "Unknown").toList();
+    }
+
+    fakeParticipants =
+        participants.mapIndexed((i, e) => fakeParticipants[i] ?? ContactManager().getContact(e.address)).toList();
+
+    return fakeParticipants.map((p) => p?.fakeName ?? "Unknown").toList();
+  }
+
   factory Chat.fromMap(Map<String, dynamic> json) {
     List<Handle> participants = [];
-    List<String> fakeParticipants = [];
+    List<Contact?> fakeParticipants = [];
     if (json.containsKey('participants')) {
       for (dynamic item in (json['participants'] as List<dynamic>)) {
         participants.add(Handle.fromMap(item));
@@ -898,7 +909,7 @@ class Chat {
 
     /// Deduplicate and generate fake participants for redacted mode
     _deduplicateParticipants();
-    fakeParticipants = participants.map((p) => ContactManager().getContact(p.address)?.fakeName ?? "Unknown").toList();
+    fakeParticipants = participants.map((p) => ContactManager().getContact(p.address)).toList();
     return this;
   }
 

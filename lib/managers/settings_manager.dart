@@ -182,7 +182,7 @@ class SettingsManager {
   FutureOr<String?> getServerVersion() async {
     if (_serverVersion == null) {
       var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
-      _serverVersion = res['data']['server_version'];
+      _serverVersion = res['data']?['server_version'];
     }
     return _serverVersion;
   }

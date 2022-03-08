@@ -48,6 +48,7 @@ class ContactManager {
   Future<bool> canAccessContacts({headless = false}) async {
     if (kIsWeb || kIsDesktop) {
       String? str = await SettingsManager().getServerVersion();
+      if (str == null) return false;
       Version version = Version.parse(str);
       int sum = version.major * 100 + version.minor * 21 + version.patch;
       return sum >= 42;
