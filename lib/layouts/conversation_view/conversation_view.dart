@@ -689,7 +689,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               },
               child: Obx(
                 () {
-                  widget.chat!.getTitle();
+                  widget.chat?.getTitle();
                   return Scaffold(
                     backgroundColor: Theme.of(context).backgroundColor,
                     extendBodyBehindAppBar: !isCreator!,
