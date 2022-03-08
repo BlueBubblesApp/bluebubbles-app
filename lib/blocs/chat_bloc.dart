@@ -211,6 +211,9 @@ class ChatBloc {
     // Remove from notification shade
     if (clearNotifications && !isUnread) {
       MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+      if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
+        SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+      }
     }
 
     updateChatPosition(chat);
