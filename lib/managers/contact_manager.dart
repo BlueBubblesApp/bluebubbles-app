@@ -310,10 +310,11 @@ class ContactManager {
   /// Fetch a contact's avatar, first trying the full size image, then the thumbnail if unavailable
   Future<void> loadContactAvatar(Contact contact) async {
     if (kIsDesktop || kIsWeb) return;
-    try {
-      contact.avatar.value ??= await FastContacts.getContactImage(contact.id);
-    } catch (_) {
-      contact.avatar.value ??= await FastContacts.getContactImage(contact.id, size: ContactImageSize.fullSize);
+    contact.avatar.value ??= await FastContacts.getContactImage(contact.id);
+    if (contact.avatarHiRes.value == null) {
+      FastContacts.getContactImage(contact.id, size: ContactImageSize.fullSize).then((value) {
+        contact.avatarHiRes.value = value;
+      }).onError((error, stackTrace) => null);
     }
   }
 

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -21,6 +23,7 @@ class ContactAvatarWidget extends StatefulWidget {
     this.onTap,
     required this.handle,
     this.scaleSize = true,
+    this.preferHighResAvatar = false,
   }) : super(key: key);
   final Handle? handle;
   final double? size;
@@ -29,6 +32,7 @@ class ContactAvatarWidget extends StatefulWidget {
   final bool editable;
   final Function? onTap;
   final bool scaleSize;
+  final bool preferHighResAvatar;
 
   @override
   _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
@@ -47,6 +51,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'refresh-avatar' && event["data"][0] == widget.handle?.address && mounted) {
+        print("REFRESHING");
         widget.handle?.color = event['data'][1];
         setState(() {});
       }
@@ -138,6 +143,15 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
           shape: BoxShape.circle,
         ),
         child: Obx(() {
+          Uint8List? avatar;
+          if (contact?.avatar.value != null || contact?.avatarHiRes.value != null) {
+            if (widget.preferHighResAvatar) {
+              avatar = contact?.avatarHiRes.value ?? contact?.avatar.value;
+            } else {
+              avatar = contact?.avatar.value ?? contact?.avatarHiRes.value;
+            }
+          }
+
           List<Color> colors = [];
           if (widget.handle?.color == null) {
             colors = toColorGradient(widget.handle?.address);
@@ -151,10 +165,10 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
             key: Key("$keyPrefix-avatar"),
             radius: ((widget.size != null) ? widget.size! / 2 : 20) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
             backgroundImage:
-            !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value) && contact?.avatar.value != null
-                ? MemoryImage(contact!.avatar.value!)
+            !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value) && avatar != null
+                ? MemoryImage(avatar)
                 : null,
-            child: contact?.avatar.value == null ||
+            child: avatar == null ||
                 (SettingsManager().settings.redactedMode.value &&
                     SettingsManager().settings.hideContactPhotos.value)
                 ? Container(

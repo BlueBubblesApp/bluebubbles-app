@@ -40,6 +40,7 @@ class Contact {
     this.fakeName,
     this.fakeAddress,
     Uint8List? avatarBytes,
+    Uint8List? avatarHiResBytes,
   }) {
     avatar.value = avatarBytes;
   }
@@ -52,6 +53,7 @@ class Contact {
   String? fakeName;
   String? fakeAddress;
   final Rxn<Uint8List> avatar = Rxn<Uint8List>();
+  final Rxn<Uint8List> avatarHiRes = Rxn<Uint8List>();
 
   Map<String, dynamic> toMap() {
     return {

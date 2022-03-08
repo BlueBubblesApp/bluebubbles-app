@@ -392,6 +392,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                   handle: participants.first,
                   borderThickness: 0.1,
                   size: avatarSize,
+                  preferHighResAvatar: true,
                   fontSize: avatarSize * 0.5,
                   editable: widget.editable,
                   onTap: widget.onTap,
