@@ -90,7 +90,7 @@ class ChatBloc {
 
     // Get the contacts in case we haven't
     if (ContactManager().contacts.isEmpty) {
-      if (kIsDesktop) {
+      if (kIsDesktop || kIsWeb) {
         ContactManager().loadContacts().then((e) => ChatBloc().chats.refresh());
       }
     }

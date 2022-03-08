@@ -28,6 +28,8 @@ export 'package:bluebubbles/repository/models/io/theme_entry.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/theme_entry.dart';
 export 'package:bluebubbles/repository/models/io/theme_object.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/theme_object.dart';
+export 'package:bluebubbles/repository/models/io/giphy.dart'
+  if (dart.library.html) 'package:bluebubbles/repository/models/html/giphy.dart';
 export 'package:bluebubbles/repository/models/platform_file.dart';
 
 class Contact {

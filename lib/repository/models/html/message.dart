@@ -264,6 +264,11 @@ class Message {
     return this;
   }
 
+  Message setPlayedDate({ DateTime? timestamp }) {
+    datePlayed = timestamp ?? DateTime.now().toUtc();
+    return this;
+  }
+
   List<Attachment?>? fetchAttachments({ChatController? currentChat}) {
     return attachments;
   }
