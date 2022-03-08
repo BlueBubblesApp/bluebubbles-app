@@ -1,7 +1,9 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
@@ -162,6 +164,10 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
           behavior: HitTestBehavior.opaque,
           onTap: () {
             chat.toggleHasUnread(!chat.hasUnreadMessage!);
+            if (!chat.hasUnreadMessage! && !kIsWeb && !kIsDesktop) {
+              // Remove from notification shade
+              MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+            }
             if (_this.mounted) _this.setState(() {});
             Navigator.pop(context);
           },
