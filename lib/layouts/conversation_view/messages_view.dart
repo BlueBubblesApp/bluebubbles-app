@@ -250,7 +250,9 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
           event.index != null ? event.index! : 0,
           duration: isNewMessage
               ? event.outGoing
-                  ? Duration(milliseconds: 300)
+                  // This determines how long to wait until showing the
+                  // "new" message after animating to the position
+                  ? Duration(milliseconds: 250)
                   : animationDuration
               : Duration(milliseconds: 0),
         );
@@ -258,7 +260,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
       if (event.outGoing) {
         currentChat!.sentMessages.add(event.message);
-        Future.delayed(Duration(milliseconds: 300) * 2, () {
+        Future.delayed(Duration(milliseconds: 250) * 2, () {
           currentChat!.sentMessages.removeWhere((element) => element!.guid == event.message!.guid);
         });
       }
