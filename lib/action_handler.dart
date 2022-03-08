@@ -126,22 +126,20 @@ class ActionHandler {
         NewMessageManager().addMessage(chat, message, outgoing: true);
       });
 
-      Future.delayed(Duration(milliseconds: 100), () {
-        messages.forEachIndexed((index, message) async {
-          // Add the message to the UI and DB
-          // NewMessageManager().addMessage(chat, message, outgoing: true);
-          chat.addMessage(message);
+      messages.forEachIndexed((index, message) async {
+        // Add the message to the UI and DB
+        // NewMessageManager().addMessage(chat, message, outgoing: true);
+        chat.addMessage(message);
 
-          // Create params for the queue item
-          Map<String, dynamic> params = {"chat": chat, "message": message};
+        // Create params for the queue item
+        Map<String, dynamic> params = {"chat": chat, "message": message};
 
-          // Add the message send to the queue
-          await OutgoingQueue().add(QueueItem(event: "send-message", item: params), completer: completer != null ? completerList[index] : null);
+        // Add the message send to the queue
+        await OutgoingQueue().add(QueueItem(event: "send-message", item: params), completer: completer != null ? completerList[index] : null);
 
-          if (index == messages.length - 1) {
-            completer?.complete();
-          }
-        });
+        if (index == messages.length - 1) {
+          completer?.complete();
+        }
       });
       
       return completer?.future;
