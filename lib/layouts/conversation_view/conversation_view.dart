@@ -728,7 +728,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               },
               child: kIsDesktop || kIsWeb ? Obx(
                 () {
-                  widget.chat!.getTitle();
+                  widget.chat?.getTitle();
                   return childWidget;
                 },
               ) : childWidget,
