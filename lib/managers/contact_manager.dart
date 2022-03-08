@@ -311,9 +311,9 @@ class ContactManager {
   Future<void> loadContactAvatar(Contact contact) async {
     if (kIsDesktop || kIsWeb) return;
     try {
-      contact.avatar.value ??= await FastContacts.getContactImage(contact.id, size: ContactImageSize.fullSize);
-    } catch (_) {
       contact.avatar.value ??= await FastContacts.getContactImage(contact.id);
+    } catch (_) {
+      contact.avatar.value ??= await FastContacts.getContactImage(contact.id, size: ContactImageSize.fullSize);
     }
   }
 
