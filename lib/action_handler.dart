@@ -136,7 +136,7 @@ class ActionHandler {
           Map<String, dynamic> params = {"chat": chat, "message": message};
 
           // Add the message send to the queue
-          OutgoingQueue().add(QueueItem(event: "send-message", item: params), completer: completer != null ? completerList[index] : null);
+          await OutgoingQueue().add(QueueItem(event: "send-message", item: params), completer: completer != null ? completerList[index] : null);
 
           if (index == messages.length - 1) {
             completer?.complete();
