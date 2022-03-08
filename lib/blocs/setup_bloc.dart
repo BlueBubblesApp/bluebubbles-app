@@ -276,7 +276,6 @@ class SetupBloc {
     // Store the time we started syncing
     addOutput("Starting incremental sync for messages since: ${settings.lastIncrementalSync}", SetupOutputType.LOG);
     int syncStart = DateTime.now().millisecondsSinceEpoch;
-    await Future.delayed(Duration(seconds: 3));
 
     // only get up to 1000 messages (arbitrary limit)
     int batches = 10;
