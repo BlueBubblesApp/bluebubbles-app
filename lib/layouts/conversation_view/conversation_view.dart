@@ -603,7 +603,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       }),
                   ]),
                   AnimatedPositioned(
-                    duration: Duration(milliseconds: 300),
+                    duration: Duration(milliseconds: 400),
                     bottom: message != null ? 62 + offset : 10 + offset,
                     right: 5,
                     curve: Curves.easeIn,
@@ -625,7 +625,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       child: CustomAnimation<double>(
                           control: controller,
                           tween: tween,
-                          duration: Duration(milliseconds: 200),
+                          duration: Duration(milliseconds: 350),
                           builder: (context, child, value) {
                             return SentMessageHelper.buildMessageWithTail(
                               context,
