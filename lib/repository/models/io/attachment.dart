@@ -39,6 +39,14 @@ class Attachment {
 
   final message = ToOne<Message>();
 
+  String? get dbMetadata {
+    return (metadata == null ? null : jsonEncode(metadata));
+  }
+
+  set dbMetadata(String? value) {
+    metadata = (value == null) ? null : jsonDecode(value) as Map<String, dynamic>;
+  }
+
   Attachment({
     this.id,
     this.originalROWID,
@@ -149,6 +157,7 @@ class Attachment {
         if (message?.id != null) {
           this.message.target = message;
         }
+
         id = attachmentBox.put(this);
       } on UniqueViolationException catch (_) {}
     });

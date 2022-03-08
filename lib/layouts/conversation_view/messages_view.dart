@@ -228,8 +228,12 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
     }
     int originalMessageLength = _messages.length;
     if (event.type == MessageBlocEventType.insert && mounted) {
+      // If we have an incoming message and the app is alive, clear notifications for the chat
       if (LifeCycleManager().isAlive && !event.outGoing) {
-        ChatManager().setActiveChat(ChatManager().activeChat?.chat);
+        Chat? activeChat = ChatManager().activeChat?.chat;
+        if (activeChat != null) {
+          ChatManager().clearChatNotifications(activeChat);
+        }
       }
 
       bool isNewMessage = true;

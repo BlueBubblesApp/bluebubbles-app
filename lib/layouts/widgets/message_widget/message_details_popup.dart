@@ -181,7 +181,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               children: <Widget>[
                 GestureDetector(
                   onTap: () {
-                    Navigator.of(context).pop();
+                    popDetails();
                   },
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
@@ -733,11 +733,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                           .toList();
                     }
                     EventDispatcher().emit("update-highlight", null);
-                    popDetails();
                     return ConversationView(
                       isCreator: true,
                       existingText: widget.message.text,
                       existingAttachments: existingAttachments,
+                      previousChat: widget.currentChat?.chat,
                     );
                   },
                 ),

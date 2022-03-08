@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -17,9 +20,18 @@ class ChatManager {
 
   ChatController? activeChat;
   final Map<String, ChatController> _chatControllers = {};
+  late Uint8List noVideoPreviewIcon;
+  late Uint8List unplayableVideoIcon;
 
   bool get hasActiveChat {
     return activeChat != null;
+  }
+
+  Future<void> loadAssets() async {
+    ByteData file = await loadAsset("assets/images/no-video-preview.png");
+    noVideoPreviewIcon = file.buffer.asUint8List();
+    file = await loadAsset("assets/images/unplayable-video.png");
+    unplayableVideoIcon = file.buffer.asUint8List();
   }
 
   void setAllInactive() {

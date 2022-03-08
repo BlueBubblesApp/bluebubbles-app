@@ -39,6 +39,12 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
   void initState() {
     super.initState();
     updateContent();
+
+    ever(Get.find<AttachmentDownloadService>().downloaders, (List<String> downloaders) {
+      if (downloaders.contains(widget.attachment.guid)) {
+        if (mounted) setState(() {});
+      }
+    });
   }
 
   void updateContent() async {
@@ -109,7 +115,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
       } else if (mimeType == "audio" && !widget.attachment.mimeType!.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
-          child: AudioPlayerWidget(file: content, context: context, width: 250, isFromMe: widget.isFromMe),
+          child: AudioPlayerWidget(file: content, context: context, width: kIsDesktop ? null : 250, isFromMe: widget.isFromMe),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
         return MediaFile(

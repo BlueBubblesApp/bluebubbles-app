@@ -28,7 +28,7 @@ class ContactWidget extends StatefulWidget {
 }
 
 class _ContactWidgetState extends State<ContactWidget> {
-  late Contact contact;
+  Contact? contact;
 
   @override
   void initState() {
@@ -56,6 +56,7 @@ class _ContactWidgetState extends State<ContactWidget> {
 
   @override
   Widget build(BuildContext context) {
+    String? initials = contact == null ? null : getInitials(contact!);
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: SizedBox(
@@ -100,7 +101,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                             style: Theme.of(context).textTheme.subtitle2,
                           ),
                           Text(
-                            contact.displayName,
+                            (contact?.displayName ?? '').isEmpty ? 'Unknown' : contact!.displayName,
                             style: Theme.of(context).textTheme.bodyText1,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
@@ -121,10 +122,16 @@ class _ContactWidgetState extends State<ContactWidget> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         child: Container(
-                          child: Text(
-                            getInitials(contact),
-                            style: Theme.of(context).textTheme.headline1,
-                          ),
+                          child: initials == null
+                            ? Icon(
+                                SettingsManager().settings.skin.value == Skins.iOS
+                                    ? CupertinoIcons.person_fill
+                                    : Icons.person,
+                                color: Theme.of(context).textTheme.headline1?.color!)
+                            : Text(
+                                initials,
+                                style: Theme.of(context).textTheme.headline1,
+                            ),
                           alignment: AlignmentDirectional.center,
                         ),
                       ),

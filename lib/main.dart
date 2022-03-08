@@ -20,6 +20,7 @@ import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -706,6 +707,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         });
       }
     });
+
+    // Load in the pre-cached assets
+    ChatManager().loadAssets();
 
     // Bind the lifecycle events
     WidgetsBinding.instance!.addObserver(this);

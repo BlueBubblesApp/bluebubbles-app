@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:2065429213543838585",
-      "lastPropertyId": "17:5777776419087046056",
+      "lastPropertyId": "18:4627777114429677812",
       "name": "Attachment",
       "properties": [
         {
@@ -98,6 +98,11 @@
           "flags": 520,
           "indexId": "8:2010461783272999439",
           "relationTarget": "Message"
+        },
+        {
+          "id": "18:4627777114429677812",
+          "name": "dbMetadata",
+          "type": 9
         }
       ],
       "relations": []

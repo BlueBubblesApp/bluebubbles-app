@@ -99,7 +99,25 @@ class VideoWidgetController extends GetxController {
 
   void getThumbnail() async {
     if (!kIsWeb) {
-      thumbnail = await AttachmentHelper.getVideoThumbnail(file.path!);
+      try {
+        // If we already errored, throw an error to load the error logo
+        if (attachment.metadata?['thumbnail_status'] == 'error') {
+          throw Exception('No video preview');
+        }
+
+        // If we haven't errored at all, fetch the thumbnail
+        thumbnail = await AttachmentHelper.getVideoThumbnail(file.path!);
+      } catch (ex) {
+        // If an error occurs, set the thumnail to the cached no preview image.
+        // Only save to DB if the status wasn't already `error` somehow
+        thumbnail = ChatManager().noVideoPreviewIcon;
+        if (attachment.metadata?['thumbnail_status'] != 'error') {
+          attachment.metadata ??= {};
+          attachment.metadata!['thumbnail_status'] = 'error';
+          attachment.save(null);
+        }
+      }
+      
       if (thumbnail == null) return;
       ChatManager().activeChat?.imageData[attachment.guid!] = thumbnail!;
       await precacheImage(MemoryImage(thumbnail!), context);

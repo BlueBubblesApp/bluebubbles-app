@@ -182,11 +182,34 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
 
   Future<void> getVideoPreview(PlatformFile file) async {
     if (previewImage != null || kIsWeb || kIsDesktop || file.path == null) return;
-    previewImage = await AttachmentHelper.getVideoThumbnail(file.path!);
-    Size size = await AttachmentHelper.getImageSizing("${file.path}.thumbnail");
-    widget.attachment.width = size.width.toInt();
-    widget.attachment.height = size.height.toInt();
-    aspectRatio = size.width / size.height;
+    
+    Size size;
+
+    try {
+      // If we already errored, throw an error to load the error logo
+      if (widget.attachment.metadata?['thumbnail_status'] == 'error') {
+        throw Exception('No video preview');
+      }
+
+      previewImage = await AttachmentHelper.getVideoThumbnail(file.path!);
+      size = await AttachmentHelper.getImageSizing("${file.path}.thumbnail");
+      widget.attachment.width = size.width.toInt();
+      widget.attachment.height = size.height.toInt();
+      aspectRatio = size.width / size.height;
+    } catch (ex) {
+      // If an error occurs, set the thumnail to the cached no preview image
+      previewImage = ChatManager().noVideoPreviewIcon;
+      widget.attachment.width = 800;
+      widget.attachment.height = 800;
+      aspectRatio = 1;
+
+      if (widget.attachment.metadata?['thumbnail_status'] != 'error') {
+          widget.attachment.metadata ??= {};
+          widget.attachment.metadata!['thumbnail_status'] = 'error';
+          widget.attachment.save(null);
+        }
+    }
+    
     if (mounted) setState(() {});
   }
 

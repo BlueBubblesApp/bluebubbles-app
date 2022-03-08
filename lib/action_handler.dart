@@ -115,13 +115,20 @@ class ActionHandler {
 
       // Make sure to save the chat
       // If we already have the ID, we don't have to wait to resave it
-      chat.save();
+      if (chat.id == null) {
+        chat.save();
+      }
 
       // Send all the messages
       List<Completer<void>> completerList = List.generate(messages.length, (_) => Completer());
       messages.forEachIndexed((index, message) async {
         // Add the message to the UI and DB
         NewMessageManager().addMessage(chat, message, outgoing: true);
+      });
+
+      messages.forEachIndexed((index, message) async {
+        // Add the message to the UI and DB
+        // NewMessageManager().addMessage(chat, message, outgoing: true);
         chat.addMessage(message);
 
         // Create params for the queue item
@@ -134,7 +141,7 @@ class ActionHandler {
           completer?.complete();
         }
       });
-
+      
       return completer?.future;
     } else {
       // Create the main message

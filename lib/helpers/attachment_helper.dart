@@ -241,7 +241,7 @@ class AttachmentHelper {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
     if (Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
-      return Get.find<AttachmentDownloadController>(tag: attachment.guid);
+      return Get.find<AttachmentDownloadService>().getController(attachment.guid);
     } else if (!kIsWeb &&
         (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
             attachment.guid == "redacted-mode-demo-attachment" ||
@@ -320,14 +320,21 @@ class AttachmentHelper {
         return cachedFile.readAsBytes();
       }
     }
+
     Uint8List? thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
       imageFormat: ImageFormat.JPEG,
       quality: SettingsManager().compressionQuality,
     );
-    if (useCachedFile && thumbnail != null) {
+
+    if (thumbnail == null || thumbnail.isEmpty || thumbnail.lengthInBytes == 0) {
+      throw Exception('Video thumbnail is empty!');
+    }
+  
+    if (useCachedFile) {
       cachedFile.writeAsBytes(thumbnail);
     }
+
     return thumbnail;
   }
 
