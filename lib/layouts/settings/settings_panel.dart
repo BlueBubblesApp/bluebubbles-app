@@ -37,6 +37,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 
@@ -864,9 +865,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         onPressed: () async {
                                           String directoryPath = "/storage/emulated/0/Download/BlueBubbles-settings-";
                                           DateTime now = DateTime.now().toLocal();
-                                          String filePath = directoryPath +
-                                              "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" +
-                                              ".json";
+                                          String filePath = "$directoryPath${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.json";
                                           Map<String, dynamic> json = SettingsManager().settings.toMap();
                                           if (kIsWeb) {
                                             final bytes = utf8.encode(jsonEncode(json));
@@ -877,6 +876,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                               ..click();
                                             return;
                                           }
+                                          if (kIsDesktop) {
+                                            String? _filePath = await FilePicker.platform.saveFile(
+                                              initialDirectory: (await getDownloadsDirectory())?.path,
+                                              dialogTitle: 'Choose a location to save this file',
+                                              fileName: "BlueBubbles-settings-${now.year}${now.month}${now.day}_${now
+                                                  .hour}${now.minute}${now.second}.json",
+                                            );
+                                            if (_filePath == null) {
+                                              return showSnackbar('Failed', 'You didn\'t select a file path!');
+                                            }
+                                            filePath = _filePath;
+                                          }
                                           File file = File(filePath);
                                           await file.create(recursive: true);
                                           String jsonString = jsonEncode(json);
@@ -884,7 +895,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                           Get.back();
                                           showSnackbar(
                                             "Success",
-                                            "Settings exported successfully to downloads folder",
+                                            "Settings exported successfully to ${kIsDesktop ? filePath : "downloads folder"}",
                                             durationMs: 2000,
                                             button: TextButton(
                                               style: TextButton.styleFrom(
@@ -893,7 +904,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                               onPressed: () {
                                                 Share.file("BlueBubbles Settings", filePath);
                                               },
-                                              child: Text("SHARE", style: TextStyle(color: Theme.of(context).primaryColor)),
+                                              child: kIsDesktop ? SizedBox.shrink() : Text("SHARE", style: TextStyle(color: Theme.of(context).primaryColor)),
                                             ),
                                           );
                                         },
@@ -988,13 +999,25 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                               ..click();
                                             return;
                                           }
+                                          if (kIsDesktop) {
+                                            String? _filePath = await FilePicker.platform.saveFile(
+                                              initialDirectory: (await getDownloadsDirectory())?.path,
+                                              dialogTitle: 'Choose a location to save this file',
+                                              fileName: "BlueBubbles-theming-${now.year}${now.month}${now.day}_${now
+                                                  .hour}${now.minute}${now.second}.json",
+                                            );
+                                            if (_filePath == null) {
+                                              return showSnackbar('Failed', 'You didn\'t select a file path!');
+                                            }
+                                            filePath = _filePath;
+                                          }
                                           File file = File(filePath);
                                           await file.create(recursive: true);
                                           await file.writeAsString(jsonStr);
                                           Get.back();
                                           showSnackbar(
                                             "Success",
-                                            "Theming exported successfully to downloads folder",
+                                            "Theming exported successfully to ${kIsDesktop ? filePath : "downloads folder"}",
                                             durationMs: 2000,
                                             button: TextButton(
                                               style: TextButton.styleFrom(
@@ -1003,7 +1026,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                               onPressed: () {
                                                 Share.file("BlueBubbles Theming", filePath);
                                               },
-                                              child: Text("SHARE", style: TextStyle(color: Theme.of(context).primaryColor)),
+                                              child: kIsDesktop ? SizedBox.shrink() : Text("SHARE", style: TextStyle(color: Theme.of(context).primaryColor)),
                                             ),
                                           );
                                         },

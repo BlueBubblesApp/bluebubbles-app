@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/darty.dart';
@@ -316,13 +315,6 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                     builder: (context, child, anim) {
                       double value = anim.get("size");
                       return StatefulBuilder(builder: (context, setState) {
-                        final bool generateContent = SettingsManager().settings.redactedMode.value &&
-                            SettingsManager().settings.generateFakeMessageContent.value;
-                        final bool hideContent = (SettingsManager().settings.redactedMode.value &&
-                            SettingsManager().settings.hideMessageContent.value &&
-                            !generateContent);
-                        final subject = generateContent ? widget.fakeSubject : message.subject;
-                        final text = generateContent ? widget.fakeText : message.text;
                         return GestureDetector(
                           onHorizontalDragUpdate: (DragUpdateDetails details) {
                             if (effect != MessageEffect.invisibleInk) return;

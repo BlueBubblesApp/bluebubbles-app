@@ -24,6 +24,7 @@ import 'package:image/image.dart' as img;
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart' hide File;
@@ -148,6 +149,7 @@ class AttachmentHelper {
     }
     if (kIsDesktop) {
       String? savePath = await FilePicker.platform.saveFile(
+        initialDirectory: (await getDownloadsDirectory())?.path,
         dialogTitle: 'Choose a location to save this file',
         fileName: file.name,
       );

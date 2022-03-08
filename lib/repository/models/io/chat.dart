@@ -27,9 +27,6 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:objectbox/objectbox.dart';
 import 'package:universal_io/io.dart';
 
-import 'handle.dart';
-import 'message.dart';
-
 String getFullChatTitle(Chat _chat) {
   String? title = "";
   if (isNullOrEmpty(_chat.displayName)!) {
