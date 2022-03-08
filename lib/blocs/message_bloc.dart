@@ -156,7 +156,7 @@ class MessageBloc {
                     message.originalROWID != null &&
                     message.originalROWID! > messages[i]!.originalROWID!) ||
             ((messages[i]!.originalROWID == null || message.originalROWID == null) &&
-                messages[i]!.dateCreated!.compareTo(message.dateCreated!) > 0)) {
+                messages[i]!.dateCreated!.compareTo(message.dateCreated!) < 0)) {
           _allMessages = linkedHashMapInsert<String, Message>(_allMessages, i, message.guid!, message);
           index = i;
 
