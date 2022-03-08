@@ -679,6 +679,45 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             .copyWith(primaryColor: chat?.isTextForwarding ?? false ? Colors.green : Theme.of(context).primaryColor),
         child: Builder(
           builder: (context) {
+            final childWidget = Scaffold(
+              backgroundColor: Theme.of(context).backgroundColor,
+              extendBodyBehindAppBar: !isCreator!,
+              appBar: !isCreator!
+                  ? buildConversationViewHeader(context) as PreferredSizeWidget?
+                  : buildChatSelectorHeader() as PreferredSizeWidget?,
+              body: Obx(() => adjustBackground.value
+                  ? MirrorAnimation<MultiTweenValues<String>>(
+                tween: ConversationViewMixin.gradientTween.value,
+                curve: Curves.fastOutSlowIn,
+                duration: Duration(seconds: 3),
+                builder: (context, child, anim) {
+                  return Container(
+                    decoration:
+                    (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
+                        ? BoxDecoration(
+                        gradient: LinearGradient(
+                            begin: Alignment.topRight,
+                            end: Alignment.bottomLeft,
+                            stops: [
+                              anim.get("color1"),
+                              anim.get("color2")
+                            ],
+                            colors: [
+                              AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
+                                  ? Theme.of(context).primaryColor.lightenPercent(20)
+                                  : Theme.of(context).primaryColor.darkenPercent(20),
+                              Theme.of(context).backgroundColor
+                            ]))
+                        : null,
+                    child: child,
+                  );
+                },
+                child: child,
+              )
+                  : child),
+              floatingActionButton: AnimatedOpacity(
+                  duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
+            );
             return WillPopScope(
               onWillPop: () async {
                 if (LifeCycleManager().isBubble) {
@@ -687,50 +726,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 }
                 return !LifeCycleManager().isBubble;
               },
-              child: Obx(
+              child: kIsDesktop || kIsWeb ? Obx(
                 () {
                   widget.chat!.getTitle();
-                  return Scaffold(
-                    backgroundColor: Theme.of(context).backgroundColor,
-                    extendBodyBehindAppBar: !isCreator!,
-                    appBar: !isCreator!
-                        ? buildConversationViewHeader(context) as PreferredSizeWidget?
-                        : buildChatSelectorHeader() as PreferredSizeWidget?,
-                    body: Obx(() => adjustBackground.value
-                        ? MirrorAnimation<MultiTweenValues<String>>(
-                            tween: ConversationViewMixin.gradientTween.value,
-                            curve: Curves.fastOutSlowIn,
-                            duration: Duration(seconds: 3),
-                            builder: (context, child, anim) {
-                              return Container(
-                                decoration:
-                                    (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
-                                        ? BoxDecoration(
-                                            gradient: LinearGradient(
-                                                begin: Alignment.topRight,
-                                                end: Alignment.bottomLeft,
-                                                stops: [
-                                                anim.get("color1"),
-                                                anim.get("color2")
-                                              ],
-                                                colors: [
-                                                AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
-                                                    ? Theme.of(context).primaryColor.lightenPercent(20)
-                                                    : Theme.of(context).primaryColor.darkenPercent(20),
-                                                Theme.of(context).backgroundColor
-                                              ]))
-                                        : null,
-                                child: child,
-                              );
-                            },
-                            child: child,
-                          )
-                        : child),
-                    floatingActionButton: AnimatedOpacity(
-                        duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
-                  );
+                  return childWidget;
                 },
-              ),
+              ) : childWidget,
             );
           },
         ),
