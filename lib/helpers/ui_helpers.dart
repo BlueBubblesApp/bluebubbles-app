@@ -163,11 +163,7 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
-            chat.toggleHasUnread(!chat.hasUnreadMessage!);
-            if (!chat.hasUnreadMessage! && !kIsWeb && !kIsDesktop) {
-              // Remove from notification shade
-              MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
-            }
+            ChatBloc().toggleChatUnread(chat, !chat.hasUnreadMessage!);
             if (_this.mounted) _this.setState(() {});
             Navigator.pop(context);
           },
