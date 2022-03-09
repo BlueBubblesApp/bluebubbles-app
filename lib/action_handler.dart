@@ -22,7 +22,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:universal_io/io.dart';
 
 import 'managers/chat_manager.dart';
@@ -242,6 +241,27 @@ class ActionHandler {
     return chat;
   }
 
+  static int lastConnectionAttempt = 0;
+  static bool lastConnectionStatus = false;
+  static Future<bool> isServerOnline() async {
+    // If we recently checked (within 15 seconds), and our last check was successful,
+    // just use that result. Don't re-check the status
+    int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    if (lastConnectionStatus && now - lastConnectionAttempt < 15000) return lastConnectionStatus;
+    lastConnectionAttempt = DateTime.now().toUtc().millisecondsSinceEpoch;
+
+    // Ping the server to see if it responds. This request should return super fast
+    try {
+      await api.ping();
+      lastConnectionStatus = true;
+      return lastConnectionStatus;
+    } catch (ex) {
+      Logger.warn('Failed to connnect to server! Error: ${ex.toString()}');
+      lastConnectionStatus = false;
+      return lastConnectionStatus;
+    }
+  }
+
   static Future<void> sendMessageHelper(Chat chat, Message message) async {
     Completer<void> completer = Completer<void>();
     Map<String, dynamic> params = {};
@@ -249,7 +269,22 @@ class ActionHandler {
     params["message"] = message.text;
     params["tempGuid"] = message.guid;
 
-    void sendSocketMessage() {
+    Future<void> handleError() async {
+      String? tempGuid = message.guid;
+      message.guid = message.guid!
+          .replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
+      message.error = MessageError.BAD_REQUEST.code;
+
+      ChatController? currChat = ChatManager().activeChat;
+      if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
+        NotificationManager().createFailedToSendMessage();
+      }
+
+      await Message.replaceMessage(tempGuid, message);
+      NewMessageManager().updateMessage(chat, tempGuid!, message);
+    }
+
+    void sendMessage() {
       if ((SettingsManager().settings.enablePrivateAPI.value
           && SettingsManager().settings.privateAPISend.value
           && (message.text?.isNotEmpty ?? false))
@@ -295,6 +330,9 @@ class ActionHandler {
           }
 
           completer.complete();
+        }).catchError((err) {
+            Logger.error('Failed to send message! Error: ${err.toString()}');
+            handleError().then((value) => completer.complete());
         });
       } else {
         SocketManager().sendMessage("send-message", params, (response) async {
@@ -315,57 +353,22 @@ class ActionHandler {
       }
     }
 
-    bool isConnected = kIsWeb;
-    if (!isConnected) {
-      isConnected = await InternetConnectionChecker().hasConnection;
+    bool isConnected = true;
+    if (!SettingsManager().settings.privateAPISend.value) {
+      if ([SocketState.CONNECTING, SocketState.DISCONNECTED].contains(SocketManager().state.value)) {
+        await Future.delayed(Duration(seconds: 3));
+      }
+
+      isConnected = SocketManager().state.value == SocketState.CONNECTED;
     }
+
+    // If we aren't connected (this will only hit with normal sending), 
     if (!isConnected) {
-      InternetConnectionChecker().checkInterval = const Duration(seconds: 1);
-      StreamSubscription? sub;
-      Worker? sub2;
-      Timer timer = Timer(const Duration(seconds: 30), () async {
-        sub?.cancel();
-        sub2?.dispose();
-        String? tempGuid = message.guid;
-        message.guid = message.guid!
-            .replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
-        message.error = MessageError.BAD_REQUEST.code;
-        ChatController? currChat = ChatManager().activeChat;
-        if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
-          NotificationManager().createFailedToSendMessage();
-        }
-        await Message.replaceMessage(tempGuid, message);
-        NewMessageManager().updateMessage(chat, tempGuid!, message);
-        completer.complete();
-        return completer.future;
-      });
-      sub = InternetConnectionChecker().onStatusChange.listen((event) {
-        /// listen to the internet status. we only want to fire callbacks when we
-        /// are connected
-        if (event == InternetConnectionStatus.connected) {
-          /// Check our internal status. If we are connected *and* we haven't
-          /// listened to the connection state stream, then send the message
-          if (SocketManager().state.value == SocketState.CONNECTED && sub2 == null) {
-            timer.cancel();
-            sendSocketMessage();
-            sub?.cancel();
-            sub2?.dispose();
-          } else {
-            /// Otherwise listen to our stream and await the socket to be connected
-            /// before doing anything
-            sub2 = ever(SocketManager().state, (event2) {
-              if (event2 == SocketState.CONNECTED && event == InternetConnectionStatus.connected) {
-                timer.cancel();
-                sendSocketMessage();
-                sub?.cancel();
-                sub2?.dispose();
-              }
-            });
-          }
-        }
-      });
+      await handleError();
+      completer.complete();
+      return completer.future;
     } else {
-      sendSocketMessage();
+      sendMessage();
     }
 
     return completer.future;
