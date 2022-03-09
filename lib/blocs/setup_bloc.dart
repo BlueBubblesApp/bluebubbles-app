@@ -169,6 +169,7 @@ class SetupBloc {
         startIncrementalSync(settings);
         return;
       }
+
       for (Chat chat in chats) {
         if (chat.guid == "ERROR") {
           addOutput("Failed to save chat data, '${chat.displayName}'", SetupOutputType.ERROR);
@@ -194,6 +195,10 @@ class SetupBloc {
           } catch (ex, stacktrace) {
             addOutput("Failed to sync chat, '${chat.chatIdentifier}'", SetupOutputType.ERROR);
             addOutput(stacktrace.toString(), SetupOutputType.ERROR);
+          } finally {
+            // This artificial wait is here so that syncing doesn't completely freeze the sync screen.
+            // Eventually, we just need to move syncing to the isolate so it gets handled asyncronously
+            await Future.delayed(Duration(milliseconds: 250));
           }
         }
 

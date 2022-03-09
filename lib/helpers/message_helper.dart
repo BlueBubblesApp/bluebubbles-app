@@ -83,6 +83,9 @@ class MessageHelper {
         checkForMessageText: checkForLatestMessageText,
       );
 
+      // Artificial await to prevent lag
+      await Future.delayed(Duration(milliseconds: 10));
+
       if (existing == null) {
         if (isIncremental && !notificationMessages.containsValue(msgChat.guid)) {
           notificationMessages[message] = msgChat.guid;
