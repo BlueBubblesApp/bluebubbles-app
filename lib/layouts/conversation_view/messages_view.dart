@@ -252,7 +252,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
               ? event.outGoing
                   // This determines how long to wait until showing the
                   // "new" message after animating to the position
-                  ? Duration(milliseconds: 250)
+                  ? Duration(milliseconds: 300)
                   : animationDuration
               : Duration(milliseconds: 0),
         );
