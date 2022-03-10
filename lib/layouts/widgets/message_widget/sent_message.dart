@@ -84,7 +84,7 @@ class SentMessageHelper {
       controller = CustomAnimationControl.playFromStart;
       if (effect != MessageEffect.invisibleInk) {
         Timer(Duration(milliseconds: 500), () {
-          if (message?.datePlayed == null) {
+          if (message?.datePlayed == null && !(message?.guid?.contains("redacted-mode-demo") ?? false)) {
             message?.setPlayedDate();
           }
         });
@@ -589,7 +589,9 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
         : effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ??
             "unknown";
 
-    if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble && widget.message.datePlayed == null && mounted) {
+    if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble
+        && widget.message.datePlayed == null
+        && mounted && !(widget.message.guid?.contains("redacted-mode-demo") ?? false)) {
       WidgetsBinding.instance!.addObserver(this);
       WidgetsBinding.instance!.addPostFrameCallback((_) async {
         if (!mounted) return;
