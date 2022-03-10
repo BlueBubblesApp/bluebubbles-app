@@ -164,7 +164,8 @@ Future<Null> initApp(bool isBubble) async {
   dynamic exception;
   StackTrace? stacktrace;
   if (Platform.isWindows) {
-    Directory appData = await getApplicationSupportDirectory();
+    //ignore: unnecessary_cast, we need this as a workaround
+    Directory appData = (await getApplicationSupportDirectory()) as Directory;
     // Migrate to new appdata location if this function returns the new place and we still have the old place
     if (basename(dirname(appData.absolute.path)) == "com.bluebubbles.app") {
       Directory oldAppData =
