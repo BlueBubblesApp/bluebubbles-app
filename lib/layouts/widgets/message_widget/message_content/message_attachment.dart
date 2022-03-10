@@ -1,10 +1,9 @@
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_file.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
@@ -13,9 +12,9 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/location_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
-import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class MessageAttachment extends StatefulWidget {
   MessageAttachment({
@@ -40,6 +39,12 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
   void initState() {
     super.initState();
     updateContent();
+
+    ever(Get.find<AttachmentDownloadService>().downloaders, (List<String> downloaders) {
+      if (downloaders.contains(widget.attachment.guid)) {
+        if (mounted) setState(() {});
+      }
+    });
   }
 
   void updateContent() async {
@@ -82,7 +87,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
     if (content is PlatformFile) {
       String? mimeType = widget.attachment.mimeType;
       if (mimeType != null) mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-      if (mimeType == "image" && !widget.attachment.mimeType!.endsWith("tiff")) {
+      if (mimeType == "image") {
         return MediaFile(
           attachment: widget.attachment,
           child: ImageWidget(
@@ -110,7 +115,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
       } else if (mimeType == "audio" && !widget.attachment.mimeType!.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
-          child: AudioPlayerWidget(file: content, context: context, width: 250, isFromMe: widget.isFromMe),
+          child: AudioPlayerWidget(file: content, context: context, width: kIsDesktop ? null : 250, isFromMe: widget.isFromMe),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
         return MediaFile(

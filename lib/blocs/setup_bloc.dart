@@ -6,9 +6,7 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
@@ -42,6 +40,7 @@ class SetupBloc {
   final Rxn<SetupData> data = Rxn<SetupData>();
   final Rxn<SocketState> connectionStatus = Rxn<SocketState>();
   final RxBool isSyncing = false.obs;
+  final RxBool isIncrementalSyncing = false.obs;
   Worker? connectionSubscription;
 
   double _progress = 0.0;
@@ -67,8 +66,8 @@ class SetupBloc {
     settingsCopy.guidAuthKey.value = password;
 
     await SettingsManager().saveSettings(settingsCopy);
-    await SettingsManager().saveFCMData(data);
-    await SocketManager().authFCM(catchException: false, force: true);
+    SettingsManager().saveFCMData(data);
+    await SocketManager().registerFcmDevice(catchException: false, force: true);
     SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     connectionSubscription = ever<SocketState>(SocketManager().state, (event) {
       connectionStatus.value = event;
@@ -130,7 +129,7 @@ class SetupBloc {
       addOutput("Getting contacts...", SetupOutputType.LOG);
       Stopwatch s = Stopwatch();
       s.start();
-      await ContactManager().getContacts(force: true);
+      await ContactManager().loadContacts(force: true);
       s.stop();
       addOutput("Received contacts list. Size: ${ContactManager().contacts.length}, speed: ${s.elapsedMilliseconds} ms", SetupOutputType.LOG);
       addOutput("Getting Chats...", SetupOutputType.LOG);
@@ -162,15 +161,15 @@ class SetupBloc {
           _progress = (_currentIndex / chats.length) * 100;
         }
         addOutput("Fetching contacts from server...", SetupOutputType.LOG);
-        await ContactManager().getContacts(force: true);
+        await ContactManager().loadContacts(force: true);
         addOutput("Received contacts list. Size: ${ContactManager().contacts.length}", SetupOutputType.LOG);
         addOutput("Matching contacts to chats...", SetupOutputType.LOG);
-        await ContactManager().matchHandles();
         _progress = 100;
         finishSetup();
         startIncrementalSync(settings);
         return;
       }
+
       for (Chat chat in chats) {
         if (chat.guid == "ERROR") {
           addOutput("Failed to save chat data, '${chat.displayName}'", SetupOutputType.ERROR);
@@ -184,11 +183,7 @@ class SetupBloc {
               List<dynamic> messages = await SocketManager().getChatMessages(params)!;
               addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
               if (!skipEmptyChats || (skipEmptyChats && messages.isNotEmpty)) {
-                await chat.save();
-
-                // Re-match the handles with the contacts
-                await ContactManager().matchHandles();
-
+                chat.save();
                 await syncChat(chat, messages);
                 addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
               } else {
@@ -200,6 +195,10 @@ class SetupBloc {
           } catch (ex, stacktrace) {
             addOutput("Failed to sync chat, '${chat.chatIdentifier}'", SetupOutputType.ERROR);
             addOutput(stacktrace.toString(), SetupOutputType.ERROR);
+          } finally {
+            // This artificial wait is here so that syncing doesn't completely freeze the sync screen.
+            // Eventually, we just need to move syncing to the isolate so it gets handled asyncronously
+            await Future.delayed(Duration(milliseconds: 250));
           }
         }
 
@@ -221,7 +220,6 @@ class SetupBloc {
       addOutput("Failed to sync chats!", SetupOutputType.ERROR);
       addOutput("Error: ${ex.toString()}", SetupOutputType.ERROR);
     } finally {
-      await ContactManager().matchHandles();
       finishSetup();
     }
 
@@ -251,9 +249,8 @@ class SetupBloc {
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup.value = true;
     await SettingsManager().saveSettings(_settingsCopy);
-    if (!kIsWeb) await ContactManager().getContacts(force: true);
     if (!kIsWeb) await ChatBloc().refreshChats(force: true);
-    await SocketManager().authFCM(force: true);
+    await SocketManager().registerFcmDevice(force: true);
     closeSync();
   }
 
@@ -267,7 +264,7 @@ class SetupBloc {
       {String? chatGuid, bool saveDate = true, Function? onConnectionError, Function? onComplete}) async {
     // If we are already syncing, don't sync again
     // Or, if we haven't finished setup, or we aren't connected, don't sync
-    if (isSyncing.value || !settings.finishedSetup.value || SocketManager().state.value != SocketState.CONNECTED) {
+    if (isIncrementalSyncing.value || !settings.finishedSetup.value || SocketManager().state.value != SocketState.CONNECTED) {
       return;
     }
 
@@ -278,13 +275,12 @@ class SetupBloc {
     processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
 
     // if (onConnectionError != null) this.onConnectionError = onConnectionError;
-    isSyncing.value = true;
+    isIncrementalSyncing.value = true;
     _progress = 1;
 
     // Store the time we started syncing
     addOutput("Starting incremental sync for messages since: ${settings.lastIncrementalSync}", SetupOutputType.LOG);
     int syncStart = DateTime.now().millisecondsSinceEpoch;
-    await Future.delayed(Duration(seconds: 3));
 
     // only get up to 1000 messages (arbitrary limit)
     int batches = 10;
@@ -351,7 +347,8 @@ class SetupBloc {
   }
 
   void closeSync() {
-    isSyncing.value = false;
+    if (isSyncing.value) isSyncing.value = false;
+    if (isIncrementalSyncing.value) isIncrementalSyncing.value = false;
     if (processId != null) SocketManager().finishSocketProcess(processId);
     data.value = null;
     connectionStatus.value = null;

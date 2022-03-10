@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.15)
-project(bluebubbles_android_app LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.14)
+project(bluebubbles_app LANGUAGES CXX)
 
-set(BINARY_NAME "bluebubbles_android_app")
+set(BINARY_NAME "bluebubbles_app")
 
 cmake_policy(SET CMP0063 NEW)
 

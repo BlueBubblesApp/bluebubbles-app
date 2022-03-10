@@ -1,29 +1,28 @@
-import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_io/io.dart';
 
 class SamsungConversationList extends StatefulWidget {
   SamsungConversationList({Key? key, required this.parent}) : super(key: key);
@@ -176,7 +175,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
         && prefs.getString('lastOpenedChat') != null
         && (!context.isPhone || context.isLandscape)
         && SettingsManager().settings.tabletMode.value
-        && CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
+        && ChatManager().activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
         context,
@@ -651,9 +650,8 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
     return VerticalSplitView(
-      dividerWidth: 10.0,
       initialRatio: 0.4,
-      minRatio: 0.33,
+      minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
       maxRatio: 0.5,
       allowResize: true,
       left: LayoutBuilder(
@@ -722,10 +720,12 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
   }
 
   Widget buildForDevice() {
-    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
+    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600;
     Widget chatList = buildChatList();
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);
+    } else if (!widget.parent.widget.showArchivedChats && !widget.parent.widget.showUnknownSenders) {
+      return TitleBarWrapper(child: chatList);
     }
 
     return chatList;

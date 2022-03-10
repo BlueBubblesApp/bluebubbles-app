@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:dio_http/dio_http.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:universal_io/io.dart';
@@ -30,7 +31,7 @@ class ApiService extends GetxService {
   /// Initialize dio with a couple options and intercept all requests for logging
   @override
   void onInit() {
-    dio = Dio(BaseOptions(connectTimeout: 30000, receiveTimeout: 30000, sendTimeout: 30000));
+    dio = Dio(BaseOptions(connectTimeout: 15000, receiveTimeout: 15000, sendTimeout: 15000));
     dio.interceptors.add(ApiInterceptor());
     // Uncomment to run tests on most API requests
     // testAPI();
@@ -111,12 +112,13 @@ class ApiService extends GetxService {
   }
 
   /// Get the attachment data for the specified [guid]
-  Future<Response> downloadAttachment(String guid, {CancelToken? cancelToken}) async {
+  Future<Response> downloadAttachment(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
     return await dio.get(
         "$origin/attachment/$guid/download",
         queryParameters: buildQueryParams(),
-        options: Options(responseType: ResponseType.bytes),
-        cancelToken: cancelToken
+        options: Options(responseType: ResponseType.bytes, receiveTimeout: 1800000),
+        cancelToken: cancelToken,
+        onReceiveProgress: onReceiveProgress,
     );
   }
 
@@ -267,6 +269,7 @@ class ApiService extends GetxService {
         queryParameters: buildQueryParams(),
         data: {
           "chatGuid": chatGuid,
+          "tempGuid": tempGuid,
           "message": message.isEmpty && (subject?.isNotEmpty ?? false) ? " " : message,
           "method": method,
           "effectId": effectId,
@@ -396,6 +399,14 @@ class ApiService extends GetxService {
         origin.replaceAll("/api/v1", ""),
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken
+    );
+  }
+
+  Future<Response> downloadGiphy(String url, {CancelToken? cancelToken}) async {
+    return await dio.get(
+        url,
+        options: Options(responseType: ResponseType.bytes),
+        cancelToken: cancelToken,
     );
   }
 
@@ -548,6 +559,15 @@ class ApiInterceptor extends Interceptor {
     Logger.error(err.requestOptions.contentType, tag: "ERROR[${err.response?.statusCode}]");
     Logger.error(err.response?.data, tag: "ERROR[${err.response?.statusCode}]");
     if (err.response != null) return handler.resolve(err.response!);
+    if (describeEnum(err.type).contains("Timeout")) {
+      return handler.resolve(Response(data: {
+        'status': 500,
+        'error': {
+          'type': 'timeout',
+          'error': 'Failed to receive response from server.'
+        }
+      }, requestOptions: err.requestOptions, statusCode: 500));
+    }
     return super.onError(err, handler);
   }
 }

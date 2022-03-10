@@ -1,13 +1,11 @@
-import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as p;
+import 'package:universal_io/io.dart';
 
 class MessageAttachments extends StatelessWidget {
   MessageAttachments({
@@ -66,11 +64,11 @@ class MessageAttachments extends StatelessWidget {
 
   List<Widget> _buildAttachments(BuildContext context) {
     List<Widget> content = <Widget>[];
-    dynamic items;
-    if (message?.guid == "redacted-mode-demo" || message!.guid!.contains("theme-selector")) {
+    List<Attachment?>? items;
+    if (message?.guid == "redacted-mode-demo" || message!.guid!.contains("theme-selector") || message!.guid!.startsWith("temp-")) {
       items = message!.attachments;
     } else {
-      items = CurrentChat.activeChat?.getAttachmentsForMessage(message) ?? [];
+      items = ChatManager().activeChat?.getAttachmentsForMessage(message) ?? [];
     }
     for (Attachment? attachment in items) {
       if (attachment!.mimeType != null) {
@@ -82,7 +80,7 @@ class MessageAttachments extends StatelessWidget {
           isFromMe: message?.isFromMe ?? false,
         );
 
-        if (message!.error.value == 0) {
+        if (message!.error == 0) {
           content.add(attachmentWidget);
         } else {
           content.add(Row(
@@ -91,7 +89,7 @@ class MessageAttachments extends StatelessWidget {
             children: [
               attachmentWidget,
               Container(width: 5),
-              SentMessageHelper.getErrorWidget(context, message, CurrentChat.activeChat?.chat, rightPadding: 0),
+              SentMessageHelper.getErrorWidget(context, message, ChatManager().activeChat?.chat, rightPadding: 0),
             ],
           ));
         }

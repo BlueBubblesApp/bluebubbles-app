@@ -1,11 +1,11 @@
-import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
-import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ConversationPanel extends StatelessWidget {
   @override
@@ -67,7 +67,7 @@ class ConversationPanel extends StatelessWidget {
                     },
                     initialVal: SettingsManager().settings.recipientAsPlaceholder.value,
                     title: "Show Recipient (or Group Name) as Placeholder",
-                    subtitle: "Changes the default hint text in the message box to the recipient name",
+                    subtitle: "Changes the default hint text in the message box to display the recipient name",
                     backgroundColor: tileColor,
                   )),
                   Container(

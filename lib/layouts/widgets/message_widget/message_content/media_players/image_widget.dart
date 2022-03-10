@@ -1,17 +1,18 @@
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
+import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:flutter/services.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class ImageWidgetController extends GetxController {
@@ -29,7 +30,22 @@ class ImageWidgetController extends GetxController {
 
   @override
   void onInit() {
-    initBytes();
+    if (ModalRoute.of(context)?.animation != null) {
+      if (ModalRoute.of(context)?.animation?.status != AnimationStatus.completed) {
+        late final AnimationStatusListener listener;
+        listener = (AnimationStatus status) {
+          if (status == AnimationStatus.completed) {
+            initBytes();
+            ModalRoute.of(context)?.animation?.removeStatusListener(listener);
+          }
+        };
+        ModalRoute.of(context)?.animation?.addStatusListener(listener);
+      } else {
+        initBytes();
+      }
+    } else {
+      initBytes();
+    }
     super.onInit();
   }
 
@@ -39,12 +55,21 @@ class ImageWidgetController extends GetxController {
     if (!runForcefully && data.value != null) return;
 
     // Try to get the image data from the "cache"
-    Uint8List? tmpData = CurrentChat.activeChat?.getImageData(attachment);
+    Uint8List? tmpData = ChatManager().activeChat?.getImageData(attachment);
     if (tmpData == null) {
       // If it's an image, compress the image when loading it
       if (kIsWeb || file.path == null) {
         if (attachment.guid != "redacted-mode-demo-attachment") {
-          tmpData = file.bytes;
+          if ((attachment.mimeType?.endsWith("tif") ?? false) || (attachment.mimeType?.endsWith("tiff") ?? false)) {
+            final receivePort = ReceivePort();
+            await Isolate.spawn(
+                unsupportedToPngIsolate, IsolateData(file, receivePort.sendPort));
+            // Get the processed image from the isolate.
+            final image = await receivePort.first as Uint8List?;
+            tmpData = image;
+          } else {
+            tmpData = file.bytes;
+          }
         } else {
           data.value = Uint8List.view((await rootBundle.load(attachment.transferName!)).buffer);
           return;
@@ -62,8 +87,8 @@ class ImageWidgetController extends GetxController {
         tmpData = await File(file.path!).readAsBytes();
       }
 
-      if (tmpData == null || CurrentChat.activeChat == null) return;
-      CurrentChat.activeChat?.saveImageData(tmpData, attachment);
+      if (tmpData == null || !ChatManager().hasActiveChat) return;
+      ChatManager().activeChat!.saveImageData(tmpData, attachment);
       if (!(attachment.mimeType?.endsWith("heic") ?? false) && !(attachment.mimeType?.endsWith("heif") ?? false)) {
         await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
       }
@@ -96,7 +121,7 @@ class ImageWidget extends StatelessWidget {
           if (!SettingsManager().settings.lowMemoryMode.value) return;
           if (info.visibleFraction == 0 && controller.visible && !controller.navigated) {
             controller.visible = false;
-            CurrentChat.activeChat?.clearImageData(controller.attachment);
+            ChatManager().activeChat?.clearImageData(controller.attachment);
             controller.update();
           } else if (!controller.visible) {
             controller.visible = true;
@@ -107,8 +132,8 @@ class ImageWidget extends StatelessWidget {
           child: buildSwitcher(context, controller),
           onTap: () async {
             controller.navigated = true;
-            CurrentChat? currentChat = CurrentChat.activeChat;
-            await Navigator.of(context).push(
+            ChatController? currentChat = ChatManager().activeChat;
+            await Navigator.of(Get.context!).push(
               MaterialPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(
                   currentChat: currentChat,
@@ -135,6 +160,9 @@ class ImageWidget extends StatelessWidget {
                 controller.data.value!,
                 // prevents the image widget from "refreshing" when the provider changes
                 gaplessPlayback: true,
+                filterQuality: FilterQuality.none,
+                cacheWidth: (controller.attachment.width != null ? (controller.attachment.width! * Get.pixelRatio).round().abs() : null).nonZero,
+                cacheHeight: (controller.attachment.height != null ? (controller.attachment.height! * Get.pixelRatio).round().abs() : null).nonZero,
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   return Stack(children: [
                     buildPlaceHolder(context, controller, isLoaded: wasSynchronouslyLoaded),
@@ -181,4 +209,8 @@ class ImageWidget extends StatelessWidget {
         controller.attachment.guid != "redacted-mode-demo-attachment"
             ? Center(child: buildProgressIndicator(context)) : Container());
   }
+}
+
+extension NonZero on int? {
+  int? get nonZero => (this ?? 0) == 0 ? null : this;
 }

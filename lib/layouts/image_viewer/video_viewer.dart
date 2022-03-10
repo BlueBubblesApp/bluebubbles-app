@@ -1,28 +1,27 @@
 import 'dart:async';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
 
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:chewie/chewie.dart';
-import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:video_player/video_player.dart';
-import 'package:provider/provider.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:chewie/chewie.dart';
 // (needed for custom back button)
 //ignore: implementation_imports
 import 'package:chewie/src/notifiers/index.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
+import 'package:video_player/video_player.dart';
 
 class VideoViewer extends StatefulWidget {
   VideoViewer({Key? key, required this.file, required this.attachment, required this.showInteractions})
@@ -177,7 +176,7 @@ class _VideoViewerState extends State<VideoViewer> {
           onTap: () async {
             Navigator.pop(context);
             isReloading.value = true;
-            CurrentChat.activeChat?.clearImageData(widget.attachment);
+            ChatManager().activeChat?.clearImageData(widget.attachment);
 
             showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
             AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
@@ -391,7 +390,7 @@ class _VideoViewerState extends State<VideoViewer> {
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
                       isReloading.value = true;
-                      CurrentChat.activeChat?.clearImageData(widget.attachment);
+                      ChatManager().activeChat?.clearImageData(widget.attachment);
 
                       showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
                       AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {

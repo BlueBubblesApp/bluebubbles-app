@@ -1,8 +1,8 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
-import 'package:flutter/material.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
 
 enum DarkThemes {
   OLED,
@@ -62,16 +62,12 @@ ThemeData oledDarkTheme = ThemeData(
       fontWeight: FontWeight.normal,
     ),
   ),
-  accentColor: HexColor('26262a'),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: Colors.blue,
     backgroundColor: Colors.black,
     accentColor: HexColor('26262a'),
-  ).copyWith(
-    secondary: HexColor('26262a'),
   ),
   dividerColor: HexColor('27272a'),
-  buttonColor: HexColor("666666"),
   backgroundColor: Colors.black,
   splashColor: Colors.white.withOpacity(0.35),
 );
@@ -111,16 +107,12 @@ ThemeData nordDarkTheme = ThemeData(
       fontWeight: FontWeight.normal,
     ),
   ),
-  accentColor: HexColor('4C566A'),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: Colors.blue,
     backgroundColor: HexColor('2E3440'),
     accentColor: HexColor('4C566A'),
-  ).copyWith(
-    secondary: HexColor("4C566A"),
   ),
   dividerColor: HexColor('4C566A'),
-  buttonColor: HexColor("4C566A"),
   backgroundColor: HexColor('2E3440'),
   splashColor: Colors.white.withOpacity(0.35),
 );
@@ -160,7 +152,6 @@ ThemeData whiteLightTheme = ThemeData(
       fontWeight: FontWeight.normal,
     ),
   ),
-  accentColor: HexColor('e5e5ea'),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: Colors.blue,
     backgroundColor: Colors.white,
@@ -170,20 +161,20 @@ ThemeData whiteLightTheme = ThemeData(
   backgroundColor: Colors.white,
 );
 
-Future<void> loadTheme(BuildContext? context, {ThemeObject? lightOverride, ThemeObject? darkOverride}) async {
+void loadTheme(BuildContext? context, {ThemeObject? lightOverride, ThemeObject? darkOverride}) {
   if (context == null) return;
 
   // Set the theme to match those of the settings
-  ThemeObject light = lightOverride ?? await ThemeObject.getLightTheme();
-  ThemeObject dark = darkOverride ?? await ThemeObject.getDarkTheme();
+  ThemeObject light = lightOverride ?? ThemeObject.getLightTheme();
+  ThemeObject dark = darkOverride ?? ThemeObject.getDarkTheme();
   AdaptiveTheme.of(context).setTheme(
     light: light.themeData,
     dark: dark.themeData,
   );
 }
 
-Future<ThemeObject> revertToPreviousDarkTheme() async {
-  List<ThemeObject> allThemes = await ThemeObject.getThemes();
+ThemeObject revertToPreviousDarkTheme() {
+  List<ThemeObject> allThemes = ThemeObject.getThemes();
   ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
 
   previous ??= Themes.themes.firstWhereOrNull((element) => element.name == "OLED Dark");
@@ -192,11 +183,11 @@ Future<ThemeObject> revertToPreviousDarkTheme() async {
   previous!.previousDarkTheme = false;
 
   // Save the theme and set it accordingly
-  return await previous.save();
+  return previous.save();
 }
 
-Future<ThemeObject> revertToPreviousLightTheme() async {
-  List<ThemeObject> allThemes = await ThemeObject.getThemes();
+ThemeObject revertToPreviousLightTheme() {
+  List<ThemeObject> allThemes = ThemeObject.getThemes();
   ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
 
   previous ??= Themes.themes.firstWhereOrNull((element) => element.name == "Bright White");
@@ -205,5 +196,5 @@ Future<ThemeObject> revertToPreviousLightTheme() async {
   previous!.previousDarkTheme = false;
 
   // Save the theme and set it accordingly
-  return await previous.save();
+  return previous.save();
 }

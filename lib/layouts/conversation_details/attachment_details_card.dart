@@ -1,24 +1,25 @@
 import 'dart:async';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:path/path.dart';
+import 'package:universal_io/io.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
   AttachmentDetailsCard({Key? key, required this.attachment}) : super(key: key);
@@ -118,7 +119,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
         alignment: Alignment.center,
         color: Theme.of(context).colorScheme.secondary,
         child: Text(
-          widget.attachment.mimeType!,
+          widget.attachment.mimeType ?? "Unknown",
           textAlign: TextAlign.center,
         ),
       );
@@ -180,17 +181,40 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
   }
 
   Future<void> getVideoPreview(PlatformFile file) async {
-    if (previewImage != null || kIsWeb || file.path == null) return;
-    previewImage = await AttachmentHelper.getVideoThumbnail(file.path!);
-    Size size = await AttachmentHelper.getImageSizing("${file.path}.thumbnail");
-    widget.attachment.width = size.width.toInt();
-    widget.attachment.height = size.height.toInt();
-    aspectRatio = size.width / size.height;
+    if (previewImage != null || kIsWeb || kIsDesktop || file.path == null) return;
+    
+    Size size;
+
+    try {
+      // If we already errored, throw an error to load the error logo
+      if (widget.attachment.metadata?['thumbnail_status'] == 'error') {
+        throw Exception('No video preview');
+      }
+
+      previewImage = await AttachmentHelper.getVideoThumbnail(file.path!);
+      size = await AttachmentHelper.getImageSizing("${file.path}.thumbnail");
+      widget.attachment.width = size.width.toInt();
+      widget.attachment.height = size.height.toInt();
+      aspectRatio = size.width / size.height;
+    } catch (ex) {
+      // If an error occurs, set the thumnail to the cached no preview image
+      previewImage = ChatManager().noVideoPreviewIcon;
+      widget.attachment.width = 800;
+      widget.attachment.height = 800;
+      aspectRatio = 1;
+
+      if (widget.attachment.metadata?['thumbnail_status'] != 'error') {
+          widget.attachment.metadata ??= {};
+          widget.attachment.metadata!['thumbnail_status'] = 'error';
+          widget.attachment.save(null);
+        }
+    }
+    
     if (mounted) setState(() {});
   }
 
   Widget _buildPreview(PlatformFile file, BuildContext context) {
-    if (widget.attachment.mimeType!.startsWith("image/")) {
+    if (widget.attachment.mimeType?.startsWith("image/") ?? false) {
       if (previewImage == null) {
         if (file.bytes != null) {
           previewImage = file.bytes;
@@ -219,8 +243,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                CurrentChat? currentChat = CurrentChat.activeChat;
-                Navigator.of(context).push(
+                ChatController? currentChat = ChatManager().activeChat;
+                Navigator.of(Get.context!).push(
                   ThemeSwitcher.buildPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
                       currentChat: currentChat,
@@ -234,7 +258,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
           )
         ],
       );
-    } else if (widget.attachment.mimeType!.startsWith("video/")) {
+    } else if (widget.attachment.mimeType?.startsWith("video/") ?? false) {
       getVideoPreview(file);
 
       return Stack(
@@ -258,7 +282,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                Navigator.of(context).push(
+                Navigator.of(Get.context!).push(
                   ThemeSwitcher.buildPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
                       attachment: widget.attachment,

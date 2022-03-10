@@ -4,8 +4,7 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -22,98 +21,88 @@ class PinnedTileTextBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool showTail = !chat.isGroup();
+    if (!(chat.hasUnreadMessage ?? false)) return Container();
+    Message? lastMessage = chat.latestMessageGetter;
+    bool leftSide = Random(lastMessage?.id).nextBool();
+    bool hide = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
+    bool generate =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
 
-    return FutureBuilder<Message>(
-      future: chat.latestMessageFuture,
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (!snapshot.hasData) return Container();
-        if (!(chat.hasUnreadMessage ?? false)) return Container();
-        Message message = snapshot.data;
-        bool leftSide = Random(message.id).nextBool();
-        bool hide =
-            SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
-        bool generate = SettingsManager().settings.redactedMode.value &&
-            SettingsManager().settings.generateFakeMessageContent.value;
+    String messageText = lastMessage == null ? '' : MessageHelper.getNotificationText(lastMessage);
+    if (generate) messageText = chat.fakeLatestMessageText ?? "";
+    if (lastMessage?.associatedMessageGuid != null || (lastMessage?.isFromMe ?? false) || isNullOrEmpty(messageText, trimString: true)!) {
+      return Container();
+    }
 
-        String messageText = MessageHelper.getNotificationTextSync(message);
-        if (generate) messageText = chat.fakeLatestMessageText ?? "";
-        if (message.associatedMessageGuid != null ||
-            message.isFromMe! ||
-            isNullOrEmpty(messageText, trimString: true)!) {
-          return Container();
-        }
+    TextStyle style = Get.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
 
-        TextStyle style = Get.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
+    if (hide && !generate) style = style.apply(color: Colors.transparent);
 
-        if (hide && !generate) style = style.apply(color: Colors.transparent);
-
-        return Align(
-          alignment: showTail
+    return Align(
+      alignment: showTail
+          ? leftSide
+          ? Alignment.centerLeft
+          : Alignment.centerRight
+          : Alignment.center,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: showTail
               ? leftSide
-                  ? Alignment.centerLeft
-                  : Alignment.centerRight
-              : Alignment.center,
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: showTail
-                  ? leftSide
-                      ? size * 0.06
-                      : size * 0.02
-                  : size * 0.04,
-              right: showTail
-                  ? leftSide
-                      ? size * 0.02
-                      : size * 0.06
-                  : size * 0.04,
-            ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: <Widget>[
-                if (showTail)
-                  Positioned(
-                    top: -8.5,
-                    right: leftSide ? null : 7,
-                    left: leftSide ? 7 : null,
-                    child: CustomPaint(
-                      size: Size(18, 9),
-                      painter: TailPainter(leftSide: leftSide),
-                    ),
+              ? size * 0.06
+              : size * 0.02
+              : size * 0.04,
+          right: showTail
+              ? leftSide
+              ? size * 0.02
+              : size * 0.06
+              : size * 0.04,
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            if (showTail)
+              Positioned(
+                top: -8.5,
+                right: leftSide ? null : 7,
+                left: leftSide ? 7 : null,
+                child: CustomPaint(
+                  size: Size(18, 9),
+                  painter: TailPainter(leftSide: leftSide),
+                ),
+              ),
+            ConstrainedBox(
+              constraints: BoxConstraints(minWidth: showTail ? 30 : 0),
+              child: ClipRRect(
+                clipBehavior: Clip.antiAlias,
+                borderRadius: BorderRadius.circular(10.0),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: 2,
+                    sigmaY: 2,
                   ),
-                ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: showTail ? 30 : 0),
-                  child: ClipRRect(
-                    clipBehavior: Clip.antiAlias,
-                    borderRadius: BorderRadius.circular(10.0),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: 2,
-                        sigmaY: 2,
-                      ),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 3.0,
-                          horizontal: 6.0,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10.0),
-                          color: context.theme.colorScheme.secondary.withOpacity(0.8),
-                        ),
-                        child: Text(
-                          messageText,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
-                          textAlign: TextAlign.center,
-                          style: style,
-                        ),
-                      ),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      vertical: 3.0,
+                      horizontal: 6.0,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10.0),
+                      color: context.theme.colorScheme.secondary.withOpacity(0.8),
+                    ),
+                    child: Text(
+                      messageText,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                      style: style,
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 }

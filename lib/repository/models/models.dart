@@ -6,6 +6,32 @@ import 'package:image_size_getter/image_size_getter.dart';
 //ignore: implementation_imports
 import 'package:image_size_getter/src/utils/file_utils.dart';
 
+export 'package:bluebubbles/repository/models/io/attachment.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/attachment.dart';
+export 'package:bluebubbles/repository/models/io/chat.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/chat.dart';
+export 'package:bluebubbles/repository/models/io/fcm_data.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/fcm_data.dart';
+export 'package:bluebubbles/repository/models/io/handle.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/handle.dart';
+export 'package:bluebubbles/repository/models/io/join_tables.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/join_tables.dart';
+export 'package:bluebubbles/repository/models/io/js.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/js.dart';
+export 'package:bluebubbles/repository/models/io/launch_at_startup.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/launch_at_startup.dart';
+export 'package:bluebubbles/repository/models/io/message.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/message.dart';
+export 'package:bluebubbles/repository/models/io/scheduled.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/scheduled.dart';
+export 'package:bluebubbles/repository/models/io/theme_entry.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/theme_entry.dart';
+export 'package:bluebubbles/repository/models/io/theme_object.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/theme_object.dart';
+export 'package:bluebubbles/repository/models/io/giphy.dart'
+  if (dart.library.html) 'package:bluebubbles/repository/models/html/giphy.dart';
+export 'package:bluebubbles/repository/models/platform_file.dart';
+
 class Contact {
   Contact({
     required this.id,
@@ -13,7 +39,10 @@ class Contact {
     this.phones = const [],
     this.emails = const [],
     this.structuredName,
+    this.fakeName,
+    this.fakeAddress,
     Uint8List? avatarBytes,
+    Uint8List? avatarHiResBytes,
   }) {
     avatar.value = avatarBytes;
   }
@@ -23,7 +52,10 @@ class Contact {
   List<String> phones;
   List<String> emails;
   StructuredName? structuredName;
+  String? fakeName;
+  String? fakeAddress;
   final Rxn<Uint8List> avatar = Rxn<Uint8List>();
+  final Rxn<Uint8List> avatarHiRes = Rxn<Uint8List>();
 
   Map<String, dynamic> toMap() {
     return {
@@ -31,6 +63,8 @@ class Contact {
       'displayName': displayName,
       'phones': phones,
       'emails': emails,
+      'fakeName': fakeName,
+      'fakeAddress': fakeAddress
     };
   }
 
@@ -47,6 +81,8 @@ class Contact {
       displayName: map['displayName'] as String,
       phones: map['phones'].cast<String>(),
       emails: map['emails'].cast<String>(),
+      fakeName: map['fakeName'],
+      fakeAddress: map['fakeAddress']
     );
   }
 }

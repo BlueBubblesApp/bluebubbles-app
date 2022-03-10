@@ -4,10 +4,9 @@ import 'dart:collection';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:get/get.dart';
 
 import '../socket_manager.dart';
@@ -203,7 +202,7 @@ class MessageBloc {
     _isGettingMore = true;
 
     // Fetch messages
-    List<Message> messages = await Chat.getMessagesSingleton(_currentChat);
+    List<Message> messages = await Chat.getMessagesAsync(_currentChat!);
 
     if (isNullOrEmpty(messages)!) {
       _allMessages = {};
@@ -266,7 +265,7 @@ class MessageBloc {
   }
 
   Future<LoadMessageResult> loadMessageChunk(int offset,
-      {bool includeReactions = true, bool checkLocal = true, CurrentChat? currentChat}) async {
+      {bool includeReactions = true, bool checkLocal = true, ChatController? currentChat}) async {
     int reactionCnt = includeReactions ? _reactions : 0;
     Completer<LoadMessageResult> completer = Completer();
     if (!_canLoadMore) {
@@ -281,7 +280,7 @@ class MessageBloc {
       int count = 0;
 
       // Should we check locally first?
-      if (checkLocal) messages = await Chat.getMessages(currChat, offset: offset + reactionCnt);
+      if (checkLocal) messages = await Chat.getMessagesAsync(currChat, offset: offset + reactionCnt);
 
       // Fetch messages from the socket
       count = messages.length;
@@ -304,7 +303,7 @@ class MessageBloc {
             // If the handle is empty, load it
             for (Message msg in messages) {
               if (msg.isFromMe! || msg.handle != null) continue;
-              await msg.getHandle();
+              msg.handle = msg.getHandle();
             }
           }
         } catch (ex) {
@@ -327,7 +326,7 @@ class MessageBloc {
 
       if (currentChat != null) {
         List<Message> messagesWithAttachment = messages.where((element) => element.hasAttachments).toList();
-        await currentChat.preloadMessageAttachments(specificMessages: messagesWithAttachment);
+        await currentChat.preloadMessageAttachmentsAsync(specificMessages: messagesWithAttachment);
       }
 
       emitLoaded();

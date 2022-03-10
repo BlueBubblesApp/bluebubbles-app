@@ -13,24 +13,25 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
-import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -40,6 +41,7 @@ import 'package:url_launcher/url_launcher.dart';
 mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on State<ConversationView> {
   /// Commonly shared variables
   Chat? chat;
+  Chat? previousChat;
   bool? isCreator;
   MessageBloc? messageBloc;
 
@@ -56,14 +58,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   List<UniqueContact> prevSelected = [];
   String searchQuery = "";
   bool currentlyProcessingDeleteKey = false;
-  CurrentChat? currentChat;
+  ChatController? currentChat;
   bool markingAsRead = false;
   bool markedAsRead = false;
   String previousSearch = '';
   int previousContactCount = 0;
   bool shouldShowAlert = false;
 
-  final RxBool fetchingCurrentChat = false.obs;
+  final RxBool fetchingChatController = false.obs;
 
   final _contactStreamController = StreamController<List<UniqueContact>>.broadcast();
 
@@ -71,11 +73,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   TextEditingController chatSelectorController = TextEditingController(text: " ");
 
-  static Rx<MultiTween<String>> gradientTween = Rx<MultiTween<String>>(
-      MultiTween<String>()
-        ..add("color1", Tween<double>(begin: 0, end: 0.2))
-        ..add("color2", Tween<double>(begin: 0.8, end: 1))
-  );
+  static Rx<MultiTween<String>> gradientTween = Rx<MultiTween<String>>(MultiTween<String>()
+    ..add("color1", Tween<double>(begin: 0, end: 0.2))..add("color2", Tween<double>(begin: 0.8, end: 1)));
   Timer? _debounce;
 
   /// Conversation view methods
@@ -84,13 +83,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   /// ===========================================================
   void initConversationViewState() {
     if (isCreator!) return;
-    NotificationManager().switchChat(chat);
 
     fetchParticipants();
 
     newMessages = ChatBloc()
         .chats
-        .where((element) => element != chat && (element.hasUnreadMessage ?? false))
+        .where((element) => element.guid != chat?.guid && (element.hasUnreadMessage ?? false))
         .map((e) => e.guid)
         .toList();
 
@@ -125,7 +123,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       // If it's a group event, let's fetch the new information and save it
       try {
-        await fetchChatSingleton(widget.chat!.guid!);
+        await fetchChatSingleton(widget.chat!.guid);
       } catch (ex) {
         Logger.error(ex.toString());
       }
@@ -134,14 +132,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     });
   }
 
-  void setNewChatData({forceUpdate = false}) async {
+  void setNewChatData({forceUpdate = false}) {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat!.participants;
-    await widget.chat!.getParticipants();
+    widget.chat!.getParticipants();
 
     // Save the current title and generate the new one
     String? ogTitle = widget.chat!.title;
-    await widget.chat!.getTitle();
+    widget.chat!.getTitle();
 
     // If the original data is different, update the state
     if (ogTitle != widget.chat!.title || ogParticipants.length != widget.chat!.participants.length || forceUpdate) {
@@ -149,18 +147,21 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
   }
 
-  void didChangeDependenciesConversationView() {
+  void didChangeDependenciesConversationView() async {
     if (isCreator!) return;
+    if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+      // wait for the end of that frame.
+      await SchedulerBinding.instance!.endOfFrame;
+    }
     SocketManager().removeChatNotification(chat!);
   }
 
-  void initCurrentChat(Chat chat) async {
-    currentChat = CurrentChat.getCurrentChat(chat);
+  void initChatController(Chat chat) async {
+    currentChat = ChatManager().createChatController(chat, active: true, loadAttachments: true);
     currentChat!.init();
     currentChat!.stream.listen((event) {
       if (mounted) setState(() {});
     });
-    await currentChat!.updateChatAttachments();
   }
 
   MessageBloc initMessageBloc() {
@@ -173,7 +174,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     _debounce?.cancel();
     messageBloc?.dispose();
     _contactStreamController.close();
-    // NotificationManager().leaveChat();
+
+    ChatManager().setActiveChat(previousChat);
     super.dispose();
   }
 
@@ -186,7 +188,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     // If we don't have participants, get them
     if (chat!.participants.isEmpty) {
-      await chat!.getParticipants();
+      chat!.getParticipants();
 
       // If we have participants, refresh the state
       if (chat!.participants.isNotEmpty) {
@@ -198,10 +200,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       try {
         // If we don't have participants, we should fetch them from the server
-        Chat? data = await fetchChatSingleton(chat!.guid!);
+        Chat? data = await fetchChatSingleton(chat!.guid);
         // If we got data back, fetch the participants and update the state
         if (data != null) {
-          await chat!.getParticipants();
+          chat!.getParticipants();
           if (chat!.participants.isNotEmpty) {
             Logger.info("Got new chat participants. Updating state.", tag: "ConversationView");
             if (mounted) setState(() {});
@@ -218,13 +220,17 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     processingParticipants = false;
   }
 
-  Future<void> openDetails() async {
+  void openDetails() {
     Navigator.of(context).push(
       ThemeSwitcher.buildPageRoute(
-        builder: (context) => ConversationDetails(
-          chat: chat!,
-          messageBloc: messageBloc ?? initMessageBloc(),
-        ),
+        builder: (context) =>
+            TitleBarWrapper(
+              hideInSplitView: true,
+              child: ConversationDetails(
+                chat: chat!,
+                messageBloc: messageBloc ?? initMessageBloc(),
+              ),
+            ),
       ),
     );
   }
@@ -262,7 +268,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildCupertinoTrailing() {
-    Color? fontColor = Theme.of(context).textTheme.headline1!.color;
+    Color? fontColor = Theme
+        .of(context)
+        .textTheme
+        .headline1!
+        .color;
     bool manualMark =
         SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateManualMarkAsRead.value;
     bool showManual = !SettingsManager().settings.privateMarkChatAsRead.value && !(widget.chat?.isGroup() ?? false);
@@ -272,20 +282,22 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 15.0 : 10.0),
             child: SettingsManager().settings.skin.value == Skins.iOS
                 ? Theme(
-                    data: ThemeData(
-                      cupertinoOverrideTheme: cupertino.CupertinoThemeData(
-                        brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
-                      ),
-                    ),
-                    child: cupertino.CupertinoActivityIndicator(
-                      radius: 12,
-                    ),
-                  )
+              data: ThemeData(
+                cupertinoOverrideTheme: cupertino.CupertinoThemeData(
+                  brightness: ThemeData.estimateBrightnessForColor(Theme
+                      .of(context)
+                      .backgroundColor),
+                ),
+              ),
+              child: cupertino.CupertinoActivityIndicator(
+                radius: 12,
+              ),
+            )
                 : Container(
-                    height: 24,
-                    width: 24,
-                    child: Center(
-                        child: CircularProgressIndicator(
+                height: 24,
+                width: 24,
+                child: Center(
+                    child: CircularProgressIndicator(
                       strokeWidth: 2,
                     )))),
       if (showManual && manualMark && !markingAsRead)
@@ -293,7 +305,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 10.0 : 5.0),
           child: GestureDetector(
             child: Icon(
-              (markedAsRead) ? cupertino.CupertinoIcons.check_mark_circled : cupertino.CupertinoIcons.check_mark_circled_solid,
+              (markedAsRead)
+                  ? cupertino.CupertinoIcons.check_mark_circled
+                  : cupertino.CupertinoIcons.check_mark_circled_solid,
               color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
             ),
             onTap: markChatAsRead,
@@ -318,9 +332,19 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildConversationViewHeader(BuildContext context) {
-    Color backgroundColor = Theme.of(context).backgroundColor;
-    Color? fontColor = Theme.of(context).textTheme.headline1!.color;
-    Color? fontColor2 = Theme.of(context).textTheme.subtitle1!.color;
+    Color backgroundColor = Theme
+        .of(context)
+        .backgroundColor;
+    Color? fontColor = Theme
+        .of(context)
+        .textTheme
+        .headline1!
+        .color;
+    Color? fontColor2 = Theme
+        .of(context)
+        .textTheme
+        .subtitle1!
+        .color;
     String? title = chat!.title;
 
     final hideTitle = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
@@ -328,7 +352,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     if (generateTitle) {
-      title = chat!.fakeParticipants.length > 1 ? "Group Chat" : chat!.fakeParticipants[0];
+      title = chat!.fakeNames.length > 1 ? "Group Chat" : chat!.fakeNames[0];
     } else if (hideTitle) {
       fontColor = Colors.transparent;
       fontColor2 = Colors.transparent;
@@ -337,144 +361,191 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     if (SettingsManager().settings.skin.value == Skins.Material ||
         SettingsManager().settings.skin.value == Skins.Samsung) {
       return AppBar(
-        systemOverlayStyle: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.dark
-                      ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title!,
-              style: Theme.of(context).textTheme.headline1!.apply(color: fontColor),
+        toolbarHeight: kIsDesktop ? 70 : null,
+        systemOverlayStyle: ThemeData.estimateBrightnessForColor(Theme
+            .of(context)
+            .backgroundColor) == Brightness.dark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
+        title: Padding(
+          padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+          child: GestureDetector(
+            onTap: () async {
+              if (!chat!.isGroup()) {
+                final handle = chat!.handles.first;
+                final contact = ContactManager().getContact(handle.address);
+                if (contact == null) {
+                  await MethodChannelInterface().invokeMethod("open-contact-form",
+                      {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+                } else {
+                  await MethodChannelInterface().invokeMethod("view-contact-form", {'id': contact.id});
+                }
+              }
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title!,
+                  style: Theme
+                      .of(context)
+                      .textTheme
+                      .headline1!
+                      .apply(color: fontColor),
+                ),
+                if (SettingsManager().settings.skin.value == Skins.Samsung &&
+                    (chat!.isGroup() || (!title.isPhoneNumber && !title.isEmail)))
+                  Text(
+                    generateTitle
+                        ? ContactManager()
+                        .getContact(chat!.handles.first.address)
+                        ?.fakeAddress ?? ""
+                        : chat!.isGroup()
+                        ? "${chat!.participants.length} recipients"
+                        : chat!.participants[0].address,
+                    style: Theme
+                        .of(context)
+                        .textTheme
+                        .subtitle1!
+                        .apply(color: fontColor2),
+                  ),
+              ],
             ),
-            if (SettingsManager().settings.skin.value == Skins.Samsung && (chat!.isGroup() || (!title.isPhoneNumber && !title.isEmail)))
-              Text(
-                chat!.isGroup() ? "${chat!.participants.length} recipients" : chat!.participants[0].address,
-                style: Theme.of(context).textTheme.subtitle1!.apply(color: fontColor2),
-              ),
-          ],
+          ),
         ),
         bottom: PreferredSize(
           child: Container(
-            color: Theme.of(context).dividerColor,
+            color: Theme
+                .of(context)
+                .dividerColor,
             height: 0.5,
           ),
           preferredSize: Size.fromHeight(0.5),
         ),
-        leading: buildBackButton(context, callback: () {
-          if (LifeCycleManager().isBubble) SystemNavigator.pop();
-          EventDispatcher().emit("update-highlight", null);
-        }),
+        leading: Padding(
+          padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+          // child: buildBackButton(context, callback: () {
+          //   if (LifeCycleManager().isBubble) {
+          //     SystemNavigator.pop();
+          //     return false;
+          //   }
+          //   EventDispatcher().emit("update-highlight", null);
+          //   return true;
+          // }),
+        ),
         automaticallyImplyLeading: false,
         backgroundColor: backgroundColor,
-        actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-        iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+        actionsIconTheme: IconThemeData(color: Theme
+            .of(context)
+            .primaryColor),
+        iconTheme: IconThemeData(color: Theme
+            .of(context)
+            .primaryColor),
         actions: [
-          Obx(() {
-            if (SettingsManager().settings.showConnectionIndicator.value) {
-              return Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12));
-            } else {
-              return SizedBox.shrink();
-            }
-          }),
-          Obx(() {
-            if (SettingsManager().settings.privateManualMarkAsRead.value && markingAsRead) {
-              return Padding(
+          Padding(
+            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+            child: Obx(() {
+              if (SettingsManager().settings.showConnectionIndicator.value) {
+                return Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12));
+              } else {
+                return SizedBox.shrink();
+              }
+            }),
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+            child: Obx(() {
+              if (SettingsManager().settings.privateManualMarkAsRead.value && markingAsRead) {
+                return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Theme
+                                  .of(context)
+                                  .primaryColor)),
+                        )));
+              } else {
+                return SizedBox.shrink();
+              }
+            }),
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+            child: Obx(() {
+              if (SettingsManager().settings.enablePrivateAPI.value &&
+                  SettingsManager().settings.privateManualMarkAsRead.value &&
+                  !markingAsRead) {
+                return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
-                  child: Center(
-                      child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)),
-                  )));
-            } else {
-              return SizedBox.shrink();
-            }
-          }),
-          Obx(() {
-            if (SettingsManager().settings.enablePrivateAPI.value &&
-                SettingsManager().settings.privateManualMarkAsRead.value &&
-                !markingAsRead) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
+                  child: GestureDetector(
+                    child: Icon(
+                      (markedAsRead)
+                          ? SettingsManager().settings.skin.value == Skins.iOS
+                          ? cupertino.CupertinoIcons.check_mark_circled_solid
+                          : Icons.check_circle
+                          : SettingsManager().settings.skin.value == Skins.iOS
+                          ? cupertino.CupertinoIcons.check_mark_circled
+                          : Icons.check_circle_outline,
+                      color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
+                    ),
+                    onTap: markChatAsRead,
+                  ),
+                );
+              } else {
+                return SizedBox.shrink();
+              }
+            }),
+          ),
+          if ((!chat!.isGroup() &&
+              (chat!.participants[0].address.isPhoneNumber || chat!.participants[0].address.isEmail)) &&
+              !kIsDesktop &&
+              !kIsWeb)
+            Padding(
+              padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12.0),
                 child: GestureDetector(
                   child: Icon(
-                    (markedAsRead)
-                        ? SettingsManager().settings.skin.value == Skins.iOS
-                        ? cupertino.CupertinoIcons.check_mark_circled_solid
-                        : Icons.check_circle
-                        : SettingsManager().settings.skin.value == Skins.iOS
-                        ? cupertino.CupertinoIcons.check_mark_circled
-                        : Icons.check_circle_outline,
-                    color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
+                    chat!.participants[0].address.isPhoneNumber ? Icons.call : Icons.email,
+                    color: fontColor,
                   ),
-                  onTap: markChatAsRead,
+                  onTap: () {
+                    if (chat!.participants[0].address.isPhoneNumber) {
+                      launch("tel://${chat!.participants[0].address}");
+                    } else {
+                      launch('mailto:${chat!.participants[0].address}');
+                    }
+                  },
                 ),
-              );
-            } else {
-              return SizedBox.shrink();
-            }
-          }),
-          if (!chat!.isGroup() && (chat!.participants[0].address.isPhoneNumber || chat!.participants[0].address.isEmail))
-            Padding(
-              padding: const EdgeInsets.only(right: 12.0),
-              child: GestureDetector(
-                child: Icon(
-                  chat!.participants[0].address.isPhoneNumber ? Icons.call : Icons.email,
-                  color: fontColor,
-                ),
-                onTap: () {
-                  if (chat!.participants[0].address.isPhoneNumber) {
-                    launch("tel://${chat!.participants[0].address}");
-                  } else {
-                    launch('mailto:${chat!.participants[0].address}');
-                  }
-                },
               ),
             ),
           Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: GestureDetector(
-              child: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.ellipsis : Icons.more_vert,
-                color: fontColor,
+            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: GestureDetector(
+                child: Icon(
+                  SettingsManager().settings.skin.value == Skins.iOS
+                      ? cupertino.CupertinoIcons.ellipsis
+                      : Icons.more_vert,
+                  color: fontColor,
+                ),
+                onTap: openDetails,
               ),
-              onTap: openDetails,
             ),
           ),
         ],
       );
     }
 
-    // Build the stack
-    List<Widget> avatars = [];
-    for (Handle participant in chat!.participants) {
-      avatars.add(
-        Container(
-          height: 42.0, // 2 px larger than the diameter
-          width: 42.0, // 2 px larger than the diameter
-          child: CircleAvatar(
-            radius: 20,
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            child: ContactAvatarWidget(
-                key: Key("${participant.address}-conversation-view"),
-                handle: participant,
-                borderThickness: 0.1,
-                editable: false,
-                onTap: openDetails),
-          ),
-        ),
-      );
-    }
-
-    TextStyle? titleStyle = Theme.of(context).textTheme.bodyText1;
+    TextStyle? titleStyle = Theme
+        .of(context)
+        .textTheme
+        .bodyText1;
     if (!generateTitle && hideTitle) titleStyle = titleStyle!.copyWith(color: Colors.transparent);
-
-    // Calculate separation factor
-    // Anything below -60 won't work due to the alignment
-    double distance = avatars.length * -4.0;
-    if (distance <= -30.0 && distance > -60) distance = -30.0;
-    if (distance <= -60.0) distance = -35.0;
 
     // NOTE: THIS IS ZACH TRYING TO FIX THE NAV BAR (REPLACE IT)
     // IT KINDA WORKED BUT ULTIMATELY FAILED
@@ -559,12 +630,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                     ])))));
 
     final children = [
+      if (kIsDesktop) SizedBox(height: 8.0, width: 5.0),
       ContactAvatarGroupWidget(
         chat: chat!,
-        size: avatars.length == 1 ? 40 : 45,
+        size: chat!.participants.length == 1 ? 40 : 45,
         onTap: openDetails,
       ),
-      SizedBox(height: 5.0, width: 5.0),
+      if (!kIsDesktop) SizedBox(height: 5.0, width: 5.0),
       Row(mainAxisSize: MainAxisSize.min, children: [
         Container(
           constraints: BoxConstraints(
@@ -575,7 +647,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             overflow: cupertino.TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             text: TextSpan(
-              style: Theme.of(context).textTheme.headline2,
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .headline2,
               children: [
                 ...MessageHelper.buildEmojiText(
                   title ?? "",
@@ -587,11 +662,17 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
         RichText(
           text: TextSpan(
-            style: Theme.of(context).textTheme.headline2,
+            style: Theme
+                .of(context)
+                .textTheme
+                .headline2,
             children: [
               TextSpan(
                 text: " >",
-                style: Theme.of(context).textTheme.subtitle1,
+                style: Theme
+                    .of(context)
+                    .textTheme
+                    .subtitle1,
               ),
             ],
           ),
@@ -602,67 +683,82 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     return PreferredSize(
       preferredSize: Size.fromHeight(context.orientation == Orientation.landscape && context.isPhone ? 55 : 75),
       child: CupertinoNavigationBar(
-          backgroundColor: Theme.of(context).colorScheme.secondary.withAlpha(125),
+          backgroundColor: Theme
+              .of(context)
+              .colorScheme
+              .secondary
+              .withAlpha(125),
           border: Border(
-            bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),
+            bottom: BorderSide(color: Theme
+                .of(context)
+                .dividerColor, width: 1.5),
           ),
           leading: GestureDetector(
-            onTap: () {
-              if (LifeCycleManager().isBubble) SystemNavigator.pop();
-              EventDispatcher().emit("update-highlight", null);
-              Navigator.of(context).pop();
-            },
-            behavior: HitTestBehavior.translucent,
-            child: Container(
-              width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
-              child: Row(
-                mainAxisSize: cupertino.MainAxisSize.min,
-                mainAxisAlignment: cupertino.MainAxisAlignment.start,
-                children: [
-                  buildBackButton(context, callback: () async {
-                    if (LifeCycleManager().isBubble) SystemNavigator.pop();
-                    EventDispatcher().emit("update-highlight", null);
-                    await SystemChannels.textInput.invokeMethod('TextInput.hide');
-                  }),
-                  if (ChatBloc().unreads.value > 0)
+              onTap: () {
+                if (LifeCycleManager().isBubble) {
+                  ChatManager().setActiveChat(null);
+                  SystemNavigator.pop();
+                  return;
+                }
+                EventDispatcher().emit("update-highlight", null);
+                Navigator.of(context).pop();
+              },
+              behavior: HitTestBehavior.translucent,
+              child: Obx(
+                    () =>
                     Container(
-                      width: 25.0,
-                      height: 20.0,
-                      decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          shape: BoxShape.rectangle,
-                          borderRadius: BorderRadius.circular(10)),
-                      child: Center(
-                          child: Text(ChatBloc().unreads.value.toString(),
-                              textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
+                      width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
+                      child: Row(
+                        mainAxisSize: cupertino.MainAxisSize.min,
+                        mainAxisAlignment: cupertino.MainAxisAlignment.start,
+                        children: [
+                          buildBackButton(context, callback: () {
+                            EventDispatcher().emit("update-highlight", null);
+                            return true;
+                          }),
+                          if (ChatBloc().unreads.value > 0)
+                            Container(
+                              width: 25.0,
+                              height: 20.0,
+                              decoration: BoxDecoration(
+                                  color: Theme
+                                      .of(context)
+                                      .primaryColor,
+                                  shape: BoxShape.rectangle,
+                                  borderRadius: BorderRadius.circular(10)),
+                              child: Center(
+                                  child: Text(ChatBloc().unreads.value.toString(),
+                                      textAlign: TextAlign.center, style: TextStyle(
+                                          color: Colors.white, fontSize: 12.0))),
+                            ),
+                        ],
+                      ),
                     ),
-                ],
-              ),
-            ),
-          ),
+              )),
           middle: cupertino.Padding(
             padding: EdgeInsets.only(right: newMessages.isNotEmpty ? 10 : 0),
             child: GestureDetector(
               onTap: openDetails,
-              child: Builder(
-                builder: (context) {
-                  if (context.orientation == Orientation.landscape && context.isPhone) {
-                    return Row(
+              child: Builder(builder: (context) {
+                if (context.orientation == Orientation.landscape && context.isPhone) {
+                  return Row(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
-                      children: children
-                    );
-                  }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: children,
-                  );
+                      children: children);
                 }
-              ),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: children,
+                );
+              }),
             ),
           ),
-          trailing:
-              Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing()))),
+          trailing: Obx(
+                  () =>
+                  Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing())
+          )
+      )
+      ,
     );
   }
 
@@ -684,7 +780,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             currentlyProcessingDeleteKey = true;
             selected.removeLast();
             resetCursor();
-            fetchCurrentChat();
+            fetchChatController();
             setState(() {});
             // Prevent deletes from occuring multiple times
             Future.delayed(Duration(milliseconds: 100), () {
@@ -695,8 +791,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           }
         } else if (chatSelectorController.text[0] != " ") {
           chatSelectorController.text =
-              " " + chatSelectorController.text.substring(
-                  0, chatSelectorController.text.length - 1);
+              " " + chatSelectorController.text.substring(0, chatSelectorController.text.length - 1);
           chatSelectorController.selection = TextSelection.fromPosition(
             TextPosition(offset: chatSelectorController.text.length),
           );
@@ -716,7 +811,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     );
   }
 
-  Future<void> fetchCurrentChat() async {
+  Future<void> fetchChatController() async {
     if (!isCreator!) return;
     if (selected.length == 1 && selected.first.isChat) {
       chat = selected.first.chat;
@@ -739,7 +834,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If it's just one recipient, try manual lookup
     if (selected.length == 1) {
       try {
-        Chat? existingChat = await Chat.findOne({"chatIdentifier": slugify(selected[0].address!, delimiter: '')});
+        Chat? existingChat;
+        if (kIsWeb) {
+          existingChat = await Chat.findOneWeb(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
+        } else {
+          existingChat = Chat.findOne(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
+        }
         if (existingChat != null) {
           matchingChats.add(existingChat);
         }
@@ -788,11 +888,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     chat = matchingChats.first;
 
     // Re-initialize the current chat and message bloc for the found chats
-    currentChat = CurrentChat.getCurrentChat(chat);
-    messageBloc = initMessageBloc();
-
-    // Tell the notification manager that we are looking at a specific chat
-    await NotificationManager().switchChat(chat);
+    if (chat != null) {
+      currentChat = ChatManager().createChatController(chat!, active: true, loadAttachments: true);
+      messageBloc = initMessageBloc();
+    }
     if (mounted) setState(() {});
   }
 
@@ -804,11 +903,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       await ChatBloc().refreshChats();
     }
 
-    Future<void> setChats(List<Chat> newChats) async {
+    void setChats(List<Chat> newChats) {
       conversations = newChats;
       for (int i = 0; i < conversations.length; i++) {
         if (isNullOrEmpty(conversations[i].participants)!) {
-          await conversations[i].getParticipants();
+          conversations[i].getParticipants();
         }
       }
 
@@ -823,13 +922,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       previousContactCount = chats.length;
 
       // Update and filter the chats
-      await setChats(chats);
+      setChats(chats);
     });
 
     // When the chat request is finished, set the chats
     if (ChatBloc().chatRequest != null) {
       await ChatBloc().chatRequest!.future;
-      await setChats(ChatBloc().chats);
+      setChats(ChatBloc().chats);
     }
   }
 
@@ -909,7 +1008,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         String title = slugText(chat.title ?? chat.displayName!);
         if (title.contains(tempSearchQuery)) {
           if (!cache.contains(chat.guid)) {
-            cache.add(chat.guid!);
+            cache.add(chat.guid);
             _conversations.add(
               UniqueContact(
                 chat: chat,
@@ -951,18 +1050,26 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: Theme.of(context).colorScheme.secondary,
+            backgroundColor: Theme
+                .of(context)
+                .colorScheme
+                .secondary,
             title: Text(
               "Creating a new chat...",
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .bodyText1,
             ),
             content:
-                Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+            Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
               Container(
                 // height: 70,
                 // color: Colors.black,
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                  valueColor: AlwaysStoppedAnimation<Color>(Theme
+                      .of(context)
+                      .primaryColor),
                 ),
               ),
             ]),
@@ -973,7 +1080,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     Logger.info("Starting chat with participants: ${participants.join(", ")}");
 
     Future<void> returnChat(Chat newChat) async {
-      await newChat.save();
+      newChat.save();
       await ChatBloc().updateChatPosition(newChat);
       completer.complete(newChat);
       Navigator.of(context).pop();
@@ -982,10 +1089,16 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If there is only 1 participant, try to find the chat
     Chat? existingChat;
     if (participants.length == 1) {
-      existingChat = await Chat.findOne({"chatIdentifier": slugify(participants[0], delimiter: '')});
+      if (kIsWeb) {
+        existingChat = await Chat.findOneWeb(chatIdentifier: slugify(participants[0], delimiter: ''));
+      } else {
+        existingChat = Chat.findOne(chatIdentifier: slugify(participants[0], delimiter: ''));
+      }
     }
 
-    if (SettingsManager().settings.enablePrivateAPI.value && (await SettingsManager().getMacOSVersion() ?? 0) > 10 && existingChat == null) {
+    if (SettingsManager().settings.enablePrivateAPI.value &&
+        (await SettingsManager().getMacOSVersion() ?? 0) > 10 &&
+        existingChat == null) {
       api.createChat(participants, null).then((response) async {
         if (response.statusCode != 200) {
           Navigator.of(context).pop();
@@ -1024,7 +1137,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       SocketManager().sendMessage(
         "start-chat",
         params,
-        (data) async {
+            (data) async {
           if (data['status'] != 200) {
             Navigator.of(context).pop();
             showDialog(
@@ -1069,7 +1182,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   void onSelected(UniqueContact item) async {
-    fetchingCurrentChat.value = true;
+    fetchingChatController.value = true;
     if (item.isChat) {
       if (widget.type == ChatSelectorTypes.ONLY_EXISTING) {
         selected.add(item);
@@ -1079,64 +1192,91 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         for (Handle e in item.chat?.participants ?? []) {
           UniqueContact contact = UniqueContact(
               address: e.address,
-              displayName: ContactManager().getCachedContact(address: e.address)?.displayName ?? await formatPhoneNumber(e));
+              displayName:
+              ContactManager()
+                  .getContact(e.address)
+                  ?.displayName ?? await formatPhoneNumber(e));
           selected.add(contact);
         }
 
-        await fetchCurrentChat();
+        await fetchChatController();
       }
 
       resetCursor();
       if (mounted) setState(() {});
-      fetchingCurrentChat.value = false;
+      fetchingChatController.value = false;
       return;
     }
     // Add the selected item
     selected.add(item);
-    fetchCurrentChat();
+    fetchChatController();
 
     // Reset the controller text
     resetCursor();
     if (mounted) setState(() {});
-    fetchingCurrentChat.value = false;
+    fetchingChatController.value = false;
   }
 
-  Widget buildChatSelectorBody() => ClipRRect(
-    borderRadius: SettingsManager().settings.skin.value == Skins.Samsung ? BorderRadius.circular(25) : BorderRadius.circular(0),
-    child: StreamBuilder(
-        initialData: contacts,
-        stream: contactStream,
-        builder: (BuildContext context, AsyncSnapshot<List<UniqueContact>> snapshot) {
-          List? data = snapshot.hasData ? snapshot.data : [];
-          return ListView.builder(
-            physics: ThemeSwitcher.getScrollPhysics(),
-            itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
-              key: Key("selector-${data![index].displayName}"),
-              item: data[index],
-              onSelected: onSelected,
-              index: index,
-            ),
-            itemCount: data?.length ?? 0,
-          );
-        }),
-  );
+  Widget buildChatSelectorBody() =>
+      ClipRRect(
+        borderRadius: SettingsManager().settings.skin.value == Skins.Samsung
+            ? BorderRadius.circular(25)
+            : BorderRadius.circular(0),
+        child: StreamBuilder(
+            initialData: contacts,
+            stream: contactStream,
+            builder: (BuildContext context, AsyncSnapshot<List<UniqueContact>> snapshot) {
+              List<UniqueContact>? data = snapshot.hasData ? snapshot.data : [];
+              return ListView.builder(
+                physics: ThemeSwitcher.getScrollPhysics(),
+                itemBuilder: (BuildContext context, int index) =>
+                    ContactSelectorOption(
+                      key: Key("selector-${data![index].displayName}"),
+                      item: data[index],
+                      onSelected: onSelected,
+                      index: index,
+                      shouldShowChatType: data.firstWhereOrNull((e) => !(e.chat?.isIMessage ?? true)) != null,
+                    ),
+                itemCount: data?.length ?? 0,
+              );
+            }),
+      );
 
-  Widget buildChatSelectorHeader() => PreferredSize(
-        preferredSize: Size.fromHeight(40),
-        child: cupertino.CupertinoNavigationBar(
-          backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+  Widget buildChatSelectorHeader() =>
+      AppBar(
+        toolbarHeight: kIsDesktop ? 30 : 0,
+        backgroundColor: Theme
+            .of(context)
+            .colorScheme
+            .secondary,
+        leading: null,
+        automaticallyImplyLeading: false,
+        bottom: cupertino.CupertinoNavigationBar(
+          backgroundColor: Theme
+              .of(context)
+              .colorScheme
+              .secondary
+              .withOpacity(0.5),
           middle: Container(
             child: Text(
               widget.customHeading ?? "New Message",
-              style: Theme.of(context).textTheme.headline2,
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .headline2,
             ),
           ),
-          leading: buildBackButton(context, iconSize: 20),
-          trailing: shouldShowAlert ? IconButton(
+          // leading: buildBackButton(context, iconSize: 20),
+          trailing: shouldShowAlert
+              ? IconButton(
             icon: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.exclamationmark_circle : Icons.error_outline,
+              SettingsManager().settings.skin.value == Skins.iOS
+                  ? cupertino.CupertinoIcons.exclamationmark_circle
+                  : Icons.error_outline,
               size: 20,
-              color: Theme.of(context).primaryColor,
+              color: Theme
+                  .of(context)
+                  .primaryColor,
             ),
             padding: EdgeInsets.zero,
             iconSize: 20,
@@ -1146,10 +1286,16 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                      title: Text("Group Naming",
-                          style:
-                          TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                      backgroundColor: Theme
+                          .of(context)
+                          .colorScheme
+                          .secondary,
+                      title: Text("Group Chat Creation",
+                          style: TextStyle(color: Theme
+                              .of(context)
+                              .textTheme
+                              .bodyText1!
+                              .color)),
                       content: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.min,
@@ -1164,10 +1310,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                       actions: <Widget>[
                         TextButton(
                             child: Text("OK",
-                                style: Theme.of(context)
+                                style: Theme
+                                    .of(context)
                                     .textTheme
                                     .subtitle1!
-                                    .apply(color: Theme.of(context).primaryColor)),
+                                    .apply(color: Theme
+                                    .of(context)
+                                    .primaryColor)),
                             onPressed: () {
                               Navigator.of(context).pop();
                             }),
@@ -1175,7 +1324,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 },
               );
             },
-          ) : null,
+          )
+              : null,
         ),
       );
 }

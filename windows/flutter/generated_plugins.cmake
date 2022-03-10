@@ -3,10 +3,15 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  bitsdojo_window_windows
   connectivity_plus_windows
+  desktop_drop
   maps_launcher
+  objectbox_flutter_libs
+  printing
   quick_notify
   secure_application
+  system_tray
   url_launcher_windows
   window_manager
 )

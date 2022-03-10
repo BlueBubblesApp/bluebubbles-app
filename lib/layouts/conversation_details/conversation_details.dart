@@ -1,34 +1,34 @@
-import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:printing/printing.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:universal_io/io.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
 import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:collection/collection.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:slugify/slugify.dart';
+import 'package:universal_io/io.dart';
 
 class ConversationDetails extends StatefulWidget {
   final Chat chat;
@@ -40,7 +40,7 @@ class ConversationDetails extends StatefulWidget {
   _ConversationDetailsState createState() => _ConversationDetailsState();
 }
 
-class _ConversationDetailsState extends State<ConversationDetails> {
+class _ConversationDetailsState extends State<ConversationDetails> with WidgetsBindingObserver {
   late TextEditingController controller;
   bool readOnly = true;
   late Chat chat;
@@ -71,26 +71,35 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     controller = TextEditingController(text: chat.displayName);
     showNameField = chat.displayName?.isNotEmpty ?? false;
 
-    fetchAttachments();
     ever(ChatBloc().chats, (List<Chat> chats) async {
       Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat.guid);
       if (_chat == null) return;
-      await _chat.getParticipants();
+      _chat.getParticipants();
       chat = _chat;
       readOnly = !(chat.participants.length > 1);
       if (mounted) setState(() {});
     });
-  }
 
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
+    WidgetsBinding.instance!.addObserver(this);
 
-    await chat.getParticipants();
-    readOnly = !(chat.participants.length > 1);
-
-    Logger.info("Updated readonly $readOnly");
-    if (mounted) setState(() {});
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      if (ModalRoute.of(context)?.animation != null) {
+        if (ModalRoute.of(context)?.animation?.status != AnimationStatus.completed) {
+          late final AnimationStatusListener listener;
+          listener = (AnimationStatus status) {
+            if (status == AnimationStatus.completed) {
+              fetchAttachments();
+              ModalRoute.of(context)?.animation?.removeStatusListener(listener);
+            }
+          };
+          ModalRoute.of(context)?.animation?.addStatusListener(listener);
+        } else {
+          fetchAttachments();
+        }
+      } else {
+        fetchAttachments();
+      }
+    });
   }
 
   void fetchAttachments() {
@@ -99,7 +108,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
       if (mounted) setState(() {});
       return;
     }
-    Chat.getAttachments(chat).then((value) {
+    chat.getAttachmentsAsync().then((value) {
       attachmentsForChat = value;
       if (attachmentsForChat.length > 25) attachmentsForChat = attachmentsForChat.sublist(0, 25);
       if (mounted) setState(() {});
@@ -137,7 +146,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             ]),
                           );
                         });
-                    final response = await api.updateChat(chat.guid!, controller.text);
+                    final response = await api.updateChat(chat.guid, controller.text);
                     if (response.statusCode == 200) {
                       Get.back();
                       Get.back();
@@ -148,8 +157,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     }
                   } else {
                     Get.back();
-                    await widget.chat.changeName(controller.text);
-                    await widget.chat.getTitle();
+                    widget.chat.changeName(controller.text);
+                    widget.chat.getTitle();
                     ChatBloc().updateChat(chat);
                   }
                 },
@@ -197,21 +206,13 @@ class _ConversationDetailsState extends State<ConversationDetails> {
           builder: (context) {
             return Scaffold(
               backgroundColor: Theme.of(context).backgroundColor,
-              appBar: (SettingsManager().settings.skin.value == Skins.iOS
-                  ? CupertinoNavigationBar(
-                      backgroundColor: Theme.of(context).colorScheme.secondary.withAlpha(125),
-                      leading: buildBackButton(context),
-                      middle: Text(
-                        "Details",
-                        style: Theme.of(context).textTheme.headline1,
-                      ),
-                    )
-                  : AppBar(
+              appBar: AppBar(
+                leading: SettingsManager().settings.skin.value == Skins.iOS ? buildBackButton(context, padding: EdgeInsets.only(left: kIsDesktop ? 5 : 0, top: kIsDesktop ? 15 : 0)) : null,
                       iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-                      title: Text(
+                      title: Padding(padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0), child: Text(
                         "Details",
                         style: Theme.of(context).textTheme.headline1,
-                      ),
+                      ),),
                       backgroundColor: Theme.of(context).backgroundColor,
                       bottom: PreferredSize(
                         child: Container(
@@ -220,7 +221,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         ),
                         preferredSize: Size.fromHeight(0.5),
                       ),
-                    )) as PreferredSizeWidget?,
+                    ),
               extendBodyBehindAppBar: SettingsManager().settings.skin.value == Skins.iOS ? true : false,
               body: CustomScrollView(
                 physics: ThemeSwitcher.getScrollPhysics(),
@@ -376,7 +377,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   SliverPadding(
                     padding: EdgeInsets.symmetric(vertical: 10),
                   ),
-                  if (SettingsManager().settings.enablePrivateAPI.value && chat.isIMessage)
+                  if (SettingsManager().settings.enablePrivateAPI.value && chat.isIMessage && chat.isGroup())
                     SliverToBoxAdapter(
                       child: Padding(
                           padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
@@ -394,6 +395,111 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 builder: (_) {
                                   return AlertDialog(
                                     actions: [
+                                      TextButton(
+                                        child: Text("Cancel"),
+                                        onPressed: () => Get.back(),
+                                      ),
+                                      TextButton(
+                                        child: Text("Pick Contact"),
+                                        onPressed: () async {
+                                          final contacts = [];
+                                          final cache = [];
+                                          String slugText(String text) {
+                                            return slugify(text, delimiter: '').toString().replaceAll('-', '');
+                                          }
+
+                                          for (Contact contact in ContactManager().contacts) {
+                                            for (String phone in contact.phones) {
+                                              String cleansed = slugText(phone);
+
+                                              if (!cache.contains(cleansed)) {
+                                                cache.add(cleansed);
+                                                contacts.add(
+                                                  UniqueContact(
+                                                    address: phone,
+                                                    displayName: contact.displayName,
+                                                  ),
+                                                );
+                                              }
+                                            }
+
+                                            for (String email in contact.emails) {
+                                              String emailVal = slugText.call(email);
+
+                                              if (!cache.contains(emailVal)) {
+                                                cache.add(emailVal);
+                                                contacts.add(
+                                                  UniqueContact(
+                                                    address: email,
+                                                    displayName: contact.displayName,
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          }
+                                          UniqueContact? selected;
+                                          await Get.defaultDialog(
+                                            title: "Pick Contact",
+                                            titleStyle: Theme.of(context).textTheme.headline1,
+                                            backgroundColor: Theme.of(context).backgroundColor,
+                                            buttonColor: Theme.of(context).primaryColor,
+                                            content: Container(
+                                              constraints: BoxConstraints(
+                                                maxHeight: Get.height - 300,
+                                              ),
+                                              child: Center(
+                                                child: Container(
+                                                  width: 300,
+                                                  height: Get.height - 300,
+                                                  constraints: BoxConstraints(
+                                                    maxHeight: Get.height - 300,
+                                                  ),
+                                                  child: StatefulBuilder(
+                                                      builder: (context, setState) {
+                                                        return SingleChildScrollView(
+                                                          child: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            children: [
+                                                              Padding(
+                                                                padding: const EdgeInsets.all(8.0),
+                                                                child: Text("Select the contact you would like to add"),
+                                                              ),
+                                                              ListView.builder(
+                                                                shrinkWrap: true,
+                                                                itemCount: contacts.length,
+                                                                physics: NeverScrollableScrollPhysics(),
+                                                                itemBuilder: (context, index) {
+                                                                  return ContactSelectorOption(
+                                                                    key: Key("selector-${contacts[index].displayName}"),
+                                                                    item: contacts[index],
+                                                                    onSelected: (contact) {
+                                                                      Get.back();
+                                                                      selected = contact;
+                                                                    },
+                                                                    index: index,
+                                                                  );
+                                                                },
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        );
+                                                      }
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            confirm: Container(height: 0, width: 0),
+                                            cancel: Container(height: 0, width: 0),
+                                          );
+                                          if (selected?.address != null) {
+                                            if (!selected!.address!.isEmail) {
+                                              participantController.text = selected!.address!.numericOnly();
+                                            } else {
+                                              participantController.text = selected!.address!;
+                                            }
+                                          }
+                                        },
+                                      ),
                                       TextButton(
                                         child: Text("OK"),
                                         onPressed: () async {
@@ -422,7 +528,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                                   ]),
                                                 );
                                               });
-                                          final response = await api.chatParticipant("add", chat.guid!, participantController.text);
+                                          final response = await api.chatParticipant("add", chat.guid, participantController.text);
                                           if (response.statusCode == 200) {
                                             Get.back();
                                             Get.back();
@@ -433,10 +539,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                           }
                                         },
                                       ),
-                                      TextButton(
-                                        child: Text("Cancel"),
-                                        onPressed: () => Get.back(),
-                                      )
                                     ],
                                     content: Column(
                                       mainAxisSize: MainAxisSize.min,
@@ -472,7 +574,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     SliverToBoxAdapter(
                       child: InkWell(
                         onTap: () async {
-                          if (chat.customAvatarPath.value != null) {
+                          if (chat.customAvatarPath != null) {
                             showDialog(
                               context: context,
                               builder: (BuildContext context) {
@@ -506,10 +608,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                                   .subtitle1!
                                                   .apply(color: Theme.of(context).primaryColor)),
                                           onPressed: () {
-                                            File file = File(chat.customAvatarPath.value!);
+                                            File file = File(chat.customAvatarPath!);
                                             file.delete();
-                                            chat.customAvatarPath.value = null;
-                                            chat.save();
+                                            chat.customAvatarPath = null;
+                                            chat.save(updateCustomAvatarPath: true);
                                             Get.back();
                                           }),
                                       TextButton(
@@ -599,6 +701,42 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       ),
                     ),
                   ),
+                  if (!kIsWeb && !widget.chat.isGroup() && SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateMarkChatAsRead.value)
+                    SliverToBoxAdapter(
+                        child: ListTile(
+                            leading: Text("Send Read Receipts",
+                                style: TextStyle(
+                                  color: Theme.of(context).primaryColor,
+                                )),
+                            trailing: Switch(
+                                value: widget.chat.autoSendReadReceipts!,
+                                activeColor: Theme.of(context).primaryColor,
+                                activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                                inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                                inactiveThumbColor: Theme.of(context).colorScheme.secondary,
+                                onChanged: (value) {
+                                  widget.chat.toggleAutoRead(!widget.chat.autoSendReadReceipts!);
+                                  EventDispatcher().emit("refresh", null);
+                                  if (mounted) setState(() {});
+                                }))),
+                  if (!kIsWeb && !widget.chat.isGroup() && SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSendTypingIndicators.value)
+                    SliverToBoxAdapter(
+                        child: ListTile(
+                            leading: Text("Send Typing Indicators",
+                                style: TextStyle(
+                                  color: Theme.of(context).primaryColor,
+                                )),
+                            trailing: Switch(
+                                value: widget.chat.autoSendTypingIndicators!,
+                                activeColor: Theme.of(context).primaryColor,
+                                activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                                inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                                inactiveThumbColor: Theme.of(context).colorScheme.secondary,
+                                onChanged: (value) {
+                                  widget.chat.toggleAutoType(!widget.chat.autoSendTypingIndicators!);
+                                  EventDispatcher().emit("refresh", null);
+                                  if (mounted) setState(() {});
+                                }))),
                   if (!kIsWeb)
                     SliverToBoxAdapter(
                         child: ListTile(
@@ -612,8 +750,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                                 inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
                                 inactiveThumbColor: Theme.of(context).colorScheme.secondary,
-                                onChanged: (value) async {
-                                  await widget.chat.togglePin(!widget.chat.isPinned!);
+                                onChanged: (value) {
+                                  widget.chat.togglePin(!widget.chat.isPinned!);
                                   EventDispatcher().emit("refresh", null);
                                   if (mounted) setState(() {});
                               }))),
@@ -630,8 +768,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                                 inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
                                 inactiveThumbColor: Theme.of(context).colorScheme.secondary,
-                                onChanged: (value) async {
-                                  await widget.chat.toggleMute(value);
+                                onChanged: (value) {
+                                  widget.chat.toggleMute(value);
                                   EventDispatcher().emit("refresh", null);
 
                                   if (mounted) setState(() {});
@@ -662,30 +800,65 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   if (!kIsWeb)
                     SliverToBoxAdapter(
                       child: InkWell(
-                        onTap: () async {
-                          if (mounted) {
-                            setState(() {
-                              isClearing = true;
-                            });
-                          }
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  title: Text("Are You Sure?",
+                                      style:
+                                      TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                  content: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Clearing the transcript will permanently prevent all stored messages from being loaded by the client app, until you perform a full reset.',
+                                        style: context.theme.textTheme.subtitle1,
+                                      ),
+                                    ],
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: Text("Yes"),
+                                      onPressed: () async {
+                                        if (mounted) {
+                                          setState(() {
+                                            isClearing = true;
+                                          });
+                                        }
 
-                          try {
-                            await widget.chat.clearTranscript();
-                            EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
-                            if (mounted) {
-                              setState(() {
-                                isClearing = false;
-                                isCleared = true;
-                              });
-                            }
-                          } catch (ex) {
-                            if (mounted) {
-                              setState(() {
-                                isClearing = false;
-                                isCleared = false;
-                              });
-                            }
-                          }
+                                        try {
+                                          widget.chat.clearTranscript();
+                                          EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
+                                          if (mounted) {
+                                            setState(() {
+                                              isClearing = false;
+                                              isCleared = true;
+                                            });
+                                          }
+                                        } catch (ex) {
+                                          if (mounted) {
+                                            setState(() {
+                                              isClearing = false;
+                                              isCleared = false;
+                                            });
+                                          }
+                                        }
+                                      },
+                                    ),
+                                    TextButton(
+                                      child: Text("Cancel"),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                  ]
+                              );
+                            },
+                          );
                         },
                         child: ListTile(
                           leading: Text(
@@ -720,7 +893,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           int hours = 0;
                           int days = 0;
                           await showDialog(
-                            barrierDismissible: false,
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
@@ -805,23 +977,23 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             barrierDismissible: false,
                             backgroundColor: Theme.of(context).backgroundColor,
                           );
-                          final messages = (await Chat.getMessages(chat, limit: 0, includeDeleted: true))
+                          final messages = (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true))
                               .reversed
                               .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
-                            Navigator.of(context).pop();
+                            Get.back();
                             showSnackbar("Error", "No messages found!");
                             return;
                           }
                           final List<String> lines = [];
                           for (Message m in messages) {
                             if (m.hasAttachments) {
-                              await m.fetchAttachments();
+                              m.fetchAttachments();
                             }
-                            final readStr = m.dateRead.value != null ? "Read: ${buildFullDate(m.dateRead.value!)}, " : "";
-                            final deliveredStr = m.dateDelivered.value != null ? "Delivered: ${buildFullDate(m.dateDelivered.value!)}, " : "";
+                            final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
+                            final deliveredStr = m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
                             final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
-                            final text = await MessageHelper.getNotificationText(m, withSender: true);
+                            final text = MessageHelper.getNotificationText(m, withSender: true);
                             final line = "(" + readStr + deliveredStr + sentStr + ") " + text;
                             lines.add(line);
                           }
@@ -830,11 +1002,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           if (kIsDesktop) {
                             filePath = (await getDownloadsDirectory())!.path;
                           }
-                          filePath = filePath + "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt";
+                          filePath = p.join(filePath, "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
                           File file = File(filePath);
                           await file.create(recursive: true);
                           await file.writeAsString(lines.join('\n'));
-                          Navigator.of(context).pop();
+                          Get.back();
                           showSnackbar("Success", "Saved transcript to the downloads folder");
                         },
                         child: ListTile(
@@ -861,7 +1033,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           int hours = 0;
                           int days = 0;
                           await showDialog(
-                            barrierDismissible: false,
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
@@ -946,11 +1117,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             barrierDismissible: false,
                             backgroundColor: Theme.of(context).backgroundColor,
                           );
-                          final messages = (await Chat.getMessages(chat, limit: 0, includeDeleted: true))
+                          final messages = (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true))
                               .reversed
                               .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
-                            Navigator.of(context).pop();
+                            Get.back();
                             showSnackbar("Error", "No messages found!");
                             return;
                           }
@@ -960,10 +1131,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           final List<Size?> dimensions = [];
                           for (Message m in messages) {
                             if (m.hasAttachments) {
-                              await m.fetchAttachments();
+                              m.fetchAttachments();
                             }
-                            final readStr = m.dateRead.value != null ? "Read: ${buildFullDate(m.dateRead.value!)}, " : "";
-                            final deliveredStr = m.dateDelivered.value != null ? "Delivered: ${buildFullDate(m.dateDelivered.value!)}, " : "";
+                            final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
+                            final deliveredStr = m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
                             final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
                             if (m.hasAttachments) {
                               final attachments = m.attachments.where((e) => e?.guid != null && ["image/png", "image/jpg", "image/jpeg"].contains(e!.mimeType));
@@ -978,11 +1149,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 }
                               }
                               timestamps.add(readStr + deliveredStr + sentStr);
-                              content.add(await MessageHelper.getNotificationText(m, withSender: true));
+                              content.add(MessageHelper.getNotificationText(m, withSender: true));
                               dimensions.add(null);
                             } else {
                               timestamps.add(readStr + deliveredStr + sentStr);
-                              content.add(await MessageHelper.getNotificationText(m, withSender: true));
+                              content.add(MessageHelper.getNotificationText(m, withSender: true));
                               dimensions.add(null);
                             }
                           }
@@ -1033,11 +1204,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           if (kIsDesktop) {
                             filePath = (await getDownloadsDirectory())!.path;
                           }
-                          filePath = filePath + "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.pdf";
+                          filePath = p.join(filePath,"${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.pdf");
                           File file = File(filePath);
                           await file.create(recursive: true);
                           await file.writeAsBytes(await doc.save());
-                          Navigator.of(context).pop();
+                          Get.back();
                           showSnackbar("Success", "Saved transcript to the downloads folder");
                         },
                         child: ListTile(
@@ -1114,7 +1285,7 @@ class _SyncDialogState extends State<SyncDialog> {
   void syncMessages() async {
     int offset = 0;
     if (widget.withOffset) {
-      offset = await Message.countForChat(widget.chat) ?? 0;
+      offset = Message.countForChat(widget.chat) ?? 0;
     }
 
     SocketManager().fetchMessages(widget.chat, offset: offset, limit: widget.limit)!.then((dynamic messages) {

@@ -1,37 +1,39 @@
 import 'dart:convert';
-
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
+import 'dart:io' show File;
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:exif/exif.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_native_image/flutter_native_image.dart';
-import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:exif/exif.dart';
+import 'package:file_picker/file_picker.dart' hide PlatformFile;
+import 'package:filesystem_picker/filesystem_picker.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_image/flutter_native_image.dart';
+import 'package:get/get.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart' hide File;
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AppleLocation {
   double? longitude;
   double? latitude;
+
   AppleLocation({required this.latitude, required this.longitude});
 }
 
@@ -140,17 +142,23 @@ class AttachmentHelper {
   static Future<void> saveToGallery(PlatformFile file, {bool showAlert = true}) async {
     if (kIsWeb) {
       final content = base64.encode(file.bytes!);
-      html.AnchorElement(
-          href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+      html.AnchorElement(href: "data:application/octet-stream;charset=utf-16le;base64,$content")
         ..setAttribute("download", file.name)
         ..click();
       return;
     }
     if (kIsDesktop) {
-      String downloadsPath = (await getDownloadsDirectory())!.path;
-      File(join(downloadsPath, file.name)).writeAsBytes(file.bytes!);
-      if (showAlert) showSnackbar('Success', 'Saved attachment to $downloadsPath!');
-      return;
+      String? savePath = await FilePicker.platform.saveFile(
+        initialDirectory: (await getDownloadsDirectory())?.path,
+        dialogTitle: 'Choose a location to save this file',
+        fileName: file.name,
+      );
+      Logger.info(savePath);
+      if (savePath != null) {
+        File(file.path!).copy(savePath);
+        return showSnackbar('Success', 'Saved attachment to $savePath!');
+      }
+      return showSnackbar('Failed', 'You didn\'t select a file path!');
     }
     void showDeniedSnackbar({String? err}) {
       if (showAlert) showSnackbar("Save Failed", err ?? "Failed to save attachment!");
@@ -175,8 +183,33 @@ class AttachmentHelper {
       return showDeniedSnackbar();
     }
 
-    await ImageGallerySaver.saveFile(file.path!);
-    if (showAlert) showSnackbar('Success', 'Saved attachment!');
+    if (SettingsManager().settings.askWhereToSave.value && showAlert) {
+      dynamic dir = Directory("/storage/emulated/0/");
+      String? path = await FilesystemPicker.open(
+        title: 'Save to folder',
+        context: Get.context!,
+        rootDirectory: dir,
+        fsType: FilesystemType.folder,
+        pickText: 'Save file',
+        folderIconColor: Theme.of(Get.context!).primaryColor,
+      );
+      if (path != null) {
+        final bytes = await File(file.path!).readAsBytes();
+        await File(join(path, file.name)).writeAsBytes(bytes);
+      }
+      return;
+    }
+
+    try {
+      await ImageGallerySaver.saveFile(file.path!);
+      if (showAlert) showSnackbar('Success', 'Saved attachment to gallery!');
+    } catch (_) {
+      File toSave = File("/storage/emulated/0/Download/${file.name}");
+      await toSave.create(recursive: true);
+      final bytes = await File(file.path!).readAsBytes();
+      await toSave.writeAsBytes(bytes);
+      if (showAlert) showSnackbar('Success', 'Saved attachment to downloads folder!');
+    }
   }
 
   static String getBaseAttachmentsPath() {
@@ -197,9 +230,9 @@ class AttachmentHelper {
   }
 
   static dynamic getContent(Attachment attachment, {String? path, bool autoDownload = true}) {
-    if ((kIsWeb || kIsDesktop) && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment" && autoDownload) {
+    if (kIsWeb && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment" && autoDownload) {
       return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
-    } else if (kIsWeb || kIsDesktop) {
+    } else if (kIsWeb) {
       return PlatformFile(
         name: attachment.transferName!,
         path: attachment.guid == "redacted-mode-demo-attachment" ? "dummy path" : null,
@@ -210,10 +243,11 @@ class AttachmentHelper {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
     if (Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
-      return Get.find<AttachmentDownloadController>(tag: attachment.guid);
-    } else if (!kIsWeb && (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
-        attachment.guid == "redacted-mode-demo-attachment" ||
-        (attachment.guid != null && attachment.guid!.contains("theme-selector")))) {
+      return Get.find<AttachmentDownloadService>().getController(attachment.guid);
+    } else if (!kIsWeb &&
+        (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
+            attachment.guid == "redacted-mode-demo-attachment" ||
+            (attachment.guid != null && attachment.guid!.contains("theme-selector")))) {
       return PlatformFile(
         name: attachment.transferName!,
         path: pathName,
@@ -227,7 +261,11 @@ class AttachmentHelper {
   }
 
   static IconData getIcon(String mimeType) {
-    if (mimeType.isEmpty) return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
+    if (mimeType.isEmpty) {
+      return SettingsManager().settings.skin.value == Skins.iOS
+          ? CupertinoIcons.arrow_up_right_square
+          : Icons.open_in_new;
+    }
     if (mimeType == "application/pdf") {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf;
     } else if (mimeType == "application/zip") {
@@ -241,7 +279,9 @@ class AttachmentHelper {
     } else if (mimeType.startsWith("text")) {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note;
     }
-    return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
+    return SettingsManager().settings.skin.value == Skins.iOS
+        ? CupertinoIcons.arrow_up_right_square
+        : Icons.open_in_new;
   }
 
   static Future<bool> canAutoDownload() async {
@@ -258,16 +298,16 @@ class AttachmentHelper {
   static void redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) {
     if (!kIsWeb) {
       File file = File(attachment.getPath());
-      File compressedFile = File(attachment.getCompressedPath());
+      File jpgFile = File(attachment.getHeicToJpgPath());
 
       // If neither exist, don't do anything
       bool fExists = file.existsSync();
-      bool cExists = compressedFile.existsSync();
+      bool cExists = jpgFile.existsSync();
       if (!fExists && !cExists) return;
 
       // Delete them if they exist
       if (fExists) file.deleteSync();
-      if (cExists) compressedFile.deleteSync();
+      if (cExists) jpgFile.deleteSync();
     }
 
     // Redownload the attachment
@@ -282,14 +322,21 @@ class AttachmentHelper {
         return cachedFile.readAsBytes();
       }
     }
+
     Uint8List? thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
       imageFormat: ImageFormat.JPEG,
       quality: SettingsManager().compressionQuality,
     );
-    if (useCachedFile && thumbnail != null) {
+
+    if (thumbnail == null || thumbnail.isEmpty || thumbnail.lengthInBytes == 0) {
+      throw Exception('Video thumbnail is empty!');
+    }
+  
+    if (useCachedFile) {
       cachedFile.writeAsBytes(thumbnail);
     }
+
     return thumbnail;
   }
 
@@ -374,16 +421,39 @@ class AttachmentHelper {
     }
 
     // Handle getting heic images
-    if (attachment.mimeType == 'image/heic' || attachment.mimeType == 'image/heif') {
-      dynamic file = await FlutterNativeImage.compressImage(
-        filePath,
-        percentage: 100,
-        quality: qualityOverride ?? SettingsManager().compressionQuality
-      );
-      originalFile = file;
+    if ((attachment.mimeType == 'image/heic' || attachment.mimeType == 'image/heif') && !kIsWeb && !kIsDesktop) {
+      if (await File(filePath + ".jpg").exists()) {
+        originalFile = File(filePath + ".jpg");
+      } else {
+        final file = await FlutterNativeImage.compressImage(
+          filePath,
+          percentage: 100,
+          quality: 100,
+        );
+        final cacheFile = File(filePath + ".jpg");
+        final bytes = await file.readAsBytes();
+        await cacheFile.writeAsBytes(bytes);
+        originalFile = file;
+      }
     }
 
     Uint8List previewData = await originalFile.readAsBytes();
+
+    if ((attachment.mimeType?.endsWith("tif") ?? false) || (attachment.mimeType?.endsWith("tiff") ?? false)) {
+      final receivePort = ReceivePort();
+      await Isolate.spawn(
+          unsupportedToPngIsolate,
+          IsolateData(
+              PlatformFile(
+                name: randomString(8),
+                path: originalFile.path,
+                size: 0,
+              ),
+              receivePort.sendPort));
+      // Get the processed image from the isolate.
+      final image = await receivePort.first as Uint8List?;
+      previewData = image ?? previewData;
+    }
     if (attachment.mimeType == "image/gif") {
       try {
         Size size = getGifDimensions(previewData);
@@ -428,7 +498,9 @@ class AttachmentHelper {
     }
 
     // If we should update the attachment data, do it right before we return, no awaiting
-    attachment.update();
+    if (attachment.guid != null) {
+      attachment.save(null);
+    }
 
     // Return the bytes
     return previewData;
@@ -446,6 +518,28 @@ class AttachmentHelper {
 
     return (aWidth / aHeight).abs();
   }
+}
+
+void unsupportedToPngIsolate(IsolateData param) {
+  try {
+    final bytes = param.file.bytes ?? (kIsWeb ? null : File(param.file.path!).readAsBytesSync());
+    if (bytes == null) {
+      param.sendPort.send(null);
+      return;
+    }
+    final image = img.decodeImage(bytes)!;
+    final encoded = img.encodePng(image);
+    param.sendPort.send(encoded);
+  } catch (_) {
+    param.sendPort.send(null);
+  }
+}
+
+class IsolateData {
+  final PlatformFile file;
+  final SendPort sendPort;
+
+  IsolateData(this.file, this.sendPort);
 }
 
 class ResizeArgs {

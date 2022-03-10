@@ -1,21 +1,18 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
-
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 
 class ContactWidget extends StatefulWidget {
   ContactWidget({
@@ -31,7 +28,7 @@ class ContactWidget extends StatefulWidget {
 }
 
 class _ContactWidgetState extends State<ContactWidget> {
-  late Contact contact;
+  Contact? contact;
 
   @override
   void initState() {
@@ -59,6 +56,7 @@ class _ContactWidgetState extends State<ContactWidget> {
 
   @override
   Widget build(BuildContext context) {
+    String? initials = contact == null ? null : getInitials(contact!);
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: SizedBox(
@@ -103,7 +101,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                             style: Theme.of(context).textTheme.subtitle2,
                           ),
                           Text(
-                            contact.displayName,
+                            (contact?.displayName ?? '').isEmpty ? 'Unknown' : contact!.displayName,
                             style: Theme.of(context).textTheme.bodyText1,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
@@ -124,10 +122,16 @@ class _ContactWidgetState extends State<ContactWidget> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         child: Container(
-                          child: Text(
-                            getInitials(contact),
-                            style: Theme.of(context).textTheme.headline1,
-                          ),
+                          child: initials == null
+                            ? Icon(
+                                SettingsManager().settings.skin.value == Skins.iOS
+                                    ? CupertinoIcons.person_fill
+                                    : Icons.person,
+                                color: Theme.of(context).textTheme.headline1?.color!)
+                            : Text(
+                                initials,
+                                style: Theme.of(context).textTheme.headline1,
+                            ),
                           alignment: AlignmentDirectional.center,
                         ),
                       ),

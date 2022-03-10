@@ -1,23 +1,24 @@
 import 'dart:async';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:file_picker/file_picker.dart' hide PlatformFile;
-import 'package:file_picker/file_picker.dart' as pf;
-import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:file_picker/file_picker.dart' hide PlatformFile;
+import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:universal_io/io.dart';
 
 class TextFieldAttachmentPicker extends StatefulWidget {
   TextFieldAttachmentPicker({
@@ -57,6 +58,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
 
   Future<void> getAttachments() async {
     if (!mounted) return;
+    if (kIsDesktop || kIsWeb) return;
     List<AssetPathEntity> list = await PhotoManager.getAssetPathList(onlyAll: true);
     if (list.isNotEmpty) {
       List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 24);
@@ -218,7 +220,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                                   style: Theme.of(context).textTheme.bodyText1,
                                                 ),
                                                 onPressed: () async {
-                                                  Share.location(CurrentChat.activeChat!.chat);
+                                                  Share.location(ChatManager().activeChat!.chat);
                                                   Navigator.of(context).pop();
                                                 },
                                               ),

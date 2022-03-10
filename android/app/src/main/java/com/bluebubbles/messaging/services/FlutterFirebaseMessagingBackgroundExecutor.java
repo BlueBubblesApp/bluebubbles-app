@@ -184,9 +184,12 @@ public class FlutterFirebaseMessagingBackgroundExecutor implements MethodCallHan
      */
     public void startBackgroundIsolate() {
         if (isNotRunning()) {
-            Long callbackHandle = getPluginCallbackHandle();
-            if (callbackHandle != null && callbackHandle != 0) {
+            long callbackHandle = getPluginCallbackHandle();
+            if (callbackHandle != 0) {
+                Log.i(TAG, "Found background isolate callback handle");
                 startBackgroundIsolate(callbackHandle, null);
+            } else {
+                Log.i(TAG, "No callback handler available for background isolate");
             }
         }
     }
@@ -312,9 +315,12 @@ public class FlutterFirebaseMessagingBackgroundExecutor implements MethodCallHan
 
     /** Get the registered Dart callback handle for the messaging plugin. Returns 0 if not set. */
     private long getPluginCallbackHandle() {
+        if (ContextHolder.getApplicationContext() == null) {
+            return 0;
+        }
         SharedPreferences prefs =
                 ContextHolder.getApplicationContext().getSharedPreferences(BACKGROUND_SERVICE_SHARED_PREF, Context.MODE_PRIVATE);
-        return prefs.getLong(BACKGROUND_HANDLE_SHARED_PREF_KEY, -1);
+        return prefs.getLong(BACKGROUND_HANDLE_SHARED_PREF_KEY, 0);
     }
 
     private void initializeMethodChannel(BinaryMessenger isolate) {

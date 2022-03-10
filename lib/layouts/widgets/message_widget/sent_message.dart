@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -19,18 +20,19 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:particles_flutter/particles_flutter.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -46,7 +48,7 @@ class SentMessageHelper {
     Future<List<InlineSpan>> msgSpanFuture, {
     Widget? customContent,
     Message? olderMessage,
-    CurrentChat? currentChat,
+    ChatController? currentChat,
     Color? customColor,
     bool padding = true,
     bool margin = true,
@@ -75,9 +77,24 @@ class SentMessageHelper {
     bool hasReactions = (message?.getReactions() ?? []).isNotEmpty;
     Skins currentSkin = Skin.of(context)?.skin ?? SettingsManager().settings.skin.value;
     Size bubbleSize = Size(0, 0);
+
+    // If we haven't played the effect, we should apply it from the start.
+    // This must come before we set the bubbleSize variable or else we get a box constraints errors
+    if (message?.datePlayed == null && effect != MessageEffect.none) {
+      controller = CustomAnimationControl.playFromStart;
+      if (effect != MessageEffect.invisibleInk) {
+        Timer(Duration(milliseconds: 500), () {
+          if (message?.datePlayed == null && !(message?.guid?.contains("redacted-mode-demo") ?? false)) {
+            message?.setPlayedDate();
+          }
+        });
+      }
+    }
+
     if (controller != CustomAnimationControl.stop) {
       bubbleSize = message!.getBubbleSize(context);
     }
+
     if (message?.isBigEmoji() ?? false) {
       // this stack is necessary for layouting width properly
       msg = Stack(alignment: AlignmentDirectional.bottomEnd, children: [
@@ -201,8 +218,10 @@ class SentMessageHelper {
                               double value = anim.get("size");
                               return StatefulBuilder(builder: (context, setState) {
                                 return GestureDetector(
-                                  onHorizontalDragEnd: (DragEndDetails details) {
-                                    if ((details.primaryVelocity ?? 0) > 0 && effect == MessageEffect.invisibleInk) {
+                                  onHorizontalDragUpdate: (DragUpdateDetails details) {
+                                    if (effect != MessageEffect.invisibleInk) return;
+                                    if ((details.primaryDelta ?? 0).abs() > 1) {
+                                      message?.setPlayedDate();
                                       setState(() {
                                         opacity = 1 - opacity;
                                       });
@@ -318,7 +337,7 @@ class SentMessageHelper {
             getErrorWidget(
               context,
               message,
-              currentChat != null ? currentChat.chat : CurrentChat.activeChat?.chat,
+              currentChat != null ? currentChat.chat : ChatManager().activeChat?.chat,
             ),
           ],
         ));
@@ -374,6 +393,10 @@ class SentMessageHelper {
                       : 1800),
           animationStatusListener: (status) {
             if (status == AnimationStatus.completed) {
+              if (message?.datePlayed == null) {
+                message?.setPlayedDate();
+              }
+
               updateController?.call();
             }
           },
@@ -423,8 +446,8 @@ class SentMessageHelper {
   }
 
   static Widget getErrorWidget(BuildContext context, Message? message, Chat? chat, {double rightPadding = 8.0}) {
-    if (message != null && message.error.value > 0) {
-      int errorCode = message.error.value;
+    if (message != null && message.error > 0) {
+      int errorCode = message.error;
       String errorText = "Server Error. Contact Support.";
       if (errorCode == 22) {
         errorText = "The recipient is not registered with iMessage!";
@@ -450,7 +473,7 @@ class SentMessageHelper {
                           // Remove the OG alert dialog
                           Navigator.of(context).pop();
                           NewMessageManager().removeMessage(chat, message.guid);
-                          await Message.softDelete({'guid': message.guid});
+                          Message.softDelete(message.guid!);
                           NotificationManager().clearFailedToSend();
                           ActionHandler.retryMessage(message);
                         },
@@ -461,16 +484,16 @@ class SentMessageHelper {
                         onPressed: () async {
                           Navigator.of(context).pop();
                           // Delete the message from the DB
-                          await Message.softDelete({'guid': message.guid});
+                          Message.softDelete(message.guid!);
 
                           // Remove the message from the Bloc
                           NewMessageManager().removeMessage(chat, message.guid);
                           NotificationManager().clearFailedToSend();
                           // Get the "new" latest info
-                          List<Message> latest = await Chat.getMessages(chat, limit: 1);
+                          List<Message> latest = Chat.getMessages(chat, limit: 1);
                           chat.latestMessage = latest.first;
                           chat.latestMessageDate = latest.first.dateCreated;
-                          chat.latestMessageText = await MessageHelper.getNotificationText(latest.first);
+                          chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
 
                           // Update it in the Bloc
                           await ChatBloc().updateChatPosition(chat);
@@ -546,12 +569,13 @@ class SentMessage extends StatefulWidget {
   _SentMessageState createState() => _SentMessageState();
 }
 
-class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
+class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, WidgetsBindingObserver {
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message);
   Size? threadOriginatorSize;
   Size? messageSize;
   bool showReplies = false;
+  late String effect;
   CustomAnimationControl animController = CustomAnimationControl.stop;
   final GlobalKey key = GlobalKey();
 
@@ -560,8 +584,28 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
     super.initState();
     showReplies = widget.showReplies;
 
-    /*if (CurrentChat.activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
-      CurrentChat.activeChat?.autoplayGuid = null;
+    effect = widget.message.expressiveSendStyleId == null
+        ? "none"
+        : effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ??
+            "unknown";
+
+    if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble
+        && widget.message.datePlayed == null
+        && mounted && !(widget.message.guid?.contains("redacted-mode-demo") ?? false)) {
+      WidgetsBinding.instance!.addObserver(this);
+      WidgetsBinding.instance!.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        EventDispatcher().emit('play-effect', {
+          'type': effect,
+          'size': key.globalPaintBounds(context),
+        });
+
+        widget.message.setPlayedDate();
+      });
+    }
+
+    /*if (ChatManager().activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
+      ChatManager().activeChat?.autoplayGuid = null;
       SchedulerBinding.instance!.addPostFrameCallback((_) {
         if (ModalRoute.of(context)?.animation?.status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
           setState(() {
@@ -616,7 +660,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
             showReplyThread(context, widget.message, widget.messageBloc);
           },
           child: StreamBuilder<dynamic>(
-              stream: CurrentChat.of(context)?.totalOffsetStream.stream,
+              stream: ChatController.of(context)?.totalOffsetStream.stream,
               builder: (context, snapshot) {
                 dynamic data;
                 if (snapshot.data is double) {
@@ -639,7 +683,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
                       mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                       children: [
                         if ((SettingsManager().settings.alwaysShowAvatars.value ||
-                                (CurrentChat.of(context)?.chat.isGroup() ?? false)) &&
+                                (ChatController.of(context)?.chat.isGroup() ?? false)) &&
                             !msg.isFromMe!)
                           Padding(
                             padding: EdgeInsets.only(top: 5, left: 6),
@@ -742,10 +786,6 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
 
     // Third, let's add the message or URL preview
     Widget? message;
-    String effect = widget.message.expressiveSendStyleId == null
-        ? "none"
-        : effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ??
-            "unknown";
     if (widget.message.balloonBundleId != null &&
         widget.message.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
       message = BalloonBundleWidget(message: widget.message);
@@ -803,7 +843,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
         messageSize ??= widget.message.getBubbleSize(context);
         messageColumn.add(
           StreamBuilder<dynamic>(
-              stream: CurrentChat.of(context)?.totalOffsetStream.stream,
+              stream: ChatController.of(context)?.totalOffsetStream.stream,
               builder: (context, snapshot) {
                 double? data;
                 if (snapshot.data is double) {
@@ -829,7 +869,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
                   padding: EdgeInsets.only(
                     // add extra padding when showing contact avatars
                     left: max(
-                        ((CurrentChat.of(context)?.chat.isGroup() ?? false) ||
+                        ((ChatManager().activeChat?.chat.isGroup() ?? false) ||
                                     SettingsManager().settings.alwaysShowAvatars.value
                                 ? 75
                                 : 40) -
@@ -894,12 +934,14 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
         );
       }
     }
+
     messageColumn.add(Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         if (widget.message.expressiveSendStyleId != null)
           GestureDetector(
             onTap: () {
+              HapticFeedback.mediumImpact();
               if ((stringToMessageEffect[effect] ?? MessageEffect.none).isBubble) {
                 if (effect == "invisible ink" && animController == CustomAnimationControl.playFromStart) {
                   setState(() {
@@ -982,7 +1024,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
                     ? 0.0
                     : 10,
             bottom: (skin.value == Skins.iOS && widget.showTail && !isEmptyString(widget.message.fullText)) ? 5.0 : 0,
-            right: isEmptyString(widget.message.fullText) && widget.message.error.value == 0 ? 10.0 : 0.0),
+            right: isEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -1022,7 +1064,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
             children: msgRow,
           ),
         ),
-        if (skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid)
+        if (!kIsDesktop && !kIsWeb && skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid)
           MessageTimeStamp(
             message: widget.message,
           )

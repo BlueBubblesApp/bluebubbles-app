@@ -14,14 +14,14 @@ import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -56,45 +56,58 @@ class MessageWidget extends StatefulWidget {
   final MessageBloc? bloc;
   final bool autoplayEffect;
 
+  late final _fakeOlderSubject = faker.lorem.words(olderMessage?.subject?.split(" ").length ?? 0).join(" ");
+  late final _fakeOlderText = faker.lorem.words(olderMessage?.text?.split(" ").length ?? 0).join(" ");
+  late final _fakeSubject = faker.lorem.words(message.subject?.split(" ").length ?? 0).join(" ");
+  late final _fakeText = faker.lorem.words(message.text?.split(" ").length ?? 0).join(" ");
+
   @override
   _MessageState createState() => _MessageState();
 }
 
 class _MessageState extends State<MessageWidget> {
   bool showTail = true;
-  Completer<void>? associatedMessageRequest;
-  Completer<void>? attachmentsRequest;
-  Completer<void>? handleRequest;
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
-  CurrentChat? currentChat;
+  ChatController? currentChat;
   StreamSubscription<NewMessageEvent>? subscription;
   late Message _message;
   Message? _newerMessage;
   Message? _olderMessage;
-  RxBool tapped = false.obs;
+  final RxBool tapped = false.obs;
   double baseOffset = 0;
-  RxDouble offset = 0.0.obs;
+  final RxDouble offset = 0.0.obs;
   bool gaveHapticFeedback = false;
+
+  late final String _fakeOlderSubject;
+  late final String _fakeOlderText;
+  late final String _fakeSubject;
+  late final String _fakeText;
 
   @override
   void initState() {
     super.initState();
-    currentChat = CurrentChat.activeChat;
+    currentChat = ChatManager().activeChat;
     _message = widget.message;
+    _fakeOlderSubject = widget._fakeOlderSubject;
+    _fakeSubject = widget._fakeSubject;
+    _fakeOlderText = widget._fakeOlderText;
+    _fakeText = widget._fakeText;
     _newerMessage = widget.newerMessage;
     _olderMessage = widget.olderMessage;
     init();
   }
 
   void init() {
+    if (!_message.hasReactions && _message.getReactions().isNotEmpty) {
+      _message.hasReactions = true;
+      _message.save();
+    }
+
     checkHandle();
     fetchAssociatedMessages();
     fetchAttachments();
-
-    // If we already are listening to the stream, no need to do it again
-    if (subscription != null) return;
 
     // Listen for new messages
     subscription = NewMessageManager().stream.listen((data) {
@@ -137,7 +150,7 @@ class _MessageState extends State<MessageWidget> {
         }
 
         // If the associated message GUID matches this one, fetch associated messages
-        if (fetchAssoc) fetchAssociatedMessages(forceReload: true);
+        if (fetchAssoc) fetchAssociatedMessages(shouldReload: true);
         if (fetchAttach) fetchAttachments(forceReload: true);
       } else if (data.type == NewMessageType.UPDATE) {
         String? oldGuid = data.event["oldGuid"];
@@ -173,40 +186,24 @@ class _MessageState extends State<MessageWidget> {
     super.dispose();
   }
 
-  Future<void> checkHandle() async {
-    // If we've already started, return the request
-    if (handleRequest != null) return handleRequest!.future;
-    handleRequest = Completer();
-
+  void checkHandle() {
     // Checks ordered in a specific way to ever so slightly reduce processing
-    if (_message.isFromMe!) return handleRequest!.complete();
-    if (_message.handle != null) return handleRequest!.complete();
+    if (_message.isFromMe!) return;
+    if (_message.handle != null) return;
 
     try {
-      Handle? handle = await _message.getHandle();
-      if (mounted && handle != null) {
-        setState(() {});
-      }
-    } catch (ex) {
-      handleRequest!.completeError(ex);
-    }
+      _message.handle = _message.getHandle();
+    } catch (_) {}
   }
 
-  Future<void> fetchAssociatedMessages({bool forceReload = false}) async {
-    // If there is already a request being made, return that request
-    if (!forceReload && associatedMessageRequest != null) return associatedMessageRequest!.future;
-
-    // Create a new request and get the messages
-    associatedMessageRequest = Completer();
-
+  void fetchAssociatedMessages({bool shouldReload = false}) {
+    associatedCount = _message.associatedMessages.length;
     try {
-      await _message.fetchAssociatedMessages(bloc: widget.bloc);
-    } catch (ex) {
-      return associatedMessageRequest!.completeError(ex);
-    }
+      _message.fetchAssociatedMessages(bloc: widget.bloc, shouldRefresh: shouldReload);
+    } catch (_) {}
 
     bool hasChanges = false;
-    if (_message.associatedMessages.length != associatedCount || forceReload) {
+    if (_message.associatedMessages.length != associatedCount || shouldReload) {
       associatedCount = _message.associatedMessages.length;
       hasChanges = true;
     }
@@ -217,28 +214,18 @@ class _MessageState extends State<MessageWidget> {
       // Update the DB so it saves that we have reactions
       if (!_message.hasReactions && _message.getReactions().isNotEmpty) {
         _message.hasReactions = true;
-        _message.update();
+        _message.save();
       }
 
-      if (mounted) setState(() {});
+      if (mounted && shouldReload) setState(() {});
     }
-
-    associatedMessageRequest!.complete();
   }
 
-  Future<void> fetchAttachments({bool forceReload = false}) async {
-    // If there is already a request being made, return that request
-    if (!forceReload && attachmentsRequest != null) return attachmentsRequest!.future;
-
-    // Create a new request and get the attachments
-    attachmentsRequest = Completer();
-    if (!mounted) return attachmentsRequest!.complete();
-
+  void fetchAttachments({bool forceReload = false}) {
+    attachmentCount = _message.attachments.length;
     try {
-      await _message.fetchAttachments(currentChat: currentChat);
-    } catch (ex) {
-      return attachmentsRequest!.completeError(ex);
-    }
+      _message.fetchAttachments(currentChat: currentChat);
+    } catch (_) {}
 
     bool hasChanges = false;
     if (_message.attachments.length != attachmentCount || forceReload) {
@@ -250,8 +237,6 @@ class _MessageState extends State<MessageWidget> {
     if (mounted && hasChanges) {
       setState(() {});
     }
-
-    if (!attachmentsRequest!.isCompleted) attachmentsRequest!.complete();
   }
 
   @override
@@ -289,7 +274,7 @@ class _MessageState extends State<MessageWidget> {
     UrlPreviewWidget urlPreviewWidget = UrlPreviewWidget(
         key: Key("preview-${_message.guid}"), linkPreviews: _message.getPreviewAttachments(), message: _message);
     StickersWidget stickersWidget =
-        StickersWidget(key: Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages);
+        StickersWidget(key: Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages, size: _message.getBubbleSize(context));
     ReactionsWidget reactionsWidget = ReactionsWidget(
         key: Key("reactions-${associatedCount.toString()}"), associatedMessages: _message.associatedMessages);
     final separator = MessageTimeStampSeparator(
@@ -331,6 +316,10 @@ class _MessageState extends State<MessageWidget> {
             olderMessage: widget.olderMessage,
             newerMessage: widget.newerMessage,
             message: _message,
+            fakeOlderSubject: _fakeOlderSubject,
+            fakeOlderText: _fakeOlderText,
+            fakeSubject: _fakeSubject,
+            fakeText: _fakeText,
             messageBloc: widget.bloc,
             hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
             hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
@@ -346,7 +335,7 @@ class _MessageState extends State<MessageWidget> {
         }
 
         double replyThreshold = 40;
-        final Chat? chat = CurrentChat.of(context)?.chat;
+        final Chat? chat = ChatController.of(context)?.chat;
 
         return Obx(
           () => GestureDetector(
@@ -368,7 +357,7 @@ class _MessageState extends State<MessageWidget> {
               } else if (offset.value < replyThreshold) {
                 gaveHapticFeedback = false;
               }
-              CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
+              ChatController.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
             },
             onHorizontalDragEnd: !SettingsManager().settings.enablePrivateAPI.value
                 || !SettingsManager().settings.swipeToReply.value
@@ -377,7 +366,7 @@ class _MessageState extends State<MessageWidget> {
                 EventDispatcher().emit("focus-keyboard", _message);
               }
               offset.value = 0;
-              CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
+              ChatController.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
             },
             child: AnimatedContainer(
               duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
@@ -402,7 +391,7 @@ class _MessageState extends State<MessageWidget> {
                       child: AnimatedContainer(
                         margin: EdgeInsets.only(
                             bottom: min(replyThreshold, offset.value) * (!_message.isFromMe! ? 0.10 : 0.20) +
-                                (widget.isFirstSentMessage && _message.dateDelivered.value != null ? 20 : 0)),
+                                (widget.isFirstSentMessage && _message.dateDelivered != null ? 20 : 0)),
                         duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
                         width: min(replyThreshold, offset.value) * 0.8,
                         height: min(replyThreshold, offset.value) * 0.8,

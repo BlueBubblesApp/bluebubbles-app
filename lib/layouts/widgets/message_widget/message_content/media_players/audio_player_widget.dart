@@ -1,16 +1,15 @@
-import 'package:universal_html/html.dart' as html;
-
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:chewie_audio/chewie_audio.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
 class AudioPlayerWidget extends StatefulWidget {
@@ -39,7 +38,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   void initState() {
     super.initState();
 
-    CurrentChat? thisChat = CurrentChat.of(widget.context);
+    ChatController? thisChat = ChatController.of(widget.context);
     if (!kIsWeb && thisChat != null && thisChat.audioPlayers.containsKey(widget.file.path)) {
       audioController = thisChat.audioPlayers[widget.file.path]!.item2;
       controller = thisChat.audioPlayers[widget.file.path]!.item1;
@@ -74,9 +73,9 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         cupertinoColumnAlignment: widget.isFromMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       );
 
-      thisChat = CurrentChat.of(widget.context);
+      thisChat = ChatController.of(widget.context);
       if (!kIsWeb && thisChat != null && widget.file.path != null) {
-        CurrentChat.of(widget.context)!.audioPlayers[widget.file.path!] = Tuple2(controller, audioController);
+        ChatController.of(widget.context)!.audioPlayers[widget.file.path!] = Tuple2(controller, audioController);
       }
     }
   }
@@ -104,11 +103,11 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     return Container(
       alignment: Alignment.center,
       color: Theme.of(context).colorScheme.secondary,
-      height: SettingsManager().settings.skin.value == Skins.iOS ? 75 : 48,
+      height: SettingsManager().settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop ? 75 : 48,
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Theme(
         data: Theme.of(context).copyWith(
-            platform: SettingsManager().settings.skin.value == Skins.iOS ? TargetPlatform.iOS : TargetPlatform.android,
+            platform: SettingsManager().settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop ? TargetPlatform.iOS : TargetPlatform.android,
             dialogBackgroundColor: Theme.of(context).colorScheme.secondary,
             iconTheme: Theme.of(context).iconTheme.copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
         child: ChewieAudio(

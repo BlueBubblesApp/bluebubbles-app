@@ -1,10 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:ui';
@@ -12,28 +7,30 @@ import 'dart:ui';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
+import 'package:universal_io/io.dart';
 
 /// [MethodChannelInterface] is a manager used to talk to native code via a flutter MethodChannel
 ///
@@ -153,17 +150,17 @@ class MethodChannelInterface {
           TestingModeController controller = Get.find<TestingModeController>();
           controller.mostRecentReply.value = call.arguments["text"];
           // If `reply` is called when the app is in a background isolate, then we need to close it once we are done
-          closeThread();
+          await closeThread();
 
           return Future.value("");
         }
         // Find the chat to reply to
-        Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
+        Chat? chat = Chat.findOne(guid: call.arguments["chat"]);
 
         // If no chat is found, then we can't do anything
         if (chat == null) {
           // If `reply` is called when the app is in a background isolate, then we need to close it once we are done
-          closeThread();
+          await closeThread();
 
           return Future.value("");
         }
@@ -172,30 +169,30 @@ class MethodChannelInterface {
         // Send the message to that chat
         await ActionHandler.sendMessage(chat, call.arguments["text"], completer: completer);
 
-        closeThread();
+        await closeThread();
 
         return Future.value("");
       case "markAsRead":
         // Find the chat to mark as read
-        Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
+        Chat? chat = Chat.findOne(guid: call.arguments["chat"]);
 
         // If no chat is found, then we can't do anything
         if (chat == null) {
           // If `markAsRead` is called when the app is in a background isolate, then we need to close it once we are done
-          closeThread();
+          await closeThread();
 
           return Future.value("");
         }
 
         // Remove the notificaiton from that chat
-        await SocketManager().removeChatNotification(chat);
+        SocketManager().removeChatNotification(chat);
 
-        if (SettingsManager().settings.privateMarkChatAsRead.value) {
-          SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+        if (SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
+          await SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
         }
 
         // In case this method is called when the app is in a background isolate
-        closeThread();
+        await closeThread();
 
         return Future.value("");
       case "shareAttachments":
@@ -231,7 +228,7 @@ class MethodChannelInterface {
             Chat chat = chats.first!;
 
             // Open the chat
-            openChat(chat.guid!, existingAttachments: attachments);
+            openChat(chat.guid, existingAttachments: attachments);
 
             // Nothing else to do
             return Future.value("");
@@ -271,7 +268,7 @@ class MethodChannelInterface {
             Chat chat = chats.first!;
 
             // Open the chat
-            openChat(chat.guid!, existingText: text);
+            openChat(chat.guid, existingText: text);
 
             // Nothing else to do
             return Future.value("");
@@ -308,14 +305,14 @@ class MethodChannelInterface {
           print("primary color is $primary");
           print("light bg color is $lightBg");
           print("dark bg color is $darkBg");
-          var darkTheme = (await ThemeObject.getThemes()).firstWhere((e) => e.name == "Music Theme (Dark)");
-          var lightTheme = (await ThemeObject.getThemes()).firstWhere((e) => e.name == "Music Theme (Light)");
-          await darkTheme.fetchData();
+          var darkTheme = ThemeObject.getThemes().firstWhere((e) => e.name == "Music Theme (Dark)");
+          var lightTheme = ThemeObject.getThemes().firstWhere((e) => e.name == "Music Theme (Light)");
+          darkTheme.fetchData();
           var darkPrimaryEntry = darkTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
           var darkBgEntry = darkTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
           darkPrimaryEntry.color = primary;
           darkBgEntry.color = darkBg;
-          await lightTheme.fetchData();
+          lightTheme.fetchData();
           var lightPrimaryEntry = lightTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
           var lightBgEntry = lightTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
           lightPrimaryEntry.color = primary;
@@ -347,13 +344,15 @@ class MethodChannelInterface {
                 ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
             }
           }
-          await SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
+          SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
           isRunning = false;
         }
         return Future.value("");
       case "remove-sendPort":
         IsolateNameServer.removePortNameMapping('bg_isolate');
-        print("Removed sendPort because Activity was destroyed");
+        await prefs.remove('objectbox-reference');
+        print("Removed sendPort and objectbox reference because Activity was destroyed");
+        store.close();
         return Future.value("");
       default:
         return Future.value("");
@@ -361,51 +360,59 @@ class MethodChannelInterface {
   }
 
   /// [closeThread] closes the background isolate when the app is fully closed
-  void closeThread() {
+  Future<void> closeThread() async {
     // Only do this if we are indeed running in the background
     if (headless) {
       Logger.info("Closing the background isolate...", tag: "MCI-CloseThread");
-
+      await prefs.remove('objectbox-reference');
+      store.close();
       // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");
     }
   }
 
   Future<void> openChat(String id, {List<PlatformFile> existingAttachments = const [], String? existingText}) async {
+    // If the ID is -1, it means the notification grouping header was tapped
     if (id == "-1") {
       NavigatorManager().navigatorKey.currentState!.popUntil((route) => route.isFirst);
       return;
     }
-    if (CurrentChat.activeChat?.chat.guid == id) {
-      NotificationManager().switchChat(CurrentChat.activeChat!.chat);
+
+    // If the currently active chat is the same as the tapped notification, we
+    // clear notifications for it and update the text field data
+    if (ChatManager().activeChat?.chat.guid == id) {
+      ChatManager().setActiveChat(ChatManager().activeChat!.chat);
+  
+      // Get the current text field and update the attachments/text
       TextFieldData? data = TextFieldBloc().getTextField(id);
-      if (existingAttachments.isNotEmpty && data != null) {
-        data.attachments.addAll(existingAttachments);
-        final ids = data.attachments.map((e) => e.path).toSet();
-        data.attachments.retainWhere((element) => ids.remove(element.path));
-        EventDispatcher().emit("text-field-update-attachments", null);
+      if (data != null) {
+        if (existingAttachments.isNotEmpty) {
+          data.attachments.addAll(existingAttachments);
+          final ids = data.attachments.map((e) => e.path).toSet();
+          data.attachments.retainWhere((element) => ids.remove(element.path));
+          EventDispatcher().emit("text-field-update-attachments", null);
+        }
+
+        if (existingText != null) {
+          data.controller.text = existingText;
+          EventDispatcher().emit("text-field-update-text", null);
+        }
       }
-      if (existingText != null) {
-        data?.controller.text = existingText;
-        EventDispatcher().emit("text-field-update-text", null);
-      }
+
       return;
     }
-    // Try to find the specified chat to open
-    Chat? openedChat = await Chat.findOne({"GUID": id});
 
-    // If we did find one, then we can move on
+    // If the chat is not active, we should find the respective chat in the 
+    // database and then switch to that chat
+    Chat? openedChat = Chat.findOne(guid: id);
     if (openedChat != null) {
       // Get all of the participants of the chat so that it looks right when it is opened
-      await openedChat.getParticipants();
+      openedChat.getParticipants();
 
       // Make sure that the title is set
-      await openedChat.getTitle();
+      openedChat.getTitle();
 
-      // Clear all notifications for this chat
-      NotificationManager().switchChat(openedChat);
-
-      // if (!CurrentChat.isActive(openedChat.guid))
+      // if (!ChatController.isActive(openedChat.guid))
       // Actually navigate to the chat page
       CustomNavigator.pushAndRemoveUntil(
           Get.context!,
@@ -421,8 +428,10 @@ class MethodChannelInterface {
       // Because we are pushing AND removing until it is the first route,
       // the [dispose] methods of the previous conversation views will be called and thus will override the switch chat we just called
       // Thus we need to add a delay here to wait for the animation to finish
-      await Future.delayed(Duration(milliseconds: 500));
-      NotificationManager().switchChat(openedChat);
+      await Future.delayed(Duration(milliseconds: 1000));
+
+      // We already cleared the notifications, so we don't need to
+      ChatManager().setActiveChat(openedChat, clearNotifications: true);
     } else {
       Logger.warn("Failed to find chat", tag: "MCI-OpenChat");
     }

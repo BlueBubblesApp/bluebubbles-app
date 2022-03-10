@@ -2,11 +2,9 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
@@ -30,7 +28,7 @@ class Settings {
   final RxBool colorfulBubbles = false.obs;
   final RxBool hideDividers = false.obs;
   final RxDouble scrollVelocity = 1.00.obs;
-  final RxBool sendWithReturn = (kIsWeb || kIsDesktop).obs;
+  final RxBool sendWithReturn = false.obs;
   final RxBool doubleTapForDetails = false.obs;
   final RxBool denseChatTiles = false.obs;
   final RxBool smartReply = false.obs;
@@ -62,7 +60,10 @@ class Settings {
   final RxString globalTextDetection = "".obs;
   final RxBool filterUnknownSenders = false.obs;
   final RxBool tabletMode = true.obs;
+  final RxBool highlightSelectedChat = true.obs;
   final RxBool immersiveMode = false.obs;
+  final RxDouble avatarScale = 1.0.obs;
+  final RxBool askWhereToSave = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -73,6 +74,7 @@ class Settings {
   final RxBool privateManualMarkAsRead = false.obs;
   final RxBool privateSubjectLine = false.obs;
   final RxBool swipeToReply = false.obs;
+  final RxBool privateAPISend = false.obs;
 
   // Redacted Mode Settings
   final RxBool redactedMode = false.obs;
@@ -116,6 +118,14 @@ class Settings {
   final RxInt pinColumnsLandscape = RxInt(6);
 
   final RxInt maxAvatarsInGroupWidget = RxInt(4);
+
+  // Desktop settings
+  final RxBool launchAtStartup = false.obs;
+  final RxBool minimizeToTray = false.obs;
+  final RxBool closeToTray = true.obs;
+
+  // Linux settings
+  final RxBool useCustomTitleBar = RxBool(true);
 
   Settings();
 
@@ -290,11 +300,21 @@ class Settings {
         settings.immersiveMode.value = entry.value;
       } else if (entry.name == "swipeToReply") {
         settings.swipeToReply.value = entry.value;
+      } else if (entry.name == "privateAPISend") {
+        settings.privateAPISend.value = entry.value;
+      } else if (entry.name == "avatarScale") {
+        settings.avatarScale.value = entry.value;
+      } else if (entry.name == "launchAtStartup") {
+        settings.launchAtStartup.value = entry.value;
+      } else if (entry.name == "minimizeToTray") {
+        settings.minimizeToTray.value = entry.value;
+      } else if (entry.name == "closeToTray") {
+        settings.closeToTray.value = entry.value;
+      } else if (entry.name == "askWhereToSave") {
+        settings.askWhereToSave.value = entry.value;
+      } else if (entry.name == "useCustomTitleBar") {
+        settings.useCustomTitleBar.value = entry.value;
       }
-
-      // else if (entry.name == "emojiFontFamily") {
-      //   settings.emojiFontFamily = entry.value;
-      // }
     }
     settings.save();
     return settings;
@@ -401,7 +421,14 @@ class Settings {
       'filterUnknownSenders': filterUnknownSenders.value,
       'tabletMode': tabletMode.value,
       'immersiveMode': immersiveMode.value,
+      'avatarScale': avatarScale.value,
+      'launchAtStartup': launchAtStartup.value,
+      'closeToTray': closeToTray.value,
+      'minimizeToTray': minimizeToTray.value,
+      'askWhereToSave': askWhereToSave.value,
       'swipeToReply': swipeToReply.value,
+      'privateAPISend': privateAPISend.value,
+      'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
       'privateSendTypingIndicators': privateSendTypingIndicators.value,
       'privateMarkChatAsRead': privateMarkChatAsRead.value,
@@ -438,6 +465,7 @@ class Settings {
       'pinRowsLandscape': pinRowsLandscape.value,
       'pinColumnsLandscape': pinColumnsLandscape.value,
       'maxAvatarsInGroupWidget': maxAvatarsInGroupWidget.value,
+      'useCustomTitleBar': useCustomTitleBar.value,
     };
     if (includeAll) {
       map.addAll({
@@ -459,13 +487,14 @@ class Settings {
     SettingsManager().settings.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
     SettingsManager().settings.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
     SettingsManager().settings.lowMemoryMode.value = map['lowMemoryMode'] ?? false;
-    SettingsManager().settings.lastIncrementalSync.value = map['lastIncrementalSync'] ?? 0;
     SettingsManager().settings.refreshRate.value = map['refreshRate'] ?? 0;
     SettingsManager().settings.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     SettingsManager().settings.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     SettingsManager().settings.hideDividers.value = map['hideDividers'] ?? false;
-    SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'] is int? ? (map['scrollVelocity'] as int? ?? 1).toDouble() : map['scrollVelocity'] as double? ?? 1.0;
-    SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'] ?? (kIsWeb || kIsDesktop);
+    SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'] is int?
+        ? (map['scrollVelocity'] as int? ?? 1).toDouble()
+        : map['scrollVelocity'] as double? ?? 1.0;
+    SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'] ?? false;
     SettingsManager().settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     SettingsManager().settings.denseChatTiles.value = map['denseChatTiles'] ?? false;
     SettingsManager().settings.smartReply.value = map['smartReply'] ?? false;
@@ -497,7 +526,13 @@ class Settings {
     SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
     SettingsManager().settings.immersiveMode.value = map['immersiveMode'] ?? false;
+    SettingsManager().settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
+    SettingsManager().settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
+    SettingsManager().settings.closeToTray.value = map['closeToTray'] ?? true;
+    SettingsManager().settings.minimizeToTray.value = map['minimizeToTray'] ?? false;
+    SettingsManager().settings.askWhereToSave.value = map['askWhereToSave'] ?? false;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
+    SettingsManager().settings.privateAPISend.value = map['privateAPISend'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
@@ -521,19 +556,27 @@ class Settings {
     SettingsManager().settings.iosShowDelete.value = map['iosShowDelete'] ?? true;
     SettingsManager().settings.iosShowMarkRead.value = map['iosShowMarkRead'] ?? true;
     SettingsManager().settings.iosShowArchive.value = map['iosShowArchive'] ?? true;
-    SettingsManager().settings.materialRightAction.value = map['materialRightAction'] != null ? MaterialSwipeAction.values[map['materialRightAction']] : MaterialSwipeAction.pin;
-    SettingsManager().settings.materialLeftAction.value = map['materialLeftAction'] != null ? MaterialSwipeAction.values[map['materialLeftAction']] : MaterialSwipeAction.archive;
+    SettingsManager().settings.materialRightAction.value = map['materialRightAction'] != null
+        ? MaterialSwipeAction.values[map['materialRightAction']]
+        : MaterialSwipeAction.pin;
+    SettingsManager().settings.materialLeftAction.value = map['materialLeftAction'] != null
+        ? MaterialSwipeAction.values[map['materialLeftAction']]
+        : MaterialSwipeAction.archive;
     SettingsManager().settings.shouldSecure.value = map['shouldSecure'] ?? false;
-    SettingsManager().settings.securityLevel.value = map['securityLevel'] != null ? SecurityLevel.values[map['securityLevel']] : SecurityLevel.locked;
+    SettingsManager().settings.securityLevel.value =
+        map['securityLevel'] != null ? SecurityLevel.values[map['securityLevel']] : SecurityLevel.locked;
     SettingsManager().settings.incognitoKeyboard.value = map['incognitoKeyboard'] ?? false;
     SettingsManager().settings.skin.value = map['skin'] != null ? Skins.values[map['skin']] : Skins.iOS;
     SettingsManager().settings.theme.value = map['theme'] != null ? ThemeMode.values[map['theme']] : ThemeMode.system;
-    SettingsManager().settings.fullscreenViewerSwipeDir.value = map['fullscreenViewerSwipeDir'] != null ? SwipeDirection.values[map['fullscreenViewerSwipeDir']] : SwipeDirection.RIGHT;
+    SettingsManager().settings.fullscreenViewerSwipeDir.value = map['fullscreenViewerSwipeDir'] != null
+        ? SwipeDirection.values[map['fullscreenViewerSwipeDir']]
+        : SwipeDirection.RIGHT;
     SettingsManager().settings.pinRowsPortrait.value = map['pinRowsPortrait'] ?? 3;
     SettingsManager().settings.pinColumnsPortrait.value = map['pinColumnsPortrait'] ?? 3;
     SettingsManager().settings.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
     SettingsManager().settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     SettingsManager().settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
+    SettingsManager().settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     SettingsManager().settings.save();
   }
 
@@ -555,8 +598,8 @@ class Settings {
     s.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     s.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     s.hideDividers.value = map['hideDividers'] ?? false;
-    s.scrollVelocity.value = map['scrollVelocity'] ?? 1;
-    s.sendWithReturn.value = map['sendWithReturn'] ?? (kIsWeb || kIsDesktop);
+    s.scrollVelocity.value = map['scrollVelocity']?.toDouble() ?? 1;
+    s.sendWithReturn.value = map['sendWithReturn'] ?? false;
     s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     s.denseChatTiles.value = map['denseChatTiles'] ?? false;
     s.smartReply.value = map['smartReply'] ?? false;
@@ -588,8 +631,15 @@ class Settings {
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     s.tabletMode.value = map['tabletMode'] ?? true;
+    s.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     s.immersiveMode.value = map['immersiveMode'] ?? false;
+    s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
+    s.launchAtStartup.value = map['launchAtStartup'] ?? false;
+    s.closeToTray.value = map['closeToTray'] ?? true;
+    s.minimizeToTray.value = map['minimizeToTray'] ?? false;
+    s.askWhereToSave.value = map['askWhereToSave'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
+    s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
@@ -613,19 +663,27 @@ class Settings {
     s.iosShowDelete.value = map['iosShowDelete'] ?? true;
     s.iosShowMarkRead.value = map['iosShowMarkRead'] ?? true;
     s.iosShowArchive.value = map['iosShowArchive'] ?? true;
-    s.materialRightAction.value = map['materialRightAction'] != null ? MaterialSwipeAction.values[map['materialRightAction']] : MaterialSwipeAction.pin;
-    s.materialLeftAction.value = map['materialLeftAction'] != null ? MaterialSwipeAction.values[map['materialLeftAction']] : MaterialSwipeAction.archive;
+    s.materialRightAction.value = map['materialRightAction'] != null
+        ? MaterialSwipeAction.values[map['materialRightAction']]
+        : MaterialSwipeAction.pin;
+    s.materialLeftAction.value = map['materialLeftAction'] != null
+        ? MaterialSwipeAction.values[map['materialLeftAction']]
+        : MaterialSwipeAction.archive;
     s.shouldSecure.value = map['shouldSecure'] ?? false;
-    s.securityLevel.value = map['securityLevel'] != null ? SecurityLevel.values[map['securityLevel']] : SecurityLevel.locked;
+    s.securityLevel.value =
+        map['securityLevel'] != null ? SecurityLevel.values[map['securityLevel']] : SecurityLevel.locked;
     s.incognitoKeyboard.value = map['incognitoKeyboard'] ?? false;
     s.skin.value = map['skin'] != null ? Skins.values[map['skin']] : Skins.iOS;
     s.theme.value = map['theme'] != null ? ThemeMode.values[map['theme']] : ThemeMode.system;
-    s.fullscreenViewerSwipeDir.value = map['fullscreenViewerSwipeDir'] != null ? SwipeDirection.values[map['fullscreenViewerSwipeDir']] : SwipeDirection.RIGHT;
+    s.fullscreenViewerSwipeDir.value = map['fullscreenViewerSwipeDir'] != null
+        ? SwipeDirection.values[map['fullscreenViewerSwipeDir']]
+        : SwipeDirection.RIGHT;
     s.pinRowsPortrait.value = map['pinRowsPortrait'] ?? 3;
     s.pinColumnsPortrait.value = map['pinColumnsPortrait'] ?? 3;
     s.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
     s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
+    s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     return s;
   }
 }

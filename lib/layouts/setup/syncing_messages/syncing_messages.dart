@@ -1,16 +1,18 @@
 import 'dart:math';
 
+import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:confetti/confetti.dart';
-import 'package:get/get.dart';
-import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:simple_animations/stateless_animation/custom_animation.dart';
 
 class SyncingMessages extends StatefulWidget {
   SyncingMessages({Key? key, required this.controller}) : super(key: key);
@@ -23,6 +25,8 @@ class SyncingMessages extends StatefulWidget {
 class _SyncingMessagesState extends State<SyncingMessages> {
   final confettiController = ConfettiController(duration: Duration(milliseconds: 500));
   bool hasPlayed = false;
+  CustomAnimationControl controller = CustomAnimationControl.mirror;
+  Tween<double> tween = Tween<double>(begin: 0, end: 5);
 
   @override
   void initState() {
@@ -53,8 +57,11 @@ class _SyncingMessagesState extends State<SyncingMessages> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+            ? Colors.transparent
+            : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -77,13 +84,15 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                             alignment: Alignment.centerLeft,
                             child: Container(
                               width: context.width * 2 / 3,
-                              child: Text(
-                                  hasPlayed ? "Sync complete!" : "Syncing...",
-                                  style: Theme.of(context).textTheme.bodyText1!.apply(
-                                    fontSizeFactor: 2.5,
-                                    fontWeightDelta: 2,
-                                  ).copyWith(height: 1.5)
-                              ),
+                              child: Text(hasPlayed ? "Sync complete!" : "Syncing...",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1!
+                                      .apply(
+                                        fontSizeFactor: 2.5,
+                                        fontWeightDelta: 2,
+                                      )
+                                      .copyWith(height: 1.5)),
                             ),
                           ),
                         ),
@@ -123,8 +132,9 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                               child: ListView.builder(
                                 physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                                 itemBuilder: (context, index) {
-                                  SetupOutputData data = SocketManager().setup.data.value?.output.reversed.toList()[index]
-                                      ?? SetupOutputData("Unknown", SetupOutputType.ERROR);
+                                  SetupOutputData data =
+                                      SocketManager().setup.data.value?.output.reversed.toList()[index] ??
+                                          SetupOutputData("Unknown", SetupOutputType.ERROR);
                                   return Text(
                                     data.text,
                                     style: TextStyle(
@@ -139,8 +149,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                           ),
                         ],
                       ),
-                    if (!hasPlayed)
-                      Container(),
+                    if (!hasPlayed) Container(),
                     if (hasPlayed)
                       Container(
                         decoration: BoxDecoration(
@@ -165,24 +174,39 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                           ),
                           onPressed: () {
                             SocketManager().toggleSetupFinished(true, applyToDb: true);
-                            Get.offAll(() => ConversationList(
-                              showArchivedChats: false,
-                              showUnknownSenders: false,
-                            ), duration: Duration.zero, transition: Transition.noTransition);
+                            Get.offAll(
+                                () => ConversationList(
+                                      showArchivedChats: false,
+                                      showUnknownSenders: false,
+                                    ),
+                                duration: Duration.zero,
+                                transition: Transition.noTransition);
                           },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.check,
-                                color: Colors.white,
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                  "Finish",
-                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)
-                              ),
-                            ],
+                          child: Shimmer.fromColors(
+                            baseColor: Colors.white70,
+                            highlightColor: Colors.white,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CustomAnimation<double>(
+                                  control: controller,
+                                  tween: tween,
+                                  duration: Duration(milliseconds: 600),
+                                  curve: Curves.easeOut,
+                                  builder: (context, _, anim) {
+                                    return Padding(
+                                      padding: EdgeInsets.only(left: 0.0),
+                                      child: Icon(Icons.check, color: Colors.white, size: 25),
+                                    );
+                                  },
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 0.0, left: 5.0),
+                                  child: Text("Finish",
+                                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.2, color: Colors.white)),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

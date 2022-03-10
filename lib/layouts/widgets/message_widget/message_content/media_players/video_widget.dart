@@ -1,10 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
-
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -12,12 +7,16 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
@@ -45,7 +44,7 @@ class VideoWidgetController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    Map<String, VideoPlayerController> controllers = CurrentChat.activeChat!.currentPlayingVideo;
+    Map<String, VideoPlayerController> controllers = ChatManager().activeChat!.currentPlayingVideo;
     showPlayPauseOverlay =
         RxBool(!controllers.containsKey(attachment.guid) || !controllers[attachment.guid]!.value.isPlaying);
 
@@ -53,7 +52,11 @@ class VideoWidgetController extends GetxController {
       controller = controllers[attachment.guid]!;
       createListener(controller!);
     } else {
-      getThumbnail();
+      if (ChatManager().activeChat?.imageData[attachment.guid] != null) {
+        thumbnail = ChatManager().activeChat?.imageData[attachment.guid];
+      } else {
+        getThumbnail();
+      }
     }
   }
 
@@ -69,7 +72,7 @@ class VideoWidgetController extends GetxController {
     }
     await controller!.initialize();
     createListener(controller!);
-    CurrentChat.activeChat?.changeCurrentPlayingVideo({attachment.guid!: controller!});
+    ChatManager().activeChat?.changeCurrentPlayingVideo({attachment.guid!: controller!});
   }
 
   void createListener(VideoPlayerController controller) {
@@ -96,8 +99,27 @@ class VideoWidgetController extends GetxController {
 
   void getThumbnail() async {
     if (!kIsWeb) {
-      thumbnail = await AttachmentHelper.getVideoThumbnail(file.path!);
+      try {
+        // If we already errored, throw an error to load the error logo
+        if (attachment.metadata?['thumbnail_status'] == 'error') {
+          throw Exception('No video preview');
+        }
+
+        // If we haven't errored at all, fetch the thumbnail
+        thumbnail = await AttachmentHelper.getVideoThumbnail(file.path!);
+      } catch (ex) {
+        // If an error occurs, set the thumnail to the cached no preview image.
+        // Only save to DB if the status wasn't already `error` somehow
+        thumbnail = ChatManager().noVideoPreviewIcon;
+        if (attachment.metadata?['thumbnail_status'] != 'error') {
+          attachment.metadata ??= {};
+          attachment.metadata!['thumbnail_status'] = 'error';
+          attachment.save(null);
+        }
+      }
+      
       if (thumbnail == null) return;
+      ChatManager().activeChat?.imageData[attachment.guid!] = thumbnail!;
       await precacheImage(MemoryImage(thumbnail!), context);
       update();
     }
@@ -154,8 +176,8 @@ class VideoWidget extends StatelessWidget {
         controller.showPlayPauseOverlay.value = true;
       } else {
         controller.navigated = true;
-        CurrentChat? currentChat = CurrentChat.activeChat;
-        await Navigator.of(context).push(
+        ChatController? currentChat = ChatManager().activeChat;
+        await Navigator.of(Get.context!).push(
           ThemeSwitcher.buildPageRoute(
             builder: (context) => AttachmentFullscreenViewer(
               currentChat: currentChat,

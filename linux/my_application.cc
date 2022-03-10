@@ -7,6 +7,8 @@
 
 #include "flutter/generated_plugin_registrant.h"
 
+#include <bitsdojo_window_linux/bitsdojo_window_plugin.h>
+
 struct _MyApplication {
   GtkApplication parent_instance;
   char** dart_entrypoint_arguments;
@@ -44,6 +46,8 @@ static void my_application_activate(GApplication* application) {
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
+    auto bdw = bitsdojo_window_from(window);
+    bdw->setCustomFrame(true);
     gtk_window_set_title(window, "bluebubbles_app");
   }
 
@@ -99,6 +103,5 @@ static void my_application_init(MyApplication* self) {}
 MyApplication* my_application_new() {
   return MY_APPLICATION(g_object_new(my_application_get_type(),
                                      "application-id", APPLICATION_ID,
-                                     "flags", G_APPLICATION_NON_UNIQUE,
                                      nullptr));
 }

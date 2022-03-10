@@ -1,9 +1,9 @@
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
 Map<String, IconData> iconMap = {
@@ -56,7 +56,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.device_phone_portrait : Icons.phone_android;
     } else if (val.contains("mobileslideshow")) {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play_rectangle : Icons.slideshow;
-    } else if (val.contains("PeerPayment")) {
+    } else if (val.contains("peerpayment")) {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.money_dollar_circle : Icons.monetization_on;
     }
 

@@ -1,10 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:quick_notify/quick_notify.dart';
-import 'package:universal_html/html.dart' as uh;
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -13,15 +9,14 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as fln;
+import 'package:quick_notify/quick_notify.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:universal_html/html.dart' as uh;
 
 /// [NotificationManager] holds data relating to the current chat, and manages things such as
 class NotificationManager {
@@ -60,33 +55,6 @@ class NotificationManager {
     }
   }
 
-  /// Sets the currently active [chat]. As a result,
-  /// the chat will be marked as read, and the notifications
-  /// for the chat will be cleared
-  Future<void> switchChat(Chat? chat) async {
-    if (chat == null) {
-      // CurrentChat.getCurrentChat(chat)?.dispose();
-      return;
-    }
-
-    CurrentChat.getCurrentChat(chat)?.isAlive = true;
-    await chat.toggleHasUnread(false);
-
-    if (SettingsManager().settings.enablePrivateAPI.value) {
-      if (SettingsManager().settings.privateMarkChatAsRead.value) {
-        SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
-      }
-
-      if (!MethodChannelInterface().headless && SettingsManager().settings.privateSendTypingIndicators.value) {
-        SocketManager().sendMessage("update-typing-status", {"chatGuid": chat.guid}, (data) {});
-      }
-    }
-    ChatBloc().updateUnreads();
-    if (!LifeCycleManager().isBubble) {
-      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
-    }
-  }
-
   /// Creates notification channel for android
   /// This is done through native code and all of this data is hard coded for now
   Future<void> createNotificationChannel(String channelID, String channelName, String channelDescription) async {
@@ -110,7 +78,7 @@ class NotificationManager {
 
   Future<void> scheduleNotification(Chat chat, Message message, DateTime time) async {
     // Get a title as best as we can
-    String? chatTitle = await chat.getTitle();
+    String? chatTitle = chat.getTitle();
     bool isGroup = chat.isGroup();
 
     // If we couldn't get a chat title, generate placeholder names
@@ -118,7 +86,7 @@ class NotificationManager {
     await flutterLocalNotificationsPlugin!.zonedSchedule(
         Random().nextInt(9998) + 1,
         'Reminder: $chatTitle',
-        await MessageHelper.getNotificationText(message),
+        MessageHelper.getNotificationText(message),
         tz.TZDateTime.from(time, tz.local),
         fln.NotificationDetails(
             android: fln.AndroidNotificationDetails(
@@ -129,7 +97,7 @@ class NotificationManager {
           importance: fln.Importance.max,
           color: HexColor("4990de"),
         )),
-        payload: await MessageHelper.getNotificationText(message),
+        payload: MessageHelper.getNotificationText(message),
         androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation: fln.UILocalNotificationDateInterpretation.absoluteTime);
   }
@@ -159,7 +127,7 @@ class NotificationManager {
   /// @param [contact] optional parameter of the contact of the message
   Future<void> createNotificationFromMessage(Chat chat, Message message) async {
     // sanity check to make sure we don't notify if the chat is muted
-    if (await chat.shouldMuteNotification(message)) return;
+    if (chat.shouldMuteNotification(message)) return;
     Uint8List? contactIcon;
 
     // Get the contact name if the message is not from you
@@ -174,10 +142,10 @@ class NotificationManager {
     }
 
     // Get the actual contact metadata
-    Contact? contact = ContactManager().getCachedContact(handle: message.handle);
+    Contact? contact = ContactManager().getContact(message.handle?.address);
 
     // Build the message text for the notification
-    String? messageText = await MessageHelper.getNotificationText(message);
+    String? messageText = MessageHelper.getNotificationText(message);
     if (SettingsManager().settings.hideTextPreviews.value) messageText = "iMessage";
 
     // Try to load in an avatar for the person
@@ -187,6 +155,9 @@ class NotificationManager {
         if (contact.avatar.value!.isNotEmpty) contactIcon = contact.avatar.value!;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
+        if (contact != null) {
+          await ContactManager().loadContactAvatar(contact);
+        }
         // If [defaultAvatar] is not loaded, load it from assets
         if ((contact?.avatar.value == null || contact!.avatar.value!.isEmpty) && defaultAvatar == null) {
           ByteData file = await loadAsset("assets/images/person64.png");
@@ -207,14 +178,14 @@ class NotificationManager {
     }
 
     // Get a title as best as we can
-    String? chatTitle = await chat.getTitle();
+    String? chatTitle = chat.getTitle();
     bool isGroup = chat.isGroup();
 
     // If we couldn't get a chat title, generate placeholder names
     chatTitle ??= isGroup ? 'Group Chat' : 'iMessage Chat';
 
     await createNewMessageNotification(
-        chat.guid!,
+        chat.guid,
         isGroup,
         chatTitle,
         contactIcon,
@@ -248,7 +219,7 @@ class NotificationManager {
     }
     if (kIsDesktop) {
       Logger.info("Sending desktop notification");
-      QuickNotify.notify(content: chatTitle + ":\n" + messageText);
+      QuickNotify.notify(title: chatIsGroup ? "$chatTitle: $contactName" : chatTitle, content: messageText);
       return;
     }
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {

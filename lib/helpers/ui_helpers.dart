@@ -1,9 +1,9 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,24 +11,29 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 Widget buildBackButton(BuildContext context,
-    {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, Function()? callback}) {
-  return Container(
-    padding: padding,
-    width: 25,
-    child: IconButton(
-      iconSize: iconSize ?? (SettingsManager().settings.skin.value != Skins.Material ? 30 : 24),
-      icon: skin != null
-          ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: Theme.of(context).primaryColor)
-          : Obx(() => Icon(SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
-              color: Theme.of(context).primaryColor)),
-      onPressed: () {
-        callback?.call();
-        while (Get.isOverlaysOpen) {
-          Get.back();
-        }
-        Navigator.of(context).pop();
-      },
-    ),
+    {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, bool Function()? callback}) {
+  return Material(
+    color: Colors.transparent,
+    child: Container(
+      padding: padding,
+      width: 25,
+      child: IconButton(
+        iconSize: iconSize ?? (SettingsManager().settings.skin.value != Skins.Material ? 30 : 24),
+        icon: skin != null
+            ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: Theme.of(context).primaryColor)
+            : Obx(() => Icon(SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
+                color: Theme.of(context).primaryColor)),
+        onPressed: () {
+          final result = callback?.call() ?? true;
+          if (result) {
+            while (Get.isOverlaysOpen) {
+              Get.back();
+            }
+            Navigator.of(context).pop();
+          }
+        },
+      ),
+    )
   );
 }
 
@@ -156,7 +161,7 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
-            chat.toggleHasUnread(!chat.hasUnreadMessage!);
+            ChatBloc().toggleChatUnread(chat, !chat.hasUnreadMessage!);
             if (_this.mounted) _this.setState(() {});
             Navigator.pop(context);
           },
@@ -248,4 +253,5 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
         ),
     ],
   );
+  EventDispatcher().emit('focus-keyboard', null);
 }

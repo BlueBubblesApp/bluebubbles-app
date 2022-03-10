@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class CustomAvatarColorPanelBinding implements Bindings {
   @override
@@ -34,7 +34,7 @@ class CustomAvatarColorPanelController extends GetxController {
   Future<void> getCustomHandles({force = false}) async {
     // If we are already fetching or have results,
     if (!false && (isFetching || !isNullOrEmpty(handleWidgets)!)) return;
-    List<Handle> handles = await Handle.find();
+    List<Handle> handles = Handle.find();
     if (isNullOrEmpty(handles)!) return;
 
     // Filter handles down by ones with colors
@@ -43,7 +43,7 @@ class CustomAvatarColorPanelController extends GetxController {
     List<Widget> items = [];
     for (var item in handles) {
       items.add(SettingsTile(
-        title: ContactManager().getCachedContact(address: item.address)?.displayName ?? await formatPhoneNumber(item),
+        title: ContactManager().getContact(item.address)?.displayName ?? await formatPhoneNumber(item),
         subtitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));

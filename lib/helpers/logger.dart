@@ -1,14 +1,14 @@
 import 'dart:convert';
-import 'package:path_provider/path_provider.dart';
-import 'package:universal_html/html.dart' as html;
-
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 
 // ignore: non_constant_identifier_names
 BaseLogger Logger = Get.isRegistered<BaseLogger>() ? Get.find<BaseLogger>() : Get.put(BaseLogger());
@@ -17,17 +17,35 @@ enum LogLevel { INFO, WARN, ERROR, DEBUG }
 
 class BaseLogger extends GetxService {
   final RxBool saveLogs = false.obs;
+  final RxBool startup = false.obs;
   final int lineLimit = 5000;
   List<String> logs = [];
   List<LogLevel> enabledLevels = [LogLevel.INFO, LogLevel.WARN, LogLevel.DEBUG, LogLevel.ERROR];
+  final String _directoryPath = "/storage/emulated/0/Download/BlueBubbles-log-";
+  late final File startupFile;
 
   String get logPath {
-    String directoryPath = "/storage/emulated/0/Download/BlueBubbles-log-";
     DateTime now = DateTime.now().toLocal();
-    return directoryPath + "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" + ".txt";
+    return _directoryPath + "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" + ".txt";
   }
 
   set setEnabledLevels(List<LogLevel> levels) => enabledLevels = levels;
+
+  init() async {
+    // For now, only do startup logs on desktop
+    if (kIsDesktop) {
+      String startupPath = _directoryPath + "startup.txt";
+      startupPath = (await getDownloadsDirectory())!.path;
+      startupPath = join(startupPath, "BlueBubbles_Logs_Startup.txt");
+      startupFile = File(startupPath);
+      startupFile.writeAsStringSync("", mode: FileMode.writeOnly);
+      startup.listen((val) async {
+        if (val) {
+          await writeToStartupFile('----------------${DateTime.now().toLocal()}----------------');
+        }
+      });
+    }
+  }
 
   void startSavingLogs() {
     saveLogs.value = true;
@@ -43,13 +61,18 @@ class BaseLogger extends GetxService {
     logs.clear();
   }
 
+  Future<void> writeToStartupFile(String log) async {
+    if (kIsDesktop) {
+      startupFile.writeAsStringSync(log + '\n', mode: FileMode.writeOnlyAppend);
+    }
+  }
+
   Future<void> writeLogToFile() async {
     // Create the log file and write to it
     if (kIsWeb) {
       final bytes = utf8.encode(logs.join('\n'));
       final content = base64.encode(bytes);
-      html.AnchorElement(
-          href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+      html.AnchorElement(href: "data:application/octet-stream;charset=utf-16le;base64,$content")
         ..setAttribute("download", logPath.split("/").last)
         ..click();
       return;
@@ -58,7 +81,8 @@ class BaseLogger extends GetxService {
     if (kIsDesktop) {
       filePath = (await getDownloadsDirectory())!.path;
       DateTime now = DateTime.now().toLocal();
-      filePath += "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" ".txt";
+      filePath = join(
+          filePath, "BlueBubbles_Logs_${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
     }
     File file = File(filePath);
     await file.create(recursive: true);
@@ -76,14 +100,19 @@ class BaseLogger extends GetxService {
         onPressed: () {
           Share.file("BlueBubbles Logs", filePath);
         },
-        child: Text("SHARE", style: TextStyle(color: Theme.of(Get.context!).primaryColor)),
+        child: kIsDesktop || kIsWeb
+            ? Container()
+            : Text("SHARE", style: TextStyle(color: Theme.of(Get.context!).primaryColor)),
       ),
     );
   }
 
   void info(dynamic log, {String? tag}) => _log(LogLevel.INFO, log, tag: tag);
+
   void warn(dynamic log, {String? tag}) => _log(LogLevel.WARN, log, tag: tag);
+
   void debug(dynamic log, {String? tag}) => _log(LogLevel.DEBUG, log, tag: tag);
+
   void error(dynamic log, {String? tag}) => _log(LogLevel.ERROR, log, tag: tag);
 
   void _log(LogLevel level, dynamic log, {String name = "BlueBubblesApp", String? tag}) {
@@ -95,6 +124,11 @@ class BaseLogger extends GetxService {
 
       // Log the data normally
       debugPrint(theLog);
+
+      // If we are in startup, write the log to the startup file
+      if (kIsDesktop && startup.value) {
+        writeToStartupFile(theLog);
+      }
 
       // If we aren't saving logs, return here
       if (!saveLogs.value) return;

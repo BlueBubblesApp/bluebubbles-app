@@ -1,12 +1,9 @@
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
@@ -50,6 +47,10 @@ class ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
+    if (kIsDesktop && !widget.showUnknownSenders) {
+      ChatBloc().refreshChats();
+    }
+
     SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
       Logger.error("Error caught while hiding keyboard: ${e.toString()}");
     });
@@ -61,62 +62,9 @@ class ConversationListState extends State<ConversationList> {
       if (event["type"] == 'refresh' && mounted) {
         setState(() {});
       }
-    });
 
-    SchedulerBinding.instance?.addPostFrameCallback((timeStamp) {
-      if (prefs.getBool('warning') != true && !kIsWeb) {
-        Get.defaultDialog(
-            title: "IMPORTANT NOTICE",
-            content: Container(
-              constraints: BoxConstraints(
-                maxHeight: Get.height - 300,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(left: 10, right: 10),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(text: "Hi there, we hope you've been enjoying BlueBubbles!!\r\n\n"),
-                                TextSpan(text: "We've got some architectural changes in the works to make the app even better.\r\n\n"),
-                                TextSpan(text: "Please make sure to upgrade your server to a ",
-                                    style: context.theme.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold)),
-                                TextSpan(text: "minimum of v0.3.0",
-                                    style: context.theme.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
-                                TextSpan(text: " by February 1st, 2022 to maintain full functionality.\r\n\n",
-                                    style: context.theme.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold)),
-                                TextSpan(text: "Be on the lookout for some exciting new features soon!\r\n\n"),
-                                TextSpan(text: "~ BlueBubbles Devs"),
-                              ],
-                              style: context.theme.textTheme.subtitle1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ]
-                ),
-              ),
-            ),
-            cancel: Container(
-              height: 0,
-              width: 0,
-            ),
-            textConfirm: "OK",
-            confirmTextColor: Get.theme.dialogBackgroundColor,
-            buttonColor: context.theme.primaryColor,
-            backgroundColor: context.theme.backgroundColor.lightenOrDarken(),
-            barrierDismissible: false,
-            titleStyle: context.theme.textTheme.bodyText1!.copyWith(fontWeight: FontWeight.bold).apply(fontSizeFactor: 1.3),
-            onConfirm: () {
-              Get.back();
-              prefs.setBool('warning', true);
-            }
-        );
+      if (event["type"] == 'theme-update' && mounted) {
+        setState(() {});
       }
     });
   }
@@ -127,19 +75,26 @@ class ConversationListState extends State<ConversationList> {
 
     return Padding(
       padding: const EdgeInsets.only(right: 10.0),
-      child: Text(widget.showArchivedChats ? "Archive" : widget.showUnknownSenders ? "Unknown Senders" : "Messages", style: style),
+      child: Text(
+          widget.showArchivedChats
+              ? "Archive"
+              : widget.showUnknownSenders
+                  ? "Unknown Senders"
+                  : "Messages",
+          style: style),
     );
   }
 
   Widget getSyncIndicatorWidget() {
     return Obx(() {
       if (!SettingsManager().settings.showSyncIndicator.value) return SizedBox.shrink();
-      if (!SetupBloc().isSyncing.value) return Container();
-      return buildProgressIndicator(context, size: 10);
+      if (!SetupBloc().isIncrementalSyncing.value) return Container();
+      return buildProgressIndicator(context, size: 12);
     });
   }
 
   void openNewChatCreator({List<PlatformFile>? existing}) async {
+    EventDispatcher().emit("update-highlight", null);
     CustomNavigator.pushAndRemoveUntil(
       context,
       ConversationView(
@@ -148,6 +103,42 @@ class ConversationListState extends State<ConversationList> {
       ),
       (route) => route.isFirst,
     );
+  }
+
+  void openCamera() async {
+    bool camera = await Permission.camera.isGranted;
+    if (!camera) {
+      bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
+      if (!granted) {
+        showSnackbar(
+            "Error",
+            "Camera was denied"
+        );
+        return;
+      }
+    }
+
+    String appDocPath = SettingsManager().appDocDir.path;
+    String ext = ".png";
+    File file = File("$appDocPath/attachments/" + randomString(16) + ext);
+    await file.create(recursive: true);
+
+    // Take the picture after opening the camera
+    await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+
+    // If we don't get data back, return outta here
+    if (!file.existsSync()) return;
+    if (file.statSync().size == 0) {
+      file.deleteSync();
+      return;
+    }
+
+    openNewChatCreator(existing: [PlatformFile(
+      name: file.path.split("/").last,
+      path: file.path,
+      bytes: file.readAsBytesSync(),
+      size: file.lengthSync(),
+    )]);
   }
 
   Widget buildSettingsButton() => !widget.showArchivedChats && !widget.showUnknownSenders
@@ -199,9 +190,12 @@ class ConversationListState extends State<ConversationList> {
                           await SettingsManager().resetConnection();
                           SettingsManager().settings.finishedSetup.value = false;
                           Get.offAll(() => WillPopScope(
-                            onWillPop: () async => false,
-                            child: SetupView(),
-                          ), duration: Duration.zero, transition: Transition.noTransition);
+                              onWillPop: () async => false,
+                              child: TitleBarWrapper(child: SetupView()),
+                            ),
+                            duration: Duration.zero,
+                            transition: Transition.noTransition
+                          );
                           SettingsManager().settings = Settings();
                           SettingsManager().settings.save();
                           SettingsManager().fcmData = null;
@@ -261,7 +255,12 @@ class ConversationListState extends State<ConversationList> {
                 )
             ];
           },
-          child: ThemeSwitcher(
+          icon: SettingsManager().settings.skin.value == Skins.Material ? Icon(
+            Icons.more_vert,
+            color: context.textTheme.bodyText1!.color,
+            size: 25,
+          ) : null,
+          child: SettingsManager().settings.skin.value == Skins.Material ? null : ThemeSwitcher(
             iOSSkin: Container(
               width: 20,
               height: 20,
@@ -275,11 +274,7 @@ class ConversationListState extends State<ConversationList> {
                 size: 15,
               ),
             ),
-            materialSkin: Icon(
-              Icons.more_vert,
-              color: context.textTheme.bodyText1!.color,
-              size: 25,
-            ),
+            materialSkin: Container(),
             samsungSkin: Icon(
               Icons.more_vert,
               color: context.textTheme.bodyText1!.color,
@@ -289,11 +284,11 @@ class ConversationListState extends State<ConversationList> {
         )
       : Container();
 
-  Column buildFloatingActionButton() {
-    return Column(
+  Widget buildFloatingActionButton() {
+    return Obx(() => Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        if (SettingsManager().settings.cameraFAB.value)
+        if (SettingsManager().settings.cameraFAB.value && SettingsManager().settings.skin.value != Skins.Material)
           ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: 45,
@@ -304,41 +299,7 @@ class ConversationListState extends State<ConversationList> {
                   SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
                 size: 20,
               ),
-              onPressed: () async {
-                bool camera = await Permission.camera.isGranted;
-                if (!camera) {
-                  bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
-                  if (!granted) {
-                    showSnackbar(
-                        "Error",
-                        "Camera was denied"
-                    );
-                    return;
-                  }
-                }
-
-                String appDocPath = SettingsManager().appDocDir.path;
-                String ext = ".png";
-                File file = File("$appDocPath/attachments/" + randomString(16) + ext);
-                await file.create(recursive: true);
-
-                // Take the picture after opening the camera
-                await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
-
-                // If we don't get data back, return outta here
-                if (!file.existsSync()) return;
-                if (file.statSync().size == 0) {
-                  file.deleteSync();
-                  return;
-                }
-
-                openNewChatCreator(existing: [PlatformFile(
-                  name: file.path.split("/").last,
-                  path: file.path,
-                  bytes: file.readAsBytesSync(),
-                  size: file.lengthSync(),
-                )]);
-              },
+              onPressed: openCamera,
               heroTag: null,
             ),
           ),
@@ -351,14 +312,14 @@ class ConversationListState extends State<ConversationList> {
             child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
             onPressed: openNewChatCreator),
       ],
-    );
+    ));
   }
 
   Widget getConnectionIndicatorWidget() {
     if (!SettingsManager().settings.showConnectionIndicator.value) return Container();
 
     return Obx(() => Padding(
-      padding: const EdgeInsets.only(right: 10.0),
+          padding: EdgeInsets.only(right: SettingsManager().settings.skin.value != Skins.Material ? 10 : 0.0),
       child: getIndicatorIcon(SocketManager().state.value, size: 12),
     ));
   }

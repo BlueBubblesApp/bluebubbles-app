@@ -5,13 +5,12 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
@@ -20,18 +19,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../repository/models/chat.dart';
-import '../repository/models/handle.dart';
-
 class ChatBloc {
   static StreamSubscription<NewMessageEvent>? _messageSubscription;
 
   final RxList<Chat> _chats = <Chat>[].obs;
 
   RxList<Chat> get chats => _chats;
-  final RxInt _unreads = 0.obs;
-
-  RxInt get unreads => _unreads;
+  final RxInt unreads = 0.obs;
 
   final RxBool hasChats = false.obs;
   final RxBool loadedChatBatch = false.obs;
@@ -41,7 +35,7 @@ class ChatBloc {
   final Map<String, Size> cachedMessageBubbleSizes = {};
 
   void updateUnreads() {
-    _unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
+    unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
   }
 
   Completer<void>? chatRequest;
@@ -63,12 +57,18 @@ class ChatBloc {
 
   Future<Chat?> getChat(String? guid) async {
     if (guid == null) return null;
-    if (_chats.isEmpty) {
-      await refreshChats();
-    }
 
+    // Try to find the corresponding chat in the bloc and return it
     for (Chat? chat in _chats) {
       if (chat!.guid == guid) return chat;
+    }
+
+    // If we can't find one, let's check the database, then add to the bloc
+    Chat? chat = Chat.findOne(guid: guid);
+    if (chat != null) {
+      _chats.add(chat);
+      await ContactManager().getAvatarsForChat(chat);
+      return chat;
     }
 
     return null;
@@ -89,7 +89,11 @@ class ChatBloc {
     Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
 
     // Get the contacts in case we haven't
-    if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
+    if (ContactManager().contacts.isEmpty) {
+      if (kIsDesktop || kIsWeb) {
+        ContactManager().loadContacts().then((e) => ChatBloc().chats.refresh());
+      }
+    }
 
     _messageSubscription ??= setupMessageListener();
 
@@ -104,7 +108,7 @@ class ChatBloc {
     Logger.info('Performing ChatBloc resume request...', tag: 'ChatBloc-Resume');
 
     // Get the last message date
-    DateTime? lastMsgDate = await Message.lastMessageDate();
+    DateTime? lastMsgDate = Message.lastMessageDate();
 
     // If there is no last message, don't do anything
     if (!kIsWeb && lastMsgDate == null) {
@@ -154,7 +158,7 @@ class ChatBloc {
     if (!shouldUpdate) return;
 
     if (isNullOrEmpty(chat.title)!) {
-      await chat.getTitle();
+      chat.getTitle();
     }
 
     // If the current chat isn't found in the bloc, let's insert it at the correct position
@@ -175,7 +179,7 @@ class ChatBloc {
 
     for (int i = 0; i < _chats.length; i++) {
       if (isNullOrEmpty(_chats[i].participants)!) {
-        await _chats[i].getParticipants();
+        _chats[i].getParticipants();
       }
     }
 
@@ -189,7 +193,7 @@ class ChatBloc {
 
     // Mark them as unread
     for (Chat chat in unread) {
-      await chat.toggleHasUnread(false);
+      chat.toggleHasUnread(false);
 
       // Remove from notification shade
       MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
@@ -202,10 +206,15 @@ class ChatBloc {
   }
 
   Future<void> toggleChatUnread(Chat chat, bool isUnread, {bool clearNotifications = true}) async {
-    await chat.toggleHasUnread(isUnread);
+    chat.toggleHasUnread(isUnread);
 
     // Remove from notification shade
-    if (clearNotifications) MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    if (clearNotifications && !isUnread) {
+      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+      if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
+        SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+      }
+    }
 
     updateChatPosition(chat);
   }
@@ -223,20 +232,27 @@ class ChatBloc {
   Future<void> updateShareTarget(Chat chat) async {
     Uint8List? icon;
     Contact? contact =
-        chat.participants.length == 1 ? ContactManager().getCachedContact(handle: chat.participants.first) : null;
+        chat.participants.length == 1 ? ContactManager().getContact(chat.participants.first.address) : null;
     try {
       // If there is a contact specified, we can use it's avatar
       if (contact != null && contact.avatar.value != null && contact.avatar.value!.isNotEmpty) {
         icon = contact.avatar.value;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
-        // If [defaultAvatar] is not loaded, load it from assets
-        if (NotificationManager().defaultAvatar == null) {
-          ByteData file = await loadAsset("assets/images/person64.png");
-          NotificationManager().defaultAvatar = file.buffer.asUint8List();
+        if (contact != null && (contact.avatar.value?.isEmpty ?? true)) {
+          await ContactManager().loadContactAvatar(contact);
+          icon = contact.avatar.value;
         }
 
-        icon = NotificationManager().defaultAvatar;
+        if (icon == null) {
+          // If [defaultAvatar] is not loaded, load it from assets
+          if (NotificationManager().defaultAvatar == null) {
+            ByteData file = await loadAsset("assets/images/person64.png");
+            NotificationManager().defaultAvatar = file.buffer.asUint8List();
+          }
+
+          icon = NotificationManager().defaultAvatar;
+        }
       }
     } catch (ex) {
       Logger.error("Failed to load contact avatar: ${ex.toString()}");
@@ -244,7 +260,7 @@ class ChatBloc {
 
     // If we don't have a title, try to get it
     if (isNullOrEmpty(chat.title)!) {
-      await chat.getTitle();
+      chat.getTitle();
     }
 
     // If we still don't have a title, bye felicia
@@ -268,7 +284,7 @@ class ChatBloc {
       Chat updatedChat = event.event["chat"];
 
       // Update the tile values for the chat (basically just the title)
-      await initTileValsForChat(updatedChat);
+      initTileValsForChat(updatedChat);
 
       // Insert/move the chat to the correct position
       await updateChatPosition(updatedChat);
@@ -280,8 +296,8 @@ class ChatBloc {
     return NewMessageManager().stream.listen(handleMessageAction);
   }
 
-  Future<void> getChatBatches({int batchSize = 15}) async {
-    int count = (await Chat.count()) ?? (await api.chatCount()).data['data']['total'];
+  Future<void> getChatBatches({int batchSize = 15, bool headless = false}) async {
+    int count = Chat.count() ?? (await api.chatCount()).data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
     } else {
@@ -291,7 +307,11 @@ class ChatBloc {
     // Reset chat lists
     List<Chat> newChats = [];
 
-    int batches = count == 0 ? 1 : (count < batchSize) ? batchSize : (count / batchSize).ceil();
+    int batches = count == 0
+        ? 1
+        : (count < batchSize)
+            ? batchSize
+            : (count / batchSize).ceil();
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = [];
       if (kIsWeb) {
@@ -300,27 +320,35 @@ class ChatBloc {
         chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       }
       if (chats.isEmpty) break;
-      await ContactManager().matchHandles();
       for (Chat chat in chats) {
         newChats.add(chat);
-        await initTileValsForChat(chat);
+        initTileValsForChat(chat);
         if (isNullOrEmpty(chat.participants)!) {
-          await chat.getParticipants();
+          chat.getParticipants();
         }
+
+        // Set the fake participants when we load the chats
+        chat.fakeParticipants = chat.participants.map((e) => ContactManager().getContact(e.address)).toList();
+
+        // Fetch the avatars for the chat so they load in first.
+        await ContactManager().getAvatarsForChat(chat);
+
         if (kIsWeb) {
           for (Handle element in chat.participants) {
             if (cachedHandles.firstWhereOrNull((e) => e.address == element.address) == null) {
               cachedHandles.add(element);
             }
           }
-          final Message m = await chat.latestMessageFuture;
-          if (m.hasAttachments) {
-            m.fetchAttachments();
-          }
-          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) chat.latestMessage!.handle = await Handle.findOne({"originalROWID": chat.latestMessage!.handleId});
-          chat.latestMessageText = MessageHelper.getNotificationTextSync(m);
+
+          Message? lastMessage = chat.latestMessageGetter;
+          chat.latestMessageText = lastMessage == null ? '' : MessageHelper.getNotificationText(lastMessage);
           chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
-          chat.latestMessageDate = m.dateCreated;
+          chat.latestMessageDate = lastMessage == null ? DateTime.fromMillisecondsSinceEpoch(0) : lastMessage.dateCreated;
+          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) {
+            chat.latestMessage!.handle = kIsWeb
+                ? Handle.findOne(originalROWID: chat.latestMessage!.handleId)
+                : Handle.findOne(id: chat.latestMessage!.handleId);
+          }
         }
       }
 
@@ -346,55 +374,56 @@ class ChatBloc {
 
   /// Get the values for the chat, specifically the title
   /// @param chat to initialize
-  Future<void> initTileValsForChat(Chat chat) async {
+  void initTileValsForChat(Chat chat) {
     if (chat.title == null) {
-      await chat.getTitle();
+      chat.getTitle();
     }
-    AttachmentInfoBloc().initChat(chat);
+    ChatManager().createChatController(chat);
   }
 
-  void archiveChat(Chat chat) async {
+  void archiveChat(Chat chat) {
     _chats.firstWhere((element) => element.guid == chat.guid).isArchived = true;
-    await chat.toggleArchived(true);
+    chat.toggleArchived(true);
     initTileValsForChat(chat);
   }
 
-  void unArchiveChat(Chat chat) async {
+  void unArchiveChat(Chat chat) {
     _chats.firstWhere((element) => element.guid == chat.guid).isArchived = false;
-    await chat.toggleArchived(false);
+    chat.toggleArchived(false);
     initTileValsForChat(chat);
   }
 
-  void removePinIndices() async {
+  void removePinIndices() {
     _chats.bigPinHelper(true).forEach((element) {
-      element.pinIndex.value = null;
-      element.save();
+      element.pinIndex = null;
+      element.save(updatePinIndex: true);
     });
     _chats.sort(Chat.sort);
   }
 
-  void updateChatPinIndex(int oldIndex, int newIndex) async {
-    final item = _chats.bigPinHelper(true)[oldIndex];
-    if (newIndex > oldIndex) {
-      newIndex = newIndex - 1;
-      _chats
-          .bigPinHelper(true)
-          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! <= newIndex)
-          .forEach((element) {
-        element.pinIndex.value = element.pinIndex.value! - 1;
-      });
-      item.pinIndex.value = newIndex;
-    } else {
-      _chats
-          .bigPinHelper(true)
-          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! >= newIndex)
-          .forEach((element) {
-        element.pinIndex.value = element.pinIndex.value! + 1;
-      });
-      item.pinIndex.value = newIndex;
+  void updateChatPinIndex(int oldIndex, int newIndex) {
+    final items = _chats.bigPinHelper(true);
+    final item = items[oldIndex];
+
+    // Remove the item at the old index, and re-add it at the newIndex
+    // We dynamically subtract 1 from the new index depending on if the newIndex is > the oldIndex
+    items.removeAt(oldIndex);
+    items.insert(newIndex + (oldIndex < newIndex ? -1 : 0), item);
+
+    // Create a map of each chat that needs to move to what pinIndex
+    Map<String, int> newIndexes = {item.guid: newIndex};
+    for (int i = 0; i < items.length; i++) {
+      newIndexes[items[i].guid] = i;
     }
+
+    // Move the pinIndex for each of the chats, and save the pinIndex in the DB
+    items.where((p0) => newIndexes.containsKey(p0.guid)).forEach((element) {
+      element.pinIndex = newIndexes[element.guid];
+      element.save(updatePinIndex: true);
+    });
+
+    // Sort the chats again to make sure everything is in order for the chat list
     _chats.sort(Chat.sort);
-    await item.save();
   }
 
   void deleteChat(Chat chat) async {
@@ -405,9 +434,7 @@ class ChatBloc {
     if (map.containsKey(chat.guid)) {
       map.remove(chat.guid);
     }
-    if (chat.guid != null) {
-      map[chat.guid!] = chatMap;
-    }
+    map[chat.guid] = chatMap;
   }
 
   void updateChat(Chat chat) async {
@@ -417,32 +444,32 @@ class ChatBloc {
       Chat _chat = _chats[i];
       if (_chat.guid == chat.guid) {
         _chats[i] = chat;
-        await initTileValsForChat(chats[i]);
+        initTileValsForChat(chats[i]);
       }
     }
     for (int i = 0; i < _chats.length; i++) {
       if (isNullOrEmpty(_chats[i].participants)!) {
-        await _chats[i].getParticipants();
+        _chats[i].getParticipants();
       }
     }
     _chats.sort(Chat.sort);
   }
 
-  addChat(Chat chat) async {
+  addChat(Chat chat) {
     // Create the chat in the database
-    await chat.save();
+    chat.save();
     refreshChats();
   }
 
-  addParticipant(Chat chat, Handle participant) async {
+  addParticipant(Chat chat, Handle participant) {
     // Add the participant to the chat
-    await chat.addParticipant(participant);
+    chat.addParticipant(participant);
     refreshChats();
   }
 
-  removeParticipant(Chat chat, Handle participant) async {
+  removeParticipant(Chat chat, Handle participant) {
     // Add the participant to the chat
-    await chat.removeParticipant(participant);
+    chat.removeParticipant(participant);
     chat.participants.remove(participant);
     refreshChats();
   }
@@ -466,13 +493,9 @@ extension Helpers on RxList<Chat> {
 
   RxList<Chat> bigPinHelper(bool pinned) {
     if (pinned) {
-      return where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true)
-          .toList()
-          .obs;
+      return where((e) => e.isPinned ?? false).toList().obs;
     } else {
-      return where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
-          .toList()
-          .obs;
+      return where((e) => !(e.isPinned ?? false)).toList().obs;
     }
   }
 
@@ -480,13 +503,13 @@ extension Helpers on RxList<Chat> {
     if (!SettingsManager().settings.filterUnknownSenders.value) return this;
     if (unknown) {
       return where(
-              (e) => e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] == null)
+              (e) => e.participants.length == 1 && ContactManager().getContact(e.participants[0].address) == null)
           .toList()
           .obs;
     } else {
       return where((e) =>
               e.participants.length > 1 ||
-              (e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] != null))
+              (e.participants.length == 1 && ContactManager().getContact(e.participants[0].address) != null))
           .toList()
           .obs;
     }

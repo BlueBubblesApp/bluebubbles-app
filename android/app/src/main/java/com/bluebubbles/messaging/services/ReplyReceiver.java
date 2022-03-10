@@ -1,6 +1,7 @@
 package com.bluebubbles.messaging.services;
 
 import android.app.Notification;
+import android.app.Person;
 import android.app.NotificationManager;
 import android.app.RemoteInput;
 import android.content.BroadcastReceiver;
@@ -12,6 +13,7 @@ import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.bluebubbles.messaging.workers.NotificationWorker;
@@ -53,8 +55,19 @@ public class ReplyReceiver extends BroadcastReceiver {
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
             for (StatusBarNotification notification : notificationManager.getActiveNotifications()) {
                 if (NewMessageNotification.notificationTag.equals(notification.getTag()) && notification.getId() == existingId) {
-                    Notification.Builder builder = Notification.Builder.recoverBuilder(context, notification.getNotification());
-                    Notification.MessagingStyle style = (Notification.MessagingStyle) builder.getStyle();
+                    Notification.MessagingStyle style;
+                    Notification.Builder builder;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        builder = Notification.Builder.recoverBuilder(context, notification.getNotification());
+                        style = (Notification.MessagingStyle) builder.getStyle();
+                    } else {
+                        Notification notif = notification.getNotification();
+                        // get the builder from the original notification
+                        builder = Notification.Builder.recoverBuilder(context, notif);
+                        // get the compat messagingstyle from the original notification
+                        NotificationCompat.MessagingStyle temp = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notif);
+                        style = new Notification.MessagingStyle(temp.getUser().getName());
+                    }
                     style.addMessage(new Notification.MessagingStyle.Message(replyText, System.currentTimeMillis() / 1000, "You"));
                     builder.setStyle(style);
                     builder.setOnlyAlertOnce(true);
