@@ -51,7 +51,7 @@ import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path/path.dart' show join;
+import 'package:path/path.dart' show basename, dirname, join;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -163,6 +163,21 @@ Future<Null> initApp(bool isBubble) async {
   WidgetsFlutterBinding.ensureInitialized();
   dynamic exception;
   StackTrace? stacktrace;
+  if (Platform.isWindows) {
+    Directory appData = await getApplicationSupportDirectory();
+    // Migrate to new appdata location if this function returns the new place and we still have the old place
+    if (basename(dirname(appData.absolute.path)) == "com.bluebubbles.app") {
+      Directory oldAppData =
+          Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app"));
+      if (oldAppData.existsSync()) {
+        Logger.info("Copying appData to new directory");
+        copyDirectory(oldAppData, appData);
+        Logger.info("Deleting old appData directory");
+        Directory(dirname(oldAppData.absolute.path)).deleteSync(recursive: true);
+        Logger.info("Finished migrating appData");
+      }
+    }
+  }
   try {
     prefs = await SharedPreferences.getInstance();
     if (!kIsWeb) {
@@ -187,20 +202,18 @@ Future<Null> initApp(bool isBubble) async {
                 Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
               }
               store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
-            } catch (_) {
+            } catch (e, s) {
+              Logger.error(e);
+              Logger.error(s);
               if (Platform.isWindows) {
-                if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
-                  Logger.info("Failed to open store from default path. Using custom path");
-                  customStorePath ??= "C:\\bluebubbles_app";
-                  prefs.setBool("use-custom-path", true);
-                  objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-                  Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-                  store = await openStore(directory: join(customStorePath, 'objectbox'));
-                } else {
-                  Logger.info("Objectbox directory exists.");
-                }
+                Logger.info("Failed to open store from default path. Using custom path");
+                customStorePath ??= "C:\\bluebubbles_app";
+                prefs.setBool("use-custom-path", true);
+                objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+                objectBoxDirectory.createSync(recursive: true);
+                Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
+                store = await openStore(directory: join(customStorePath, 'objectbox'));
               }
-
               // TODO Linux fallback
             }
           }
@@ -219,18 +232,17 @@ Future<Null> initApp(bool isBubble) async {
             }
             Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
             store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
-          } catch (_) {
+          } catch (e, s) {
+            Logger.error(e);
+            Logger.error(s);
             if (Platform.isWindows) {
-              if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
-                Logger.info("Failed to open store from default path. Using custom path");
-                customStorePath ??= "C:\\bluebubbles_app";
-                prefs.setBool("use-custom-path", true);
-                objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-                Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-                store = await openStore(directory: join(customStorePath, 'objectbox'));
-              } else {
-                Logger.info("Objectbox directory exists.");
-              }
+              Logger.info("Failed to open store from default path. Using custom path");
+              customStorePath ??= "C:\\bluebubbles_app";
+              prefs.setBool("use-custom-path", true);
+              objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+              objectBoxDirectory.createSync(recursive: true);
+              Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
+              store = await openStore(directory: join(customStorePath, 'objectbox'));
             }
             // TODO Linux fallback
           }
@@ -876,3 +888,14 @@ Future<void> initSystemTray() async {
     }
   });
 }
+
+void copyDirectory(Directory source, Directory destination) => source.listSync(recursive: false).forEach((element) {
+      if (element is Directory) {
+        Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
+        newDirectory.createSync();
+
+        copyDirectory(element.absolute, newDirectory);
+      } else if (element is File) {
+        element.copySync(join(destination.path, basename(element.path)));
+      }
+    });

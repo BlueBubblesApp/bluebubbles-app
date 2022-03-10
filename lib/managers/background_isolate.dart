@@ -59,18 +59,14 @@ callbackHandler() async {
             store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
           } catch (_) {
             if (Platform.isWindows) {
-              if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
-                debugPrint("Failed to open store from default path. Using custom path");
-                customStorePath ??= "C:\\bluebubbles_app";
-                prefs.setBool("use-custom-path", true);
-                objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-                debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-                store = await openStore(directory: join(customStorePath, 'objectbox'));
-              } else {
-                debugPrint("Objectbox directory exists.");
-              }
+              debugPrint("Failed to open store from default path. Using custom path");
+              customStorePath ??= "C:\\bluebubbles_app";
+              prefs.setBool("use-custom-path", true);
+              objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+              objectBoxDirectory.createSync(recursive: true);
+              debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
+              store = await openStore(directory: join(customStorePath, 'objectbox'));
             }
-
             // TODO Linux fallback
           }
         }
@@ -91,18 +87,14 @@ callbackHandler() async {
           store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
         } catch (_) {
           if (Platform.isWindows) {
-            if (!Directory(join(documentsDirectory.path, 'objectbox')).existsSync()) {
-              debugPrint("Failed to open store from default path. Using custom path");
-              customStorePath ??= "C:\\bluebubbles_app";
-              prefs.setBool("use-custom-path", true);
-              objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-              debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-              store = await openStore(directory: join(customStorePath, 'objectbox'));
-            } else {
-              debugPrint("Objectbox directory exists.");
-            }
+            debugPrint("Failed to open store from default path. Using custom path");
+            customStorePath ??= "C:\\bluebubbles_app";
+            prefs.setBool("use-custom-path", true);
+            objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
+            objectBoxDirectory.createSync(recursive: true);
+            debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
+            store = await openStore(directory: join(customStorePath, 'objectbox'));
           }
-
           // TODO Linux fallback
         }
       }

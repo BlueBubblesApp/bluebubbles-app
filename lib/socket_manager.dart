@@ -11,6 +11,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -142,6 +143,11 @@ class SocketManager {
             Logger.error("Error performing incremental sync. Not saving last sync date.", tag: "IncrementalSync");
             Logger.error(err);
           });
+
+          if (kIsDesktop && ContactManager().contacts.isEmpty) {
+            // Get contacts whenever we connect if we didn't yet
+            Future.delayed(Duration.zero, () async => await ContactManager().fetchContactsDesktop());
+          }
         }
 
         // Make sure we have the correct macOS version loaded so that we can show UI elements accurately
