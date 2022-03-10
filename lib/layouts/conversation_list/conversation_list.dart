@@ -284,8 +284,8 @@ class ConversationListState extends State<ConversationList> {
         )
       : Container();
 
-  Column buildFloatingActionButton() {
-    return Column(
+  Widget buildFloatingActionButton() {
+    return Obx(() => Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         if (SettingsManager().settings.cameraFAB.value && SettingsManager().settings.skin.value != Skins.Material)
@@ -312,7 +312,7 @@ class ConversationListState extends State<ConversationList> {
             child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
             onPressed: openNewChatCreator),
       ],
-    );
+    ));
   }
 
   Widget getConnectionIndicatorWidget() {
