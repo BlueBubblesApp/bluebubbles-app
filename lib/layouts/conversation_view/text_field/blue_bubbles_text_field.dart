@@ -686,7 +686,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                             Text(
                                               emojis[index].char,
                                               style:
-                                                  context.textTheme.subtitle1!.apply(fontFamily: "Apple Color Emoji"),
+                                                  context.textTheme.subtitle1!.apply(fontFamily: kIsDesktop && Platform.isMacOS ? null : "Apple Color Emoji"),
                                             ),
                                             SizedBox(width: 8),
                                             Text(
@@ -1219,7 +1219,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     ? Colors.black
                                     : Colors.white,
                                 fontSizeDelta: -0.25,
-                                fontFamily: kIsDesktop ? "Apple Color Emoji" : null,
+                                fontFamily: kIsDesktop && !Platform.isMacOS ? "Apple Color Emoji" : null,
                               ),
                           keyboardType: TextInputType.multiline,
                           maxLines: 14,
