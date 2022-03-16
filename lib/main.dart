@@ -140,8 +140,9 @@ Future<Null> bubble() async {
 
 //ignore: prefer_void_to_null
 Future<Null> initApp(bool isBubble) async {
+  WidgetsFlutterBinding.ensureInitialized();
   await Logger.init();
-  Logger.startup.value = true;
+  Logger.startup.value = false;
   Logger.info('Startup Logs');
   HttpOverrides.global = MyHttpOverrides();
   LifeCycleManager().isBubble = isBubble;
@@ -160,7 +161,6 @@ Future<Null> initApp(bool isBubble) async {
     }
   };
 
-  WidgetsFlutterBinding.ensureInitialized();
   dynamic exception;
   StackTrace? stacktrace;
   if (Platform.isWindows) {
@@ -201,7 +201,7 @@ Future<Null> initApp(bool isBubble) async {
               if (kIsDesktop) {
                 Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
               }
-              store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
+              store = await openStore(directory: join(documentsDirectory.path, 'objectbox'), macosApplicationGroup: "S6D73TBQQU.app");
             } catch (e, s) {
               Logger.error(e);
               Logger.error(s);
@@ -212,7 +212,7 @@ Future<Null> initApp(bool isBubble) async {
                 objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
                 objectBoxDirectory.createSync(recursive: true);
                 Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-                store = await openStore(directory: join(customStorePath, 'objectbox'));
+                store = await openStore(directory: join(customStorePath, 'objectbox'), macosApplicationGroup: "S6D73TBQQU.app");
               }
               // TODO Linux fallback
             }
@@ -224,14 +224,14 @@ Future<Null> initApp(bool isBubble) async {
             objectBoxDirectory.createSync(recursive: true);
           }
           Logger.info("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
-          store = await openStore(directory: join(customStorePath, "objectbox"));
+          store = await openStore(directory: join(customStorePath, "objectbox"), macosApplicationGroup: "S6D73TBQQU.app");
         } else {
           try {
             if (kIsDesktop) {
               Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
             }
             Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
-            store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
+            store = await openStore(directory: join(documentsDirectory.path, 'objectbox'), macosApplicationGroup: "S6D73TBQQU.app");
           } catch (e, s) {
             Logger.error(e);
             Logger.error(s);
@@ -242,7 +242,7 @@ Future<Null> initApp(bool isBubble) async {
               objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
               objectBoxDirectory.createSync(recursive: true);
               Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-              store = await openStore(directory: join(customStorePath, 'objectbox'));
+              store = await openStore(directory: join(customStorePath, 'objectbox'), macosApplicationGroup: "S6D73TBQQU.app");
             }
             // TODO Linux fallback
           }
@@ -351,6 +351,7 @@ Future<Null> initApp(bool isBubble) async {
       await FlutterLibphonenumber().init();
     }
     if (kIsDesktop) {
+      await WindowManager.instance.ensureInitialized();
       await WindowManager.instance.setTitle('BlueBubbles');
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() {
