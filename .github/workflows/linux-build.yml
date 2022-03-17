@@ -1,0 +1,40 @@
+# This workflow was built using the build instructions found at 
+# https://docs.bluebubbles.app/client/build-yourself-contribution-guide
+name: Linux Build
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      
+      - name: Install Flutter
+        uses: subosito/flutter-actions@v2
+        with:
+          channel: 'stable'
+      
+      - name: Comment Out Content Commit
+        run: |
+          # Find `onContentCommitted: onContentCommit,` in blue_bubbles_text_field.dart
+          # and insert `//` before it to comment it out.
+          sed -i "s|onContentCommitted: onContentCommit,.*|//&|g" ./lib/layouts/conversation_view/text_field/blue_bubbles_text_field.dart
+
+          # Find `final ValueChanged<CommittedContent>? onContentCommitted` in custom_cupertino_text_field.dart
+          # and insert `//` fefore it to comment it out.
+          sed -i "s|final ValueChanged<CommittedContent>? onContentCommitted.*|//&|g" ./lib/layouts/widgets/custom_cupertino_text_field.dart
+
+          # Find `void onContentCommit(CommittedContent content) async {` in blue_bubbles_text_field.dart
+          # and replace it with `void onContentCommit(dynamic content) async {`
+          sed -i "s|void onContentCommit(CommittedContent content) async {|void onContentCommit(dynamic content) async {|g" ./lib/layouts/conversation_view/text_field/blue_bubbles_text_field.dart
+
+      - name: Create .env File
+        run: touch ./.env
+
+      - name: Flutter Build
+        run: flutter build linux
