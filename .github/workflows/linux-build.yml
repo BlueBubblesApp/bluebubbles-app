@@ -19,19 +19,30 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Install Additional Build Deps
+      - name: Install Additional Required Packages
         run: |
           sudo apt update
-          sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev -y
+          sudo apt-get install -y clang \
+          cmake \
+          ninja-build \
+          pkg-config \
+          libgtk-3-dev \
+          liblzma-dev \
+          gir1.2-appindicator3-0.1 \
+          libappindicator3-1 \
+          libappindicator3-dev
       
-      - name: Comment Out Content Commit
+      - name: Comment Out ContentCommit issues
         run: |
-          # Find `onContentCommitted: onContentCommit,` in blue_bubbles_text_field.dart
-          # and insert `//` before it to comment it out.
-          sed -i "s|onContentCommitted: onContentCommit,.*|//&|g" ./lib/layouts/conversation_view/text_field/blue_bubbles_text_field.dart
+          # Find `onContentCommitted` in blue_bubbles_text_field.dart
+          # and insert `//` at the beginning of the line to comment it out.
+          sed -i -e 's|^.*onContentCommitted.*|// &|' ./lib/layouts/conversation_view/text_field/blue_bubbles_text_field.dart # FIXME - put // at beginning of line
+          # The same thing in custom_cupertino_text_field.dart
+          sed -i -e 's|^.*onContentCommitted.*|// &|' ./lib/layouts/widgets/custom_cupertino_text_field.dart # FIXME put // at beginning of line
+
 
           # Find `final ValueChanged<CommittedContent>? onContentCommitted` in custom_cupertino_text_field.dart
-          # and insert `//` fefore it to comment it out.
+          # and insert `//` before it to comment it out.
           sed -i "s|final ValueChanged<CommittedContent>? onContentCommitted.*|//&|g" ./lib/layouts/widgets/custom_cupertino_text_field.dart
 
           # Find `void onContentCommit(CommittedContent content) async {` in blue_bubbles_text_field.dart
@@ -41,7 +52,18 @@ jobs:
       - name: Create .env File
         run: touch ./.env
 
-      - name: Flutter Build
+      - name: Build
         run: |
           flutter config --enable-linux-desktop
           flutter build linux
+      
+      - name: Zip binaries
+        uses: papeloto/action-zip@v1
+        with:
+          files: build/linux/x64/release/bundle
+          dest: bluebubbles-linux-x64.zip
+          
+      - name: Upload Artifacts
+        uses: softprops/action-gh-release@v0.1.14
+        with: 
+          files: bluebubbles-linux-x64.zip
