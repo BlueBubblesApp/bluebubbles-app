@@ -20,7 +20,9 @@ jobs:
           channel: 'stable'
 
       - name: Install Additional Build Deps
-        run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+        run: |
+          sudo apt update
+          sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev -y
       
       - name: Comment Out Content Commit
         run: |
