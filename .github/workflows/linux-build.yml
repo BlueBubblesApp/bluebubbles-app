@@ -30,7 +30,8 @@ jobs:
           liblzma-dev \
           gir1.2-appindicator3-0.1 \
           libappindicator3-1 \
-          libappindicator3-dev
+          libappindicator3-dev \
+          libnotify-dev
       
       - name: Comment Out ContentCommit issues
         run: |
