@@ -37,4 +37,6 @@ jobs:
         run: touch ./.env
 
       - name: Flutter Build
-        run: flutter build linux
+        run: |
+          flutter config --enable-linux-desktop
+          flutter build linux
