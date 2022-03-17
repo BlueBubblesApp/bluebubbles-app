@@ -63,6 +63,7 @@ jobs:
         with:
           files: build/linux/x64/release/bundle
           dest: bluebubbles-linux-x64.zip
+          recursive: false
           
       - name: Upload Artifacts
         uses: softprops/action-gh-release@v0.1.14
