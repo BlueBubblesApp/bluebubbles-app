@@ -125,7 +125,7 @@ dependencies:
   printing: ^5.6.5
   shimmer: ^2.0.0
   # pinned to 2.0.2 because chewie is on provider 5.0.0
-  giphy_get: ^3.0.4
+  giphy_get: ^3.0.5
   flutter_dotenv: ^5.0.2
   image: ^3.1.0
   launch_at_startup: ^0.1.1
