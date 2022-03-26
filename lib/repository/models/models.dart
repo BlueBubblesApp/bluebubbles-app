@@ -29,7 +29,7 @@ export 'package:bluebubbles/repository/models/io/theme_entry.dart'
 export 'package:bluebubbles/repository/models/io/theme_object.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/theme_object.dart';
 export 'package:bluebubbles/repository/models/io/giphy.dart'
-  if (dart.library.html) 'package:bluebubbles/repository/models/html/giphy.dart';
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/giphy.dart';
 export 'package:bluebubbles/repository/models/platform_file.dart';
 
 class Contact {
@@ -57,6 +57,22 @@ class Contact {
   final Rxn<Uint8List> avatar = Rxn<Uint8List>();
   final Rxn<Uint8List> avatarHiRes = Rxn<Uint8List>();
 
+  bool get hasAvatar {
+    bool hasNormal = avatar.value != null && avatar.value!.isNotEmpty;
+    bool hasHiRes = avatarHiRes.value != null && avatarHiRes.value!.isNotEmpty;
+    return hasNormal || hasHiRes;
+  }
+
+  Uint8List? getAvatar({prioritizeHiRes = false}) {
+    if (!hasAvatar) return null;
+
+    if (prioritizeHiRes) {
+      return avatarHiRes.value ?? avatar.value;
+    } else {
+      return avatar.value ?? avatarHiRes.value;
+    }
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -77,13 +93,12 @@ class Contact {
       map['emails'] = map['emails'].map((e) => e['value'] ?? "").toList();
     }
     return Contact(
-      id: (map['id'] ?? map['identifier']) as String,
-      displayName: map['displayName'] as String,
-      phones: map['phones'].cast<String>(),
-      emails: map['emails'].cast<String>(),
-      fakeName: map['fakeName'],
-      fakeAddress: map['fakeAddress']
-    );
+        id: (map['id'] ?? map['identifier']) as String,
+        displayName: map['displayName'] as String,
+        phones: map['phones'].cast<String>(),
+        emails: map['emails'].cast<String>(),
+        fakeName: map['fakeName'],
+        fakeAddress: map['fakeAddress']);
   }
 }
 
