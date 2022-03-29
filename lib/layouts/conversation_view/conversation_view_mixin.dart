@@ -424,14 +424,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
         leading: Padding(
           padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-          // child: buildBackButton(context, callback: () {
-          //   if (LifeCycleManager().isBubble) {
-          //     SystemNavigator.pop();
-          //     return false;
-          //   }
-          //   EventDispatcher().emit("update-highlight", null);
-          //   return true;
-          // }),
+          child: buildBackButton(context, callback: () {
+            if (LifeCycleManager().isBubble) {
+              SystemNavigator.pop();
+              return false;
+            }
+            EventDispatcher().emit("update-highlight", null);
+            return true;
+          }),
         ),
         automaticallyImplyLeading: false,
         backgroundColor: backgroundColor,
