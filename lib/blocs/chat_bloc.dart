@@ -211,7 +211,9 @@ class ChatBloc {
     // Remove from notification shade
     if (clearNotifications && !isUnread) {
       MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
-      if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
+      if (SettingsManager().settings.enablePrivateAPI.value &&
+          SettingsManager().settings.privateMarkChatAsRead.value &&
+          chat.autoSendReadReceipts!) {
         SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
       }
     }
@@ -234,25 +236,22 @@ class ChatBloc {
     Contact? contact =
         chat.participants.length == 1 ? ContactManager().getContact(chat.participants.first.address) : null;
     try {
-      // If there is a contact specified, we can use it's avatar
-      if (contact != null && contact.avatar.value != null && contact.avatar.value!.isNotEmpty) {
-        icon = contact.avatar.value;
-        // Otherwise if there isn't, we use the [defaultAvatar]
-      } else {
-        if (contact != null && (contact.avatar.value?.isEmpty ?? true)) {
+      if (contact != null) {
+        if (!contact.hasAvatar) {
           await ContactManager().loadContactAvatar(contact);
-          icon = contact.avatar.value;
         }
 
-        if (icon == null) {
-          // If [defaultAvatar] is not loaded, load it from assets
-          if (NotificationManager().defaultAvatar == null) {
-            ByteData file = await loadAsset("assets/images/person64.png");
-            NotificationManager().defaultAvatar = file.buffer.asUint8List();
-          }
+        icon = contact.getAvatar(prioritizeHiRes: true);
+      }
 
-          icon = NotificationManager().defaultAvatar;
+      if (icon == null) {
+        // If [defaultAvatar] is not loaded, load it from assets
+        if (NotificationManager().defaultAvatar == null) {
+          ByteData file = await loadAsset("assets/images/person64.png");
+          NotificationManager().defaultAvatar = file.buffer.asUint8List();
         }
+
+        icon = NotificationManager().defaultAvatar;
       }
     } catch (ex) {
       Logger.error("Failed to load contact avatar: ${ex.toString()}");
@@ -343,7 +342,8 @@ class ChatBloc {
           Message? lastMessage = chat.latestMessageGetter;
           chat.latestMessageText = lastMessage == null ? '' : MessageHelper.getNotificationText(lastMessage);
           chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
-          chat.latestMessageDate = lastMessage == null ? DateTime.fromMillisecondsSinceEpoch(0) : lastMessage.dateCreated;
+          chat.latestMessageDate =
+              lastMessage == null ? DateTime.fromMillisecondsSinceEpoch(0) : lastMessage.dateCreated;
           if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) {
             chat.latestMessage!.handle = kIsWeb
                 ? Handle.findOne(originalROWID: chat.latestMessage!.handleId)
@@ -502,16 +502,13 @@ extension Helpers on RxList<Chat> {
   RxList<Chat> unknownSendersHelper(bool unknown) {
     if (!SettingsManager().settings.filterUnknownSenders.value) return this;
     if (unknown) {
-      return where(
-              (e) => e.participants.length == 1 && ContactManager().getContact(e.participants[0].address) == null)
+      return where((e) => e.participants.length == 1 && ContactManager().getContact(e.participants[0].address) == null)
           .toList()
           .obs;
     } else {
       return where((e) =>
-              e.participants.length > 1 ||
-              (e.participants.length == 1 && ContactManager().getContact(e.participants[0].address) != null))
-          .toList()
-          .obs;
+          e.participants.length > 1 ||
+          (e.participants.length == 1 && ContactManager().getContact(e.participants[0].address) != null)).toList().obs;
     }
   }
 }
