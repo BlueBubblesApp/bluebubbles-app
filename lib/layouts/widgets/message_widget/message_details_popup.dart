@@ -175,6 +175,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: TitleBarWrapper(
         child: Scaffold(

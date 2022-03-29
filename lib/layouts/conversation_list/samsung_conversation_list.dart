@@ -218,6 +218,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
         systemNavigationBarIconBrightness:
         context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Obx(() => buildForDevice()),
     );

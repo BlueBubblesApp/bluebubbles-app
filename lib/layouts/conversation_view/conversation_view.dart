@@ -673,6 +673,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Theme(
         data: Theme.of(context)

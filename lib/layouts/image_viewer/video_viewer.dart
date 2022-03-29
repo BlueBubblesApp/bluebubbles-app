@@ -499,6 +499,7 @@ class _VideoViewerState extends State<VideoViewer> {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,

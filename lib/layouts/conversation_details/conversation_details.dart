@@ -199,6 +199,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Theme(
         data: Theme.of(context).copyWith(primaryColor: chat.isTextForwarding ? Colors.green : Theme.of(context).primaryColor),

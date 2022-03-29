@@ -777,6 +777,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       systemNavigationBarIconBrightness:
           Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       statusBarColor: Colors.transparent, // status bar color
+      statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -787,6 +788,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Actions(
         actions: {
