@@ -442,6 +442,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 for (Attachment? element in widget.message.attachments) {
                   dynamic content = AttachmentHelper.getContent(element!);
                   if (content is PlatformFile) {
+                    if (element.guid == widget.message.attachments.last?.guid) {
+                      popDetails();
+                    }
                     await AttachmentHelper.saveToGallery(content);
                   }
                 }
@@ -449,7 +452,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Logger.error(trace.toString());
                 showSnackbar("Download Error", ex.toString());
               }
-              popDetails();
             },
             child: ListTile(
               dense: !kIsDesktop && !kIsWeb,
