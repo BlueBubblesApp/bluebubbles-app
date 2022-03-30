@@ -759,11 +759,17 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   /// Just in case the theme doesn't change automatically
+  /// Workaround for adaptive_theme issue #32
   @override
   void didChangePlatformBrightness() {
     super.didChangePlatformBrightness();
     if (AdaptiveTheme.maybeOf(context)?.mode == AdaptiveThemeMode.system) {
-      setState(() {});
+      if (AdaptiveTheme.maybeOf(context)?.brightness == Brightness.light) {
+        AdaptiveTheme.maybeOf(context)?.setLight();
+      } else {
+        AdaptiveTheme.maybeOf(context)?.setDark();
+      }
+      AdaptiveTheme.maybeOf(context)?.setSystem();
     }
   }
 
