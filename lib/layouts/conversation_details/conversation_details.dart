@@ -825,6 +825,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                     TextButton(
                                       child: Text("Yes"),
                                       onPressed: () async {
+                                        Navigator.of(context).pop();
                                         if (mounted) {
                                           setState(() {
                                             isClearing = true;
