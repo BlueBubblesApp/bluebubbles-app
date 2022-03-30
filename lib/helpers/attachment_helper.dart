@@ -213,10 +213,6 @@ class AttachmentHelper {
       return showDeniedSnackbar(err: "BlueBubbles does not have the required permissions!");
     }
 
-    if (file.path == null) {
-      return showDeniedSnackbar();
-    }
-
     if (SettingsManager().settings.askWhereToSave.value && showAlert) {
       dynamic dir = Directory("/storage/emulated/0/");
       String? path = await FilesystemPicker.open(
@@ -228,19 +224,23 @@ class AttachmentHelper {
         folderIconColor: Theme.of(Get.context!).primaryColor,
       );
       if (path != null) {
-        final bytes = await File(file.path!).readAsBytes();
+        final bytes = file.bytes ?? await File(file.path!).readAsBytes();
         await File(join(path, file.name)).writeAsBytes(bytes);
       }
       return;
     }
 
     try {
-      await ImageGallerySaver.saveFile(file.path!);
+      if (file.path == null && file.bytes != null) {
+        await ImageGallerySaver.saveImage(file.bytes!, quality: 100, name: file.name);
+      } else {
+        await ImageGallerySaver.saveFile(file.path!);
+      }
       if (showAlert) showSnackbar('Success', 'Saved attachment to gallery!');
     } catch (_) {
       File toSave = File("/storage/emulated/0/Download/${file.name}");
       await toSave.create(recursive: true);
-      final bytes = await File(file.path!).readAsBytes();
+      final bytes = file.bytes ?? await File(file.path!).readAsBytes();
       await toSave.writeAsBytes(bytes);
       if (showAlert) showSnackbar('Success', 'Saved attachment to downloads folder!');
     }

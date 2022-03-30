@@ -85,15 +85,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
-  battery_optimization:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: master
-      resolved-ref: "8d193276320275d01e3cc8e9e328a465671154f0"
-      url: "https://github.com/ChangJoo-Park/battery_optimization"
-    source: git
-    version: "0.0.0"
   bitsdojo_window:
     dependency: "direct main"
     description:
@@ -467,6 +458,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.0.5-beta1"
+  disable_battery_optimization:
+    dependency: "direct main"
+    description:
+      name: disable_battery_optimization
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.1.0+1"
   dynamic_cached_fonts:
     dependency: "direct main"
     description:
@@ -852,7 +850,7 @@ packages:
       name: giphy_get
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.0.4"
+    version: "3.0.5"
   git:
     dependency: transitive
     description:

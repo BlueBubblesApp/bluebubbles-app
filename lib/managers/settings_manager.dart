@@ -13,6 +13,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_io/io.dart';
+import 'package:version/version.dart';
 
 /// [SettingsManager] is responsible for making the current settings accessible to other managers and for saving new settings
 ///
@@ -172,6 +173,7 @@ class SettingsManager {
     if (refresh) {
       var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
       final version = int.tryParse(res['data']['os_version'].split(".")[0]);
+      _serverVersion = res['data']?['server_version'];
       if (version != null) prefs.setInt("macos-version", version);
       return version;
     } else {
@@ -185,5 +187,11 @@ class SettingsManager {
       _serverVersion = res['data']?['server_version'];
     }
     return _serverVersion;
+  }
+
+  FutureOr<int?> getServerVersionCode() async {
+    final version = await getServerVersion();
+    Version code = Version.parse(version);
+    return code.major * 100 + code.minor * 21 + code.patch;
   }
 }
