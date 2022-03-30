@@ -1266,7 +1266,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   .headline2,
             ),
           ),
-          // leading: buildBackButton(context, iconSize: 20),
+          leading: buildBackButton(context, iconSize: 20),
           trailing: shouldShowAlert
               ? IconButton(
             icon: Icon(
