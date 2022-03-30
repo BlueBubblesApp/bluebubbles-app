@@ -155,8 +155,42 @@ class AttachmentHelper {
       );
       Logger.info(savePath);
       if (savePath != null) {
-        File(file.path!).copy(savePath);
-        return showSnackbar('Success', 'Saved attachment to $savePath!');
+        if (await File(savePath).exists()) {
+          await showDialog(
+            barrierDismissible: false,
+            context: Get.context!,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(
+                  "Confirm save",
+                  style: Theme.of(context).textTheme.bodyText1,
+                ),
+                content: Text("This file already exists.\nAre you sure you want to overwrite it?"),
+                backgroundColor: context.theme.colorScheme.secondary,
+                actions: <Widget>[
+                  TextButton(
+                    child: Text("Yes"),
+                    onPressed: () async {
+                      File(file.path!).copy(savePath);
+                      Navigator.of(context).pop();
+                      showSnackbar('Success', 'Saved attachment to $savePath!');
+                    },
+                  ),
+                  TextButton(
+                    child: Text("No"),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          File(file.path!).copy(savePath);
+          showSnackbar('Success', 'Saved attachment to $savePath!');
+        }
+        return;
       }
       return showSnackbar('Failed', 'You didn\'t select a file path!');
     }
