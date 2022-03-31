@@ -88,7 +88,7 @@ dependencies:
   universal_html: ^2.0.8 # cross-platform dart:html implementation
   file_picker: ^4.5.1
   firebase_dart: ^1.0.5
-  dio: ^4.0.5
+  dio: ^4.0.6
   flutter_dropzone: ^3.0.0
   transparent_pointer: ^1.0.0
   # used to allow for custom parameters when creating notification
