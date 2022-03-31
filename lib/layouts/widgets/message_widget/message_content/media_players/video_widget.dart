@@ -288,22 +288,39 @@ class VideoWidget extends StatelessWidget {
     ),
   );
 
-  Widget buildPreview(VideoWidgetController controller, BuildContext context) => GestureDetector(
-    onTap: () async {
-      await controller.initializeController();
-      controller.controller!.setVolume(controller.muted.value ? 0.0 : 1.0);
-      controller.controller!.play();
-    },
-    child: Stack(
-      children: [
-        Container(
+  Widget buildPreview(VideoWidgetController controller, BuildContext context) => Stack(
+    children: [
+      GestureDetector(
+        onTap: () async {
+          controller.navigated = true;
+          ChatController? currentChat = ChatManager().activeChat;
+          await Navigator.of(Get.context!).push(
+            ThemeSwitcher.buildPageRoute(
+              builder: (context) => AttachmentFullscreenViewer(
+                currentChat: currentChat,
+                attachment: attachment,
+                showInteractions: true,
+              ),
+            ),
+          );
+          controller.navigated = false;
+        },
+        child: Container(
           constraints: BoxConstraints(
             maxWidth: context.width / 2,
             maxHeight: context.height / 2,
           ),
           child: buildSwitcher(controller),
         ),
-        Container(
+      ),
+      GestureDetector(
+        onTap: () async {
+          await controller.initializeController();
+          controller.controller!.setVolume(controller.muted.value ? 0.0 : 1.0);
+          controller.controller!.play();
+          controller.showPlayPauseOverlay.value = false;
+        },
+        child: Container(
           height: 75,
           width: 75,
           decoration: BoxDecoration(
@@ -323,40 +340,40 @@ class VideoWidget extends StatelessWidget {
             ),
           ),
         ),
-        Positioned.fill(
-          child: Align(
-            alignment: Alignment.bottomRight,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
-              child: GestureDetector(
-                onTap: () {
-                  controller.muted.toggle();
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: HexColor('26262a').withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  padding: EdgeInsets.all(5),
-                  child: Obx(() => Icon(
-                    controller.muted.value
-                        ? SettingsManager().settings.skin.value == Skins.iOS
-                        ? CupertinoIcons.volume_mute
-                        : Icons.volume_mute
-                        : SettingsManager().settings.skin.value == Skins.iOS
-                        ? CupertinoIcons.volume_up
-                        : Icons.volume_up,
-                    color: Colors.white,
-                    size: 15,
-                  )),
+      ),
+      Positioned.fill(
+        child: Align(
+          alignment: Alignment.bottomRight,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
+            child: GestureDetector(
+              onTap: () {
+                controller.muted.toggle();
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: HexColor('26262a').withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(40),
                 ),
+                padding: EdgeInsets.all(5),
+                child: Obx(() => Icon(
+                  controller.muted.value
+                      ? SettingsManager().settings.skin.value == Skins.iOS
+                      ? CupertinoIcons.volume_mute
+                      : Icons.volume_mute
+                      : SettingsManager().settings.skin.value == Skins.iOS
+                      ? CupertinoIcons.volume_up
+                      : Icons.volume_up,
+                  color: Colors.white,
+                  size: 15,
+                )),
               ),
             ),
           ),
         ),
-      ],
-      alignment: Alignment.center,
-    ),
+      ),
+    ],
+    alignment: Alignment.center,
   );
 
   Widget buildSwitcher(VideoWidgetController controller) => AnimatedSwitcher(
