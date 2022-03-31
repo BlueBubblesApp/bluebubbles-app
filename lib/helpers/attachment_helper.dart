@@ -333,15 +333,21 @@ class AttachmentHelper {
     if (!kIsWeb) {
       File file = File(attachment.getPath());
       File jpgFile = File(attachment.getHeicToJpgPath());
+      File thumbnail = File(attachment.getPath() + ".thumbnail");
+      File jpgThumbnail = File(attachment.getHeicToJpgPath() + ".thumbnail");
 
       // If neither exist, don't do anything
       bool fExists = file.existsSync();
       bool cExists = jpgFile.existsSync();
+      bool tExists = thumbnail.existsSync();
+      bool tcExists = jpgThumbnail.existsSync();
       if (!fExists && !cExists) return;
 
       // Delete them if they exist
       if (fExists) file.deleteSync();
       if (cExists) jpgFile.deleteSync();
+      if (tExists) thumbnail.deleteSync();
+      if (tcExists) jpgThumbnail.deleteSync();
     }
 
     // Redownload the attachment
