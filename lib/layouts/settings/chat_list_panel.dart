@@ -97,6 +97,23 @@ class ChatListPanel extends StatelessWidget {
                           subtitle: "Replaces the colored connection indicator with icons to aid accessibility",
                           backgroundColor: tileColor,
                         )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.statusIndicatorsOnChats.value = val;
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.statusIndicatorsOnChats.value,
+                      title: "Message Status Indicators",
+                      subtitle: "Adds status indicators to the chat list for the sent / delivered / read status of your most recent message",
+                      backgroundColor: tileColor,
+                    )),
                   ],
                 ),
                 SettingsHeader(

@@ -323,7 +323,8 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                   ),
                                 );
                               }
-                              if (!widget.chat.isGroup() &&
+                              if (SettingsManager().settings.statusIndicatorsOnChats.value &&
+                                  !widget.chat.isGroup() &&
                                   shouldShow(widget.chat.latestMessageGetter, markers?.myLastMessage.value,
                                           markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value) !=
                                       Indicator.NONE) {
