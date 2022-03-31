@@ -22,6 +22,7 @@ import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -624,6 +625,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
     LifeCycleManager().opened(context);
+
+    // Listen to a refresh-all event in case the entire ap
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
+
+      if (event["type"] == 'refresh-all' && mounted) {
+        setState(() {});
+      }
+    });
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
