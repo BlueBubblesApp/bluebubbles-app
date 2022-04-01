@@ -74,13 +74,10 @@ dependencies:
   device_info_plus: ^3.2.0
   google_ml_kit: ^0.7.3 # mobile only
   faker: ^2.0.0
-  share_plus: ^3.0.4 # sharing files not supported on Windows & Linux, todo desktop
+  share_plus: ^3.0.4 # sharing files not yupported on Windows & Linux, todo desktop
   collection: ^1.15.0
   # for nullsafety
-  battery_optimization: # android only
-    git:
-      url: https://github.com/ChangJoo-Park/battery_optimization
-      ref: master
+  disable_battery_optimization: ^1.1.0+1
   secure_application: ^3.7.3 # no linux support
   local_auth: ^1.1.9 # mobile only
   crop_your_image: ^0.6.0+1
