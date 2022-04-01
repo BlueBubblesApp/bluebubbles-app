@@ -72,6 +72,7 @@ dependencies:
   faker: ^2.0.0
   share_plus: ^4.0.3 # sharing files not supported on Windows & Linux, todo desktop
   collection: ^1.16.0
+  # for nullsafety
   disable_battery_optimization: ^1.1.0+1
   secure_application: ^3.7.3 # no linux support
   local_auth: ^1.1.9 # mobile only
