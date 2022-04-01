@@ -87,8 +87,8 @@ class ImageWidgetController extends GetxController {
         tmpData = await File(file.path!).readAsBytes();
       }
 
-      if (tmpData == null || !ChatManager().hasActiveChat) return;
-      ChatManager().activeChat!.saveImageData(tmpData, attachment);
+      if (tmpData == null) return;
+      ChatManager().activeChat?.saveImageData(tmpData, attachment);
       if (!(attachment.mimeType?.endsWith("heic") ?? false) && !(attachment.mimeType?.endsWith("heif") ?? false)) {
         await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
       }

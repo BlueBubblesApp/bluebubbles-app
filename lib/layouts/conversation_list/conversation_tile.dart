@@ -12,6 +12,7 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_list/conversation_peek_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
@@ -502,10 +503,8 @@ class _Cupertino extends StatelessWidget {
               );
               parent.shouldPartialHighlight.value = false;
             },
-            onLongPress: () async {
-              HapticFeedback.mediumImpact();
-              await ChatBloc().toggleChatUnread(parent.widget.chat, !parent.widget.chat.hasUnreadMessage!);
-              if (parent.mounted) parent.update();
+            onLongPressStart: (details) async {
+              await peekChat(context, parent.widget.chat, details.globalPosition);
             },
             child: Stack(
               alignment: Alignment.centerLeft,

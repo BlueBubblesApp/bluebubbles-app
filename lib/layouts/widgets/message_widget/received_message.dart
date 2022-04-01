@@ -529,10 +529,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     bool showSender = SettingsManager().settings.alwaysShowAvatars.value ||
         isGroup ||
         widget.message.guid == "redacted-mode-demo" ||
-        widget.message.guid!.contains("theme-selector");
+        widget.message.guid!.contains("theme-selector") || widget.showHandle;
     if (widget.message.guid == "redacted-mode-demo" ||
         widget.message.guid!.contains("theme-selector") ||
-        (isGroup &&
+        ((isGroup || widget.showHandle) &&
             (!sameSender(widget.message, widget.olderMessage) ||
                 !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30)))) {
       messageColumn.add(
