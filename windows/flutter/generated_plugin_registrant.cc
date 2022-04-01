@@ -11,6 +11,7 @@
 #include <desktop_drop/desktop_drop_plugin.h>
 #include <maps_launcher/maps_launcher_plugin.h>
 #include <objectbox_flutter_libs/objectbox_flutter_libs_plugin.h>
+#include <permission_handler_windows/permission_handler_windows_plugin.h>
 #include <printing/printing_plugin.h>
 #include <quick_notify/quick_notify_plugin.h>
 #include <secure_application/secure_application_plugin.h>
@@ -29,6 +30,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("MapsLauncherPlugin"));
   ObjectboxFlutterLibsPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ObjectboxFlutterLibsPlugin"));
+  PermissionHandlerWindowsPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("PermissionHandlerWindowsPlugin"));
   PrintingPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("PrintingPlugin"));
   QuickNotifyPluginRegisterWithRegistrar(

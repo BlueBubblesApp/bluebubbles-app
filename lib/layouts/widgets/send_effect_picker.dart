@@ -80,6 +80,7 @@ void sendEffectAction(
                   systemNavigationBarIconBrightness:
                   Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
                   statusBarColor: Colors.transparent, // status bar color
+                  statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
                 ),
                 child: Scaffold(
                   backgroundColor: context.theme.backgroundColor.withOpacity(0.3),

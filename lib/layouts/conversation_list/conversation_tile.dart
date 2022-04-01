@@ -383,7 +383,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   Widget _buildDate() {
     MessageMarkers? markers = ChatManager().getChatController(widget.chat)?.messageMarkers;
-    return kIsWeb || markers == null
+    return Obx(() => !SettingsManager().settings.statusIndicatorsOnChats.value || kIsWeb || markers == null
         ? Text(buildDate(widget.chat.latestMessageDate),
             textAlign: TextAlign.right,
             style: Theme.of(context).textTheme.subtitle2!.copyWith(
@@ -422,7 +422,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                       ),
                   overflow: TextOverflow.clip);
             }),
-          );
+          ));
   }
 
   void onTap() {

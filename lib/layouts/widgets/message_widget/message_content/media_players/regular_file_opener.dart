@@ -8,6 +8,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -43,8 +44,41 @@ class RegularFileOpener extends StatelessWidget {
             );
             Logger.info(savePath);
             if (savePath != null) {
-              File(file.path!).copy(savePath);
-              return showSnackbar('Success', 'Saved attachment to $savePath!');
+              if (await File(savePath).exists()) {
+                await showDialog(
+                  barrierDismissible: false,
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text(
+                        "Confirm save",
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                      content: Text("This file already exists.\nAre you sure you want to overwrite it?"),
+                      backgroundColor: context.theme.colorScheme.secondary,
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text("Yes"),
+                          onPressed: () async {
+                            File(file.path!).copy(savePath);
+                            Navigator.of(context).pop();
+                            showSnackbar('Success', 'Saved attachment to $savePath!');
+                          },
+                        ),
+                        TextButton(
+                          child: Text("No"),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              } else {
+                File(file.path!).copy(savePath);
+                showSnackbar('Success', 'Saved attachment to $savePath!');
+              }
             }
             return;
           }

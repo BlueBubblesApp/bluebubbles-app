@@ -32,6 +32,7 @@ import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/api_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
@@ -79,6 +80,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   late double topMinimum;
   double? detailsMenuHeight;
   bool isBigSur = true;
+  bool supportsOriginalDownload = false;
 
   @override
   void initState() {
@@ -95,11 +97,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
     fetchReactions();
 
-    SettingsManager().getMacOSVersion().then((val) {
+    SettingsManager().getMacOSVersion().then((val) async {
+      final version = await SettingsManager().getServerVersionCode();
       if (mounted) {
         setState(() {
           isBigSur = (val ?? 0) >= 11;
           showTools = true;
+          supportsOriginalDownload = (version ?? 0) > 100;
         });
       }
     });
@@ -175,6 +179,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: TitleBarWrapper(
         child: Scaffold(
@@ -441,6 +446,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 for (Attachment? element in widget.message.attachments) {
                   dynamic content = AttachmentHelper.getContent(element!);
                   if (content is PlatformFile) {
+                    if (element.guid == widget.message.attachments.last?.guid) {
+                      popDetails();
+                    }
                     await AttachmentHelper.saveToGallery(content);
                   }
                 }
@@ -448,7 +456,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Logger.error(trace.toString());
                 showSnackbar("Download Error", ex.toString());
               }
-              popDetails();
             },
             child: ListTile(
               dense: !kIsDesktop && !kIsWeb,
@@ -535,6 +542,118 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.doc_on_clipboard
                     : Icons.content_copy,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if (showDownload
+          && supportsOriginalDownload
+          && widget.message.attachments.where((element) =>
+            (element?.uti?.contains("heic") ?? false)
+              || (element?.uti?.contains("heif") ?? false)
+              || (element?.uti?.contains("quicktime") ?? false)
+              || (element?.uti?.contains("coreaudio") ?? false)
+              || (element?.uti?.contains("tiff") ?? false)).isNotEmpty)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              final RxBool downloadingAttachments = true.obs;
+              final RxnDouble progress = RxnDouble();
+              final Rxn<Attachment> attachmentObs = Rxn<Attachment>();
+              final toDownload = widget.message.attachments.where((element) =>
+                (element?.uti?.contains("heic") ?? false)
+                  || (element?.uti?.contains("heif") ?? false)
+                  || (element?.uti?.contains("quicktime") ?? false)
+                  || (element?.uti?.contains("coreaudio") ?? false)
+                  || (element?.uti?.contains("tiff") ?? false));
+              final length = toDownload.length;
+              Get.defaultDialog(
+                backgroundColor: context.theme.colorScheme.secondary,
+                radius: 15.0,
+                barrierDismissible: false,
+                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                titlePadding: EdgeInsets.only(top: 15),
+                title: "Downloading attachment${length > 1 ? "s" : ""}...",
+                titleStyle: Theme.of(context).textTheme.headline1,
+                confirm: Obx(() => downloadingAttachments.value
+                    ? Container(height: 0, width: 0)
+                    : Container(
+                  margin: EdgeInsets.only(bottom: 10),
+                  child: TextButton(
+                    child: Text("CLOSE"),
+                    onPressed: () async {
+                      if (Get.isSnackbarOpen ?? false) {
+                        Get.close(1);
+                      }
+                      Get.back();
+                      popDetails();
+                    },
+                  ),
+                ),
+                ),
+                cancel: Container(height: 0, width: 0),
+                content: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 300),
+                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                    Obx(() => Text(
+                        '${progress.value != null && attachmentObs.value != null ? getSizeString(progress.value! * attachmentObs.value!.totalBytes! / 1000) : ""} / ${getSizeString(attachmentObs.value!.totalBytes!.toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)'),
+                    ),
+                    SizedBox(height: 10.0),
+                    Obx(
+                          () => ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: LinearProgressIndicator(
+                          backgroundColor: Colors.white,
+                          value: progress.value,
+                          minHeight: 5,
+                          valueColor:
+                          AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 15.0,
+                    ),
+                    Obx(() => Text(
+                      progress.value == 1 ? "Download Complete!" : "Downloading attachment ",
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                    ),),
+                  ]),
+                ),
+              );
+              try {
+                for (Attachment? element in toDownload) {
+                  attachmentObs.value = element;
+                  final response = await api.downloadAttachment(element!.guid!, original: true,
+                      onReceiveProgress: (count, total) => progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
+                  final file = PlatformFile(
+                    name: element.transferName!,
+                    path: kIsWeb ? null : element.getPath(),
+                    size: response.data.length,
+                    bytes: response.data,
+                  );
+                  bool lastAttachment = element.guid == toDownload.last?.guid;
+                  await AttachmentHelper.saveToGallery(file, showAlert: lastAttachment);
+                }
+                downloadingAttachments.value = false;
+              } catch (ex, trace) {
+                Logger.error(trace.toString());
+                showSnackbar("Download Error", ex.toString());
+              }
+            },
+            child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Download Original to Device",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.cloud_download
+                    : Icons.file_download,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),

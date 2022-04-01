@@ -19,7 +19,13 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' show join;
 import 'package:path_provider/path_provider.dart';
+import 'package:path_provider_android/path_provider_android.dart';
+import 'package:path_provider_linux/path_provider_linux.dart';
+import 'package:path_provider_windows/path_provider_windows.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_android/shared_preferences_android.dart';
+import 'package:shared_preferences_linux/shared_preferences_linux.dart';
+import 'package:shared_preferences_windows/shared_preferences_windows.dart';
 import 'package:universal_io/io.dart';
 
 abstract class BackgroundIsolateInterface {
@@ -34,6 +40,20 @@ callbackHandler() async {
   debugPrint("(ISOLATE) Starting up...");
   MethodChannel _backgroundChannel = MethodChannel("com.bluebubbles.messaging");
   WidgetsFlutterBinding.ensureInitialized();
+  // due to a flutter change we need to manually register plugins
+  // should be removeable in flutter 2.11
+  if (Platform.isAndroid) {
+    SharedPreferencesAndroid.registerWith();
+    PathProviderAndroid.registerWith();
+  } else if (kIsWeb) {
+    // do nothing
+  } else if (Platform.isLinux) {
+    SharedPreferencesLinux.registerWith();
+    PathProviderLinux.registerWith();
+  } else if (Platform.isWindows) {
+    SharedPreferencesWindows.registerWith();
+    PathProviderWindows.registerWith();
+  }
   prefs = await SharedPreferences.getInstance();
   if (!kIsWeb) {
     var documentsDirectory =

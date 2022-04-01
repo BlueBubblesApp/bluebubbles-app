@@ -360,9 +360,9 @@ class DBProvider {
         }
 
         // Remove all the join rows that do not have an associated message or attachment
-        for (int i in amjToRemove) {
-          amJoins.removeAt(i);
-        }
+        amjToRemove.forEachIndexed((index, element) {
+          amJoins.removeAt(element - index);
+        });
 
         Logger.info("Replaced old attachment & message IDs with new ObjectBox IDs", tag: "OB Migration");
         final attachments2 = attachmentBox.getAll();
