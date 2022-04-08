@@ -5,15 +5,15 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
-import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:simple_animations/stateless_animation/custom_animation.dart';
@@ -662,12 +662,6 @@ class _QRScanState extends State<QRScan> {
     // Get the FCM Client and make sure we have a valid response
     // If so, save. Proceed to sync page as long as we get 200 from the API.
     api.fcmClient().then((response) {
-      if (response.statusCode != 200) {
-        error = response.data["error"]["message"];
-        if (mounted) setState(() {});
-        return;
-      }
-
       Map<String, dynamic>? data = response.data["data"];
       if (!isNullOrEmpty(data)!) {
         FCMData newData = FCMData.fromMap(data!);
@@ -675,6 +669,13 @@ class _QRScanState extends State<QRScan> {
       }
 
       goToNextPage();
+    }).catchError((err) {
+      if (err is Response) {
+        error = err.data["error"]["message"];
+      } else {
+        error = err.toString();
+      }
+      if (mounted) setState(() {});
     });
   }
 }

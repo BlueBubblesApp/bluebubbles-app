@@ -5,8 +5,9 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 
 class TextInputURL extends StatefulWidget {
   TextInputURL({Key? key, required this.onConnect, required this.onClose}) : super(key: key);
@@ -56,12 +57,6 @@ class _TextInputURLState extends State<TextInputURL> {
     // If so, save. Let the parent widget know we've connected as long as
     // we get 200 from the API.
     api.fcmClient().then((response) {
-      if (response.statusCode != 200) {
-        error = response.data["error"]["message"];
-        if (mounted) setState(() {});
-        return;
-      }
-
       Map<String, dynamic>? data = response.data["data"];
       if (!isNullOrEmpty(data)!) {
         FCMData newData = FCMData.fromMap(data!);
@@ -69,6 +64,13 @@ class _TextInputURLState extends State<TextInputURL> {
       }
 
       widget.onConnect();
+    }).catchError((err) {
+      if (err is Response) {
+        error = err.data["error"]["message"];
+      } else {
+        error = err.toString();
+      }
+      if (mounted) setState(() {});
     });
   }
 

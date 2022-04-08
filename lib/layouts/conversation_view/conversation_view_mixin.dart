@@ -28,12 +28,13 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:simple_animations/simple_animations.dart';
 import 'package:slugify/slugify.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1100,38 +1101,37 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         (await SettingsManager().getMacOSVersion() ?? 0) > 10 &&
         existingChat == null) {
       api.createChat(participants, null).then((response) async {
-        if (response.statusCode != 200) {
-          Navigator.of(context).pop();
-          showDialog(
-              barrierDismissible: false,
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text(
-                    "Could not create",
-                  ),
-                  content: Text(
-                    "Reason: (${response.data["error"]["type"]}) -> ${response.data["error"]["message"]}",
-                  ),
-                  actions: [
-                    TextButton(
-                      child: Text(
-                        "Ok",
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    )
-                  ],
-                );
-              });
-          completer.complete(null);
-          return;
-        }
-
         // If everything went well, let's add the chat to the bloc
         Chat newChat = Chat.fromMap(response.data["data"]);
         await returnChat(newChat);
+      }).catchError((error) {
+        Navigator.of(context).pop();
+        showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(
+                  "Could not create",
+                ),
+                content: Text(
+                  error is Response
+                      ? "Reason: (${error.data["error"]["type"]}) -> ${error.data["error"]["message"]}"
+                      : error.toString(),
+                ),
+                actions: [
+                  TextButton(
+                    child: Text(
+                      "Ok",
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  )
+                ],
+              );
+            });
+        completer.complete(null);
       });
     } else if (existingChat == null) {
       SocketManager().sendMessage(

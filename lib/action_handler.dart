@@ -19,9 +19,10 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:universal_io/io.dart';
 
 import 'managers/chat_manager.dart';
@@ -301,38 +302,42 @@ class ActionHandler {
             effectId: message.expressiveSendStyleId
         ).then((response) async {
           String? tempGuid = message.guid;
-          // If there is an error, replace the temp value with an error
-          if (response.statusCode != 200) {
-            message.guid = message.guid!.replaceAll("temp", "error-${response.data['error']['message']}");
-            message.error =
-            response.statusCode == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
-            await Message.replaceMessage(tempGuid, message);
-            NewMessageManager().updateMessage(chat, tempGuid!, message);
-          } else {
-            Message newMessage = Message.fromMap(response.data['data']);
-            await Message.replaceMessage(tempGuid, newMessage, chat: chat);
-            List<dynamic> attachments = response.data['data'].containsKey("attachments") ? response.data['data']['attachments'] : [];
-            newMessage.attachments = [];
-            for (dynamic attachmentItem in attachments) {
-              Attachment file = Attachment.fromMap(attachmentItem);
+          Message newMessage = Message.fromMap(response.data['data']);
+          await Message.replaceMessage(tempGuid, newMessage, chat: chat);
+          List<dynamic> attachments = response.data['data'].containsKey("attachments") ? response.data['data']['attachments'] : [];
+          newMessage.attachments = [];
+          for (dynamic attachmentItem in attachments) {
+            Attachment file = Attachment.fromMap(attachmentItem);
 
-              try {
-                Attachment.replaceAttachment(tempGuid, file);
-              } catch (ex) {
-                Logger.warn("Attachment's Old GUID doesn't exist. Skipping");
-              }
-              newMessage.attachments.add(file);
+            try {
+              Attachment.replaceAttachment(tempGuid, file);
+            } catch (ex) {
+              Logger.warn("Attachment's Old GUID doesn't exist. Skipping");
             }
-            Logger.info("Message match: [${response.data['data']["text"]}] - ${response.data['data']["guid"]} - $tempGuid", tag: "MessageStatus");
-
-            NewMessageManager().updateMessage(chat, tempGuid!, newMessage);
+            newMessage.attachments.add(file);
           }
+          Logger.info("Message match: [${response.data['data']["text"]}] - ${response.data['data']["guid"]} - $tempGuid", tag: "MessageStatus");
+
+          NewMessageManager().updateMessage(chat, tempGuid!, newMessage);
 
           completer.complete();
-        }).catchError((err) {
-            Logger.error('Failed to send message! Error: ${err.toString()}');
+        }).catchError((error) async {
+          if (error is Response) {
+            String? tempGuid = message.guid;
+            // If there is an error, replace the temp value with an error
+            if (error.statusCode != 200) {
+              message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message']}");
+              message.error =
+              error.statusCode == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+
+              await Message.replaceMessage(tempGuid, message);
+              NewMessageManager().updateMessage(chat, tempGuid!, message);
+            }
+          } else {
+            Logger.error('Failed to send message! Error: ${error.toString()}');
             handleError().then((value) => completer.complete());
+          }
         });
       } else {
         SocketManager().sendMessage("send-message", params, (response) async {
