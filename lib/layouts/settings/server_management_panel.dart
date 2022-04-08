@@ -64,18 +64,24 @@ class ServerManagementPanelController extends GetxController {
     _settingsCopy = SettingsManager().settings;
     _fcmDataCopy = SettingsManager().fcmData;
     if (SocketManager().state.value == SocketState.CONNECTED) {
-      int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-      SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-        int later = DateTime.now().toUtc().millisecondsSinceEpoch;
-        latency.value = later - now;
-        macOSVersion.value = res['data']['os_version'];
-        serverVersion.value = res['data']['server_version'];
-        Version version = Version.parse(serverVersion.value);
-        serverVersionCode.value = version.major * 100 + version.minor * 21 + version.patch;
-        privateAPIStatus.value = res['data']['private_api'] ?? false;
-        helperBundleStatus.value = res['data']['helper_connected'] ?? false;
-        proxyService.value = res['data']['proxy_service'];
-      });
+      getServerStats();
+    }
+    super.onInit();
+  }
+
+  void getServerStats() {
+    int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    api.serverInfo().then((response) {
+      int later = DateTime.now().toUtc().millisecondsSinceEpoch;
+      latency.value = later - now;
+      macOSVersion.value = response.data['data']['os_version'];
+      serverVersion.value = response.data['data']['server_version'];
+      Version version = Version.parse(serverVersion.value);
+      serverVersionCode.value = version.major * 100 + version.minor * 21 + version.patch;
+      privateAPIStatus.value = response.data['data']['private_api'] ?? false;
+      helperBundleStatus.value = response.data['data']['helper_connected'] ?? false;
+      proxyService.value = response.data['data']['proxy_service'];
+
       api.serverStatTotals().then((response) {
         if (response.data['status'] == 200) {
           stats.addAll(response.data['data'] ?? {});
@@ -85,9 +91,14 @@ class ServerManagementPanelController extends GetxController {
             }
           });
         }
+        opacity.value = 1.0;
+      }).catchError((_) {
+        showSnackbar("Error", "Failed to load server statistics!");
+        opacity.value = 1.0;
       });
-    }
-    super.onInit();
+    }).catchError((_) {
+      showSnackbar("Error", "Failed to load server details!");
+    });
   }
 
   void saveSettings() async {
@@ -184,17 +195,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                               onTap: () {
                                 if (SocketManager().state.value != SocketState.CONNECTED) return;
                                 controller.opacity.value = 0.0;
-                                int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                                SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-                                  int later = DateTime.now().toUtc().millisecondsSinceEpoch;
-                                  controller.latency.value = later - now;
-                                  controller.macOSVersion.value = res['data']['os_version'];
-                                  controller.serverVersion.value = res['data']['server_version'];
-                                  controller.privateAPIStatus.value = res['data']['private_api'];
-                                  controller.helperBundleStatus.value = res['data']['helper_connected'];
-                                  controller.proxyService.value = res['data']['proxy_service'];
-                                  controller.opacity.value = 1.0;
-                                });
+                                controller.getServerStats();
                               },
                             ),
                           ),

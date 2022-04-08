@@ -170,11 +170,15 @@ class SettingsManager {
 
   Future<int?> getMacOSVersion({bool refresh = false}) async {
     if (refresh) {
-      var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
-      final version = int.tryParse(res['data']['os_version'].split(".")[0]);
-      _serverVersion = res['data']?['server_version'];
-      if (version != null) prefs.setInt("macos-version", version);
-      return version;
+      final response = await api.serverInfo();
+      if (response.statusCode == 200) {
+        final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
+        _serverVersion = response.data['data']['server_version'];
+        if (version != null) prefs.setInt("macos-version", version);
+        return version;
+      } else {
+        return null;
+      }
     } else {
       return prefs.getInt("macos-version") ?? 11;
     }
@@ -182,8 +186,10 @@ class SettingsManager {
 
   FutureOr<String?> getServerVersion() async {
     if (_serverVersion == null) {
-      var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
-      _serverVersion = res['data']?['server_version'];
+      final response = await api.serverInfo();
+      if (response.statusCode == 200) {
+        _serverVersion = response.data['data']['server_version'];
+      }
     }
     return _serverVersion;
   }
