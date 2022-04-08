@@ -11,16 +11,14 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/firebase/database_manager.dart';
 import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -160,7 +158,7 @@ class SocketManager {
           // After 5 seconds of an error, we should retry the connection
           Timer(Duration(seconds: 5), () {
             if (state.value != SocketState.ERROR && state.value != SocketState.FAILED) return;
-            refreshConnection(connectToSocket: true);
+            fdb.fetchNewUrl(connectToSocket: true);
           });
 
           // After 20 seconds, if we still aren't connected, show the warning notification
@@ -263,7 +261,7 @@ class SocketManager {
       _manager.socket!.destroy();
     }
 
-    String? serverAddress = getServerAddress();
+    String? serverAddress = sanitizeServerAddress();
     if (serverAddress == null) {
       Logger.warn("Server Address is not yet configured. Not connecting...", tag: tag);
       return;
@@ -629,96 +627,8 @@ class SocketManager {
     }
   }
 
-  /// Updates and saves a new server address and then forces a new reconnection to the socket with this address
-  ///
-  /// @param [serverAddress] is the new address to update to
-  Future<void> newServer(String serverAddress) async {
-    // We copy the settings to a local variable
-    Settings settingsCopy = SettingsManager().settings;
-    if (settingsCopy.serverAddress.value == serverAddress) {
-      Logger.debug("Server address didn't actually change. Ignoring...");
-      return;
-    }
-
-    // Update the address of the copied settings
-    settingsCopy.serverAddress.value = getServerAddress(address: serverAddress) ?? settingsCopy.serverAddress.value;
-
-    // And then save to disk
-    // NOTE: we do not automatically connect to the socket or authorize fcm,
-    //       because we need to do that manually with a forced connection
-    await SettingsManager().saveSettings(settingsCopy);
-
-    // Then we connect to the socket.
-    // We force a connection because the socket may still be attempting to connect to the socket,
-    // in which case it won't attempt to connect again.
-    // We need to override this behavior.
-    SocketManager().startSocketIO(forceNewConnection: true);
-  }
-
   dispose() {
     _attachmentSenderCompleter.close();
     _socketProcessUpdater.close();
-  }
-
-  Future<void> refreshConnection({bool connectToSocket = true}) async {
-    Logger.info("Fetching new server URL from Firebase");
-
-    // Get the server URL
-    try {
-      String? url;
-      if (kIsWeb || kIsDesktop) {
-        if (SettingsManager().fcmData == null) return;
-        var db = FirebaseDatabase(databaseURL: SettingsManager().fcmData?.firebaseURL);
-        var ref = db.reference().child('config').child('serverUrl');
-        ref.onValue.listen((event) {
-          url = event.snapshot.value;
-          url = getServerAddress(address: url);
-
-          Logger.info("New server URL: $url");
-
-          // Set the server URL
-          Settings _settingsCopy = SettingsManager().settings;
-          if (_settingsCopy.serverAddress.value == url) return;
-          _settingsCopy.serverAddress.value = url ?? _settingsCopy.serverAddress.value;
-          SettingsManager().saveSettings(_settingsCopy);
-          if (connectToSocket) {
-            final serverAddress = getServerAddress();
-            if (serverAddress?.contains("trycloudflare.com") ?? false) {
-              Logger.info("Detected Cloudflare URL, waiting 10 seconds before connecting to socket at: $serverAddress");
-              Future.delayed(Duration(seconds: 10), () {
-                startSocketIO(forceNewConnection: true);
-              });
-            } else {
-              startSocketIO(forceNewConnection: connectToSocket);
-            }
-          }
-        });
-      } else {
-        url = await MethodChannelInterface().invokeMethod("get-server-url");
-        url = getServerAddress(address: url);
-
-        Logger.info("New server URL: $url");
-
-        // Set the server URL
-        Settings _settingsCopy = SettingsManager().settings;
-        if (_settingsCopy.serverAddress.value == url) return;
-        _settingsCopy.serverAddress.value = url ?? _settingsCopy.serverAddress.value;
-        await SettingsManager().saveSettings(_settingsCopy);
-        if (connectToSocket) {
-          final serverAddress = getServerAddress();
-          if (serverAddress?.contains("trycloudflare.com") ?? false) {
-            Logger.info("Detected Cloudflare URL, waiting 10 seconds before connecting to socket at: $serverAddress");
-            Future.delayed(Duration(seconds: 10), () {
-              startSocketIO(forceNewConnection: true);
-            });
-          } else {
-            startSocketIO(forceNewConnection: connectToSocket);
-          }
-        }
-      }
-    } catch (e, s) {
-      print(e);
-      print(s);
-    }
   }
 }

@@ -63,7 +63,7 @@ class SetupBloc {
       return;
     }
 
-    settingsCopy.serverAddress.value = getServerAddress(address: serverURL) ?? settingsCopy.serverAddress.value;
+    settingsCopy.serverAddress.value = sanitizeServerAddress(address: serverURL) ?? settingsCopy.serverAddress.value;
     settingsCopy.guidAuthKey.value = password;
 
     await SettingsManager().saveSettings(settingsCopy);

@@ -110,11 +110,9 @@ class SettingsManager {
   }
 
   /// Saves a [Settings] instance to disk
-  ///
-  /// @param [newSettings] are the settings to save
-  Future<void> saveSettings(Settings newSettings) async {
+  Future<void> saveSettings([Settings? newSettings]) async {
     // Set the new settings as the current settings in the manager
-    settings = newSettings;
+    settings = newSettings ?? settings;
     settings.save();
     try {
       // Set the [displayMode] to that saved in settings

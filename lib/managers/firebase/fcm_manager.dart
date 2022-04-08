@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 
-/// Get an instance of our [ApiService]
+/// Get an instance of our [FcmManager]
 FcmManager fcm = Get.isRegistered<FcmManager>() ? Get.find<FcmManager>() : Get.put(FcmManager());
 
 /// Manager for registering the client with the server FCM client (used for notifications)

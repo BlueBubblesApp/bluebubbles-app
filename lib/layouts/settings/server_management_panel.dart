@@ -446,7 +446,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       } catch (e) {
                         return;
                       }
-                      if (fcmData != null && fcmData[0] != null && getServerAddress(address: fcmData[1]) != null) {
+                      if (fcmData != null && fcmData[0] != null && sanitizeServerAddress(address: fcmData[1]) != null) {
                         controller._fcmDataCopy = FCMData(
                           projectID: fcmData[2],
                           storageBucket: fcmData[3],
@@ -456,7 +456,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                           applicationID: fcmData[7],
                         );
                         controller._settingsCopy.guidAuthKey.value = fcmData[0];
-                        controller._settingsCopy.serverAddress.value = getServerAddress(address: fcmData[1])!;
+                        controller._settingsCopy.serverAddress.value = sanitizeServerAddress(address: fcmData[1])!;
 
                         SettingsManager().saveSettings(controller._settingsCopy);
                         SettingsManager().saveFCMData(controller._fcmDataCopy!);

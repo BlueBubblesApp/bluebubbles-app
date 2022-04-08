@@ -122,7 +122,7 @@ class MyHttpOverrides extends HttpOverrides {
       // If there is a bad certificate callback, override it if the host is part of
       // your server URL
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-        String serverUrl = getServerAddress() ?? "";
+        String serverUrl = sanitizeServerAddress() ?? "";
         return serverUrl.contains(host);
       }; // add your localhost detection logic here if you want
   }

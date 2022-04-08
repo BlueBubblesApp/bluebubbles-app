@@ -33,7 +33,7 @@ class _TextInputURLState extends State<TextInputURL> {
   void connect(String url, String password) async {
     SocketManager().closeSocket(force: true);
     Settings copy = SettingsManager().settings;
-    String? addr = getServerAddress(address: url);
+    String? addr = sanitizeServerAddress(address: url);
     if (addr == null) {
       error = "Server address is invalid!";
       if (mounted) setState(() {});
@@ -133,7 +133,7 @@ class _TextInputURLState extends State<TextInputURL> {
             if (mounted) {
               setState(() {
                 error =
-                    "Failed to connect to ${getServerAddress()}! Please check that the url is correct (including http://) and the server logs for more info.";
+                    "Failed to connect to ${sanitizeServerAddress()}! Please check that the url is correct (including http://) and the server logs for more info.";
               });
             }
           }

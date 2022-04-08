@@ -130,7 +130,7 @@ class _QRScanState extends State<QRScan> {
       }
 
       String? password = result[0];
-      String? serverURL = getServerAddress(address: result[1]);
+      String? serverURL = sanitizeServerAddress(address: result[1]);
 
       showDialog(
         context: context,
@@ -631,7 +631,7 @@ class _QRScanState extends State<QRScan> {
             if (mounted) {
               setState(() {
                 error =
-                    "Failed to connect to ${getServerAddress()}! Please ensure your credentials are correct (including http://) and check the server logs for more info.";
+                    "Failed to connect to ${sanitizeServerAddress()}! Please ensure your credentials are correct (including http://) and check the server logs for more info.";
               });
             }
           }
@@ -640,7 +640,7 @@ class _QRScanState extends State<QRScan> {
       barrierDismissible: false,
     );
     SocketManager().closeSocket(force: true);
-    String? addr = getServerAddress(address: url);
+    String? addr = sanitizeServerAddress(address: url);
     if (addr == null) {
       error = "Server address is invalid!";
       if (mounted) setState(() {});

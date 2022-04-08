@@ -17,6 +17,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
 import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/firebase/database_manager.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
@@ -96,10 +97,10 @@ class MethodChannelInterface {
         String address = call.arguments.toString();
 
         // We remove the brackets from the formatting
-        address = getServerAddress(address: address.substring(1, address.length - 1))!;
+        address = sanitizeServerAddress(address: address.substring(1, address.length - 1))!;
 
         // And then tell the socket to set the new server address
-        await SocketManager().newServer(address);
+        await fdb.connectNewAddress(address);
 
         return Future.value("");
       case "new-message":
