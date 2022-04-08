@@ -52,17 +52,22 @@ class _TextInputURLState extends State<TextInputURL> {
   }
 
   void retreiveFCMData() {
-    SocketManager().sendMessage("get-fcm-client", {}, (_data) {
-      if (_data["status"] != 200) {
-        error = _data["error"]["message"];
+    // Get the FCM Client and make sure we have a valid response
+    // If so, save. Let the parent widget know we've connected as long as
+    // we get 200 from the API.
+    api.fcmClient().then((response) {
+      if (response.statusCode != 200) {
+        error = response.data["error"]["message"];
         if (mounted) setState(() {});
         return;
       }
-      FCMData? copy = SettingsManager().fcmData;
-      Map<String, dynamic> data = _data["data"];
-      copy = FCMData.fromMap(data);
 
-      SettingsManager().saveFCMData(copy);
+      Map<String, dynamic>? data = response.data["data"];
+      if (!isNullOrEmpty(data)!) {
+        FCMData newData = FCMData.fromMap(data!);
+        SettingsManager().saveFCMData(newData);
+      }
+
       widget.onConnect();
     });
   }
