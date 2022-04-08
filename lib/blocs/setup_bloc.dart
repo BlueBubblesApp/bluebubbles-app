@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/fcm/fcm_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -67,7 +68,7 @@ class SetupBloc {
 
     await SettingsManager().saveSettings(settingsCopy);
     SettingsManager().saveFCMData(data);
-    await SocketManager().registerFcmDevice(catchException: false, force: true);
+    await fcm.registerDevice(catchException: false, force: true);
     SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     connectionSubscription = ever<SocketState>(SocketManager().state, (event) {
       connectionStatus.value = event;
@@ -250,7 +251,7 @@ class SetupBloc {
     _settingsCopy.finishedSetup.value = true;
     await SettingsManager().saveSettings(_settingsCopy);
     if (!kIsWeb) await ChatBloc().refreshChats(force: true);
-    await SocketManager().registerFcmDevice(force: true);
+    await fcm.registerDevice(force: true);
     closeSync();
   }
 

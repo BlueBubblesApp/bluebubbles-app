@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
+import 'package:bluebubbles/managers/fcm/fcm_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -116,10 +117,13 @@ class _QRScanState extends State<QRScan> {
       } else {
         try {
           // Fetch FCM data from the server
-          Map<String, dynamic> fcmMeta = await SocketManager().getFcmClient();
+          final response = await api.fcmClient();
 
-          // Parse out the new FCM data
-          fcmData = parseFcmJson(fcmMeta);
+          if (response.statusCode == 200 && response.data['data'] is Map<String, dynamic>) {
+            Map<String, dynamic> fcmMeta = response.data['data'];
+            // Parse out the new FCM data
+            fcmData = parseFcmJson(fcmMeta);
+          }
         } catch (ex) {
           // If we fail, who cares!
         }

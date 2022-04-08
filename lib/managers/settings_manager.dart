@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/fcm/fcm_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -102,7 +103,7 @@ class SettingsManager {
       try {
         if (settings.finishedSetup.value) {
           SocketManager().startSocketIO();
-          SocketManager().registerFcmDevice();
+          fcm.registerDevice();
         }
       } catch (_) {}
     }
@@ -153,7 +154,7 @@ class SettingsManager {
   void saveFCMData(FCMData data) {
     fcmData = data;
     fcmData!.save();
-    SocketManager().registerFcmDevice();
+    fcm.registerDevice();
   }
 
   Future<void> resetConnection() async {

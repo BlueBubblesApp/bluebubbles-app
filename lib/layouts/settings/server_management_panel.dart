@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
+import 'package:bluebubbles/managers/fcm/fcm_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -405,7 +406,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         builder: (connectContext) => TextInputURL(
                           onConnect: () {
                             Get.back();
-                            SocketManager().registerFcmDevice();
+                            fcm.registerDevice();
                             SocketManager()
                                 .startSocketIO(forceNewConnection: true);
                           },
@@ -421,7 +422,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         builder: (connectContext) => TextInputURL(
                           onConnect: () {
                             Get.back();
-                            SocketManager().registerFcmDevice();
+                            fcm.registerDevice();
                             SocketManager()
                                 .startSocketIO(forceNewConnection: true);
                           },
@@ -459,7 +460,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
 
                         SettingsManager().saveSettings(controller._settingsCopy);
                         SettingsManager().saveFCMData(controller._fcmDataCopy!);
-                        SocketManager().registerFcmDevice();
+                        fcm.registerDevice();
                       }
                     },
                   ),

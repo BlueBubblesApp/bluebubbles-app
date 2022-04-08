@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:bluebubbles/blocs/setup_bloc.dart';
@@ -12,6 +11,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/fcm/fcm_manager.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -22,7 +22,6 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:socket_io_client/socket_io_client.dart';
@@ -123,7 +122,7 @@ class SocketManager {
 
         // Once we connect, we need to make sure that we register the device with the server.
         // This is to ensure we always will be registered to receive notifications
-        registerFcmDevice();
+        fcm.registerDevice();
 
         // Clear the errored socket notification (if any)
         NotificationManager().clearSocketWarning();
@@ -436,93 +435,6 @@ class SocketManager {
     NotificationManager().clearSocketWarning();
   }
 
-  Future<void> registerFcmDevice({bool catchException = true, bool force = false}) async {
-    if (!SettingsManager().settings.finishedSetup.value) return;
-
-    if (isAuthingFcm && !force) {
-      Logger.debug('Currently authenticating with FCM, not doing it again...');
-      return;
-    }
-
-    isAuthingFcm = true;
-
-    if (SettingsManager().fcmData!.isNull) {
-      Logger.warn("No FCM Auth data found. Skipping FCM authentication", tag: 'FCM-Auth');
-      isAuthingFcm = false;
-      return;
-    }
-
-    String deviceName = await getDeviceName();
-    if (token != null && !force) {
-      Logger.debug("Already authorized FCM device! Token: $token", tag: 'FCM-Auth');
-      await registerDevice(deviceName, token);
-      isAuthingFcm = false;
-      return;
-    }
-
-    String? result;
-
-    if (kIsWeb || kIsDesktop) {
-      Logger.debug("Platform ${kIsWeb ? "web" : Platform.operatingSystem} detected, not authing with FCM!",
-          tag: 'FCM-Auth');
-      isAuthingFcm = false;
-      return;
-    }
-
-    try {
-      // First, try to send what we currently have
-      Logger.info('Authenticating with FCM', tag: 'FCM-Auth');
-      result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData!.toMap());
-    } on PlatformException catch (ex) {
-      Logger.error('Failed to perform initial FCM authentication: ${ex.toString()}', tag: 'FCM-Auth');
-      Logger.info('Fetching FCM data from the server...', tag: 'FCM-Auth');
-
-      // If the first try fails, let's try again, but first, get the FCM data from the server
-      Map<String, dynamic> fcmMeta = await getFcmClient();
-      Logger.info('Received FCM data from the server. Attempting to re-authenticate', tag: 'FCM-Auth');
-
-      try {
-        // Parse out the new FCM data
-        FCMData fcmData = parseFcmJson(fcmMeta);
-
-        // Save the FCM data in settings
-        SettingsManager().saveFCMData(fcmData);
-
-        // Retry authenticating with Firebase
-        result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData!.toMap());
-      } on PlatformException catch (e) {
-        if (!catchException) {
-          isAuthingFcm = false;
-          throw Exception("[FCM Auth] -> " + e.toString());
-        } else {
-          Logger.error("Failed to register with FCM: " + e.toString(), tag: 'FCM-Auth');
-        }
-      }
-    }
-
-    if (isNullOrEmpty(result)!) {
-      Logger.error("Empty results, not registering device with the server.", tag: 'FCM-Auth');
-    }
-
-    try {
-      token = result;
-      Logger.info('Registering device with server...', tag: 'FCM-Auth');
-      await registerDevice(deviceName, token);
-    } catch (ex) {
-      isAuthingFcm = false;
-      Logger.error('[FCM Auth] -> Failed to register device with server: ${ex.toString()}');
-      throw Exception("Failed to add FCM device to the server! Token: $token");
-    }
-
-    isAuthingFcm = false;
-  }
-
-  Future<dynamic>? registerDevice(String name, String? token) {
-    if (name.trim().isEmpty || token == null || token.trim().isEmpty) return null;
-    dynamic params = {"deviceId": token.trim(), "deviceName": name.trim()};
-    return request("add-fcm-device", params);
-  }
-
   Future<List<Chat>> getChats(Map<String, dynamic> params, {Function(List<dynamic>?)? cb}) async {
     List<Chat> chats = [];
     List<dynamic> data = await request('get-chats', params, cb: cb);
@@ -808,26 +720,5 @@ class SocketManager {
       print(e);
       print(s);
     }
-  }
-
-  Future<Map<String, dynamic>> getFcmClient() async {
-    Completer<Map<String, dynamic>> completer = Completer<Map<String, dynamic>>();
-
-    SocketManager().sendMessage("get-fcm-client", {}, (data) {
-      if (data["status"] == 200) {
-        completer.complete(data["data"] as Map<String, dynamic>?);
-      } else {
-        String? msg = "Failed to get FCM client data";
-        if (data.containsKey("error") && data["error"].containsKey("message")) {
-          msg = data["error"]["message"];
-        }
-
-        completer.completeError(Exception(msg));
-      }
-    }).catchError((err) {
-      completer.completeError(err);
-    });
-
-    return completer.future;
   }
 }
