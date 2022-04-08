@@ -526,21 +526,15 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
 
                       controller.fetchStatus.value = "Fetching logs, please wait...";
 
-                      SocketManager().sendMessage("get-logs", {"count": 500}, (Map<String, dynamic> res) async {
-                        if (res['status'] != 200) {
-                          controller.fetchStatus.value = "Failed to fetch logs!";
-
-                          return;
-                        }
-
+                      api.serverLogs().then((response) async {
                         if (kIsDesktop) {
                           String downloadsPath = (await getDownloadsDirectory())!.path;
-                          File(join(downloadsPath, "main.log")).writeAsStringSync(res['data']);
+                          File(join(downloadsPath, "main.log")).writeAsStringSync(response.data['data']);
                           return showSnackbar('Success', 'Saved logs to $downloadsPath!');
                         }
 
                         if (kIsWeb) {
-                          final bytes = utf8.encode(res['data']);
+                          final bytes = utf8.encode(response.data['data']);
                           final content = base64.encode(bytes);
                           html.AnchorElement(
                               href: "data:application/octet-stream;charset=utf-16le;base64,$content")
@@ -556,7 +550,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                           logFile.deleteSync();
                         }
 
-                        logFile.writeAsStringSync(res['data']);
+                        logFile.writeAsStringSync(response.data['data']);
 
                         try {
                           Share.file("BlueBubbles Server Log", logFile.absolute.path);
@@ -564,6 +558,8 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         } catch (ex) {
                           controller.fetchStatus.value = "Failed to share file! ${ex.toString()}";
                         }
+                      }).catchError((_) {
+                        controller.fetchStatus.value = "Failed to fetch logs!";
                       });
                     },
                   )),
@@ -778,6 +774,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       materialIcon: Icons.dvr,
                     ),
                     onTap: () async {
+
                       var data = await SocketManager().sendMessage("check-for-server-update", {}, (_) {});
                       if (data['status'] == 200) {
                         bool available = data['data']['available'] ?? false;
