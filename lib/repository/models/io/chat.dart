@@ -792,40 +792,35 @@ class Chat {
     return newMessages;
   }*/
 
-  void serverSyncParticipants() {
+  void serverSyncParticipants() async {
     // Send message to server to get the participants
-    SocketManager().sendMessage("get-participants", {"identifier": guid}, (response) {
-      if (response["status"] == 200) {
-        // Get all the participants from the server
-        List data = response["data"];
-        List<Handle> handles = data.map((e) => Handle.fromMap(e)).toList();
+    final chat = await ChatManager().fetchChat(guid);
+    if (chat != null) {
+      // Make sure that all participants for our local chat are fetched
+      getParticipants();
 
-        // Make sure that all participants for our local chat are fetched
-        getParticipants();
+      // We want to determine all the participants that exist in the response that are not already in our locally saved chat (AKA all the new participants)
+      List<Handle> newParticipants =
+      chat.participants.where((a) => (participants.where((b) => b.address == a.address).toList().isEmpty)).toList();
 
-        // We want to determine all the participants that exist in the response that are not already in our locally saved chat (AKA all the new participants)
-        List<Handle> newParticipants =
-            handles.where((a) => (participants.where((b) => b.address == a.address).toList().isEmpty)).toList();
+      // We want to determine all the participants that exist in the locally saved chat that are not in the response (AKA all the removed participants)
+      List<Handle> removedParticipants =
+      participants.where((a) => (chat.participants.where((b) => b.address == a.address).toList().isEmpty)).toList();
 
-        // We want to determine all the participants that exist in the locally saved chat that are not in the response (AKA all the removed participants)
-        List<Handle> removedParticipants =
-            participants.where((a) => (handles.where((b) => b.address == a.address).toList().isEmpty)).toList();
-
-        // Add all participants that are missing from our local db
-        for (Handle newParticipant in newParticipants) {
-          addParticipant(newParticipant);
-        }
-
-        // Remove all extraneous participants from our local db
-        for (Handle removedParticipant in removedParticipants) {
-          removedParticipant.save();
-          removeParticipant(removedParticipant);
-        }
-
-        // Sync all changes with the chatbloc
-        ChatBloc().updateChat(this);
+      // Add all participants that are missing from our local db
+      for (Handle newParticipant in newParticipants) {
+        addParticipant(newParticipant);
       }
-    });
+
+      // Remove all extraneous participants from our local db
+      for (Handle removedParticipant in removedParticipants) {
+        removedParticipant.save();
+        removeParticipant(removedParticipant);
+      }
+
+      // Sync all changes with the chatbloc
+      ChatBloc().updateChat(this);
+    }
   }
 
   static int? count() {
