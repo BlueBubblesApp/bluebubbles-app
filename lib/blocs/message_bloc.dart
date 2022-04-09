@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:get/get.dart';
@@ -287,7 +288,7 @@ class MessageBloc {
       if (isNullOrEmpty(messages)!) {
         try {
           // Fetch messages from the server
-          List<dynamic> _messages = await SocketManager().loadMessageChunk(currChat, offset + reactionCnt);
+          List<dynamic> _messages = await ChatManager().loadMessageChunk(currChat, offset + reactionCnt);
           count = _messages.length;
 
           // Handle the messages

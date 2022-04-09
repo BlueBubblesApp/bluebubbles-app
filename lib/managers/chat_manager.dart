@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/logger.dart';
@@ -197,5 +198,23 @@ class ChatManager {
     }
 
     return null;
+  }
+
+  Future<List<dynamic>> loadMessageChunk(Chat chat, int offset, {int limit = 25}) async {
+    Completer<List<dynamic>> completer = Completer();
+
+    api.chatMessages(chat.guid, withQuery: "attachment,handle", offset: offset, limit: limit).then((response) {
+      if (!completer.isCompleted) completer.complete(response.data["data"]);
+    }).catchError((err) {
+      late final dynamic error;
+      if (err is Response) {
+        error = err.data["error"]["message"];
+      } else {
+        error = err.toString();
+      }
+      if (!completer.isCompleted) completer.completeError(error);
+    });
+
+    return completer.future;
   }
 }

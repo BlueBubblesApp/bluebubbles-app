@@ -493,26 +493,6 @@ class SocketManager {
     return request('get-messages', params);
   }
 
-  Future<List<dynamic>> loadMessageChunk(Chat chat, int offset, {limit = 25}) async {
-    Completer<List<dynamic>> completer = Completer();
-
-    Map<String, dynamic> params = {};
-    params["identifier"] = chat.guid;
-    params["limit"] = limit;
-    params["offset"] = offset;
-    params["withBlurhash"] = false;
-
-    SocketManager().sendMessage("get-chat-messages", params, (data) async {
-      if (data['status'] != 200) {
-        completer.completeError(data['error']);
-      }
-
-      if (!completer.isCompleted) completer.complete(data["data"]);
-    });
-
-    return completer.future;
-  }
-
   Future<dynamic>? fetchMessages(Chat? chat,
       {int offset = 0,
       int limit = 100,
