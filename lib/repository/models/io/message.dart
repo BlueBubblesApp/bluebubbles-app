@@ -61,8 +61,8 @@ class GetMessageAttachments extends AsyncTask<List<dynamic>, Map<String, List<At
 
       /// Add the attachments to the map with some clever list operations
       map.addEntries(messages.mapIndexed((index, e) => MapEntry(
-          e!.guid!,
-          e.dbAttachments)));
+        e!.guid!,
+        e.dbAttachments)));
       return map;
     });
   }
@@ -87,14 +87,27 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
   @override
   FutureOr<List<Message>> run() {
     return store.runInTransaction(TxMode.write, () {
+      // NOTE: This assumes that handles and chats will already be created and in the database
+      // 0. Create map for the messages and attachments to save
+      // 1. Check for existing attachments and save new ones
+      // 2. Fetch all inserted/existing attachments based on input
+      // 3. Create map of inserted/existing attachments
+      // 4. Check for existing messages & create list of new messages to save
+      // 5. Fetch all handles and map the old handle ROWIDs from each message to the new ones based on the original ROWID
+      // 6. Relate the attachments to the messages
+      // 7. Save all messages (and handle/attachment relationships)
+      // 8. Get the inserted messages
+      // 9. Check inserted messages for associated message GUIDs & update hasReactions flag
+      // 10. Save the updated associated messages
+      // 11. Update the associated chat's last message
+
       /// Takes the list of messages from [params] and saves it
       /// to the objectbox store.
       Chat inputChat = params[0];
       List<Message> inputMessages = params[1];
       List<String> inputMessageGuids = inputMessages.map((element) => element.guid!).toList();
 
-      // Pull out all the unique attachments.
-      // Maintain a map of the message attachments
+      // 0. Create map for the messages and attachments to save
       Map<String, Attachment> attachmentsToSave = {};
       Map<String, List<String>> messageAttachments = {};
       for (final msg in inputMessages) {
@@ -113,8 +126,8 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
         }
       }
 
-      // If there are attachments we need to save, do any duplication checks, then add them,
-      // and relate them to the corresponding message
+      // 1. Check for existing attachments and save new ones
+      Map<String, Attachment> attachmentMap = {};
       if (attachmentsToSave.isNotEmpty) {
         List<String> inputAttachmentGuids = attachmentsToSave.values.map((e) => e.guid).whereNotNull().toList();
         QueryBuilder<Attachment> attachmentQuery = attachmentBox.query(Attachment_.guid.oneOf(inputAttachmentGuids));
@@ -128,40 +141,28 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
             .toList();
         attachmentBox.putMany(attachmentsToInsert);
 
-        // Fetch the attachments that we were intended to insert
+        // 2. Fetch all inserted/existing attachments based on input
         QueryBuilder<Attachment> attachmentQuery2 = attachmentBox.query(Attachment_.guid.oneOf(inputAttachmentGuids));
         List<Attachment> attachments = attachmentQuery2.build().find().whereNotNull().toList();
 
-        // Create a map for easy accessibility when we add the relationships
-        Map<String, Attachment> attachmentMap = {};
+        // 3. Create map of inserted/existing attachments
         for (final a in attachments) {
           attachmentMap[a.guid!] = a;
         }
-
-        // Create the relationships
-        for (final msg in inputMessages) {
-          final relatedAttachments =
-              messageAttachments[msg.guid]?.map((e) => attachmentMap[e]).whereNotNull().toList() ?? [];
-          msg.attachments = relatedAttachments;
-          msg.dbAttachments.addAll(relatedAttachments);
-        }
       }
 
-      // Although this assumes that these are brand new entries, we should still
-      // check if they exist first. Mainly because I still saw some unique violations.
+      // 4. Check for existing messages & create list of new messages to save
       QueryBuilder<Message> query = messageBox.query(Message_.guid.oneOf(inputMessageGuids));
       List<String> existingMessageGuids = query.build().find().map((e) => e.guid!).toList();
       inputMessages = inputMessages.where((element) => !existingMessageGuids.contains(element.guid)).toList();
 
-      // Fetch the handles
+      // 5. Fetch all handles and map the old handle ROWIDs from each message to the new ones based on the original ROWID
       List<Handle> handles = handleBox.getAll();
       Map<int, Handle> originalRowIdMap = {};
       for (final h in handles) {
         originalRowIdMap[h.originalROWID!] = h;
       }
 
-      // Relate the messages to the chat.
-      // Then fix the handleIDs
       for (final msg in inputMessages) {
         msg.chat.target = inputChat;
 
@@ -174,14 +175,22 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
         }
       }
 
-      // This should save the relationships as well
+      // 6. Relate the attachments to the messages
+      for (final msg in inputMessages) {
+        final relatedAttachments =
+            messageAttachments[msg.guid]?.map((e) => attachmentMap[e]).whereNotNull().toList() ?? [];
+        msg.attachments = relatedAttachments;
+        msg.dbAttachments.addAll(relatedAttachments);
+      }
+
+      // 7. Save all messages (and handle/attachment relationships)
       messageBox.putMany(inputMessages);
 
-      // Get the inserted messages
+      // 8. Get the inserted messages
       QueryBuilder<Message> messageQuery = messageBox.query(Message_.guid.oneOf(inputMessageGuids));
       List<Message> messages = messageQuery.build().find().toList();
 
-      // For each of the messages, check for associated message GUIDs
+      // 9. Check inserted messages for associated message GUIDs & update hasReactions flag
       Map<String, Message> messagesToUpdate = {};
       for (final message in messages) {
         if ((message.associatedMessageGuid ?? '').isEmpty) continue;
@@ -210,7 +219,7 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
         }
       }
 
-      // If we have messages to update, update them
+      // 10. Save the updated associated messages
       if (messagesToUpdate.isNotEmpty) {
         try {
           messageBox.putMany(messagesToUpdate.values.toList());
@@ -219,6 +228,7 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
         }
       }
 
+      // 11. Update the associated chat's last message
       messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
       bool isNewer = false;
 
@@ -236,7 +246,6 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
 
         if (isNewer) {
           inputChat.latestMessage = messages[0];
-          // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
           inputChat.latestMessageText = MessageHelper.getNotificationText(messages[0]);
           inputChat.fakeLatestMessageText =
               faker.lorem.words((inputChat.latestMessageText ?? "").split(" ").length).join(" ");
@@ -245,8 +254,6 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
           // Save the chat with the new info
           chatBox.put(inputChat);
         }
-
-        chatBox.put(inputChat);
       }
 
       return messages;
@@ -617,7 +624,8 @@ class Message {
     try {
       messageBox.put(existing, mode: PutMode.update);
     } catch (ex) {
-      Logger.error('Failed to replace message! This is likely due to a unique constraint being violated. See error below:');
+      Logger.error(
+          'Failed to replace message! This is likely due to a unique constraint being violated. See error below:');
       Logger.error(ex.toString());
     }
 
@@ -663,10 +671,9 @@ class Message {
 
       /// Add the attachments with some fancy list operations
       /// The conditional is in case objectbox hasn't persisted the dbAttachments yet
-      map.addEntries(messages.where((element) => element?.id != null).map((e) => MapEntry(
-        e!.guid!,
-        e.dbAttachments.isEmpty ? e.attachments : e.dbAttachments
-      )));
+      map.addEntries(messages
+          .where((element) => element?.id != null)
+          .map((e) => MapEntry(e!.guid!, e.dbAttachments.isEmpty ? e.attachments : e.dbAttachments)));
       return map;
     });
   }
@@ -685,10 +692,7 @@ class Message {
       return map;
     }
 
-    final task = GetMessageAttachments([
-      messages.map((e) => e!.id!).toList(),
-      prefs.getString("objectbox-reference")
-    ]);
+    final task = GetMessageAttachments([messages.map((e) => e!.id!).toList(), prefs.getString("objectbox-reference")]);
     return (await createAsyncTask<Map<String, List<Attachment?>>>(task)) ?? {};
   }
 
