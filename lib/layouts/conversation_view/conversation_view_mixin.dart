@@ -7,7 +7,6 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
@@ -124,7 +123,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       // If it's a group event, let's fetch the new information and save it
       try {
-        await fetchChatSingleton(widget.chat!.guid);
+        await ChatManager().fetchChat(widget.chat!.guid);
       } catch (ex) {
         Logger.error(ex.toString());
       }
@@ -201,7 +200,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       try {
         // If we don't have participants, we should fetch them from the server
-        Chat? data = await fetchChatSingleton(chat!.guid);
+        Chat? data = await ChatManager().fetchChat(chat!.guid);
         // If we got data back, fetch the participants and update the state
         if (data != null) {
           chat!.getParticipants();

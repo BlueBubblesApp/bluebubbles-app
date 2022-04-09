@@ -9,7 +9,6 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -86,7 +85,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
       // If it's a group event, let's fetch the new information and save it
       try {
-        await fetchChatSingleton(widget.chat.guid);
+        await ChatManager().fetchChat(widget.chat.guid);
       } catch (ex) {
         Logger.error(ex.toString());
       }

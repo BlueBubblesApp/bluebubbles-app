@@ -513,35 +513,6 @@ class SocketManager {
     return completer.future;
   }
 
-  Future<Chat?> fetchChat(String chatGuid, {withParticipants = true}) async {
-    Completer<Chat?> completer = Completer();
-    Logger.info("[Fetch Chat] Fetching full chat metadata from server.");
-
-    Map<String, dynamic> params = {};
-    params["chatGuid"] = chatGuid;
-    params["withParticipants"] = withParticipants;
-    SocketManager().sendMessage("get-chat", params, (data) {
-      if (data['status'] != 200 && !completer.isCompleted) {
-        return completer.completeError(Exception(data['error']['message']));
-      }
-
-      Map<String, dynamic>? chatData = data["data"];
-      if (chatData == null) {
-        Logger.info("[Fetch Chat] Server returned no metadata for chat.");
-        return completer.complete(null);
-      }
-
-      Logger.info("[Fetch Chat] Got updated chat metadata from server. Saving.");
-      Chat newChat = Chat.fromMap(chatData);
-
-      // Resave the chat after we've got the participants
-      newChat.save();
-      completer.complete(newChat);
-    });
-
-    return completer.future;
-  }
-
   Future<dynamic>? fetchMessages(Chat? chat,
       {int offset = 0,
       int limit = 100,

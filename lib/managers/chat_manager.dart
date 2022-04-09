@@ -1,11 +1,13 @@
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat_controller.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:dio/dio.dart';
 
 import '../socket_manager.dart';
 
@@ -169,5 +171,31 @@ class ChatManager {
     if (!LifeCycleManager().isBubble) {
       await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
     }
+  }
+
+  /// Fetch chat information from the server
+  Future<Chat?> fetchChat(String chatGuid, {withParticipants = true, withLastMessage = false}) async {
+    Logger.info("Fetching full chat metadata from server.", tag: "Fetch-Chat");
+
+    final withQuery = <String>[];
+    if (withParticipants) withQuery.add("participants");
+    if (withLastMessage) withQuery.add("lastmessage");
+
+    final response = await api.singleChat(chatGuid, withQuery: withQuery.join(",")).catchError((err) {
+      if (err is! Response) {
+        Logger.error("Failed to fetch chat metadata! ${err.toString()}", tag: "Fetch-Chat");
+      }
+    });
+
+    if (response.statusCode == 200 && response.data["data"] != null) {
+      Map<String, dynamic> chatData = response.data["data"];
+
+      Logger.info("Got updated chat metadata from server. Saving.", tag: "Fetch-Chat");
+      Chat newChat = Chat.fromMap(chatData);
+      newChat.save();
+      return newChat;
+    }
+
+    return null;
   }
 }
