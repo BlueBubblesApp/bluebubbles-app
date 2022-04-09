@@ -68,11 +68,71 @@ class ApiService extends GetxService {
     });
   }
 
+  /// Lock Mac device
+  Future<Response> lockMac({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$origin/mac/lock",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Restart iMessage app
+  Future<Response> restartImessage({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$origin/mac/imessage/restart",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get server metadata like server version, macOS version, current URL, etc
   Future<Response> serverInfo({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
           "$origin/server/info",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Restart the server app services
+  Future<Response> softRestart({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+          "$origin/server/restart/soft",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Restart the entire server app
+  Future<Response> hardRestart({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+          "$origin/server/restart/hard",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Check for new server versions
+  Future<Response> checkUpdate({CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+          "$origin/update/check",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -93,10 +153,12 @@ class ApiService extends GetxService {
   }
 
   /// Get server media totals (number of images, videos, and locations)
-  Future<Response> serverStatMedia({CancelToken? cancelToken}) async {
+  ///
+  /// Optionally fetch totals split by chat
+  Future<Response> serverStatMedia({bool byChat = false, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/server/statistics/media",
+          "$origin/server/statistics/media${byChat ? "/chat" : ""}",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -162,6 +224,20 @@ class ApiService extends GetxService {
           options: Options(responseType: ResponseType.bytes, receiveTimeout: 1800000),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Get the attachment blurhash for the specified [guid]
+  Future<Response> attachmentBlurhash(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.get(
+        "$origin/attachment/$guid/blurhash",
+        queryParameters: buildQueryParams(),
+        options: Options(responseType: ResponseType.bytes, receiveTimeout: 1800000),
+        cancelToken: cancelToken,
+        onReceiveProgress: onReceiveProgress,
       );
       return returnSuccessOrError(response);
     });
@@ -282,11 +358,51 @@ class ApiService extends GetxService {
     });
   }
 
-  /// Get the number of messages in the server iMessage DB
-  Future<Response> messageCount({CancelToken? cancelToken}) async {
+  /// Mark a chat read by its [guid]
+  Future<Response> markChatRead(String guid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$origin/chat/$guid/read",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Add or remove a participant (specify [method] as "add" or "remove")
+  /// to a chat by its [guid]. Provide a participant [address].
+  Future<Response> addRemoveParticipant(String method, String guid, String address, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$origin/chat/$guid/participant/$method",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken,
+          data: {"address": address}
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Get a group chat icon by the chat [guid]
+  Future<Response> getChatIcon(String guid, {void Function(int, int)? onReceiveProgress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/message/count",
+          "$origin/chat/$guid/icon",
+          queryParameters: buildQueryParams(),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: 1800000),
+          cancelToken: cancelToken,
+          onReceiveProgress: onReceiveProgress,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Delete a chat by [guid]
+  Future<Response> deleteChat(String guid, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.delete(
+          "$origin/chat/$guid",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -294,12 +410,13 @@ class ApiService extends GetxService {
     });
   }
 
-  /// Get the number of messages the current user has sent in the server iMessage
-  /// DB
-  Future<Response> myMessageCount({CancelToken? cancelToken}) async {
+  /// Get the number of messages in the server iMessage DB
+  Future<Response> messageCount({bool updated = false, bool onlyMe = false, CancelToken? cancelToken}) async {
+    // we don't have a query that supports providing updated and onlyMe
+    assert(updated != true && onlyMe != true);
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/message/count/me",
+          "$origin/message/count${updated ? "/updated" : onlyMe ? "/me" : ""}",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -311,7 +428,8 @@ class ApiService extends GetxService {
   /// the response or how to query the DB.
   ///
   /// [withQuery] options: `"chats"` / `"chat"`, `"attachment"` / `"attachments"`,
-  /// `"handle"`, `"sms"`, `"chats.participants"` / `"chat.participants"`
+  /// `"handle"`, `"chats.participants"` / `"chat.participants"`
+  /// (set as one string, comma separated, no spaces)
   Future<Response> messages({List<String> withQuery = const [], List<String> where = const [], String sort = "DESC", int? before, int? after, String? chatGuid, int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
@@ -327,8 +445,8 @@ class ApiService extends GetxService {
   /// Get a single message by [guid]. Use [withQuery] to specify what you would
   /// like in the response or how to query the DB.
   ///
-  /// [withQuery] options: `"chats"` / `"chat"`, `"chats.participants"` / `"chat.participants"`
-  /// (set as one string, comma separated, no spaces)
+  /// [withQuery] options: `"chats"` / `"chat"`, `"attachment"` / `"attachments"`,
+  /// `"chats.participants"` / `"chat.participants"` (set as one string, comma separated, no spaces)
   Future<Response> singleMessage(String guid, {String withQuery = "", CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
@@ -419,6 +537,23 @@ class ApiService extends GetxService {
     });
   }
 
+  /// Query the handles DB. Use [withQuery] to specify what you would like in
+  /// the response or how to query the DB.
+  ///
+  /// [withQuery] options: `"chats"` / `"chat"`, `"chats.participants"` / `"chat.participants"`
+  /// (set as one string, comma separated, no spaces)
+  Future<Response> handles({List<String> withQuery = const [], String? address, int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$origin/handle/query",
+          queryParameters: buildQueryParams(),
+          data: {"with": withQuery, "address": address, "offset": offset, "limit": limit},
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Get a single handle by [guid]
   Future<Response> handle(String guid, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
@@ -450,6 +585,20 @@ class ApiService extends GetxService {
       final response = await dio.post(
           "$origin/contact/query",
           queryParameters: buildQueryParams(),
+          data: {"addresses": addresses},
+          cancelToken: cancelToken
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Add a contact to the server
+  Future<Response> createContact(String addresses, {CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final response = await dio.post(
+          "$origin/contact",
+          queryParameters: buildQueryParams(),
+          //todo
           data: {"addresses": addresses},
           cancelToken: cancelToken
       );
@@ -606,7 +755,7 @@ class ApiService extends GetxService {
       });
       test("My Message Count", () async {
         s.start();
-        var res = await myMessageCount();
+        var res = await messageCount(onlyMe: true);
         expect(res.data['status'], 200);
         s.stop();
         Logger.info("Request took ${s.elapsedMilliseconds} ms");
