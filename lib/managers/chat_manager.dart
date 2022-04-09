@@ -156,7 +156,7 @@ class ChatManager {
     // Handle Private API features
     if (SettingsManager().settings.enablePrivateAPI.value) {
       if (SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
-        SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+        await api.markChatRead(chat.guid);
       }
 
       if (!MethodChannelInterface().headless && SettingsManager().settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {

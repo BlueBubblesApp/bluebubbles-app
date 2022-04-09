@@ -261,7 +261,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // Set that we are
     setProgress(true);
 
-    SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat!.guid}, (data) {
+    api.markChatRead(chat!.guid).then((_) {
       setProgress(false);
     }).catchError((_) {
       setProgress(false);

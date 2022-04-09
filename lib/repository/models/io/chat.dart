@@ -987,7 +987,7 @@ class Chat {
     this.autoSendReadReceipts = autoSendReadReceipts;
     save(updateAutoSendReadReceipts: true);
     if (autoSendReadReceipts) {
-      SocketManager().sendMessage("mark-chat-read", {"chatGuid": guid}, (data) {});
+      api.markChatRead(guid);
     }
     ChatBloc().updateChat(this);
     return this;
