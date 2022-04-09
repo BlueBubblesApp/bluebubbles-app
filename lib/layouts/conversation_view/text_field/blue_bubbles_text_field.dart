@@ -548,7 +548,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       focusNode!.unfocus();
       subjectFocusNode!.unfocus();
     }
-    if (!showMenu && !(await PhotoManager.requestPermission())) {
+    if (!showMenu && !(await PhotoManager.requestPermissionExtend()).isAuth) {
       showShareMenu.value = false;
       return;
     }
