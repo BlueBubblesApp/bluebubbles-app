@@ -11,6 +11,7 @@ import 'package:bluebubbles/layouts/settings/about_panel.dart';
 import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
 import 'package:bluebubbles/layouts/settings/chat_list_panel.dart';
 import 'package:bluebubbles/layouts/settings/conversation_panel.dart';
+import 'package:bluebubbles/layouts/settings/desktop_panel.dart';
 import 'package:bluebubbles/layouts/settings/misc_panel.dart';
 import 'package:bluebubbles/layouts/settings/notification_panel.dart';
 import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
@@ -31,17 +32,16 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
-
-import 'desktop_panel.dart';
 
 List disconnectedStates = [SocketState.DISCONNECTED, SocketState.ERROR, SocketState.FAILED];
 
@@ -1107,18 +1107,23 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           SettingsTile(
                             backgroundColor: tileColor,
                             onTap: () async {
-                              String json = "[";
-                              ContactManager().contacts.forEachIndexed((index, c) {
+                              final contacts = <Map<String, dynamic>>[];
+                              for (Contact c in ContactManager().contacts) {
                                 var map = c.toMap();
-                                map.remove("avatar");
-                                json = json + jsonEncode(map);
-                                if (index != ContactManager().contacts.length - 1) {
-                                  json = json + ",";
+                                map['firstName'] = map['displayName'];
+                                contacts.add(map);
+                              }
+                              api.createContact(contacts).then((_) {
+                                showSnackbar("Notice", "Successfully exported contacts to server");
+                              }).catchError((err) {
+                                if (err is Response) {
+                                  Logger.error(err.data["error"]["message"].toString());
                                 } else {
-                                  json = json + "]";
+                                  Logger.error(err.toString());
                                 }
+
+                                showSnackbar("Error", "Failed to export contacts to server");
                               });
-                              SocketManager().sendMessage("save-vcf", {"vcf": json}, (_) => showSnackbar("Notice", "Successfully exported contacts to server"));
                             },
                             leading: SettingsLeadingIcon(
                               iosIcon: CupertinoIcons.group,

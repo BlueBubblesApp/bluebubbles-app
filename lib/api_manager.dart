@@ -593,13 +593,12 @@ class ApiService extends GetxService {
   }
 
   /// Add a contact to the server
-  Future<Response> createContact(String addresses, {CancelToken? cancelToken}) async {
+  Future<Response> createContact(List<Map<String, dynamic>> contacts, {CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$origin/contact",
           queryParameters: buildQueryParams(),
-          //todo
-          data: {"addresses": addresses},
+          data: contacts,
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
