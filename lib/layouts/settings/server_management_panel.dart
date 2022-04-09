@@ -580,7 +580,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         materialIcon: Icons.sms,
                       ),
                       onTap: () async {
-                        if (![SocketState.CONNECTED].contains(SocketManager().state.value) || controller.isRestartingMessages.value) return;
+                        if (SocketManager().state.value != SocketState.CONNECTED || controller.isRestartingMessages.value) return;
 
                         controller.isRestartingMessages.value = true;
 
@@ -591,22 +591,12 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         // Save the last time we restarted
                         controller.lastRestartMessages = now;
 
-                        // Create a temporary functon so we can call it easily
-                        void stopRestarting() {
-                          controller.isRestartingMessages.value = false;
-                        }
-
                         // Execute the restart
-                        try {
-                          // If it fails or there is an endpoint error, stop the loader
-                          await SocketManager().sendMessage("restart-messages-app", null, (_) {
-                            stopRestarting();
-                          }).catchError((_) {
-                            stopRestarting();
-                          });
-                        } finally {
-                          stopRestarting();
-                        }
+                        api.restartImessage().then((_) {
+                          controller.isRestartingMessages.value = false;
+                        }).catchError((_) {
+                          controller.isRestartingMessages.value = false;
+                        });
                       },
                       trailing: Obx(() => (!controller.isRestartingMessages.value)
                           ? Icon(Icons.refresh, color: Colors.grey)
@@ -636,7 +626,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                     if (SettingsManager().settings.enablePrivateAPI.value
                         && (controller.serverVersionCode.value ?? 0) >= 41) {
                       return SettingsTile(
-                          title: "Restart Private API",
+                          title: "Restart Private API & Services",
                           subtitle: controller.isRestartingPrivateAPI.value && SocketManager().state.value == SocketState.CONNECTED
                               ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the Private API" : "Disconnected, cannot restart",
                           backgroundColor: tileColor,
@@ -645,7 +635,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                             materialIcon: Icons.gpp_maybe,
                           ),
                           onTap: () async {
-                            if (![SocketState.CONNECTED].contains(SocketManager().state.value) || controller.isRestartingPrivateAPI.value) return;
+                            if (SocketManager().state.value != SocketState.CONNECTED || controller.isRestartingPrivateAPI.value) return;
 
                             controller.isRestartingPrivateAPI.value = true;
 
@@ -656,22 +646,12 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                             // Save the last time we restarted
                             controller.lastRestartPrivateAPI = now;
 
-                            // Create a temporary functon so we can call it easily
-                            void stopRestarting() {
-                              controller.isRestartingPrivateAPI.value = false;
-                            }
-
                             // Execute the restart
-                            try {
-                              // If it fails or there is an endpoint error, stop the loader
-                              await SocketManager().sendMessage("restart-private-api", null, (_) {
-                                stopRestarting();
-                              }).catchError((_) {
-                                stopRestarting();
-                              });
-                            } finally {
-                              stopRestarting();
-                            }
+                            api.softRestart().then((_) {
+                              controller.isRestartingPrivateAPI.value = false;
+                            }).catchError((_) {
+                              controller.isRestartingPrivateAPI.value = false;
+                            });
                           },
                           trailing: (!controller.isRestartingPrivateAPI.value)
                               ? Icon(Icons.refresh, color: Colors.grey)
@@ -726,12 +706,12 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                           if (kIsDesktop || kIsWeb) {
                             var db = FirebaseDatabase(databaseURL: SettingsManager().fcmData?.firebaseURL);
                             var ref = db.reference().child('config').child('nextRestart');
-                            ref.set(DateTime
+                            await ref.set(DateTime
                                 .now()
                                 .toUtc()
                                 .millisecondsSinceEpoch);
                           } else {
-                            MethodChannelInterface().invokeMethod(
+                            await MethodChannelInterface().invokeMethod(
                                 "set-next-restart", {"value": DateTime
                                 .now()
                                 .toUtc()
@@ -775,10 +755,10 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                     ),
                     onTap: () async {
 
-                      var data = await SocketManager().sendMessage("check-for-server-update", {}, (_) {});
-                      if (data['status'] == 200) {
-                        bool available = data['data']['available'] ?? false;
-                        Map<String, dynamic> metadata = data['data']['metadata'] ?? {};
+                      final response = await api.checkUpdate();
+                      if (response.statusCode == 200) {
+                        bool available = response.data['data']['available'] ?? false;
+                        Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
                         Get.defaultDialog(
                           title: "Update Check",
                           titleStyle: Theme.of(context).textTheme.headline1,
