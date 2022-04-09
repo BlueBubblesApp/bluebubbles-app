@@ -193,30 +193,17 @@ Future<Null> initApp(bool isBubble) async {
         String? storeRef = prefs.getString("objectbox-reference");
         bool? useCustomPath = prefs.getBool("use-custom-path");
         String? customStorePath = prefs.getString("custom-path");
-        if (useCustomPath != true && storeRef != null) {
+        if (!kIsDesktop && storeRef != null) {
           Logger.info("Opening ObjectBox store from reference");
           try {
             store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
           } catch (_) {
             Logger.info("Failed to open store from reference, opening from path");
             try {
-              if (kIsDesktop) {
-                Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
-              }
               store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
             } catch (e, s) {
               Logger.error(e);
               Logger.error(s);
-              if (Platform.isWindows) {
-                Logger.info("Failed to open store from default path. Using custom path");
-                customStorePath ??= "C:\\bluebubbles_app";
-                prefs.setBool("use-custom-path", true);
-                objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-                objectBoxDirectory.createSync(recursive: true);
-                Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-                store = await openStore(directory: join(customStorePath, 'objectbox'));
-              }
-              // TODO Linux fallback
             }
           }
         } else if (useCustomPath == true && Platform.isWindows) {
@@ -793,7 +780,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       systemNavigationBarIconBrightness:
           Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       statusBarColor: Colors.transparent, // status bar color
-      statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+      statusBarIconBrightness:
+          context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -804,7 +792,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Actions(
         actions: {

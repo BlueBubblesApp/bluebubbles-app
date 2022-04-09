@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -32,7 +33,6 @@ import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/api_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
@@ -41,6 +41,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:sprung/sprung.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -150,14 +151,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     ActionHandler.sendReaction(widget.currentChat!.chat, widget.message, type);
     Navigator.of(context).pop();
   }
-  
+
   void popDetails() {
     bool dialogOpen = Get.isDialogOpen ?? false;
     if (dialogOpen) {
       if (kIsWeb) {
         Get.back();
       } else {
-        Navigator.of(context).pop();
+        Get.close(1);
       }
     }
     Navigator.of(context).pop();
@@ -179,7 +180,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: TitleBarWrapper(
         child: Scaffold(
@@ -547,14 +549,16 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-      if (showDownload
-          && supportsOriginalDownload
-          && widget.message.attachments.where((element) =>
-            (element?.uti?.contains("heic") ?? false)
-              || (element?.uti?.contains("heif") ?? false)
-              || (element?.uti?.contains("quicktime") ?? false)
-              || (element?.uti?.contains("coreaudio") ?? false)
-              || (element?.uti?.contains("tiff") ?? false)).isNotEmpty)
+      if (showDownload &&
+          supportsOriginalDownload &&
+          widget.message.attachments
+              .where((element) =>
+                  (element?.uti?.contains("heic") ?? false) ||
+                  (element?.uti?.contains("heif") ?? false) ||
+                  (element?.uti?.contains("quicktime") ?? false) ||
+                  (element?.uti?.contains("coreaudio") ?? false) ||
+                  (element?.uti?.contains("tiff") ?? false))
+              .isNotEmpty)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -563,11 +567,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               final RxnDouble progress = RxnDouble();
               final Rxn<Attachment> attachmentObs = Rxn<Attachment>();
               final toDownload = widget.message.attachments.where((element) =>
-                (element?.uti?.contains("heic") ?? false)
-                  || (element?.uti?.contains("heif") ?? false)
-                  || (element?.uti?.contains("quicktime") ?? false)
-                  || (element?.uti?.contains("coreaudio") ?? false)
-                  || (element?.uti?.contains("tiff") ?? false));
+                  (element?.uti?.contains("heic") ?? false) ||
+                  (element?.uti?.contains("heif") ?? false) ||
+                  (element?.uti?.contains("quicktime") ?? false) ||
+                  (element?.uti?.contains("coreaudio") ?? false) ||
+                  (element?.uti?.contains("tiff") ?? false));
               final length = toDownload.length;
               Get.defaultDialog(
                 backgroundColor: context.theme.colorScheme.secondary,
@@ -577,58 +581,63 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 titlePadding: EdgeInsets.only(top: 15),
                 title: "Downloading attachment${length > 1 ? "s" : ""}...",
                 titleStyle: Theme.of(context).textTheme.headline1,
-                confirm: Obx(() => downloadingAttachments.value
-                    ? Container(height: 0, width: 0)
-                    : Container(
-                  margin: EdgeInsets.only(bottom: 10),
-                  child: TextButton(
-                    child: Text("CLOSE"),
-                    onPressed: () async {
-                      if (Get.isSnackbarOpen ?? false) {
-                        Get.close(1);
-                      }
-                      Get.back();
-                      popDetails();
-                    },
-                  ),
-                ),
+                confirm: Obx(
+                  () => downloadingAttachments.value
+                      ? Container(height: 0, width: 0)
+                      : Container(
+                          margin: EdgeInsets.only(bottom: 10),
+                          child: TextButton(
+                            child: Text("CLOSE"),
+                            onPressed: () async {
+                              if (Get.isSnackbarOpen ?? false) {
+                                Get.close(1);
+                              }
+                              Get.back();
+                              popDetails();
+                            },
+                          ),
+                        ),
                 ),
                 cancel: Container(height: 0, width: 0),
                 content: ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: 300),
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-                    Obx(() => Text(
-                        '${progress.value != null && attachmentObs.value != null ? getSizeString(progress.value! * attachmentObs.value!.totalBytes! / 1000) : ""} / ${getSizeString(attachmentObs.value!.totalBytes!.toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)'),
+                    Obx(
+                      () => Text(
+                          '${progress.value != null && attachmentObs.value != null ? getSizeString(progress.value! * attachmentObs.value!.totalBytes! / 1000) : ""} / ${getSizeString(attachmentObs.value!.totalBytes!.toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)'),
                     ),
                     SizedBox(height: 10.0),
                     Obx(
-                          () => ClipRRect(
+                      () => ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: LinearProgressIndicator(
                           backgroundColor: Colors.white,
                           value: progress.value,
                           minHeight: 5,
-                          valueColor:
-                          AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
                     SizedBox(
                       height: 15.0,
                     ),
-                    Obx(() => Text(
-                      progress.value == 1 ? "Download Complete!" : "Downloading attachment ",
-                      maxLines: 2,
-                      textAlign: TextAlign.center,
-                    ),),
+                    Obx(
+                      () => Text(
+                        progress.value == 1 ? "Download Complete!" : "Downloading attachment ",
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ]),
                 ),
               );
               try {
                 for (Attachment? element in toDownload) {
                   attachmentObs.value = element;
-                  final response = await api.downloadAttachment(element!.guid!, original: true,
-                      onReceiveProgress: (count, total) => progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
+                  final response = await api.downloadAttachment(element!.guid!,
+                      original: true,
+                      onReceiveProgress: (count, total) =>
+                          progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
                   final file = PlatformFile(
                     name: element.transferName!,
                     path: kIsWeb ? null : element.getPath(),
@@ -839,7 +848,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              Navigator.of(context).pop();
+              popDetails();
               Navigator.pushReplacement(
                 context,
                 cupertino.CupertinoPageRoute(
@@ -1108,24 +1117,25 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () {
+                    onTap: () async {
                       Widget content = Column(
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: moreActions,
                       );
                       Get.dialog(
-                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoAlertDialog(
-                            backgroundColor: Theme.of(context).colorScheme.secondary,
-                            content: content,
-                          ) : AlertDialog(
-                            contentPadding: EdgeInsets.all(5),
-                            shape: cupertino.RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                            backgroundColor: Theme.of(context).colorScheme.secondary,
-                            content: content,
-                          ),
-                        name: 'Popup Menu'
-                      );
+                          SettingsManager().settings.skin.value == Skins.iOS
+                              ? CupertinoAlertDialog(
+                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  content: content,
+                                )
+                              : AlertDialog(
+                                  contentPadding: EdgeInsets.all(5),
+                                  shape: cupertino.RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  content: content,
+                                ),
+                          name: 'Popup Menu');
                     },
                     child: ListTile(
                       dense: !kIsDesktop && !kIsWeb,

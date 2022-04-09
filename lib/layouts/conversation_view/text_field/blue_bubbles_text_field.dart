@@ -36,6 +36,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:get/get.dart';
 import 'package:giphy_get/giphy_get.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
 import 'package:transparent_pointer/transparent_pointer.dart';
@@ -548,7 +549,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       focusNode!.unfocus();
       subjectFocusNode!.unfocus();
     }
-    if (!showMenu && !(await PhotoManager.requestPermission())) {
+    if (!showMenu && !(await PhotoManager.requestPermissionExtend()).isAuth) {
       showShareMenu.value = false;
       return;
     }
@@ -1010,9 +1011,25 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               focusNode!.requestFocus();
               return KeyEventResult.handled;
             }
-            if (event.data is RawKeyEventDataWeb) {
-              var data = event.data as RawKeyEventDataWeb;
-              if ((data.physicalKey == PhysicalKeyboardKey.keyV || data.logicalKey == LogicalKeyboardKey.keyV) &&
+
+            if (windowsData != null) {
+              if ((windowsData.physicalKey == PhysicalKeyboardKey.keyV ||
+                      windowsData.logicalKey == LogicalKeyboardKey.keyV) &&
+                  (event.isControlPressed)) {
+                Pasteboard.image.then((image) {
+                  if (image != null) {
+                    addAttachment(PlatformFile(
+                      name: randomString(8) + ".png",
+                      bytes: image,
+                      size: image.length,
+                    ));
+                  }
+                });
+              }
+            }
+
+            if (webData != null) {
+              if ((webData.physicalKey == PhysicalKeyboardKey.keyV || webData.logicalKey == LogicalKeyboardKey.keyV) &&
                   (event.isControlPressed || previousKeyCode == 0x1700000000)) {
                 getPastedImageWeb().then((value) {
                   if (value != null) {
@@ -1031,7 +1048,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   }
                 });
               }
-              previousKeyCode = data.logicalKey.keyId;
+              previousKeyCode = webData.logicalKey.keyId;
               return KeyEventResult.ignored;
             }
             if (kIsDesktop || kIsWeb) return KeyEventResult.ignored;
@@ -1106,7 +1123,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                           text: reply.isFromMe!
                                               ? "You"
                                               : generateContactInfo
-                                                  ? ContactManager().getContact(reply.handle?.address)?.fakeName ?? "You"
+                                                  ? ContactManager().getContact(reply.handle?.address)?.fakeName ??
+                                                      "You"
                                                   : ContactManager()
                                                           .getContact(reply.handle?.address ?? "")
                                                           ?.displayName ??
@@ -1305,9 +1323,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                         TextSpan(children: [
                                           TextSpan(text: "Replying to "),
                                           TextSpan(
-                                              text: ContactManager()
-                                                      .getContact(reply.handle?.address)
-                                                      ?.displayName ??
+                                              text: ContactManager().getContact(reply.handle?.address)?.displayName ??
                                                   replyToMessage.value!.handle?.address ??
                                                   "You",
                                               style: Theme.of(context)
@@ -1520,9 +1536,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                         TextSpan(children: [
                                           TextSpan(text: "Replying to "),
                                           TextSpan(
-                                              text: ContactManager()
-                                                      .getContact(reply.handle?.address)
-                                                      ?.displayName ??
+                                              text: ContactManager().getContact(reply.handle?.address)?.displayName ??
                                                   reply.handle?.address ??
                                                   "You",
                                               style: Theme.of(context)
@@ -1640,7 +1654,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                             fontSizeDelta: -0.25,
                           ),
-                      onContentCommitted: onContentCommit,
+                      // onContentCommitted: onContentCommit,
                       decoration: InputDecoration(
                         isDense: true,
                         enabledBorder: OutlineInputBorder(
@@ -2020,7 +2034,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         updateTextFieldAttachments();
         if (mounted) setState(() {});
         return;
-      } else if (!kIsWeb && image.path == file.path) {
+      } else if (!kIsWeb && !kIsDesktop && image.path == file.path) {
         pickedImages.removeWhere((element) => element.path == file.path);
         updateTextFieldAttachments();
         if (mounted) setState(() {});
