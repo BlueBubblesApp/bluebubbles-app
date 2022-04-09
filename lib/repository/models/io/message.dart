@@ -20,6 +20,7 @@ import 'package:bluebubbles/repository/models/io/attachment.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
+import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
@@ -63,6 +64,192 @@ class GetMessageAttachments extends AsyncTask<List<dynamic>, Map<String, List<At
           e!.guid!,
           e.dbAttachments)));
       return map;
+    });
+  }
+}
+
+/// Async method to get chats from objectbox
+class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
+  final List<dynamic> params;
+
+  BulkSaveNewMessages(this.params);
+
+  @override
+  AsyncTask<List<dynamic>, List<Message>> instantiate(List<dynamic> parameters, [Map<String, SharedData>? sharedData]) {
+    return BulkSaveNewMessages(parameters);
+  }
+
+  @override
+  List<dynamic> parameters() {
+    return params;
+  }
+
+  @override
+  FutureOr<List<Message>> run() {
+    return store.runInTransaction(TxMode.write, () {
+      /// Takes the list of messages from [params] and saves it
+      /// to the objectbox store.
+      Chat inputChat = params[0];
+      List<Message> inputMessages = params[1];
+      List<String> inputMessageGuids = inputMessages.map((element) => element.guid!).toList();
+
+      // Pull out all the unique attachments.
+      // Maintain a map of the message attachments
+      Map<String, Attachment> attachmentsToSave = {};
+      Map<String, List<String>> messageAttachments = {};
+      for (final msg in inputMessages) {
+        for (final a in msg.attachments) {
+          if (!attachmentsToSave.containsKey(a!.guid)) {
+            attachmentsToSave[a.guid!] = a;
+          }
+
+          if (!messageAttachments.containsKey(a.guid)) {
+            messageAttachments[msg.guid!] = [];
+          }
+
+          if (!messageAttachments[msg.guid]!.contains(a.guid)) {
+            messageAttachments[msg.guid]?.add(a.guid!);
+          }
+        }
+      }
+
+      // If there are attachments we need to save, do any duplication checks, then add them,
+      // and relate them to the corresponding message
+      if (attachmentsToSave.isNotEmpty) {
+        List<String> inputAttachmentGuids = attachmentsToSave.values.map((e) => e.guid).whereNotNull().toList();
+        QueryBuilder<Attachment> attachmentQuery = attachmentBox.query(Attachment_.guid.oneOf(inputAttachmentGuids));
+        List<String> existingAttachmentGuids =
+            attachmentQuery.build().find().map((e) => e.guid).whereNotNull().toList();
+
+        // Insert the attachments that don't yet exist
+        List<Attachment> attachmentsToInsert = attachmentsToSave.values
+            .where((element) => !existingAttachmentGuids.contains(element.guid))
+            .whereNotNull()
+            .toList();
+        attachmentBox.putMany(attachmentsToInsert);
+
+        // Fetch the attachments that we were intended to insert
+        QueryBuilder<Attachment> attachmentQuery2 = attachmentBox.query(Attachment_.guid.oneOf(inputAttachmentGuids));
+        List<Attachment> attachments = attachmentQuery2.build().find().whereNotNull().toList();
+
+        // Create a map for easy accessibility when we add the relationships
+        Map<String, Attachment> attachmentMap = {};
+        for (final a in attachments) {
+          attachmentMap[a.guid!] = a;
+        }
+
+        // Create the relationships
+        for (final msg in inputMessages) {
+          final relatedAttachments =
+              messageAttachments[msg.guid]?.map((e) => attachmentMap[e]).whereNotNull().toList() ?? [];
+          msg.attachments = relatedAttachments;
+          msg.dbAttachments.addAll(relatedAttachments);
+        }
+      }
+
+      // Although this assumes that these are brand new entries, we should still
+      // check if they exist first. Mainly because I still saw some unique violations.
+      QueryBuilder<Message> query = messageBox.query(Message_.guid.oneOf(inputMessageGuids));
+      List<String> existingMessageGuids = query.build().find().map((e) => e.guid!).toList();
+      inputMessages = inputMessages.where((element) => !existingMessageGuids.contains(element.guid)).toList();
+
+      // Fetch the handles
+      List<Handle> handles = handleBox.getAll();
+      Map<int, Handle> originalRowIdMap = {};
+      for (final h in handles) {
+        originalRowIdMap[h.originalROWID!] = h;
+      }
+
+      // Relate the messages to the chat.
+      // Then fix the handleIDs
+      for (final msg in inputMessages) {
+        msg.chat.target = inputChat;
+
+        if (msg.handleId != null && msg.handleId! > 1) {
+          msg.handleId = originalRowIdMap[msg.handleId]?.id;
+        }
+
+        if (msg.otherHandle != null && msg.otherHandle! > 1) {
+          msg.otherHandle = originalRowIdMap[msg.otherHandle]?.id;
+        }
+      }
+
+      // This should save the relationships as well
+      messageBox.putMany(inputMessages);
+
+      // Get the inserted messages
+      QueryBuilder<Message> messageQuery = messageBox.query(Message_.guid.oneOf(inputMessageGuids));
+      List<Message> messages = messageQuery.build().find().toList();
+
+      // For each of the messages, check for associated message GUIDs
+      Map<String, Message> messagesToUpdate = {};
+      for (final message in messages) {
+        if ((message.associatedMessageGuid ?? '').isEmpty) continue;
+
+        // Find the associated message in the DB and update the hasReactions flag
+        List<Message> associatedMessages =
+            Message.find(cond: Message_.guid.equals(message.associatedMessageGuid!)).toList();
+        if (associatedMessages.isNotEmpty) {
+          // Toggle the hasReactions flag
+          Message associatedMessage = messagesToUpdate[associatedMessages[0].guid] ?? associatedMessages[0];
+          associatedMessage.hasReactions = true;
+
+          // Make sure the current message has the associated message in it's list, and the hasReactions
+          // flag is set as well
+          Message currentMessage = messagesToUpdate[message.guid!] ?? message;
+          for (var e in currentMessage.associatedMessages) {
+            if (e.guid == associatedMessage.guid) {
+              e.hasReactions = true;
+              break;
+            }
+          }
+
+          // Update the cached values
+          messagesToUpdate[associatedMessage.guid!] = associatedMessage;
+          messagesToUpdate[currentMessage.guid!] = currentMessage;
+        }
+      }
+
+      // If we have messages to update, update them
+      if (messagesToUpdate.isNotEmpty) {
+        try {
+          messageBox.putMany(messagesToUpdate.values.toList());
+        } catch (ex) {
+          print('Failed to put associated messages into DB: ${ex.toString()}');
+        }
+      }
+
+      messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      bool isNewer = false;
+
+      // If the message was saved correctly, update this chat's latestMessage info,
+      // but only if the incoming message's date is newer
+      if (messages.isNotEmpty) {
+        if ((messages[0].id != null || kIsWeb)) {
+          if (inputChat.latestMessageDate == null) {
+            isNewer = true;
+          } else if (inputChat.latestMessageDate!.millisecondsSinceEpoch <
+              messages[0].dateCreated!.millisecondsSinceEpoch) {
+            isNewer = true;
+          }
+        }
+
+        if (isNewer) {
+          inputChat.latestMessage = messages[0];
+          // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+          inputChat.latestMessageText = MessageHelper.getNotificationText(messages[0]);
+          inputChat.fakeLatestMessageText =
+              faker.lorem.words((inputChat.latestMessageText ?? "").split(" ").length).join(" ");
+          inputChat.latestMessageDate = messages[0].dateCreated;
+
+          // Save the chat with the new info
+          chatBox.put(inputChat);
+        }
+
+        chatBox.put(inputChat);
+      }
+
+      return messages;
     });
   }
 }
@@ -274,6 +461,10 @@ class Message {
     return data;
   }
 
+  static int count() {
+    return messageBox.count();
+  }
+
   /// Save a single message - prefer [bulkSave] for multiple messages rather
   /// than iterating through them
   Message save({Chat? chat}) {
@@ -313,6 +504,13 @@ class Message {
       } on UniqueViolationException catch (_) {}
     });
     return this;
+  }
+
+  static Future<List<Message>> bulkSaveNewMessages(Chat chat, List<Message> messages) async {
+    if (kIsWeb) throw Exception("Web does not support saving messages!");
+
+    final task = BulkSaveNewMessages([chat, messages]);
+    return (await createAsyncTask<List<Message>>(task)) ?? [];
   }
 
   /// Save a list of messages
@@ -393,7 +591,7 @@ class Message {
         await Future.delayed(Duration(milliseconds: 500));
         return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false, chat: chat);
       }
-  
+
       // If we have a chat and the message doesn't exist, let's add the message as new
       if (chat != null) {
         await chat.addMessage(newMessage);
@@ -411,7 +609,7 @@ class Message {
     if (existing.guid != newMessage.guid) {
       existing.guid = newMessage.guid;
     }
-    
+
     existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
     existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
     existing._error.value = newMessage._error.value;
@@ -433,7 +631,7 @@ class Message {
     return this;
   }
 
-  Message setPlayedDate({ DateTime? timestamp }) {
+  Message setPlayedDate({DateTime? timestamp}) {
     datePlayed = timestamp ?? DateTime.now().toUtc();
     save();
     return this;
@@ -466,8 +664,8 @@ class Message {
       /// Add the attachments with some fancy list operations
       /// The conditional is in case objectbox hasn't persisted the dbAttachments yet
       map.addEntries(messages.where((element) => element?.id != null).map((e) => MapEntry(
-          e!.guid!,
-          e.dbAttachments.isEmpty ? e.attachments : e.dbAttachments
+        e!.guid!,
+        e.dbAttachments.isEmpty ? e.attachments : e.dbAttachments
       )));
       return map;
     });

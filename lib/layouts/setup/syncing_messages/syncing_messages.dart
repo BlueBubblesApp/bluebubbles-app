@@ -1,11 +1,12 @@
 import 'dart:math';
 
-import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/sync/sync_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:simple_animations/stateless_animation/custom_animation.dart';
+import 'package:tuple/tuple.dart';
 
 class SyncingMessages extends StatefulWidget {
   SyncingMessages({Key? key, required this.controller}) : super(key: key);
@@ -31,30 +33,34 @@ class _SyncingMessagesState extends State<SyncingMessages> {
   @override
   void initState() {
     super.initState();
-    ever<SetupData?>(SocketManager().setup.data, (event) async {
-      if (event?.progress == -1) {
-        await showDialog(
-          context: context,
-          builder: (context) =>
-              FailedToScan(exception: event?.output.last.text, title: "An error occured during setup!"),
-        );
 
-        widget.controller.animateToPage(
-          3,
-          duration: Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      } else if ((event?.progress ?? 0) >= 100 && !hasPlayed) {
-        setState(() {
-          hasPlayed = true;
-        });
-        confettiController.play();
-      }
-    });
+    final syncManager = SocketManager().setup.syncManager;
+    if (syncManager != null) {
+      ever<SyncStatus>(syncManager.status, (event) async {
+        if (event == SyncStatus.COMPLETED_ERROR) {
+          await showDialog(
+            context: context,
+            builder: (context) => FailedToScan(exception: syncManager.error, title: "An error occured during setup!"),
+          );
+
+          widget.controller.animateToPage(
+            3,
+            duration: Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        } else if (event == SyncStatus.COMPLETED_SUCCESS && !hasPlayed) {
+          setState(() {
+            hasPlayed = true;
+          });
+          confettiController.play();
+        }
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final syncManager = SocketManager().setup.syncManager!;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
@@ -71,7 +77,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
           alignment: Alignment.topCenter,
           children: [
             Obx(() {
-              double progress = SocketManager().setup.data.value?.progress ?? 0;
+              double progress = syncManager.progress.value;
               return Padding(
                 padding: const EdgeInsets.only(top: 80.0, left: 20.0, right: 20.0, bottom: 40.0),
                 child: Column(
@@ -103,7 +109,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                       Column(
                         children: [
                           Text(
-                            "${progress.floor()}%",
+                            "${(progress * 100).round()}%",
                             style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                           ),
                           SizedBox(height: 15),
@@ -112,8 +118,10 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(20),
                               child: LinearProgressIndicator(
-                                value: progress != 100.0 && progress != 0.0 ? (progress / 100) : null,
-                                backgroundColor: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Colors.grey : Colors.white,
+                                value: progress == 0 ? null : progress,
+                                backgroundColor: Theme.of(context).backgroundColor.computeLuminance() > 0.5
+                                    ? Colors.grey
+                                    : Colors.white,
                                 valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                               ),
                             ),
@@ -133,18 +141,16 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                               child: ListView.builder(
                                 physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                                 itemBuilder: (context, index) {
-                                  SetupOutputData data =
-                                      SocketManager().setup.data.value?.output.reversed.toList()[index] ??
-                                          SetupOutputData("Unknown", SetupOutputType.ERROR);
+                                  Tuple2<LogLevel, String> log = syncManager.output.reversed.toList()[index];
                                   return Text(
-                                    data.text,
+                                    log.item2,
                                     style: TextStyle(
-                                      color: data.type == SetupOutputType.LOG ? Colors.grey : Colors.red,
+                                      color: log.item1 == LogLevel.INFO ? Colors.grey : Colors.red,
                                       fontSize: 10,
                                     ),
                                   );
                                 },
-                                itemCount: SocketManager().setup.data.value?.output.length ?? 0,
+                                itemCount: syncManager.output.length,
                               ),
                             ),
                           ),

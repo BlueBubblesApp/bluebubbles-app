@@ -188,7 +188,6 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                           onPressed: () {
                             // Set the number of messages to sync
                             SocketManager().setup.numberOfMessagesPerPage = numberOfMessages;
-                            SocketManager().setup.downloadAttachments = downloadAttachments;
                             SocketManager().setup.skipEmptyChats = skipEmptyChats;
 
                             // Start syncing

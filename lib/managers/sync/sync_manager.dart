@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:get/get.dart';
+import 'package:tuple/tuple.dart';
 
 enum SyncStatus { IDLE, IN_PROGRESS, STOPPING, COMPLETED_SUCCESS, COMPLETED_ERROR }
 
@@ -25,6 +26,9 @@ abstract class SyncManager {
 
   /// So we can track the progress of the
   Completer<void>? completer;
+
+  // Store any log output here
+  RxList<Tuple2<LogLevel, String>> output = <Tuple2<LogLevel, String>>[].obs;
 
   SyncManager(this.name);
 
@@ -52,11 +56,34 @@ abstract class SyncManager {
     completeWithError('$name Sync was force stopped');
   }
 
+  void setProgress(int amount, int total) {
+    if (total <= 0) {
+      progress.value = 0.0;
+    } else if (amount >= total) {
+      progress.value = 1.0;
+    } else {
+      progress.value = double.parse((amount / total).toStringAsFixed(2));
+    }
+  }
+
+  void addToOutput(String log, {LogLevel level = LogLevel.INFO}) {
+    output.add(Tuple2(level, log));
+
+    if (level == LogLevel.ERROR) {
+      Logger.error(log, tag: "SyncManager");
+    } else if (level == LogLevel.WARN) {
+      Logger.warn(log, tag: "SyncManager");
+    } else {
+      Logger.info(log, tag: "SyncManager");
+    }
+  }
+
   void complete() {
     if (completer != null && !completer!.isCompleted) {
       completer!.complete();
     }
 
+    progress.value = 0.0;
     status.value = SyncStatus.COMPLETED_SUCCESS;
     endedAt = DateTime.now().toUtc();
     Logger.info(
@@ -69,6 +96,7 @@ abstract class SyncManager {
       completer!.completeError(errorMessage);
     }
 
+    progress.value = 0.0;
     error = errorMessage;
     status.value = SyncStatus.COMPLETED_ERROR;
     endedAt = DateTime.now().toUtc();

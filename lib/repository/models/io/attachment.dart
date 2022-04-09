@@ -140,6 +140,10 @@ class Attachment {
     return data;
   }
 
+  static int count() {
+    return attachmentBox.count();
+  }
+
   /// Save a new attachment or update an existing attachment on disk
   /// [message] is used to create a link between the attachment and message,
   /// when provided
