@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -13,7 +13,7 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:get/get.dart' hide Response;
@@ -96,12 +96,12 @@ class AttachmentSender {
     // Add the message to the chat.
     // This will save the message, attachments, and chat
     await chat.addMessage(sentMessage);
-    NewMessageManager().addMessage(chat, sentMessage, outgoing: true);
+    MessageManager().addMessage(chat, sentMessage, outgoing: true);
 
     // If there is any text, save the text too
     if (messageWithText != null) {
       await chat.addMessage(messageWithText!);
-      NewMessageManager().addMessage(chat, messageWithText!, outgoing: true);
+      MessageManager().addMessage(chat, messageWithText!, outgoing: true);
     }
 
     // add this sender to our list of active senders
@@ -129,7 +129,7 @@ class AttachmentSender {
       }
 
       Logger.info("Message match: [${response.data['data']["text"]}] - ${response.data['data']["guid"]} - $tempGuid", tag: "MessageStatus");
-      NewMessageManager().updateMessage(chat, tempGuid, newMessage);
+      MessageManager().updateMessage(chat, tempGuid, newMessage);
       SocketManager().finishSender(_attachmentGuid);
     }
 
@@ -154,7 +154,7 @@ class AttachmentSender {
       }
 
       await Message.replaceMessage(tempGuid, message);
-      NewMessageManager().updateMessage(chat, tempGuid, message);
+      MessageManager().updateMessage(chat, tempGuid, message);
     }
 
     // on web, we can't send from a file so send from bytes instead

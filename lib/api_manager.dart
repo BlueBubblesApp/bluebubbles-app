@@ -432,7 +432,7 @@ class ApiService extends GetxService {
   /// [withQuery] options: `"chats"` / `"chat"`, `"attachment"` / `"attachments"`,
   /// `"handle"`, `"chats.participants"` / `"chat.participants"`
   /// (set as one string, comma separated, no spaces)
-  Future<Response> messages({List<String> withQuery = const [], List<String> where = const [], String sort = "DESC", int? before, int? after, String? chatGuid, int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
+  Future<Response> messages({List<String> withQuery = const [], List<dynamic> where = const [], String sort = "DESC", int? before, int? after, String? chatGuid, int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$origin/message/query",

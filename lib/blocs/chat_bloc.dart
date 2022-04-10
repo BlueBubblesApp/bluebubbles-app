@@ -5,10 +5,10 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -292,7 +292,7 @@ class ChatBloc {
 
   StreamSubscription<NewMessageEvent> setupMessageListener() {
     // Listen for new messages
-    return NewMessageManager().stream.listen(handleMessageAction);
+    return MessageManager().stream.listen(handleMessageAction);
   }
 
   Future<void> getChatBatches({int batchSize = 15, bool headless = false}) async {
@@ -314,7 +314,7 @@ class ChatBloc {
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = [];
       if (kIsWeb) {
-        chats = await SocketManager().getChats({"withLastMessage": true, "limit": batchSize, "offset": i * batchSize});
+        chats = await ChatManager().getChats(withLastMessage: true, limit: batchSize, offset: i * batchSize);
       } else {
         chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       }

@@ -10,6 +10,7 @@ import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
 import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -814,7 +815,7 @@ class _SyncDialogState extends State<SyncDialog> {
     if (lookback == null) return;
 
     DateTime now = DateTime.now().toUtc().subtract(lookback!);
-    SocketManager().fetchMessages(null, after: now.millisecondsSinceEpoch)!.then((dynamic messages) {
+    MessageManager().getMessages(withAttachments: true, withHandles: true, after: now.millisecondsSinceEpoch, limit: 10000).then((dynamic messages) {
       if (mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";

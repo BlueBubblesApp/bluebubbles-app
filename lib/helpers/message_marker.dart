@@ -1,4 +1,4 @@
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:get/get.dart';
 
@@ -9,7 +9,7 @@ class MessageMarkers {
   final Rxn<Message> lastDeliveredMessage = Rxn();
 
   MessageMarkers(this.guid) {
-    NewMessageManager().stream.listen((event) {
+    MessageManager().stream.listen((event) {
       // Ignore any events that don't have to do with the current chat
       if (event.chatGuid != guid) return;
 

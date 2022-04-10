@@ -8,8 +8,8 @@ import 'package:bluebubbles/helpers/crypto.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/firebase/database_manager.dart';
 import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
@@ -431,97 +431,6 @@ class SocketManager {
     _manager.socket = null;
     state.value = SocketState.DISCONNECTED;
     NotificationManager().clearSocketWarning();
-  }
-
-  Future<List<Chat>> getChats(Map<String, dynamic> params, {Function(List<dynamic>?)? cb}) async {
-    List<Chat> chats = [];
-    List<dynamic> data = await request('get-chats', params, cb: cb);
-    for (var item in data) {
-      try {
-        var chat = Chat.fromMap(item);
-        chats.add(chat);
-      } catch (ex) {
-        chats.add(Chat(guid: "ERROR", displayName: item.toString()));
-      }
-    }
-    return chats;
-  }
-
-  Future<dynamic>? getMessages(Map<String, dynamic> params, {Function(List<dynamic>?)? cb}) {
-    return request('get-messages', params, cb: cb);
-  }
-
-  Future<dynamic>? getChatMessages(Map<String, dynamic> params, {Function(List<dynamic>?)? cb}) {
-    return request('get-chat-messages', params, cb: cb);
-  }
-
-  Future<dynamic>? request(String path, Map<String, dynamic> params, {Function(List<dynamic>?)? cb}) async {
-    Completer<List<dynamic>?> completer = Completer();
-    if (_manager.socket == null) SocketManager().startSocketIO();
-
-    Logger.info("Sending request for '$path'", tag: "Socket");
-    _manager.sendMessage(path, params, (Map<String, dynamic> data) async {
-      if (data["status"] != 200) return completer.completeError(data);
-
-      dynamic output;
-      if (data.containsKey("data")) {
-        output = data["data"];
-      }
-
-      if (!completer.isCompleted) completer.complete(output);
-      if (cb != null) cb(output);
-    });
-
-    return completer.future;
-  }
-
-  Future<dynamic>? getAttachments(String chatGuid, String messageGuid, {Function(List<dynamic>?)? cb}) {
-    Map<String, dynamic> params = {
-      'after': 1,
-      'identifier': chatGuid,
-      'limit': 1,
-      'withAttachments': true,
-      'withChats': true,
-      'where': [
-        {
-          'statement': 'message.guid = :guid',
-          'args': {'guid': messageGuid}
-        }
-      ]
-    };
-
-    return request('get-messages', params);
-  }
-
-  Future<dynamic>? fetchMessages(Chat? chat,
-      {int offset = 0,
-      int limit = 100,
-      int? after,
-      bool onlyAttachments = false,
-      List<Map<String, dynamic>> where = const []}) async {
-    Logger.info("(Fetch Messages) Fetching data.");
-
-    Map<String, dynamic> params = {};
-    params["chatGuid"] = chat?.guid;
-    params["offset"] = offset;
-    params["limit"] = limit;
-    params["withAttachments"] = true;
-    params["withHandle"] = true;
-    params["sort"] = "DESC";
-    params["where"] = where;
-
-    if (after != null) {
-      params["after"] = after;
-    }
-
-    if (onlyAttachments) {
-      params["where"].add({
-        "statement": "message.cache_has_attachments = :flag",
-        "args": {"flag": 1}
-      });
-    }
-
-    return getMessages(params)!;
   }
 
   Future<Map<String, dynamic>> sendMessage(

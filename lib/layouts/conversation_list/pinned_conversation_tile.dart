@@ -12,10 +12,10 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
@@ -56,7 +56,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
     }
 
     // Listen for changes in the group
-    NewMessageManager().stream.listen((NewMessageEvent event) async {
+    MessageManager().stream.listen((NewMessageEvent event) async {
       // Make sure we have the required data to qualify for this tile
       if (event.chatGuid != widget.chat.guid) return;
       if (!event.event.containsKey("message")) return;

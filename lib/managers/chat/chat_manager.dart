@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio/dio.dart';
-
-import '../socket_manager.dart';
 
 class ChatManager {
   factory ChatManager() {
@@ -200,10 +200,38 @@ class ChatManager {
     return null;
   }
 
-  Future<List<dynamic>> loadMessageChunk(Chat chat, int offset, {int limit = 25}) async {
-    Completer<List<dynamic>> completer = Completer();
+  Future<List<Chat>> getChats({bool withParticipants = false, bool withLastMessage = false, int offset = 0, int limit = 100,}) async {
+    final withQuery = <String>[];
+    if (withParticipants) withQuery.add("participants");
+    if (withLastMessage) withQuery.add("lastmessage");
 
-    api.chatMessages(chat.guid, withQuery: "attachment,handle", offset: offset, limit: limit).then((response) {
+    final response = await api.chats(withQuery: withQuery, offset: offset, limit: limit).catchError((err) {
+      if (err is! Response) {
+        Logger.error("Failed to fetch chat metadata! ${err.toString()}", tag: "Fetch-Chat");
+      }
+    });
+
+    // parse chats from the response
+    final chats = <Chat>[];
+    for (var item in response.data) {
+      try {
+        var chat = Chat.fromMap(item);
+        chats.add(chat);
+      } catch (ex) {
+        chats.add(Chat(guid: "ERROR", displayName: item.toString()));
+      }
+    }
+
+    return chats;
+  }
+
+  Future<List<dynamic>> getMessages(String guid, {bool withAttachment = true, bool withHandle = true, int offset = 0, int limit = 25}) async {
+    Completer<List<dynamic>> completer = Completer();
+    final withQuery = <String>[];
+    if (withAttachment) withQuery.add("attachment");
+    if (withHandle) withQuery.add("handle");
+
+    api.chatMessages(guid, withQuery: withQuery.join(","), offset: offset, limit: limit).then((response) {
       if (!completer.isCompleted) completer.complete(response.data["data"]);
     }).catchError((err) {
       late final dynamic error;

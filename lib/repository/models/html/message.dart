@@ -10,8 +10,8 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/chat.dart';
 import 'package:bluebubbles/repository/models/html/handle.dart';
@@ -246,7 +246,7 @@ class Message {
       if (chat != null) {
         await chat.addMessage(newMessage);
         // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-        NewMessageManager().addMessage(chat, newMessage, outgoing: false);
+        MessageManager().addMessage(chat, newMessage, outgoing: false);
       }
 
       return newMessage;
