@@ -35,7 +35,7 @@ public class SocketIssueWarning implements Handler {
                 context,
                 4000,
                 new Intent(context, MainActivity.class).setType(TYPE),
-                Intent.FILL_IN_ACTION);
+                PendingIntent.FLAG_MUTABLE | Intent.FILL_IN_ACTION);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, (String) call.argument("CHANNEL_ID"))
                 .setSmallIcon(R.mipmap.ic_stat_icon)
