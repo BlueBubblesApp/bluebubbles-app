@@ -326,14 +326,12 @@ class ActionHandler {
           if (error is Response) {
             String? tempGuid = message.guid;
             // If there is an error, replace the temp value with an error
-            if (error.statusCode != 200) {
-              message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message']}");
-              message.error =
-              error.statusCode == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+            message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message']}");
+            message.error =
+            error.statusCode == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
-              await Message.replaceMessage(tempGuid, message);
-              NewMessageManager().updateMessage(chat, tempGuid!, message);
-            }
+            await Message.replaceMessage(tempGuid, message);
+            NewMessageManager().updateMessage(chat, tempGuid!, message);
           } else {
             Logger.error('Failed to send message! Error: ${error.toString()}');
             handleError().then((value) => completer.complete());

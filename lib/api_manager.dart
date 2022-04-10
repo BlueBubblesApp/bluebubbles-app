@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:dio/dio.dart';
@@ -493,6 +495,31 @@ class ApiService extends GetxService {
         "chatGuid": chatGuid,
         "tempGuid": tempGuid,
         "name": fileName,
+      });
+      final response = await dio.post(
+          "$origin/message/attachment",
+          queryParameters: buildQueryParams(),
+          cancelToken: cancelToken,
+          data: formData,
+          onSendProgress: onSendProgress
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
+  /// Send an attachment with bytes. [chatGuid] specifies the chat, [tempGuid] specifies a
+  /// temporary guid to avoid duplicate messages being sent, [file] is the
+  /// body of the message.
+  ///
+  /// Prefer using [sendAttachment] since it provides accurate send progress
+  Future<Response> sendAttachmentBytes(String chatGuid, String tempGuid, Uint8List bytes, String filename,
+      {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
+    return runApiGuarded(() async {
+      final formData = FormData.fromMap({
+        "file": MultipartFile.fromBytes(bytes, filename: filename),
+        "chatGuid": chatGuid,
+        "tempGuid": tempGuid,
+        "name": filename,
       });
       final response = await dio.post(
           "$origin/message/attachment",
