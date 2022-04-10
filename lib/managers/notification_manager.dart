@@ -196,19 +196,20 @@ class NotificationManager {
     chatTitle ??= isGroup ? 'Group Chat' : 'iMessage Chat';
 
     await createNewMessageNotification(
-      chat.guid,
-      isGroup,
-      chatTitle,
-      contactIcon,
-      contactName,
-      contactIcon,
-      message.guid!,
-      messageText,
-      message.dateCreated ?? DateTime.now(),
-      message.isFromMe ?? false,
-      chat.id ?? Random().nextInt(9998) + 1,
-      ![null, ""].contains(message.associatedMessageGuid),
-    );
+        chat.guid,
+        isGroup,
+        chatTitle,
+        contactIcon,
+        contactName,
+        contactIcon,
+        message.guid!,
+        messageText,
+        message.dateCreated ?? DateTime.now(),
+        message.isFromMe ?? false,
+        chat.id ?? Random().nextInt(9998) + 1,
+        ![null, ""].contains(message.associatedMessageGuid),
+        message.handle,
+        chat.participants);
   }
 
   Future<void> createNewMessageNotification(
@@ -223,7 +224,9 @@ class NotificationManager {
       DateTime messageDate,
       bool messageIsFromMe,
       int summaryId,
-      bool isReaction) async {
+      bool isReaction,
+      Handle? handle,
+      List<Handle>? participants) async {
     if (kIsWeb && uh.Notification.permission == "granted") {
       var notif = uh.Notification(chatTitle, body: messageText, icon: "/splash/img/dark-4x.png");
       notif.onClick.listen((event) {
@@ -234,18 +237,15 @@ class NotificationManager {
     if (kIsDesktop) {
       if (Platform.isWindows) {
         // Check if custom avatar saved
-        String customPath = join(
-            (await getApplicationSupportDirectory()).path, "avatars", chatGuid.replaceAll(";-;+", ""), "avatar.jpg");
+
+        Uint8List? clippedImage = await avatarAsBytes(
+            isGroup: chatIsGroup,
+            handle: handle,
+            participants: participants,
+            chatGuid: chatGuid,
+        );
 
         String path = '';
-        Uint8List? clippedImage;
-
-        if (File(customPath).existsSync()) {
-          clippedImage = await circularize(File(customPath).readAsBytesSync());
-        } else if (contactAvatar != null || chatIcon != null) {
-          clippedImage = await circularize(contactAvatar ?? chatIcon!);
-        }
-
         if (clippedImage != null) {
           // Create a temp file with the avatar for making it circley
           path = join((await getApplicationSupportDirectory()).path, "temp", "${randomString(8)}.jpg");

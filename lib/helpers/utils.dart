@@ -29,9 +29,10 @@ import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:get/get.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
-import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart' as intl;
 import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:slugify/slugify.dart';
 import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
@@ -733,6 +734,176 @@ extension ConditionlAdd on RxMap {
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;
 
+Future<Uint8List?> avatarAsBytes({
+  required String chatGuid,
+  required bool isGroup,
+  required Handle? handle,
+  List<Handle>? participants,
+}) async {
+  Uint8List? contactAvatar;
+  Uint8List? chatAvatar;
+
+  Contact? contact = ContactManager().getContact(handle?.address);
+  if (contact?.hasAvatar ?? false) {
+    contactAvatar = await circularize(contact!.avatarHiRes.value ?? contact.avatar.value!);
+  }
+
+  String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
+      chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
+
+  if (File(customPath).existsSync()) {
+    if (isGroup) {
+      chatAvatar = await circularize(File(customPath).readAsBytesSync());
+    } else {
+      contactAvatar = await circularize(File(customPath).readAsBytesSync());
+    }
+  }
+
+  int chatIconSize = 192;
+  int contactIconSize = isGroup ? 96 : 192;
+
+  ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  Canvas canvas = Canvas(pictureRecorder);
+  Paint paint = Paint();
+  paint.isAntiAlias = true;
+
+  Path path = Path()
+    ..addOval(Rect.fromLTWH(
+      (chatIconSize - contactIconSize).toDouble(),
+      (chatIconSize - contactIconSize).toDouble(),
+      contactIconSize.toDouble(),
+      contactIconSize.toDouble(),
+    ));
+
+  if (isGroup) {
+    path = Path.combine(
+        PathOperation.union,
+        path,
+        Path()
+          ..addOval(
+            Rect.fromLTWH(0, 0, chatIconSize.toDouble(), chatIconSize.toDouble()),
+          ));
+  }
+
+  canvas.clipPath(path);
+
+  List<Color> colors;
+  if (handle?.color == null) {
+    colors = toColorGradient(handle?.address);
+  } else {
+    colors = [
+      HexColor(handle!.color!).lightenAmount(0.02),
+      HexColor(handle.color!),
+    ];
+  }
+
+  paint.shader = ui.Gradient.linear(Offset(chatIconSize - contactIconSize / 2, chatIconSize - contactIconSize / 2),
+      Offset(contactIconSize.toDouble(), contactIconSize.toDouble()), [
+    HexColor("928E8E"),
+    HexColor("686868"),
+  ]);
+
+  if (isGroup) {
+    if (chatAvatar != null) {
+      canvas.drawImage(await loadImage(chatAvatar), Offset(0, 0), Paint());
+    } else {
+      canvas.drawCircle(Offset(chatIconSize / 2, chatIconSize / 2), chatIconSize / 2, paint);
+
+      IconData icon = Icons.people;
+
+      TextPainter()
+        ..textDirection = TextDirection.rtl
+        ..textAlign = TextAlign.center
+        ..text = TextSpan(
+            text: String.fromCharCode(icon.codePoint),
+            style: TextStyle(fontSize: chatIconSize / 2, fontFamily: icon.fontFamily))
+        ..layout()
+        ..paint(canvas, Offset(chatIconSize / 4, chatIconSize / 4));
+    }
+  }
+
+  paint.shader = ui.Gradient.linear(Offset(chatIconSize - contactIconSize / 2, chatIconSize - contactIconSize / 2),
+      Offset(contactIconSize.toDouble(), contactIconSize.toDouble()), [
+    !SettingsManager().settings.colorfulAvatars.value
+        ? HexColor("928E8E")
+        : colors.isNotEmpty
+            ? colors[1]
+            : HexColor("928E8E"),
+    !SettingsManager().settings.colorfulAvatars.value
+        ? HexColor("686868")
+        : colors.isNotEmpty
+            ? colors[0]
+            : HexColor("686868"),
+  ]);
+
+  if (contactAvatar != null) {
+    if (!isGroup) {
+      canvas.drawImage(await loadImage(contactAvatar), Offset(0, 0), Paint());
+    } else {
+      paintImage(
+        canvas: canvas,
+        image: await loadImage(contactAvatar),
+        rect: Rect.fromCircle(
+          center: Offset(chatIconSize - contactIconSize / 2, chatIconSize - contactIconSize / 2),
+          radius: contactIconSize / 2,
+        ),
+      );
+    }
+  } else if (!isGroup) {
+    canvas.drawCircle(Offset(chatIconSize / 2, chatIconSize / 2), chatIconSize / 2, paint);
+  } else {
+    canvas.drawCircle(
+        Offset(chatIconSize - contactIconSize / 2, chatIconSize - contactIconSize / 2), contactIconSize / 2, paint);
+  }
+
+  if (isGroup) {
+    canvas.drawCircle(
+      Offset(chatIconSize - contactIconSize / 2, chatIconSize - contactIconSize / 2),
+      contactIconSize / 2,
+      Paint()..style = PaintingStyle.stroke,
+    );
+  }
+
+  String? initials = ContactManager().getContactInitials(handle);
+
+  if (initials == null) {
+    IconData icon = Icons.person;
+
+    TextPainter()
+      ..textDirection = TextDirection.rtl
+      ..textAlign = TextAlign.center
+      ..text = TextSpan(
+          text: String.fromCharCode(icon.codePoint),
+          style: TextStyle(fontSize: contactIconSize / 2, fontFamily: icon.fontFamily))
+      ..layout()
+      ..paint(
+          canvas,
+          Offset(isGroup ? chatIconSize - contactIconSize * 0.75 : contactIconSize / 4,
+              isGroup ? chatIconSize - contactIconSize * 0.75 : contactIconSize / 4));
+  } else {
+    TextPainter text = TextPainter()
+      ..textDirection = TextDirection.ltr
+      ..textAlign = TextAlign.center
+      ..text = TextSpan(
+        text: initials,
+        style: TextStyle(fontSize: contactIconSize * 0.5),
+      )
+      ..layout();
+
+    text.paint(
+        canvas,
+        Offset(isGroup ? chatIconSize - (contactIconSize + text.width) * 0.5 : (contactIconSize - text.width) * 0.5,
+            isGroup ? chatIconSize - (contactIconSize + text.height) * 0.5 : (contactIconSize - text.height) * 0.5));
+  }
+
+  ui.Picture picture = pictureRecorder.endRecording();
+  ui.Image image = await picture.toImage(chatIconSize, chatIconSize);
+
+  Uint8List? bytes = (await image.toByteData(format: ui.ImageByteFormat.png))?.buffer.asUint8List();
+
+  return bytes;
+}
+
 Future<Uint8List?> circularize(Uint8List data) async {
   ui.Image image = await loadImage(data);
 
@@ -741,8 +912,7 @@ Future<Uint8List?> circularize(Uint8List data) async {
   Paint paint = Paint();
   paint.isAntiAlias = true;
 
-  Path path = Path()
-    ..addOval(Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()));
+  Path path = Path()..addOval(Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()));
 
   canvas.clipPath(path);
 
