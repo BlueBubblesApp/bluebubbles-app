@@ -126,6 +126,7 @@ dependencies:
   version: ^2.0.0
   emojis: ^0.9.9
   defer_pointer: ^0.0.2
+  win_toast: ^0.0.2
 
 dependency_overrides:
   rxdart: ^0.27.3
@@ -208,6 +209,7 @@ flutter:
     - assets/icon/icon.png
     - assets/changelog/changelog.md
     - assets/icon/icon.ico
+    - .env
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
   # For details regarding adding assets from package dependencies, see

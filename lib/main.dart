@@ -65,6 +65,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:version/version.dart' as ver;
+import 'package:win_toast/win_toast.dart';
 import 'package:window_manager/window_manager.dart';
 
 // final SentryClient _sentry = SentryClient(
@@ -574,6 +575,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     super.initState();
 
     if (kIsDesktop) {
+      if (Platform.isWindows) {
+        WinToast.instance().initialize(
+          appName: "BlueBubbles",
+          productName: "BlueBubbles",
+          companyName: "23344BlueBubbles",
+        );
+      }
       initSystemTray();
     }
 
@@ -793,7 +801,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       systemNavigationBarIconBrightness:
           Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       statusBarColor: Colors.transparent, // status bar color
-      statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+      statusBarIconBrightness:
+          context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -804,7 +813,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Actions(
         actions: {

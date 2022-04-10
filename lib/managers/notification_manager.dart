@@ -1,22 +1,32 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as fln;
+import 'package:get/get.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:quick_notify/quick_notify.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as uh;
+import 'package:win_toast/win_toast.dart';
 
 /// [NotificationManager] holds data relating to the current chat, and manages things such as
 class NotificationManager {
@@ -28,6 +38,7 @@ class NotificationManager {
   static const String SOCKET_ERROR_CHANNEL = "com.bluebubbles.socket_error";
 
   static final NotificationManager _manager = NotificationManager._internal();
+
   NotificationManager._internal();
 
   /// [processedItems] holds all of the notifications that have already been notified / processed
@@ -185,17 +196,19 @@ class NotificationManager {
     chatTitle ??= isGroup ? 'Group Chat' : 'iMessage Chat';
 
     await createNewMessageNotification(
-        chat.guid,
-        isGroup,
-        chatTitle,
-        contactIcon,
-        contactName,
-        contactIcon,
-        message.guid!,
-        messageText,
-        message.dateCreated ?? DateTime.now(),
-        message.isFromMe ?? false,
-        chat.id ?? Random().nextInt(9998) + 1);
+      chat.guid,
+      isGroup,
+      chatTitle,
+      contactIcon,
+      contactName,
+      contactIcon,
+      message.guid!,
+      messageText,
+      message.dateCreated ?? DateTime.now(),
+      message.isFromMe ?? false,
+      chat.id ?? Random().nextInt(9998) + 1,
+      ![null, ""].contains(message.associatedMessageGuid),
+    );
   }
 
   Future<void> createNewMessageNotification(
@@ -209,7 +222,8 @@ class NotificationManager {
       String messageText,
       DateTime messageDate,
       bool messageIsFromMe,
-      int summaryId) async {
+      int summaryId,
+      bool isReaction) async {
     if (kIsWeb && uh.Notification.permission == "granted") {
       var notif = uh.Notification(chatTitle, body: messageText, icon: "/splash/img/dark-4x.png");
       notif.onClick.listen((event) {
@@ -218,8 +232,71 @@ class NotificationManager {
       return;
     }
     if (kIsDesktop) {
-      Logger.info("Sending desktop notification");
-      QuickNotify.notify(title: chatIsGroup ? "$chatTitle: $contactName" : chatTitle, content: messageText);
+      if (Platform.isWindows) {
+        // Check if custom avatar saved
+        String customPath = join(
+            (await getApplicationSupportDirectory()).path, "avatars", chatGuid.replaceAll(";-;+", ""), "avatar.jpg");
+
+        String path = '';
+        Uint8List? clippedImage;
+
+        if (File(customPath).existsSync()) {
+          clippedImage = await circularize(File(customPath).readAsBytesSync());
+        } else if (contactAvatar != null || chatIcon != null) {
+          clippedImage = await circularize(contactAvatar ?? chatIcon!);
+        }
+
+        if (clippedImage != null) {
+          // Create a temp file with the avatar for making it circley
+          path = join((await getApplicationSupportDirectory()).path, "temp", "${randomString(8)}.jpg");
+          File(path).createSync(recursive: true);
+          File(path).writeAsBytesSync(clippedImage);
+        }
+
+        Chat? chat = Chat.findOne(guid: chatGuid);
+
+        // todo make this configurable
+        List<String> reactions = [ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE];
+
+        final toast = await WinToast.instance().showToast(
+          imagePath: path,
+          type: ToastType.imageAndText02,
+          title: chatIsGroup ? "$chatTitle: $contactName" : chatTitle,
+          subtitle: messageText,
+          actions: [
+            "Mark Read",
+            ...(!isReaction ? reactions.map((reaction) => ReactionTypes.reactionToEmoji[reaction]!) : [])
+          ],
+        );
+        toast?.eventStream.listen((event) async {
+          // If we get any event, the notification has been shown, and we can delete the temp file
+          if (File(path).existsSync()) {
+            File(path).deleteSync();
+          }
+
+          // Show window and open the right chat
+          if (event is ActivatedEvent) {
+            if (chat == null) return;
+            if (event.actionIndex == null) {
+              WinToast.instance().bringWindowToFront();
+              if (ChatManager().activeChat?.chat.guid != chatGuid && Get.context != null) {
+                CustomNavigator.pushAndRemoveUntil(
+                  Get.context!,
+                  ConversationView(chat: Chat.findOne(guid: chatGuid)),
+                  (route) => route.isFirst,
+                );
+              }
+            } else if (event.actionIndex == 0) {
+              await ChatBloc().toggleChatUnread(chat, false);
+            } else {
+              Message? message = Message.findOne(guid: messageGuid);
+              await ActionHandler.sendReaction(chat, message, reactions[event.actionIndex! - 1]);
+            }
+          }
+        });
+      } else {
+        QuickNotify.notify(title: chatIsGroup ? "$chatTitle: $contactName" : chatTitle, content: messageText);
+      }
       return;
     }
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {

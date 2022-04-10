@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:async_task/async_task.dart';
@@ -29,6 +29,7 @@ import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:get/get.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
+import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart' as intl;
 import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
 import 'package:slugify/slugify.dart';
@@ -188,14 +189,10 @@ Future<String?> parsePhoneNumber(String number, String region) async {
   }
 }
 
-String randomString(int length) {
-  var rand = Random();
-  var codeUnits = List.generate(length, (index) {
-    return rand.nextInt(33) + 89;
-  });
+const _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
 
-  return String.fromCharCodes(codeUnits);
-}
+String randomString(int length) =>
+    String.fromCharCodes(Iterable.generate(length, (_) => _chars.codeUnitAt(Random().nextInt(_chars.length))));
 
 void showSnackbar(String title, String message,
     {int animationMs = 250, int durationMs = 1500, Function(GetBar)? onTap, TextButton? button}) {
@@ -261,9 +258,7 @@ String buildFullDate(DateTime time) {
 extension DateHelpers on DateTime {
   bool isTomorrow({DateTime? otherDate}) {
     final now = otherDate?.add(Duration(days: 1)) ?? DateTime.now().add(Duration(days: 1));
-    return now.day == day &&
-        now.month == month &&
-        now.year == year;
+    return now.day == day && now.month == month && now.year == year;
   }
 
   bool isToday() {
@@ -474,7 +469,9 @@ Size getGifDimensions(Uint8List bytes) {
 }
 
 SystemUiOverlayStyle getBrightness(BuildContext context) {
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark;
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark
+      ? SystemUiOverlayStyle.light
+      : SystemUiOverlayStyle.dark;
 }
 
 /// Take the passed [address] or serverAddress from Settings
@@ -540,10 +537,10 @@ Future<String> getDeviceName() async {
 
 /// Contextless way to get device width
 double getDeviceWidth() {
-  double pixelRatio = window.devicePixelRatio;
+  double pixelRatio = ui.window.devicePixelRatio;
 
   //Size in logical pixels
-  Size logicalScreenSize = window.physicalSize / pixelRatio;
+  Size logicalScreenSize = ui.window.physicalSize / pixelRatio;
   return logicalScreenSize.width;
 }
 
@@ -735,3 +732,34 @@ extension ConditionlAdd on RxMap {
 }
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;
+
+Future<Uint8List?> circularize(Uint8List data) async {
+  ui.Image image = await loadImage(data);
+
+  ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  Canvas canvas = Canvas(pictureRecorder);
+  Paint paint = Paint();
+  paint.isAntiAlias = true;
+
+  Path path = Path()
+    ..addOval(Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()));
+
+  canvas.clipPath(path);
+
+  canvas.drawImage(image, Offset(0, 0), paint);
+
+  ui.Picture picture = pictureRecorder.endRecording();
+  image = await picture.toImage(image.width, image.height);
+
+  Uint8List? bytes = (await image.toByteData(format: ui.ImageByteFormat.png))?.buffer.asUint8List();
+
+  return bytes;
+}
+
+Future<ui.Image> loadImage(Uint8List data) async {
+  final Completer<ui.Image> completer = Completer();
+  ui.decodeImageFromList(data, (ui.Image image) {
+    return completer.complete(image);
+  });
+  return completer.future;
+}

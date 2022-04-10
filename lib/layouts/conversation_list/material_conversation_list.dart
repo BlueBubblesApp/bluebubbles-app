@@ -208,7 +208,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
         context,
-        ConversationView(chat: ChatBloc().chats.firstWhere((e) => e.guid == prefs.getString('lastOpenedChat'))),
+        ConversationView(chat: Chat.findOne(guid: prefs.getString('lastOpenedChat'))),
         (route) => route.isFirst,
       );
     }
