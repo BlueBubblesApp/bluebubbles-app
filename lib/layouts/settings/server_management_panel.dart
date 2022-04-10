@@ -815,7 +815,7 @@ class _SyncDialogState extends State<SyncDialog> {
     if (lookback == null) return;
 
     DateTime now = DateTime.now().toUtc().subtract(lookback!);
-    MessageManager().getMessages(withAttachments: true, withHandles: true, after: now.millisecondsSinceEpoch, limit: 10000).then((dynamic messages) {
+    MessageManager().getMessages(withChats: true, withAttachments: true, withHandles: true, after: now.millisecondsSinceEpoch, limit: 100).then((dynamic messages) {
       if (mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";

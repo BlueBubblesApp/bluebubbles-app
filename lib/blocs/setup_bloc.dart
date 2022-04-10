@@ -136,7 +136,7 @@ class SetupBloc {
       s.stop();
       addOutput("Received contacts list. Size: ${ContactManager().contacts.length}, speed: ${s.elapsedMilliseconds} ms", SetupOutputType.LOG);
       addOutput("Getting Chats...", SetupOutputType.LOG);
-      List<Chat> chats = await ChatManager().getChats(withParticipants: true, withLastMessage: kIsWeb, limit: 10000);
+      List<Chat> chats = await ChatManager().getChats(withParticipants: true, withLastMessage: kIsWeb, limit: 1000);
 
       // If we got chats, cancel the timerCo
       timer.cancel();

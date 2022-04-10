@@ -134,7 +134,7 @@ class ApiService extends GetxService {
   Future<Response> checkUpdate({CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
-          "$origin/update/check",
+          "$origin/server/update/check",
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken
       );
@@ -278,7 +278,7 @@ class ApiService extends GetxService {
   ///
   /// [withQuery] options: `"attachment"` / `"attachments"`, `"handle"` / `"handles"`
   /// `"sms"` (set as one string, comma separated, no spaces)
-  Future<Response> chatMessages(String guid, {String withQuery = "", String sort = "DESC", int before = 10, int after = 10, int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
+  Future<Response> chatMessages(String guid, {String withQuery = "", String sort = "DESC", int? before, int? after, int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
           "$origin/chat/$guid/message",
@@ -431,7 +431,6 @@ class ApiService extends GetxService {
   ///
   /// [withQuery] options: `"chats"` / `"chat"`, `"attachment"` / `"attachments"`,
   /// `"handle"`, `"chats.participants"` / `"chat.participants"`
-  /// (set as one string, comma separated, no spaces)
   Future<Response> messages({List<String> withQuery = const [], List<dynamic> where = const [], String sort = "DESC", int? before, int? after, String? chatGuid, int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
@@ -453,7 +452,7 @@ class ApiService extends GetxService {
     return runApiGuarded(() async {
       final response = await dio.get(
           "$origin/message/$guid",
-          queryParameters: buildQueryParams(),
+          queryParameters: buildQueryParams({"with": withQuery}),
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -491,7 +490,7 @@ class ApiService extends GetxService {
     return runApiGuarded(() async {
       final fileName = file.path.split('/').last;
       final formData = FormData.fromMap({
-        "file": await MultipartFile.fromFile(file.path, filename: fileName),
+        "attachment": await MultipartFile.fromFile(file.path, filename: fileName),
         "chatGuid": chatGuid,
         "tempGuid": tempGuid,
         "name": fileName,
@@ -501,7 +500,8 @@ class ApiService extends GetxService {
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken,
           data: formData,
-          onSendProgress: onSendProgress
+          onSendProgress: onSendProgress,
+          options: Options(sendTimeout: 0),
       );
       return returnSuccessOrError(response);
     });
@@ -516,7 +516,7 @@ class ApiService extends GetxService {
       {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final formData = FormData.fromMap({
-        "file": MultipartFile.fromBytes(bytes, filename: filename),
+        "attachment": MultipartFile.fromBytes(bytes, filename: filename),
         "chatGuid": chatGuid,
         "tempGuid": tempGuid,
         "name": filename,
@@ -526,7 +526,8 @@ class ApiService extends GetxService {
           queryParameters: buildQueryParams(),
           cancelToken: cancelToken,
           data: formData,
-          onSendProgress: onSendProgress
+          onSendProgress: onSendProgress,
+          options: Options(sendTimeout: 0),
       );
       return returnSuccessOrError(response);
     });

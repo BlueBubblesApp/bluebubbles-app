@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -131,6 +132,10 @@ class AttachmentSender {
       Logger.info("Message match: [${response.data['data']["text"]}] - ${response.data['data']["guid"]} - $tempGuid", tag: "MessageStatus");
       MessageManager().updateMessage(chat, tempGuid, newMessage);
       SocketManager().finishSender(_attachmentGuid);
+
+      if (messageWithText != null) {
+        ActionHandler.sendMessageHelper(chat, messageWithText!);
+      }
     }
 
     onError(dynamic error, String tempGuid, Message message) async {
@@ -164,7 +169,7 @@ class AttachmentSender {
       ).then(onSuccess).catchError((err) async {
         await onError.call(err, _attachmentGuid, sentMessage);
         if (messageWithText != null) {
-          await onError.call(err, _attachmentGuid, sentMessage);
+          await onError.call(err, _attachmentGuid, messageWithText!);
         }
         SocketManager().finishSender(_attachmentGuid);
         attachmentData.value = Tuple2(null, true);
@@ -176,7 +181,7 @@ class AttachmentSender {
       ).then(onSuccess).catchError((err) async {
         await onError.call(err, _attachmentGuid, sentMessage);
         if (messageWithText != null) {
-          await onError.call(err, _attachmentGuid, sentMessage);
+          await onError.call(err, _attachmentGuid, messageWithText!);
         }
         SocketManager().finishSender(_attachmentGuid);
         attachmentData.value = Tuple2(null, true);

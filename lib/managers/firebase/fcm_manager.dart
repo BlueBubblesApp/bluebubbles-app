@@ -46,7 +46,7 @@ class FcmManager extends GetxService {
     }
 
     // If we've already got a token, re-register with this token
-    if (isNullOrEmpty(token)! && !force) {
+    if (!isNullOrEmpty(token)! && !force) {
       Logger.debug("Already authorized FCM device! Token: $token", tag: 'FCM-Auth');
       Logger.info('Registering device with server...', tag: 'FCM-Auth');
       await api.addFcmDevice(deviceName.trim(), token!.trim()).then((_) {

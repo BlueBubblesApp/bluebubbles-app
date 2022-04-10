@@ -38,7 +38,6 @@ class ActionHandler {
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
   static Future<void> sendMessage(Chat? chat, String text, {
-    MessageBloc? messageBloc,
     List<Attachment> attachments = const [],
     String? subject, String? replyGuid,
     String? effectId,
@@ -207,28 +206,21 @@ class ActionHandler {
 
     message.generateTempGuid();
 
-    // Create params for the queue item
-    Map<String, dynamic> params = {"guid": "iMessage;-;$address", "message": message.text, "tempGuid": message.guid};
-
-    // Add the message send to the queue
-    final response = await SocketManager().sendMessage("send-message", params, (response) {});
-    if (response['data'] == null) {
-      return null;
-    }
-    message = Message.fromMap(response['data']);
-    final chat = Chat.fromMap(response['data']['chats'].first);
-
-    // If there is an error, replace the temp value with an error
-    if (response['status'] != 200) {
-      message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
+    final response = await api.createChat([address], text.trim()).catchError((err) {
+      // If there is an error, replace the temp value with an error
+      message.guid = message.guid!.replaceAll("temp", "error-${err is Response ? err.data['error']['message'] : err.toString()}");
       message.error =
-      response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
-    }
+        err is! Response || err.data['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+    });
+
+    message = Message.fromMap(response.data['data']['messages'].first);
+    final chat = Chat.fromMap(response.data['data']);
 
     // Make sure to save the chat
     // If we already have the ID, we don't have to wait to resave it
     chat.save();
     await ChatBloc().updateChatPosition(chat);
+
     // for some reason it likes to add multiple of the chat in the chat list so
     // deduplicate them just in case
     final ids = ChatBloc().chats.map((e) => e.guid).toSet();
@@ -264,10 +256,6 @@ class ActionHandler {
 
   static Future<void> sendMessageHelper(Chat chat, Message message) async {
     Completer<void> completer = Completer<void>();
-    Map<String, dynamic> params = {};
-    params["guid"] = chat.guid;
-    params["message"] = message.text;
-    params["tempGuid"] = message.guid;
 
     Future<void> handleError() async {
       String? tempGuid = message.guid;

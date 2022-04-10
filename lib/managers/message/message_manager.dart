@@ -93,7 +93,7 @@ class MessageManager {
     if (withHandles) withQuery.add("handle");
     if (withChatParticipants) withQuery.add("chat.participants");
 
-    await api.messages(withQuery: withQuery, where: where, sort: sort, before: before, after: after, chatGuid: chatGuid, offset: offset, limit: limit).then((response) {
+    api.messages(withQuery: withQuery, where: where, sort: sort, before: before, after: after, chatGuid: chatGuid, offset: offset, limit: limit).then((response) {
       if (!completer.isCompleted) completer.complete(response.data["data"]);
     }).catchError((err) {
       late final dynamic error;
