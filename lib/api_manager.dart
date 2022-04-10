@@ -430,13 +430,13 @@ class ApiService extends GetxService {
   /// the response or how to query the DB.
   ///
   /// [withQuery] options: `"chats"` / `"chat"`, `"attachment"` / `"attachments"`,
-  /// `"handle"`, `"chats.participants"` / `"chat.participants"`
-  Future<Response> messages({List<String> withQuery = const [], List<dynamic> where = const [], String sort = "DESC", int? before, int? after, String? chatGuid, int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
+  /// `"handle"`, `"chats.participants"` / `"chat.participants"`,  `"attachment.metadata"`
+  Future<Response> messages({List<String> withQuery = const [], List<dynamic> where = const [], String sort = "DESC", int? before, int? after, String? chatGuid, int offset = 0, int limit = 100, bool convertAttachment = true, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$origin/message/query",
           queryParameters: buildQueryParams(),
-          data: {"with": withQuery, "where": where, "sort": sort, "before": before, "after": after, "chatGuid": chatGuid, "offset": offset, "limit": limit},
+          data: {"with": withQuery, "where": where, "sort": sort, "before": before, "after": after, "chatGuid": chatGuid, "offset": offset, "limit": limit, "convertAttachment": convertAttachment},
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);

@@ -92,6 +92,7 @@ class MessageManager {
     if (withAttachments) withQuery.add("attachment");
     if (withHandles) withQuery.add("handle");
     if (withChatParticipants) withQuery.add("chat.participants");
+    withQuery.add("attachment.metadata");
 
     api.messages(withQuery: withQuery, where: where, sort: sort, before: before, after: after, chatGuid: chatGuid, offset: offset, limit: limit).then((response) {
       if (!completer.isCompleted) completer.complete(response.data["data"]);
