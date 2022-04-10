@@ -387,26 +387,25 @@ class ActionHandler {
 
   static Future<void> sendReactionHelper(Chat chat, Message message, String reaction) async {
     Completer<void> completer = Completer<void>();
-    Map<String, dynamic> params = {};
+    String text = !isNullOrEmpty(message.text)! ? message.text! : "A text";
 
-    String? text = !isEmptyString(message.text) ? message.text : "A text";
+    // we currently don't supply a "temp" message when a reaction goes through,
+    // so we only need to add the successful tapback as a new message
+    api.sendTapback(chat.guid, text, message.guid!, reaction.toLowerCase()).then((response) async {
+      Message newMessage = Message.fromMap(response.data['data']);
 
-    params["chatGuid"] = chat.guid;
-    params["messageGuid"] = "temp-${randomString(8)}";
-    params["messageText"] = text;
-    params["actionMessageGuid"] = message.guid;
-    params["actionMessageText"] = text;
-    params["tapback"] = reaction.toLowerCase();
-
-    SocketManager().sendMessage("send-reaction", params, (response) async {
-      // String tempGuid = message.guid;
-
-      // If there is an error, replace the temp value with an error
-      if (response['status'] != 200) {
-        Logger.error("FAILED TO SEND REACTION " + response['error']['message']);
-      }
+      await chat.addMessage(newMessage);
+      NewMessageManager().addMessage(chat, newMessage, outgoing: true);
 
       completer.complete();
+    }).catchError((err) {
+      if (err is Response) {
+        Logger.error("FAILED TO SEND REACTION " + err.data["error"]["message"]);
+      } else {
+        Logger.error("FAILED TO SEND REACTION " + err.toString());
+      }
+
+      completer.completeError(err);
     });
   }
 
