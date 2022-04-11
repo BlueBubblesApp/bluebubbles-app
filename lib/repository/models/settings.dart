@@ -125,6 +125,10 @@ class Settings {
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
 
+  // Notification actions
+  final RxList<int> selectedActionIndices = [0, 1, 2, 3, 4].obs;
+  final RxList<String> actionList = RxList.from(["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]);
+
   // Linux settings
   final RxBool useCustomTitleBar = RxBool(true);
 
@@ -311,6 +315,10 @@ class Settings {
         settings.minimizeToTray.value = entry.value;
       } else if (entry.name == "closeToTray") {
         settings.closeToTray.value = entry.value;
+      } else if (entry.name == "selectedActionIndices") {
+        settings.selectedActionIndices.value = entry.value;
+      } else if (entry.name == "actionList") {
+        settings.actionList.value = entry.value;
       } else if (entry.name == "askWhereToSave") {
         settings.askWhereToSave.value = entry.value;
       } else if (entry.name == "indicatorsOnPinnedChats") {
@@ -428,6 +436,8 @@ class Settings {
       'launchAtStartup': launchAtStartup.value,
       'closeToTray': closeToTray.value,
       'minimizeToTray': minimizeToTray.value,
+      'selectedActionIndices': selectedActionIndices,
+      'actionList': actionList,
       'askWhereToSave': askWhereToSave.value,
       'indicatorsOnPinnedChats': statusIndicatorsOnChats.value,
       'swipeToReply': swipeToReply.value,
@@ -582,6 +592,8 @@ class Settings {
     SettingsManager().settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     SettingsManager().settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     SettingsManager().settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
+    SettingsManager().settings.selectedActionIndices.value = map['selectedActionIndices'] ?? [0, 1, 2, 3, 4];
+    SettingsManager().settings.actionList.value = map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION];
     SettingsManager().settings.save();
   }
 
@@ -690,6 +702,8 @@ class Settings {
     s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
+    s.selectedActionIndices.value = map['selectedActionIndices'] ?? [0, 1, 2, 3, 4];
+    s.actionList.value = map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION];
     return s;
   }
 }

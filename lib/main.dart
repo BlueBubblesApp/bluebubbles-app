@@ -581,6 +581,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           productName: "BlueBubbles",
           companyName: "23344BlueBubbles",
         );
+
+        // Delete temp dir in case any notif icons weren't cleared
+        getApplicationSupportDirectory().then((Directory d) => Directory(join(d.path, "temp")).deleteSync(recursive: true));
       }
       initSystemTray();
     }

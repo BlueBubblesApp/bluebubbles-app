@@ -18,6 +18,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as fln;
 import 'package:get/get.dart';
@@ -236,37 +237,35 @@ class NotificationManager {
     }
     if (kIsDesktop) {
       if (Platform.isWindows) {
-        // Check if custom avatar saved
+        Uint8List avatar = await avatarAsBytes(
+            isGroup: chatIsGroup, handle: handle, participants: participants, chatGuid: chatGuid, quality: 256);
 
-        Uint8List? clippedImage = await avatarAsBytes(
-            isGroup: chatIsGroup,
-            handle: handle,
-            participants: participants,
-            chatGuid: chatGuid,
-        );
-
-        String path = '';
-        if (clippedImage != null) {
-          // Create a temp file with the avatar for making it circley
-          path = join((await getApplicationSupportDirectory()).path, "temp", "${randomString(8)}.jpg");
-          File(path).createSync(recursive: true);
-          File(path).writeAsBytesSync(clippedImage);
-        }
+        // Create a temp file with the avatar
+        String path = join((await getApplicationSupportDirectory()).path, "temp", "${randomString(8)}.jpg");
+        File(path).createSync(recursive: true);
+        File(path).writeAsBytesSync(avatar);
 
         Chat? chat = Chat.findOne(guid: chatGuid);
 
-        // todo make this configurable
-        List<String> reactions = [ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE];
+        // Ensure we don't have too many actions
+        List<int> selectedIndices = SettingsManager().settings.selectedActionIndices;
+        List<String> reactions = SettingsManager().settings.actionList;
+
+        List<String> actions = reactions.whereIndexed((index, element) => selectedIndices.contains(index))
+                .map((reaction) => reaction == "Mark Read"
+                    ? reaction
+                    : !isReaction
+                        ? ReactionTypes.reactionToEmoji[reaction]!
+                        : null)
+                .whereNotNull()
+                .toList();
 
         final toast = await WinToast.instance().showToast(
           imagePath: path,
           type: ToastType.imageAndText02,
           title: chatIsGroup ? "$chatTitle: $contactName" : chatTitle,
           subtitle: messageText,
-          actions: [
-            "Mark Read",
-            ...(!isReaction ? reactions.map((reaction) => ReactionTypes.reactionToEmoji[reaction]!) : [])
-          ],
+          actions: actions,
         );
         toast?.eventStream.listen((event) async {
           // If we get any event, the notification has been shown, and we can delete the temp file
@@ -286,11 +285,11 @@ class NotificationManager {
                   (route) => route.isFirst,
                 );
               }
-            } else if (event.actionIndex == 0) {
+            } else if (actions[selectedIndices[event.actionIndex!]] == "Mark Read") {
               await ChatBloc().toggleChatUnread(chat, false);
             } else {
               Message? message = Message.findOne(guid: messageGuid);
-              await ActionHandler.sendReaction(chat, message, reactions[event.actionIndex! - 1]);
+              await ActionHandler.sendReaction(chat, message, ReactionTypes.reactionToEmoji[selectedIndices[event.actionIndex!]]!);
             }
           }
         });

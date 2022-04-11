@@ -734,58 +734,136 @@ extension ConditionlAdd on RxMap {
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;
 
-Future<Uint8List?> avatarAsBytes({
+Future<Uint8List> avatarAsBytes({
   required String chatGuid,
   required bool isGroup,
   required Handle? handle,
   List<Handle>? participants,
+  double quality = 256,
 }) async {
-  Uint8List? contactAvatar;
-  Uint8List? chatAvatar;
 
-  Contact? contact = ContactManager().getContact(handle?.address);
-  if (contact?.hasAvatar ?? false) {
-    contactAvatar = await circularize(contact!.avatarHiRes.value ?? contact.avatar.value!);
-  }
+  ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  Canvas canvas = Canvas(pictureRecorder);
 
+  await paintGroupAvatar(chatGuid: chatGuid, participants: participants, canvas: canvas, size: quality);
+
+  ui.Picture picture = pictureRecorder.endRecording();
+  ui.Image image = await picture.toImage(quality.toInt(), quality.toInt());
+
+  Uint8List bytes = (await image.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List();
+
+  return bytes;
+}
+
+Future<void> paintGroupAvatar({
+  required String chatGuid,
+  required List<Handle>? participants,
+  required Canvas canvas,
+  required double size,
+}) async {
   String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
       chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
   if (File(customPath).existsSync()) {
-    if (isGroup) {
-      chatAvatar = await circularize(File(customPath).readAsBytesSync());
-    } else {
-      contactAvatar = await circularize(File(customPath).readAsBytesSync());
+    Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync());
+    if (customAvatar != null) {
+      canvas.drawImage(await loadImage(customAvatar), Offset(0, 0), Paint());
+      return;
     }
   }
 
-  int chatIconSize = 192;
-  int contactIconSize = isGroup ? 96 : 192;
+  if (participants == null) return;
+  int maxAvatars = SettingsManager().settings.maxAvatarsInGroupWidget.value;
 
-  ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
-  Canvas canvas = Canvas(pictureRecorder);
-  Paint paint = Paint();
-  paint.isAntiAlias = true;
-
-  Path path = Path()
-    ..addOval(Rect.fromLTWH(
-      (chatIconSize - contactIconSize).toDouble(),
-      (chatIconSize - contactIconSize).toDouble(),
-      contactIconSize.toDouble(),
-      contactIconSize.toDouble(),
-    ));
-
-  if (isGroup) {
-    path = Path.combine(
-        PathOperation.union,
-        path,
-        Path()
-          ..addOval(
-            Rect.fromLTWH(0, 0, chatIconSize.toDouble(), chatIconSize.toDouble()),
-          ));
+  if (participants.length == 1) {
+    await paintAvatar(
+      chatGuid: chatGuid,
+      handle: participants.first,
+      canvas: canvas,
+      offset: Offset(0, 0),
+      size: size,
+    );
+    return;
   }
 
-  canvas.clipPath(path);
+  Paint paint = Paint()..color = (Get.context?.theme.colorScheme.secondary ?? HexColor("928E8E")).withOpacity(0.6);
+  canvas.drawCircle(Offset(size * 0.5, size * 0.5), size * 0.5, paint);
+
+  int realAvatarCount = min(participants.length, maxAvatars);
+
+  for (int index = 0; index < realAvatarCount; index++) {
+    double padding = size * 0.08;
+    double angle = index / realAvatarCount * 2 * pi + pi * 0.25;
+    double adjustedWidth = size * (-0.07 * realAvatarCount + 1);
+    double innerRadius = size - adjustedWidth * 0.5 - 2 * padding;
+    double realSize = adjustedWidth * 0.65;
+    double top = size * 0.5 + (innerRadius * 0.5) * sin(angle + pi) - realSize * 0.5;
+    double left = size * 0.5 - (innerRadius * 0.5) * cos(angle + pi) - realSize * 0.5;
+
+    if (index == maxAvatars - 1 && participants.length > maxAvatars) {
+      Paint paint = Paint();
+      paint.isAntiAlias = true;
+      paint.color = Get.context?.theme.colorScheme.secondary.withOpacity(0.8) ?? HexColor("686868").withOpacity(0.8);
+      canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
+
+      IconData icon = Icons.people;
+
+      TextPainter()
+        ..textDirection = TextDirection.rtl
+        ..textAlign = TextAlign.center
+        ..text = TextSpan(
+            text: String.fromCharCode(icon.codePoint),
+            style: TextStyle(
+                fontSize: adjustedWidth * 0.3,
+                fontFamily: icon.fontFamily,
+                color: Get.context?.textTheme.subtitle1!.color!.withOpacity(0.8)))
+        ..layout()
+        ..paint(canvas, Offset(left + realSize * 0.25, top + realSize * 0.25));
+    } else {
+      Paint paint = Paint()..color = (SettingsManager().settings.skin.value == Skins.Samsung
+          ? Get.context?.theme.colorScheme.secondary
+          : Get.context?.theme.backgroundColor) ?? HexColor("928E8E");
+      canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
+      await paintAvatar(
+        chatGuid: chatGuid,
+        handle: participants[index],
+        canvas: canvas,
+        offset: Offset(left + realSize * 0.01, top + realSize * 0.01),
+        size: realSize * 0.99,
+        borderWidth: size * 0.01,
+        fontSize: adjustedWidth * 0.3,
+      );
+    }
+  }
+}
+
+Future<void> paintAvatar(
+    {required String chatGuid,
+    required Handle? handle,
+    required Canvas canvas,
+    required Offset offset,
+    required double size,
+    double fontSize = 128,
+    double borderWidth = 12.8}) async {
+  String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
+      chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
+
+  if (File(customPath).existsSync()) {
+    Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync());
+    if (customAvatar != null) {
+      canvas.drawImage(await loadImage(customAvatar), offset, Paint());
+      return;
+    }
+  } else {
+    Contact? contact = ContactManager().getContact(handle?.address);
+    if (contact?.hasAvatar ?? false) {
+      Uint8List? contactAvatar = await circularize(contact!.avatarHiRes.value ?? contact.avatar.value!);
+      if (contactAvatar != null) {
+        canvas.drawImage(await loadImage(contactAvatar), offset, Paint());
+        return;
+      }
+    }
+  }
 
   List<Color> colors;
   if (handle?.color == null) {
@@ -797,33 +875,13 @@ Future<Uint8List?> avatarAsBytes({
     ];
   }
 
-  paint.shader = ui.Gradient.linear(Offset(chatIconSize - contactIconSize / 2, chatIconSize - contactIconSize / 2),
-      Offset(contactIconSize.toDouble(), contactIconSize.toDouble()), [
-    HexColor("928E8E"),
-    HexColor("686868"),
-  ]);
+  double dx = offset.dx;
+  double dy = offset.dy;
 
-  if (isGroup) {
-    if (chatAvatar != null) {
-      canvas.drawImage(await loadImage(chatAvatar), Offset(0, 0), Paint());
-    } else {
-      canvas.drawCircle(Offset(chatIconSize / 2, chatIconSize / 2), chatIconSize / 2, paint);
-
-      IconData icon = Icons.people;
-
-      TextPainter()
-        ..textDirection = TextDirection.rtl
-        ..textAlign = TextAlign.center
-        ..text = TextSpan(
-            text: String.fromCharCode(icon.codePoint),
-            style: TextStyle(fontSize: chatIconSize / 2, fontFamily: icon.fontFamily))
-        ..layout()
-        ..paint(canvas, Offset(chatIconSize / 4, chatIconSize / 4));
-    }
-  }
-
-  paint.shader = ui.Gradient.linear(Offset(chatIconSize - contactIconSize / 2, chatIconSize - contactIconSize / 2),
-      Offset(contactIconSize.toDouble(), contactIconSize.toDouble()), [
+  Paint paint = Paint();
+  paint.isAntiAlias = true;
+  paint.shader =
+      ui.Gradient.linear(Offset(dx + size * 0.5, dy + size * 0.5), Offset(size.toDouble(), size.toDouble()), [
     !SettingsManager().settings.colorfulAvatars.value
         ? HexColor("928E8E")
         : colors.isNotEmpty
@@ -836,33 +894,7 @@ Future<Uint8List?> avatarAsBytes({
             : HexColor("686868"),
   ]);
 
-  if (contactAvatar != null) {
-    if (!isGroup) {
-      canvas.drawImage(await loadImage(contactAvatar), Offset(0, 0), Paint());
-    } else {
-      paintImage(
-        canvas: canvas,
-        image: await loadImage(contactAvatar),
-        rect: Rect.fromCircle(
-          center: Offset(chatIconSize - contactIconSize / 2, chatIconSize - contactIconSize / 2),
-          radius: contactIconSize / 2,
-        ),
-      );
-    }
-  } else if (!isGroup) {
-    canvas.drawCircle(Offset(chatIconSize / 2, chatIconSize / 2), chatIconSize / 2, paint);
-  } else {
-    canvas.drawCircle(
-        Offset(chatIconSize - contactIconSize / 2, chatIconSize - contactIconSize / 2), contactIconSize / 2, paint);
-  }
-
-  if (isGroup) {
-    canvas.drawCircle(
-      Offset(chatIconSize - contactIconSize / 2, chatIconSize - contactIconSize / 2),
-      contactIconSize / 2,
-      Paint()..style = PaintingStyle.stroke,
-    );
-  }
+  canvas.drawCircle(Offset(dx + size * 0.5, dy + size * 0.5), size * 0.5, paint);
 
   String? initials = ContactManager().getContactInitials(handle);
 
@@ -873,35 +905,21 @@ Future<Uint8List?> avatarAsBytes({
       ..textDirection = TextDirection.rtl
       ..textAlign = TextAlign.center
       ..text = TextSpan(
-          text: String.fromCharCode(icon.codePoint),
-          style: TextStyle(fontSize: contactIconSize / 2, fontFamily: icon.fontFamily))
+          text: String.fromCharCode(icon.codePoint), style: TextStyle(fontSize: fontSize, fontFamily: icon.fontFamily))
       ..layout()
-      ..paint(
-          canvas,
-          Offset(isGroup ? chatIconSize - contactIconSize * 0.75 : contactIconSize / 4,
-              isGroup ? chatIconSize - contactIconSize * 0.75 : contactIconSize / 4));
+      ..paint(canvas, Offset(dx + size * 0.25, dy + size * 0.25));
   } else {
     TextPainter text = TextPainter()
       ..textDirection = TextDirection.ltr
       ..textAlign = TextAlign.center
       ..text = TextSpan(
         text: initials,
-        style: TextStyle(fontSize: contactIconSize * 0.5),
+        style: TextStyle(fontSize: fontSize),
       )
       ..layout();
 
-    text.paint(
-        canvas,
-        Offset(isGroup ? chatIconSize - (contactIconSize + text.width) * 0.5 : (contactIconSize - text.width) * 0.5,
-            isGroup ? chatIconSize - (contactIconSize + text.height) * 0.5 : (contactIconSize - text.height) * 0.5));
+    text.paint(canvas, Offset(dx + (size - text.width) * 0.5, dy + (size - text.height) * 0.5));
   }
-
-  ui.Picture picture = pictureRecorder.endRecording();
-  ui.Image image = await picture.toImage(chatIconSize, chatIconSize);
-
-  Uint8List? bytes = (await image.toByteData(format: ui.ImageByteFormat.png))?.buffer.asUint8List();
-
-  return bytes;
 }
 
 Future<Uint8List?> circularize(Uint8List data) async {
