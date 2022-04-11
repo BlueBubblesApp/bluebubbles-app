@@ -1,4 +1,4 @@
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/widgets.dart';

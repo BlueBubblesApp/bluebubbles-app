@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:chewie_audio/chewie_audio.dart';

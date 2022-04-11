@@ -23,13 +23,13 @@ import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -1046,7 +1046,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
+            MessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
             Message.softDelete(widget.message.guid!);
             popDetails();
           },

@@ -479,7 +479,7 @@ SystemUiOverlayStyle getBrightness(BuildContext context) {
 
 /// Take the passed [address] or serverAddress from Settings
 /// and sanitize it, making sure it includes an http schema
-String? getServerAddress({String? address}) {
+String? sanitizeServerAddress({String? address}) {
   String serverAddress = address ?? SettingsManager().settings.serverAddress.value;
 
   String sanitized = serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();

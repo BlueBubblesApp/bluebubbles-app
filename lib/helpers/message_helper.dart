@@ -5,11 +5,11 @@ import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -126,7 +126,7 @@ class MessageHelper {
 
         // Tell all listeners that we have a new message, and save the message
         if (notifyMessageManager) {
-          NewMessageManager().addMessage(msgChat, message);
+          MessageManager().addMessage(msgChat, message);
         }
       });
     }

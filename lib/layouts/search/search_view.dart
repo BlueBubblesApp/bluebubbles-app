@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -75,13 +76,13 @@ class SearchViewState extends State<SearchView> {
       });
     }
 
-    List<dynamic> results = await SocketManager().fetchMessages(null, limit: 50, where: [
+    List<dynamic> results = await MessageManager().getMessages(limit: 50, withChats: true, withHandles: true, where: [
       {
         'statement': 'message.text LIKE :term',
         'args': {'term': "%${textEditingController.text}%"}
       },
       {'statement': 'message.associated_message_guid IS NULL', 'args': null}
-    ])!;
+    ]);
 
     List<dynamic> _results = [];
     for (dynamic item in results) {

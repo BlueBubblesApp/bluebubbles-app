@@ -216,14 +216,14 @@ class ContactManager {
     try {
       contacts.clear();
       logger?.call("Trying to fetch contacts from Android...");
-      var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
-      if (vcfs['data'] != null) {
+      final response = await api.contacts();
+      if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])!) {
         logger?.call("Found Android contacts!");
-        if (vcfs['data'] is String) {
+        if (response.data['data'] is String) {
           logger?.call("Parsing string into JSON...");
-          vcfs['data'] = jsonDecode(vcfs['data']);
+          response.data['data'] = jsonDecode(response.data['data']);
         }
-        for (var c in vcfs['data']) {
+        for (var c in response.data['data']) {
           logger?.call("Parsing contact: ${c['displayName']}");
           contacts.add(Contact.fromMap(c));
         }
@@ -238,16 +238,18 @@ class ContactManager {
       logger?.call("Android contacts didn't exist, falling back to macOS contacts...");
       try {
         var response = await api.contacts();
-        logger?.call("Found macOS contacts!");
-        for (Map<String, dynamic> map in response.data['data']) {
-          logger?.call(
-              "Parsing contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
-          contacts.add(Contact(
-            id: randomString(8),
-            displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
-            emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-            phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-          ));
+        if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])!) {
+          logger?.call("Found macOS contacts!");
+          for (Map<String, dynamic> map in response.data['data']) {
+            logger?.call(
+                "Parsing contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
+            contacts.add(Contact(
+              id: randomString(8),
+              displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
+              emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
+              phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
+            ));
+          }
         }
       } catch (e, s) {
         print(e);

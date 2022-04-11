@@ -1,12 +1,16 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/outgoing_queue.dart';
+import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'package:location/location.dart';
 import 'package:share_plus/share_plus.dart' as sp;
+import 'package:universal_io/io.dart';
 
 class Share {
   /// Share a file with other apps.
@@ -51,40 +55,31 @@ class Share {
 
     // Build out the file we are going to send
     String _attachmentGuid = "temp-${randomString(8)}";
-    String fileName = "CL.loc.vcf";
+    String fileName = "$_attachmentGuid-CL.loc.vcf";
+    File? file;
+    String? filePath;
+    Uint8List? bytes;
+    if (!kIsWeb) {
+      filePath = AttachmentHelper.getTempPath() + "/" + fileName;
+      file = await (await File(filePath).create()).writeAsString(vcfString);
+    } else {
+      bytes = Uint8List.fromList(utf8.encode(vcfString));
+    }
 
-    Attachment messageAttachment = Attachment(
-      guid: _attachmentGuid,
-      totalBytes: utf8.encode(vcfString).length,
-      isOutgoing: true,
-      isSticker: false,
-      hideAttachment: false,
-      uti: "public.jpg",
-      transferName: fileName,
-      mimeType: "text/x-vlocation",
+    OutgoingQueue().add(
+      QueueItem(
+        event: "send-attachment",
+        item: AttachmentSender(
+          PlatformFile(
+            name: fileName,
+            size: kIsWeb ? bytes!.length : await file!.length(),
+            path: filePath,
+            bytes: bytes,
+          ),
+          chat,
+          "",
+        ),
+      ),
     );
-
-    // Create the message object and link the attachment
-    Message sentMessage = Message(
-      guid: _attachmentGuid,
-      text: "",
-      dateCreated: DateTime.now(),
-      hasAttachments: true,
-      attachments: [messageAttachment],
-      isFromMe: true,
-      handleId: 0,
-    );
-
-    // Add the message to the chat and save
-    NewMessageManager().addMessage(chat, sentMessage);
-    await chat.addMessage(sentMessage);
-
-    // Send message to the server to be sent out
-    Map<String, dynamic> params = {};
-    params["guid"] = chat.guid;
-    params["attachmentGuid"] = _attachmentGuid;
-    params["attachmentName"] = fileName;
-    params["attachment"] = base64Encode(utf8.encode(vcfString));
-    SocketManager().sendMessage("send-message", params, (data) {});
   }
 }
