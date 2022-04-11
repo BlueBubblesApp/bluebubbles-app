@@ -392,14 +392,14 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                   ) : SizedBox.shrink()),*/
                   SettingsTile(
                     title: "Re-configure with BlueBubbles Server",
-                    subtitle: kIsWeb || kIsDesktop ? "Tap for manual entry" : "Tap to scan QR code\nLong press for manual entry",
+                    subtitle: kIsWeb || kIsDesktop ? "Click for manual entry" : "Tap to scan QR code\nLong press for manual entry",
                     isThreeLine: kIsWeb || kIsDesktop ? false : true,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.gear,
                       materialIcon: Icons.room_preferences,
                     ),
                     backgroundColor: tileColor,
-                    onLongPress: () {
+                    onLongPress: kIsWeb || kIsDesktop ? null : () {
                       showDialog(
                         context: context,
                         builder: (connectContext) => TextInputURL(
