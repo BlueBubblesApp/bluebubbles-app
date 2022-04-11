@@ -58,6 +58,15 @@ class ReactionTypes {
     EMPHASIZE: Emojis.redExclamationMark,
     QUESTION: Emojis.redQuestionMark,
   };
+
+  static final Map<String, String> emojiToReaction = {
+    Emojis.redHeart: LOVE,
+    Emojis.thumbsUp: LIKE,
+    Emojis.thumbsDown: DISLIKE,
+    Emojis.faceWithTearsOfJoy: LAUGH,
+    Emojis.redExclamationMark: EMPHASIZE,
+    Emojis.redQuestionMark: QUESTION,
+  };
 }
 
 class Reaction {

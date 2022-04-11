@@ -285,11 +285,11 @@ class NotificationManager {
                   (route) => route.isFirst,
                 );
               }
-            } else if (actions[selectedIndices[event.actionIndex!]] == "Mark Read") {
+            } else if (actions[event.actionIndex!] == "Mark Read") {
               await ChatBloc().toggleChatUnread(chat, false);
             } else {
               Message? message = Message.findOne(guid: messageGuid);
-              await ActionHandler.sendReaction(chat, message, ReactionTypes.reactionToEmoji[selectedIndices[event.actionIndex!]]!);
+              await ActionHandler.sendReaction(chat, message, ReactionTypes.emojiToReaction[actions[event.actionIndex!]]!);
             }
           }
         });
