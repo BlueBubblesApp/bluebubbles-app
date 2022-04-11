@@ -15,6 +15,7 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -245,8 +246,6 @@ class NotificationManager {
         File(path).createSync(recursive: true);
         File(path).writeAsBytesSync(avatar);
 
-        Chat? chat = Chat.findOne(guid: chatGuid);
-
         // Ensure we don't have too many actions
         List<int> selectedIndices = SettingsManager().settings.selectedActionIndices;
         List<String> reactions = SettingsManager().settings.actionList;
@@ -275,6 +274,7 @@ class NotificationManager {
 
           // Show window and open the right chat
           if (event is ActivatedEvent) {
+            Chat? chat = Chat.findOne(guid: chatGuid);
             if (chat == null) return;
             if (event.actionIndex == null) {
               WinToast.instance().bringWindowToFront();
@@ -287,6 +287,7 @@ class NotificationManager {
               }
             } else if (actions[event.actionIndex!] == "Mark Read") {
               await ChatBloc().toggleChatUnread(chat, false);
+              EventDispatcher().emit('refresh', null);
             } else {
               Message? message = Message.findOne(guid: messageGuid);
               await ActionHandler.sendReaction(chat, message, ReactionTypes.emojiToReaction[actions[event.actionIndex!]]!);
