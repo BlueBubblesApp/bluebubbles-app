@@ -1238,6 +1238,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
     }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(context.theme, nordDarkTheme)) {
+      tileColor = headerColor;
+    }
     return VerticalSplitView(
       initialRatio: 0.4,
       minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
