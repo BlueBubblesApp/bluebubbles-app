@@ -1285,6 +1285,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.4"
+  pasteboard:
+    dependency: "direct main"
+    description:
+      name: pasteboard
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.3"
   path:
     dependency: "direct main"
     description:
