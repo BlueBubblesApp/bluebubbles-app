@@ -246,15 +246,14 @@ class NotificationManager {
         File(path).createSync(recursive: true);
         File(path).writeAsBytesSync(avatar);
 
-        // Ensure we don't have too many actions
         List<int> selectedIndices = SettingsManager().settings.selectedActionIndices;
-        List<String> reactions = SettingsManager().settings.actionList;
+        List<String> _actions = SettingsManager().settings.actionList;
 
-        List<String> actions = reactions.whereIndexed((index, element) => selectedIndices.contains(index))
-                .map((reaction) => reaction == "Mark Read"
-                    ? reaction
-                    : !isReaction
-                        ? ReactionTypes.reactionToEmoji[reaction]!
+        List<String> actions = _actions.whereIndexed((index, element) => selectedIndices.contains(index))
+                .map((action) => action == "Mark Read"
+                    ? action
+                    : !isReaction && SettingsManager().settings.enablePrivateAPI.value
+                        ? ReactionTypes.reactionToEmoji[action]!
                         : null)
                 .whereNotNull()
                 .toList();

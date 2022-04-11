@@ -843,8 +843,11 @@ Future<void> paintAvatar(
     required Canvas canvas,
     required Offset offset,
     required double size,
-    double fontSize = 128,
-    double borderWidth = 12.8}) async {
+    double? fontSize,
+    double? borderWidth}) async {
+  fontSize ??= size * 0.5;
+  borderWidth ??= size * 0.05;
+
   String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
       chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
