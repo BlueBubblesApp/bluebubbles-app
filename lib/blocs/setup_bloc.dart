@@ -12,6 +12,9 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:universal_io/io.dart';
 
 enum SetupOutputType { ERROR, LOG }
 
@@ -49,6 +52,7 @@ class SetupBloc {
   double numberOfMessagesPerPage = 25;
   bool downloadAttachments = false;
   bool skipEmptyChats = true;
+  bool saveToDownloads = false;
 
   double get progress => _progress;
   int? processId;
@@ -246,6 +250,20 @@ class SetupBloc {
 
   void finishSetup() async {
     addOutput("Finished Setup! Cleaning up...", SetupOutputType.LOG);
+    if (saveToDownloads) {
+      final List<String> text = SocketManager().setup.data.value?.output.reversed.toList().map((e) => e.text).toList() ?? [];
+      if (text.isNotEmpty) {
+        final now = DateTime.now().toLocal();
+        String filePath = "/storage/emulated/0/Download/";
+        if (kIsDesktop) {
+          filePath = (await getDownloadsDirectory())!.path;
+        }
+        filePath = p.join(filePath, "BlueBubbles-sync-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
+        File file = File(filePath);
+        await file.create(recursive: true);
+        await file.writeAsString(text.join('\n'));
+      }
+    }
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup.value = true;
     await SettingsManager().saveSettings(_settingsCopy);
