@@ -18,6 +18,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_html/html.dart' as html;
 
 class AboutPanel extends StatelessWidget {
   // Not sure how to do this other than manually yet
@@ -104,8 +105,15 @@ class AboutPanel extends StatelessWidget {
                     SettingsTile(
                       backgroundColor: tileColor,
                       title: "Source Code",
+                      subtitle: kIsWeb || kIsDesktop ? "Right click to report a bug" : "Tap and hold to report a bug",
                       onTap: () async {
                         await launch("https://github.com/BlueBubblesApp");
+                      },
+                      onLongPress: () async {
+                        if (kIsWeb) {
+                          (await html.document.onContextMenu.first).preventDefault();
+                        }
+                        await launch("https://github.com/BlueBubblesApp/bluebubbles-app/issues");
                       },
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,

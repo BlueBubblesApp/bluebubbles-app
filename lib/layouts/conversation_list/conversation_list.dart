@@ -144,6 +144,11 @@ class ConversationListState extends State<ConversationList> {
   Widget buildSettingsButton() => !widget.showArchivedChats && !widget.showUnknownSenders
       ? PopupMenuButton(
           color: context.theme.colorScheme.secondary,
+          shape: SettingsManager().settings.skin.value != Skins.Material ? RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(20.0),
+            ),
+          ) : null,
           onSelected: (dynamic value) {
             if (value == 0) {
               ChatBloc().markAllAsRead();

@@ -126,6 +126,7 @@ dependencies:
   version: ^2.0.0
   emojis: ^0.9.9
   defer_pointer: ^0.0.2
+  pasteboard: ^0.0.3
   win_toast: ^0.0.2
   reorderables: ^0.4.3
 
@@ -238,13 +239,12 @@ flutter:
 msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
-  identity_name: com.bluebubbles.app
-  msix_version: 1.8.0.0
-  publisher: CN=BlueBubbles, O=BlueBubbles, C=US
+  identity_name: 23344BlueBubbles.BlueBubbles
+  msix_version: 1.8.0.1
+  publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico
-  certificate_path: ../bluebubbles.pfx
-  certificate_password: BlueBubbles
+  store: true
   icons_background_color: transparent
   languages: en-us
   architecture: x64

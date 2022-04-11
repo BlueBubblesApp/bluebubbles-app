@@ -113,7 +113,11 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       padding: EdgeInsets.symmetric(horizontal: 5),
                       onPressed: () async {
                         List<Widget> metaWidgets = [];
-                        for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
+                        final metadataMap = <String, dynamic>{
+                          'filename': widget.attachment.transferName,
+                          'mime': widget.attachment.mimeType,
+                        }..addAll(widget.attachment.metadata ?? {});
+                        for (var entry in metadataMap.entries.where((element) => element.value != null)) {
                           metaWidgets.add(RichText(
                               text: TextSpan(children: [
                             TextSpan(
