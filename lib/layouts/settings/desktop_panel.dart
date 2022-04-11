@@ -140,16 +140,18 @@ class DesktopPanel extends StatelessWidget {
                 backgroundColor: tileColor,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Expanded(
                         child: Container(
                           width: CustomNavigator.width(context) / 2,
                           child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
                               SettingsTile(
                                 title: "Actions",
                                 subtitle:
-                                    "Click on actions to toggle them. Drag actions to reorder them. You may select up to 5 actions.",
+                                    "Click on actions to toggle them. Drag actions to reorder them. You can select up to 5 actions.",
                               ),
                               Padding(
                                 padding: EdgeInsets.all(15),
@@ -157,12 +159,16 @@ class DesktopPanel extends StatelessWidget {
                                   child: Obx(
                                     () => ReorderableWrap(
                                       onReorder: (int oldIndex, int newIndex) {
-                                        List<String> selected = SettingsManager().settings.selectedActionIndices.map((index) => SettingsManager().settings.actionList[index]).toList();
+                                        List<String> selected = SettingsManager()
+                                            .settings
+                                            .selectedActionIndices
+                                            .map((index) => SettingsManager().settings.actionList[index])
+                                            .toList();
                                         String? temp = SettingsManager().settings.actionList[oldIndex];
                                         // If dragging to the right
                                         for (int i = oldIndex; i <= newIndex - 1; i++) {
                                           SettingsManager().settings.actionList[i] =
-                                          SettingsManager().settings.actionList[i + 1];
+                                              SettingsManager().settings.actionList[i + 1];
                                         }
                                         // If dragging to the left
                                         for (int i = oldIndex; i >= newIndex + 1; i--) {
@@ -171,7 +177,9 @@ class DesktopPanel extends StatelessWidget {
                                         }
                                         SettingsManager().settings.actionList[newIndex] = temp;
 
-                                        List<int> selectedIndices = selected.map((s) => SettingsManager().settings.actionList.indexOf(s)).toList();
+                                        List<int> selectedIndices = selected
+                                            .map((s) => SettingsManager().settings.actionList.indexOf(s))
+                                            .toList();
                                         SettingsManager().settings.selectedActionIndices.value = selectedIndices;
                                       },
                                       needsLongPressDraggable: false,
@@ -251,141 +259,259 @@ class DesktopPanel extends StatelessWidget {
                         ),
                       ),
                       Expanded(
-                        child: Obx(() {
-                          int numActions = SettingsManager().settings.selectedActionIndices.length;
-                          int markReadIndex = SettingsManager().settings.actionList.indexOf("Mark Read");
-                          bool showMarkRead = SettingsManager().settings.selectedActionIndices.contains(markReadIndex);
-                          CustomNavigator.listener.value;
-                          context.width;
-                          double margin = 20;
-                          double size = CustomNavigator.width(context) / 2 - 2 * margin;
-                          return Container(
-                            height: size /
-                                3 *
-                                (numActions == 0
-                                    ? 0.9
-                                    : showMarkRead && numActions > 3
-                                        ? 1.41
-                                        : 1.28),
-                            margin: EdgeInsets.symmetric(vertical: margin / 2, horizontal: margin),
-                            decoration: BoxDecoration(
-                              color: context.theme.colorScheme.secondary.withOpacity(0.4),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: context.theme.colorScheme.secondary),
-                            ),
-                            child: Stack(
-                              children: <Widget>[
-                                Positioned(
-                                  top: size * 0.035,
-                                  left: size * 0.04,
-                                  child: Image.asset("assets/icon/icon.ico", width: size * 0.043, height: size * 0.043),
+                        child: Column(
+                          children: [
+                            Obx(() {
+                              int numActions = SettingsManager().settings.selectedActionIndices.length;
+                              int markReadIndex = SettingsManager().settings.actionList.indexOf("Mark Read");
+                              bool showMarkRead =
+                                  SettingsManager().settings.selectedActionIndices.contains(markReadIndex);
+                              CustomNavigator.listener.value;
+                              context.width;
+                              double margin = 20;
+                              double size = CustomNavigator.width(context) / 2 - 2 * margin;
+                              return Container(
+                                height: size /
+                                    3 *
+                                    (numActions == 0
+                                        ? 0.9
+                                        : showMarkRead && numActions > 3
+                                            ? 1.41
+                                            : 1.28),
+                                margin: EdgeInsets.symmetric(vertical: margin / 2, horizontal: margin),
+                                decoration: BoxDecoration(
+                                  color: context.theme.colorScheme.secondary.withOpacity(0.4),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: context.theme.colorScheme.secondary),
                                 ),
-                                Positioned(
-                                  top: size * 0.035,
-                                  left: size * 0.106,
-                                  child: Center(
-                                    child: Text(
-                                      "BlueBubbles",
-                                      style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.0305),
-                                      textAlign: TextAlign.center,
+                                child: Stack(
+                                  children: <Widget>[
+                                    Positioned(
+                                      top: size * 0.035,
+                                      left: size * 0.04,
+                                      child: Image.asset("assets/icon/icon.ico",
+                                          width: size * 0.043, height: size * 0.043),
                                     ),
-                                  ),
-                                ),
-                                Positioned(
-                                  top: size * 0.11,
-                                  left: size * 0.034,
-                                  child: ContactAvatarWidget(
-                                      editable: false,
-                                      handle: Handle(address: "John Doe"),
-                                      fontSize: size * 0.144 * 0.93 * 0.5,
-                                      size: size * 0.144),
-                                ),
-                                Positioned(
-                                  top: size * 0.132,
-                                  left: size * 0.216,
-                                  child: Text(
-                                    "John Doe",
-                                    style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.036),
-                                  ),
-                                ),
-                                Positioned(
-                                  top: size * 0.182,
-                                  left: size * 0.216,
-                                  child: Text(
-                                    "Message notifications will look like this.",
-                                    style: context.textTheme.subtitle1!.copyWith(fontSize: size * 0.036),
-                                  ),
-                                ),
-                                Positioned(
-                                  top: size * 0.035,
-                                  right: size * 0.15,
-                                  child: Center(
-                                    child: Icon(Icons.more_horiz,
-                                        size: size * 0.04, color: context.textTheme.subtitle1!.color),
-                                  ),
-                                ),
-                                Positioned(
-                                  top: size * 0.035,
-                                  right: size * 0.05,
-                                  child: Center(
-                                    child: Icon(Icons.close_rounded,
-                                        size: size * 0.04, color: context.textTheme.subtitle1!.color),
-                                  ),
-                                ),
-                                ...List.generate(
-                                  SettingsManager().settings.actionList.length,
-                                  (index) => (!SettingsManager().settings.selectedActionIndices.contains(index))
-                                      ? null
-                                      : Obx(
-                                          () {
-                                            context.width;
-                                            int _index = SettingsManager()
-                                                .settings
-                                                .actionList
-                                                .whereIndexed((index, element) => SettingsManager().settings.selectedActionIndices.contains(index))
-                                                .toList()
-                                                .indexOf(SettingsManager().settings.actionList[index]);
-                                            return Positioned(
-                                              bottom: size * 0.04,
-                                              left: size * 0.04 +
-                                                  (_index *
-                                                          (size * 0.92 - ((numActions - 1) * size * 0.02)) /
-                                                          numActions -
-                                                      0.5) +
-                                                  (size * _index * 0.02) -
-                                                  ((_index == 0 || _index == numActions - 1) ? 0.5 : 0.25),
-                                              child: Container(
-                                                height: size * (!showMarkRead || numActions < 4 ? 0.09 : 0.13),
-                                                width:
-                                                    (size * 0.92 - ((numActions - 1) * size * 0.02)) / numActions - 0.5,
-                                                padding: EdgeInsets.symmetric(
-                                                    vertical: size * 0.01, horizontal: size * 0.02),
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(5),
-                                                  border: Border.all(
-                                                      color: context.textTheme.bodyText1!.color!.withOpacity(0.1)),
-                                                  color: context.theme.colorScheme.secondary.withOpacity(0.6),
-                                                ),
-                                                child: Center(
-                                                  child: Text(
-                                                    index == markReadIndex
-                                                        ? SettingsManager().settings.actionList[index]
-                                                        : ReactionTypes.reactionToEmoji[
-                                                            SettingsManager().settings.actionList[index]]!,
-                                                    style:
-                                                        context.textTheme.bodyText1!.copyWith(fontSize: size * 0.037),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          },
+                                    Positioned(
+                                      top: size * 0.035,
+                                      left: size * 0.106,
+                                      child: Center(
+                                        child: Text(
+                                          "BlueBubbles",
+                                          style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.0305),
+                                          textAlign: TextAlign.center,
                                         ),
-                                ).whereNotNull(),
-                              ],
-                            ),
-                          );
-                        }),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: size * 0.11,
+                                      left: size * 0.034,
+                                      child: ContactAvatarWidget(
+                                          editable: false,
+                                          handle: Handle(address: "John Doe"),
+                                          fontSize: size * 0.144 * 0.93 * 0.5,
+                                          size: size * 0.144),
+                                    ),
+                                    Positioned(
+                                      top: size * 0.132,
+                                      left: size * 0.216,
+                                      child: Text(
+                                        "John Doe",
+                                        style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.036),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: size * 0.182,
+                                      left: size * 0.216,
+                                      child: Text(
+                                        "Message notifications will look like this.",
+                                        style: context.textTheme.subtitle1!.copyWith(fontSize: size * 0.036),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: size * 0.035,
+                                      right: size * 0.15,
+                                      child: Center(
+                                        child: Icon(Icons.more_horiz,
+                                            size: size * 0.04, color: context.textTheme.subtitle1!.color),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: size * 0.035,
+                                      right: size * 0.05,
+                                      child: Center(
+                                        child: Icon(Icons.close_rounded,
+                                            size: size * 0.04, color: context.textTheme.subtitle1!.color),
+                                      ),
+                                    ),
+                                    ...List.generate(
+                                      SettingsManager().settings.actionList.length,
+                                      (index) => (!SettingsManager().settings.selectedActionIndices.contains(index))
+                                          ? null
+                                          : Obx(
+                                              () {
+                                                context.width;
+                                                int _index = SettingsManager()
+                                                    .settings
+                                                    .actionList
+                                                    .whereIndexed((index, element) => SettingsManager()
+                                                        .settings
+                                                        .selectedActionIndices
+                                                        .contains(index))
+                                                    .toList()
+                                                    .indexOf(SettingsManager().settings.actionList[index]);
+                                                return Positioned(
+                                                  bottom: size * 0.04,
+                                                  left: size * 0.04 +
+                                                      (_index *
+                                                              (size * 0.92 - ((numActions - 1) * size * 0.02)) /
+                                                              numActions -
+                                                          0.5) +
+                                                      (size * _index * 0.02) -
+                                                      ((_index == 0 || _index == numActions - 1) ? 0.5 : 0.25),
+                                                  child: Container(
+                                                    height: size * (!showMarkRead || numActions < 4 ? 0.09 : 0.13),
+                                                    width:
+                                                        (size * 0.92 - ((numActions - 1) * size * 0.02)) / numActions -
+                                                            0.5,
+                                                    padding: EdgeInsets.symmetric(
+                                                        vertical: size * 0.01, horizontal: size * 0.02),
+                                                    decoration: BoxDecoration(
+                                                      borderRadius: BorderRadius.circular(5),
+                                                      border: Border.all(
+                                                          color: context.textTheme.bodyText1!.color!.withOpacity(0.1)),
+                                                      color: context.theme.colorScheme.secondary.withOpacity(0.6),
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        index == markReadIndex
+                                                            ? SettingsManager().settings.actionList[index]
+                                                            : ReactionTypes.reactionToEmoji[
+                                                                SettingsManager().settings.actionList[index]]!,
+                                                        style: context.textTheme.bodyText1!
+                                                            .copyWith(fontSize: size * 0.037),
+                                                        textAlign: TextAlign.center,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                    ).whereNotNull(),
+                                  ],
+                                ),
+                              );
+                            }),
+                            Obx(() {
+                              int markReadIndex = SettingsManager().settings.actionList.indexOf("Mark Read");
+                              bool showMarkRead =
+                              SettingsManager().settings.selectedActionIndices.contains(markReadIndex);
+                              CustomNavigator.listener.value;
+                              context.width;
+                              double margin = 20;
+                              double size = CustomNavigator.width(context) / 2 - 2 * margin;
+                              return Container(
+                                height: size /
+                                    3 *
+                                    (!showMarkRead
+                                        ? 0.9
+                                        : 1.28),
+                                margin: EdgeInsets.symmetric(vertical: margin / 2, horizontal: margin),
+                                decoration: BoxDecoration(
+                                  color: context.theme.colorScheme.secondary.withOpacity(0.4),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: context.theme.colorScheme.secondary),
+                                ),
+                                child: Stack(
+                                  children: <Widget>[
+                                    Positioned(
+                                      top: size * 0.035,
+                                      left: size * 0.04,
+                                      child: Image.asset("assets/icon/icon.ico",
+                                          width: size * 0.043, height: size * 0.043),
+                                    ),
+                                    Positioned(
+                                      top: size * 0.035,
+                                      left: size * 0.106,
+                                      child: Center(
+                                        child: Text(
+                                          "BlueBubbles",
+                                          style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.0305),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: size * 0.11,
+                                      left: size * 0.034,
+                                      child: ContactAvatarWidget(
+                                          editable: false,
+                                          handle: Handle(address: "John Doe"),
+                                          fontSize: size * 0.144 * 0.93 * 0.5,
+                                          size: size * 0.144),
+                                    ),
+                                    Positioned(
+                                      top: size * 0.132,
+                                      left: size * 0.216,
+                                      child: Text(
+                                        "John Doe",
+                                        style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.036),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: size * 0.182,
+                                      left: size * 0.216,
+                                      child: Text(
+                                        "Reaction notifications will look like this.",
+                                        style: context.textTheme.subtitle1!.copyWith(fontSize: size * 0.036),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: size * 0.035,
+                                      right: size * 0.15,
+                                      child: Center(
+                                        child: Icon(Icons.more_horiz,
+                                            size: size * 0.04, color: context.textTheme.subtitle1!.color),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: size * 0.035,
+                                      right: size * 0.05,
+                                      child: Center(
+                                        child: Icon(Icons.close_rounded,
+                                            size: size * 0.04, color: context.textTheme.subtitle1!.color),
+                                      ),
+                                    ),
+                                    if (showMarkRead)
+                                      Positioned(
+                                        bottom: size * 0.04,
+                                        left: size * 0.04 + 0.5,
+                                        child: Container(
+                                          height: size * 0.09,
+                                          width: size * 0.92 - 0.5,
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: size * 0.01, horizontal: size * 0.02),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(5),
+                                            border: Border.all(
+                                                color: context.textTheme.bodyText1!.color!.withOpacity(0.1)),
+                                            color: context.theme.colorScheme.secondary.withOpacity(0.6),
+                                          ),
+                                          child: Center(
+                                            child: Text("Mark Read",
+                                              style: context.textTheme.bodyText1!
+                                                  .copyWith(fontSize: size * 0.037),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
                       ),
                     ],
                   ),
