@@ -13,7 +13,7 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -29,6 +29,8 @@ import 'package:quick_notify/quick_notify.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as uh;
 import 'package:win_toast/win_toast.dart';
+
+import 'chat/chat_manager.dart';
 
 /// [NotificationManager] holds data relating to the current chat, and manages things such as
 class NotificationManager {
