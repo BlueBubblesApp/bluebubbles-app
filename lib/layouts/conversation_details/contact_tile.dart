@@ -51,25 +51,6 @@ class ContactTile extends StatelessWidget {
     launch('mailto:$email');
   }
 
-  List<String> getUniqueNumbers(Iterable<String> numbers) {
-    List<String> phones = [];
-    for (String phone in numbers) {
-      bool exists = false;
-      for (String current in phones) {
-        if (cleansePhoneNumber(phone) == cleansePhoneNumber(current)) {
-          exists = true;
-          break;
-        }
-      }
-
-      if (!exists) {
-        phones.add(phone);
-      }
-    }
-
-    return phones;
-  }
-
   Widget _buildContactTile(BuildContext context) {
     final bool redactedMode = SettingsManager().settings.redactedMode.value;
     final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo.value;

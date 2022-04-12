@@ -188,6 +188,44 @@ Future<String?> parsePhoneNumber(String number, String region) async {
   }
 }
 
+List<String> getUniqueNumbers(Iterable<String> numbers) {
+  List<String> phones = [];
+  for (String phone in numbers) {
+    bool exists = false;
+    for (String current in phones) {
+      if (cleansePhoneNumber(phone) == cleansePhoneNumber(current)) {
+        exists = true;
+        break;
+      }
+    }
+
+    if (!exists) {
+      phones.add(phone);
+    }
+  }
+
+  return phones;
+}
+
+List<String> getUniqueEmails(Iterable<String> list) {
+  List<String> emails = [];
+  for (String email in list) {
+    bool exists = false;
+    for (String current in emails) {
+      if (email.trim() == current.trim()) {
+        exists = true;
+        break;
+      }
+    }
+
+    if (!exists) {
+      emails.add(email);
+    }
+  }
+
+  return emails;
+}
+
 String randomString(int length) {
   var rand = Random();
   var codeUnits = List.generate(length, (index) {
