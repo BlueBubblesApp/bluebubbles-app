@@ -190,6 +190,44 @@ Future<String?> parsePhoneNumber(String number, String region) async {
   }
 }
 
+List<String> getUniqueNumbers(Iterable<String> numbers) {
+  List<String> phones = [];
+  for (String phone in numbers) {
+    bool exists = false;
+    for (String current in phones) {
+      if (cleansePhoneNumber(phone) == cleansePhoneNumber(current)) {
+        exists = true;
+        break;
+      }
+    }
+
+    if (!exists) {
+      phones.add(phone);
+    }
+  }
+
+  return phones;
+}
+
+List<String> getUniqueEmails(Iterable<String> list) {
+  List<String> emails = [];
+  for (String email in list) {
+    bool exists = false;
+    for (String current in emails) {
+      if (email.trim() == current.trim()) {
+        exists = true;
+        break;
+      }
+    }
+
+    if (!exists) {
+      emails.add(email);
+    }
+  }
+
+  return emails;
+}
+
 const _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
 
 String randomString(int length) =>
@@ -477,7 +515,7 @@ SystemUiOverlayStyle getBrightness(BuildContext context) {
 
 /// Take the passed [address] or serverAddress from Settings
 /// and sanitize it, making sure it includes an http schema
-String? getServerAddress({String? address}) {
+String? sanitizeServerAddress({String? address}) {
   String serverAddress = address ?? SettingsManager().settings.serverAddress.value;
 
   String sanitized = serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();

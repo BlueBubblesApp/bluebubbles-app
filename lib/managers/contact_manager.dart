@@ -160,7 +160,7 @@ class ContactManager {
       await fetchContactsDesktop();
     }
 
-    // This is _reuquired_ for the `getContacts()` function to be used
+    // This is _required_ for the `getContacts()` function to be used
     await buildCacheMap();
 
     loadFakeInfo();
@@ -213,50 +213,57 @@ class ContactManager {
   }
 
   Future<void> fetchContactsDesktop({Function(String)? logger}) async {
+    contacts.clear();
+
+    logger?.call("Fetching contacts (no avatars)...");
     try {
-      contacts.clear();
-      logger?.call("Trying to fetch contacts from Android...");
-      var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
-      if (vcfs['data'] != null) {
-        logger?.call("Found Android contacts!");
-        if (vcfs['data'] is String) {
-          logger?.call("Parsing string into JSON...");
-          vcfs['data'] = jsonDecode(vcfs['data']);
-        }
-        for (var c in vcfs['data']) {
-          logger?.call("Parsing contact: ${c['displayName']}");
-          contacts.add(Contact.fromMap(c));
-        }
-      }
-    } catch (e, s) {
-      print(e);
-      print(s);
-      logger?.call("Got exception: $e");
-      logger?.call(s.toString());
-    }
-    if (contacts.isEmpty) {
-      logger?.call("Android contacts didn't exist, falling back to macOS contacts...");
-      try {
-        var response = await api.contacts();
-        logger?.call("Found macOS contacts!");
+      final response = await api.contacts();
+
+      if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])!) {
+        logger?.call("Found contacts!");
+
         for (Map<String, dynamic> map in response.data['data']) {
           logger?.call(
               "Parsing contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
           contacts.add(Contact(
-            id: randomString(8),
+            id: map['id'].toString(),
             displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
             emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
             phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
           ));
         }
-      } catch (e, s) {
-        print(e);
-        print(s);
-        logger?.call("Got exception: $e");
-        logger?.call(s.toString());
+      } else {
+        logger?.call("No contacts found!");
       }
+      logger?.call("Finished contacts sync (no avatars)");
+    } catch (e, s) {
+      logger?.call("Got exception: $e");
+      logger?.call(s.toString());
     }
-    logger?.call("Finished contacts sync");
+
+    logger?.call("Fetching contacts (with avatars)...");
+    try {
+      api.contacts(withAvatars: true).then((response) {
+        if (!isNullOrEmpty(response.data['data'])!) {
+          logger?.call("Found contacts!");
+
+          for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar'])!)) {
+            logger?.call(
+                "Adding avatar for contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
+
+            final contact = contacts.firstWhereOrNull((e) => e.id == map['id'].toString());
+            contact?.avatar.value = base64Decode(map['avatar'].toString());
+            contact?.avatarHiRes.value = base64Decode(map['avatar'].toString());
+          }
+        } else {
+          logger?.call("No contacts found!");
+        }
+        logger?.call("Finished contacts sync (with avatars)");
+      });
+    } catch (e, s) {
+      logger?.call("Got exception: $e");
+      logger?.call(s.toString());
+    }
   }
 
   void loadFakeInfo() {

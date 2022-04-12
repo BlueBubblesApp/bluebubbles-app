@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -102,18 +103,16 @@ class SettingsManager {
       try {
         if (settings.finishedSetup.value) {
           SocketManager().startSocketIO();
-          SocketManager().registerFcmDevice();
+          fcm.registerDevice();
         }
       } catch (_) {}
     }
   }
 
   /// Saves a [Settings] instance to disk
-  ///
-  /// @param [newSettings] are the settings to save
-  Future<void> saveSettings(Settings newSettings) async {
+  Future<void> saveSettings([Settings? newSettings]) async {
     // Set the new settings as the current settings in the manager
-    settings = newSettings;
+    settings = newSettings ?? settings;
     settings.save();
     try {
       // Set the [displayMode] to that saved in settings
@@ -153,7 +152,7 @@ class SettingsManager {
   void saveFCMData(FCMData data) {
     fcmData = data;
     fcmData!.save();
-    SocketManager().registerFcmDevice();
+    fcm.registerDevice();
   }
 
   Future<void> resetConnection() async {
@@ -171,11 +170,15 @@ class SettingsManager {
 
   Future<int?> getMacOSVersion({bool refresh = false}) async {
     if (refresh) {
-      var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
-      final version = int.tryParse(res['data']['os_version'].split(".")[0]);
-      _serverVersion = res['data']?['server_version'];
-      if (version != null) prefs.setInt("macos-version", version);
-      return version;
+      final response = await api.serverInfo();
+      if (response.statusCode == 200) {
+        final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
+        _serverVersion = response.data['data']['server_version'];
+        if (version != null) prefs.setInt("macos-version", version);
+        return version;
+      } else {
+        return null;
+      }
     } else {
       return prefs.getInt("macos-version") ?? 11;
     }
@@ -183,8 +186,10 @@ class SettingsManager {
 
   FutureOr<String?> getServerVersion() async {
     if (_serverVersion == null) {
-      var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
-      _serverVersion = res['data']?['server_version'];
+      final response = await api.serverInfo();
+      if (response.statusCode == 200) {
+        _serverVersion = response.data['data']['server_version'];
+      }
     }
     return _serverVersion;
   }

@@ -20,7 +20,7 @@ import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
@@ -123,7 +123,7 @@ class MyHttpOverrides extends HttpOverrides {
       // If there is a bad certificate callback, override it if the host is part of
       // your server URL
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-        String serverUrl = getServerAddress() ?? "";
+        String serverUrl = sanitizeServerAddress() ?? "";
         return serverUrl.contains(host);
       }; // add your localhost detection logic here if you want
   }
