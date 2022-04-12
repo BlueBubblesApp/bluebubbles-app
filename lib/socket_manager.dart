@@ -143,7 +143,7 @@ class SocketManager {
 
           if (kIsDesktop && ContactManager().contacts.isEmpty) {
             // Get contacts whenever we connect if we didn't yet
-            Future.delayed(Duration.zero, () async => await ContactManager().fetchContactsDesktop());
+            Future.delayed(Duration.zero, () async => await ContactManager().loadContacts());
           }
         }
 
