@@ -243,7 +243,7 @@ class ContactManager {
 
     logger?.call("Fetching contacts (with avatars)...");
     try {
-      api.contacts(withAvatars: true).then((response) {
+      await api.contacts(withAvatars: true).then((response) {
         if (!isNullOrEmpty(response.data['data'])!) {
           logger?.call("Found contacts!");
 
