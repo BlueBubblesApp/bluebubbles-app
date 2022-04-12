@@ -239,6 +239,7 @@ class DesktopPanel extends StatelessWidget {
                                                       color: disabled
                                                           ? context.theme.colorScheme.secondary.withOpacity(0.9)
                                                           : Colors.transparent,
+                                                      backgroundBlendMode: BlendMode.saturation,
                                                       borderRadius: BorderRadius.circular(8),
                                                     ),
                                                     child:  Center(
