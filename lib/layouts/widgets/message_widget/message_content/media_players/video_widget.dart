@@ -44,7 +44,7 @@ class VideoWidgetController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    Map<String, VideoPlayerController> controllers = ChatManager().activeChat!.currentPlayingVideo;
+    Map<String, VideoPlayerController> controllers = ChatManager().activeChat?.currentPlayingVideo ?? {};
     showPlayPauseOverlay =
         RxBool(!controllers.containsKey(attachment.guid) || !controllers[attachment.guid]!.value.isPlaying);
 

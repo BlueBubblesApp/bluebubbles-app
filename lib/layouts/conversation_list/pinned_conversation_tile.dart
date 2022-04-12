@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_list/conversation_peek_view.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_tile_text_bubble.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
@@ -167,15 +168,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
       },
       onTap: onTapUpBypass,
       onLongPress: () async {
-        shouldPartialHighlight.value = true;
-        await showConversationTileMenu(
-          context,
-          this,
-          widget.chat,
-          _tapPosition,
-          context.textTheme,
-        );
-        shouldPartialHighlight.value = false;
+        await peekChat(context, widget.chat, _tapPosition);
       },
       onSecondaryTapUp: (details) async {
         if (kIsWeb) {
