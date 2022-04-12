@@ -73,6 +73,9 @@ class NotificationPanel extends StatelessWidget {
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
     }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(context.theme, nordDarkTheme)) {
+      tileColor = headerColor;
+    }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(

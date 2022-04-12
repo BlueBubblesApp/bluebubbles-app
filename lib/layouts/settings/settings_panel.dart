@@ -137,6 +137,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
     }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(context.theme, nordDarkTheme)) {
+      tileColor = headerColor;
+    }
 
     return Obx(() => SettingsScaffold(
         title: "Settings",
@@ -1314,6 +1317,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
       tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+      tileColor = headerColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(context.theme, nordDarkTheme)) {
       tileColor = headerColor;
     }
     return VerticalSplitView(

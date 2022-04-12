@@ -199,7 +199,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
       CustomNavigator.pushAndRemoveUntil(
         context,
         ConversationView(
-            chat: ChatBloc().chats.firstWhere((e) => e.guid == prefs.getString('lastOpenedChat'))
+            chat: Chat.findOne(guid: prefs.getString('lastOpenedChat'))
         ),
             (route) => route.isFirst,
       );

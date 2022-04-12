@@ -65,6 +65,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:version/version.dart' as ver;
+import 'package:win_toast/win_toast.dart';
 import 'package:window_manager/window_manager.dart';
 
 // final SentryClient _sentry = SentryClient(
@@ -561,6 +562,16 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     super.initState();
 
     if (kIsDesktop) {
+      if (Platform.isWindows) {
+        WinToast.instance().initialize(
+          appName: "BlueBubbles",
+          productName: "BlueBubbles",
+          companyName: "23344BlueBubbles",
+        );
+
+        // Delete temp dir in case any notif icons weren't cleared
+        getApplicationSupportDirectory().then((Directory d) => Directory(join(d.path, "temp")).deleteSync(recursive: true));
+      }
       initSystemTray();
     }
 
