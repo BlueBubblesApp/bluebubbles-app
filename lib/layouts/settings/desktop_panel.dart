@@ -221,17 +221,10 @@ class DesktopPanel extends StatelessWidget {
                                                   SettingsManager().settings.selectedActionIndices.add(index);
                                                 }
                                               },
-                                              child: Container(
+                                              child: AnimatedContainer(
                                                 margin: EdgeInsets.symmetric(vertical: 5),
                                                 height: 56,
                                                 width: 72,
-                                                foregroundDecoration: BoxDecoration(
-                                                  color: disabled
-                                                      ? context.theme.colorScheme.secondary.withOpacity(0.9)
-                                                      : Colors.transparent,
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                                child: AnimatedContainer(
                                                   decoration: BoxDecoration(
                                                     borderRadius: BorderRadius.circular(8),
                                                     border: Border.all(
@@ -241,7 +234,14 @@ class DesktopPanel extends StatelessWidget {
                                                   ),
                                                   curve: Curves.linear,
                                                   duration: Duration(milliseconds: 150),
-                                                  child: Center(
+                                                  child: Container(
+                                                    foregroundDecoration: BoxDecoration(
+                                                      color: disabled
+                                                          ? context.theme.colorScheme.secondary.withOpacity(0.9)
+                                                          : Colors.transparent,
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    child:  Center(
                                                     child: Material(
                                                       color: Colors.transparent,
                                                       child: Text(
