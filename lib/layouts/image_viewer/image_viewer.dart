@@ -7,7 +7,7 @@ import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
@@ -113,7 +113,11 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       padding: EdgeInsets.symmetric(horizontal: 5),
                       onPressed: () async {
                         List<Widget> metaWidgets = [];
-                        for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
+                        final metadataMap = <String, dynamic>{
+                          'filename': widget.attachment.transferName,
+                          'mime': widget.attachment.mimeType,
+                        }..addAll(widget.attachment.metadata ?? {});
+                        for (var entry in metadataMap.entries.where((element) => element.value != null)) {
                           metaWidgets.add(RichText(
                               text: TextSpan(children: [
                             TextSpan(

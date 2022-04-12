@@ -6,7 +6,7 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:chewie/chewie.dart';
@@ -112,7 +112,11 @@ class _VideoViewerState extends State<VideoViewer> {
         OptionItem(
           onTap: () async {
             List<Widget> metaWidgets = [];
-            for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
+            final metadataMap = <String, dynamic>{
+              'filename': widget.attachment.transferName,
+              'mime': widget.attachment.mimeType,
+            }..addAll(widget.attachment.metadata ?? {});
+            for (var entry in metadataMap.entries.where((element) => element.value != null)) {
               metaWidgets.add(RichText(
                   text: TextSpan(children: [
                     TextSpan(
@@ -321,7 +325,11 @@ class _VideoViewerState extends State<VideoViewer> {
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
                       List<Widget> metaWidgets = [];
-                      for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
+                      final metadataMap = <String, dynamic>{
+                        'filename': widget.attachment.transferName,
+                        'mime': widget.attachment.mimeType,
+                      }..addAll(widget.attachment.metadata ?? {});
+                      for (var entry in metadataMap.entries.where((element) => element.value != null)) {
                         metaWidgets.add(RichText(
                             text: TextSpan(children: [
                           TextSpan(

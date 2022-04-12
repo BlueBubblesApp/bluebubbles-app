@@ -19,8 +19,8 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';

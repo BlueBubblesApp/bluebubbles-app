@@ -22,7 +22,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/screen_effects_widget.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
@@ -358,8 +358,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     } else if (chat != null && !alreadySent) {
       // We include messageBloc here because the bloc listener may not be instantiated yet
-      ActionHandler.sendMessage(chat!, text,
-          messageBloc: messageBloc, subject: subject, replyGuid: replyGuid, effectId: effectId);
+      ActionHandler.sendMessage(chat!, text, subject: subject, replyGuid: replyGuid, effectId: effectId);
     }
 
     if (alreadySent) {
