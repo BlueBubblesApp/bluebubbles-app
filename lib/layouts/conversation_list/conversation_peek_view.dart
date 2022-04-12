@@ -24,7 +24,7 @@ Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
   final chat = c;
   final messages = Chat.getMessages(c, getDetails: true).where((e) => e.associatedMessageGuid == null).toList();
   await Navigator.push(
-    context,
+    Get.context!,
     PageRouteBuilder(
       transitionDuration: Duration(milliseconds: 150),
       pageBuilder: (context, animation, secondaryAnimation) {
@@ -58,6 +58,7 @@ class ConversationPeekView extends StatefulWidget {
 class _ConversationPeekViewState extends State<ConversationPeekView> with SingleTickerProviderStateMixin {
   double targetValue = 1;
   late AnimationController controller;
+  double itemHeight = kIsDesktop || kIsWeb ? 56 : 48;
 
   @override
   void initState() {
@@ -113,7 +114,7 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
                 ),
                 Positioned(
                   left: min(widget.position.dx, context.width - min(context.width - 50, 500) - 25),
-                  top: min(widget.position.dy, context.height - min(context.height / 2, 750) - (kIsDesktop || kIsWeb ? 60 : 50)),
+                  top: min(widget.position.dy, context.height - min(context.height / 2, context.height - itemHeight * 5) - itemHeight * 5 - 25),
                   child: TweenAnimationBuilder<double>(
                     tween: Tween<double>(begin: 0.8, end: targetValue),
                     curve: Curves.easeOutBack,
@@ -135,7 +136,7 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
                               borderRadius: BorderRadius.circular(10),
                             ),
                             width: min(context.width - 50, 500),
-                            height: min(context.height / 2, 750) - (kIsDesktop || kIsWeb ? 60 : 50),
+                            height: min(context.height / 2, context.height - itemHeight * 5),
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: ListView.builder(
@@ -187,10 +188,6 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
 
   Widget buildDetailsMenu(BuildContext context) {
     double maxMenuWidth = min(max(context.width * 3 / 5, 200), context.width * 4 / 5);
-    double maxHeight = context.height
-        - min(context.height / 2, 750) - (kIsDesktop || kIsWeb ? 60 : 50)
-        - min(widget.position.dy, context.height - min(context.height / 2, 750) - (kIsDesktop || kIsWeb ? 60 : 50));
-    print(maxHeight);
     bool ios = SettingsManager().settings.skin.value == Skins.iOS;
 
     List<Widget> allActions = [
@@ -314,24 +311,6 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
       ),
     ];
 
-    List<Widget> detailsActions = [];
-    List<Widget> moreActions = [];
-    double itemHeight = kIsDesktop || kIsWeb ? 56 : 48;
-
-    double actualHeight = 0;
-    int index = 0;
-
-    while (actualHeight <= maxHeight - itemHeight && index < allActions.length) {
-      actualHeight += itemHeight;
-      detailsActions.add(allActions[index++]);
-    }
-    moreActions.addAll(allActions.getRange(index, allActions.length));
-
-    // If there is only one 'more' action then it can replace the 'more' button
-    if (moreActions.length == 1) {
-      detailsActions.add(moreActions.removeAt(0));
-    }
-
     return ClipRRect(
       borderRadius: BorderRadius.circular(10.0),
       child: BackdropFilter(
@@ -342,44 +321,7 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ...detailsActions,
-              if (moreActions.isNotEmpty)
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      Widget content = Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: moreActions,
-                      );
-                      Get.dialog(
-                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoAlertDialog(
-                            backgroundColor: Theme.of(context).colorScheme.secondary,
-                            content: content,
-                          ) : AlertDialog(
-                            contentPadding: EdgeInsets.all(5),
-                            shape: cupertino.RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                            backgroundColor: Theme.of(context).colorScheme.secondary,
-                            content: content,
-                          ),
-                          name: 'Popup Menu'
-                      );
-                    },
-                    child: ListTile(
-                      dense: !kIsDesktop && !kIsWeb,
-                      title: Text("More...", style: Theme.of(context).textTheme.bodyText1),
-                      trailing: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS
-                            ? cupertino.CupertinoIcons.ellipsis
-                            : Icons.more_vert,
-                        color: Theme.of(context).textTheme.bodyText1!.color,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+            children: allActions
           ),
         ),
       ),
