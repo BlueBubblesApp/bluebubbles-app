@@ -92,11 +92,7 @@ dependencies:
   dio: ^4.0.6
   flutter_dropzone: ^3.0.0
   transparent_pointer: ^1.0.0
-  # used to allow for custom parameters when creating notification
-  quick_notify:
-    git:
-      url: https://github.com/jjoelj/quick_notify
-      ref: 41030fb6468e7990b230bb08e42fd99928d6fd64
+  quick_notify: ^0.2.1
   qr_flutter: ^4.0.0
   window_manager: ^0.2.0
   objectbox: ^1.4.1

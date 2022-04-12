@@ -1540,12 +1540,10 @@ packages:
   quick_notify:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "41030fb6468e7990b230bb08e42fd99928d6fd64"
-      resolved-ref: "41030fb6468e7990b230bb08e42fd99928d6fd64"
-      url: "https://github.com/jjoelj/quick_notify"
-    source: git
-    version: "0.1.0+2"
+      name: quick_notify
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.1"
   quiver:
     dependency: transitive
     description:
