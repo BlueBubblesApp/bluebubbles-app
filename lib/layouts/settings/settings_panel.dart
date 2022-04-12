@@ -58,6 +58,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
   bool pushedServerManagement = false;
   int? lastRestart;
   final ScrollController scrollController = ScrollController();
+  final RxBool uploadingContacts = false.obs;
+  final RxnDouble progress = RxnDouble();
+  final RxnInt totalSize = RxnInt();
 
   @override
   void initState() {
@@ -1107,14 +1110,83 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           SettingsTile(
                             backgroundColor: tileColor,
                             onTap: () async {
+                              void closeDialog() {
+                                if (Get.isSnackbarOpen ?? false) {
+                                  Get.close(1);
+                                }
+                                Get.back();
+                                Future.delayed(Duration(milliseconds: 400), ()
+                                {
+                                  progress.value = null;
+                                  totalSize.value = null;
+                                });
+                              }
+
+                              Get.defaultDialog(
+                                backgroundColor: context.theme.colorScheme.secondary,
+                                radius: 15.0,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                titlePadding: EdgeInsets.only(top: 15),
+                                title: "Uploading contacts...",
+                                titleStyle: Theme.of(context).textTheme.headline1,
+                                confirm: Obx(() => uploadingContacts.value
+                                    ? Container(height: 0, width: 0)
+                                    : Container(
+                                  margin: EdgeInsets.only(bottom: 10),
+                                  child: TextButton(
+                                    child: Text("CLOSE"),
+                                    onPressed: () async {
+                                      closeDialog.call();
+                                    },
+                                  ),
+                                ),
+                                ),
+                                cancel: Container(height: 0, width: 0),
+                                content: ConstrainedBox(
+                                  constraints: BoxConstraints(maxWidth: 300),
+                                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                                    Obx(
+                                          () => Text(
+                                          '${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)'),
+                                    ),
+                                    SizedBox(height: 10.0),
+                                    Obx(
+                                          () => ClipRRect(
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: LinearProgressIndicator(
+                                          backgroundColor: Colors.white,
+                                          value: progress.value,
+                                          minHeight: 5,
+                                          valueColor:
+                                          AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: 15.0,
+                                    ),
+                                    Obx(() => Text(
+                                      progress.value == 1 ? "Upload Complete!" : "You can close this dialog. Contacts will continue to upload in the background.",
+                                      maxLines: 2,
+                                      textAlign: TextAlign.center,
+                                    ),),
+                                  ]),
+                                ),
+                              );
                               final contacts = <Map<String, dynamic>>[];
                               for (Contact c in ContactManager().contacts) {
                                 var map = c.toMap();
                                 map['firstName'] = map['displayName'];
                                 contacts.add(map);
                               }
-                              api.createContact(contacts).then((_) {
-                                showSnackbar("Notice", "Successfully exported contacts to server");
+                              api.createContact(contacts, onSendProgress: (count, total) {
+                                uploadingContacts.value = true;
+                                progress.value = count / total;
+                                totalSize.value = total;
+                                if (progress.value == 1.0) {
+                                  uploadingContacts.value = false;
+                                  showSnackbar("Notice", "Successfully exported contacts to server");
+                                }
                               }).catchError((err) {
                                 if (err is Response) {
                                   Logger.error(err.data["error"]["message"].toString());
@@ -1122,6 +1194,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                   Logger.error(err.toString());
                                 }
 
+                                closeDialog.call();
                                 showSnackbar("Error", "Failed to export contacts to server");
                               });
                             },

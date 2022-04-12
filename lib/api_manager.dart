@@ -595,11 +595,11 @@ class ApiService extends GetxService {
   }
 
   /// Get all icloud contacts
-  Future<Response> contacts({CancelToken? cancelToken}) async {
+  Future<Response> contacts({bool withAvatars = false, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
           "$origin/contact",
-          queryParameters: buildQueryParams(),
+          queryParameters: buildQueryParams(withAvatars ? {"extraProperties": "contactImage"} : {}),
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -621,12 +621,14 @@ class ApiService extends GetxService {
   }
 
   /// Add a contact to the server
-  Future<Response> createContact(List<Map<String, dynamic>> contacts, {CancelToken? cancelToken}) async {
+  Future<Response> createContact(List<Map<String, dynamic>> contacts, {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$origin/contact",
           queryParameters: buildQueryParams(),
           data: contacts,
+          onSendProgress: onSendProgress,
+          options: Options(sendTimeout: 0),
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
