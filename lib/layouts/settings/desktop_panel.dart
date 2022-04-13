@@ -153,20 +153,20 @@ class DesktopPanel extends StatelessWidget {
                   children: [
                     SettingsTile(
                       title: "Actions",
-                      subtitle: "Click actions to toggle them. Drag actions to reorder them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
+                      subtitle:
+                          "Click actions to toggle them. Drag actions to reorder them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
                     ),
-                    Row(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Expanded(
-                          child: Container(
+                        Container(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
                                 Padding(
                                   padding: EdgeInsets.all(15),
                                   child: Center(
-                                    child: ReorderableWrap(
+                                    child: ReorderableRow(
                                       onReorder: (int oldIndex, int newIndex) {
                                         List<String> selected = SettingsManager()
                                             .settings
@@ -192,41 +192,46 @@ class DesktopPanel extends StatelessWidget {
                                         SettingsManager().settings.selectedActionIndices.value = selectedIndices;
                                       },
                                       needsLongPressDraggable: false,
-                                      spacing: 10,
-                                      alignment: WrapAlignment.center,
                                       buildDraggableFeedback: (context, constraints, child) => AnimatedScale(
                                           duration: Duration(milliseconds: 250), scale: 1.1, child: child),
                                       children: List.generate(
                                         ReactionTypes.toList().length + 1,
-                                        (int index) => Obx(
-                                          () {
-                                            bool selected =
-                                                SettingsManager().settings.selectedActionIndices.contains(index);
+                                        (int index) => ReorderableWidget(
+                                          key: Key(randomString(8)),
+                                          reorderable: true,
+                                          child: Obx(
+                                            () {
+                                              bool selected =
+                                                  SettingsManager().settings.selectedActionIndices.contains(index);
 
-                                            String value = SettingsManager().settings.actionList[index];
+                                              String value = SettingsManager().settings.actionList[index];
 
-                                            bool disabled = (!selected &&
-                                                    (SettingsManager().settings.selectedActionIndices.length == 5)) ||
-                                                (!SettingsManager().settings.enablePrivateAPI.value &&
-                                                    value != "Mark Read");
+                                              bool disabled = (!selected &&
+                                                      (SettingsManager().settings.selectedActionIndices.length == 5)) ||
+                                                  (!SettingsManager().settings.enablePrivateAPI.value &&
+                                                      value != "Mark Read");
 
-                                            Color color = selected
-                                                ? context.theme.primaryColor
-                                                : context.theme.colorScheme.secondary;
-                                            return GestureDetector(
-                                              behavior: HitTestBehavior.translucent,
-                                              onTap: () {
-                                                if (disabled) return;
-                                                if (!SettingsManager().settings.selectedActionIndices.remove(index)) {
-                                                  SettingsManager().settings.selectedActionIndices.add(index);
-                                                }
-                                              },
-                                              child: AnimatedContainer(
-                                                margin: EdgeInsets.symmetric(vertical: 5),
-                                                height: 56,
-                                                width: 72,
+                                              Color color = selected
+                                                  ? context.theme.primaryColor
+                                                  : context.theme.colorScheme.secondary;
+
+                                              CustomNavigator.listener.value;
+                                              context.width;
+                                              double size = min(CustomNavigator.width(context) / 9, 72);
+                                              return GestureDetector(
+                                                behavior: HitTestBehavior.translucent,
+                                                onTap: () {
+                                                  if (disabled) return;
+                                                  if (!SettingsManager().settings.selectedActionIndices.remove(index)) {
+                                                    SettingsManager().settings.selectedActionIndices.add(index);
+                                                  }
+                                                },
+                                                child: AnimatedContainer(
+                                                  margin: EdgeInsets.symmetric(horizontal: size * 0.069),
+                                                  height: size * 0.78,
+                                                  width: size,
                                                   decoration: BoxDecoration(
-                                                    borderRadius: BorderRadius.circular(8),
+                                                    borderRadius: BorderRadius.circular(size * 0.11),
                                                     border: Border.all(
                                                         color: color.withOpacity(selected ? 1 : 0.5),
                                                         width: selected ? 1.5 : 1),
@@ -242,24 +247,25 @@ class DesktopPanel extends StatelessWidget {
                                                       backgroundBlendMode: BlendMode.saturation,
                                                       borderRadius: BorderRadius.circular(8),
                                                     ),
-                                                    child:  Center(
-                                                    child: Material(
-                                                      color: Colors.transparent,
-                                                      child: Text(
-                                                        ReactionTypes.reactionToEmoji[value] ?? "Mark Read",
-                                                        style: TextStyle(
-                                                            fontSize: 16,
-                                                            color: (disabled && value == "Mark Read")
-                                                                ? context.textTheme.subtitle1!.color
-                                                                : null),
-                                                        textAlign: TextAlign.center,
+                                                    child: Center(
+                                                      child: Material(
+                                                        color: Colors.transparent,
+                                                        child: Text(
+                                                          ReactionTypes.reactionToEmoji[value] ?? "Mark Read",
+                                                          style: TextStyle(
+                                                              fontSize: size * 0.222,
+                                                              color: (disabled && value == "Mark Read")
+                                                                  ? context.textTheme.subtitle1!.color
+                                                                  : null),
+                                                          textAlign: TextAlign.center,
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
                                                 ),
-                                              ),
-                                            );
-                                          },
+                                              );
+                                            },
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -268,16 +274,12 @@ class DesktopPanel extends StatelessWidget {
                               ],
                             ),
                           ),
-                        ),
                         Obx(
                           () {
                             context.width;
                             CustomNavigator.listener.value;
-                            double width = min(CustomNavigator.width(context) / 2, 400);
-                            return Container(
-                              width: CustomNavigator.width(context) > 1500
-                                  ? 800
-                                  : min(CustomNavigator.width(context) / 2, 400),
+                            double width = max(min(CustomNavigator.width(context) / 2 - 20, 500), 300);
+                            return Center(
                               child: Wrap(
                                 alignment: WrapAlignment.center,
                                 runAlignment: WrapAlignment.center,
