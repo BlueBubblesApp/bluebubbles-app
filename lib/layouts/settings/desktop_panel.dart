@@ -230,7 +230,7 @@ class DesktopPanel extends StatelessWidget {
                                                 child: Container(
                                                   foregroundDecoration: BoxDecoration(
                                                     color: context.theme.colorScheme.secondary.withOpacity(hardDisabled ? 1 : disabled ? 0.9 : 0),
-                                                    backgroundBlendMode: BlendMode.darken,
+                                                    backgroundBlendMode: BlendMode.color,
                                                     borderRadius: BorderRadius.circular(8),
                                                   ),
                                                   child: Center(
