@@ -83,12 +83,12 @@ class DatabaseManager extends GetxService {
 
         ref.onValue.listen((event) {
           url = sanitizeServerAddress(address: event.snapshot.value);
+          connectNewAddress(url, shouldReconnect: connectToSocket);
         });
       } else {
         url = sanitizeServerAddress(address: await MethodChannelInterface().invokeMethod("get-server-url"));
+        connectNewAddress(url, shouldReconnect: connectToSocket);
       }
-
-      connectNewAddress(url, shouldReconnect: connectToSocket);
     } catch (e, s) {
       Logger.error("Failed to fetch URL: $e\n${s.toString()}");
       completer?.completeError(e);
