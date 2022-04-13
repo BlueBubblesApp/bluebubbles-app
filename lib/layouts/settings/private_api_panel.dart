@@ -146,14 +146,6 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            if (!val) {
-                              int markReadIndex = SettingsManager().settings.actionList.indexOf("Mark Read");
-                              if (SettingsManager().settings.selectedActionIndices.contains(markReadIndex)) {
-                                SettingsManager().settings.selectedActionIndices.value = [markReadIndex];
-                              } else {
-                                SettingsManager().settings.selectedActionIndices.value = [];
-                              }
-                            }
                             controller._settingsCopy.enablePrivateAPI.value = val;
                             saveSettings();
                           },
