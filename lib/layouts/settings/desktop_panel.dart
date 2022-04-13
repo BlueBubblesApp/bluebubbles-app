@@ -209,7 +209,7 @@ class DesktopPanel extends StatelessWidget {
                                             return GestureDetector(
                                               behavior: HitTestBehavior.translucent,
                                               onTap: () {
-                                                if (!selected && SettingsManager().settings.selectedActionIndices.length == 5) return;
+                                                if (hardDisabled) return;
                                                 if (!SettingsManager().settings.selectedActionIndices.remove(index)) {
                                                   SettingsManager().settings.selectedActionIndices.add(index);
                                                 }
