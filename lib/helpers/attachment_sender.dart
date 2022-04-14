@@ -1,6 +1,11 @@
 import 'dart:async';
-import 'dart:convert';
+import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
@@ -9,128 +14,53 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:mime_type/mime_type.dart';
 import 'package:tuple/tuple.dart';
 
 class AttachmentSender {
   final Rx<Tuple2<num?, bool>> attachmentData = Rx<Tuple2<num?, bool>>(Tuple2(null, false));
 
-  int _totalChunks = 0;
-  int _chunkSize = 500;
-  late Chat _chat;
-
-  // String _tempGuid;
-
-  late PlatformFile _attachment;
-  late String _attachmentGuid;
-  late Uint8List _imageBytes;
-  late String _text;
-  String? _attachmentName;
-  Attachment? messageAttachment;
+  Chat chat;
+  PlatformFile attachment;
+  String text;
+  final String _attachmentGuid = "temp-${randomString(8)}";
+  late Uint8List _attachmentBytes;
+  late String _attachmentName;
+  late Attachment messageAttachment;
   late Message sentMessage;
   Message? messageWithText;
-  double progress = 0.0;
 
   String? get guid => _attachmentGuid;
 
   AttachmentSender(
-    PlatformFile attachment,
-    Chat chat,
-    String text,
-  ) {
-    // Set default chunk size to what is set in the settings
-    _chunkSize = SettingsManager().settings.chunkSize.value * 1024;
-    _chat = chat;
-    _attachmentGuid = "temp-${randomString(8)}";
-    _text = text;
-    _attachment = attachment;
-  }
-
-  // resumeChunkingAfterDisconnect() {
-  //     Logger.instance.log("restarting chunking");
-  //     sendChunkRecursive(_guid, _currentchunk, _totalchunks, _currentbytes,
-  //         _chunksize * 1024, _cb);
-  // }
-
-  sendChunkRecursive(int index, int total, String? tempGuid) {
-    // if (index < ) {
-    Map<String, dynamic> params = {};
-    params["guid"] = _chat.guid;
-    params["tempGuid"] = tempGuid;
-    params["message"] = _text;
-    params["attachmentGuid"] = _attachmentGuid;
-    params["attachmentChunkStart"] = index;
-    List<int> chunk = <int>[];
-    for (int i = index; i < index + _chunkSize; i++) {
-      if (i == _imageBytes.length) break;
-      chunk.add(_imageBytes[i]);
-    }
-    params["hasMore"] = index + _chunkSize < _imageBytes.length;
-    params["attachmentName"] = _attachmentName;
-    params["attachmentData"] = base64Encode(chunk);
-    Logger.info(chunk.length.toString() + "/" + _imageBytes.length.toString());
-    SocketManager().sendMessage("send-message-chunk", params, (data) async {
-      Map<String, dynamic> response = data;
-      if (response['status'] == 200) {
-        if (index + _chunkSize < _imageBytes.length) {
-          progress = index / _imageBytes.length;
-          attachmentData.value = Tuple2(progress, false);
-          sendChunkRecursive(index + _chunkSize, total, tempGuid);
-        } else {
-          progress = index / _imageBytes.length;
-          attachmentData.value = Tuple2(progress, false);
-          SocketManager().finishSender(_attachmentGuid);
-        }
-      } else {
-        Logger.error("Failed to sendattachment");
-
-        String? tempGuid = sentMessage.guid;
-        sentMessage.guid = sentMessage.guid!.replaceAll("temp", "error-${response['error']['message']}");
-        sentMessage.error =
-            response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
-
-        sentMessage = await Message.replaceMessage(tempGuid, sentMessage);
-        NewMessageManager().updateMessage(_chat, tempGuid!, sentMessage);
-        if (messageWithText != null) {
-          tempGuid = messageWithText!.guid;
-          messageWithText!.guid = messageWithText!.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          messageWithText!.error =
-              response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
-
-          await Message.replaceMessage(tempGuid, messageWithText!);
-          NewMessageManager().updateMessage(_chat, tempGuid!, messageWithText!);
-        }
-        SocketManager().finishSender(_attachmentGuid);
-        attachmentData.value = Tuple2(null, true);
-        attachmentData.close();
-      }
-    });
-  }
+    this.attachment,
+    this.chat,
+    this.text,
+  );
 
   Future<void> send() async {
-    _attachmentName = _attachment.name;
-    _imageBytes = _attachment.bytes ?? (await File(_attachment.path!).readAsBytes());
+    _attachmentName = attachment.name;
+    _attachmentBytes = attachment.bytes ?? (await File(attachment.path!).readAsBytes());
 
-    int numOfChunks = (_imageBytes.length / _chunkSize).ceil();
-
+    // create the attachment object and any necessary message objects
     messageAttachment = Attachment(
       guid: _attachmentGuid,
-      totalBytes: _imageBytes.length,
+      totalBytes: _attachmentBytes.length,
       isOutgoing: true,
       isSticker: false,
       hideAttachment: false,
       uti: "public.jpg",
       transferName: _attachmentName,
-      mimeType: mime(_attachmentName),
+      mimeType: _attachmentName == "$_attachmentGuid-CL.loc.vcf" ? "text/x-vlocation" : mime(_attachmentName),
       width: mime(_attachmentName)!.startsWith("image")
-          ? (await AttachmentHelper.getImageSizing(kIsWeb ? _attachment.name : _attachment.path ?? _attachment.name, bytes: _attachment.bytes)).width.toInt()
+          ? (await AttachmentHelper.getImageSizing(kIsWeb ? attachment.name : attachment.path ?? attachment.name, bytes: attachment.bytes)).width.toInt()
           : null,
       height: mime(_attachmentName)!.startsWith("image")
-          ? (await AttachmentHelper.getImageSizing(kIsWeb ? _attachment.name : _attachment.path ?? _attachment.name, bytes: _attachment.bytes)).height.toInt()
+          ? (await AttachmentHelper.getImageSizing(kIsWeb ? attachment.name : attachment.path ?? attachment.name, bytes: attachment.bytes)).height.toInt()
           : null,
     );
 
@@ -144,10 +74,10 @@ class AttachmentSender {
         handleId: 0,
     );
 
-    if (_text != "") {
+    if (text.isNotEmpty) {
       messageWithText = Message(
         guid: "temp-${randomString(8)}",
-        text: _text,
+        text: text,
         dateCreated: DateTime.now(),
         hasAttachments: false,
         isFromMe: true,
@@ -156,26 +86,107 @@ class AttachmentSender {
     }
 
     // Save the attachment to device
+    File? file;
     if (!kIsWeb) {
       String appDocPath = SettingsManager().appDocDir.path;
-      String pathName = "$appDocPath/attachments/${messageAttachment!.guid}/$_attachmentName";
-      File file = await File(pathName).create(recursive: true);
-      await file.writeAsBytes(_imageBytes);
+      String pathName = "$appDocPath/attachments/$_attachmentGuid/$_attachmentName";
+      file = await File(pathName).create(recursive: true);
+      file = await file.writeAsBytes(_attachmentBytes);
     }
 
     // Add the message to the chat.
     // This will save the message, attachments, and chat
-    await _chat.addMessage(sentMessage);
-    NewMessageManager().addMessage(_chat, sentMessage, outgoing: true);
+    await chat.addMessage(sentMessage);
+    MessageManager().addMessage(chat, sentMessage, outgoing: true);
 
     // If there is any text, save the text too
     if (messageWithText != null) {
-      await _chat.addMessage(messageWithText!);
-      NewMessageManager().addMessage(_chat, messageWithText!, outgoing: true);
+      await chat.addMessage(messageWithText!);
+      MessageManager().addMessage(chat, messageWithText!, outgoing: true);
     }
 
-    _totalChunks = numOfChunks;
+    // add this sender to our list of active senders
     SocketManager().addAttachmentSender(this);
-    sendChunkRecursive(0, _totalChunks, messageWithText == null ? "temp-${randomString(8)}" : messageWithText!.guid);
+
+    onSuccess(Response response) async {
+      String? tempGuid = _attachmentGuid;
+
+      // get the message from the response and update it in DB and the UI
+      Message newMessage = Message.fromMap(response.data['data']);
+      await Message.replaceMessage(tempGuid, newMessage, chat: chat);
+
+      // do the same for attachments
+      List<dynamic> attachments = response.data['data']['attachments'] ?? [];
+      newMessage.attachments = [];
+
+      for (var attachmentItem in attachments) {
+        Attachment file = Attachment.fromMap(attachmentItem);
+        try {
+          Attachment.replaceAttachment(tempGuid, file);
+        } catch (ex) {
+          Logger.warn("Attachment's Old GUID doesn't exist. Skipping");
+        }
+        newMessage.attachments.add(file);
+      }
+
+      Logger.info("Message match: [${response.data['data']["text"]}] - ${response.data['data']["guid"]} - $tempGuid", tag: "MessageStatus");
+      MessageManager().updateMessage(chat, tempGuid, newMessage);
+      SocketManager().finishSender(_attachmentGuid);
+
+      if (messageWithText != null) {
+        ActionHandler.sendMessageHelper(chat, messageWithText!);
+      }
+    }
+
+    onError(dynamic error, String tempGuid, Message message) async {
+      Logger.error("Failed to send attachment");
+
+      // If there is an error, replace the temp value with an error
+      if (error is Response) {
+        message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message']}");
+        message.error = error.statusCode == 400
+            ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+      } else {
+        message.guid = message.guid!
+            .replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
+        message.error = MessageError.BAD_REQUEST.code;
+
+        // send a notification to the user
+        ChatController? currChat = ChatManager().activeChat;
+        if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
+          NotificationManager().createFailedToSendMessage();
+        }
+      }
+
+      await Message.replaceMessage(tempGuid, message);
+      MessageManager().updateMessage(chat, tempGuid, message);
+    }
+
+    // on web, we can't send from a file so send from bytes instead
+    if (!kIsWeb) {
+      api.sendAttachment(chat.guid, _attachmentGuid, file!,
+          onSendProgress: (count, total) => attachmentData.value = Tuple2(count / _attachmentBytes.length, false)
+      ).then(onSuccess).catchError((err) async {
+        await onError.call(err, _attachmentGuid, sentMessage);
+        if (messageWithText != null) {
+          await onError.call(err, _attachmentGuid, messageWithText!);
+        }
+        SocketManager().finishSender(_attachmentGuid);
+        attachmentData.value = Tuple2(null, true);
+        attachmentData.close();
+      });
+    } else {
+      api.sendAttachmentBytes(chat.guid, _attachmentGuid, _attachmentBytes, _attachmentName,
+          onSendProgress: (count, total) => attachmentData.value = Tuple2(count / _attachmentBytes.length, false)
+      ).then(onSuccess).catchError((err) async {
+        await onError.call(err, _attachmentGuid, sentMessage);
+        if (messageWithText != null) {
+          await onError.call(err, _attachmentGuid, messageWithText!);
+        }
+        SocketManager().finishSender(_attachmentGuid);
+        attachmentData.value = Tuple2(null, true);
+        attachmentData.close();
+      });
+    }
   }
 }

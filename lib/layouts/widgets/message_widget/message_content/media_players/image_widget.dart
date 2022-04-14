@@ -4,8 +4,8 @@ import 'dart:typed_data';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
@@ -87,8 +87,8 @@ class ImageWidgetController extends GetxController {
         tmpData = await File(file.path!).readAsBytes();
       }
 
-      if (tmpData == null || !ChatManager().hasActiveChat) return;
-      ChatManager().activeChat!.saveImageData(tmpData, attachment);
+      if (tmpData == null) return;
+      ChatManager().activeChat?.saveImageData(tmpData, attachment);
       if (!(attachment.mimeType?.endsWith("heic") ?? false) && !(attachment.mimeType?.endsWith("heif") ?? false)) {
         await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
       }

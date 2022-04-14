@@ -8,11 +8,12 @@ import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:simple_animations/stateless_animation/custom_animation.dart';
@@ -116,17 +117,20 @@ class _QRScanState extends State<QRScan> {
       } else {
         try {
           // Fetch FCM data from the server
-          Map<String, dynamic> fcmMeta = await SocketManager().getFcmClient();
+          final response = await api.fcmClient();
 
-          // Parse out the new FCM data
-          fcmData = parseFcmJson(fcmMeta);
+          if (response.statusCode == 200 && response.data['data'] is Map<String, dynamic>) {
+            Map<String, dynamic> fcmMeta = response.data['data'];
+            // Parse out the new FCM data
+            fcmData = parseFcmJson(fcmMeta);
+          }
         } catch (ex) {
           // If we fail, who cares!
         }
       }
 
       String? password = result[0];
-      String? serverURL = getServerAddress(address: result[1]);
+      String? serverURL = sanitizeServerAddress(address: result[1]);
 
       showDialog(
         context: context,
@@ -210,6 +214,7 @@ class _QRScanState extends State<QRScan> {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
@@ -626,7 +631,7 @@ class _QRScanState extends State<QRScan> {
             if (mounted) {
               setState(() {
                 error =
-                    "Failed to connect to ${getServerAddress()}! Please ensure your credentials are correct (including http://) and check the server logs for more info.";
+                    "Failed to connect to ${sanitizeServerAddress()}! Please ensure your credentials are correct (including http://) and check the server logs for more info.";
               });
             }
           }
@@ -635,7 +640,7 @@ class _QRScanState extends State<QRScan> {
       barrierDismissible: false,
     );
     SocketManager().closeSocket(force: true);
-    String? addr = getServerAddress(address: url);
+    String? addr = sanitizeServerAddress(address: url);
     if (addr == null) {
       error = "Server address is invalid!";
       if (mounted) setState(() {});
@@ -654,20 +659,23 @@ class _QRScanState extends State<QRScan> {
   }
 
   void retreiveFCMData() {
-    SocketManager().sendMessage("get-fcm-client", {}, (_data) {
-      if (_data["status"] != 200) {
-        error = _data["error"]["message"];
-        if (mounted) setState(() {});
-        return;
+    // Get the FCM Client and make sure we have a valid response
+    // If so, save. Proceed to sync page as long as we get 200 from the API.
+    api.fcmClient().then((response) {
+      Map<String, dynamic>? data = response.data["data"];
+      if (!isNullOrEmpty(data)!) {
+        FCMData newData = FCMData.fromMap(data!);
+        SettingsManager().saveFCMData(newData);
       }
-      FCMData? copy = SettingsManager().fcmData;
-      Map<String, dynamic>? data = _data["data"];
-      if (data != null && data.isNotEmpty) {
-        copy = FCMData.fromMap(data);
 
-        SettingsManager().saveFCMData(copy);
-      }
       goToNextPage();
+    }).catchError((err) {
+      if (err is Response) {
+        error = err.data["error"]["message"];
+      } else {
+        error = err.toString();
+      }
+      if (mounted) setState(() {});
     });
   }
 }

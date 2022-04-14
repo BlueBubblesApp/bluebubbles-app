@@ -65,6 +65,7 @@ class Settings {
   final RxBool immersiveMode = false.obs;
   final RxDouble avatarScale = 1.0.obs;
   final RxBool askWhereToSave = false.obs;
+  final RxBool statusIndicatorsOnChats = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -124,6 +125,10 @@ class Settings {
   final RxBool launchAtStartup = false.obs;
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
+
+  // Notification actions
+  final RxList<int> selectedActionIndices = [0, 1, 2, 3, 4].obs;
+  final RxList<String> actionList = RxList.from(["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]);
 
   // Linux settings
   final RxBool useCustomTitleBar = RxBool(true);
@@ -313,8 +318,14 @@ class Settings {
         settings.minimizeToTray.value = entry.value;
       } else if (entry.name == "closeToTray") {
         settings.closeToTray.value = entry.value;
+      } else if (entry.name == "selectedActionIndices") {
+        settings.selectedActionIndices.value = entry.value;
+      } else if (entry.name == "actionList") {
+        settings.actionList.value = entry.value;
       } else if (entry.name == "askWhereToSave") {
         settings.askWhereToSave.value = entry.value;
+      } else if (entry.name == "indicatorsOnPinnedChats") {
+        settings.statusIndicatorsOnChats.value = entry.value;
       } else if (entry.name == "useCustomTitleBar") {
         settings.useCustomTitleBar.value = entry.value;
       }
@@ -428,7 +439,10 @@ class Settings {
       'launchAtStartup': launchAtStartup.value,
       'closeToTray': closeToTray.value,
       'minimizeToTray': minimizeToTray.value,
+      'selectedActionIndices': selectedActionIndices,
+      'actionList': actionList,
       'askWhereToSave': askWhereToSave.value,
+      'indicatorsOnPinnedChats': statusIndicatorsOnChats.value,
       'swipeToReply': swipeToReply.value,
       'privateAPISend': privateAPISend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
@@ -535,6 +549,7 @@ class Settings {
     SettingsManager().settings.closeToTray.value = map['closeToTray'] ?? true;
     SettingsManager().settings.minimizeToTray.value = map['minimizeToTray'] ?? false;
     SettingsManager().settings.askWhereToSave.value = map['askWhereToSave'] ?? false;
+    SettingsManager().settings.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.privateAPISend.value = map['privateAPISend'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -581,6 +596,8 @@ class Settings {
     SettingsManager().settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     SettingsManager().settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     SettingsManager().settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
+    SettingsManager().settings.selectedActionIndices.value = map['selectedActionIndices'] ?? [0, 1, 2, 3, 4];
+    SettingsManager().settings.actionList.value = map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION];
     SettingsManager().settings.save();
   }
 
@@ -643,6 +660,7 @@ class Settings {
     s.closeToTray.value = map['closeToTray'] ?? true;
     s.minimizeToTray.value = map['minimizeToTray'] ?? false;
     s.askWhereToSave.value = map['askWhereToSave'] ?? false;
+    s.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -689,6 +707,8 @@ class Settings {
     s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
+    s.selectedActionIndices.value = map['selectedActionIndices'] ?? [0, 1, 2, 3, 4];
+    s.actionList.value = map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION];
     return s;
   }
 }

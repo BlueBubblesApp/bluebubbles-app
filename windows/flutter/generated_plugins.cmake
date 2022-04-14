@@ -8,11 +8,14 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
   maps_launcher
   objectbox_flutter_libs
+  pasteboard
+  permission_handler_windows
   printing
   quick_notify
   secure_application
   system_tray
   url_launcher_windows
+  win_toast
   window_manager
 )
 

@@ -4,7 +4,10 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -12,6 +15,9 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:universal_io/io.dart';
 
 enum SetupOutputType { ERROR, LOG }
 
@@ -49,6 +55,7 @@ class SetupBloc {
   double numberOfMessagesPerPage = 25;
   bool downloadAttachments = false;
   bool skipEmptyChats = true;
+  bool saveToDownloads = false;
 
   double get progress => _progress;
   int? processId;
@@ -62,12 +69,12 @@ class SetupBloc {
       return;
     }
 
-    settingsCopy.serverAddress.value = getServerAddress(address: serverURL) ?? settingsCopy.serverAddress.value;
+    settingsCopy.serverAddress.value = sanitizeServerAddress(address: serverURL) ?? settingsCopy.serverAddress.value;
     settingsCopy.guidAuthKey.value = password;
 
     await SettingsManager().saveSettings(settingsCopy);
     SettingsManager().saveFCMData(data);
-    await SocketManager().registerFcmDevice(catchException: false, force: true);
+    await fcm.registerDevice(catchException: false, force: true);
     SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     connectionSubscription = ever<SocketState>(SocketManager().state, (event) {
       connectionStatus.value = event;
@@ -133,7 +140,7 @@ class SetupBloc {
       s.stop();
       addOutput("Received contacts list. Size: ${ContactManager().contacts.length}, speed: ${s.elapsedMilliseconds} ms", SetupOutputType.LOG);
       addOutput("Getting Chats...", SetupOutputType.LOG);
-      List<Chat> chats = await SocketManager().getChats({"withLastMessage": kIsWeb});
+      List<Chat> chats = await ChatManager().getChats(withParticipants: true, withLastMessage: kIsWeb, limit: 1000);
 
       // If we got chats, cancel the timerCo
       timer.cancel();
@@ -176,11 +183,7 @@ class SetupBloc {
         } else {
           try {
             if (!(chat.chatIdentifier ?? "").startsWith("urn:biz")) {
-              Map<String, dynamic> params = {};
-              params["identifier"] = chat.guid;
-              params["withBlurhash"] = false;
-              params["limit"] = numberOfMessagesPerPage.round();
-              List<dynamic> messages = await SocketManager().getChatMessages(params)!;
+              List<dynamic> messages = await ChatManager().getMessages(chat.guid, limit: numberOfMessagesPerPage.round());
               addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
               if (!skipEmptyChats || (skipEmptyChats && messages.isNotEmpty)) {
                 chat.save();
@@ -246,11 +249,25 @@ class SetupBloc {
 
   void finishSetup() async {
     addOutput("Finished Setup! Cleaning up...", SetupOutputType.LOG);
+    if (saveToDownloads) {
+      final List<String> text = SocketManager().setup.data.value?.output.reversed.toList().map((e) => e.text).toList() ?? [];
+      if (text.isNotEmpty) {
+        final now = DateTime.now().toLocal();
+        String filePath = "/storage/emulated/0/Download/";
+        if (kIsDesktop) {
+          filePath = (await getDownloadsDirectory())!.path;
+        }
+        filePath = p.join(filePath, "BlueBubbles-sync-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
+        File file = File(filePath);
+        await file.create(recursive: true);
+        await file.writeAsString(text.join('\n'));
+      }
+    }
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup.value = true;
     await SettingsManager().saveSettings(_settingsCopy);
     if (!kIsWeb) await ChatBloc().refreshChats(force: true);
-    await SocketManager().registerFcmDevice(force: true);
+    await fcm.registerDevice(force: true);
     closeSync();
   }
 
@@ -285,23 +302,15 @@ class SetupBloc {
     // only get up to 1000 messages (arbitrary limit)
     int batches = 10;
     for (int i = 0; i < batches; i++) {
-      // Build request params. We want all details on the messages
-      Map<String, dynamic> params = {};
-      if (chatGuid != null) {
-        params["chatGuid"] = chatGuid;
-      }
-
-      params["withBlurhash"] = false; // Maybe we want it?
-      params["limit"] = 100;
-      params["offset"] = i * batches;
-      params["after"] = settings.lastIncrementalSync.value; // Get everything since the last sync
-      params["withChats"] = true; // We want the chats too so we can save them correctly
-      params["withChatParticipants"] = true; // We want participants on web only
-      params["withAttachments"] = true; // We want the attachment data
-      params["withHandle"] = true; // We want to know who sent it
-      params["sort"] = "DESC"; // Sort my DESC so we receive the newest messages first
-
-      List<dynamic> messages = await SocketManager().getMessages(params)!;
+      List<dynamic> messages = await MessageManager().getMessages(
+          withChats: true,
+          withAttachments: true,
+          withHandles: true,
+          withChatParticipants: true,
+          after: settings.lastIncrementalSync.value,
+          chatGuid: chatGuid,
+          offset: i * batches,
+      );
       if (messages.isEmpty) {
         addOutput("No more new messages found during incremental sync", SetupOutputType.LOG);
         break;

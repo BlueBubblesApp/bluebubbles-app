@@ -7,7 +7,6 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
@@ -17,23 +16,24 @@ import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:simple_animations/simple_animations.dart';
 import 'package:slugify/slugify.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -112,7 +112,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     });
 
     // Listen for changes in the group
-    NewMessageManager().stream.listen((NewMessageEvent event) async {
+    MessageManager().stream.listen((NewMessageEvent event) async {
       // Make sure we have the required data to qualify for this tile
       if (event.chatGuid != widget.chat!.guid) return;
       if (!event.event.containsKey("message")) return;
@@ -123,7 +123,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       // If it's a group event, let's fetch the new information and save it
       try {
-        await fetchChatSingleton(widget.chat!.guid);
+        await ChatManager().fetchChat(widget.chat!.guid);
       } catch (ex) {
         Logger.error(ex.toString());
       }
@@ -200,7 +200,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       try {
         // If we don't have participants, we should fetch them from the server
-        Chat? data = await fetchChatSingleton(chat!.guid);
+        Chat? data = await ChatManager().fetchChat(chat!.guid);
         // If we got data back, fetch the participants and update the state
         if (data != null) {
           chat!.getParticipants();
@@ -260,7 +260,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // Set that we are
     setProgress(true);
 
-    SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat!.guid}, (data) {
+    api.markChatRead(chat!.guid).then((_) {
       setProgress(false);
     }).catchError((_) {
       setProgress(false);
@@ -424,14 +424,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
         leading: Padding(
           padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-          // child: buildBackButton(context, callback: () {
-          //   if (LifeCycleManager().isBubble) {
-          //     SystemNavigator.pop();
-          //     return false;
-          //   }
-          //   EventDispatcher().emit("update-highlight", null);
-          //   return true;
-          // }),
+          child: buildBackButton(context, callback: () {
+            if (LifeCycleManager().isBubble) {
+              SystemNavigator.pop();
+              return false;
+            }
+            EventDispatcher().emit("update-highlight", null);
+            return true;
+          }),
         ),
         automaticallyImplyLeading: false,
         backgroundColor: backgroundColor,
@@ -1100,38 +1100,37 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         (await SettingsManager().getMacOSVersion() ?? 0) > 10 &&
         existingChat == null) {
       api.createChat(participants, null).then((response) async {
-        if (response.statusCode != 200) {
-          Navigator.of(context).pop();
-          showDialog(
-              barrierDismissible: false,
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text(
-                    "Could not create",
-                  ),
-                  content: Text(
-                    "Reason: (${response.data["error"]["type"]}) -> ${response.data["error"]["message"]}",
-                  ),
-                  actions: [
-                    TextButton(
-                      child: Text(
-                        "Ok",
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    )
-                  ],
-                );
-              });
-          completer.complete(null);
-          return;
-        }
-
         // If everything went well, let's add the chat to the bloc
         Chat newChat = Chat.fromMap(response.data["data"]);
         await returnChat(newChat);
+      }).catchError((error) {
+        Navigator.of(context).pop();
+        showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(
+                  "Could not create",
+                ),
+                content: Text(
+                  error is Response
+                      ? "Reason: (${error.data["error"]["type"]}) -> ${error.data["error"]["message"]}"
+                      : error.toString(),
+                ),
+                actions: [
+                  TextButton(
+                    child: Text(
+                      "Ok",
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  )
+                ],
+              );
+            });
+        completer.complete(null);
       });
     } else if (existingChat == null) {
       SocketManager().sendMessage(
@@ -1266,7 +1265,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   .headline2,
             ),
           ),
-          // leading: buildBackButton(context, iconSize: 20),
+          leading: buildBackButton(context, iconSize: 20),
           trailing: shouldShowAlert
               ? IconButton(
             icon: Icon(

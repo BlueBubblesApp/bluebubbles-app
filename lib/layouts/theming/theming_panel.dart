@@ -47,6 +47,9 @@ class _ThemingPanelState extends State<ThemingPanel> {
 ) {
       tileColor = headerColor;
     }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(context.theme, nordDarkTheme)) {
+      tileColor = headerColor;
+    }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -54,6 +57,7 @@ class _ThemingPanelState extends State<ThemingPanel> {
         systemNavigationBarIconBrightness:
         headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: DefaultTabController(
         length: 2,

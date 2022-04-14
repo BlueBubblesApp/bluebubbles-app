@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -13,6 +14,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 class SearchView extends StatefulWidget {
   SearchView({
@@ -74,13 +76,13 @@ class SearchViewState extends State<SearchView> {
       });
     }
 
-    List<dynamic> results = await SocketManager().fetchMessages(null, limit: 50, where: [
+    List<dynamic> results = await MessageManager().getMessages(limit: 50, withChats: true, withHandles: true, where: [
       {
         'statement': 'message.text LIKE :term',
         'args': {'term': "%${textEditingController.text}%"}
       },
       {'statement': 'message.associated_message_guid IS NULL', 'args': null}
-    ])!;
+    ]);
 
     List<dynamic> _results = [];
     for (dynamic item in results) {
@@ -135,6 +137,7 @@ class SearchViewState extends State<SearchView> {
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         // extendBodyBehindAppBar: true,

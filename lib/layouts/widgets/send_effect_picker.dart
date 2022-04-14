@@ -19,7 +19,7 @@ import 'package:bluebubbles/layouts/animations/spotlight_classes.dart';
 import 'package:bluebubbles/layouts/animations/spotlight_rendering.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:confetti/confetti.dart';
@@ -80,6 +80,7 @@ void sendEffectAction(
                   systemNavigationBarIconBrightness:
                   Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
                   statusBarColor: Colors.transparent, // status bar color
+                  statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
                 ),
                 child: Scaffold(
                   backgroundColor: context.theme.backgroundColor.withOpacity(0.3),

@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:fast_contacts/fast_contacts.dart';
 import 'package:get/get.dart';
 import 'package:image_size_getter/image_size_getter.dart';
@@ -29,7 +31,7 @@ export 'package:bluebubbles/repository/models/io/theme_entry.dart'
 export 'package:bluebubbles/repository/models/io/theme_object.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/theme_object.dart';
 export 'package:bluebubbles/repository/models/io/giphy.dart'
-  if (dart.library.html) 'package:bluebubbles/repository/models/html/giphy.dart';
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/giphy.dart';
 export 'package:bluebubbles/repository/models/platform_file.dart';
 
 class Contact {
@@ -45,6 +47,7 @@ class Contact {
     Uint8List? avatarHiResBytes,
   }) {
     avatar.value = avatarBytes;
+    avatarHiRes.value = avatarHiResBytes;
   }
 
   String id;
@@ -57,14 +60,31 @@ class Contact {
   final Rxn<Uint8List> avatar = Rxn<Uint8List>();
   final Rxn<Uint8List> avatarHiRes = Rxn<Uint8List>();
 
+  bool get hasAvatar {
+    bool hasNormal = avatar.value != null && avatar.value!.isNotEmpty;
+    bool hasHiRes = avatarHiRes.value != null && avatarHiRes.value!.isNotEmpty;
+    return hasNormal || hasHiRes;
+  }
+
+  Uint8List? getAvatar({prioritizeHiRes = false}) {
+    if (!hasAvatar) return null;
+
+    if (prioritizeHiRes) {
+      return avatarHiRes.value ?? avatar.value;
+    } else {
+      return avatar.value ?? avatarHiRes.value;
+    }
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'displayName': displayName,
-      'phones': phones,
-      'emails': emails,
+      'phoneNumbers': getUniqueNumbers(phones),
+      'emails': getUniqueEmails(emails),
       'fakeName': fakeName,
-      'fakeAddress': fakeAddress
+      'fakeAddress': fakeAddress,
+      'avatar': avatarHiRes.value != null || avatar.value != null ? base64Encode(avatarHiRes.value ?? avatar.value!) : null,
     };
   }
 
@@ -77,13 +97,12 @@ class Contact {
       map['emails'] = map['emails'].map((e) => e['value'] ?? "").toList();
     }
     return Contact(
-      id: (map['id'] ?? map['identifier']) as String,
-      displayName: map['displayName'] as String,
-      phones: map['phones'].cast<String>(),
-      emails: map['emails'].cast<String>(),
-      fakeName: map['fakeName'],
-      fakeAddress: map['fakeAddress']
-    );
+        id: (map['id'] ?? map['identifier']) as String,
+        displayName: map['displayName'] as String,
+        phones: map['phones'].cast<String>(),
+        emails: map['emails'].cast<String>(),
+        fakeName: map['fakeName'],
+        fakeAddress: map['fakeAddress']);
   }
 }
 

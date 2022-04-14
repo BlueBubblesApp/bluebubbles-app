@@ -33,16 +33,17 @@ public class ShareShortcutManager {
             .setAction(Intent.ACTION_DEFAULT);
 
         @SuppressLint("RestrictedApi")
-        ShortcutInfoCompat shortcut = new ShortcutInfoCompat.Builder(context, contact.id)
+        ShortcutInfoCompat.Builder shortcut = new ShortcutInfoCompat.Builder(context, contact.id)
                 .setShortLabel(contact.name)
-                .setIcon(contact.getIcon())
                 .setIntent(staticLauncherShortcutIntent)
                 .setCategories(contactCategories)
                 .setLongLived(true)
                 .setPerson(new Person.Builder()
                         .setName(contact.name)
-                        .build())
-                .build();
-        ShortcutManagerCompat.pushDynamicShortcut(context, shortcut);
+                        .build());
+        if (contact.icon != null && contact.icon.length != 0) {
+            shortcut.setIcon(contact.getIcon());
+        }
+        ShortcutManagerCompat.pushDynamicShortcut(context, shortcut.build());
     }
 }

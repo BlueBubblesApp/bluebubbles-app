@@ -91,6 +91,9 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
 ) {
       tileColor = headerColor;
     }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), nordDarkTheme)) {
+      tileColor = headerColor;
+    }
     return currentTheme != null
         ? CustomScrollView(
             physics: ThemeSwitcher.getScrollPhysics(),

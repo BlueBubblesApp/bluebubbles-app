@@ -12,6 +12,7 @@ import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_s
 import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -199,6 +200,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Theme(
         data: Theme.of(context).copyWith(primaryColor: chat.isTextForwarding ? Colors.green : Theme.of(context).primaryColor),
@@ -824,6 +826,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                     TextButton(
                                       child: Text("Yes"),
                                       onPressed: () async {
+                                        Navigator.of(context).pop();
                                         if (mounted) {
                                           setState(() {
                                             isClearing = true;
@@ -1288,7 +1291,7 @@ class _SyncDialogState extends State<SyncDialog> {
       offset = Message.countForChat(widget.chat) ?? 0;
     }
 
-    SocketManager().fetchMessages(widget.chat, offset: offset, limit: widget.limit)!.then((dynamic messages) {
+    ChatManager().getMessages(widget.chat.guid, offset: offset, limit: widget.limit).then((dynamic messages) {
       if (mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";

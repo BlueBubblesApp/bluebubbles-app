@@ -24,14 +24,14 @@ class PrivateAPIPanelBinding extends Bindings {
 
 class PrivateAPIPanelController extends GetxController {
   late Settings _settingsCopy;
-  final RxnInt serverVersionCode = RxnInt();
+  final RxInt serverVersionCode = RxInt(0);
 
   @override
   void onInit() {
     super.onInit();
     _settingsCopy = SettingsManager().settings;
-    SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-      final String? serverVersion = res['data']['server_version'];
+    api.serverInfo().then((response) {
+      final String? serverVersion = response.data['data']['server_version'];
       Version version = Version.parse(serverVersion);
       serverVersionCode.value = version.major * 100 + version.minor * 21 + version.patch;
     });
@@ -70,6 +70,9 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && Theme.of(context).backgroundColor == Colors.black
 ) {
+      tileColor = headerColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(context.theme, nordDarkTheme)) {
       tileColor = headerColor;
     }
 
@@ -144,6 +147,14 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
+                            if (!val) {
+                              int markReadIndex = SettingsManager().settings.actionList.indexOf("Mark Read");
+                              if (SettingsManager().settings.selectedActionIndices.contains(markReadIndex)) {
+                                SettingsManager().settings.selectedActionIndices.value = [markReadIndex];
+                              } else {
+                                SettingsManager().settings.selectedActionIndices.value = [];
+                              }
+                            }
                             controller._settingsCopy.enablePrivateAPI.value = val;
                             saveSettings();
                           },
@@ -283,7 +294,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                             }
                           }),
                           Obx(() {
-                            if ((controller.serverVersionCode.value ?? 0) >= 63) {
+                            if (controller.serverVersionCode.value >= 63) {
                               return SettingsSwitch(
                                 onChanged: (bool val) {
                                   controller._settingsCopy.privateSubjectLine.value = val;
@@ -302,7 +313,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                               future: SettingsManager().getMacOSVersion().then((val) => (val ?? 0) >= 11),
                               builder: (context, snapshot) {
                                 return Obx(() {
-                                  if ((controller.serverVersionCode.value ?? 0) >= 63 && snapshot.data as bool) {
+                                  if (controller.serverVersionCode.value >= 63 && snapshot.data as bool) {
                                     return SettingsSwitch(
                                       onChanged: (bool val) {
                                         controller._settingsCopy.swipeToReply.value = val;
@@ -318,7 +329,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                                 });
                               }),
                           Obx(() {
-                            if ((controller.serverVersionCode.value ?? 0) >= 84) {
+                            if (controller.serverVersionCode.value >= 84) {
                               return SettingsSwitch(
                                 onChanged: (bool val) {
                                   controller._settingsCopy.privateAPISend.value = val;

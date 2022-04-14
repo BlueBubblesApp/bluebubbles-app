@@ -11,8 +11,8 @@ import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/custom_dismissible.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -70,7 +70,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
     }
 
     if (widget.currentChat != null) {
-      newMessageEventStream = NewMessageManager().stream.listen((event) async {
+      newMessageEventStream = MessageManager().stream.listen((event) async {
         // We don't need to do anything if there isn't a new message
         if (event.type != NewMessageType.ADD) return;
 
@@ -132,6 +132,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
           systemNavigationBarIconBrightness:
               Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
           statusBarColor: Colors.transparent, // status bar color
+          statusBarIconBrightness: Brightness.light,
         ),
         child: Actions(
           actions: {

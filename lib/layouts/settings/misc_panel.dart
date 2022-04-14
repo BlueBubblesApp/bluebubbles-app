@@ -2,6 +2,8 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +12,8 @@ import 'package:local_auth/local_auth.dart';
 import 'package:secure_application/secure_application.dart';
 
 class MiscPanel extends StatelessWidget {
+  final RxnBool refreshingContacts = RxnBool();
+
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
@@ -37,6 +41,9 @@ class MiscPanel extends StatelessWidget {
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && Theme.of(context).backgroundColor == Colors.black
 ) {
+      tileColor = headerColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(context.theme, nordDarkTheme)) {
       tileColor = headerColor;
     }
 
@@ -336,6 +343,34 @@ class MiscPanel extends StatelessWidget {
                       }
                     },
                   ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  SettingsTile(
+                      title: "Refresh contacts",
+                      backgroundColor: tileColor,
+                      onTap: () async {
+                          refreshingContacts.value = true;
+                          await ContactManager().loadContacts(force: true);
+                          EventDispatcher().emit("refresh-all", null);
+                          refreshingContacts.value = false;
+                      },
+                      trailing: Obx(() => refreshingContacts.value == null
+                          ? SizedBox.shrink()
+                          : refreshingContacts.value == true ? Container(
+                          constraints: BoxConstraints(
+                            maxHeight: 20,
+                            maxWidth: 20,
+                          ),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                          )) : Icon(Icons.check, color: Colors.grey)
+                      )),
                 ],
               ),
             ],
