@@ -441,7 +441,8 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                                     headerColor = Theme.of(context).backgroundColor;
                                     tileColor = Theme.of(context).colorScheme.secondary;
                                   }
-                                  if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+                                  if (SettingsManager().settings.skin.value == Skins.iOS && Theme.of(context).backgroundColor == Colors.black
+) {
                                     tileColor = headerColor;
                                   }
                                     return Container(
@@ -480,7 +481,8 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                                     headerColor = Theme.of(context).backgroundColor;
                                     tileColor = Theme.of(context).colorScheme.secondary;
                                   }
-                                  if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+                                  if (SettingsManager().settings.skin.value == Skins.iOS && Theme.of(context).backgroundColor == Colors.black
+) {
                                     tileColor = headerColor;
                                   }
                                   if (!ChatBloc().loadedChatBatch.value) {

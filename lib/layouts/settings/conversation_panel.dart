@@ -15,7 +15,7 @@ class ConversationPanel extends StatelessWidget {
     final materialSubtitle = Theme.of(context)
         .textTheme
         .subtitle1
-        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+        ?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
     if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
@@ -26,7 +26,8 @@ class ConversationPanel extends StatelessWidget {
       headerColor = Theme.of(context).backgroundColor;
       tileColor = Theme.of(context).colorScheme.secondary;
     }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+    if (SettingsManager().settings.skin.value == Skins.iOS && Theme.of(context).backgroundColor == Colors.black
+) {
       tileColor = headerColor;
     }
 

@@ -87,7 +87,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
       headerColor = Theme.of(context).backgroundColor;
       tileColor = Theme.of(context).colorScheme.secondary;
     }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+    if (SettingsManager().settings.skin.value == Skins.iOS && Theme.of(context).backgroundColor == Colors.black
+) {
       tileColor = headerColor;
     }
     return currentTheme != null

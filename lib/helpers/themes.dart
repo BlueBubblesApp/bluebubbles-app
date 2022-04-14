@@ -1,7 +1,10 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 
 enum DarkThemes {
@@ -165,11 +168,31 @@ void loadTheme(BuildContext? context, {ThemeObject? lightOverride, ThemeObject? 
   if (context == null) return;
 
   // Set the theme to match those of the settings
-  ThemeObject light = lightOverride ?? ThemeObject.getLightTheme();
-  ThemeObject dark = darkOverride ?? ThemeObject.getDarkTheme();
+  ThemeData light = (lightOverride ?? ThemeObject.getLightTheme()).themeData;
+  ThemeData dark = (darkOverride ?? ThemeObject.getDarkTheme()).themeData;
+
+  if (SettingsManager().settings.monetTheming.value && monetPalette!=null) {
+    light = light.copyWith(
+        primaryColor: Color(monetPalette!.primary.get(50)),
+        backgroundColor: light.backgroundColor == Colors.white
+            ? Color(monetPalette!.neutral.get(99))
+            : light.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(50))),
+        colorScheme: light.colorScheme.copyWith(
+          secondary: light.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(50))),
+        )
+    );
+    dark = dark.copyWith(
+        primaryColor: Color(monetPalette!.primary.get(50)),
+        backgroundColor: dark.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(60))),
+        colorScheme: dark.colorScheme.copyWith(
+          secondary: dark.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(60))),
+        )
+    );
+  }
+
   AdaptiveTheme.of(context).setTheme(
-    light: light.themeData,
-    dark: dark.themeData,
+    light: light,
+    dark: dark,
   );
 }
 

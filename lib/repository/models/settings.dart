@@ -57,6 +57,7 @@ class Settings {
   final RxBool notifyReactions = true.obs;
   final RxString notificationSound = "default".obs;
   final RxBool colorsFromMedia = false.obs;
+  final RxBool monetTheming = false.obs;
   final RxString globalTextDetection = "".obs;
   final RxBool filterUnknownSenders = false.obs;
   final RxBool tabletMode = true.obs;
@@ -290,6 +291,8 @@ class Settings {
         settings.notificationSound.value = entry.value;
       } else if (entry.name == "colorsFromMedia") {
         settings.colorsFromMedia.value = entry.value;
+      } else if (entry.name == "monetTheming") {
+        settings.monetTheming.value = entry.value;
       } else if (entry.name == "globalTextDetection") {
         settings.globalTextDetection.value = entry.value;
       } else if (entry.name == "filterUnknownSenders") {
@@ -473,6 +476,7 @@ class Settings {
         'serverAddress': serverAddress.value,
         'finishedSetup': finishedSetup.value,
         'colorsFromMedia': colorsFromMedia.value,
+        'monetTheming': monetTheming.value,
       });
     }
     return map;
@@ -628,6 +632,7 @@ class Settings {
     s.notifyReactions.value = map['notifyReactions'] ?? true;
     s.notificationSound.value = map['notificationSound'] ?? "default";
     s.colorsFromMedia.value = map['colorsFromMedia'] ?? false;
+    s.monetTheming.value = map['monetTheming'] ?? false;
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     s.tabletMode.value = map['tabletMode'] ?? true;
