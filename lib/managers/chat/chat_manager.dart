@@ -213,7 +213,7 @@ class ChatManager {
 
     // parse chats from the response
     final chats = <Chat>[];
-    for (var item in response.data) {
+    for (var item in response.data["data"]) {
       try {
         var chat = Chat.fromMap(item);
         chats.add(chat);
