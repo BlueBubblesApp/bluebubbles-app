@@ -24,6 +24,8 @@ import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:socket_io_client/socket_io_client.dart';
 
+import 'managers/event_dispatcher.dart';
+
 export 'package:bluebubbles/api_manager.dart';
 
 enum SocketState {
@@ -134,7 +136,7 @@ class SocketManager {
           element();
         }
 
-        // Start an incremental sync 
+        // Start an incremental sync
         if (SettingsManager().settings.finishedSetup.value) {
           setup.startIncrementalSync(SettingsManager().settings, onConnectionError: (String err) {
             Logger.error("Error performing incremental sync. Not saving last sync date.", tag: "IncrementalSync");
@@ -143,7 +145,10 @@ class SocketManager {
 
           if (kIsDesktop && ContactManager().contacts.isEmpty) {
             // Get contacts whenever we connect if we didn't yet
-            Future.delayed(Duration.zero, () async => await ContactManager().fetchContactsDesktop());
+            Future.delayed(Duration.zero, () async {
+              await ContactManager().loadContacts();
+              EventDispatcher().emit('refresh', null);
+            });
           }
         }
 
@@ -171,12 +176,12 @@ class SocketManager {
             if (SettingsManager().settings.finishedSetup.value) {
               NotificationManager().createSocketWarningNotification();
             }
-            
+
             // Clear any socket processes
             List<Function> processes = socketProcesses.values.toList();
             for (Function value in processes) {
               value(true);
-            }            
+            }
             socketProcesses = {};
 
             // If we aren't alive and we are on Android, close the socket
@@ -194,7 +199,7 @@ class SocketManager {
         for (Function f in _manager.disconnectSubscribers.values) {
           f.call();
         }
-        
+
         // If we are still disconnected after 5 seconds, show the disconnected snackbar
         Timer t;
         t = Timer(const Duration(seconds: 5), () {

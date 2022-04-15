@@ -156,12 +156,12 @@ class ContactManager {
                 id: e.id,
               ))
           .toList();
+
+        // This is _required_ for the `getContacts()` function to be used
+        await buildCacheMap();
     } else {
       await fetchContactsDesktop();
     }
-
-    // This is _required_ for the `getContacts()` function to be used
-    await buildCacheMap();
 
     loadFakeInfo();
 
@@ -241,6 +241,8 @@ class ContactManager {
       logger?.call(s.toString());
     }
 
+    await buildCacheMap();
+
     logger?.call("Fetching contacts (with avatars)...");
     try {
       api.contacts(withAvatars: true).then((response) {
@@ -259,6 +261,8 @@ class ContactManager {
           logger?.call("No contacts found!");
         }
         logger?.call("Finished contacts sync (with avatars)");
+
+        buildCacheMap();
       });
     } catch (e, s) {
       logger?.call("Got exception: $e");
