@@ -51,15 +51,6 @@ class DesktopPanel extends StatelessWidget {
       tileColor = headerColor;
     }
 
-    if (!SettingsManager().settings.enablePrivateAPI.value) {
-      int markReadIndex = SettingsManager().settings.actionList.indexOf("Mark Read");
-      if (SettingsManager().settings.selectedActionIndices.contains(markReadIndex)) {
-        SettingsManager().settings.selectedActionIndices.value = [markReadIndex];
-      } else {
-        SettingsManager().settings.selectedActionIndices.value = [];
-      }
-    }
-
     return SettingsScaffold(
       title: "Desktop Settings",
       initialHeader: "Window Behavior",
@@ -153,7 +144,8 @@ class DesktopPanel extends StatelessWidget {
                   children: [
                     SettingsTile(
                       title: "Actions",
-                      subtitle: "Click actions to toggle them. Drag actions to reorder them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
+                      subtitle:
+                          "Click actions to toggle them. Drag actions to reorder them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
                     ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,10 +197,11 @@ class DesktopPanel extends StatelessWidget {
 
                                             String value = SettingsManager().settings.actionList[index];
 
-                                            bool disabled = (!selected &&
-                                                    (SettingsManager().settings.selectedActionIndices.length == 5)) ||
-                                                (!SettingsManager().settings.enablePrivateAPI.value &&
+                                            bool disabled = (!SettingsManager().settings.enablePrivateAPI.value &&
                                                     value != "Mark Read");
+
+                                            bool hardDisabled = (!selected &&
+                                            (SettingsManager().settings.selectedActionIndices.length == 5));
 
                                             Color color = selected
                                                 ? context.theme.primaryColor
@@ -216,31 +209,30 @@ class DesktopPanel extends StatelessWidget {
                                             return GestureDetector(
                                               behavior: HitTestBehavior.translucent,
                                               onTap: () {
-                                                if (disabled) return;
+                                                if (hardDisabled) return;
                                                 if (!SettingsManager().settings.selectedActionIndices.remove(index)) {
                                                   SettingsManager().settings.selectedActionIndices.add(index);
                                                 }
                                               },
-                                              child: Container(
+                                              child: AnimatedContainer(
                                                 margin: EdgeInsets.symmetric(vertical: 5),
                                                 height: 56,
                                                 width: 72,
-                                                foregroundDecoration: BoxDecoration(
-                                                  color: disabled
-                                                      ? context.theme.colorScheme.secondary.withOpacity(0.9)
-                                                      : Colors.transparent,
+                                                decoration: BoxDecoration(
                                                   borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                      color: color.withOpacity(selected ? 1 : 0.5),
+                                                      width: selected ? 1.5 : 1),
+                                                  color: color.withOpacity(selected ? 0.8 : 0.7),
                                                 ),
-                                                child: AnimatedContainer(
-                                                  decoration: BoxDecoration(
+                                                curve: Curves.linear,
+                                                duration: Duration(milliseconds: 150),
+                                                child: Container(
+                                                  foregroundDecoration: BoxDecoration(
+                                                    color: context.theme.colorScheme.secondary.withOpacity(hardDisabled ? 1 : disabled ? 0.9 : 0),
+                                                    backgroundBlendMode: BlendMode.color,
                                                     borderRadius: BorderRadius.circular(8),
-                                                    border: Border.all(
-                                                        color: color.withOpacity(selected ? 1 : 0.5),
-                                                        width: selected ? 1.5 : 1),
-                                                    color: color.withOpacity(selected ? 0.8 : 0.7),
                                                   ),
-                                                  curve: Curves.linear,
-                                                  duration: Duration(milliseconds: 150),
                                                   child: Center(
                                                     child: Material(
                                                       color: Colors.transparent,
@@ -282,8 +274,9 @@ class DesktopPanel extends StatelessWidget {
                                 runAlignment: WrapAlignment.center,
                                 children: [
                                   Obx(() {
-                                    int numActions = SettingsManager().settings.selectedActionIndices.length;
                                     int markReadIndex = SettingsManager().settings.actionList.indexOf("Mark Read");
+                                    Iterable<int> actualIndices = SettingsManager().settings.selectedActionIndices.where((s) => SettingsManager().settings.enablePrivateAPI.value || s == markReadIndex);
+                                    int numActions = actualIndices.length;
                                     bool showMarkRead =
                                         SettingsManager().settings.selectedActionIndices.contains(markReadIndex);
                                     CustomNavigator.listener.value;
@@ -367,10 +360,7 @@ class DesktopPanel extends StatelessWidget {
                                           ),
                                           ...List.generate(
                                             SettingsManager().settings.actionList.length,
-                                            (index) => (!SettingsManager()
-                                                    .settings
-                                                    .selectedActionIndices
-                                                    .contains(index))
+                                            (index) => (!actualIndices.contains(index))
                                                 ? null
                                                 : Obx(
                                                     () {
@@ -378,10 +368,7 @@ class DesktopPanel extends StatelessWidget {
                                                       int _index = SettingsManager()
                                                           .settings
                                                           .actionList
-                                                          .whereIndexed((index, element) => SettingsManager()
-                                                              .settings
-                                                              .selectedActionIndices
-                                                              .contains(index))
+                                                          .whereIndexed((index, element) => actualIndices.contains(index))
                                                           .toList()
                                                           .indexOf(SettingsManager().settings.actionList[index]);
                                                       return Positioned(
@@ -429,10 +416,11 @@ class DesktopPanel extends StatelessWidget {
                                     );
                                   }),
                                   Obx(() {
-                                    int numActions = SettingsManager().settings.selectedActionIndices.length;
                                     int markReadIndex = SettingsManager().settings.actionList.indexOf("Mark Read");
+                                    Iterable<int> actualIndices = SettingsManager().settings.selectedActionIndices.where((s) => SettingsManager().settings.enablePrivateAPI.value || s == markReadIndex);
+                                    int numActions = actualIndices.length;
                                     bool showMarkRead =
-                                        SettingsManager().settings.selectedActionIndices.contains(markReadIndex);
+                                    SettingsManager().settings.selectedActionIndices.contains(markReadIndex);
                                     if (numActions <= (showMarkRead ? 1 : 0)) {
                                       return SizedBox.shrink();
                                     }
