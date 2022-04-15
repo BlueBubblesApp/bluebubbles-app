@@ -253,7 +253,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    if (!kIsWeb && !kIsDesktop && monetPalette!=null)
+                    if (!kIsWeb && !kIsDesktop && monetPalette != null)
                       Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           controller._settingsCopy.monetTheming.value = val;
@@ -266,7 +266,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                         subtitle:
                         "Use Android 12's new Material You Dynamic Colors for app colors. Works with any theme",
                       )),
-                    if (!kIsWeb && !kIsDesktop && monetPalette!=null)
+                    if (!kIsWeb && !kIsDesktop && monetPalette != null)
                       Container(
                         color: tileColor,
                         child: Padding(

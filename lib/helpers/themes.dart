@@ -171,7 +171,7 @@ void loadTheme(BuildContext? context, {ThemeObject? lightOverride, ThemeObject? 
   ThemeData light = (lightOverride ?? ThemeObject.getLightTheme()).themeData;
   ThemeData dark = (darkOverride ?? ThemeObject.getDarkTheme()).themeData;
 
-  if (SettingsManager().settings.monetTheming.value && monetPalette!=null) {
+  if (SettingsManager().settings.monetTheming.value && monetPalette != null) {
     light = light.copyWith(
         primaryColor: Color(monetPalette!.primary.get(50)),
         backgroundColor: light.backgroundColor == Colors.white

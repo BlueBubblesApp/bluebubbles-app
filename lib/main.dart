@@ -381,7 +381,7 @@ Future<Null> initApp(bool isBubble) async {
     ThemeData light = ThemeObject.getLightTheme().themeData;
     ThemeData dark = ThemeObject.getDarkTheme().themeData;
 
-    if (SettingsManager().settings.monetTheming.value && monetPalette!=null) {
+    if (SettingsManager().settings.monetTheming.value && monetPalette != null) {
       light = light.copyWith(
           primaryColor: Color(monetPalette!.primary.get(50)),
           backgroundColor: light.backgroundColor == Colors.white
