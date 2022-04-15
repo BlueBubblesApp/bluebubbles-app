@@ -1,4 +1,5 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -220,4 +221,33 @@ ThemeObject revertToPreviousLightTheme() {
 
   // Save the theme and set it accordingly
   return previous.save();
+}
+
+extension SettingsThemeData on ThemeData {
+  bool get isOled {
+    return backgroundColor == Colors.black;
+  }
+  bool get isMonoColorPanel {
+    return SettingsManager().settings.skin.value == Skins.iOS && isOled;
+  }
+  Color get titleColor {
+    if (SettingsManager().settings.skin.value == Skins.iOS && backgroundColor == Colors.black) {
+      return headerColor;
+    }
+    if ((colorScheme.secondary.computeLuminance() < backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(this, whiteLightTheme))) {
+      return backgroundColor;
+    } else {
+      return colorScheme.secondary;
+    }
+
+  }
+  Color get headerColor {
+    if ((colorScheme.secondary.computeLuminance() < backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(this, whiteLightTheme))) {
+      return colorScheme.secondary;
+    } else {
+      return backgroundColor;
+    }
+  }
 }
