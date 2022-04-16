@@ -86,6 +86,7 @@ bool get isInDebugMode {
 
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
+bool initializedViaReference = false;
 late final FirebaseApp app;
 late final Store store;
 late final Box<Attachment> attachmentBox;
@@ -198,6 +199,7 @@ Future<Null> initApp(bool isBubble) async {
           Logger.info("Opening ObjectBox store from reference");
           try {
             store = Store.attach(getObjectBoxModel(), join(documentsDirectory.path, 'objectbox'));
+            initializedViaReference = true;
           } catch (_) {
             Logger.info("Failed to open store from reference, opening from path");
             try {
@@ -353,7 +355,7 @@ Future<Null> initApp(bool isBubble) async {
     if (!kIsWeb) {
       try {
         DynamicCachedFonts.loadCachedFont(
-                "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
+                "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
                 fontFamily: "Apple Color Emoji")
             .then((_) {
           fontExistsOnDisk.value = true;
@@ -617,8 +619,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           }
         });
       }
-      // Set a reference to the DB so it can be used in another isolate
-      prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
+
+      if (!initializedViaReference) {
+        // Set a reference to the DB so it can be used in another isolate
+        prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
+      }
     }
 
     // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
