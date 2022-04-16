@@ -20,15 +20,15 @@ class SetupBloc {
   static final SetupBloc _setupBloc = SetupBloc._internal();
   SetupBloc._internal();
   factory SetupBloc() {
-    _setupBloc.syncManager ??= FullSyncManager(
-        messageCount: _setupBloc.numberOfMessagesPerPage.toInt(), skipEmptyChats: _setupBloc.skipEmptyChats);
+    _setupBloc.fullSyncManager = FullSyncManager(
+            messageCount: _setupBloc.numberOfMessagesPerPage.toInt(), skipEmptyChats: _setupBloc.skipEmptyChats);
     return _setupBloc;
   }
 
-  FullSyncManager? syncManager;
+  late FullSyncManager fullSyncManager;
   IncrementalSyncManager? incrementalSyncManager;
+  RxBool isIncrementalSyncing = false.obs;
 
-  final RxBool isIncrementalSyncing = false.obs;
   double numberOfMessagesPerPage = 25;
   bool skipEmptyChats = true;
 
@@ -39,10 +39,9 @@ class SetupBloc {
     _settingsCopy.lastIncrementalSync.value = DateTime.now().millisecondsSinceEpoch;
     await SettingsManager().saveSettings(_settingsCopy);
 
-    syncManager = FullSyncManager(messageCount: numberOfMessagesPerPage.toInt(), skipEmptyChats: skipEmptyChats);
-    await syncManager!.start();
+    fullSyncManager = FullSyncManager(messageCount: numberOfMessagesPerPage.toInt(), skipEmptyChats: skipEmptyChats);
+    await fullSyncManager.start();
     await finishSetup();
-
     await startIncrementalSync(SettingsManager().settings);
   }
 
@@ -123,36 +122,10 @@ class SetupBloc {
 
   Future<void> startIncrementalSync(Settings settings,
       {String? chatGuid, bool saveDate = true, Function? onConnectionError, Function? onComplete}) async {
-    // If we are already syncing, don't sync again
-    // Or, if we haven't finished setup, or we aren't connected, don't sync
-    if (isIncrementalSyncing.value ||
-        !settings.finishedSetup.value ||
-        SocketManager().state.value != SocketState.CONNECTED) {
-      return;
-    }
-
-    int syncStart = DateTime.now().millisecondsSinceEpoch;
-    final incrementalSyncManager = IncrementalSyncManager(syncStart);
-
-    // Store the time we started syncing
-    incrementalSyncManager.addToOutput("Starting incremental sync for messages since: ${settings.lastIncrementalSync}");
-    incrementalSyncManager.start();
-
-    // Once we have added everything, save the last sync date
-    if (saveDate) {
-      incrementalSyncManager.addToOutput("Saving last sync date: $syncStart");
-
-      Settings _settingsCopy = SettingsManager().settings;
-      _settingsCopy.lastIncrementalSync.value = syncStart;
-      SettingsManager().saveSettings(_settingsCopy);
-    }
-
-    if (SettingsManager().settings.showIncrementalSync.value) {
-      showSnackbar('Success', '🔄 Incremental sync complete 🔄');
-    }
-
-    if (onComplete != null) {
-      onComplete();
-    }
+    isIncrementalSyncing.value = true;
+    int syncStart = SettingsManager().settings.lastIncrementalSync.value;
+    incrementalSyncManager = IncrementalSyncManager(syncStart, chatGuid: chatGuid, saveDate: saveDate, onComplete: onComplete);
+    await incrementalSyncManager!.start();
+    isIncrementalSyncing.value = false;
   }
 }

@@ -34,12 +34,6 @@ abstract class SyncManager {
 
   /// Start the sync
   Future<void> start() async {
-    if (completer != null && !completer!.isCompleted) {
-      return completer!.future;
-    } else {
-      completer = Completer<void>();
-    }
-
     startedAt = DateTime.now().toUtc();
     progress.value = 0.0;
     error = null;
@@ -66,6 +60,16 @@ abstract class SyncManager {
     }
   }
 
+  void setProgressExact(double percent) {
+    if (percent <= 0) {
+      progress.value = 0.0;
+    } else if (percent > 1.0) {
+      progress.value = 1.0;
+    } else {
+      progress.value = double.parse(percent.toStringAsFixed(2));
+    }
+  }
+
   void addToOutput(String log, {LogLevel level = LogLevel.INFO}) {
     output.add(Tuple2(level, log));
 
@@ -78,12 +82,12 @@ abstract class SyncManager {
     }
   }
 
-  void complete() {
+  Future<void> complete() async {
     if (completer != null && !completer!.isCompleted) {
       completer!.complete();
     }
 
-    progress.value = 0.0;
+    progress.value = 1.0;
     status.value = SyncStatus.COMPLETED_SUCCESS;
     endedAt = DateTime.now().toUtc();
     Logger.info(
@@ -96,7 +100,7 @@ abstract class SyncManager {
       completer!.completeError(errorMessage);
     }
 
-    progress.value = 0.0;
+    progress.value = 1.0;
     error = errorMessage;
     status.value = SyncStatus.COMPLETED_ERROR;
     endedAt = DateTime.now().toUtc();

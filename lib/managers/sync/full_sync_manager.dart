@@ -25,6 +25,12 @@ class FullSyncManager extends SyncManager {
 
   @override
   Future<void> start() async {
+    if (completer != null && !completer!.isCompleted) {
+      return completer!.future;
+    } else {
+      completer = Completer<void>();
+    }
+
     super.start();
     addToOutput('Full sync is starting...');
     addToOutput("Reloading your contacts...");
@@ -100,7 +106,7 @@ class FullSyncManager extends SyncManager {
 
         if (chatProgress >= 1.0) {
           // When we've hit the last chunk, we're finished
-          complete();
+          await complete();
         } else if (status.value == SyncStatus.STOPPING) {
           // If we are supposed to be stopping, complete the future
           if (completer != null && !completer!.isCompleted) completer!.complete();
@@ -174,10 +180,10 @@ class FullSyncManager extends SyncManager {
   }
 
   @override
-  void complete() async {
+  Future<void> complete() async {
     addToOutput("Reloading your chats...");
     await ChatBloc().refreshChats(force: true);
-    super.complete();
+    await super.complete();
   }
 }
 

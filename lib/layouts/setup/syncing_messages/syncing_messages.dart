@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/sync/full_sync_manager.dart';
 import 'package:bluebubbles/managers/sync/sync_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:confetti/confetti.dart';
@@ -29,38 +30,37 @@ class _SyncingMessagesState extends State<SyncingMessages> {
   bool hasPlayed = false;
   CustomAnimationControl controller = CustomAnimationControl.mirror;
   Tween<double> tween = Tween<double>(begin: 0, end: 5);
+  late FullSyncManager syncManager;
 
   @override
   void initState() {
     super.initState();
 
-    final syncManager = SocketManager().setup.syncManager;
-    if (syncManager != null) {
-      ever<SyncStatus>(syncManager.status, (event) async {
-        if (event == SyncStatus.COMPLETED_ERROR) {
-          await showDialog(
-            context: context,
-            builder: (context) => FailedToScan(exception: syncManager.error, title: "An error occured during setup!"),
-          );
+    syncManager = SocketManager().setup.fullSyncManager;
+    ever<SyncStatus>(syncManager.status, (event) async {
+      String err = syncManager.error ?? "Unknown Error";
+      if (event == SyncStatus.COMPLETED_ERROR) {
+        await showDialog(
+          context: context,
+          builder: (context) => FailedToScan(exception: err, title: "An error occured during setup!"),
+        );
 
-          widget.controller.animateToPage(
-            3,
-            duration: Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-          );
-        } else if (event == SyncStatus.COMPLETED_SUCCESS && !hasPlayed) {
-          setState(() {
-            hasPlayed = true;
-          });
-          confettiController.play();
-        }
-      });
-    }
+        widget.controller.animateToPage(
+          3,
+          duration: Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      } else if (event == SyncStatus.COMPLETED_SUCCESS && !hasPlayed) {
+        setState(() {
+          hasPlayed = true;
+        });
+        confettiController.play();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final syncManager = SocketManager().setup.syncManager!;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
@@ -69,7 +69,8 @@ class _SyncingMessagesState extends State<SyncingMessages> {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
@@ -210,7 +211,10 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                                 Padding(
                                   padding: const EdgeInsets.only(right: 0.0, left: 5.0),
                                   child: Text("Finish",
-                                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.2, color: Colors.white)),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText1!
+                                          .apply(fontSizeFactor: 1.2, color: Colors.white)),
                                 ),
                               ],
                             ),

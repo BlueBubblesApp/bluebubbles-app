@@ -1,99 +1,124 @@
-import 'dart:math';
-
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/api_manager.dart';
-import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/sync/sync_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:dio/dio.dart';
-import 'package:tuple/tuple.dart';
-
-class ChatRequestException implements Exception {
-  const ChatRequestException([this.message]);
-
-  final String? message;
-
-  @override
-  String toString() {
-    String result = 'ChatRequestException';
-    if (message is String) return '$result: $message';
-    return result;
-  }
-}
+import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 
 class IncrementalSyncManager extends SyncManager {
+  final tag = 'IncrementalSyncManager';
+
   int startTimestamp;
 
-  int endTimestamp;
+  late int endTimestamp;
 
-  IncrementalSyncManager(this.startTimestamp, this.endTimestamp) : super("Incremental");
+  int messageCount;
+
+  int chatsSynced = 0;
+
+  int messagesSynced = 0;
+
+  int? processId;
+
+  String? chatGuid;
+
+  bool saveDate;
+
+  Function? onComplete;
+
+  int? syncStart;
+
+  IncrementalSyncManager(this.startTimestamp,
+      {int? endTimestamp, this.messageCount = 25, this.chatGuid, this.saveDate = true, this.onComplete})
+      : super("Incremental") {
+    this.endTimestamp = endTimestamp ?? DateTime.now().toUtc().millisecondsSinceEpoch;
+  }
 
   @override
   Future<void> start() async {
+    if (completer != null && !completer!.isCompleted) {
+      return completer!.future;
+    } else {
+      completer = Completer<void>();
+    }
+
     super.start();
 
-    // Get the total chats so we can properly fetch them all
-    Response chatCountResponse = await api.chatCount();
-    Map<String, dynamic> res = chatCountResponse.data;
-    int? total;
-    if (chatCountResponse.statusCode == 200) {
-      total = res["total"];
-    }
+    // Setup the socket process and error handler
+    processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
 
-    try {
-      await for (final event in streamChatPages(total)) {
-        double progress = event.item1;
-        List<Chat> chats = event.item2;
+    // Store the time we started syncing
+    RxInt lastSync = SettingsManager().settings.lastIncrementalSync;
+    syncStart = DateTime.now().millisecondsSinceEpoch;
+    addToOutput("Starting incremental sync for messages since: ${lastSync.value}");
 
-        // 1: Asynchronously save the chats
-
-        // 2: Get messages for the chat from the API
-
-        // 3: Asyncronously save the chat's messages
-
-        if (progress >= 1) {
-          // When we've hit the last chunk, we're finished
-          complete();
-        } else if (status.value == SyncStatus.STOPPING) {
-          // If we are supposed to be stopping, complete the future
-          completer!.complete();
-        } else {
-          // If all else passes, increment the progress to all listeners
-          this.progress.value = progress;
-        }
+    // only get up to 1000 messages (arbitrary limit)
+    int batches = 10;
+    for (int i = 0; i < batches; i++) {
+      // Build request params. We want all details on the messages
+      Map<String, dynamic> params = {};
+      if (chatGuid != null) {
+        params["chatGuid"] = chatGuid;
       }
-    } catch (e) {
-      completeWithError(e.toString());
+
+      params["withBlurhash"] = false; // Maybe we want it?
+      params["limit"] = 100;
+      params["offset"] = i * batches;
+      params["after"] = lastSync.value; // Get everything since the last sync
+      params["withChats"] = true; // We want the chats too so we can save them correctly
+      params["withChatParticipants"] = true; // We want participants on web only
+      params["withAttachments"] = true; // We want the attachment data
+      params["withHandle"] = true; // We want to know who sent it
+      params["sort"] = "DESC"; // Sort my DESC so we receive the newest messages first
+
+      List<dynamic> messages = await SocketManager().getMessages(params)!;
+      if (messages.isEmpty) {
+        addToOutput("No more new messages found during incremental sync");
+        break;
+      } else {
+        addToOutput("Incremental sync found ${messages.length} messages. Syncing...");
+      }
+
+      if (messages.isNotEmpty) {
+        await MessageHelper.bulkAddMessages(null, messages, onProgress: (progress, total) {
+          setProgress(progress, total);
+        }, notifyForNewMessage: !kIsWeb);
+      }
     }
 
-    return completer!.future;
+    // End the sync
+    await complete();
   }
 
-  Stream<Tuple2<double, List<Chat>>> streamChatPages(int? count, {int batchSize = 200}) async* {
-    // Set some default sync values
-    int batches = 1;
-    int countPerBatch = batchSize;
+  @override
+  Future<void> complete() async {
+    // Once we have added everything, save the last sync date
+    if (saveDate && syncStart != null) {
+      addToOutput("Saving last sync date: $syncStart");
 
-    if (count != null) {
-      batches = (count / countPerBatch).ceil();
-    } else {
-      // If we weren't given a total, just use 1000 with 1 batch
-      countPerBatch = 1000;
+      Settings _settingsCopy = SettingsManager().settings;
+      _settingsCopy.lastIncrementalSync.value = syncStart!;
+      await SettingsManager().saveSettings(_settingsCopy);
     }
 
-    for (int i = 0; i < batches; i++) {
-      // Fetch the chats and throw an error if we don't get back a good response.
-      // Throwing an error should cancel the sync
-      Response chatPage = await api.chats(withQuery: ['participants'], offset: i * countPerBatch, limit: countPerBatch);
-      dynamic data = chatPage.data;
-      if (chatPage.statusCode != 200) {
-        throw ChatRequestException('${data["error"]?["type"] ?? "API_ERROR"}: data["message"] ?? data["error"]}');
-      }
+    // Call this first so listeners can react before any
+    // "heavier" calls are made
+    await super.complete();
 
-      // Convert the returned chat dictionaries to a list of Chat Objects
-      List<Map<String, dynamic>> chatResponse = data["data"];
-      List<Chat> chats = chatResponse.map((e) => Chat.fromMap(e)).toList();
-      yield Tuple2<double, List<Chat>>((i + 1) / batches, chats);
+    if (SettingsManager().settings.showIncrementalSync.value) {
+      showSnackbar('Success', '🔄 Incremental sync complete 🔄');
+    }
+
+    if (processId != null) {
+      SocketManager().finishSocketProcess(processId);
+      processId = null;
+    }
+
+    if (onComplete != null) {
+      onComplete!();
     }
   }
 }
