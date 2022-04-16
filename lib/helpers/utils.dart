@@ -29,6 +29,7 @@ import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:get/get.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
+import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart' as intl;
 import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
 import 'package:path/path.dart';
@@ -779,7 +780,6 @@ Future<Uint8List> avatarAsBytes({
   List<Handle>? participants,
   double quality = 256,
 }) async {
-
   ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   Canvas canvas = Canvas(pictureRecorder);
 
@@ -803,7 +803,7 @@ Future<void> paintGroupAvatar({
       chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
   if (File(customPath).existsSync()) {
-    Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync());
+    Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync(), size: size.toInt());
     if (customAvatar != null) {
       canvas.drawImage(await loadImage(customAvatar), Offset(0, 0), Paint());
       return;
@@ -858,9 +858,11 @@ Future<void> paintGroupAvatar({
         ..layout()
         ..paint(canvas, Offset(left + realSize * 0.25, top + realSize * 0.25));
     } else {
-      Paint paint = Paint()..color = (SettingsManager().settings.skin.value == Skins.Samsung
-          ? Get.context?.theme.colorScheme.secondary
-          : Get.context?.theme.backgroundColor) ?? HexColor("928E8E");
+      Paint paint = Paint()
+        ..color = (SettingsManager().settings.skin.value == Skins.Samsung
+                ? Get.context?.theme.colorScheme.secondary
+                : Get.context?.theme.backgroundColor) ??
+            HexColor("928E8E");
       canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
       await paintAvatar(
         chatGuid: chatGuid,
@@ -890,7 +892,7 @@ Future<void> paintAvatar(
       chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
   if (File(customPath).existsSync()) {
-    Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync());
+    Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync(), size: size.toInt());
     if (customAvatar != null) {
       canvas.drawImage(await loadImage(customAvatar), offset, Paint());
       return;
@@ -898,7 +900,8 @@ Future<void> paintAvatar(
   } else {
     Contact? contact = ContactManager().getContact(handle?.address);
     if (contact?.hasAvatar ?? false) {
-      Uint8List? contactAvatar = await circularize(contact!.avatarHiRes.value ?? contact.avatar.value!);
+      Uint8List? contactAvatar =
+          await circularize(contact!.avatarHiRes.value ?? contact.avatar.value!, size: size.toInt());
       if (contactAvatar != null) {
         canvas.drawImage(await loadImage(contactAvatar), offset, Paint());
         return;
@@ -963,8 +966,19 @@ Future<void> paintAvatar(
   }
 }
 
-Future<Uint8List?> circularize(Uint8List data) async {
-  ui.Image image = await loadImage(data);
+Future<Uint8List?> circularize(Uint8List data, {required int size}) async {
+  ui.Image image;
+  Uint8List _data = data;
+
+  // Resize the image if it's the wrong size
+  img.Image? _image = img.decodeImage(data);
+  if (_image != null) {
+    _image = img.copyResize(_image, width: size, height: size);
+
+    _data = img.encodePng(_image) as Uint8List;
+  }
+
+  image = await loadImage(_data);
 
   ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   Canvas canvas = Canvas(pictureRecorder);
