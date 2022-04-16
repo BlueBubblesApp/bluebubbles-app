@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/emoji_regex.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
