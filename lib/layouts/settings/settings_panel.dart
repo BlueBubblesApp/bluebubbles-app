@@ -1179,7 +1179,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               final contacts = <Map<String, dynamic>>[];
                               for (Contact c in ContactManager().contacts) {
                                 var map = c.toMap();
-                                map['firstName'] = map['displayName'];
                                 contacts.add(map);
                               }
                               api.createContact(contacts, onSendProgress: (count, total) {
