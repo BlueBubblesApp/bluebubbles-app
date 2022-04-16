@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:async_task/async_task.dart';
@@ -31,6 +31,8 @@ import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
 import 'package:intl/intl.dart' as intl;
 import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:slugify/slugify.dart';
 import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
@@ -188,14 +190,48 @@ Future<String?> parsePhoneNumber(String number, String region) async {
   }
 }
 
-String randomString(int length) {
-  var rand = Random();
-  var codeUnits = List.generate(length, (index) {
-    return rand.nextInt(33) + 89;
-  });
+List<String> getUniqueNumbers(Iterable<String> numbers) {
+  List<String> phones = [];
+  for (String phone in numbers) {
+    bool exists = false;
+    for (String current in phones) {
+      if (cleansePhoneNumber(phone) == cleansePhoneNumber(current)) {
+        exists = true;
+        break;
+      }
+    }
 
-  return String.fromCharCodes(codeUnits);
+    if (!exists) {
+      phones.add(phone);
+    }
+  }
+
+  return phones;
 }
+
+List<String> getUniqueEmails(Iterable<String> list) {
+  List<String> emails = [];
+  for (String email in list) {
+    bool exists = false;
+    for (String current in emails) {
+      if (email.trim() == current.trim()) {
+        exists = true;
+        break;
+      }
+    }
+
+    if (!exists) {
+      emails.add(email);
+    }
+  }
+
+  return emails;
+}
+
+const _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
+
+String randomString(int length) =>
+    String.fromCharCodes(Iterable.generate(length, (_) => _chars.codeUnitAt(Random().nextInt(_chars.length))));
 
 void showSnackbar(String title, String message,
     {int animationMs = 250, int durationMs = 1500, Function(GetBar)? onTap, TextButton? button}) {
@@ -261,9 +297,7 @@ String buildFullDate(DateTime time) {
 extension DateHelpers on DateTime {
   bool isTomorrow({DateTime? otherDate}) {
     final now = otherDate?.add(Duration(days: 1)) ?? DateTime.now().add(Duration(days: 1));
-    return now.day == day &&
-        now.month == month &&
-        now.year == year;
+    return now.day == day && now.month == month && now.year == year;
   }
 
   bool isToday() {
@@ -474,12 +508,14 @@ Size getGifDimensions(Uint8List bytes) {
 }
 
 SystemUiOverlayStyle getBrightness(BuildContext context) {
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark;
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark
+      ? SystemUiOverlayStyle.light
+      : SystemUiOverlayStyle.dark;
 }
 
 /// Take the passed [address] or serverAddress from Settings
 /// and sanitize it, making sure it includes an http schema
-String? getServerAddress({String? address}) {
+String? sanitizeServerAddress({String? address}) {
   String serverAddress = address ?? SettingsManager().settings.serverAddress.value;
 
   String sanitized = serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();
@@ -540,10 +576,10 @@ Future<String> getDeviceName() async {
 
 /// Contextless way to get device width
 double getDeviceWidth() {
-  double pixelRatio = window.devicePixelRatio;
+  double pixelRatio = ui.window.devicePixelRatio;
 
   //Size in logical pixels
-  Size logicalScreenSize = window.physicalSize / pixelRatio;
+  Size logicalScreenSize = ui.window.physicalSize / pixelRatio;
   return logicalScreenSize.width;
 }
 
@@ -735,3 +771,224 @@ extension ConditionlAdd on RxMap {
 }
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;
+
+Future<Uint8List> avatarAsBytes({
+  required String chatGuid,
+  required bool isGroup,
+  required Handle? handle,
+  List<Handle>? participants,
+  double quality = 256,
+}) async {
+
+  ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  Canvas canvas = Canvas(pictureRecorder);
+
+  await paintGroupAvatar(chatGuid: chatGuid, participants: participants, canvas: canvas, size: quality);
+
+  ui.Picture picture = pictureRecorder.endRecording();
+  ui.Image image = await picture.toImage(quality.toInt(), quality.toInt());
+
+  Uint8List bytes = (await image.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List();
+
+  return bytes;
+}
+
+Future<void> paintGroupAvatar({
+  required String chatGuid,
+  required List<Handle>? participants,
+  required Canvas canvas,
+  required double size,
+}) async {
+  String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
+      chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
+
+  if (File(customPath).existsSync()) {
+    Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync());
+    if (customAvatar != null) {
+      canvas.drawImage(await loadImage(customAvatar), Offset(0, 0), Paint());
+      return;
+    }
+  }
+
+  if (participants == null) return;
+  int maxAvatars = SettingsManager().settings.maxAvatarsInGroupWidget.value;
+
+  if (participants.length == 1) {
+    await paintAvatar(
+      chatGuid: chatGuid,
+      handle: participants.first,
+      canvas: canvas,
+      offset: Offset(0, 0),
+      size: size,
+    );
+    return;
+  }
+
+  Paint paint = Paint()..color = (Get.context?.theme.colorScheme.secondary ?? HexColor("928E8E")).withOpacity(0.6);
+  canvas.drawCircle(Offset(size * 0.5, size * 0.5), size * 0.5, paint);
+
+  int realAvatarCount = min(participants.length, maxAvatars);
+
+  for (int index = 0; index < realAvatarCount; index++) {
+    double padding = size * 0.08;
+    double angle = index / realAvatarCount * 2 * pi + pi * 0.25;
+    double adjustedWidth = size * (-0.07 * realAvatarCount + 1);
+    double innerRadius = size - adjustedWidth * 0.5 - 2 * padding;
+    double realSize = adjustedWidth * 0.65;
+    double top = size * 0.5 + (innerRadius * 0.5) * sin(angle + pi) - realSize * 0.5;
+    double left = size * 0.5 - (innerRadius * 0.5) * cos(angle + pi) - realSize * 0.5;
+
+    if (index == maxAvatars - 1 && participants.length > maxAvatars) {
+      Paint paint = Paint();
+      paint.isAntiAlias = true;
+      paint.color = Get.context?.theme.colorScheme.secondary.withOpacity(0.8) ?? HexColor("686868").withOpacity(0.8);
+      canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
+
+      IconData icon = Icons.people;
+
+      TextPainter()
+        ..textDirection = TextDirection.rtl
+        ..textAlign = TextAlign.center
+        ..text = TextSpan(
+            text: String.fromCharCode(icon.codePoint),
+            style: TextStyle(
+                fontSize: adjustedWidth * 0.3,
+                fontFamily: icon.fontFamily,
+                color: Get.context?.textTheme.subtitle1!.color!.withOpacity(0.8)))
+        ..layout()
+        ..paint(canvas, Offset(left + realSize * 0.25, top + realSize * 0.25));
+    } else {
+      Paint paint = Paint()..color = (SettingsManager().settings.skin.value == Skins.Samsung
+          ? Get.context?.theme.colorScheme.secondary
+          : Get.context?.theme.backgroundColor) ?? HexColor("928E8E");
+      canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
+      await paintAvatar(
+        chatGuid: chatGuid,
+        handle: participants[index],
+        canvas: canvas,
+        offset: Offset(left + realSize * 0.01, top + realSize * 0.01),
+        size: realSize * 0.99,
+        borderWidth: size * 0.01,
+        fontSize: adjustedWidth * 0.3,
+      );
+    }
+  }
+}
+
+Future<void> paintAvatar(
+    {required String chatGuid,
+    required Handle? handle,
+    required Canvas canvas,
+    required Offset offset,
+    required double size,
+    double? fontSize,
+    double? borderWidth}) async {
+  fontSize ??= size * 0.5;
+  borderWidth ??= size * 0.05;
+
+  String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
+      chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
+
+  if (File(customPath).existsSync()) {
+    Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync());
+    if (customAvatar != null) {
+      canvas.drawImage(await loadImage(customAvatar), offset, Paint());
+      return;
+    }
+  } else {
+    Contact? contact = ContactManager().getContact(handle?.address);
+    if (contact?.hasAvatar ?? false) {
+      Uint8List? contactAvatar = await circularize(contact!.avatarHiRes.value ?? contact.avatar.value!);
+      if (contactAvatar != null) {
+        canvas.drawImage(await loadImage(contactAvatar), offset, Paint());
+        return;
+      }
+    }
+  }
+
+  List<Color> colors;
+  if (handle?.color == null) {
+    colors = toColorGradient(handle?.address);
+  } else {
+    colors = [
+      HexColor(handle!.color!).lightenAmount(0.02),
+      HexColor(handle.color!),
+    ];
+  }
+
+  double dx = offset.dx;
+  double dy = offset.dy;
+
+  Paint paint = Paint();
+  paint.isAntiAlias = true;
+  paint.shader =
+      ui.Gradient.linear(Offset(dx + size * 0.5, dy + size * 0.5), Offset(size.toDouble(), size.toDouble()), [
+    !SettingsManager().settings.colorfulAvatars.value
+        ? HexColor("928E8E")
+        : colors.isNotEmpty
+            ? colors[1]
+            : HexColor("928E8E"),
+    !SettingsManager().settings.colorfulAvatars.value
+        ? HexColor("686868")
+        : colors.isNotEmpty
+            ? colors[0]
+            : HexColor("686868"),
+  ]);
+
+  canvas.drawCircle(Offset(dx + size * 0.5, dy + size * 0.5), size * 0.5, paint);
+
+  String? initials = ContactManager().getContactInitials(handle);
+
+  if (initials == null) {
+    IconData icon = Icons.person;
+
+    TextPainter()
+      ..textDirection = TextDirection.rtl
+      ..textAlign = TextAlign.center
+      ..text = TextSpan(
+          text: String.fromCharCode(icon.codePoint), style: TextStyle(fontSize: fontSize, fontFamily: icon.fontFamily))
+      ..layout()
+      ..paint(canvas, Offset(dx + size * 0.25, dy + size * 0.25));
+  } else {
+    TextPainter text = TextPainter()
+      ..textDirection = TextDirection.ltr
+      ..textAlign = TextAlign.center
+      ..text = TextSpan(
+        text: initials,
+        style: TextStyle(fontSize: fontSize),
+      )
+      ..layout();
+
+    text.paint(canvas, Offset(dx + (size - text.width) * 0.5, dy + (size - text.height) * 0.5));
+  }
+}
+
+Future<Uint8List?> circularize(Uint8List data) async {
+  ui.Image image = await loadImage(data);
+
+  ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  Canvas canvas = Canvas(pictureRecorder);
+  Paint paint = Paint();
+  paint.isAntiAlias = true;
+
+  Path path = Path()..addOval(Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()));
+
+  canvas.clipPath(path);
+
+  canvas.drawImage(image, Offset(0, 0), paint);
+
+  ui.Picture picture = pictureRecorder.endRecording();
+  image = await picture.toImage(image.width, image.height);
+
+  Uint8List? bytes = (await image.toByteData(format: ui.ImageByteFormat.png))?.buffer.asUint8List();
+
+  return bytes;
+}
+
+Future<ui.Image> loadImage(Uint8List data) async {
+  final Completer<ui.Image> completer = Completer();
+  ui.decodeImageFromList(data, (ui.Image image) {
+    return completer.complete(image);
+  });
+  return completer.future;
+}

@@ -1285,6 +1285,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.4"
+  pasteboard:
+    dependency: "direct main"
+    description:
+      name: pasteboard
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.3"
   path:
     dependency: "direct main"
     description:
@@ -1533,12 +1540,10 @@ packages:
   quick_notify:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "41030fb6468e7990b230bb08e42fd99928d6fd64"
-      resolved-ref: "41030fb6468e7990b230bb08e42fd99928d6fd64"
-      url: "https://github.com/jjoelj/quick_notify"
-    source: git
-    version: "0.1.0+2"
+      name: quick_notify
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.1"
   quiver:
     dependency: transitive
     description:
@@ -1574,6 +1579,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.2.1"
+  reorderables:
+    dependency: "direct main"
+    description:
+      name: reorderables
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.4.3"
   rxdart:
     dependency: "direct overridden"
     description:
@@ -2202,6 +2214,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.2"
+  win_toast:
+    dependency: "direct main"
+    description:
+      name: win_toast
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.2"
   window_manager:
     dependency: "direct main"
     description:

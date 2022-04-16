@@ -14,6 +14,7 @@ import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class SetupBloc {
   // Setup as a Singleton
@@ -31,6 +32,7 @@ class SetupBloc {
 
   double numberOfMessagesPerPage = 25;
   bool skipEmptyChats = true;
+  bool saveToDownloads = false;
 
   Future<void> startFullSync(Settings settings) async {
     // Set the last sync date (for incremental, even though this isn't incremental)
@@ -39,7 +41,8 @@ class SetupBloc {
     _settingsCopy.lastIncrementalSync.value = DateTime.now().millisecondsSinceEpoch;
     await SettingsManager().saveSettings(_settingsCopy);
 
-    fullSyncManager = FullSyncManager(messageCount: numberOfMessagesPerPage.toInt(), skipEmptyChats: skipEmptyChats);
+    fullSyncManager = FullSyncManager(
+      messageCount: numberOfMessagesPerPage.toInt(), skipEmptyChats: skipEmptyChats, saveLogs: saveToDownloads);
     await fullSyncManager.start();
     await finishSetup();
     await startIncrementalSync(SettingsManager().settings);

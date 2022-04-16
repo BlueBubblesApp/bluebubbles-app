@@ -11,7 +11,7 @@ import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -199,7 +199,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
       CustomNavigator.pushAndRemoveUntil(
         context,
         ConversationView(
-            chat: ChatBloc().chats.firstWhere((e) => e.guid == prefs.getString('lastOpenedChat'))
+            chat: Chat.findOne(guid: prefs.getString('lastOpenedChat'))
         ),
             (route) => route.isFirst,
       );

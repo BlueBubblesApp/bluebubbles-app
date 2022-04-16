@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/firebase/database_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
@@ -66,36 +67,23 @@ callbackHandler() async {
       String? storeRef = prefs.getString("objectbox-reference");
       bool? useCustomPath = prefs.getBool("use-custom-path");
       String? customStorePath = prefs.getString("custom-path");
-      if (useCustomPath != true && storeRef != null) {
+      if (!kIsDesktop && storeRef != null) {
         debugPrint("Opening ObjectBox store from reference");
         try {
           store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
         } catch (_) {
           debugPrint("Failed to open store from reference, opening from path");
           try {
-            if (kIsDesktop) {
-              Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
-            }
             store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
-          } catch (_) {
-            if (Platform.isWindows) {
-              debugPrint("Failed to open store from default path. Using custom path");
-              customStorePath ??= "C:\\bluebubbles_app";
-              prefs.setBool("use-custom-path", true);
-              objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-              objectBoxDirectory.createSync(recursive: true);
-              debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-              store = await openStore(directory: join(customStorePath, 'objectbox'));
-            }
-            // TODO Linux fallback
+          } catch (e, s) {
+            debugPrint(e.toString());
+            debugPrint(s.toString());
           }
         }
       } else if (useCustomPath == true && Platform.isWindows) {
         customStorePath ??= "C:\\bluebubbles_app";
         objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-        if (kIsDesktop) {
-          objectBoxDirectory.createSync(recursive: true);
-        }
+        objectBoxDirectory.createSync(recursive: true);
         debugPrint("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
         store = await openStore(directory: join(customStorePath, "objectbox"));
       } else {
@@ -105,7 +93,9 @@ callbackHandler() async {
           }
           debugPrint("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
           store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
-        } catch (_) {
+        }  catch (e, s) {
+          debugPrint(e.toString());
+          debugPrint(s.toString());
           if (Platform.isWindows) {
             debugPrint("Failed to open store from default path. Using custom path");
             customStorePath ??= "C:\\bluebubbles_app";
@@ -163,6 +153,6 @@ callbackHandler() async {
   await SettingsManager().getSavedSettings(headless: true);
   if (!ContactManager().hasFetchedContacts) await ContactManager().loadContacts(headless: true);
   MethodChannelInterface().init(customChannel: _backgroundChannel);
-  await SocketManager().refreshConnection(connectToSocket: false);
+  await fdb.fetchNewUrl(connectToSocket: false);
   Get.put(AttachmentDownloadService());
 }

@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:fast_contacts/fast_contacts.dart';
 import 'package:get/get.dart';
 import 'package:image_size_getter/image_size_getter.dart';
@@ -45,6 +47,7 @@ class Contact {
     Uint8List? avatarHiResBytes,
   }) {
     avatar.value = avatarBytes;
+    avatarHiRes.value = avatarHiResBytes;
   }
 
   String id;
@@ -77,10 +80,11 @@ class Contact {
     return {
       'id': id,
       'displayName': displayName,
-      'phones': phones,
-      'emails': emails,
+      'phoneNumbers': getUniqueNumbers(phones),
+      'emails': getUniqueEmails(emails),
       'fakeName': fakeName,
-      'fakeAddress': fakeAddress
+      'fakeAddress': fakeAddress,
+      'avatar': avatarHiRes.value != null || avatar.value != null ? base64Encode(avatarHiRes.value ?? avatar.value!) : null,
     };
   }
 

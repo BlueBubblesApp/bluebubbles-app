@@ -3,9 +3,11 @@ import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 
 class FutureLoaderDialog extends StatefulWidget {
-  FutureLoaderDialog({Key? key, required this.onConnect, required this.future}) : super(key: key);
+  FutureLoaderDialog({Key? key, required this.onConnect, required this.future, this.showErrorDialog = true})
+      : super(key: key);
   final Function(bool, Object?) onConnect;
   final Future<dio.Response> future;
+  final bool showErrorDialog;
 
   @override
   _FutureLoaderDialogState createState() => _FutureLoaderDialogState();
@@ -29,9 +31,19 @@ class _FutureLoaderDialogState extends State<FutureLoaderDialog> {
         future: widget.future,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return FailedToConnectDialog(
-              onDismiss: () => Navigator.of(context).pop(),
-            );
+            if (widget.showErrorDialog) {
+              return FailedToConnectDialog(
+                onDismiss: () => Navigator.of(context).pop(),
+              );
+            } else {
+              Navigator.of(context).pop();
+              return WillPopScope(
+                onWillPop: () async {
+                  return false;
+                },
+                child: Container(),
+              );
+            }
           }
 
           if (!snapshot.hasData || snapshot.data == null) {

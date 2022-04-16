@@ -278,23 +278,26 @@ class SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: SettingsManager().settings.skin.value == Skins.Samsung ? null : backgroundColor,
-      child: ListTile(
-        onLongPress: onLongPress as void Function()?,
-        tileColor: SettingsManager().settings.skin.value == Skins.Samsung ? null : backgroundColor,
-        onTap: onTap as void Function()?,
-        leading: leading,
-        title: Text(
-          title!,
-          style: Theme.of(context).textTheme.bodyText1,
+      child: GestureDetector(
+        onSecondaryTapUp: (details) => onLongPress as void Function()?,
+        child: ListTile(
+          onLongPress: onLongPress as void Function()?,
+          tileColor: SettingsManager().settings.skin.value == Skins.Samsung ? null : backgroundColor,
+          onTap: onTap as void Function()?,
+          leading: leading,
+          title: Text(
+            title!,
+            style: Theme.of(context).textTheme.bodyText1,
+          ),
+          trailing: trailing,
+          subtitle: subtitle != null
+              ? Text(
+            subtitle!,
+            style: Theme.of(context).textTheme.subtitle1,
+          )
+              : null,
+          isThreeLine: isThreeLine,
         ),
-        trailing: trailing,
-        subtitle: subtitle != null
-            ? Text(
-          subtitle!,
-          style: Theme.of(context).textTheme.subtitle1,
-        )
-            : null,
-        isThreeLine: isThreeLine,
       ),
     );
   }

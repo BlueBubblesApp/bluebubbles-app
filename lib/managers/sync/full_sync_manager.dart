@@ -21,7 +21,8 @@ class FullSyncManager extends SyncManager {
 
   bool skipEmptyChats;
 
-  FullSyncManager({int? endTimestamp, this.messageCount = 25, this.skipEmptyChats = true}) : super("Full");
+  FullSyncManager({int? endTimestamp, this.messageCount = 25, this.skipEmptyChats = true, bool saveLogs = false})
+      : super("Full", saveLogs: saveLogs);
 
   @override
   Future<void> start() async {

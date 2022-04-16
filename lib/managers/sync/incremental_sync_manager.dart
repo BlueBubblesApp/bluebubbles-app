@@ -1,6 +1,7 @@
 import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/sync/sync_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -32,8 +33,8 @@ class IncrementalSyncManager extends SyncManager {
   int? syncStart;
 
   IncrementalSyncManager(this.startTimestamp,
-      {int? endTimestamp, this.messageCount = 25, this.chatGuid, this.saveDate = true, this.onComplete})
-      : super("Incremental") {
+      {int? endTimestamp, this.messageCount = 25, this.chatGuid, this.saveDate = true, this.onComplete, bool saveLogs = false})
+      : super("Incremental", saveLogs: saveLogs) {
     this.endTimestamp = endTimestamp ?? DateTime.now().toUtc().millisecondsSinceEpoch;
   }
 
@@ -74,7 +75,15 @@ class IncrementalSyncManager extends SyncManager {
       params["withHandle"] = true; // We want to know who sent it
       params["sort"] = "DESC"; // Sort my DESC so we receive the newest messages first
 
-      List<dynamic> messages = await SocketManager().getMessages(params)!;
+      List<dynamic> messages = await MessageManager().getMessages(
+          withChats: true,
+          withAttachments: true,
+          withHandles: true,
+          withChatParticipants: true,
+          after: lastSync.value,
+          chatGuid: chatGuid,
+          offset: i * batches,
+      );
       if (messages.isEmpty) {
         addToOutput("No more new messages found during incremental sync");
         break;

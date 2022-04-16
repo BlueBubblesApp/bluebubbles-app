@@ -2,6 +2,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -18,6 +19,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
   double numberOfMessages = 25;
   bool downloadAttachments = false;
   bool skipEmptyChats = true;
+  bool saveToDownloads = false;
 
   @override
   Widget build(BuildContext context) {
@@ -160,6 +162,39 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                                 ],
                               ),
                             ),
+                            if (!kIsWeb)
+                              SizedBox(height: 10),
+                            if (!kIsWeb)
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 40.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisSize: MainAxisSize.max,
+                                  children: [
+                                    Text(
+                                      "Save sync log to downloads",
+                                      style: Theme.of(context).textTheme.bodyText1!.apply(
+                                        color: Colors.grey,
+                                      ).copyWith(height: 1.5),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    Switch(
+                                      value: saveToDownloads,
+                                      activeColor: Theme.of(context).primaryColor,
+                                      activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                                      inactiveTrackColor: Theme.of(context).primaryColor.withAlpha(75),
+                                      inactiveThumbColor: Theme.of(context).textTheme.bodyText1!.color,
+                                      onChanged: (bool value) {
+                                        if (!mounted) return;
+
+                                        setState(() {
+                                          saveToDownloads = value;
+                                        });
+                                      },
+                                    )
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -189,6 +224,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                             // Set the number of messages to sync
                             SocketManager().setup.numberOfMessagesPerPage = numberOfMessages;
                             SocketManager().setup.skipEmptyChats = skipEmptyChats;
+                            SocketManager().setup.saveToDownloads = saveToDownloads;
 
                             // Start syncing
                             SocketManager().setup.startFullSync(SettingsManager().settings);

@@ -13,7 +13,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:simple_animations/stateless_animation/custom_animation.dart';
@@ -114,7 +114,7 @@ class _QRScanState extends State<QRScan> {
 
     // Make sure we have a URL and password
     String? password = result[0];
-    String? serverURL = getServerAddress(address: result[1]);
+    String? serverURL = sanitizeServerAddress(address: result[1]);
     if (serverURL == null || serverURL.isEmpty || password == null || password.isEmpty) {
       showSnackbar("Error", "Your server URL or password was unable to be parsed!");
       return;
@@ -133,7 +133,8 @@ class _QRScanState extends State<QRScan> {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
@@ -256,7 +257,10 @@ class _QRScanState extends State<QRScan> {
                                     Padding(
                                       padding: const EdgeInsets.only(right: 0.0, left: 5.0),
                                       child: Text("Scan QR Code",
-                                          style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1!
+                                              .apply(fontSizeFactor: 1.1, color: Colors.white)),
                                     ),
                                   ],
                                 ),
@@ -287,23 +291,6 @@ class _QRScanState extends State<QRScan> {
                               minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
                             ),
                             onPressed: () async {
-                              // showDialog(
-                              //   context: context,
-                              //   builder: (connectContext) => TextInputURL(
-                              //     onConnect: () {
-                              //       if (Navigator.of(connectContext).canPop()) {
-                              //         Navigator.of(connectContext).pop();
-                              //       }
-                              //
-                              //       goToNextPage();
-                              //     },
-                              //     onClose: () {
-                              //       if (Navigator.of(connectContext).canPop()) {
-                              //         Navigator.of(connectContext).pop();
-                              //       }
-                              //     },
-                              //   ),
-                              // );
                               setState(() {
                                 showManualEntry = !showManualEntry;
                               });
@@ -311,7 +298,8 @@ class _QRScanState extends State<QRScan> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(CupertinoIcons.text_cursor, color: Theme.of(context).textTheme.bodyText1!.color, size: 20),
+                                Icon(CupertinoIcons.text_cursor,
+                                    color: Theme.of(context).textTheme.bodyText1!.color, size: 20),
                                 SizedBox(width: 10),
                                 Text("Manual entry",
                                     style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)),
@@ -537,7 +525,7 @@ class _QRScanState extends State<QRScan> {
       });
     }
 
-    String? addr = getServerAddress(address: url);
+    String? addr = sanitizeServerAddress(address: url);
     if (addr == null && mounted) {
       return setState(() {
         error = "Server address is invalid!";
@@ -553,23 +541,18 @@ class _QRScanState extends State<QRScan> {
 
     Get.dialog(FutureLoaderDialog(
       future: fcmFuture,
-      onConnect: (bool result, Object? error) async {
-        if (Get.isDialogOpen ?? false) {
-          Get.back();
-        }
-
+      showErrorDialog: false,
+      onConnect: (bool result, Object? err) async {
         if (result) {
+          if (Get.isDialogOpen ?? false) {
+            Get.back();
+          }
+
           setState(() {
             showManualEntry = false;
           });
 
           dio.Response fcmResponse = await fcmFuture;
-          if (fcmResponse.statusCode == 404) {
-            return setState(() {
-              error = "Server not found!";
-            });
-          }
-
           Map<String, dynamic> data = fcmResponse.data;
           if (fcmResponse.statusCode != 200) {
             return setState(() {
@@ -582,14 +565,21 @@ class _QRScanState extends State<QRScan> {
           SettingsManager().saveFCMData(fcmData);
           goToNextPage();
         } else if (mounted) {
-          if (error != null) {
-            setState(() {
-              error = "Failed to connect! Error: ${error.toString()}";
-            });
+          if (err != null) {
+            final errorData = jsonDecode(err as String);
+            if (errorData['status'] == 401) {
+              setState(() {
+                error = "Authentication failed. Incorrect password!";
+              });
+            } else {
+              setState(() {
+                error = "Failed to connect! Error: [${errorData['status']}] ${errorData['message']}";
+              });
+            }
           } else {
             setState(() {
               error =
-                  "Failed to connect to ${getServerAddress()}! Please ensure your credentials are correct (including http://) and check the server logs for more info.";
+                  "Failed to connect to $addr! Please ensure your credentials are correct (including http://) and check the server logs for more info.";
             });
           }
         }

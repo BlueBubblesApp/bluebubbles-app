@@ -13,8 +13,8 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/attachment.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
@@ -602,7 +602,7 @@ class Message {
       // If we have a chat and the message doesn't exist, let's add the message as new
       if (chat != null) {
         await chat.addMessage(newMessage);
-        NewMessageManager().addMessage(chat, newMessage, outgoing: false);
+        MessageManager().addMessage(chat, newMessage, outgoing: false);
         return newMessage;
       } else {
         // If we don't have a chat, we just want to add the message
