@@ -51,9 +51,7 @@ class GetMessageAttachments extends AsyncTask<List<dynamic>, Map<String, List<At
   FutureOr<Map<String, List<Attachment?>>> run() {
     /// Pull args from input and create new instances of store and boxes
     List<int> messageIds = stuff[0];
-    String? storeRef = stuff[1];
     final Map<String, List<Attachment?>> map = {};
-    final store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
     return store.runInTransaction(TxMode.read, () {
       /// Query the [amJoinBox] for relevant attachment IDs
       final messages = messageBox.getMany(messageIds);
@@ -489,7 +487,6 @@ class Message {
 
     final task = GetMessageAttachments([
       messages.map((e) => e!.id!).toList(),
-      prefs.getString("objectbox-reference")
     ]);
     return (await createAsyncTask<Map<String, List<Attachment?>>>(task)) ?? {};
   }

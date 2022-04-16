@@ -197,7 +197,7 @@ Future<Null> initApp(bool isBubble) async {
         if (!kIsDesktop && storeRef != null) {
           Logger.info("Opening ObjectBox store from reference");
           try {
-            store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
+            store = Store.attach(getObjectBoxModel(), join(documentsDirectory.path, 'objectbox'));
           } catch (_) {
             Logger.info("Failed to open store from reference, opening from path");
             try {
