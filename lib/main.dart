@@ -570,7 +570,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         );
 
         // Delete temp dir in case any notif icons weren't cleared
-        getApplicationSupportDirectory().then((Directory d) => Directory(join(d.path, "temp")).deleteSync(recursive: true));
+        getApplicationSupportDirectory().then((d) => Directory(join(d.path, "temp")).deleteSync(recursive: true));
       }
       initSystemTray();
     }
