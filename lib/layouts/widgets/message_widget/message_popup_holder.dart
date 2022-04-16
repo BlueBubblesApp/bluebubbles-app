@@ -124,7 +124,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
 
   void sendReaction(String type) {
     Logger.info("Sending reaction type: " + type);
-    ActionHandler.sendReaction(ChatManager().activeChat!.chat, widget.message, type);
+    ActionHandler.sendReaction(widget.message.getChat() ?? ChatManager().activeChat!.chat, widget.message, type);
   }
 
   @override
