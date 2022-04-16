@@ -197,7 +197,7 @@ Future<Null> initApp(bool isBubble) async {
         if (!kIsDesktop && storeRef != null) {
           Logger.info("Opening ObjectBox store from reference");
           try {
-            store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
+            store = Store.attach(getObjectBoxModel(), join(documentsDirectory.path, 'objectbox'));
           } catch (_) {
             Logger.info("Failed to open store from reference, opening from path");
             try {
@@ -570,7 +570,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         );
 
         // Delete temp dir in case any notif icons weren't cleared
-        getApplicationSupportDirectory().then((Directory d) => Directory(join(d.path, "temp")).deleteSync(recursive: true));
+        getApplicationSupportDirectory().then((d) => Directory(join(d.path, "temp")).deleteSync(recursive: true));
       }
       initSystemTray();
     }

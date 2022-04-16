@@ -244,7 +244,7 @@ class NotificationManager {
             isGroup: chatIsGroup, handle: handle, participants: participants, chatGuid: chatGuid, quality: 256);
 
         // Create a temp file with the avatar
-        String path = join((await getApplicationSupportDirectory()).path, "temp", "${randomString(8)}.jpg");
+        String path = join((await getApplicationSupportDirectory()).path, "temp", "${randomString(8)}.png");
         File(path).createSync(recursive: true);
         File(path).writeAsBytesSync(avatar);
 

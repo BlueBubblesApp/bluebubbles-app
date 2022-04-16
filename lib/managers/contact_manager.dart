@@ -250,10 +250,10 @@ class ContactManager {
 
         for (Map<String, dynamic> map in response.data['data']) {
           logger?.call(
-              "Parsing contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
+              "Parsing contact: ${map['displayName'] ?? [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
           contacts.add(Contact(
             id: map['id'].toString(),
-            displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
+            displayName: map['displayName'] ?? [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
             emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
             phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
           ));
@@ -277,7 +277,7 @@ class ContactManager {
 
           for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar'])!)) {
             logger?.call(
-                "Adding avatar for contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
+                "Adding avatar for contact: ${map['displayName'] ?? [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
 
             final contact = contacts.firstWhereOrNull((e) => e.id == map['id'].toString());
             contact?.avatar.value = base64Decode(map['avatar'].toString());

@@ -190,7 +190,11 @@ class ThemeObject {
   static List<ThemeObject> getThemes() {
     if (kIsWeb) return Themes.themes;
     final results = themeObjectBox.getAll();
-    return (results.isNotEmpty) ? results.map((e) => e..fetchData()).toList() : Themes.themes;
+    final list = Themes.themes;
+    if (results.isNotEmpty) {
+      list.addAll(results.map((e) => e..fetchData()).toList());
+    }
+    return list;
   }
 
   List<ThemeEntry> fetchData() {

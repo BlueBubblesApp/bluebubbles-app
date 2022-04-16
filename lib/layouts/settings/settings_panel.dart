@@ -1063,6 +1063,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             List<dynamic> json = jsonDecode(jsonString);
                                             for (var e in json) {
                                               ThemeObject object = ThemeObject.fromMap(e);
+                                              if (object.isPreset) continue;
+                                              object.selectedLightTheme = false;
+                                              object.selectedDarkTheme = false;
+                                              object.id = null;
                                               List<dynamic> entriesJson = e['entries'];
                                               List<ThemeEntry> entries = [];
                                               for (var e2 in entriesJson) {
@@ -1072,7 +1076,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                               object.data = object.themeData;
                                               object.save();
                                             }
-                                            SettingsManager().saveSelectedTheme(context);
                                             Get.back();
                                             showSnackbar("Success", "Theming restored successfully");
                                           } catch (_) {
@@ -1179,7 +1182,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               final contacts = <Map<String, dynamic>>[];
                               for (Contact c in ContactManager().contacts) {
                                 var map = c.toMap();
-                                map['firstName'] = map['displayName'];
                                 contacts.add(map);
                               }
                               api.createContact(contacts, onSendProgress: (count, total) {

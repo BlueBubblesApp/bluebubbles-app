@@ -325,7 +325,7 @@ class ApiService extends GetxService {
       final response = await dio.post(
           "$origin/chat/new",
           queryParameters: buildQueryParams(),
-          data: {"addresses": addresses},
+          data: {"addresses": addresses, "message": message},
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
