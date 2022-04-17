@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
@@ -232,7 +233,9 @@ class NotificationManager {
       Handle? handle,
       List<Handle>? participants) async {
     if (kIsWeb && uh.Notification.permission == "granted") {
-      var notif = uh.Notification(chatTitle, body: messageText, icon: "/splash/img/dark-4x.png");
+      Uint8List avatar = await avatarAsBytes(
+          isGroup: chatIsGroup, handle: handle, participants: participants, chatGuid: chatGuid, quality: 256);
+      var notif = uh.Notification(chatTitle, body: messageText, icon: "data:image/png;base64,${base64Encode(avatar)}");
       notif.onClick.listen((event) {
         MethodChannelInterface().openChat(chatGuid);
       });
