@@ -124,7 +124,6 @@ dependencies:
   defer_pointer: ^0.0.2
   pasteboard: ^0.0.3
   win_toast: ^0.0.2
-  reorderables: ^0.4.3
 
 dependency_overrides:
   rxdart: ^0.27.3
