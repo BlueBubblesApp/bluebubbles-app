@@ -62,6 +62,7 @@ callbackHandler() async {
         (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
     Directory objectBoxDirectory = Directory(join(documentsDirectory.path, 'objectbox'));
     final sqlitePath = join(documentsDirectory.path, "chat.db");
+    bool initializedViaReference = false;
 
     Future<void> initStore({bool saveThemes = false}) async {
       String? storeRef = prefs.getString("objectbox-reference");
@@ -71,6 +72,7 @@ callbackHandler() async {
         debugPrint("Opening ObjectBox store from reference");
         try {
           store = Store.attach(getObjectBoxModel(), join(documentsDirectory.path, 'objectbox'));
+          initializedViaReference = true;
         } catch (_) {
           debugPrint("Failed to open store from reference, opening from path");
           try {
@@ -108,7 +110,10 @@ callbackHandler() async {
           // TODO Linux fallback
         }
       }
-      prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
+      if (!initializedViaReference) {
+        // Set a reference to the DB so it can be used in another isolate
+        prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
+      }
       debugPrint("Opening boxes");
       attachmentBox = store.box<Attachment>();
       chatBox = store.box<Chat>();
