@@ -192,7 +192,8 @@ class ThemeObject {
     final results = themeObjectBox.getAll();
     final list = Themes.themes;
     if (results.isNotEmpty) {
-      list.addAll(results.map((e) => e..fetchData()).toList());
+      final existing = list.map((e) => e.name);
+      list.addAll(results.where((element) => !existing.contains(element.name)).map((e) => e..fetchData()));
     }
     return list;
   }
