@@ -34,7 +34,7 @@ class AboutPanel extends StatelessWidget {
         .subtitle1
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.titleColor;
+    Color tileColor = context.theme.tileColor;
 
     return SettingsScaffold(
         title: "About & Links",

@@ -78,7 +78,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
   Widget build(BuildContext context) {
     editable = currentTheme != null && !currentTheme!.isPreset;
     Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.titleColor;
+    Color tileColor = context.theme.tileColor;
     return currentTheme != null
         ? CustomScrollView(
             physics: ThemeSwitcher.getScrollPhysics(),

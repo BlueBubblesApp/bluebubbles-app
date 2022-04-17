@@ -103,7 +103,7 @@ final RxBool fontExistsOnDisk = false.obs;
 final RxBool downloadingFont = false.obs;
 final RxnDouble progress = RxnDouble();
 final RxnInt totalSize = RxnInt();
-CorePalette? monetPalette;
+late final CorePalette? monetPalette;
 
 String? _recentIntent;
 
@@ -383,24 +383,9 @@ Future<Null> initApp(bool isBubble) async {
     ThemeData light = ThemeObject.getLightTheme().themeData;
     ThemeData dark = ThemeObject.getDarkTheme().themeData;
 
-    if (SettingsManager().settings.monetTheming.value && monetPalette != null) {
-      light = light.copyWith(
-          primaryColor: Color(monetPalette!.primary.get(50)),
-          backgroundColor: light.backgroundColor == Colors.white
-              ? Color(monetPalette!.neutral.get(99))
-              : light.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(50))),
-          colorScheme: light.colorScheme.copyWith(
-            secondary: light.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(50))),
-          )
-      );
-      dark = dark.copyWith(
-          primaryColor: Color(monetPalette!.primary.get(50)),
-          backgroundColor: dark.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(60))),
-          colorScheme: dark.colorScheme.copyWith(
-            secondary: dark.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(60))),
-          )
-      );
-    }
+    final tuple = applyMonet(light, dark);
+    light = tuple.item1;
+    dark = tuple.item2;
 
     runApp(Main(
       lightTheme: light,
