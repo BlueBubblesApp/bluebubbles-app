@@ -222,14 +222,14 @@ class ConversationListState extends State<ConversationList> {
                 value: 0,
                 child: Text(
                   'Mark all as read',
-                  style: context.textTheme.bodyText1,
+                  style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                 ),
               ),
               PopupMenuItem(
                 value: 1,
                 child: Text(
                   'Archived',
-                  style: context.textTheme.bodyText1,
+                  style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                 ),
               ),
               if (SettingsManager().settings.filterUnknownSenders.value)
@@ -237,14 +237,14 @@ class ConversationListState extends State<ConversationList> {
                   value: 3,
                   child: Text(
                     'Unknown Senders',
-                    style: context.textTheme.bodyText1,
+                    style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                   ),
                 ),
               PopupMenuItem(
                 value: 2,
                 child: Text(
                   'Settings',
-                  style: context.textTheme.bodyText1,
+                  style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                 ),
               ),
               if (kIsWeb)
@@ -252,7 +252,7 @@ class ConversationListState extends State<ConversationList> {
                     value: 4,
                     child: Text(
                       'Logout',
-                      style: context.textTheme.bodyText1,
+                      style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                     ))
             ];
           },

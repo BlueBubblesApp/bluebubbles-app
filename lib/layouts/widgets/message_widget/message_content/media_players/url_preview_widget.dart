@@ -176,7 +176,7 @@ class UrlPreviewWidget extends StatelessWidget {
                             return Container();
                           } else {
                             return Text("Unable to Load Preview",
-                                style: Theme.of(context).textTheme.bodyText1!..apply(
+                                style: Theme.of(context).textTheme.bodyText1!.apply(
                                     fontWeightDelta: 2,
                                     color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null)
                             );
