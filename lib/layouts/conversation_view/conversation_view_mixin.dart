@@ -153,7 +153,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       // wait for the end of that frame.
       await SchedulerBinding.instance!.endOfFrame;
     }
-    SocketManager().removeChatNotification(chat!);
+    ChatManager().clearChatNotifications(chat!);
   }
 
   void initChatController(Chat chat) async {
