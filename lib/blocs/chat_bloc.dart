@@ -318,7 +318,10 @@ class ChatBloc {
       } else {
         chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       }
-      if (chats.isEmpty) break;
+      if (chats.isEmpty) {
+        loadedChatBatch.value = true;
+        break;
+      }
       for (Chat chat in chats) {
         newChats.add(chat);
         initTileValsForChat(chat);
