@@ -310,9 +310,7 @@ class MethodChannelInterface {
           previousLightBg = lightBg;
           previousDarkBg = darkBg;
           isRunning = true;
-          print("primary color is $primary");
-          print("light bg color is $lightBg");
-          print("dark bg color is $darkBg");
+
           var darkTheme = ThemeObject.getThemes().firstWhere((e) => e.name == "Music Theme (Dark)");
           var lightTheme = ThemeObject.getThemes().firstWhere((e) => e.name == "Music Theme (Light)");
           darkTheme.fetchData();

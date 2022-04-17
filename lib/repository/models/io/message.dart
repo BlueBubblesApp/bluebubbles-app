@@ -39,7 +39,8 @@ class GetMessageAttachments extends AsyncTask<List<dynamic>, Map<String, List<At
   GetMessageAttachments(this.stuff);
 
   @override
-  AsyncTask<List<dynamic>, Map<String, List<Attachment?>>> instantiate(List<dynamic> parameters, [Map<String, SharedData>? sharedData]) {
+  AsyncTask<List<dynamic>, Map<String, List<Attachment?>>> instantiate(List<dynamic> parameters,
+      [Map<String, SharedData>? sharedData]) {
     return GetMessageAttachments(parameters);
   }
 
@@ -58,9 +59,7 @@ class GetMessageAttachments extends AsyncTask<List<dynamic>, Map<String, List<At
       final messages = messageBox.getMany(messageIds);
 
       /// Add the attachments to the map with some clever list operations
-      map.addEntries(messages.mapIndexed((index, e) => MapEntry(
-        e!.guid!,
-        e.dbAttachments)));
+      map.addEntries(messages.mapIndexed((index, e) => MapEntry(e!.guid!, e.dbAttachments)));
       return map;
     });
   }
@@ -158,19 +157,16 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
       List<Handle> handles = handleBox.getAll();
       Map<int, Handle> originalRowIdMap = {};
       for (final h in handles) {
-        originalRowIdMap[h.originalROWID!] = h;
+        if (h.originalROWID != null) {
+          originalRowIdMap[h.originalROWID!] = h;
+        }
       }
 
       for (final msg in inputMessages) {
         msg.chat.target = inputChat;
-
-        if (msg.handleId != null && msg.handleId! > 1) {
-          msg.handleId = originalRowIdMap[msg.handleId]?.id;
-        }
-
-        if (msg.otherHandle != null && msg.otherHandle! > 1) {
-          msg.otherHandle = originalRowIdMap[msg.otherHandle]?.id;
-        }
+        msg.handleId = originalRowIdMap[msg.handleId]?.id ?? msg.handleId;
+        msg.handle = originalRowIdMap[msg.handleId];
+        msg.otherHandle = originalRowIdMap[msg.otherHandle]?.id ?? msg.otherHandle;
       }
 
       // 6. Relate the attachments to the messages
@@ -191,6 +187,10 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
       // 9. Check inserted messages for associated message GUIDs & update hasReactions flag
       Map<String, Message> messagesToUpdate = {};
       for (final message in messages) {
+        // Update the handles from our cache
+        message.handle = handles.firstWhereOrNull((element) => element.id == message.handleId);
+
+        // Continue if there isn't an associated message GUID to process
         if ((message.associatedMessageGuid ?? '').isEmpty) continue;
 
         // Find the associated message in the DB and update the hasReactions flag
@@ -198,22 +198,22 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
             Message.find(cond: Message_.guid.equals(message.associatedMessageGuid!)).toList();
         if (associatedMessages.isNotEmpty) {
           // Toggle the hasReactions flag
-          Message associatedMessage = messagesToUpdate[associatedMessages[0].guid] ?? associatedMessages[0];
-          associatedMessage.hasReactions = true;
+          Message messageWithReaction = messagesToUpdate[associatedMessages[0].guid] ?? associatedMessages[0];
+          messageWithReaction.hasReactions = true;
 
           // Make sure the current message has the associated message in it's list, and the hasReactions
           // flag is set as well
-          Message currentMessage = messagesToUpdate[message.guid!] ?? message;
-          for (var e in currentMessage.associatedMessages) {
-            if (e.guid == associatedMessage.guid) {
+          Message reactionMessage = messagesToUpdate[message.guid!] ?? message;
+          for (var e in messageWithReaction.associatedMessages) {
+            if (e.guid == messageWithReaction.guid) {
               e.hasReactions = true;
               break;
             }
           }
 
           // Update the cached values
-          messagesToUpdate[associatedMessage.guid!] = associatedMessage;
-          messagesToUpdate[currentMessage.guid!] = currentMessage;
+          messagesToUpdate[messageWithReaction.guid!] = messageWithReaction;
+          messagesToUpdate[reactionMessage.guid!] = reactionMessage;
         }
       }
 
