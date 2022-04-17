@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ThemingColorOptionsList extends StatefulWidget {
   ThemingColorOptionsList({Key? key, required this.isDarkMode, required this.controller}) : super(key: key);
@@ -76,23 +77,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
   @override
   Widget build(BuildContext context) {
     editable = currentTheme != null && !currentTheme!.isPreset;
-    Color headerColor;
-    Color tileColor;
-    if (Theme.of(context).colorScheme.secondary.computeLuminance() <
-            Theme.of(context).backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
-    } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
-      tileColor = headerColor;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), nordDarkTheme)) {
-      tileColor = headerColor;
-    }
+    Color headerColor = context.theme.headerColor;
+    Color tileColor = context.theme.titleColor;
     return currentTheme != null
         ? CustomScrollView(
             physics: ThemeSwitcher.getScrollPhysics(),

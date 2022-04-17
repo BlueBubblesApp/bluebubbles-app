@@ -120,6 +120,32 @@ class ContactManager {
     return match;
   }
 
+  Future<String?> getFormattedAddress(String address) async {
+    if (address.isEmpty) return null;
+
+    String saniAddress = address.numericOnly();
+    String? match = _addressToFormatted[saniAddress];
+
+    // If we can't find the match, we want to match based on last 7 digits
+    if (match == null) {
+      String? matchedAddress = findAddressMatch(saniAddress);
+      if (matchedAddress != null) {
+        match = _addressToFormatted[matchedAddress];
+      }
+    }
+
+    if (match == null) {
+      try {
+        match = await formatPhoneNumber(saniAddress);
+        _addressToFormatted[saniAddress] = match;
+      } catch (ex) {
+        // Dont do anything
+      }
+    }
+
+    return match;
+  }
+
   Future<bool> loadContacts({headless = false, force = false, loadAvatars = false}) async {
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
@@ -224,10 +250,10 @@ class ContactManager {
 
         for (Map<String, dynamic> map in response.data['data']) {
           logger?.call(
-              "Parsing contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
+              "Parsing contact: ${map['displayName'] ?? [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
           contacts.add(Contact(
             id: map['id'].toString(),
-            displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
+            displayName: map['displayName'] ?? [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
             emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
             phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
           ));
@@ -251,7 +277,7 @@ class ContactManager {
 
           for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar'])!)) {
             logger?.call(
-                "Adding avatar for contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
+                "Adding avatar for contact: ${map['displayName'] ?? [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
 
             final contact = contacts.firstWhereOrNull((e) => e.id == map['id'].toString());
             contact?.avatar.value = base64Decode(map['avatar'].toString());
@@ -335,7 +361,6 @@ class ContactManager {
     String address = handle.address;
     Contact? contact = getContact(address);
     if (contact != null) return contact.displayName;
-
 
     if (address.startsWith("e:")) {
       address = address.substring(2);

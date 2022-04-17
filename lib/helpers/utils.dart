@@ -8,6 +8,7 @@ import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/country_codes.dart';
+import 'package:bluebubbles/helpers/emoji_regex.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -20,7 +21,6 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -799,14 +799,16 @@ Future<void> paintGroupAvatar({
   required Canvas canvas,
   required double size,
 }) async {
-  String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
-      chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
+  if (kIsDesktop) {
+    String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
+        chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
-  if (File(customPath).existsSync()) {
-    Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync(), size: size.toInt());
-    if (customAvatar != null) {
-      canvas.drawImage(await loadImage(customAvatar), Offset(0, 0), Paint());
-      return;
+    if (File(customPath).existsSync()) {
+      Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync(), size: size.toInt());
+      if (customAvatar != null) {
+        canvas.drawImage(await loadImage(customAvatar), Offset(0, 0), Paint());
+        return;
+      }
     }
   }
 
@@ -888,24 +890,26 @@ Future<void> paintAvatar(
   fontSize ??= size * 0.5;
   borderWidth ??= size * 0.05;
 
-  String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
-      chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
+  if (kIsDesktop) {
+    String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
+        chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
-  if (File(customPath).existsSync()) {
-    Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync(), size: size.toInt());
-    if (customAvatar != null) {
-      canvas.drawImage(await loadImage(customAvatar), offset, Paint());
-      return;
-    }
-  } else {
-    Contact? contact = ContactManager().getContact(handle?.address);
-    if (contact?.hasAvatar ?? false) {
-      Uint8List? contactAvatar =
-          await circularize(contact!.avatarHiRes.value ?? contact.avatar.value!, size: size.toInt());
-      if (contactAvatar != null) {
-        canvas.drawImage(await loadImage(contactAvatar), offset, Paint());
+    if (File(customPath).existsSync()) {
+      Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync(), size: size.toInt());
+      if (customAvatar != null) {
+        canvas.drawImage(await loadImage(customAvatar), offset, Paint());
         return;
       }
+    }
+  }
+
+  Contact? contact = ContactManager().getContact(handle?.address);
+  if (contact?.hasAvatar ?? false) {
+    Uint8List? contactAvatar =
+        await circularize(contact!.avatarHiRes.value ?? contact.avatar.value!, size: size.toInt());
+    if (contactAvatar != null) {
+      canvas.drawImage(await loadImage(contactAvatar), offset, Paint());
+      return;
     }
   }
 

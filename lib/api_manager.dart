@@ -325,7 +325,7 @@ class ApiService extends GetxService {
       final response = await dio.post(
           "$origin/chat/new",
           queryParameters: buildQueryParams(),
-          data: {"addresses": addresses},
+          data: {"addresses": addresses, "message": message},
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);
@@ -856,7 +856,16 @@ class ApiInterceptor extends Interceptor {
     Logger.error(err.error, tag: "ERROR[${err.response?.statusCode}]");
     Logger.error(err.requestOptions.contentType, tag: "ERROR[${err.response?.statusCode}]");
     Logger.error(err.response?.data, tag: "ERROR[${err.response?.statusCode}]");
-    if (err.response != null) return handler.resolve(err.response!);
+    if (err.response != null && err.response!.data is Map) return handler.resolve(err.response!);
+    if (err.response != null) {
+      return handler.resolve(Response(data: {
+        'status': err.response!.statusCode,
+        'error': {
+          'type': 'Error',
+          'error': err.response!.data.toString()
+        }
+      }, requestOptions: err.requestOptions, statusCode: err.response!.statusCode));
+    }
     if (describeEnum(err.type).contains("Timeout")) {
       return handler.resolve(Response(data: {
         'status': 500,

@@ -286,8 +286,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
 
       if (chat == null &&
-          (await SettingsManager().getMacOSVersion() ?? 10) >
-              10 /*&& SettingsManager().settings.enablePrivateAPI.value == false*/) {
+          (await SettingsManager().getMacOSVersion() ?? 10) > 10) {
         if (searchQuery.isNotEmpty) {
           selected.add(UniqueContact(address: searchQuery, displayName: searchQuery));
           resetCursor();

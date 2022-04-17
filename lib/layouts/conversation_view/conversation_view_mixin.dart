@@ -153,7 +153,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       // wait for the end of that frame.
       await SchedulerBinding.instance!.endOfFrame;
     }
-    SocketManager().removeChatNotification(chat!);
+    ChatManager().clearChatNotifications(chat!);
   }
 
   void initChatController(Chat chat) async {
@@ -1045,7 +1045,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     List<String> participants = selected.map((e) => cleansePhoneNumber(e.address!)).toList();
-    Map<String, dynamic> params = {};
     showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -1076,7 +1075,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           );
         });
 
-    params["participants"] = participants;
     Logger.info("Starting chat with participants: ${participants.join(", ")}");
 
     Future<void> returnChat(Chat newChat) async {
@@ -1096,9 +1094,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       }
     }
 
-    if (SettingsManager().settings.enablePrivateAPI.value &&
-        (await SettingsManager().getMacOSVersion() ?? 0) > 10 &&
-        existingChat == null) {
+    if (existingChat == null) {
       api.createChat(participants, null).then((response) async {
         // If everything went well, let's add the chat to the bloc
         Chat newChat = Chat.fromMap(response.data["data"]);
@@ -1132,45 +1128,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             });
         completer.complete(null);
       });
-    } else if (existingChat == null) {
-      SocketManager().sendMessage(
-        "start-chat",
-        params,
-            (data) async {
-          if (data['status'] != 200) {
-            Navigator.of(context).pop();
-            showDialog(
-                barrierDismissible: false,
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text(
-                      "Could not create",
-                    ),
-                    content: Text(
-                      "Reason: (${data["error"]["type"]}) -> ${data["error"]["message"]}",
-                    ),
-                    actions: [
-                      TextButton(
-                        child: Text(
-                          "Ok",
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      )
-                    ],
-                  );
-                });
-            completer.complete(null);
-            return;
-          }
-
-          // If everything went well, let's add the chat to the bloc
-          Chat newChat = Chat.fromMap(data["data"]);
-          await returnChat(newChat);
-        },
-      );
     }
 
     if (existingChat != null) {

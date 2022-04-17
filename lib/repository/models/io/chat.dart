@@ -261,15 +261,26 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
   @override
   FutureOr<List<Chat>> run() {
     return store.runInTransaction(TxMode.write, () {
-      /// Query the [chatBox] for chats with limit and offset, prioritize pinned
-      /// chats and order by latest message date
-      final query = (chatBox.query()
+      late final QueryBuilder<Chat> queryBuilder;
+
+      // If the 3rd param is available, it's for an ID query.
+      // Otherwise, query without any criteria
+      if (stuff.length >= 3 && stuff[2] != null && stuff[2] is List) {
+        queryBuilder = chatBox.query(Chat_.id.oneOf(stuff[2] as List<int>));
+      } else {
+        queryBuilder = chatBox.query();
+      }
+
+      // Build the query, applying some sorting so we get data in the correct order.
+      // As well as some limit and offset parameters
+      Query<Chat> query = (queryBuilder
             ..order(Chat_.isPinned, flags: Order.descending)
             ..order(Chat_.latestMessageDate, flags: Order.descending))
-          .build();
-      query
+          .build()
         ..limit = stuff[0]
         ..offset = stuff[1];
+
+      // Execute the query, then close the DB connection
       final chats = query.find();
       query.close();
 
@@ -287,6 +298,111 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
           );
         }
       }
+      return chats;
+    });
+  }
+}
+
+/// Async method to get chats from objectbox
+class BulkSaveNewChats extends AsyncTask<List<dynamic>, List<Chat>> {
+  final List<dynamic> params;
+
+  BulkSaveNewChats(this.params);
+
+  @override
+  AsyncTask<List<dynamic>, List<Chat>> instantiate(List<dynamic> parameters, [Map<String, SharedData>? sharedData]) {
+    return BulkSaveNewChats(parameters);
+  }
+
+  @override
+  List<dynamic> parameters() {
+    return params;
+  }
+
+  @override
+  FutureOr<List<Chat>> run() {
+    return store.runInTransaction(TxMode.write, () {
+      // 0. Create map for the chats and handles to save
+      // 1. Check for existing handles and save new ones
+      // 2. Fetch all inserted/existing handles based on input
+      // 3. Create map of inserted/existing handles
+      // 4. Check for existing chats and save new ones
+      // 5. Fetch all inserted/existing chats based on input
+      // 6. Create map of inserted chats
+      // 7. Loop over chat -> participants map and relate all the participants to the chats
+      // 8. Save & return updated chats
+
+      /// Takes the list of chats from [params] and saves it
+      /// to the objectbox store.
+      List<Chat> inputChats = params[0];
+      List<String> inputChatGuids = inputChats.map((element) => element.guid).toList();
+
+      // 0. Create map for the chats and handles to save
+      Map<String, Handle> handlesToSave = {};
+      Map<String, List<String>> chatHandles = {};
+      Map<String, Chat> chatsToSave = {};
+      for (final chat in inputChats) {
+        chatsToSave[chat.guid] = chat;
+        for (final p in chat.participants) {
+          if (!handlesToSave.containsKey(p.address)) {
+            handlesToSave[p.address] = p;
+          }
+
+          if (!chatHandles.containsKey(chat.guid)) {
+            chatHandles[chat.guid] = [];
+          }
+
+          if (!chatHandles[chat.guid]!.contains(p.address)) {
+            chatHandles[chat.guid]?.add(p.address);
+          }
+        }
+      }
+
+      // 1. Check for existing handles and save new ones
+      List<Handle> inputHandles = handlesToSave.values.toList();
+      List<String> inputHandleAddresses = inputHandles.map((element) => element.address).toList();
+      QueryBuilder<Handle> handleQuery = handleBox.query(Handle_.address.oneOf(inputHandleAddresses));
+      List<String> existingHandleAddresses = handleQuery.build().find().map((e) => e.address).toList();
+      inputHandles = inputHandles.where((element) => !existingHandleAddresses.contains(element.address)).toList();
+      handleBox.putMany(inputHandles);
+
+      // 2. Fetch all inserted/existing handles based on input
+      QueryBuilder<Handle> handleQuery2 = handleBox.query(Handle_.address.oneOf(inputHandleAddresses));
+      List<Handle> handles = handleQuery2.build().find().toList();
+
+      // 3. Create map of inserted/existing handles
+      Map<String, Handle> handleMap = {};
+      for (final h in handles) {
+        handleMap[h.address] = h;
+      }
+
+      // 4. Check for existing chats and save new ones
+      QueryBuilder<Chat> chatQuery = chatBox.query(Chat_.guid.oneOf(inputChatGuids));
+      List<String> existingChatGuids = chatQuery.build().find().map((e) => e.guid).toList();
+      inputChats = inputChats.where((element) => !existingChatGuids.contains(element.guid)).toList();
+      chatBox.putMany(inputChats);
+
+      // 5. Fetch all inserted/existing chats based on input
+      QueryBuilder<Chat> chatQuery2 = chatBox.query(Chat_.guid.oneOf(inputChatGuids));
+      List<Chat> chats = chatQuery2.build().find().toList();
+
+      // 6. Create map of inserted/existing chats
+      Map<String, Chat> chatMap = {};
+      for (final c in chats) {
+        chatMap[c.guid] = c;
+      }
+
+      // Loop over chat -> participants map and relate all the participants to the chats
+      for (final item in chatHandles.entries) {
+        final chat = chatMap[item.key];
+        if (chat == null) continue;
+        final participants = item.value.map((e) => handleMap[e]).whereNotNull().toList();
+        chat.handles.addAll(participants);
+        chat.participants = participants;
+      }
+
+      // 8. Save & return updated chats
+      chatBox.putMany(chats);
       return chats;
     });
   }
@@ -1027,10 +1143,17 @@ class Chat {
     return null;
   }
 
-  static Future<List<Chat>> getChats({int limit = 15, int offset = 0}) async {
+  static Future<List<Chat>> getChats({int limit = 15, int offset = 0, List<int> ids = const []}) async {
     if (kIsWeb) throw Exception("Use socket to get chats on Web!");
 
-    final task = GetChats([limit, offset]);
+    final task = GetChats([limit, offset, ids.isEmpty ? null : ids]);
+    return (await createAsyncTask<List<Chat>>(task)) ?? [];
+  }
+
+  static Future<List<Chat>> bulkSaveNewChats(List<Chat> chats) async {
+    if (kIsWeb) throw Exception("Web does not support saving chats!");
+
+    final task = BulkSaveNewChats([chats]);
     return (await createAsyncTask<List<Chat>>(task)) ?? [];
   }
 

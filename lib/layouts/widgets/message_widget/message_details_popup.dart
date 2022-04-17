@@ -148,7 +148,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
   void sendReaction(String type) {
     Logger.info("Sending reaction type: " + type);
-    ActionHandler.sendReaction(widget.currentChat!.chat, widget.message, type);
+    ActionHandler.sendReaction(widget.message.getChat() ?? widget.currentChat!.chat, widget.message, type);
     Navigator.of(context).pop();
   }
 
