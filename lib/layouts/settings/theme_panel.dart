@@ -1,6 +1,7 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -75,7 +76,7 @@ class ThemePanel extends GetView<ThemePanelController> {
           .subtitle1
           ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
       Color headerColor = context.theme.headerColor;
-      Color tileColor = context.theme.titleColor;
+      Color tileColor = context.theme.tileColor;
 
       return SettingsScaffold(
         title: "Theming & Styles",
@@ -239,18 +240,42 @@ class ThemePanel extends GetView<ThemePanelController> {
                   backgroundColor: tileColor,
                   children: [
                     if (!kIsWeb && !kIsDesktop && monetPalette != null)
-                      Obx(() => SettingsSwitch(
-                        onChanged: (bool val) {
-                          controller._settingsCopy.monetTheming.value = val;
-                          saveSettings();
-                          loadTheme(context);
+                      Obx(() {
+                        if (SettingsManager().settings.skin.value == Skins.iOS) {
+                          return SettingsTile(
+                            backgroundColor: tileColor,
+                            title: "Material You",
+                            subtitle:
+                            "Use Android 12's Monet engine to provide wallpaper-based coloring to your theme. Tap for more info.",
+                            onTap: () {
+                              showMonetDialog(context);
+                            },
+                          );
+                        } else {
+                          return SizedBox.shrink();
+                        }
+                      }),
+                    if (!kIsWeb && !kIsDesktop && monetPalette != null)
+                      GestureDetector(
+                        onTap: () {
+                          showMonetDialog(context);
                         },
-                        initialVal: controller._settingsCopy.monetTheming.value,
-                        title: "Monet theming",
-                        backgroundColor: tileColor,
-                        subtitle:
-                        "Use Android 12's new Material You Dynamic Colors for app colors. Works with any theme",
-                      )),
+                        child: SettingsOptions<Monet>(
+                          initial: controller._settingsCopy.monetTheming.value,
+                          onChanged: (val) {
+                            controller._settingsCopy.monetTheming.value = val ?? Monet.none;
+                            saveSettings();
+                            loadTheme(context);
+                          },
+                          options: Monet.values,
+                          textProcessing: (val) => val.toString().split(".").last,
+                          title: "Material You",
+                          subtitle:
+                          "Use Android 12's Monet engine to provide wallpaper-based coloring to your theme. Tap for more info.",
+                          backgroundColor: tileColor,
+                          secondaryColor: headerColor,
+                        ),
+                      ),
                     if (!kIsWeb && !kIsDesktop && monetPalette != null)
                       Container(
                         color: tileColor,
@@ -552,5 +577,39 @@ class ThemePanel extends GetView<ThemePanelController> {
 
   void saveSettings() {
     SettingsManager().saveSettings(controller._settingsCopy);
+  }
+
+  void showMonetDialog(BuildContext context) {
+    Get.defaultDialog(
+        title: "Monet Theming Info",
+        titleStyle: Theme.of(context).textTheme.headline1,
+        backgroundColor: Theme.of(context).backgroundColor.lightenPercent(),
+        buttonColor: Theme.of(context).primaryColor,
+        content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(left: 10, right: 10),
+                child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                        "Harmonize - Overwrites primary color, and blends background & accent color with the current theme colors\r\n"
+                            "Full - Overwrites primary, background, and accent colors, along with other minor colors\r\n"
+                    )
+                ),
+              ),
+            ]
+        ),
+        cancel: Container(
+          height: 0,
+          width: 0,
+        ),
+        textConfirm: "OK",
+        confirmTextColor: context.theme.dialogBackgroundColor,
+        barrierDismissible: false,
+        onConfirm: () {
+          Get.back();
+        }
+    );
   }
 }

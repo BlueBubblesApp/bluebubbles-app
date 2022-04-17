@@ -17,7 +17,7 @@ class ConversationPanel extends StatelessWidget {
         .subtitle1
         ?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.titleColor;
+    Color tileColor = context.theme.tileColor;
 
     return SettingsScaffold(
       title: "Conversations",

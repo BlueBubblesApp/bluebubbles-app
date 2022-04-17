@@ -442,6 +442,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     this.cupertinoCustomWidgets,
     required this.initial,
     this.textProcessing,
+    this.onMaterialTap,
     required this.title,
     this.subtitle,
     this.capitalize = true,
@@ -454,6 +455,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
   final Iterable<Widget>? cupertinoCustomWidgets;
   final T initial;
   final String Function(T)? textProcessing;
+  final void Function()? onMaterialTap;
   final String? subtitle;
   final bool capitalize;
   final Color? backgroundColor;
@@ -535,6 +537,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                       );
                     }).toList(),
                     onChanged: onChanged,
+                    onTap: onMaterialTap,
                   ),
                 ),
               ),

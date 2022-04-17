@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -74,6 +75,11 @@ abstract class MessageWidgetMixin {
                   ? Colors.transparent
                   : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
         }
+      } else if (SettingsManager().settings.monetTheming.value == Monet.full) {
+        textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+            color: hideContent
+                ? Colors.transparent
+                : Theme.of(context).colorScheme.onSecondary);
       } else if (hideContent) {
         textStyle = textStyle!.apply(color: Colors.transparent);
       }
@@ -210,6 +216,11 @@ abstract class MessageWidgetMixin {
                   ? Colors.transparent
                   : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
         }
+      } else if (SettingsManager().settings.monetTheming.value == Monet.full) {
+        textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+            color: hideContent
+                ? Colors.transparent
+                : Theme.of(context).colorScheme.onSecondary);
       } else if (hideContent) {
         textStyle = textStyle!.apply(color: Colors.transparent);
       }
