@@ -120,7 +120,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
     final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.titleColor;
+    Color tileColor = context.theme.tileColor;
 
     return SettingsScaffold(
       title: "Connection & Server Management",

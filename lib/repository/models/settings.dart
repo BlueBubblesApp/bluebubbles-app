@@ -57,7 +57,7 @@ class Settings {
   final RxBool notifyReactions = true.obs;
   final RxString notificationSound = "default".obs;
   final RxBool colorsFromMedia = false.obs;
-  final RxBool monetTheming = false.obs;
+  final Rx<Monet> monetTheming = Monet.none.obs;
   final RxString globalTextDetection = "".obs;
   final RxBool filterUnknownSenders = false.obs;
   final RxBool tabletMode = true.obs;
@@ -297,7 +297,7 @@ class Settings {
       } else if (entry.name == "colorsFromMedia") {
         settings.colorsFromMedia.value = entry.value;
       } else if (entry.name == "monetTheming") {
-        settings.monetTheming.value = entry.value;
+        settings.monetTheming.value = Monet.values[entry.value];
       } else if (entry.name == "globalTextDetection") {
         settings.globalTextDetection.value = entry.value;
       } else if (entry.name == "filterUnknownSenders") {
@@ -490,7 +490,7 @@ class Settings {
         'serverAddress': serverAddress.value,
         'finishedSetup': finishedSetup.value,
         'colorsFromMedia': colorsFromMedia.value,
-        'monetTheming': monetTheming.value,
+        'monetTheming': monetTheming.value.index,
       });
     }
     return map;
@@ -649,7 +649,7 @@ class Settings {
     s.notifyReactions.value = map['notifyReactions'] ?? true;
     s.notificationSound.value = map['notificationSound'] ?? "default";
     s.colorsFromMedia.value = map['colorsFromMedia'] ?? false;
-    s.monetTheming.value = map['monetTheming'] ?? false;
+    s.monetTheming.value = map['monetTheming'] != null ? Monet.values[map['monetTheming']] : Monet.none;
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     s.tabletMode.value = map['tabletMode'] ?? true;

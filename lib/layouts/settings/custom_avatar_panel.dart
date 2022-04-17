@@ -39,7 +39,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
   @override
   Widget build(BuildContext context) {
     Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.titleColor;
+    Color tileColor = context.theme.tileColor;
 
     return SettingsScaffold(
       title: "Custom Avatars",

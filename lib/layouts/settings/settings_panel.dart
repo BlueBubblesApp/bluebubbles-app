@@ -125,7 +125,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
         .subtitle1
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.titleColor;
+    Color tileColor = context.theme.tileColor;
 
     return Obx(() => SettingsScaffold(
         title: "Settings",
@@ -1295,7 +1295,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
   Widget buildForLandscape(BuildContext context, Widget settingsList) {
     Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.titleColor;
+    Color tileColor = context.theme.tileColor;
     return VerticalSplitView(
       initialRatio: 0.4,
       minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
