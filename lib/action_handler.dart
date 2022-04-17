@@ -13,6 +13,7 @@ import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
@@ -479,7 +480,12 @@ class ActionHandler {
     }
     if (chat == null) return;
 
-    chat.toggleHasUnread(status!);
+    if (!status! && !kIsWeb) {
+      // Remove the notification from that chat
+      await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chatGuid});
+    }
+
+    chat.toggleHasUnread(status);
     ChatBloc().updateChat(chat);
   }
 

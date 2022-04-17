@@ -185,12 +185,19 @@ class MethodChannelInterface {
           return Future.value("");
         }
 
-        // Remove the notificaiton from that chat
-        SocketManager().removeChatNotification(chat);
+        // Remove the notification from that chat
+        await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
 
         if (SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
           await api.markChatRead(chat.guid);
         }
+
+        // In case this method is called when the app is in a background isolate
+        await closeThread();
+
+        return Future.value("");
+      case "chat-read-status-changed":
+        await ActionHandler.handleChatStatusChange(call.arguments["chatGuid"], call.arguments["read"]);
 
         // In case this method is called when the app is in a background isolate
         await closeThread();

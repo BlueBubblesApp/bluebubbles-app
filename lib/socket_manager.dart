@@ -46,10 +46,6 @@ class SocketManager {
 
   SocketManager._internal();
 
-  void removeChatNotification(Chat chat) {
-    chat.toggleHasUnread(false);
-  }
-
   List<String> processedGUIDS = <String>[];
 
   SetupBloc setup = SetupBloc();
@@ -244,8 +240,6 @@ class SocketManager {
   }
 
   String handleChatStatusChange(_data) {
-    if (!SettingsManager().settings.enablePrivateAPI.value) return "";
-
     Map<String, dynamic>? data = _data;
     IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
     return "";
