@@ -197,7 +197,7 @@ class MethodChannelInterface {
 
         return Future.value("");
       case "chat-read-status-changed":
-        await ActionHandler.handleChatStatusChange(call.arguments["chatGuid"], call.arguments["read"]);
+        await ActionHandler.handleChatStatusChange(call.arguments["chatGuid"], !call.arguments["read"]);
 
         // In case this method is called when the app is in a background isolate
         await closeThread();

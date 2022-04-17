@@ -480,7 +480,7 @@ class ActionHandler {
     }
     if (chat == null) return;
 
-    if (!status! && !kIsWeb) {
+    if (status! && !kIsWeb) {
       // Remove the notification from that chat
       await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chatGuid});
     }
