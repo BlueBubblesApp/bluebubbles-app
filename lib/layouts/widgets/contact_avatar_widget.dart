@@ -51,7 +51,6 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'refresh-avatar' && event["data"][0] == widget.handle?.address && mounted) {
-        print("REFRESHING");
         widget.handle?.color = event['data'][1];
         setState(() {});
       }
