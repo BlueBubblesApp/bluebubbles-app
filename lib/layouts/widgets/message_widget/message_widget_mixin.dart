@@ -75,7 +75,7 @@ abstract class MessageWidgetMixin {
                   ? Colors.transparent
                   : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
         }
-      } else if (SettingsManager().settings.monetTheming.value == Monet.full) {
+      } else if (SettingsManager().isFullMonet) {
         textStyle = Theme.of(context).textTheme.bodyText2!.apply(
             color: hideContent
                 ? Colors.transparent
@@ -216,7 +216,7 @@ abstract class MessageWidgetMixin {
                   ? Colors.transparent
                   : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
         }
-      } else if (SettingsManager().settings.monetTheming.value == Monet.full) {
+      } else if (SettingsManager().isFullMonet) {
         textStyle = Theme.of(context).textTheme.bodyText2!.apply(
             color: hideContent
                 ? Colors.transparent

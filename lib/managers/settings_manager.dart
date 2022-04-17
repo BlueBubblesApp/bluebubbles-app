@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
@@ -194,4 +195,6 @@ class SettingsManager {
     Version code = Version.parse(version);
     return code.major * 100 + code.minor * 21 + code.patch;
   }
+
+  bool get isFullMonet => SettingsManager().settings.monetTheming.value == Monet.full;
 }
