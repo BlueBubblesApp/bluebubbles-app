@@ -122,7 +122,7 @@ abstract class SyncManager {
 
   Future<void> saveToDownloads() async {
     addToOutput("Saving logs to downloads folder...");
-    final List<String> text = output.reversed.map((e) => e.item2).toList();
+    final List<String> text = output.map((e) => e.item2).toList();
     if (text.isNotEmpty) {
       final now = DateTime.now().toLocal();
       String filePath = "/storage/emulated/0/Download/";
