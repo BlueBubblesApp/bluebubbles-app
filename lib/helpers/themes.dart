@@ -202,7 +202,7 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
           secondary: dark.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(60))),
         )
     );
-  } else if (SettingsManager().settings.monetTheming.value == Monet.full && monetPalette != null) {
+  } else if (SettingsManager().isFullMonet && monetPalette != null) {
     light = light.copyWith(
       primaryColor: Color(monetPalette!.primary.get(40)),
       backgroundColor: Color(monetPalette!.neutral.get(99)),
@@ -307,7 +307,7 @@ extension SettingsThemeData on ThemeData {
     return SettingsManager().settings.skin.value == Skins.iOS && isOled;
   }
   Color get tileColor {
-    if (SettingsManager().settings.monetTheming.value == Monet.full) {
+    if (SettingsManager().isFullMonet) {
       return colorScheme.surfaceVariant;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && backgroundColor == Colors.black) {
