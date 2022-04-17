@@ -50,6 +50,10 @@ class Handle {
     return data;
   }
 
+  static int count() {
+    return handleBox.count();
+  }
+
   /// Save a single handle - prefer [bulkSave] for multiple handles rather
   /// than iterating through them
   Handle save({bool updateColor = false}) {

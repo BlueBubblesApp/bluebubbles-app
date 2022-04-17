@@ -120,6 +120,32 @@ class ContactManager {
     return match;
   }
 
+  Future<String?> getFormattedAddress(String address) async {
+    if (address.isEmpty) return null;
+
+    String saniAddress = address.numericOnly();
+    String? match = _addressToFormatted[saniAddress];
+
+    // If we can't find the match, we want to match based on last 7 digits
+    if (match == null) {
+      String? matchedAddress = findAddressMatch(saniAddress);
+      if (matchedAddress != null) {
+        match = _addressToFormatted[matchedAddress];
+      }
+    }
+
+    if (match == null) {
+      try {
+        match = await formatPhoneNumber(saniAddress);
+        _addressToFormatted[saniAddress] = match;
+      } catch (ex) {
+        // Dont do anything
+      }
+    }
+
+    return match;
+  }
+
   Future<bool> loadContacts({headless = false, force = false, loadAvatars = false}) async {
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
@@ -335,7 +361,6 @@ class ContactManager {
     String address = handle.address;
     Contact? contact = getContact(address);
     if (contact != null) return contact.displayName;
-
 
     if (address.startsWith("e:")) {
       address = address.substring(2);
