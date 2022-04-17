@@ -125,6 +125,8 @@ dependencies:
   pasteboard: ^0.0.3
   win_toast: ^0.0.2
   reorderables: ^0.4.3
+  dynamic_color: ^1.1.2
+  material_color_utilities: ^0.1.4
 
 dependency_overrides:
   rxdart: ^0.27.3

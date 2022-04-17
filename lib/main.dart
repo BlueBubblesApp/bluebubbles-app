@@ -35,6 +35,7 @@ import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 
 // ignore: implementation_imports
@@ -51,6 +52,7 @@ import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:material_color_utilities/palettes/core_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' show basename, dirname, join;
 import 'package:path/path.dart' as p;
@@ -101,6 +103,7 @@ final RxBool fontExistsOnDisk = false.obs;
 final RxBool downloadingFont = false.obs;
 final RxnDouble progress = RxnDouble();
 final RxnInt totalSize = RxnInt();
+CorePalette? monetPalette;
 
 String? _recentIntent;
 
@@ -143,6 +146,7 @@ Future<Null> bubble() async {
 
 //ignore: prefer_void_to_null
 Future<Null> initApp(bool isBubble) async {
+  WidgetsFlutterBinding.ensureInitialized();
   await Logger.init();
   Logger.startup.value = true;
   Logger.info('Startup Logs');
@@ -162,8 +166,6 @@ Future<Null> initApp(bool isBubble) async {
       Zone.current.handleUncaughtError(details.exception, details.stack!);
     }
   };
-
-  WidgetsFlutterBinding.ensureInitialized();
   dynamic exception;
   StackTrace? stacktrace;
   if (Platform.isWindows && !kIsWeb) {
@@ -375,12 +377,34 @@ Future<Null> initApp(bool isBubble) async {
     stacktrace = s;
   }
 
+  monetPalette = await DynamicColorPlugin.getCorePalette();
+
   if (exception == null) {
-    ThemeObject light = ThemeObject.getLightTheme();
-    ThemeObject dark = ThemeObject.getDarkTheme();
+    ThemeData light = ThemeObject.getLightTheme().themeData;
+    ThemeData dark = ThemeObject.getDarkTheme().themeData;
+
+    if (SettingsManager().settings.monetTheming.value && monetPalette != null) {
+      light = light.copyWith(
+          primaryColor: Color(monetPalette!.primary.get(50)),
+          backgroundColor: light.backgroundColor == Colors.white
+              ? Color(monetPalette!.neutral.get(99))
+              : light.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(50))),
+          colorScheme: light.colorScheme.copyWith(
+            secondary: light.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(50))),
+          )
+      );
+      dark = dark.copyWith(
+          primaryColor: Color(monetPalette!.primary.get(50)),
+          backgroundColor: dark.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(60))),
+          colorScheme: dark.colorScheme.copyWith(
+            secondary: dark.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(60))),
+          )
+      );
+    }
+
     runApp(Main(
-      lightTheme: light.themeData,
-      darkTheme: dark.themeData,
+      lightTheme: light,
+      darkTheme: dark,
     ));
   } else {
     runApp(FailureToStart(e: exception, s: stacktrace));

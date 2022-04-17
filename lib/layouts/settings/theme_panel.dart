@@ -74,22 +74,8 @@ class ThemePanel extends GetView<ThemePanelController> {
           .textTheme
           .subtitle1
           ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-      Color headerColor;
-      Color tileColor;
-      if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
-          SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-        headerColor = Theme.of(context).colorScheme.secondary;
-        tileColor = Theme.of(context).backgroundColor;
-      } else {
-        headerColor = Theme.of(context).backgroundColor;
-        tileColor = Theme.of(context).colorScheme.secondary;
-      }
-      if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
-        tileColor = headerColor;
-      }
-      if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(context.theme, nordDarkTheme)) {
-        tileColor = headerColor;
-      }
+      Color headerColor = context.theme.headerColor;
+      Color tileColor = context.theme.titleColor;
 
       return SettingsScaffold(
         title: "Theming & Styles",
@@ -252,6 +238,27 @@ class ThemePanel extends GetView<ThemePanelController> {
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
+                    if (!kIsWeb && !kIsDesktop && monetPalette != null)
+                      Obx(() => SettingsSwitch(
+                        onChanged: (bool val) {
+                          controller._settingsCopy.monetTheming.value = val;
+                          saveSettings();
+                          loadTheme(context);
+                        },
+                        initialVal: controller._settingsCopy.monetTheming.value,
+                        title: "Monet theming",
+                        backgroundColor: tileColor,
+                        subtitle:
+                        "Use Android 12's new Material You Dynamic Colors for app colors. Works with any theme",
+                      )),
+                    if (!kIsWeb && !kIsDesktop && monetPalette != null)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(
                             () => SettingsSwitch(

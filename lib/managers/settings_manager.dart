@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
@@ -138,12 +138,7 @@ class SettingsManager {
     selectedDarkTheme?.save();
     ThemeObject.setSelectedTheme(light: selectedLightTheme?.id, dark: selectedDarkTheme?.id);
 
-    ThemeData lightTheme = ThemeObject.getLightTheme().themeData;
-    ThemeData darkTheme = ThemeObject.getDarkTheme().themeData;
-    AdaptiveTheme.of(context).setTheme(
-      light: lightTheme,
-      dark: darkTheme,
-    );
+    loadTheme(context);
   }
 
   /// Updates FCM data and saves to disk. It will also run [registerFcmDevice] automatically
