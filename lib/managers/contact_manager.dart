@@ -251,11 +251,13 @@ class ContactManager {
         for (Map<String, dynamic> map in response.data['data']) {
           logger?.call(
               "Parsing contact: ${map['displayName'] ?? [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
+          final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+          final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
           contacts.add(Contact(
-            id: map['id'].toString(),
+            id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
             displayName: map['displayName'] ?? [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
-            emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-            phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
+            emails: emails,
+            phones: phones,
           ));
         }
       } else {
@@ -278,8 +280,9 @@ class ContactManager {
           for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar'])!)) {
             logger?.call(
                 "Adding avatar for contact: ${map['displayName'] ?? [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
-
-            final contact = contacts.firstWhereOrNull((e) => e.id == map['id'].toString());
+            final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+            final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+            final contact = contacts.firstWhereOrNull((e) => e.id == (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString());
             contact?.avatar.value = base64Decode(map['avatar'].toString());
             contact?.avatarHiRes.value = base64Decode(map['avatar'].toString());
           }

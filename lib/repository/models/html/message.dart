@@ -233,6 +233,10 @@ class Message {
     return this;
   }
 
+  static Future<List<Message>> bulkSaveNewMessages(Chat chat, List<Message> messages) async {
+    return [];
+  }
+
   static Future<Message> replaceMessage(String? oldGuid, Message newMessage,
       {bool awaitNewMessageEvent = true, Chat? chat}) async {
     Message? existing = Message.findOne(guid: oldGuid);
