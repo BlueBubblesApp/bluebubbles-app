@@ -88,9 +88,11 @@ packages:
   bitsdojo_window:
     dependency: "direct main"
     description:
-      name: bitsdojo_window
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: bitsdojo_window
+      ref: master
+      resolved-ref: "97d1ef612648cbbc2e6f554b024c28297cb5eb52"
+      url: "https://github.com/jjoelj/bitsdojo_window.git"
+    source: git
     version: "0.1.1+1"
   bitsdojo_window_linux:
     dependency: transitive
@@ -469,7 +471,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "68c9dc69ca63e5d7aa0db621aba16fcf4e4f1da5"
+      ref: main
       resolved-ref: "68c9dc69ca63e5d7aa0db621aba16fcf4e4f1da5"
       url: "https://github.com/jjoelj/dynamic_cached_fonts"
     source: git
