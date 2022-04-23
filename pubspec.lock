@@ -2217,9 +2217,11 @@ packages:
   win_toast:
     dependency: "direct main"
     description:
-      name: win_toast
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "packages/win_toast"
+      ref: msix-fix
+      resolved-ref: da7d3f078803c57a12fc567a842df664d03155c5
+      url: "https://github.com/jjoelj/flutter-plugins.git"
+    source: git
     version: "0.0.2"
   window_manager:
     dependency: "direct main"
