@@ -101,7 +101,7 @@ dependencies:
   bitsdojo_window:
     git:
       url: https://github.com/jjoelj/bitsdojo_window.git
-      ref: master
+      ref: 480262aa93986ea866c05b312d9f463a02cc9e06
       path: bitsdojo_window
   system_tray: ^0.1.0
   flutter_improved_scrolling: ^0.0.3

@@ -89,8 +89,8 @@ packages:
     dependency: "direct main"
     description:
       path: bitsdojo_window
-      ref: master
-      resolved-ref: "97d1ef612648cbbc2e6f554b024c28297cb5eb52"
+      ref: "480262aa93986ea866c05b312d9f463a02cc9e06"
+      resolved-ref: "480262aa93986ea866c05b312d9f463a02cc9e06"
       url: "https://github.com/jjoelj/bitsdojo_window.git"
     source: git
     version: "0.1.1+1"
