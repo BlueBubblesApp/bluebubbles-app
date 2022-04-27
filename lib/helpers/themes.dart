@@ -310,7 +310,7 @@ extension SettingsThemeData on ThemeData {
     if (SettingsManager().isFullMonet) {
       return colorScheme.surfaceVariant;
     }
-    if (SettingsManager().settings.skin.value == Skins.iOS && backgroundColor == Colors.black) {
+    if (SettingsManager().settings.skin.value == Skins.iOS && (backgroundColor == Colors.black || isEqual(this, nordDarkTheme))) {
       return headerColor;
     }
     if ((colorScheme.secondary.computeLuminance() < backgroundColor.computeLuminance() ||
