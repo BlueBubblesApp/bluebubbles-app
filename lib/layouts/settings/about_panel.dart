@@ -22,7 +22,7 @@ import 'package:universal_html/html.dart' as html;
 
 class AboutPanel extends StatelessWidget {
   // Not sure how to do this other than manually yet
-  final desktopVersion = "1.9.0.1";
+  final desktopVersion = "1.9.2.0";
   final desktopPre = true;
 
   @override

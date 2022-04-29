@@ -130,7 +130,7 @@ dependencies:
   win_toast:
     git:
       url: https://github.com/jjoelj/flutter-plugins.git
-      ref: msix-fix
+      ref: f64b90f651e8655a75568b0db67319ba48a5156a
       path: packages/win_toast
   dynamic_color: ^1.1.2
   material_color_utilities: ^0.1.4
@@ -246,11 +246,13 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 1.9.0.2
+  msix_version: 1.9.2.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico
   store: true
+#  certificate_path: ../bluebubbles.pfx
+#  certificate_password: BlueBubbles
   icons_background_color: transparent
   languages: en-us
   architecture: x64

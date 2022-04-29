@@ -2220,8 +2220,8 @@ packages:
     dependency: "direct main"
     description:
       path: "packages/win_toast"
-      ref: msix-fix
-      resolved-ref: da7d3f078803c57a12fc567a842df664d03155c5
+      ref: f64b90f651e8655a75568b0db67319ba48a5156a
+      resolved-ref: f64b90f651e8655a75568b0db67319ba48a5156a
       url: "https://github.com/jjoelj/flutter-plugins.git"
     source: git
     version: "0.0.2"
