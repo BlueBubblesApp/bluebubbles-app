@@ -668,7 +668,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-      if (!isEmptyString(widget.message.fullText))
+      if (!kIsDesktop && !kIsWeb && !isEmptyString(widget.message.fullText))
         Material(
           color: Colors.transparent,
           child: InkWell(
