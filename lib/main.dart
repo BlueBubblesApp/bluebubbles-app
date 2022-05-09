@@ -124,8 +124,8 @@ class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-      // If there is a bad certificate callback, override it if the host is part of
-      // your server URL
+    // If there is a bad certificate callback, override it if the host is part of
+    // your server URL
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         String serverUrl = sanitizeServerAddress() ?? "";
         return serverUrl.contains(host);
@@ -174,7 +174,7 @@ Future<Null> initApp(bool isBubble) async {
     // Migrate to new appdata location if this function returns the new place and we still have the old place
     if (basename(dirname(appData.absolute.path)) == "com.bluebubbles.app") {
       Directory oldAppData =
-          Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app"));
+      Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app"));
       if (oldAppData.existsSync()) {
         Logger.info("Copying appData to new directory");
         copyDirectory(oldAppData, appData);
@@ -188,8 +188,8 @@ Future<Null> initApp(bool isBubble) async {
     prefs = await SharedPreferences.getInstance();
     if (!kIsWeb) {
       Directory documentsDirectory =
-          //ignore: unnecessary_cast, we need this as a workaround
-          (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+      //ignore: unnecessary_cast, we need this as a workaround
+      (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
       Directory objectBoxDirectory = Directory(join(documentsDirectory.path, 'objectbox'));
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
@@ -332,7 +332,7 @@ Future<Null> initApp(bool isBubble) async {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
       final InitializationSettings initializationSettings =
-          InitializationSettings(android: initializationSettingsAndroid);
+      InitializationSettings(android: initializationSettingsAndroid);
       await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
       tz.initializeTimeZones();
       // it doesn't matter if this errors
@@ -357,8 +357,8 @@ Future<Null> initApp(bool isBubble) async {
     if (!kIsWeb) {
       try {
         DynamicCachedFonts.loadCachedFont(
-                "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
-                fontFamily: "Apple Color Emoji")
+            "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
+            fontFamily: "Apple Color Emoji")
             .then((_) {
           fontExistsOnDisk.value = true;
         });
@@ -380,8 +380,12 @@ Future<Null> initApp(bool isBubble) async {
   monetPalette = await DynamicColorPlugin.getCorePalette();
 
   if (exception == null) {
-    ThemeData light = ThemeObject.getLightTheme().themeData;
-    ThemeData dark = ThemeObject.getDarkTheme().themeData;
+    ThemeData light = ThemeObject
+        .getLightTheme()
+        .themeData;
+    ThemeData dark = ThemeObject
+        .getDarkTheme()
+        .themeData;
 
     final tuple = applyMonet(light, dark);
     light = tuple.item1;
@@ -425,6 +429,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return AdaptiveTheme(
+
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
       light: lightTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.primaryColor)),
@@ -433,119 +438,135 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
       initial: AdaptiveThemeMode.system,
-      builder: (theme, darkTheme) => GetMaterialApp(
-        /// Hide the debug banner in debug mode
-        debugShowCheckedModeBanner: false,
+      builder: (theme, darkTheme) =>
+          GetMaterialApp(
 
-        title: 'BlueBubbles',
+            /// Hide the debug banner in debug mode
+            debugShowCheckedModeBanner: false,
 
-        /// Set the light theme from the [AdaptiveTheme]
-        theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
+            title: 'BlueBubbles',
 
-        /// Set the dark theme from the [AdaptiveTheme]
-        darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
+            /// Set the light theme from the [AdaptiveTheme]
+            theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
 
-        /// [NavigatorManager] is set as the navigator key so that we can control navigation from anywhere
-        navigatorKey: NavigatorManager().navigatorKey,
+            /// Set the dark theme from the [AdaptiveTheme]
+            darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
 
-        /// [Home] is the starting widget for the app
-        home: Home(),
+            /// [NavigatorManager] is set as the navigator key so that we can control navigation from anywhere
+            navigatorKey: NavigatorManager().navigatorKey,
 
-        shortcuts: {
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
-          LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
-          if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): const OpenSearchIntent(),
-          LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
-          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
-          if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR):
+            /// [Home] is the starting widget for the app
+            home: Home(),
+
+            shortcuts: {
+              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
+              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
+              if (kIsDesktop)
+                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
+              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): const OpenSearchIntent(),
+              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
+              if (kIsDesktop) LogicalKeySet(
+                  LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
+              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
+              if (kIsDesktop)
+                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR):
                 const StartIncrementalSyncIntent(),
-          if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation):
+              if (kIsDesktop)
+                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
+              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation):
               const HeartRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at):
+              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at):
               const LikeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign):
+              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign):
               const DislikeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar):
+              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar):
               const LaughRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent):
+              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent):
               const EmphasizeRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret):
+              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret):
               const QuestionRecentIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowDown): const OpenNextChatIntent(),
-          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.tab): const OpenNextChatIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowUp): const OpenPreviousChatIntent(),
-          if (kIsDesktop)
-            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab):
+              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowDown): const OpenNextChatIntent(),
+              if (kIsDesktop) LogicalKeySet(
+                  LogicalKeyboardKey.control, LogicalKeyboardKey.tab): const OpenNextChatIntent(),
+              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowUp): const OpenPreviousChatIntent(),
+              if (kIsDesktop)
+                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab):
                 const OpenPreviousChatIntent(),
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
-          LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
-        },
+              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
+              LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
+            },
 
-        builder: (context, child) => SecureApplication(
-          child: Builder(builder: (context) {
-            if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
-              if (SettingsManager().settings.shouldSecure.value) {
-                SecureApplicationProvider.of(context, listen: false)!.lock();
-                if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
-                  SecureApplicationProvider.of(context, listen: false)!.secure();
-                }
-              }
-            }
-            return SecureGate(
-              blurr: 0,
-              opacity: 1.0,
-              lockedBuilder: (context, controller) => Container(
-                color: Theme.of(context).backgroundColor,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Text(
-                          "BlueBubbles is currently locked. Please unlock to access your messages.",
-                          style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      Container(height: 20.0),
-                      ClipOval(
-                        child: Material(
-                          color: Theme.of(context).primaryColor, // button color
-                          child: InkWell(
-                            child: SizedBox(width: 60, height: 60, child: Icon(Icons.lock_open, color: Colors.white)),
-                            onTap: () async {
-                              var localAuth = LocalAuthentication();
-                              bool didAuthenticate = await localAuth.authenticate(
-                                  localizedReason: 'Please authenticate to unlock BlueBubbles', stickyAuth: true);
-                              if (didAuthenticate) {
-                                controller!.authSuccess(unlock: true);
-                              }
-                            },
+            builder: (context, child) =>
+                SecureApplication(
+                  child: Builder(builder: (context) {
+                    if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
+                      if (SettingsManager().settings.shouldSecure.value) {
+                        SecureApplicationProvider.of(context, listen: false)!.lock();
+                        if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                          SecureApplicationProvider.of(context, listen: false)!.secure();
+                        }
+                      }
+                    }
+                    return SecureGate(
+                      blurr: 0,
+                      opacity: 1.0,
+                      lockedBuilder: (context, controller) =>
+                          Container(
+                            color: Theme
+                                .of(context)
+                                .backgroundColor,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 20.0),
+                                    child: Text(
+                                      "BlueBubbles is currently locked. Please unlock to access your messages.",
+                                      style: Theme
+                                          .of(context)
+                                          .textTheme
+                                          .bodyText1!
+                                          .apply(fontSizeFactor: 1.5),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  Container(height: 20.0),
+                                  ClipOval(
+                                    child: Material(
+                                      color: Theme
+                                          .of(context)
+                                          .primaryColor, // button color
+                                      child: InkWell(
+                                        child: SizedBox(
+                                            width: 60, height: 60, child: Icon(Icons.lock_open, color: Colors.white)),
+                                        onTap: () async {
+                                          var localAuth = LocalAuthentication();
+                                          bool didAuthenticate = await localAuth.authenticate(
+                                              localizedReason: 'Please authenticate to unlock BlueBubbles',
+                                              stickyAuth: true);
+                                          if (didAuthenticate) {
+                                            controller!.authSuccess(unlock: true);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
+                      child: child ?? Container(),
+                    );
+                  }),
                 ),
-              ),
-              child: child ?? Container(),
-            );
-          }),
-        ),
 
-        defaultTransition: Transition.cupertino,
+            defaultTransition: Transition.cupertino,
 
-        getPages: [
-          GetPage(page: () => TestingMode(), name: "/testing-mode", binding: TestingModeBinding()),
-        ],
-      ),
+            getPages: [
+              GetPage(page: () => TestingMode(), name: "/testing-mode", binding: TestingModeBinding()),
+            ],
+          ),
     );
   }
 }
@@ -581,7 +602,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         );
 
         // Delete temp dir in case any notif icons weren't cleared
-        getApplicationSupportDirectory().then((d) => Directory(join(d.path, "temp")).deleteSync(recursive: true));
+        getApplicationSupportDirectory().then((d) {
+          Directory temp = Directory(join(d.path, "temp"));
+          if (temp.existsSync()) temp.deleteSync(recursive: true);
+        });
       }
       initSystemTray();
     }
@@ -684,13 +708,17 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             if (value.isEmpty) return;
 
             // If we don't have storage permission, we can't do anything
-            if (!await Permission.storage.request().isGranted) return;
+            if (!await Permission.storage
+                .request()
+                .isGranted) return;
 
             // Add the attached files to a list
             List<PlatformFile> attachments = [];
             for (SharedMediaFile element in value) {
               attachments.add(PlatformFile(
-                name: element.path.split("/").last,
+                name: element.path
+                    .split("/")
+                    .last,
                 path: element.path,
                 size: 0,
               ));
@@ -705,7 +733,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 existingAttachments: attachments,
                 isCreator: true,
               ),
-              (route) => route.isFirst,
+                  (route) => route.isFirst,
             );
           });
 
@@ -721,7 +749,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 existingText: text,
                 isCreator: true,
               ),
-              (route) => route.isFirst,
+                  (route) => route.isFirst,
             );
           });
         }
@@ -785,8 +813,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void didChangePlatformBrightness() {
     super.didChangePlatformBrightness();
-    if (AdaptiveTheme.maybeOf(context)?.mode == AdaptiveThemeMode.system) {
-      if (AdaptiveTheme.maybeOf(context)?.brightness == Brightness.light) {
+    if (AdaptiveTheme
+        .maybeOf(context)
+        ?.mode == AdaptiveThemeMode.system) {
+      if (AdaptiveTheme
+          .maybeOf(context)
+          ?.brightness == Brightness.light) {
         AdaptiveTheme.maybeOf(context)?.setLight();
       } else {
         AdaptiveTheme.maybeOf(context)?.setDark();
@@ -801,24 +833,34 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
           ? Colors.transparent
-          : Theme.of(context).backgroundColor, // navigation bar color
+          : Theme
+          .of(context)
+          .backgroundColor, // navigation bar color
       systemNavigationBarIconBrightness:
-          Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+      Theme
+          .of(context)
+          .backgroundColor
+          .computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       statusBarColor: Colors.transparent, // status bar color
       statusBarIconBrightness:
-          context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+      context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
             ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
+            : Theme
+            .of(context)
+            .backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        Theme
+            .of(context)
+            .backgroundColor
+            .computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness:
-            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Actions(
         actions: {
@@ -922,7 +964,8 @@ Future<void> initSystemTray() async {
   });
 }
 
-void copyDirectory(Directory source, Directory destination) => source.listSync(recursive: false).forEach((element) {
+void copyDirectory(Directory source, Directory destination) =>
+    source.listSync(recursive: false).forEach((element) {
       if (element is Directory) {
         Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
         newDirectory.createSync();
