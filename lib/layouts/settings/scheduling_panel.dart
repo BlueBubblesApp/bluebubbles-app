@@ -7,6 +7,7 @@ import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
@@ -112,10 +113,15 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
               borderColor: context.textTheme.headline1!.color!,
             ),
           ),
+          enableCustomMouseWheelScrolling: kIsDesktop || kIsWeb,
+          customMouseWheelScrollConfig: CustomMouseWheelScrollConfig(
+            scrollAmountMultiplier: 7.0,
+            scrollDuration: Duration(milliseconds: 100),
+          ),
           scrollController: scrollController,
           child: CustomScrollView(
             controller: scrollController,
-            physics: ThemeSwitcher.getScrollPhysics(),
+            physics: (kIsDesktop || kIsWeb) ? NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
             slivers: <Widget>[
               SliverList(
                 delegate: SliverChildListDelegate(

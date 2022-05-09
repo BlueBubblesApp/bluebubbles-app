@@ -84,7 +84,8 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
         systemNavigationBarIconBrightness:
             context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Obx(() => buildForDevice(context)),
     );
@@ -94,6 +95,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
     bool showArchived = widget.parent.widget.showArchivedChats;
     bool showUnknown = widget.parent.widget.showUnknownSenders;
     Brightness brightness = ThemeData.estimateBrightnessForColor(context.theme.backgroundColor);
+    double? previousScroll;
     return Obx(
       () => Scaffold(
         appBar: kIsWeb || kIsDesktop
@@ -159,10 +161,15 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
               borderColor: context.textTheme.headline1!.color!,
             ),
           ),
+          enableCustomMouseWheelScrolling: kIsDesktop || kIsWeb,
+          customMouseWheelScrollConfig: CustomMouseWheelScrollConfig(
+            scrollAmountMultiplier: 7.0,
+            scrollDuration: Duration(milliseconds: 100),
+          ),
           scrollController: widget.parent.scrollController,
           child: CustomScrollView(
             controller: widget.parent.scrollController,
-            physics: ThemeManager().scrollPhysics,
+            physics: (kIsDesktop || kIsWeb) ? NeverScrollableScrollPhysics() : ThemeManager().scrollPhysics,
             slivers: <Widget>[
               SliverAppBar(
                 leading: ((SettingsManager().settings.skin.value == Skins.iOS && (showArchived || showUnknown)) ||

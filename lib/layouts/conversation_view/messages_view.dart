@@ -446,6 +446,11 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                     borderColor: context.textTheme.headline1!.color!,
                   ),
                 ),
+                enableCustomMouseWheelScrolling: kIsDesktop || kIsWeb,
+                customMouseWheelScrollConfig: CustomMouseWheelScrollConfig(
+                  scrollAmountMultiplier: -9.0,
+                  scrollDuration: Duration(milliseconds: 100),
+                ),
                 scrollController: _scrollController,
                 child: AnimatedOpacity(
                   opacity: _messages.isEmpty ? 0 : 1,
@@ -454,7 +459,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                   child: CustomScrollView(
                     controller: _scrollController,
                     reverse: true,
-                    physics: ThemeSwitcher.getScrollPhysics(),
+                    physics: (kIsDesktop || kIsWeb) ? NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
                     slivers: <Widget>[
                       if (showSmartReplies)
                         StreamBuilder<List<String?>>(

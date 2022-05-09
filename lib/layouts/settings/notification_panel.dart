@@ -121,10 +121,15 @@ class NotificationPanel extends StatelessWidget {
                       borderColor: context.textTheme.headline1!.color!,
                     ),
                   ),
+                  enableCustomMouseWheelScrolling: kIsDesktop || kIsWeb,
+                  customMouseWheelScrollConfig: CustomMouseWheelScrollConfig(
+                    scrollAmountMultiplier: 7.0,
+                    scrollDuration: Duration(milliseconds: 100),
+                  ),
                   scrollController: controller1,
                   child: CustomScrollView(
                     controller: controller1,
-                    physics: ThemeSwitcher.getScrollPhysics(),
+                    physics: (kIsDesktop || kIsWeb) ? NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
                     slivers: <Widget>[
                       if (SettingsManager().settings.skin.value == Skins.Samsung)
                         SliverAppBar(

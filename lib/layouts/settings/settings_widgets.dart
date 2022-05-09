@@ -10,6 +10,7 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -103,11 +104,16 @@ class SettingsScaffold extends StatelessWidget {
                 borderColor: context.textTheme.headline1!.color!,
               ),
             ),
+            enableCustomMouseWheelScrolling: kIsDesktop || kIsWeb,
+            customMouseWheelScrollConfig: CustomMouseWheelScrollConfig(
+              scrollAmountMultiplier: 7.0,
+              scrollDuration: Duration(milliseconds: 100),
+            ),
             scrollController: controller,
             child: CustomScrollView(
               controller: controller,
               shrinkWrap: true,
-              physics: ThemeSwitcher.getScrollPhysics(),
+              physics: (kIsDesktop || kIsWeb) ? NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
               slivers: <Widget>[
                 if (SettingsManager().settings.skin.value == Skins.Samsung)
                   SliverAppBar(
