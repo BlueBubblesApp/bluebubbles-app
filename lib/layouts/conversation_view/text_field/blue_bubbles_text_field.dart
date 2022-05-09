@@ -1237,7 +1237,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     ? Colors.black
                                     : Colors.white,
                                 fontSizeDelta: -0.25,
-                                fontFamily: kIsDesktop ? "Apple Color Emoji" : null,
                               ),
                           keyboardType: TextInputType.multiline,
                           maxLines: 14,

@@ -98,7 +98,11 @@ dependencies:
   objectbox: ^1.4.1
   objectbox_flutter_libs: any
   js: ^0.6.4
-  bitsdojo_window: ^0.1.1+1
+  bitsdojo_window:
+    git:
+      url: https://github.com/jjoelj/bitsdojo_window.git
+      ref: 480262aa93986ea866c05b312d9f463a02cc9e06
+      path: bitsdojo_window
   system_tray: ^0.1.0
   flutter_improved_scrolling: ^0.0.3
   desktop_drop: ^0.3.3
@@ -107,7 +111,7 @@ dependencies:
   dynamic_cached_fonts:
     git:
       url: https://github.com/jjoelj/dynamic_cached_fonts
-      ref: 68c9dc69ca63e5d7aa0db621aba16fcf4e4f1da5
+      ref: main
   confetti: ^0.6.0
   supercharged: ^2.1.1
   pdf: ^3.7.3
@@ -123,7 +127,11 @@ dependencies:
   emojis: ^0.9.9
   defer_pointer: ^0.0.2
   pasteboard: ^0.0.3
-  win_toast: ^0.0.2
+  win_toast:
+    git:
+      url: https://github.com/jjoelj/flutter-plugins.git
+      ref: f64b90f651e8655a75568b0db67319ba48a5156a
+      path: packages/win_toast
   dynamic_color: ^1.1.2
   material_color_utilities: ^0.1.4
 
@@ -238,11 +246,13 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 1.9.0.0
+  msix_version: 1.9.2.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico
   store: true
+#  certificate_path: ../bluebubbles.pfx
+#  certificate_password: BlueBubbles
   icons_background_color: transparent
   languages: en-us
   architecture: x64
