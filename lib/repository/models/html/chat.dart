@@ -523,6 +523,10 @@ class Chat {
     throw Exception("Use socket to get chats on Web!");
   }
 
+  static Future<List<Chat>> bulkSaveNewChats(List<Chat> chats) async {
+    return [];
+  }
+
   bool isGroup() {
     return participants.length > 1;
   }
