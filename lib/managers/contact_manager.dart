@@ -249,13 +249,15 @@ class ContactManager {
         logger?.call("Found contacts!");
 
         for (Map<String, dynamic> map in response.data['data']) {
-          logger?.call(
-              "Parsing contact: ${getDisplayName(map['displayName'], map['firstName'], map['lastName'])}");
+          final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
+          final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+          final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+          logger?.call("Parsing contact: $displayName");
           contacts.add(Contact(
-            id: map['id'].toString(),
-            displayName: getDisplayName(map['displayName'], map['firstName'], map['lastName']),
-            emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-            phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
+            id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
+            displayName: displayName,
+            emails: emails,
+            phones: phones,
           ));
         }
       } else {
@@ -278,8 +280,9 @@ class ContactManager {
           for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar'])!)) {
             logger?.call(
                 "Adding avatar for contact: ${getDisplayName(map['displayName'], map['firstName'], map['lastName'])}");
-
-            final contact = contacts.firstWhereOrNull((e) => e.id == map['id'].toString());
+            final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+            final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+            final contact = contacts.firstWhereOrNull((e) => e.id == (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString());
             contact?.avatar.value = base64Decode(map['avatar'].toString());
             contact?.avatarHiRes.value = base64Decode(map['avatar'].toString());
           }
