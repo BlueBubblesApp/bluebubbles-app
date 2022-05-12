@@ -249,13 +249,13 @@ class ContactManager {
         logger?.call("Found contacts!");
 
         for (Map<String, dynamic> map in response.data['data']) {
-          logger?.call(
-              "Parsing contact: ${getDisplayName(map['displayName'], map['firstName'], map['lastName'])}");
+          final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
           final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
           final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+          logger?.call("Parsing contact: $displayName");
           contacts.add(Contact(
             id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
-            displayName: getDisplayName(map['displayName'], map['firstName'], map['lastName']),
+            displayName: displayName,
             emails: emails,
             phones: phones,
           ));
