@@ -242,38 +242,35 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildTitle() {
-    final hideInfo = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
-    final generateNames =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
-
-    TextStyle? style = Theme.of(context).textTheme.bodyText1;
-
     return Obx(() {
+      final hideInfo = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
+      final generateNames =
+          SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
+      TextStyle style = Theme.of(context).textTheme.bodyText1!.copyWith(
+          fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
+              (widget.chat.hasUnreadMessage ?? false)
+              ? FontWeight.bold
+              : shouldHighlight.value
+              ? FontWeight.w600
+              : null,
+          color: shouldHighlight.value
+              ? SettingsManager().settings.skin.value == Skins.iOS
+              ? Colors.white
+              : null
+              : null)
+          .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0);
       widget.chat.getTitle();
       String title = widget.chat.title ?? "Fake Person";
       if (generateNames) {
         title = widget.chat.fakeNames.length == 1 ? widget.chat.fakeNames[0] : "Group Chat";
       } else if (hideInfo) {
-        style = style?.copyWith(color: Colors.transparent);
+        style = style.copyWith(color: Colors.transparent);
       }
       return RichText(
           text: TextSpan(
             children: MessageHelper.buildEmojiText(
               title,
-              style!
-                  .copyWith(
-                      fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
-                              (widget.chat.hasUnreadMessage ?? false)
-                          ? FontWeight.bold
-                          : shouldHighlight.value
-                              ? FontWeight.w600
-                              : null,
-                      color: shouldHighlight.value
-                          ? SettingsManager().settings.skin.value == Skins.iOS
-                              ? Colors.white
-                              : null
-                          : null)
-                  .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0),
+              style,
             ),
           ),
           overflow: TextOverflow.ellipsis);
@@ -291,14 +288,19 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         final generateContent = SettingsManager().settings.redactedMode.value &&
             SettingsManager().settings.generateFakeMessageContent.value;
 
-        TextStyle style = Theme.of(context).textTheme.subtitle1!.apply().copyWith(
-              fontWeight: shouldHighlight.value ? FontWeight.w500 : null,
-              color: shouldHighlight.value
+        TextStyle style = Theme.of(context).textTheme.subtitle1!.copyWith(
+              fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
+                  (widget.chat.hasUnreadMessage ?? false)
+                  ? FontWeight.w600
+                  : shouldHighlight.value ? FontWeight.w500 : null,
+              color: SettingsManager().settings.skin.value == Skins.Material &&
+                  (widget.chat.hasUnreadMessage ?? false)
+                  ? Theme.of(context).textTheme.bodyText1!.color : shouldHighlight.value
                   ? SettingsManager().settings.skin.value == Skins.iOS
                       ? Colors.white.withOpacity(0.75)
                       : null
                   : context.textTheme.subtitle1!.color!.withOpacity(0.85),
-            );
+            ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 0.95 : 1.0);
 
         if (generateContent) {
           latestText = widget.chat.fakeLatestMessageText ?? "";
@@ -312,18 +314,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
             text: TextSpan(
                 children: MessageHelper.buildEmojiText(
               latestText,
-              style
-                  .copyWith(
-                    fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
-                            (widget.chat.hasUnreadMessage ?? false)
-                        ? FontWeight.w600
-                        : null,
-                    color: SettingsManager().settings.skin.value == Skins.Material &&
-                            (widget.chat.hasUnreadMessage ?? false)
-                        ? Theme.of(context).textTheme.bodyText1!.color
-                        : null,
-                  )
-                  .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 0.95 : 1.0),
+              style,
             )),
             overflow: TextOverflow.ellipsis,
             maxLines: SettingsManager().settings.skin.value == Skins.Material ? 3 : 2,
