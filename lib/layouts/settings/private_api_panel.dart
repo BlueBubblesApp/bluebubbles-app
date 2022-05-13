@@ -114,8 +114,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                           title: "Set up Private API Features",
                           subtitle: "View instructions on how to set up these features",
                           onTap: () async {
-                            await launch(
-                                "https://docs.bluebubbles.app/helper-bundle/installation");
+                            await launchUrl(Uri(scheme: "https", host: "docs.bluebubbles.app", path: "helper-bundle/installation"));
                           },
                           leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.checkmark_shield,

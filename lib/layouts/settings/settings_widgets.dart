@@ -42,7 +42,7 @@ class SettingsScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SchedulerBinding.instance!.addPostFrameCallback((_) {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
       if (SettingsManager().settings.skin.value != Skins.Samsung) return;
       // this is so settings pages that would normally not scroll can still scroll
       // to make the header large or small

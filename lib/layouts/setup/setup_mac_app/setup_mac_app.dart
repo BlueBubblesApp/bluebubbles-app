@@ -95,7 +95,7 @@ class SetupMacApp extends StatelessWidget {
                                   maximumSize: MaterialStateProperty.all(Size(300, 36)),
                                 ),
                                 onPressed: () async {
-                                  await launch("https://bluebubbles.app/install/");
+                                  await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "install"));
                                 },
                                 child: Shimmer.fromColors(
                                   baseColor: Colors.white70,

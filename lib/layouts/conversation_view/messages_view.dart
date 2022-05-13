@@ -129,9 +129,9 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
     if (widget.initComplete != null) widget.initComplete!();
 
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) async {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       widgetsBuilt = true;
       EventDispatcher().emit("update-highlight", widget.chat!.guid);
       // See if we need to load anything from the message bloc
@@ -317,9 +317,9 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
       if (originalMessageLength < _messages.length) {
         for (int i = originalMessageLength; i < _messages.length; i++) {
           if (_listKey != null && _listKey!.currentState != null) {
-            if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+            if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
               // wait for the end of that frame.
-              await SchedulerBinding.instance!.endOfFrame;
+              await SchedulerBinding.instance.endOfFrame;
             }
             _listKey!.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
           }
@@ -328,9 +328,9 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
         for (int i = originalMessageLength; i >= _messages.length; i--) {
           if (_listKey != null && _listKey!.currentState != null) {
             try {
-              if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+              if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
                 // wait for the end of that frame.
-                await SchedulerBinding.instance!.endOfFrame;
+                await SchedulerBinding.instance.endOfFrame;
               }
               _listKey!.currentState!
                   .removeItem(i, (context, animation) => Container(), duration: Duration(milliseconds: 0));

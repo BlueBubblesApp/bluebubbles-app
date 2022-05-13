@@ -1,14 +1,12 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -22,7 +20,7 @@ import 'package:universal_html/html.dart' as html;
 
 class AboutPanel extends StatelessWidget {
   // Not sure how to do this other than manually yet
-  final desktopVersion = "1.9.3.0";
+  final desktopVersion = "1.9.4.0";
   final desktopPre = true;
 
   @override
@@ -54,7 +52,7 @@ class AboutPanel extends StatelessWidget {
                       backgroundColor: tileColor,
                       title: "Support Us",
                       onTap: () async {
-                        await launch("https://bluebubbles.app/donate/");
+                        await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "donate"));
                       },
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.money_dollar_circle,
@@ -72,7 +70,7 @@ class AboutPanel extends StatelessWidget {
                       backgroundColor: tileColor,
                       title: "Website",
                       onTap: () async {
-                        await launch("https://bluebubbles.app/");
+                        await launchUrl(Uri(scheme: "https", host: "bluebubbles.app"));
                       },
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.globe,
@@ -91,13 +89,13 @@ class AboutPanel extends StatelessWidget {
                       title: "Source Code",
                       subtitle: kIsWeb || kIsDesktop ? "Right click to report a bug" : "Tap and hold to report a bug",
                       onTap: () async {
-                        await launch("https://github.com/BlueBubblesApp");
+                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp"));
                       },
                       onLongPress: () async {
                         if (kIsWeb) {
                           (await html.document.onContextMenu.first).preventDefault();
                         }
-                        await launch("https://github.com/BlueBubblesApp/bluebubbles-app/issues");
+                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp/bluebubbles-app/issues"));
                       },
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
@@ -115,7 +113,7 @@ class AboutPanel extends StatelessWidget {
                       backgroundColor: tileColor,
                       title: "Join Our Discord",
                       onTap: () async {
-                        await launch("https://discord.gg/hbx7EhNFjp");
+                        await launchUrl(Uri(scheme: "https", host: "discord.gg", path: "hbx7EhNFjp"));
                       },
                       leading: SvgPicture.asset(
                         "assets/icon/discord.svg",
@@ -226,7 +224,7 @@ class AboutPanel extends StatelessWidget {
                                           style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () async {
-                                              await launch("https://github.com/zlshames");
+                                              await launchUrl(Uri(scheme: "https", host: "github.com", path: "zlshames"));
                                             }),
                                     ),
                                   ),
@@ -239,7 +237,7 @@ class AboutPanel extends StatelessWidget {
                                           style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () async {
-                                              await launch("https://github.com/tneotia");
+                                              await launchUrl(Uri(scheme: "https", host: "github.com", path: "tneotia"));
                                             }),
                                     ),
                                   ),
@@ -252,7 +250,7 @@ class AboutPanel extends StatelessWidget {
                                           style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () async {
-                                              await launch("https://github.com/jjoelj");
+                                              await launchUrl(Uri(scheme: "https", host: "github.com", path: "jjoelj"));
                                             }),
                                     ),
                                   ),

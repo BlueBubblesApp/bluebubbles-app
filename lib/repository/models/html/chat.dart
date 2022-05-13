@@ -15,7 +15,6 @@ import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/handle.dart';
 import 'package:bluebubbles/repository/models/html/message.dart';
 import 'package:bluebubbles/repository/models/models.dart' show Contact;
-import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
@@ -521,6 +520,10 @@ class Chat {
 
   static List<Chat> getChats({int limit = 15, int offset = 0}) {
     throw Exception("Use socket to get chats on Web!");
+  }
+
+  static Future<List<Chat>> bulkSaveNewChats(List<Chat> chats) async {
+    return [];
   }
 
   bool isGroup() {

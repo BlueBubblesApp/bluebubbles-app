@@ -260,7 +260,7 @@ class UrlPreviewWidget extends StatelessWidget {
                   child: InkResponse(
                     borderRadius: BorderRadius.circular(20),
                     onTap: () async {
-                      await launch(controller.data.value?.url ?? message.text ?? '');
+                      await launchUrl(Uri.parse(controller.data.value?.url ?? message.text ?? ''));
                     },
                     child: Container(
                       // The minus 5 here is so the timestamps show OK during swipe

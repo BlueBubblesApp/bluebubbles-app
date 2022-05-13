@@ -32,6 +32,9 @@ class ApiService extends GetxService {
 
   /// Global try-catch function
   Future<Response> runApiGuarded(Future<Response> Function() func) async {
+    if (SettingsManager().settings.serverAddress.value.isEmpty) {
+      return Future.error("No server URL!");
+    }
     try {
       return await func();
     } catch (e, s) {

@@ -42,7 +42,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sprung/sprung.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class MessageDetailsPopup extends StatefulWidget {
   MessageDetailsPopup({
@@ -113,7 +113,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     fetchReactions();
-    SchedulerBinding.instance!.addPostFrameCallback((_) {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
           messageTopOffset = max(topMinimum, min(widget.childOffsetY, context.height - widget.childSize!.height - 200));
@@ -508,7 +508,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              await launch(
+              await launchUrlString(
                   widget.message.attachments.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
               popDetails();
             },

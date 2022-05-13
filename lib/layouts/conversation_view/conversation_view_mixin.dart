@@ -149,9 +149,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   void didChangeDependenciesConversationView() async {
     if (isCreator!) return;
-    if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+    if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
       // wait for the end of that frame.
-      await SchedulerBinding.instance!.endOfFrame;
+      await SchedulerBinding.instance.endOfFrame;
     }
     ChatManager().clearChatNotifications(chat!);
   }
@@ -514,9 +514,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   ),
                   onTap: () {
                     if (chat!.participants[0].address.isPhoneNumber) {
-                      launch("tel://${chat!.participants[0].address}");
+                      launchUrl(Uri(scheme: "tel", path: chat!.participants[0].address));
                     } else {
-                      launch('mailto:${chat!.participants[0].address}');
+                      launchUrl(Uri(scheme: "mailto", path: chat!.participants[0].address));
                     }
                   },
                 ),

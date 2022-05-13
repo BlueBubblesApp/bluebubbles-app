@@ -610,8 +610,8 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
         widget.message.datePlayed == null &&
         mounted &&
         !(widget.message.guid?.contains("redacted-mode-demo") ?? false)) {
-      WidgetsBinding.instance!.addObserver(this);
-      WidgetsBinding.instance!.addPostFrameCallback((_) async {
+      WidgetsBinding.instance.addObserver(this);
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
         EventDispatcher().emit('play-effect', {
           'type': effect,
