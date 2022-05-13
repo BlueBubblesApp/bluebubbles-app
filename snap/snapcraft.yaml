@@ -1,24 +1,55 @@
 name: bluebubbles
 title: BlueBubbles
-version: 1.0.0.10
+version: 1.9.4.0
 summary: BlueBubbles client for Linux
 description: BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
 
 confinement: strict
-base: core18
+base: core20
 grade: devel
 
 apps:
   bluebubbles:
     command: bluebubbles
-    extensions: [flutter-stable]
+    extensions: [gnome-3-38]
     plugs:
       - network
       - camera
       - microphone
 
 parts:
+  flutter-git:
+    source: https://github.com/flutter/flutter.git
+    source-branch: stable
+    source-depth: 1
+    plugin: nil
+    override-build: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/bin
+      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/libexec
+      cp -r $SNAPCRAFT_PART_SRC $SNAPCRAFT_PART_INSTALL/usr/libexec/flutter
+      ln -s $SNAPCRAFT_PART_INSTALL/usr/libexec/flutter/bin/flutter $SNAPCRAFT_PART_INSTALL/usr/bin/flutter
+    build-packages:
+      - clang
+      - cmake
+      - libgtk-3-dev
+      - ninja-build
+      - libindicator3-7
+      - libappindicator3-1
+      - gir1.2-appindicator3-0.1
+      - libappindicator3-dev
+    override-prime: ''
+
   bluebubbles:
+    after: [flutter-git]
     source: .
-    plugin: flutter
-    flutter-target: lib/main.dart
+    plugin: nil
+    override-build: |
+      set -eux
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      flutter upgrade
+      flutter config --enable-linux-desktop
+      flutter doctor
+      flutter pub get
+      rm -rf build
+      flutter build linux --release -v
+      cp -r build/linux/*/release/bundle/* $SNAPCRAFT_PART_INSTALL/bin/
