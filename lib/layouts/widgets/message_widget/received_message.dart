@@ -124,8 +124,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     });
 
     if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble && widget.message.datePlayed == null) {
-      WidgetsBinding.instance!.addObserver(this);
-      WidgetsBinding.instance!.addPostFrameCallback((_) async {
+      WidgetsBinding.instance.addObserver(this);
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         EventDispatcher().emit('play-effect', {
           'type': effect,
           'size': key.globalPaintBounds(context),

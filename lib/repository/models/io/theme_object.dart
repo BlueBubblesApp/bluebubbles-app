@@ -287,7 +287,7 @@ class ThemeObject {
   static bool inDarkMode(BuildContext context) {
     return (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ||
         (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.system &&
-            SchedulerBinding.instance!.window.platformBrightness == Brightness.dark));
+            SchedulerBinding.instance.window.platformBrightness == Brightness.dark));
   }
 
   @override

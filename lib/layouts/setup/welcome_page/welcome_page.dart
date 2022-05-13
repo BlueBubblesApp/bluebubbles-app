@@ -38,7 +38,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     super.initState();
     _titleController = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
 
-    SchedulerBinding.instance!.addPostFrameCallback((_) async {
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
       await animateTitle();
       await animateSubtitle();
     });

@@ -163,9 +163,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     initListener();
 
     // Bind the lifecycle events
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       ChatManager().setActiveChat(chat);
       if (widget.isCreator) {
         setState(() {

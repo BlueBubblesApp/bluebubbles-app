@@ -41,7 +41,7 @@ import 'package:firebase_dart/firebase_dart.dart';
 // ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide MenuItem;
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -323,7 +323,7 @@ Future<Null> initApp(bool isBubble) async {
       runApp(MaterialApp(
           home: SplashScreen(shouldNavigate: false),
           theme: ThemeData(
-              backgroundColor: SchedulerBinding.instance!.window.platformBrightness == Brightness.dark
+              backgroundColor: SchedulerBinding.instance.window.platformBrightness == Brightness.dark
                   ? Colors.black
                   : Colors.white)));
     }
@@ -672,7 +672,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     });
 
     // Get the saved settings from the settings manager after the first frame
-    SchedulerBinding.instance!.addPostFrameCallback((_) async {
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
       await SettingsManager().getSavedSettings();
 
       if (SettingsManager().settings.colorsFromMedia.value) {
@@ -777,7 +777,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     ChatManager().loadAssets();
 
     // Bind the lifecycle events
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -790,7 +790,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void dispose() {
     // Clean up observer when app is fully closed
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
