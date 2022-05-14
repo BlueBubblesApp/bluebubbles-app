@@ -43,12 +43,12 @@ class ContactTile extends StatelessWidget {
 
   Future<void> makeCall(String phoneNumber) async {
     if (await Permission.phone.request().isGranted) {
-      launch("tel://$phoneNumber");
+      launchUrl(Uri(scheme: "tel", path: phoneNumber));
     }
   }
 
   Future<void> startEmail(String email) async {
-    launch('mailto:$email');
+    launchUrl(Uri(scheme: "mailto", path: email));
   }
 
   Widget _buildContactTile(BuildContext context) {

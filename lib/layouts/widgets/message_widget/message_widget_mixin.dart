@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -14,6 +13,7 @@ import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:maps_launcher/maps_launcher.dart';
 import 'package:tuple/tuple.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 // Mixin just for commonly shared functions and properties between the SentMessage and ReceivedMessage
 abstract class MessageWidgetMixin {
@@ -141,7 +141,7 @@ abstract class MessageWidgetMixin {
                         url = "http://" + url;
                       }
 
-                      await launch(url);
+                      await launchUrlString(url);
                     },
                   style: textStyle!.apply(decoration: TextDecoration.underline),
                 ),
@@ -314,13 +314,13 @@ abstract class MessageWidgetMixin {
                           url = "http://" + url;
                         }
 
-                        await launch(url);
+                        await launchUrlString(url);
                       } else if (type == "map") {
                         await MapsLauncher.launchQuery(text);
                       } else if (type == "phone") {
-                        await launch("tel://$text");
+                        await launchUrl(Uri(scheme: "tel", path: text));
                       } else if (type == "email") {
-                        await launch("mailto:$text");
+                        await launchUrl(Uri(scheme: "mailto", path: text));
                       }
                     },
                   style: textStyle!.apply(decoration: TextDecoration.underline),
