@@ -120,8 +120,8 @@ class AttachmentDownloadController extends GetxController {
     );
     if (kIsDesktop) {
       if (attachment.bytes != null) {
-        File _file = await File(attachment.getPath()).create(recursive: true);
-        _file.writeAsBytesSync(attachment.bytes!.toList());
+        File f = await File(attachment.getPath()).create(recursive: true);
+        f.writeAsBytesSync(attachment.bytes!.toList());
       }
     }
     if (SettingsManager().settings.autoSave.value && !kIsWeb && !kIsDesktop && !(attachment.isOutgoing ?? false)) {

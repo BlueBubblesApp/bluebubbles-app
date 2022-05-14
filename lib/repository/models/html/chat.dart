@@ -22,10 +22,10 @@ import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:universal_io/io.dart';
 
-String getFullChatTitle(Chat _chat) {
+String getFullChatTitle(Chat chat) {
   String? title = "";
-  if (isNullOrEmpty(_chat.displayName)!) {
-    Chat chat = _chat.getParticipants();
+  if (isNullOrEmpty(chat.displayName)!) {
+    Chat c = chat.getParticipants();
 
     //todo - do we really need this here?
     /*// If there are no participants, try to get them from the server
@@ -36,11 +36,11 @@ String getFullChatTitle(Chat _chat) {
     }*/
 
     List<String> titles = [];
-    for (int i = 0; i < chat.participants.length; i++) {
+    for (int i = 0; i < c.participants.length; i++) {
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-      String? name = ContactManager().getContactTitle(chat.participants[i]);
+      String? name = ContactManager().getContactTitle(c.participants[i]);
 
-      if (chat.participants.length > 1 && !name.isPhoneNumber) {
+      if (c.participants.length > 1 && !name.isPhoneNumber) {
         name = name.trim().split(" ")[0];
       } else {
         name = name.trim();
@@ -50,7 +50,7 @@ String getFullChatTitle(Chat _chat) {
     }
 
     if (titles.isEmpty) {
-      title = _chat.chatIdentifier;
+      title = c.chatIdentifier;
     } else if (titles.length == 1) {
       title = titles[0];
     } else if (titles.length <= 4) {
@@ -62,7 +62,7 @@ String getFullChatTitle(Chat _chat) {
       title = "$title & ${titles.length - 3} others";
     }
   } else {
-    title = _chat.displayName;
+    title = chat.displayName;
   }
 
   return title!;

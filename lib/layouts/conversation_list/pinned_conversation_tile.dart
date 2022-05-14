@@ -39,7 +39,7 @@ class PinnedConversationTile extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _PinnedConversationTileState createState() => _PinnedConversationTileState();
+  State<PinnedConversationTile> createState() => _PinnedConversationTileState();
 }
 
 class _PinnedConversationTileState extends State<PinnedConversationTile> {
@@ -160,7 +160,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
 
   @override
   Widget build(BuildContext context) {
-    late Offset _tapPosition;
+    late Offset tapPosition;
 
     return Container(
       margin: EdgeInsets.only(left: 7, right: 7, top: 1, bottom: 3),
@@ -171,11 +171,11 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onLongPressStart: (details) {
-            _tapPosition = details.globalPosition;
+            tapPosition = details.globalPosition;
           },
           onTap: onTapUpBypass,
           onLongPress: () async {
-            await peekChat(context, widget.chat, _tapPosition);
+            await peekChat(context, widget.chat, tapPosition);
           },
           onSecondaryTapUp: (details) async {
             if (kIsWeb) {

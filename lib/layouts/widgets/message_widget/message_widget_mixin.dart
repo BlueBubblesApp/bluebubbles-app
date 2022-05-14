@@ -9,7 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:maps_launcher/maps_launcher.dart';
 import 'package:tuple/tuple.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -103,16 +103,16 @@ abstract class MessageWidgetMixin {
         linkIndexMatches.add(match.end);
       }
       if (!isNullOrEmpty(message.subject)!) {
-        TextStyle _textStyle = message.isFromMe!
+        TextStyle finalStyle = message.isFromMe!
             ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
             : textStyle!.apply(fontWeightDelta: 2);
         if (hideContent) {
-          _textStyle = _textStyle.apply(color: Colors.transparent);
+          finalStyle = finalStyle.apply(color: Colors.transparent);
         }
-        if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
+        if (colorOverride != null && !hideContent) finalStyle = finalStyle.apply(color: colorOverride);
         textSpans.addAll(MessageHelper.buildEmojiText(
           "${message.subject}\n",
-          _textStyle,
+          finalStyle,
         ));
       }
 
@@ -138,7 +138,7 @@ abstract class MessageWidgetMixin {
                     ..onTap = () async {
                       String url = text;
                       if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                        url = "http://" + url;
+                        url = "http://$url";
                       }
 
                       await launchUrlString(url);
@@ -240,7 +240,7 @@ abstract class MessageWidgetMixin {
       if (!kIsWeb && !kIsDesktop) {
         if (ChatManager().activeChat?.mlKitParsedText[message.guid!] == null) {
           ChatManager().activeChat?.mlKitParsedText[message.guid!] =
-              await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
+              await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english).annotateText(message.text!);
         }
         final entities = ChatManager().activeChat?.mlKitParsedText[message.guid!] ?? [];
         List<EntityAnnotation> normalizedEntities = [];
@@ -274,16 +274,16 @@ abstract class MessageWidgetMixin {
         }
       }
       if (!isNullOrEmpty(message.subject)!) {
-        TextStyle _textStyle = message.isFromMe!
+        TextStyle finalStyle = message.isFromMe!
             ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
             : textStyle!.apply(fontWeightDelta: 2);
         if (hideContent) {
-          _textStyle = _textStyle.apply(color: Colors.transparent);
+          finalStyle = finalStyle.apply(color: Colors.transparent);
         }
-        if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
+        if (colorOverride != null && !hideContent) finalStyle = finalStyle.apply(color: colorOverride);
         textSpans.addAll(MessageHelper.buildEmojiText(
           "${message.subject}\n",
-          _textStyle,
+          finalStyle,
         ));
       }
 
@@ -311,7 +311,7 @@ abstract class MessageWidgetMixin {
                       if (type == "link") {
                         String url = text;
                         if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                          url = "http://" + url;
+                          url = "http://$url";
                         }
 
                         await launchUrlString(url);

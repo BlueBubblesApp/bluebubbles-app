@@ -266,7 +266,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
                                       String appDocPath = SettingsManager().appDocDir.path;
                                       String ext = ".png";
-                                      File file = File("$appDocPath/attachments/" + randomString(16) + ext);
+                                      File file = File("$appDocPath/attachments/${randomString(16)}$ext");
                                       await file.create(recursive: true);
 
                                       // Take the picture after opening the camera
@@ -345,9 +345,9 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                     .length;
                 int usedRowCount = min((pinCount / colCount).ceil(), rowCount);
                 int maxOnPage = rowCount * colCount;
-                PageController _controller = PageController();
-                int _pageCount = (pinCount / maxOnPage).ceil();
-                int _filledPageCount = (pinCount / maxOnPage).floor();
+                PageController controller = PageController();
+                int pageCount = (pinCount / maxOnPage).ceil();
+                int filledPageCount = (pinCount / maxOnPage).floor();
 
                 return SliverPadding(
                   padding: EdgeInsets.only(
@@ -368,15 +368,15 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                               clipBehavior: Clip.none,
                               physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                               scrollDirection: Axis.horizontal,
-                              controller: _controller,
+                              controller: controller,
                               itemBuilder: (context, index) {
                                 return Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 10),
                                   child: Wrap(
                                     crossAxisAlignment: WrapCrossAlignment.center,
-                                    alignment: _pageCount > 1 ? WrapAlignment.start : WrapAlignment.center,
+                                    alignment: pageCount > 1 ? WrapAlignment.start : WrapAlignment.center,
                                     children: List.generate(
-                                      index < _filledPageCount
+                                      index < filledPageCount
                                           ? maxOnPage
                                           : ChatBloc()
                                                   .chats
@@ -385,32 +385,32 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                                   .bigPinHelper(true)
                                                   .length %
                                               maxOnPage,
-                                      (_index) {
+                                      (index) {
                                         return PinnedConversationTile(
                                           key: Key(ChatBloc()
                                               .chats
                                               .archivedHelper(showArchived)
                                               .unknownSendersHelper(showUnknown)
-                                              .bigPinHelper(true)[index * maxOnPage + _index]
+                                              .bigPinHelper(true)[index * maxOnPage + index]
                                               .guid
                                               .toString()),
                                           chat: ChatBloc()
                                               .chats
                                               .archivedHelper(showArchived)
                                               .unknownSendersHelper(showUnknown)
-                                              .bigPinHelper(true)[index * maxOnPage + _index],
+                                              .bigPinHelper(true)[index * maxOnPage + index],
                                         );
                                       },
                                     ),
                                   ),
                                 );
                               },
-                              itemCount: _pageCount,
+                              itemCount: pageCount,
                             ),
-                            if (_pageCount > 1)
+                            if (pageCount > 1)
                               SmoothPageIndicator(
-                                controller: _controller,
-                                count: _pageCount,
+                                controller: controller,
+                                count: pageCount,
                                 effect: ScaleEffect(
                                   dotHeight: 5.0,
                                   dotWidth: 5.0,

@@ -28,7 +28,7 @@ class VerticalSplitView extends StatefulWidget {
         super(key: key);
 
   @override
-  _VerticalSplitViewState createState() => _VerticalSplitViewState();
+  State<VerticalSplitView> createState() => _VerticalSplitViewState();
 }
 
 class _VerticalSplitViewState extends State<VerticalSplitView> {

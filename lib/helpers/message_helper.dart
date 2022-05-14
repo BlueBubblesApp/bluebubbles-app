@@ -38,7 +38,7 @@ class MessageHelper {
       bool isIncremental = false,
       Function(int progress, int length)? onProgress}) async {
     // Create master list for all the messages and a chat cache
-    List<Message> _messages = <Message>[];
+    List<Message> list = <Message>[];
     Map<Message, String?> notificationMessages = <Message, String?>{};
     Map<String, Chat> chats = <String, Chat>{};
 
@@ -54,7 +54,7 @@ class MessageHelper {
     int index = 0;
     for (dynamic item in messages) {
       if (onProgress != null) {
-        onProgress(_messages.length, messages.length);
+        onProgress(list.length, messages.length);
       }
 
       // Pull the chats out of the message, if there isnt a default
@@ -104,7 +104,7 @@ class MessageHelper {
       }
 
       // Add message to the "master list"
-      _messages.add(message);
+      list.add(message);
 
       // Every 50 messages synced, who a message
       index += 1;
@@ -132,7 +132,7 @@ class MessageHelper {
     }
 
     // Return all the synced messages
-    return _messages;
+    return list;
   }
 
   static Future<void> bulkDownloadAttachments(Chat? chat, List<dynamic> messages) async {
@@ -239,18 +239,18 @@ class MessageHelper {
         ? ""
         : message.isFromMe!
             ? "You: "
-            : ContactManager().getContactTitle(message.handle) + ": ";
+            : "${ContactManager().getContactTitle(message.handle)}: ";
     // If the item type is not 0, it's a group event
     if (message.isGroupEvent()) {
       return sender + getGroupEventText(message);
     }
 
     if (message.isInteractive()) {
-      return sender + "Interactive: ${MessageHelper.getInteractiveText(message)}";
+      return "${sender}Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
     if (isNullOrEmpty(message.fullText, trimString: true)! && !message.hasAttachments) {
-      return sender + "Empty message";
+      return "${sender}Empty message";
     }
 
     if (message.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
@@ -419,8 +419,8 @@ class MessageHelper {
 
   static List<TextSpan> buildEmojiText(String text, TextStyle style) {
     RegExp darkSunglasses = RegExp('\u{1F576}');
-    RegExp _emojiRegex = RegExp("${emojiRegex.pattern}|${darkSunglasses.pattern}");
-    List<RegExpMatch> matches = _emojiRegex.allMatches(text).toList();
+    RegExp regex = RegExp("${emojiRegex.pattern}|${darkSunglasses.pattern}");
+    List<RegExpMatch> matches = regex.allMatches(text).toList();
     if (matches.isEmpty) {
       return [
         TextSpan(

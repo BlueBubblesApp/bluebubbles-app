@@ -286,17 +286,17 @@ class MessageBloc {
       if (isNullOrEmpty(messages)!) {
         try {
           // Fetch messages from the server
-          List<dynamic> _messages = await ChatManager().getMessages(currChat.guid, offset: offset + reactionCnt);
-          count = _messages.length;
+          List<dynamic> received = await ChatManager().getMessages(currChat.guid, offset: offset + reactionCnt);
+          count = received.length;
 
           // Handle the messages
-          if (isNullOrEmpty(_messages)!) {
+          if (isNullOrEmpty(received)!) {
             Logger.info("No message chunks left from server", tag: "MessageBloc");
             completer.complete(LoadMessageResult.RETREIVED_NO_MESSAGES);
           } else {
-            Logger.info("Received ${_messages.length} messages from socket", tag: "MessageBloc");
+            Logger.info("Received ${received.length} messages from socket", tag: "MessageBloc");
 
-            messages = await MessageHelper.bulkAddMessages(_currentChat, _messages,
+            messages = await MessageHelper.bulkAddMessages(_currentChat, received,
                 notifyMessageManager: false, notifyForNewMessage: false, checkForLatestMessageText: false);
 
             // If the handle is empty, load it

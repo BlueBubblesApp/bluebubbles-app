@@ -38,7 +38,7 @@ class ConversationDetails extends StatefulWidget {
   ConversationDetails({Key? key, required this.chat, required this.messageBloc}) : super(key: key);
 
   @override
-  _ConversationDetailsState createState() => _ConversationDetailsState();
+  State<ConversationDetails> createState() => _ConversationDetailsState();
 }
 
 class _ConversationDetailsState extends State<ConversationDetails> with WidgetsBindingObserver {
@@ -73,10 +73,10 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
     showNameField = chat.displayName?.isNotEmpty ?? false;
 
     ever(ChatBloc().chats, (List<Chat> chats) async {
-      Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat.guid);
-      if (_chat == null) return;
-      _chat.getParticipants();
-      chat = _chat;
+      Chat? chat = chats.firstWhereOrNull((e) => e.guid == widget.chat.guid);
+      if (chat == null) return;
+      chat.getParticipants();
+      chat = chat;
       readOnly = !(chat.participants.length > 1);
       if (mounted) setState(() {});
     });
@@ -997,7 +997,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                             final deliveredStr = m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
                             final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
                             final text = MessageHelper.getNotificationText(m, withSender: true);
-                            final line = "(" + readStr + deliveredStr + sentStr + ") " + text;
+                            final line = "($readStr$deliveredStr$sentStr) $text";
                             lines.add(line);
                           }
                           final now = DateTime.now().toLocal();
@@ -1269,7 +1269,7 @@ class SyncDialog extends StatefulWidget {
   final int limit;
 
   @override
-  _SyncDialogState createState() => _SyncDialogState();
+  State<SyncDialog> createState() => _SyncDialogState();
 }
 
 class _SyncDialogState extends State<SyncDialog> {

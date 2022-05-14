@@ -17,7 +17,7 @@ class StickersWidget extends StatefulWidget {
   final Size size;
 
   @override
-  _StickersWidgetState createState() => _StickersWidgetState();
+  State<StickersWidget> createState() => _StickersWidgetState();
 }
 
 class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAliveClientMixin {

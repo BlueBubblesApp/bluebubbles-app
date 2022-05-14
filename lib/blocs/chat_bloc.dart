@@ -444,8 +444,8 @@ class ChatBloc {
     if (_chats.isEmpty) await refreshChats();
 
     for (int i = 0; i < _chats.length; i++) {
-      Chat _chat = _chats[i];
-      if (_chat.guid == chat.guid) {
+      Chat c = _chats[i];
+      if (c.guid == chat.guid) {
         _chats[i] = chat;
         initTileValsForChat(chats[i]);
       }

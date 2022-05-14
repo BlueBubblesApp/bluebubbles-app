@@ -85,7 +85,7 @@ class ReceivedMessage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ReceivedMessageState createState() => _ReceivedMessageState();
+  State<ReceivedMessage> createState() => _ReceivedMessageState();
 }
 
 class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMixin, WidgetsBindingObserver {
@@ -735,7 +735,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().isNotEmpty ? 0.0 : 3.0),
           child: Text(
-            getContactName(context, contactTitle, widget.message.handle!.address),
+            getContactName(context, contactTitle, widget.message.handle?.address),
             style: Theme.of(context).textTheme.subtitle1,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

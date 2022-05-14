@@ -55,7 +55,7 @@ class MiscPanel extends StatelessWidget {
                               bool didAuthenticate = await localAuth.authenticate(
                                   localizedReason:
                                   'Please authenticate to ${val == true ? "enable" : "disable"} security',
-                                  stickyAuth: true);
+                                  options: AuthenticationOptions(stickyAuth: true));
                               if (didAuthenticate) {
                                 SettingsManager().settings.shouldSecure.value = val;
                                 if (val == false) {
@@ -122,7 +122,7 @@ class MiscPanel extends StatelessWidget {
                             onChanged: (val) async {
                               var localAuth = LocalAuthentication();
                               bool didAuthenticate = await localAuth.authenticate(
-                                  localizedReason: 'Please authenticate to change your security level', stickyAuth: true);
+                                  localizedReason: 'Please authenticate to change your security level', options: AuthenticationOptions(stickyAuth: true));
                               if (didAuthenticate) {
                                 if (val != null) {
                                   SettingsManager().settings.securityLevel.value = val;
@@ -263,7 +263,7 @@ class MiscPanel extends StatelessWidget {
                             SettingsManager().settings.sendDelay.value = val.toInt();
                             saveSettings();
                           },
-                          formatValue: ((double val) => val.toStringAsFixed(0) + " sec"),
+                          formatValue: ((double val) => "${val.toStringAsFixed(0)} sec"),
                           backgroundColor: tileColor,
                           min: 1,
                           max: 10,

@@ -5,8 +5,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:fast_contacts/fast_contacts.dart';
 import 'package:get/get.dart';
 import 'package:image_size_getter/image_size_getter.dart';
-//ignore: implementation_imports
-import 'package:image_size_getter/src/utils/file_utils.dart';
 
 export 'package:bluebubbles/repository/models/io/attachment.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/attachment.dart';
@@ -106,44 +104,32 @@ class Contact {
   }
 }
 
-class AsyncFileInput extends AsyncImageInput {
-  final dynamic file;
+class AsyncInput extends AsyncImageInput {
+  const AsyncInput(this._input);
 
-  AsyncFileInput(this.file);
+  /// The input data of [ImageInput].
+  final ImageInput _input;
 
   @override
-  Future<List<int>> getRange(int start, int end) async {
-    final utils = FileUtils(file);
-    return await utils.getRange(start, end);
+  Future<bool> supportRangeLoad() async {
+    return true;
   }
-
-  @override
-  Future<int> get length async => await file.length();
 
   @override
   Future<bool> exists() async {
-    return await file.exists();
-  }
-}
-
-class AsyncMemoryInput extends AsyncImageInput {
-  final Uint8List bytes;
-  const AsyncMemoryInput(this.bytes);
-
-  factory AsyncMemoryInput.byteBuffer(ByteBuffer buffer) {
-    return AsyncMemoryInput(buffer.asUint8List());
+    return _input.exists();
   }
 
   @override
   Future<List<int>> getRange(int start, int end) async {
-    return bytes.sublist(start, end);
+    return _input.getRange(start, end);
   }
 
   @override
-  Future<int> get length async => bytes.length;
+  Future<int> get length async => _input.length;
 
   @override
-  Future<bool> exists() async {
-    return bytes.isNotEmpty;
+  Future<HaveResourceImageInput> delegateInput() async {
+    return HaveResourceImageInput(innerInput: _input);
   }
 }

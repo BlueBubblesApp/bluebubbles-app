@@ -86,10 +86,7 @@ class RegularFileOpener extends StatelessWidget {
             await MethodChannelInterface().invokeMethod(
               "open_file",
               {
-                "path": "/attachments/" +
-                    attachment.guid! +
-                    "/" +
-                    basename(file.path!),
+                "path": "/attachments/${attachment.guid!}/${basename(file.path!)}",
                 "mimeType": attachment.mimeType,
               },
             );

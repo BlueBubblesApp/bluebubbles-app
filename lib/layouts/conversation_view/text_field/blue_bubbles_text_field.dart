@@ -131,8 +131,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           RegExpMatch match = matches.lastWhere((m) => m.start < controller!.selection.start);
           String char = emojiMatches.value[index].char;
           emojiMatches.value = <Emoji>[];
-          String _text = text.substring(0, match.start) + char + " " + text.substring(match.end);
-          controller!.text = _text;
+          String finalText = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
+          controller!.text = finalText;
           controller!.selection = TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1));
         } else {
           // If the user moved the cursor before trying to insert an emoji, reset the picker
@@ -220,8 +220,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             if (emojiNames.keys.contains(emojiName)) {
               allMatches = [Emoji.byShortName(emojiName)!];
               // We can replace the :emoji: with the actual emoji here
-              String _text = text.substring(0, match.start) + allMatches.first.char + text.substring(match.end);
-              controller!.text = _text;
+              String finalText = text.substring(0, match.start) + allMatches.first.char + text.substring(match.end);
+              controller!.text = finalText;
               controller!.selection =
                   TextSelection.fromPosition(TextPosition(offset: match.start + allMatches.first.char.length));
               allMatches = <Emoji>[];
@@ -810,7 +810,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 onTap: () async {
                   GiphyGif? gif = await GiphyGet.getGif(
                     context: context,
-                    apiKey: dotenv.get('GIPHY_API_KEY'),
+                    apiKey: kIsWeb ? GIPHY_API_KEY : dotenv.get('GIPHY_API_KEY'),
                     tabColor: context.theme.primaryColor,
                   );
                   if (gif?.images?.original != null) {
@@ -820,7 +820,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         final Uint8List data = response.data;
                         addAttachment(PlatformFile(
                           path: null,
-                          name: (gif.title ?? randomString(8)) + ".gif",
+                          name: "${gif.title ?? randomString(8)}.gif",
                           size: data.length,
                           bytes: data,
                         ));
@@ -1019,7 +1019,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 Pasteboard.image.then((image) {
                   if (image != null) {
                     addAttachment(PlatformFile(
-                      name: randomString(8) + ".png",
+                      name: "${randomString(8)}.png",
                       bytes: image,
                       size: image.length,
                     ));
@@ -1039,7 +1039,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       if (r.result != null && r.result is Uint8List) {
                         Uint8List data = r.result as Uint8List;
                         addAttachment(PlatformFile(
-                          name: randomString(8) + ".png",
+                          name: "${randomString(8)}.png",
                           bytes: data,
                           size: data.length,
                         ));
@@ -1738,7 +1738,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (!isRecording.value) {
       await Record().start(
         path: pathName, // required
-        encoder: AudioEncoder.AAC, // by default
+        encoder: AudioEncoder.aacHe, // by default
         bitRate: 196000, // by default
         samplingRate: 44100, // by default
       );

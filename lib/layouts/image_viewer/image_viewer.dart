@@ -30,7 +30,7 @@ class ImageViewer extends StatefulWidget {
   final bool showInteractions;
 
   @override
-  _ImageViewerState createState() => _ImageViewerState();
+  State<ImageViewer> createState() => _ImageViewerState();
 }
 
 class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClientMixin {

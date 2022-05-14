@@ -12,7 +12,7 @@ class PrepareToDownload extends StatefulWidget {
   final PageController controller;
 
   @override
-  _PrepareToDownloadState createState() => _PrepareToDownloadState();
+  State<PrepareToDownload> createState() => _PrepareToDownloadState();
 }
 
 class _PrepareToDownloadState extends State<PrepareToDownload> {

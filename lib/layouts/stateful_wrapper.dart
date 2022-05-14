@@ -6,7 +6,7 @@ class StatefulWrapper extends StatefulWidget {
   final Widget child;
   const StatefulWrapper({required this.onInit, required this.child});
   @override
-  _StatefulWrapperState createState() => _StatefulWrapperState();
+  State<StatefulWrapper> createState() => _StatefulWrapperState();
 }
 
 class _StatefulWrapperState extends State<StatefulWrapper> {

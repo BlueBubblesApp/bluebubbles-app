@@ -241,16 +241,16 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
     if (chat != null) {
       final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
       if (index > -1 && index < ChatBloc().chats.length - 1) {
-        final _chat = ChatBloc().chats[index + 1];
+        final chat = ChatBloc().chats[index + 1];
         CustomNavigator.pushAndRemoveUntil(
           context,
           ConversationView(
-            chat: _chat,
+            chat: chat,
           ),
           (route) => route.isFirst,
         );
 
-        ChatManager().setActiveChat(_chat);
+        ChatManager().setActiveChat(chat);
       }
     }
     return null;
@@ -272,16 +272,16 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
     if (chat != null) {
       final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
       if (index > 0 && index < ChatBloc().chats.length) {
-        final _chat = ChatBloc().chats[index - 1];
+        final chat = ChatBloc().chats[index - 1];
         CustomNavigator.pushAndRemoveUntil(
           context,
           ConversationView(
-            chat: _chat,
+            chat: chat,
           ),
           (route) => route.isFirst,
         );
         
-        ChatManager().setActiveChat(_chat);
+        ChatManager().setActiveChat(chat);
       }
     }
     return null;
