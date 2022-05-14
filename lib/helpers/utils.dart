@@ -1010,3 +1010,8 @@ Future<ui.Image> loadImage(Uint8List data) async {
   });
   return completer.future;
 }
+
+String getDisplayName(String? displayName, String? firstName, String? lastName) {
+  String? _displayName = (displayName?.isEmpty ?? false) ? null : displayName;
+  return _displayName ?? [firstName, lastName].where((e) => e?.isNotEmpty ?? false).toList().join(" ");
+}
