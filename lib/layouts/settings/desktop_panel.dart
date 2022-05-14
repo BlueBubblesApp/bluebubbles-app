@@ -510,7 +510,7 @@ class DesktopPanel extends StatelessWidget {
                                                 : Obx(
                                                     () {
                                                       context.width;
-                                                      int _index = SettingsManager()
+                                                      int itemIndex = SettingsManager()
                                                           .settings
                                                           .actionList
                                                           .whereIndexed(
@@ -520,12 +520,12 @@ class DesktopPanel extends StatelessWidget {
                                                       return Positioned(
                                                         bottom: size * 0.04,
                                                         left: size * 0.04 +
-                                                            (_index *
+                                                            (itemIndex *
                                                                     (size * 0.92 - ((numActions - 1) * size * 0.02)) /
                                                                     numActions -
                                                                 0.5) +
-                                                            (size * _index * 0.02) -
-                                                            ((_index == 0 || _index == numActions - 1) ? 0.5 : 0.25),
+                                                            (size * itemIndex * 0.02) -
+                                                            ((itemIndex == 0 || itemIndex == numActions - 1) ? 0.5 : 0.25),
                                                         child: Container(
                                                           height:
                                                               size * (!showMarkRead || numActions < 4 ? 0.09 : 0.13),
@@ -543,10 +543,10 @@ class DesktopPanel extends StatelessWidget {
                                                           ),
                                                           child: Center(
                                                             child: Text(
-                                                              index == markReadIndex
-                                                                  ? SettingsManager().settings.actionList[index]
+                                                              itemIndex == markReadIndex
+                                                                  ? SettingsManager().settings.actionList[itemIndex]
                                                                   : ReactionTypes.reactionToEmoji[
-                                                                      SettingsManager().settings.actionList[index]]!,
+                                                                      SettingsManager().settings.actionList[itemIndex]]!,
                                                               style: context.textTheme.bodyText1!
                                                                   .copyWith(fontSize: size * 0.037),
                                                               textAlign: TextAlign.center,

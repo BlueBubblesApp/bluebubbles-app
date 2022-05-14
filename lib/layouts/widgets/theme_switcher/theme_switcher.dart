@@ -47,7 +47,7 @@ class ThemeSwitcher extends StatefulWidget {
   }
 
   @override
-  _ThemeSwitcherState createState() => _ThemeSwitcherState();
+  State<ThemeSwitcher> createState() => _ThemeSwitcherState();
 }
 
 class _ThemeSwitcherState extends State<ThemeSwitcher> {

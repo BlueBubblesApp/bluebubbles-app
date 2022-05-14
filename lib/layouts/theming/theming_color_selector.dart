@@ -14,7 +14,7 @@ class ThemingColorSelector extends StatefulWidget {
   final bool editable;
 
   @override
-  _ThemingColorSelectorState createState() => _ThemingColorSelectorState();
+  State<ThemingColorSelector> createState() => _ThemingColorSelectorState();
 }
 
 class _ThemingColorSelectorState extends State<ThemingColorSelector> {
@@ -28,13 +28,13 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
           color: widget.entry.color?.lightenOrDarken(50) ?? whiteLightTheme.colorScheme.secondary,
           child: InkWell(
             onTap: () async {
-              BuildContext _context = context;
+              BuildContext context2 = context;
               if (widget.editable) {
                 Color newColor = widget.entry.color!;
                 int? fontSize = widget.entry.fontSize;
                 int? fontWeight = widget.entry.fontWeight;
                 await showDialog(
-                  context: context,
+                  context: context2,
                   builder: (BuildContext context) {
                     return AlertDialog(
                       scrollable: true,
@@ -87,7 +87,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                                       min: 1,
                                       max: 9,
                                       divisions: 8,
-                                      label: "w" + fontWeight.toString() + "00" + (fontWeight == 4 ? " (Default)" : ""),
+                                      label: "w${fontWeight}00${fontWeight == 4 ? " (Default)" : ""}",
                                     ),
                                   if (widget.entry.isFont!)
                                     Padding(
@@ -133,9 +133,9 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                             widget.entry.save(widget.currentTheme);
                             widget.currentTheme.fetchData();
                             if (widget.currentTheme.selectedDarkTheme) {
-                              SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
+                              SettingsManager().saveSelectedTheme(context, selectedDarkTheme: widget.currentTheme);
                             } else if (widget.currentTheme.selectedLightTheme) {
-                              SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
+                              SettingsManager().saveSelectedTheme(context, selectedLightTheme: widget.currentTheme);
                             }
                           },
                           child: Text('SAVE'),

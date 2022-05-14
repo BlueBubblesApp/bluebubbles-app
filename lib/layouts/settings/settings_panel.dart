@@ -49,7 +49,7 @@ class SettingsPanel extends StatefulWidget {
   SettingsPanel({Key? key}) : super(key: key);
 
   @override
-  _SettingsPanelState createState() => _SettingsPanelState();
+  State<SettingsPanel> createState() => _SettingsPanelState();
 }
 
 class _SettingsPanelState extends State<SettingsPanel> {
@@ -236,10 +236,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       SettingsTile(
                         backgroundColor: tileColor,
                         title: "Appearance Settings",
-                        subtitle: SettingsManager().settings.skin.value.toString().split(".").last +
-                            "   |   " +
-                            AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst! +
-                            " Mode",
+                        subtitle: "${SettingsManager().settings.skin.value.toString().split(".").last}   |   ${AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst!} Mode",
                         onTap: () {
                           CustomNavigator.pushAndRemoveSettingsUntil(
                             context,
@@ -642,10 +639,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                         }
                                                                       }
                                                                       if(int.parse(min) < 10){
-                                                                        min = "0" + min;
+                                                                        min = "0$min";
                                                                       }
                                                                       if(int.parse(sec) < 10){
-                                                                        sec = "0" + sec;
+                                                                        sec = "0$sec";
                                                                       }
                                                                       if(int.parse(hour) > 12 && !SettingsManager().settings.use24HrFormat.value){
                                                                         hour = (int.parse(hour) -12).toString();
@@ -870,16 +867,16 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             return;
                                           }
                                           if (kIsDesktop) {
-                                            String? _filePath = await FilePicker.platform.saveFile(
+                                            String? filePath = await FilePicker.platform.saveFile(
                                               initialDirectory: (await getDownloadsDirectory())?.path,
                                               dialogTitle: 'Choose a location to save this file',
                                               fileName: "BlueBubbles-settings-${now.year}${now.month}${now.day}_${now
                                                   .hour}${now.minute}${now.second}.json",
                                             );
-                                            if (_filePath == null) {
+                                            if (filePath == null) {
                                               return showSnackbar('Failed', 'You didn\'t select a file path!');
                                             }
-                                            filePath = _filePath;
+                                            filePath = filePath;
                                           }
                                           File file = File(filePath);
                                           await file.create(recursive: true);
@@ -963,9 +960,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             e.entries.forEachIndexed((index, e2) {
                                               entryJson = entryJson + jsonEncode(e2.toMap());
                                               if (index != e.entries.length - 1) {
-                                                entryJson = entryJson + ",";
+                                                entryJson = "$entryJson,";
                                               } else {
-                                                entryJson = entryJson + "]";
+                                                entryJson = "$entryJson]";
                                               }
                                             });
                                             Map<String, dynamic> map = e.toMap();
@@ -973,16 +970,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             map['entries'] = jsonDecode(entryJson);
                                             jsonStr = jsonStr + jsonEncode(map);
                                             if (index != allThemes.length - 1) {
-                                              jsonStr = jsonStr + ",";
+                                              jsonStr = "$jsonStr,";
                                             } else {
-                                              jsonStr = jsonStr + "]";
+                                              jsonStr = "$jsonStr]";
                                             }
                                           });
                                           String directoryPath = "/storage/emulated/0/Download/BlueBubbles-theming-";
                                           DateTime now = DateTime.now().toLocal();
-                                          String filePath = directoryPath +
-                                              "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" +
-                                              ".json";
+                                          String filePath = "$directoryPath${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.json";
                                           if (kIsWeb) {
                                             final bytes = utf8.encode(jsonStr);
                                             final content = base64.encode(bytes);
@@ -993,16 +988,16 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             return;
                                           }
                                           if (kIsDesktop) {
-                                            String? _filePath = await FilePicker.platform.saveFile(
+                                            String? filePath = await FilePicker.platform.saveFile(
                                               initialDirectory: (await getDownloadsDirectory())?.path,
                                               dialogTitle: 'Choose a location to save this file',
                                               fileName: "BlueBubbles-theming-${now.year}${now.month}${now.day}_${now
                                                   .hour}${now.minute}${now.second}.json",
                                             );
-                                            if (_filePath == null) {
+                                            if (filePath == null) {
                                               return showSnackbar('Failed', 'You didn\'t select a file path!');
                                             }
-                                            filePath = _filePath;
+                                            filePath = filePath;
                                           }
                                           File file = File(filePath);
                                           await file.create(recursive: true);

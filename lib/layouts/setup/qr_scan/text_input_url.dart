@@ -15,7 +15,7 @@ class TextInputURL extends StatefulWidget {
   final Function() onClose;
 
   @override
-  _TextInputURLState createState() => _TextInputURLState();
+  State<TextInputURL> createState() => _TextInputURLState();
 }
 
 class _TextInputURLState extends State<TextInputURL> {

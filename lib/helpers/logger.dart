@@ -26,7 +26,7 @@ class BaseLogger extends GetxService {
 
   String get logPath {
     DateTime now = DateTime.now().toLocal();
-    return _directoryPath + "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" + ".txt";
+    return "$_directoryPath${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt";
   }
 
   set setEnabledLevels(List<LogLevel> levels) => enabledLevels = levels;
@@ -34,7 +34,7 @@ class BaseLogger extends GetxService {
   init() async {
     // For now, only do startup logs on desktop
     if (kIsDesktop) {
-      String startupPath = _directoryPath + "startup.txt";
+      String startupPath = "${_directoryPath}startup.txt";
       startupPath = (await getDownloadsDirectory())!.path;
       startupPath = join(startupPath, "BlueBubbles_Logs_Startup.txt");
       startupFile = File(startupPath);
@@ -63,7 +63,7 @@ class BaseLogger extends GetxService {
 
   Future<void> writeToStartupFile(String log) async {
     if (kIsDesktop) {
-      startupFile.writeAsStringSync(log + '\n', mode: FileMode.writeOnlyAppend);
+      startupFile.writeAsStringSync('$log\n', mode: FileMode.writeOnlyAppend);
     }
   }
 

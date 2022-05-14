@@ -16,7 +16,7 @@ class ReactionDetailWidget extends StatefulWidget {
   final Message message;
 
   @override
-  _ReactionDetailWidgetState createState() => _ReactionDetailWidgetState();
+  State<ReactionDetailWidget> createState() => _ReactionDetailWidgetState();
 }
 
 class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {

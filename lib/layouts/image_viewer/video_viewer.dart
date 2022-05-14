@@ -31,7 +31,7 @@ class VideoViewer extends StatefulWidget {
   final bool showInteractions;
 
   @override
-  _VideoViewerState createState() => _VideoViewerState();
+  State<VideoViewer> createState() => _VideoViewerState();
 }
 
 class _VideoViewerState extends State<VideoViewer> {

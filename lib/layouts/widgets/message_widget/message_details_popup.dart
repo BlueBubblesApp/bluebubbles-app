@@ -146,7 +146,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   }
 
   void sendReaction(String type) {
-    Logger.info("Sending reaction type: " + type);
+    Logger.info("Sending reaction type: $type");
     ActionHandler.sendReaction(widget.message.getChat() ?? widget.currentChat!.chat, widget.message, type);
     Navigator.of(context).pop();
   }
@@ -509,7 +509,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           child: InkWell(
             onTap: () async {
               await launchUrlString(
-                  widget.message.attachments.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
+                  "${widget.message.attachments.first!.webUrl!}?guid=${SettingsManager().settings.guidAuthKey}");
               popDetails();
             },
             child: ListTile(

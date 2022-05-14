@@ -13,7 +13,7 @@ class ReactionsWidget extends StatefulWidget {
   final bool bigPin;
 
   @override
-  _ReactionsWidgetState createState() => _ReactionsWidgetState();
+  State<ReactionsWidget> createState() => _ReactionsWidgetState();
 }
 
 class _ReactionsWidgetState extends State<ReactionsWidget> {

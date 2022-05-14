@@ -108,9 +108,9 @@ class IncrementalSyncManager extends SyncManager {
     if (saveDate && syncStart != null) {
       addToOutput("Saving last sync date: $syncStart");
 
-      Settings _settingsCopy = SettingsManager().settings;
-      _settingsCopy.lastIncrementalSync.value = syncStart!;
-      await SettingsManager().saveSettings(_settingsCopy);
+      Settings settingsCopy = SettingsManager().settings;
+      settingsCopy.lastIncrementalSync.value = syncStart!;
+      await SettingsManager().saveSettings(settingsCopy);
     }
 
     // Call this first so listeners can react before any

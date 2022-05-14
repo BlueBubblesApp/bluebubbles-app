@@ -117,7 +117,7 @@ class ConversationListState extends State<ConversationList> {
 
     String appDocPath = SettingsManager().appDocDir.path;
     String ext = ".png";
-    File file = File("$appDocPath/attachments/" + randomString(16) + ext);
+    File file = File("$appDocPath/attachments/${randomString(16)}$ext");
     await file.create(recursive: true);
 
     // Take the picture after opening the camera

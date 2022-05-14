@@ -81,7 +81,7 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
           child: Container(width: width, height: height, color: Theme.of(context).colorScheme.secondary, child: child)));
 }
 
-Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textTheme) async {
+Future<void> showConversationTileMenu(context, widget, chat, tapPosition, textTheme) async {
   bool ios = SettingsManager().settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   await showMenu(
@@ -102,7 +102,7 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
             behavior: HitTestBehavior.opaque,
             onTap: () async {
               await chat.togglePin(!chat.isPinned!);
-              if (_this.mounted) _this.setState(() {});
+              if (widget.mounted) widget.setState(() {});
               Navigator.pop(context);
             },
             child: Padding(
@@ -134,7 +134,7 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
             behavior: HitTestBehavior.opaque,
             onTap: () async {
               await chat.toggleMute(chat.muteType != "mute");
-              if (_this.mounted) _this.setState(() {});
+              if (widget.mounted) widget.setState(() {});
               Navigator.pop(context);
             },
             child: Padding(
@@ -162,7 +162,7 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
           behavior: HitTestBehavior.opaque,
           onTap: () {
             ChatBloc().toggleChatUnread(chat, !chat.hasUnreadMessage!);
-            if (_this.mounted) _this.setState(() {});
+            if (widget.mounted) widget.setState(() {});
             Navigator.pop(context);
           },
           child: Padding(
@@ -195,7 +195,7 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
               } else {
                 ChatBloc().archiveChat(chat);
               }
-              if (_this.mounted) _this.setState(() {});
+              if (widget.mounted) widget.setState(() {});
               Navigator.pop(context);
             },
             child: Padding(
@@ -228,7 +228,7 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
             onTap: () async {
               ChatBloc().deleteChat(chat);
               Chat.deleteChat(chat);
-              if (_this.mounted) _this.setState(() {});
+              if (widget.mounted) widget.setState(() {});
               Navigator.pop(context);
             },
             child: Padding(

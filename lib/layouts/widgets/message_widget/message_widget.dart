@@ -62,7 +62,7 @@ class MessageWidget extends StatefulWidget {
   late final _fakeText = faker.lorem.words(message.text?.split(" ").length ?? 0).join(" ");
 
   @override
-  _MessageState createState() => _MessageState();
+  State<MessageWidget> createState() => _MessageState();
 }
 
 class _MessageState extends State<MessageWidget> {
@@ -290,7 +290,7 @@ class _MessageState extends State<MessageWidget> {
     return Obx(
       () {
         Widget message;
-        bool _tapped = tapped.value;
+        bool didTap = tapped.value;
         if (_message.isFromMe!) {
           message = SentMessage(
             showTail: showTail,
@@ -307,7 +307,7 @@ class _MessageState extends State<MessageWidget> {
             reactionsWidget: reactionsWidget,
             shouldFadeIn: currentChat?.sentMessages.firstWhereOrNull((e) => e?.guid == _message.guid) != null,
             showHero: widget.showHero,
-            showDeliveredReceipt: widget.isFirstSentMessage || _tapped,
+            showDeliveredReceipt: widget.isFirstSentMessage || didTap,
             autoplayEffect: widget.autoplayEffect,
           );
         } else {
@@ -329,7 +329,7 @@ class _MessageState extends State<MessageWidget> {
             stickersWidget: stickersWidget,
             attachmentsWidget: widgetAttachments,
             reactionsWidget: reactionsWidget,
-            showTimeStamp: _tapped,
+            showTimeStamp: didTap,
             autoplayEffect: widget.autoplayEffect,
           );
         }

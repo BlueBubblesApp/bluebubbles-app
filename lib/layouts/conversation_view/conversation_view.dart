@@ -134,10 +134,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       currentChat = ChatManager().activeChat;
 
       if (currentChat != null) {
-        Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat?.guid);
-        if (_chat != null) {
-          _chat.getParticipants();
-          currentChat!.chat = _chat;
+        Chat? chat = chats.firstWhereOrNull((e) => e.guid == widget.chat?.guid);
+        if (chat != null) {
+          chat.getParticipants();
+          currentChat!.chat = chat;
           if (mounted) setState(() {});
         }
       }

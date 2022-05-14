@@ -22,7 +22,7 @@ class LocationWidget extends StatefulWidget {
   final Attachment attachment;
 
   @override
-  _LocationWidgetState createState() => _LocationWidgetState();
+  State<LocationWidget> createState() => _LocationWidgetState();
 }
 
 class _LocationWidgetState extends State<LocationWidget> {
@@ -37,14 +37,14 @@ class _LocationWidgetState extends State<LocationWidget> {
   void loadLocation() async {
     // If we already have location data, don't load it again
     if (location != null) return;
-    String _location;
+    String temp;
 
     if (kIsWeb || widget.file.path == null) {
-      _location = utf8.decode(widget.file.bytes!);
+      temp = utf8.decode(widget.file.bytes!);
     } else {
-      _location = await File(widget.file.path!).readAsString();
+      temp = await File(widget.file.path!).readAsString();
     }
-    location = AttachmentHelper.parseAppleLocation(_location);
+    location = AttachmentHelper.parseAppleLocation(temp);
 
     if (location != null && mounted) {
       setState(() {});

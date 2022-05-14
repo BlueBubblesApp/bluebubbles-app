@@ -14,34 +14,34 @@ class ConfigEntry<T> {
   });
 
   static ConfigEntry fromMap(Map<String, dynamic> json) {
-    String _type = json["type"] ?? "";
-    Type t = DBConverter.getType(_type) ?? String;
+    String type = json["type"] ?? "";
+    Type t = DBConverter.getType(type) ?? String;
     if (t == bool) {
       return ConfigEntry<bool>(
         id: json["ROWID"],
         name: json["name"],
-        value: DBConverter.getValue(json["value"], _type),
+        value: DBConverter.getValue(json["value"], type),
         type: t,
       );
     } else if (t == double) {
       return ConfigEntry<double>(
         id: json["ROWID"],
         name: json["name"],
-        value: DBConverter.getValue(json["value"], _type),
+        value: DBConverter.getValue(json["value"], type),
         type: t,
       );
     } else if (t == int) {
       return ConfigEntry<int>(
         id: json["ROWID"],
         name: json["name"],
-        value: DBConverter.getValue(json["value"], _type),
+        value: DBConverter.getValue(json["value"], type),
         type: t,
       );
     } else {
       return ConfigEntry<String>(
         id: json["ROWID"],
         name: json["name"],
-        value: DBConverter.getValue(json["value"], _type),
+        value: DBConverter.getValue(json["value"], type),
         type: t,
       );
     }
