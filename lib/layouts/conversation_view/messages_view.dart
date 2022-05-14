@@ -417,6 +417,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
     final _scrollController = scrollController ?? ScrollController();
     final Widget child = FocusScope(
       node: _node,
+      onFocusChange: kIsDesktop || kIsWeb ? (focus) => focus ? EventDispatcher().emit('focus-keyboard', null) : null : null,
       child: Stack(
         children: [
           GestureDetector(

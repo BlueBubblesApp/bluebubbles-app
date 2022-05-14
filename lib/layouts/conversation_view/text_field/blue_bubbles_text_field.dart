@@ -946,8 +946,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     emojiController
                         .jumpTo(max((emojiSelectedIndex.value - downMovementIndex) * 48, emojiController.offset));
                   }
+                  return KeyEventResult.handled;
                 }
-                return KeyEventResult.handled;
               }
 
               // Up arrow
@@ -959,8 +959,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     emojiController
                         .jumpTo(min((emojiSelectedIndex.value - upMovementIndex) * 48, emojiController.offset));
                   }
+                  return KeyEventResult.handled;
                 }
-                return KeyEventResult.handled;
               }
 
               // Tab

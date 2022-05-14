@@ -10,8 +10,6 @@ import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:get/get.dart';
 
-import '../socket_manager.dart';
-
 abstract class MessageBlocEventType {
   static String insert = "INSERT";
   static String update = "UPDATE";

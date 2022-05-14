@@ -114,7 +114,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       ),
     );
     widget.popupPushed.call(false);
-    if (keyboardStatus) EventDispatcher().emit('focus-keyboard', null);
+    if (keyboardStatus || kIsDesktop || kIsWeb) EventDispatcher().emit('focus-keyboard', null);
     if (mounted) {
       setState(() {
         visible = true;

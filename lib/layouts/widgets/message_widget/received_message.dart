@@ -26,6 +26,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -390,16 +391,48 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                         fakeSubject: widget.fakeSubject,
                         fakeText: widget.fakeText),
                     builder: (context, snapshot) {
-                      return RichText(
-                        text: TextSpan(
-                          children: snapshot.data ??
-                              MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                                  colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null,
-                                  fakeSubject: widget.fakeSubject,
-                                  fakeText: widget.fakeText),
-                          style: Theme.of(context).textTheme.bodyText2,
-                        ),
-                      );
+                      return (kIsDesktop || kIsWeb) &&
+                              ((ModalRoute.of(context)?.settings.arguments as Map?)?['hideTail'] ?? false)
+                          ? Theme(
+                              data: context.theme.copyWith(
+                                  textSelectionTheme: TextSelectionThemeData(
+                                      selectionColor: context.theme.primaryColor.withAlpha(150))),
+                              child: SelectableText.rich(
+                                TextSpan(
+                                  children: snapshot.data ??
+                                      MessageWidgetMixin.buildMessageSpans(
+                                        context,
+                                        widget.message,
+                                        colors: widget.message.handle?.color != null
+                                            ? getBubbleColors(widget.message)
+                                            : null,
+                                        fakeSubject: widget.fakeSubject,
+                                        fakeText: widget.fakeText,
+                                      ),
+                                  style: Theme.of(context).textTheme.bodyText2,
+                                ),
+                                cursorWidth: 0,
+                                selectionControls: CupertinoTextSelectionControls(),
+                              ),
+                            )
+                          : Padding(
+                              padding: EdgeInsets.only(left: 1),
+                              child: RichText(
+                                text: TextSpan(
+                                  children: snapshot.data ??
+                                      MessageWidgetMixin.buildMessageSpans(
+                                        context,
+                                        widget.message,
+                                        colors: widget.message.handle?.color != null
+                                            ? getBubbleColors(widget.message)
+                                            : null,
+                                        fakeSubject: widget.fakeSubject,
+                                        fakeText: widget.fakeText,
+                                      ),
+                                  style: Theme.of(context).textTheme.bodyText2,
+                                ),
+                              ),
+                            );
                     }),
           ),
         ],
@@ -529,7 +562,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     bool showSender = SettingsManager().settings.alwaysShowAvatars.value ||
         isGroup ||
         widget.message.guid == "redacted-mode-demo" ||
-        widget.message.guid!.contains("theme-selector") || widget.showHandle;
+        widget.message.guid!.contains("theme-selector") ||
+        widget.showHandle;
     if (widget.message.guid == "redacted-mode-demo" ||
         widget.message.guid!.contains("theme-selector") ||
         ((isGroup || widget.showHandle) &&

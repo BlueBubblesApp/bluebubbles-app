@@ -28,8 +28,8 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -41,7 +41,6 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:pasteboard/pasteboard.dart';
 import 'package:sprung/sprung.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -308,35 +307,35 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                       .map(
                         (e) => Padding(
                           padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
-                          child: Container(
-                            width: reactionIconSize - 15,
-                            height: reactionIconSize - 15,
-                            decoration: BoxDecoration(
-                              color: currentlySelectedReaction == e
-                                  ? Theme.of(context).primaryColor
-                                  : Theme.of(context).colorScheme.secondary.withAlpha(150),
-                              borderRadius: BorderRadius.circular(
-                                20,
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              sendReaction(selfReaction == e ? "-$e" : e);
+                            },
+                            onTapDown: (TapDownDetails details) {
+                              if (currentlySelectedReaction == e) {
+                                currentlySelectedReaction = null;
+                              } else {
+                                currentlySelectedReaction = e;
+                              }
+                              if (mounted) setState(() {});
+                            },
+                            onTapUp: (details) {},
+                            onTapCancel: () {
+                              currentlySelectedReaction = selfReaction;
+                              if (mounted) setState(() {});
+                            },
+                            child: Container(
+                              width: reactionIconSize - 15,
+                              height: reactionIconSize - 15,
+                              decoration: BoxDecoration(
+                                color: currentlySelectedReaction == e
+                                    ? Theme.of(context).primaryColor
+                                    : Theme.of(context).colorScheme.secondary.withAlpha(150),
+                                borderRadius: BorderRadius.circular(
+                                  20,
+                                ),
                               ),
-                            ),
-                            child: GestureDetector(
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                sendReaction(selfReaction == e ? "-$e" : e);
-                              },
-                              onTapDown: (TapDownDetails details) {
-                                if (currentlySelectedReaction == e) {
-                                  currentlySelectedReaction = null;
-                                } else {
-                                  currentlySelectedReaction = e;
-                                }
-                                if (mounted) setState(() {});
-                              },
-                              onTapUp: (details) {},
-                              onTapCancel: () {
-                                currentlySelectedReaction = selfReaction;
-                                if (mounted) setState(() {});
-                              },
                               child: Padding(
                                 padding: const EdgeInsets.all(6),
                                 child: Reaction.getReactionIcon(e, iconColor),
@@ -668,7 +667,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-      if (!isEmptyString(widget.message.fullText))
+      if (!kIsDesktop && !kIsWeb && !isEmptyString(widget.message.fullText))
         Material(
           color: Colors.transparent,
           child: InkWell(
