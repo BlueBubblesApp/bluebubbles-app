@@ -32,7 +32,7 @@ class MaterialConversationList extends StatefulWidget {
   final ConversationListState parent;
 
   @override
-  State<MaterialConversationList> createState() => _MaterialConversationListState();
+  _MaterialConversationListState createState() => _MaterialConversationListState();
 }
 
 class _MaterialConversationListState extends State<MaterialConversationList> {
@@ -369,7 +369,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                                           String appDocPath = SettingsManager().appDocDir.path;
                                                           String ext = ".png";
                                                           File file =
-                                                              File("$appDocPath/attachments/${randomString(16)}$ext");
+                                                              File("$appDocPath/attachments/" + randomString(16) + ext);
                                                           await file.create(recursive: true);
 
                                                           // Take the picture after opening the camera

@@ -83,7 +83,7 @@ class SearchViewState extends State<SearchView> {
       {'statement': 'message.associated_message_guid IS NULL', 'args': null}
     ]);
 
-    List<dynamic> results2 = [];
+    List<dynamic> _results = [];
     for (dynamic item in results) {
       // Build the data map
       Map<String, dynamic> data = {'message': Message.fromMap(item), 'chat': Chat.fromMap(item['chats'][0])};
@@ -110,11 +110,11 @@ class SearchViewState extends State<SearchView> {
         await data['chat'].getTitle();
 
         // Add the item to the results
-        results2.add(data);
+        _results.add(data);
       }
     }
 
-    this.results = results2;
+    this.results = _results;
     _listKey = GlobalKey<AnimatedListState>();
 
     // Add the cached result

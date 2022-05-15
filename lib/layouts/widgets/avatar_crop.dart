@@ -20,7 +20,7 @@ class AvatarCrop extends StatefulWidget {
   AvatarCrop({this.index, this.chat});
 
   @override
-  State<AvatarCrop> createState() => _AvatarCropState();
+  _AvatarCropState createState() => _AvatarCropState();
 }
 
 class _AvatarCropState extends State<AvatarCrop> {

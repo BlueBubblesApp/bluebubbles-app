@@ -18,7 +18,7 @@ class AttachmentPicked extends StatefulWidget {
   final Function onTap;
 
   @override
-  State<AttachmentPicked> createState() => _AttachmentPickedState();
+  _AttachmentPickedState createState() => _AttachmentPickedState();
 }
 
 class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepAliveClientMixin {

@@ -438,7 +438,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                               saveSettings();
                             },
                             options: controller.refreshRates,
-                            textProcessing: (val) => val == 0 ? "Auto" : "$val Hz",
+                            textProcessing: (val) => val == 0 ? "Auto" : val.toString() + " Hz",
                             title: "Display",
                             backgroundColor: tileColor,
                             secondaryColor: headerColor,

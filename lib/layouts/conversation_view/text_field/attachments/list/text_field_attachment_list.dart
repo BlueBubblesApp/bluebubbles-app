@@ -9,7 +9,7 @@ class TextFieldAttachmentList extends StatefulWidget {
   final Function(PlatformFile) onRemove;
 
   @override
-  State<TextFieldAttachmentList> createState() => _TextFieldAttachmentListState();
+  _TextFieldAttachmentListState createState() => _TextFieldAttachmentListState();
 }
 
 class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> {
@@ -33,7 +33,7 @@ class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> {
             ),
             itemBuilder: (context, int index) {
               return AttachmentListItem(
-                key: Key("attachmentList${widget.attachments[index].name}"),
+                key: Key("attachmentList" + widget.attachments[index].name),
                 file: widget.attachments[index],
                 onRemove: () {
                   widget.onRemove(widget.attachments[index]);

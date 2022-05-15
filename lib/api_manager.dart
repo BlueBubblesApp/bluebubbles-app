@@ -17,7 +17,7 @@ class ApiService extends GetxService {
   late Dio dio;
 
   /// Get the URL origin from the current server address
-  String get origin => "${Uri.parse(SettingsManager().settings.serverAddress.value).origin}/api/v1";
+  String get origin => Uri.parse(SettingsManager().settings.serverAddress.value).origin + "/api/v1";
 
   /// Helper function to build query params, this way we only need to add the
   /// required guid auth param in one place

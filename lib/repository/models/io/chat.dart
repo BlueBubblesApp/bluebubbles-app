@@ -27,12 +27,12 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:objectbox/objectbox.dart';
 import 'package:universal_io/io.dart';
 
-String getFullChatTitle(Chat chat) {
+String getFullChatTitle(Chat _chat) {
   String? title = "";
-  if (isNullOrEmpty(chat.displayName)!) {
-    Chat c = chat;
-    if (isNullOrEmpty(c.participants)!) {
-      c = c.getParticipants();
+  if (isNullOrEmpty(_chat.displayName)!) {
+    Chat chat = _chat;
+    if (isNullOrEmpty(chat.participants)!) {
+      chat = _chat.getParticipants();
     }
 
     //todo - do we really need this here?
@@ -43,10 +43,10 @@ String getFullChatTitle(Chat chat) {
     }*/
 
     List<String> titles = [];
-    for (int i = 0; i < c.participants.length; i++) {
-      String? name = ContactManager().getContactTitle(c.participants[i]);
+    for (int i = 0; i < chat.participants.length; i++) {
+      String? name = ContactManager().getContactTitle(chat.participants[i]);
 
-      if (c.participants.length > 1 && !name.numericOnly().isPhoneNumber) {
+      if (chat.participants.length > 1 && !name.numericOnly().isPhoneNumber) {
         name = name.trim().split(" ")[0];
       } else {
         name = name.trim();
@@ -56,7 +56,7 @@ String getFullChatTitle(Chat chat) {
     }
 
     if (titles.isEmpty) {
-      title = c.chatIdentifier;
+      title = _chat.chatIdentifier;
     } else if (titles.length == 1) {
       title = titles[0];
     } else if (titles.length <= 4) {
@@ -68,7 +68,7 @@ String getFullChatTitle(Chat chat) {
       title = "$title & ${titles.length - 3} others";
     }
   } else {
-    title = chat.displayName;
+    title = _chat.displayName;
   }
 
   return title!;

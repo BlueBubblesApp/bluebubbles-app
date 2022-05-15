@@ -366,9 +366,9 @@ class ActionHandler {
       completer.complete();
     }).catchError((err) {
       if (err is Response) {
-        Logger.error("FAILED TO SEND REACTION ${err.data["error"]["message"]}");
+        Logger.error("FAILED TO SEND REACTION " + err.data["error"]["message"]);
       } else {
-        Logger.error("FAILED TO SEND REACTION $err");
+        Logger.error("FAILED TO SEND REACTION " + err.toString());
       }
 
       completer.completeError(err);
@@ -448,7 +448,7 @@ class ActionHandler {
 
     if (updatedMessage.isFromMe!) {
       await Future.delayed(const Duration(milliseconds: 200));
-      Logger.info("Handling message update: ${updatedMessage.text!}", tag: "Actions-UpdatedMessage");
+      Logger.info("Handling message update: " + updatedMessage.text!, tag: "Actions-UpdatedMessage");
     }
 
     updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage);
@@ -585,7 +585,7 @@ class ActionHandler {
     } else if (forceProcess || !NotificationManager().hasProcessed(data["guid"])) {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
-        Logger.info("Client received new message ${chats[i].guid}");
+        Logger.info("Client received new message " + chats[i].guid);
 
         // Gets the chat from the chat bloc
         Chat? chat = await ChatBloc().getChat(chats[i].guid);

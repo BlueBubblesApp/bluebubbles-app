@@ -29,7 +29,7 @@ class SchedulePanel extends StatefulWidget {
   SchedulePanel({Key? key, required this.chat}) : super(key: key);
 
   @override
-  State<SchedulePanel> createState() => _SchedulePanelState();
+  _SchedulePanelState createState() => _SchedulePanelState();
 }
 
 class _SchedulePanelState extends State<SchedulePanel> {

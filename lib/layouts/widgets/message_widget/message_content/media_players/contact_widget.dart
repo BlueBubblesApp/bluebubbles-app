@@ -24,7 +24,7 @@ class ContactWidget extends StatefulWidget {
   final Attachment attachment;
 
   @override
-  State<ContactWidget> createState() => _ContactWidgetState();
+  _ContactWidgetState createState() => _ContactWidgetState();
 }
 
 class _ContactWidgetState extends State<ContactWidget> {
@@ -76,7 +76,10 @@ class _ContactWidgetState extends State<ContactWidget> {
                 MethodChannelInterface().invokeMethod(
                   "open_file",
                   {
-                    "path": "/attachments/${widget.attachment.guid!}/${basename(widget.file.path!)}",
+                    "path": "/attachments/" +
+                        widget.attachment.guid! +
+                        "/" +
+                        basename(widget.file.path!),
                     "mimeType": "text/x-vcard",
                   },
                 );

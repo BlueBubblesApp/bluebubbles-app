@@ -30,37 +30,37 @@ class Share {
   static Future<void> location(Chat chat) async {
     Location location = Location();
 
-    bool serviceEnabled;
-    PermissionStatus permissionGranted;
-    LocationData locationData;
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
+    LocationData _locationData;
 
-    serviceEnabled = await location.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
-      if (!serviceEnabled) {
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
         return;
       }
     }
 
-    permissionGranted = await location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
         return;
       }
     }
 
-    locationData = await location.getLocation();
-    String vcfString = AttachmentHelper.createAppleLocation(locationData.latitude, locationData.longitude);
+    _locationData = await location.getLocation();
+    String vcfString = AttachmentHelper.createAppleLocation(_locationData.latitude, _locationData.longitude);
 
     // Build out the file we are going to send
-    String attachmentGuid = "temp-${randomString(8)}";
-    String fileName = "$attachmentGuid-CL.loc.vcf";
+    String _attachmentGuid = "temp-${randomString(8)}";
+    String fileName = "$_attachmentGuid-CL.loc.vcf";
     File? file;
     String? filePath;
     Uint8List? bytes;
     if (!kIsWeb) {
-      filePath = "${AttachmentHelper.getTempPath()}/$fileName";
+      filePath = AttachmentHelper.getTempPath() + "/" + fileName;
       file = await (await File(filePath).create()).writeAsString(vcfString);
     } else {
       bytes = Uint8List.fromList(utf8.encode(vcfString));

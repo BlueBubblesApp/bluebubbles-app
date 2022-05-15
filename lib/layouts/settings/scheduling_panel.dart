@@ -17,7 +17,7 @@ class SchedulingPanel extends StatefulWidget {
   SchedulingPanel({Key? key}) : super(key: key);
 
   @override
-  State<SchedulingPanel> createState() => _SchedulingPanelState();
+  _SchedulingPanelState createState() => _SchedulingPanelState();
 }
 
 class _SchedulingPanelState extends State<SchedulingPanel> {

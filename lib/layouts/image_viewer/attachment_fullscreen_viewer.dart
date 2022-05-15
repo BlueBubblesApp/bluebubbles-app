@@ -83,7 +83,10 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
         await widget.currentChat!.updateChatAttachments();
         List<Attachment> newer = widget.currentChat!.chatAttachments.sublist(0);
         if (newer.length > older.length) {
-          Logger.info("Increasing currentIndex from $currentIndex to ${newer.length - older.length + currentIndex}");
+          Logger.info("Increasing currentIndex from " +
+              currentIndex.toString() +
+              " to " +
+              (newer.length - older.length + currentIndex).toString());
           currentIndex += newer.length - older.length;
           controller!.animateToPage(currentIndex, duration: Duration(milliseconds: 0), curve: Curves.easeIn);
         }
@@ -174,7 +177,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                 '${kIsWeb ? widget.attachment.guid : widget.currentChat != null ? widget.currentChat!.chatAttachments[index].guid : widget.attachment.guid}'),
                             onDismissed: (_) => Navigator.of(context).pop(),
                             child: Builder(builder: (_) {
-                              Logger.info("Showing index: $index");
+                              Logger.info("Showing index: " + index.toString());
                               Attachment attachment = !kIsWeb && widget.currentChat != null
                                   ? widget.currentChat!.chatAttachments[index]
                                   : widget.attachment;

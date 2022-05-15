@@ -10,7 +10,7 @@ class FutureLoaderDialog extends StatefulWidget {
   final bool showErrorDialog;
 
   @override
-  State<FutureLoaderDialog> createState() => _FutureLoaderDialogState();
+  _FutureLoaderDialogState createState() => _FutureLoaderDialogState();
 }
 
 class _FutureLoaderDialogState extends State<FutureLoaderDialog> {

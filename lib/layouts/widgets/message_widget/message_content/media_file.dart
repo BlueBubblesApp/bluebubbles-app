@@ -18,7 +18,7 @@ class MediaFile extends StatefulWidget {
   final Attachment attachment;
 
   @override
-  State<MediaFile> createState() => _MediaFileState();
+  _MediaFileState createState() => _MediaFileState();
 }
 
 class _MediaFileState extends State<MediaFile> {

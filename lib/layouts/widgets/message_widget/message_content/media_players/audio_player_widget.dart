@@ -27,7 +27,7 @@ class AudioPlayerWidget extends StatefulWidget {
   final bool isFromMe;
 
   @override
-  State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
+  _AudioPlayerWidgetState createState() => _AudioPlayerWidgetState();
 }
 
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {

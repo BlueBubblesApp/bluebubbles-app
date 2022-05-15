@@ -166,7 +166,7 @@ class AttachmentPanel extends StatelessWidget {
                             SettingsManager().settings.previewCompressionQuality.value = val.toInt();
                             saveSettings();
                           },
-                          formatValue: ((double val) => "${val.toInt()}%"),
+                          formatValue: ((double val) => val.toInt().toString() + "%"),
                           backgroundColor: tileColor,
                           leading: Obx(() => Column(
                             mainAxisAlignment: MainAxisAlignment.center,

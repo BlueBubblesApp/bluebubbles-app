@@ -30,7 +30,7 @@ class TextFieldAttachmentPicker extends StatefulWidget {
   final Function(PlatformFile?) onAddAttachment;
 
   @override
-  State<TextFieldAttachmentPicker> createState() => _TextFieldAttachmentPickerState();
+  _TextFieldAttachmentPickerState createState() => _TextFieldAttachmentPickerState();
 }
 
 class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
@@ -93,7 +93,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
     // Create a file that the camera can write to
     String appDocPath = SettingsManager().appDocDir.path;
     String ext = (type == 'video') ? ".mp4" : ".png";
-    File file = File("$appDocPath/attachments/${randomString(16)}$ext");
+    File file = File("$appDocPath/attachments/" + randomString(16) + ext);
     await file.create(recursive: true);
 
     // Take the picture after opening the camera
@@ -361,7 +361,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                 (context, index) {
                               AssetEntity element = _images[index];
                               return AttachmentPicked(
-                                key: Key("attachmentPicked${_images[index].id}"),
+                                key: Key("attachmentPicked" + _images[index].id),
                                 data: element,
                                 onTap: () async {
                                   dynamic file = await element.file;

@@ -1,19 +1,36 @@
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:qr_code_scanner/qr_code_scanner.dart';
 
 class QRCodeScanner extends StatefulWidget {
   QRCodeScanner({Key? key}) : super(key: key);
 
   @override
-  State<QRCodeScanner> createState() => _QRCodeScannerState();
+  _QRCodeScannerState createState() => _QRCodeScannerState();
 }
 
 class _QRCodeScannerState extends State<QRCodeScanner> {
+  QRViewController? controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  var qrText = "";
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
+  }
+
+  void _onQRViewCreated(QRViewController controller) {
+    this.controller = controller;
+    controller.scannedDataStream.listen((scanData) {
+      if (qrText.isEmpty) {
+        qrText = scanData.code;
+        Navigator.of(context).pop(qrText);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,14 +42,17 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
         statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
-        body: MobileScanner(
+        body: QRView(
           key: qrKey,
-          allowDuplicates: false,
-          onDetect: (barcode, args) {
-            if (!isNullOrEmpty(barcode.rawValue)!) {
-              Navigator.of(context).pop(barcode.rawValue);
-            }
-          },
+          overlay: QrScannerOverlayShape(
+            borderColor: Theme.of(context).primaryColor,
+            borderRadius: 10,
+            borderLength: 30,
+            borderWidth: 10,
+            cutOutSize:
+                (MediaQuery.of(context).size.width < 400 || MediaQuery.of(context).size.height < 400) ? 250.0 : 450.0,
+          ),
+          onQRViewCreated: _onQRViewCreated,
         ),
       ),
     );

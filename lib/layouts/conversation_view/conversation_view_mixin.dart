@@ -791,7 +791,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           }
         } else if (chatSelectorController.text[0] != " ") {
           chatSelectorController.text =
-              " ${chatSelectorController.text.substring(0, chatSelectorController.text.length - 1)}";
+              " " + chatSelectorController.text.substring(0, chatSelectorController.text.length - 1);
           chatSelectorController.selection = TextSelection.fromPosition(
             TextPosition(offset: chatSelectorController.text.length),
           );
@@ -956,7 +956,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // slugify the search query for matching
     String tempSearchQuery = slugText(searchQuery);
 
-    List<UniqueContact> contacts = [];
+    List<UniqueContact> _contacts = [];
     List<String> cache = [];
     void addContactEntries(Contact contact, {conditionally = false}) {
       for (String phone in contact.phones) {
@@ -965,7 +965,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
         if (!cache.contains(cleansed)) {
           cache.add(cleansed);
-          contacts.add(
+          _contacts.add(
             UniqueContact(
               address: phone,
               displayName: contact.displayName,
@@ -980,7 +980,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
         if (!cache.contains(emailVal)) {
           cache.add(emailVal);
-          contacts.add(
+          _contacts.add(
             UniqueContact(
               address: email,
               displayName: contact.displayName,
@@ -1001,7 +1001,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       }
     }
 
-    List<UniqueContact> conversationEntries = [];
+    List<UniqueContact> _conversations = [];
     if (selected.isEmpty && widget.type != ChatSelectorTypes.ONLY_CONTACTS) {
       for (Chat chat in conversations) {
         if (chat.title == null && chat.displayName == null) continue;
@@ -1009,7 +1009,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         if (title.contains(tempSearchQuery)) {
           if (!cache.contains(chat.guid)) {
             cache.add(chat.guid);
-            conversationEntries.add(
+            _conversations.add(
               UniqueContact(
                 chat: chat,
                 displayName: chat.title,
@@ -1020,9 +1020,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       }
     }
 
-    conversationEntries.addAll(contacts);
+    _conversations.addAll(_contacts);
     if (searchQuery.isNotEmpty) {
-      conversationEntries.sort((a, b) {
+      _conversations.sort((a, b) {
         if (a.isChat && a.chat!.participants.length == 1) return -1;
         if (b.isChat && b.chat!.participants.length == 1) return 1;
         if (a.isChat && !b.isChat) return 1;
@@ -1033,7 +1033,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     bool shouldRefreshState = searchQuery != previousSearch || contacts.isEmpty || conversations.isEmpty;
-    setContacts(conversationEntries, refreshState: shouldRefreshState);
+    setContacts(_conversations, refreshState: shouldRefreshState);
     previousSearch = searchQuery;
   }
 

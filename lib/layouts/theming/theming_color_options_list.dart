@@ -20,7 +20,7 @@ class ThemingColorOptionsList extends StatefulWidget {
   final StreamController controller;
 
   @override
-  State<ThemingColorOptionsList> createState() => _ThemingColorOptionsListState();
+  _ThemingColorOptionsListState createState() => _ThemingColorOptionsListState();
 }
 
 class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
@@ -49,9 +49,9 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
         return;
       }
 
-      BuildContext context2 = context;
+      BuildContext _context = context;
       showDialog(
-        context: context2,
+        context: context,
         builder: (context) => NewThemeCreateAlert(
           onCreate: (String name) async {
             Navigator.of(context).pop();
@@ -59,9 +59,9 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
             allThemes.add(newTheme);
             currentTheme = newTheme;
             if (widget.isDarkMode) {
-              SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
+              SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: currentTheme);
             } else {
-              SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
+              SettingsManager().saveSelectedTheme(_context, selectedLightTheme: currentTheme);
             }
             setState(() {});
           },
@@ -266,7 +266,7 @@ class NewThemeCreateAlert extends StatefulWidget {
   final Function() onCancel;
 
   @override
-  State<NewThemeCreateAlert> createState() => _NewThemeCreateAlertState();
+  _NewThemeCreateAlertState createState() => _NewThemeCreateAlertState();
 }
 
 class _NewThemeCreateAlertState extends State<NewThemeCreateAlert> {

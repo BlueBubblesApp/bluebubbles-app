@@ -8,7 +8,7 @@ class SplashScreen extends StatefulWidget {
   final bool shouldNavigate;
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {

@@ -30,7 +30,7 @@ class SamsungConversationList extends StatefulWidget {
   final ConversationListState parent;
 
   @override
-  State<SamsungConversationList> createState() => _SamsungConversationListState();
+  _SamsungConversationListState createState() => _SamsungConversationListState();
 }
 
 class _SamsungConversationListState extends State<SamsungConversationList> {
@@ -335,7 +335,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
 
                   String appDocPath = SettingsManager().appDocDir.path;
                   String ext = ".png";
-                  File file = File("$appDocPath/attachments/${randomString(16)}$ext");
+                  File file = File("$appDocPath/attachments/" + randomString(16) + ext);
                   await file.create(recursive: true);
 
                   // Take the picture after opening the camera

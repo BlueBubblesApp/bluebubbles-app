@@ -22,7 +22,7 @@ class SyncingMessages extends StatefulWidget {
   final PageController controller;
 
   @override
-  State<SyncingMessages> createState() => _SyncingMessagesState();
+  _SyncingMessagesState createState() => _SyncingMessagesState();
 }
 
 class _SyncingMessagesState extends State<SyncingMessages> {

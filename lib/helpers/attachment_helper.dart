@@ -22,7 +22,6 @@ import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -99,21 +98,21 @@ class AttachmentHelper {
   }
 
   static Contact parseAppleContact(String appleContact) {
-    VCard c = VCard(appleContact);
-    c.printLines();
+    VCard _contact = VCard(appleContact);
+    _contact.printLines();
 
-    Contact contact = Contact(displayName: c.formattedName ?? "Unknown", id: randomString(8));
+    Contact contact = Contact(displayName: _contact.formattedName ?? "Unknown", id: randomString(8));
 
     List<String> emails = <String>[];
     List<String> phones = <String>[];
 
     // Parse emails from results
-    for (dynamic email in c.typedEmail) {
+    for (dynamic email in _contact.typedEmail) {
       emails.add(email[0]);
     }
 
     // Parse phone numbers from results
-    for (dynamic phone in c.typedTelephone) {
+    for (dynamic phone in _contact.typedTelephone) {
       phones.add(phone[0]);
     }
 
@@ -334,8 +333,8 @@ class AttachmentHelper {
     if (!kIsWeb) {
       File file = File(attachment.getPath());
       File jpgFile = File(attachment.getHeicToJpgPath());
-      File thumbnail = File("${attachment.getPath()}.thumbnail");
-      File jpgThumbnail = File("${attachment.getHeicToJpgPath()}.thumbnail");
+      File thumbnail = File(attachment.getPath() + ".thumbnail");
+      File jpgThumbnail = File(attachment.getHeicToJpgPath() + ".thumbnail");
 
       // If neither exist, don't do anything
       bool fExists = file.existsSync();
@@ -385,10 +384,10 @@ class AttachmentHelper {
     try {
       if (!kIsWeb) {
         dynamic file = File(filePath);
-        isg.Size size = await isg.ImageSizeGetter.getSizeAsync(AsyncInput(FileInput(file)));
+        isg.Size size = await isg.AsyncImageSizeGetter.getSize(AsyncFileInput(file));
         return Size(size.width.toDouble(), size.height.toDouble());
       } else {
-        isg.Size size = await isg.ImageSizeGetter.getSizeAsync(AsyncInput(isg.MemoryInput(bytes!)));
+        isg.Size size = await isg.AsyncImageSizeGetter.getSize(AsyncMemoryInput(bytes!));
         return Size(size.width.toDouble(), size.height.toDouble());
       }
     } catch (ex) {
@@ -463,15 +462,15 @@ class AttachmentHelper {
 
     // Handle getting heic images
     if ((attachment.mimeType == 'image/heic' || attachment.mimeType == 'image/heif') && !kIsWeb && !kIsDesktop) {
-      if (await File("$filePath.jpg").exists()) {
-        originalFile = File("$filePath.jpg");
+      if (await File(filePath + ".jpg").exists()) {
+        originalFile = File(filePath + ".jpg");
       } else {
         final file = await FlutterNativeImage.compressImage(
           filePath,
           percentage: 100,
           quality: 100,
         );
-        final cacheFile = File("$filePath.jpg");
+        final cacheFile = File(filePath + ".jpg");
         final bytes = await file.readAsBytes();
         await cacheFile.writeAsBytes(bytes);
         originalFile = file;

@@ -970,35 +970,35 @@ Future<void> paintAvatar(
   }
 }
 
-Future<Uint8List?> circularize(Uint8List uint8, {required int size}) async {
-  ui.Image uiImage;
-  Uint8List data = uint8;
+Future<Uint8List?> circularize(Uint8List data, {required int size}) async {
+  ui.Image image;
+  Uint8List _data = data;
 
   // Resize the image if it's the wrong size
-  img.Image? image = img.decodeImage(data);
-  if (image != null) {
-    image = img.copyResize(image, width: size, height: size);
+  img.Image? _image = img.decodeImage(data);
+  if (_image != null) {
+    _image = img.copyResize(_image, width: size, height: size);
 
-    data = img.encodePng(image) as Uint8List;
+    _data = img.encodePng(_image) as Uint8List;
   }
 
-  uiImage = await loadImage(data);
+  image = await loadImage(_data);
 
   ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   Canvas canvas = Canvas(pictureRecorder);
   Paint paint = Paint();
   paint.isAntiAlias = true;
 
-  Path path = Path()..addOval(Rect.fromLTWH(0, 0, uiImage.width.toDouble(), uiImage.height.toDouble()));
+  Path path = Path()..addOval(Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()));
 
   canvas.clipPath(path);
 
-  canvas.drawImage(uiImage, Offset(0, 0), paint);
+  canvas.drawImage(image, Offset(0, 0), paint);
 
   ui.Picture picture = pictureRecorder.endRecording();
-  uiImage = await picture.toImage(uiImage.width, uiImage.height);
+  image = await picture.toImage(image.width, image.height);
 
-  Uint8List? bytes = (await uiImage.toByteData(format: ui.ImageByteFormat.png))?.buffer.asUint8List();
+  Uint8List? bytes = (await image.toByteData(format: ui.ImageByteFormat.png))?.buffer.asUint8List();
 
   return bytes;
 }
@@ -1012,6 +1012,6 @@ Future<ui.Image> loadImage(Uint8List data) async {
 }
 
 String getDisplayName(String? displayName, String? firstName, String? lastName) {
-  String? name = (displayName?.isEmpty ?? false) ? null : displayName;
-  return name ?? [firstName, lastName].where((e) => e?.isNotEmpty ?? false).toList().join(" ");
+  String? _displayName = (displayName?.isEmpty ?? false) ? null : displayName;
+  return _displayName ?? [firstName, lastName].where((e) => e?.isNotEmpty ?? false).toList().join(" ");
 }

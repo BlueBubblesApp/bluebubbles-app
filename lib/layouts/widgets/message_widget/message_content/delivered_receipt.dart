@@ -18,7 +18,7 @@ class DeliveredReceipt extends StatefulWidget {
   final Message message;
 
   @override
-  State<DeliveredReceipt> createState() => _DeliveredReceiptState();
+  _DeliveredReceiptState createState() => _DeliveredReceiptState();
 }
 
 class _DeliveredReceiptState extends State<DeliveredReceipt> {
@@ -65,14 +65,15 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> {
   String getText() {
     String text = "Sent";
     if (!(widget.message.isFromMe ?? false)) {
-      text = "Received ${buildDate(widget.message.dateCreated)}";
+      text = "Received " + buildDate(widget.message.dateCreated);
     } else if (widget.message.dateRead != null) {
-      text = "Read ${buildDate(widget.message.dateRead)}";
+      text = "Read " + buildDate(widget.message.dateRead);
     } else if (widget.message.dateDelivered != null) {
-      text = "Delivered${SettingsManager().settings.showDeliveryTimestamps.value
-              ? " ${buildDate(widget.message.dateDelivered)}" : ""}";
+      text = "Delivered"
+          + (SettingsManager().settings.showDeliveryTimestamps.value
+              ? " ${buildDate(widget.message.dateDelivered)}" : "");
     } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateCreated != null) {
-      text = "Sent ${buildDate(widget.message.dateCreated)}";
+      text = "Sent " + buildDate(widget.message.dateCreated);
     }
 
     return text;

@@ -19,7 +19,7 @@ class SetupView extends StatefulWidget {
   SetupView({Key? key}) : super(key: key);
 
   @override
-  State<SetupView> createState() => _SetupViewState();
+  _SetupViewState createState() => _SetupViewState();
 }
 
 class _SetupViewState extends State<SetupView> {
@@ -51,7 +51,7 @@ class _SetupViewState extends State<SetupView> {
             );
             break;
           default:
-            Logger.info("Default case: $event");
+            Logger.info("Default case: " + event.toString());
             break;
         }
       }

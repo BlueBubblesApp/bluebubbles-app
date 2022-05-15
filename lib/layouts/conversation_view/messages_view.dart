@@ -24,7 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
-import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
+import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:cross_file/cross_file.dart';
 
 class MessagesView extends StatefulWidget {
@@ -161,11 +161,12 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
     if (kIsWeb || kIsDesktop) return await resetReplies();
 
     Logger.info("Getting smart replies...");
-    SmartReplySuggestionResult results = await smartReply.suggestReplies();
+    Map<String, dynamic> results = await smartReply.suggestReplies();
 
-    if (results.status == SmartReplySuggestionResultStatus.success) {
-      Logger.info("Smart Replies found: ${results.suggestions.length}");
-      replies = results.suggestions;
+    if (results.containsKey('suggestions')) {
+      List<SmartReplySuggestion> suggestions = results['suggestions'];
+      Logger.info("Smart Replies found: ${suggestions.length}");
+      replies = suggestions.map((e) => e.getText()).toList().toSet().toList();
       Logger.debug(replies.toString());
     }
 
@@ -298,9 +299,9 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
       reversed.sublist(reversed.length - sampleSize).forEach((message) {
         if (!isEmptyString(message.fullText, stripWhitespace: true) && !kIsWeb && !kIsDesktop) {
           if (message.isFromMe ?? false) {
-            smartReply.addMessageToConversationFromLocalUser(message.fullText, message.dateCreated?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch);
+            smartReply.addConversationForLocalUser(message.fullText);
           } else {
-            smartReply.addMessageToConversationFromRemoteUser(message.fullText, message.dateCreated?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch, message.handle?.address ?? "participant");
+            smartReply.addConversationForRemoteUser(message.fullText, message.handle?.address ?? "participant");
           }
         }
       });
@@ -412,17 +413,17 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
   @override
   Widget build(BuildContext context) {
-    final node = FocusScopeNode();
-    final controller = scrollController ?? ScrollController();
+    final _node = FocusScopeNode();
+    final _scrollController = scrollController ?? ScrollController();
     final Widget child = FocusScope(
-      node: node,
+      node: _node,
       onFocusChange: kIsDesktop || kIsWeb ? (focus) => focus ? EventDispatcher().emit('focus-keyboard', null) : null : null,
       child: Stack(
         children: [
           GestureDetector(
               behavior: HitTestBehavior.deferToChild,
               // I have no idea why this works
-              onPanDown: kIsDesktop || kIsWeb ? (details) => node.requestFocus() : null,
+              onPanDown: kIsDesktop || kIsWeb ? (details) => _node.requestFocus() : null,
               onHorizontalDragStart: (details) {},
               onHorizontalDragUpdate: (details) {
                 if (SettingsManager().settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
@@ -445,13 +446,13 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                     borderColor: context.textTheme.headline1!.color!,
                   ),
                 ),
-                scrollController: controller,
+                scrollController: _scrollController,
                 child: AnimatedOpacity(
                   opacity: _messages.isEmpty ? 0 : 1,
                   duration: Duration(milliseconds: 150),
                   curve: Curves.easeIn,
                   child: CustomScrollView(
-                    controller: controller,
+                    controller: _scrollController,
                     reverse: true,
                     physics: ThemeSwitcher.getScrollPhysics(),
                     slivers: <Widget>[

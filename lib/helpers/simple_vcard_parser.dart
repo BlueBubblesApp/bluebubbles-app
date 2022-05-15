@@ -21,7 +21,7 @@ class VCard {
       if (!lines[i].startsWith(RegExp(r'^\S+(:|;)'))) {
         String tmpLine = lines[i];
         String prevLine = lines[i - 1];
-        lines[i - 1] = '$prevLine, $tmpLine';
+        lines[i - 1] = prevLine + ', ' + tmpLine;
         lines.removeAt(i);
       }
     }
@@ -77,53 +77,53 @@ class VCard {
   }
 
   List<String> get name {
-    String name = getWordOfPrefix("N");
-    return _strip(name)!.split(';');
+    String _name = getWordOfPrefix("N");
+    return _strip(_name)!.split(';');
   }
 
   String? get formattedName {
-    String fName = getWordOfPrefix("FN");
-    return _strip(fName);
+    String _fName = getWordOfPrefix("FN");
+    return _strip(_fName);
   }
 
   String? get nickname {
-    String nName = getWordOfPrefix("NICKNAME");
-    return _strip(nName);
+    String _nName = getWordOfPrefix("NICKNAME");
+    return _strip(_nName);
   }
 
   String? get birthday {
-    String bDay = getWordOfPrefix("BDAY");
-    return _strip(bDay);
+    String _bDay = getWordOfPrefix("BDAY");
+    return _strip(_bDay);
   }
 
   String? get organisation {
-    String org = getWordOfPrefix("ORG");
-    return _strip(org);
+    String _org = getWordOfPrefix("ORG");
+    return _strip(_org);
   }
 
   String? get title {
-    String title = getWordOfPrefix("TITLE");
-    return _strip(title);
+    String _title = getWordOfPrefix("TITLE");
+    return _strip(_title);
   }
 
   String? get position {
-    String position = getWordOfPrefix("ROLE");
-    return _strip(position);
+    String _position = getWordOfPrefix("ROLE");
+    return _strip(_position);
   }
 
   String? get categories {
-    String categories = getWordOfPrefix("CATEGORIES");
-    return _strip(categories);
+    String _categories = getWordOfPrefix("CATEGORIES");
+    return _strip(_categories);
   }
 
   String? get gender {
-    String gender = getWordOfPrefix('GENDER');
-    return _strip(gender);
+    String _gender = getWordOfPrefix('GENDER');
+    return _strip(_gender);
   }
 
   String? get note {
-    String note = getWordOfPrefix('NOTE');
-    return _strip(note);
+    String _note = getWordOfPrefix('NOTE');
+    return _strip(_note);
   }
 
   @Deprecated("typedTelephone should be used instead")
@@ -147,21 +147,20 @@ class VCard {
     List<String> telephones;
     List<String> types = [];
     List<dynamic> result = [];
-    String? tel = '';
+    String? _tel = '';
 
     telephones = getWordsOfPrefix("TEL");
 
-    for (String t in telephones) {
+    for (String tel in telephones) {
       try {
         if (version == "2.1" || version == "3.0") {
-          tel = RegExp(r'(?<=:).+$').firstMatch(t)!.group(0);
+          _tel = RegExp(r'(?<=:).+$').firstMatch(tel)!.group(0);
         } else if (version == "4.0") {
-          tel = RegExp(r'(?<=tel:).+$').firstMatch(t)!.group(0);
+          _tel = RegExp(r'(?<=tel:).+$').firstMatch(tel)!.group(0);
         }
       } catch (e) {
-        tel = '';
+        _tel = '';
       }
-      tel ??= '';
 
       for (String type in telephoneTypes) {
         if (tel.toUpperCase().contains(type)) {
@@ -169,13 +168,13 @@ class VCard {
         }
       }
 
-      if (tel.isNotEmpty) {
+      if (_tel!.isNotEmpty) {
         result.add([
-          tel,
+          _tel,
           types,
         ]);
       }
-      tel = '';
+      _tel = '';
       types = [];
     }
 
@@ -184,8 +183,8 @@ class VCard {
 
   @Deprecated("typedEmail should be used instead")
   String? get email {
-    String email = getWordOfPrefix("EMAIL");
-    return _strip(email);
+    String _email = getWordOfPrefix("EMAIL");
+    return _strip(_email);
   }
 
   List<dynamic> get typedEmail => _typedProperty('EMAIL');
@@ -202,15 +201,15 @@ class VCard {
     List<String> matches;
     List<String> types = [];
     List<dynamic> result = [];
-    String? res = '';
+    String? _res = '';
 
     matches = getWordsOfPrefix(property);
 
     for (String match in matches) {
       try {
-        res = RegExp(r'(?<=:).+$').firstMatch(match)!.group(0);
+        _res = RegExp(r'(?<=:).+$').firstMatch(match)!.group(0);
       } catch (e) {
-        res = '';
+        _res = '';
       }
 
       for (String type in propertyTypes) {
@@ -219,21 +218,21 @@ class VCard {
         }
       }
 
-      if (res!.isNotEmpty) {
+      if (_res!.isNotEmpty) {
         if (property == 'ADR') {
-          List<String> adress = res.split(';');
+          List<String> adress = _res.split(';');
           result.add([
             adress,
             types,
           ]);
         } else {
           result.add([
-            res,
+            _res,
             types,
           ]);
         }
       }
-      res = '';
+      _res = '';
       types = [];
     }
 
@@ -250,26 +249,24 @@ class VCard {
     List<String> addresses;
     List<String> types = [];
     List<dynamic> result = [];
-    String? adr = '';
+    String? _adr = '';
 
     addresses = getWordsOfPrefix("ADR");
 
-    for (String a in addresses) {
+    for (String adr in addresses) {
       try {
         if (version == "2.1" || version == "3.0") {
-          adr = RegExp(r'(?<=(;|:);).+$').firstMatch(a)!.group(0);
+          _adr = RegExp(r'(?<=(;|:);).+$').firstMatch(adr)!.group(0);
         } else if (version == "4.0") {
-          adr = RegExp(r'(?<=LABEL=").+(?=":;)').firstMatch(a)!.group(0);
+          _adr = RegExp(r'(?<=LABEL=").+(?=":;)').firstMatch(adr)!.group(0);
         }
       } catch (e) {
-        adr = '';
+        _adr = '';
       }
 
-      adr ??= '';
-
-      if (adr.startsWith(r';')) {
+      if (_adr!.startsWith(r';')) {
         //remove leading semicolon
-        adr = adr.substring(1);
+        _adr = _adr.substring(1);
       }
 
       for (String type in addressTypes) {
@@ -279,10 +276,10 @@ class VCard {
       }
 
       result.add([
-        adr.split(';'),
+        _adr.split(';'),
         types
       ]); //Add splitted adress ( home;street;city -> [home, street, city]) along with its type
-      adr = '';
+      _adr = '';
       types = [];
     }
 

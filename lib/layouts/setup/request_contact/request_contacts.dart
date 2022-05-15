@@ -13,7 +13,7 @@ class RequestContacts extends StatefulWidget {
   final PageController controller;
 
   @override
-  State<RequestContacts> createState() => _RequestContactsState();
+  _RequestContactsState createState() => _RequestContactsState();
 }
 
 class _RequestContactsState extends State<RequestContacts> {
@@ -244,7 +244,7 @@ class ContactPermissionWarningDialog extends StatefulWidget {
   ContactPermissionWarningDialog({Key? key}) : super(key: key);
 
   @override
-  State<ContactPermissionWarningDialog> createState() => _ContactPermissionWarningDialogState();
+  _ContactPermissionWarningDialogState createState() => _ContactPermissionWarningDialogState();
 }
 
 class _ContactPermissionWarningDialogState extends State<ContactPermissionWarningDialog> {

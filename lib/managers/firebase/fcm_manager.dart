@@ -101,9 +101,9 @@ class FcmManager extends GetxService {
           // If we fail a second time, error out
           if (!catchException) {
             completer?.completeError(e);
-            throw Exception("[FCM Auth] -> $e");
+            throw Exception("[FCM Auth] -> " + e.toString());
           } else {
-            Logger.error("Failed to register with FCM: $e", tag: 'FCM-Auth');
+            Logger.error("Failed to register with FCM: " + e.toString(), tag: 'FCM-Auth');
             completer?.completeError(e);
             return;
           }

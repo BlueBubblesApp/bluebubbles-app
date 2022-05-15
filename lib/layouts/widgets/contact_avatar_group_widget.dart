@@ -21,7 +21,7 @@ class ContactAvatarGroupWidget extends StatefulWidget {
   final Function()? onTap;
 
   @override
-  State<ContactAvatarGroupWidget> createState() => _ContactAvatarGroupWidgetState();
+  _ContactAvatarGroupWidgetState createState() => _ContactAvatarGroupWidgetState();
 }
 
 class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {

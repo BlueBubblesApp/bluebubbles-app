@@ -26,7 +26,7 @@ class AttachmentDetailsCard extends StatefulWidget {
   final Attachment attachment;
 
   @override
-  State<AttachmentDetailsCard> createState() => _AttachmentDetailsCardState();
+  _AttachmentDetailsCardState createState() => _AttachmentDetailsCardState();
 }
 
 class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with AutomaticKeepAliveClientMixin {

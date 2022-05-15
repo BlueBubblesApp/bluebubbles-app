@@ -1025,9 +1025,11 @@ class _ActionButtonParentDataWidget extends ParentDataWidget<_ActionButtonParent
 // ParentData applied to individual action buttons that report whether or not
 // that button is currently pressed by the user.
 class _ActionButtonParentData extends MultiChildLayoutParentData {
-  _ActionButtonParentData();
+  _ActionButtonParentData({
+    this.isPressed = false,
+  });
 
-  bool isPressed = false;
+  bool isPressed;
 }
 
 /// A button typically used in a [CupertinoAlertDialog].

@@ -41,7 +41,7 @@ abstract class QueueManager {
       await handleQueueItem(queued);
       await afterProcessing(queued, {});
     } catch (ex, stacktrace) {
-      Logger.error("Failed to handle queued item! $ex");
+      Logger.error("Failed to handle queued item! " + ex.toString());
       Logger.error(stacktrace.toString());
     }
 

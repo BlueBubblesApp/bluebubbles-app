@@ -15,8 +15,8 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:universal_html/html.dart' as html;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_html/html.dart' as html;
 
 class AboutPanel extends StatelessWidget {
   // Not sure how to do this other than manually yet
@@ -503,14 +503,16 @@ class AboutPanel extends StatelessWidget {
                                                     ),
                                                     if (!kIsDesktop)
                                                       Text(
-                                                          "Version Number: ${snapshot.hasData ? snapshot.data!.version : "N/A"}",
+                                                          "Version Number: " +
+                                                              (snapshot.hasData ? snapshot.data!.version : "N/A"),
                                                           style: context.textTheme.subtitle1!),
                                                     if (!kIsDesktop)
                                                       Text(
-                                                          "Version Code: ${snapshot.hasData
+                                                          "Version Code: " +
+                                                              (snapshot.hasData
                                                                   ? snapshot.data!.buildNumber.toString().lastChars(
                                                                       min(4, snapshot.data!.buildNumber.length))
-                                                                  : "N/A"}",
+                                                                  : "N/A"),
                                                           style: context.textTheme.subtitle1!),
                                                     if (kIsDesktop)
                                                       Text(
