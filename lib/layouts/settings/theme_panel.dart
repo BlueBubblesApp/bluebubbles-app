@@ -594,7 +594,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                         "Harmonize - Overwrites primary color, and blends background & accent color with the current theme colors\r\n"
-                            "Full - Overwrites primary, background, and accent colors, along with other minor colors\r\n"
+                            "Full - Overwrites primary, background, and accent colors, along with other minor colors. Also enables Material 3 UI design and scroll physics.\r\n"
                     )
                 ),
               ),

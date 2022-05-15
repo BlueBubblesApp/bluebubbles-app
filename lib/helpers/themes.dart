@@ -234,6 +234,9 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
         onInverseSurface: Color(monetPalette!.neutral.get(95)),
         inversePrimary: Color(monetPalette!.primary.get(80)),
       ),
+      useMaterial3: true,
+      typography: Typography.material2021(),
+      splashFactory: InkSparkle.splashFactory,
     );
     dark = dark.copyWith(
       primaryColor: Color(monetPalette!.primary.get(50)),
@@ -267,6 +270,9 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
         onInverseSurface: Color(monetPalette!.neutral.get(20)),
         inversePrimary: Color(monetPalette!.primary.get(40)),
       ),
+      useMaterial3: true,
+      typography: Typography.material2021(),
+      splashFactory: InkSparkle.splashFactory,
     );
   }
   return Tuple2(light, dark);
