@@ -37,14 +37,14 @@ class _LocationWidgetState extends State<LocationWidget> {
   void loadLocation() async {
     // If we already have location data, don't load it again
     if (location != null) return;
-    String temp;
+    String _location;
 
     if (kIsWeb || widget.file.path == null) {
-      temp = utf8.decode(widget.file.bytes!);
+      _location = utf8.decode(widget.file.bytes!);
     } else {
-      temp = await File(widget.file.path!).readAsString();
+      _location = await File(widget.file.path!).readAsString();
     }
-    location = AttachmentHelper.parseAppleLocation(temp);
+    location = AttachmentHelper.parseAppleLocation(_location);
 
     if (location != null && mounted) {
       setState(() {});

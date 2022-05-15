@@ -345,9 +345,9 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                     .length;
                 int usedRowCount = min((pinCount / colCount).ceil(), rowCount);
                 int maxOnPage = rowCount * colCount;
-                PageController controller = PageController();
-                int pageCount = (pinCount / maxOnPage).ceil();
-                int filledPageCount = (pinCount / maxOnPage).floor();
+                PageController _controller = PageController();
+                int _pageCount = (pinCount / maxOnPage).ceil();
+                int _filledPageCount = (pinCount / maxOnPage).floor();
 
                 return SliverPadding(
                   padding: EdgeInsets.only(
@@ -368,15 +368,15 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                               clipBehavior: Clip.none,
                               physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                               scrollDirection: Axis.horizontal,
-                              controller: controller,
+                              controller: _controller,
                               itemBuilder: (context, index) {
                                 return Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 10),
                                   child: Wrap(
                                     crossAxisAlignment: WrapCrossAlignment.center,
-                                    alignment: pageCount > 1 ? WrapAlignment.start : WrapAlignment.center,
+                                    alignment: _pageCount > 1 ? WrapAlignment.start : WrapAlignment.center,
                                     children: List.generate(
-                                      index < filledPageCount
+                                      index < _filledPageCount
                                           ? maxOnPage
                                           : ChatBloc()
                                                   .chats
@@ -385,32 +385,32 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                                   .bigPinHelper(true)
                                                   .length %
                                               maxOnPage,
-                                      (index) {
+                                      (_index) {
                                         return PinnedConversationTile(
                                           key: Key(ChatBloc()
                                               .chats
                                               .archivedHelper(showArchived)
                                               .unknownSendersHelper(showUnknown)
-                                              .bigPinHelper(true)[index * maxOnPage + index]
+                                              .bigPinHelper(true)[index * maxOnPage + _index]
                                               .guid
                                               .toString()),
                                           chat: ChatBloc()
                                               .chats
                                               .archivedHelper(showArchived)
                                               .unknownSendersHelper(showUnknown)
-                                              .bigPinHelper(true)[index * maxOnPage + index],
+                                              .bigPinHelper(true)[index * maxOnPage + _index],
                                         );
                                       },
                                     ),
                                   ),
                                 );
                               },
-                              itemCount: pageCount,
+                              itemCount: _pageCount,
                             ),
-                            if (pageCount > 1)
+                            if (_pageCount > 1)
                               SmoothPageIndicator(
-                                controller: controller,
-                                count: pageCount,
+                                controller: _controller,
+                                count: _pageCount,
                                 effect: ScaleEffect(
                                   dotHeight: 5.0,
                                   dotWidth: 5.0,

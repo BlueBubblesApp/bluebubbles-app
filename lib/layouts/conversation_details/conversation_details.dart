@@ -73,10 +73,10 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
     showNameField = chat.displayName?.isNotEmpty ?? false;
 
     ever(ChatBloc().chats, (List<Chat> chats) async {
-      Chat? chat = chats.firstWhereOrNull((e) => e.guid == widget.chat.guid);
-      if (chat == null) return;
-      chat.getParticipants();
-      chat = chat;
+      Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat.guid);
+      if (_chat == null) return;
+      _chat.getParticipants();
+      chat = _chat;
       readOnly = !(chat.participants.length > 1);
       if (mounted) setState(() {});
     });

@@ -105,7 +105,7 @@ class Contact {
 }
 
 class AsyncInput extends AsyncImageInput {
-  const AsyncInput(this._input);
+  AsyncInput(this._input);
 
   /// The input data of [ImageInput].
   final ImageInput _input;

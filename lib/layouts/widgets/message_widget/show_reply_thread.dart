@@ -9,13 +9,13 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 void showReplyThread(BuildContext context, Message message, MessageBloc? messageBloc) {
-  List<Message> messages = [];
+  List<Message> _messages = [];
   if (message.threadOriginatorGuid != null) {
-    messages = messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == message.threadOriginatorGuid || e.guid == message.threadOriginatorGuid).toList() ?? [];
+    _messages = messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == message.threadOriginatorGuid || e.guid == message.threadOriginatorGuid).toList() ?? [];
   } else {
-    messages = messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == message.guid || e.guid == message.guid).toList() ?? [];
+    _messages = messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == message.guid || e.guid == message.guid).toList() ?? [];
   }
-  messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+  _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
   final controller = ScrollController();
   Navigator.push(
     context,
@@ -55,12 +55,12 @@ void showReplyThread(BuildContext context, Message message, MessageBloc? message
                                 child: Padding(
                                     padding: EdgeInsets.only(left: 5.0, right: 5.0),
                                     child: MessageWidget(
-                                      key: Key(messages[index].guid!),
-                                      message: messages[index],
+                                      key: Key(_messages[index].guid!),
+                                      message: _messages[index],
                                       olderMessage: null,
                                       newerMessage: null,
                                       showHandle: true,
-                                      isFirstSentMessage: messageBloc!.firstSentMessage == messages[index].guid,
+                                      isFirstSentMessage: messageBloc!.firstSentMessage == _messages[index].guid,
                                       showHero: false,
                                       showReplies: false,
                                       bloc: messageBloc,
@@ -68,7 +68,7 @@ void showReplyThread(BuildContext context, Message message, MessageBloc? message
                                     )),
                               );
                             },
-                            itemCount: messages.length,
+                            itemCount: _messages.length,
                           ),
                         ),
                       ),

@@ -412,17 +412,17 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
   @override
   Widget build(BuildContext context) {
-    final node = FocusScopeNode();
-    final controller = scrollController ?? ScrollController();
+    final _node = FocusScopeNode();
+    final _scrollController = scrollController ?? ScrollController();
     final Widget child = FocusScope(
-      node: node,
+      node: _node,
       onFocusChange: kIsDesktop || kIsWeb ? (focus) => focus ? EventDispatcher().emit('focus-keyboard', null) : null : null,
       child: Stack(
         children: [
           GestureDetector(
               behavior: HitTestBehavior.deferToChild,
               // I have no idea why this works
-              onPanDown: kIsDesktop || kIsWeb ? (details) => node.requestFocus() : null,
+              onPanDown: kIsDesktop || kIsWeb ? (details) => _node.requestFocus() : null,
               onHorizontalDragStart: (details) {},
               onHorizontalDragUpdate: (details) {
                 if (SettingsManager().settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
@@ -445,13 +445,13 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                     borderColor: context.textTheme.headline1!.color!,
                   ),
                 ),
-                scrollController: controller,
+                scrollController: _scrollController,
                 child: AnimatedOpacity(
                   opacity: _messages.isEmpty ? 0 : 1,
                   duration: Duration(milliseconds: 150),
                   curve: Curves.easeIn,
                   child: CustomScrollView(
-                    controller: controller,
+                    controller: _scrollController,
                     reverse: true,
                     physics: ThemeSwitcher.getScrollPhysics(),
                     slivers: <Widget>[

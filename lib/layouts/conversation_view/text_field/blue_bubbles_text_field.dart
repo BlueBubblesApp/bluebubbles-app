@@ -131,8 +131,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           RegExpMatch match = matches.lastWhere((m) => m.start < controller!.selection.start);
           String char = emojiMatches.value[index].char;
           emojiMatches.value = <Emoji>[];
-          String finalText = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
-          controller!.text = finalText;
+          String _text = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
+          controller!.text = _text;
           controller!.selection = TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1));
         } else {
           // If the user moved the cursor before trying to insert an emoji, reset the picker
@@ -220,8 +220,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             if (emojiNames.keys.contains(emojiName)) {
               allMatches = [Emoji.byShortName(emojiName)!];
               // We can replace the :emoji: with the actual emoji here
-              String finalText = text.substring(0, match.start) + allMatches.first.char + text.substring(match.end);
-              controller!.text = finalText;
+              String _text = text.substring(0, match.start) + allMatches.first.char + text.substring(match.end);
+              controller!.text = _text;
               controller!.selection =
                   TextSelection.fromPosition(TextPosition(offset: match.start + allMatches.first.char.length));
               allMatches = <Emoji>[];
@@ -810,7 +810,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 onTap: () async {
                   GiphyGif? gif = await GiphyGet.getGif(
                     context: context,
-                    apiKey: kIsWeb ? GIPHY_API_KEY : dotenv.get('GIPHY_API_KEY'),
+                    apiKey: dotenv.get('GIPHY_API_KEY'),
                     tabColor: context.theme.primaryColor,
                   );
                   if (gif?.images?.original != null) {

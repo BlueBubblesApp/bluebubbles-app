@@ -252,9 +252,9 @@ class NotificationManager {
         File(path).writeAsBytesSync(avatar);
 
         List<int> selectedIndices = SettingsManager().settings.selectedActionIndices;
-        List<String> actionsList = SettingsManager().settings.actionList;
+        List<String> _actions = SettingsManager().settings.actionList;
 
-        List<String> actions = actionsList.whereIndexed((index, element) => selectedIndices.contains(index))
+        List<String> actions = _actions.whereIndexed((index, element) => selectedIndices.contains(index))
                 .map((action) => action == "Mark Read"
                     ? action
                     : !isReaction && SettingsManager().settings.enablePrivateAPI.value

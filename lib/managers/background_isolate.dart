@@ -38,7 +38,7 @@ abstract class BackgroundIsolateInterface {
 callbackHandler() async {
   // can't use logger here
   debugPrint("(ISOLATE) Starting up...");
-  MethodChannel backgroundChannel = MethodChannel("com.bluebubbles.messaging");
+  MethodChannel _backgroundChannel = MethodChannel("com.bluebubbles.messaging");
   WidgetsFlutterBinding.ensureInitialized();
   // due to a flutter change we need to manually register plugins
   // should be removeable in flutter 2.11
@@ -156,7 +156,7 @@ callbackHandler() async {
   await SettingsManager().init();
   await SettingsManager().getSavedSettings(headless: true);
   if (!ContactManager().hasFetchedContacts) await ContactManager().loadContacts(headless: true);
-  MethodChannelInterface().init(customChannel: backgroundChannel);
+  MethodChannelInterface().init(customChannel: _backgroundChannel);
   await fdb.fetchNewUrl(connectToSocket: false);
   Get.put(AttachmentDownloadService());
 }

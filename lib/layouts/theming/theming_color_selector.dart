@@ -28,13 +28,13 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
           color: widget.entry.color?.lightenOrDarken(50) ?? whiteLightTheme.colorScheme.secondary,
           child: InkWell(
             onTap: () async {
-              BuildContext context2 = context;
+              BuildContext _context = context;
               if (widget.editable) {
                 Color newColor = widget.entry.color!;
                 int? fontSize = widget.entry.fontSize;
                 int? fontWeight = widget.entry.fontWeight;
                 await showDialog(
-                  context: context2,
+                  context: context,
                   builder: (BuildContext context) {
                     return AlertDialog(
                       scrollable: true,
@@ -133,9 +133,9 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                             widget.entry.save(widget.currentTheme);
                             widget.currentTheme.fetchData();
                             if (widget.currentTheme.selectedDarkTheme) {
-                              SettingsManager().saveSelectedTheme(context, selectedDarkTheme: widget.currentTheme);
+                              SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
                             } else if (widget.currentTheme.selectedLightTheme) {
-                              SettingsManager().saveSelectedTheme(context, selectedLightTheme: widget.currentTheme);
+                              SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
                             }
                           },
                           child: Text('SAVE'),

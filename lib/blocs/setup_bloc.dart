@@ -37,9 +37,9 @@ class SetupBloc {
   Future<void> startFullSync(Settings settings) async {
     // Set the last sync date (for incremental, even though this isn't incremental)
     // We won't try an incremental sync until the last (full) sync date is set
-    Settings settingsCopy = SettingsManager().settings;
-    settingsCopy.lastIncrementalSync.value = DateTime.now().millisecondsSinceEpoch;
-    await SettingsManager().saveSettings(settingsCopy);
+    Settings _settingsCopy = SettingsManager().settings;
+    _settingsCopy.lastIncrementalSync.value = DateTime.now().millisecondsSinceEpoch;
+    await SettingsManager().saveSettings(_settingsCopy);
 
     fullSyncManager = FullSyncManager(
       messageCount: numberOfMessagesPerPage.toInt(), skipEmptyChats: skipEmptyChats, saveLogs: saveToDownloads);
@@ -49,9 +49,9 @@ class SetupBloc {
   }
 
   Future<void> finishSetup() async {
-    Settings settingsCopy = SettingsManager().settings;
-    settingsCopy.finishedSetup.value = true;
-    await SettingsManager().saveSettings(settingsCopy);
+    Settings _settingsCopy = SettingsManager().settings;
+    _settingsCopy.finishedSetup.value = true;
+    await SettingsManager().saveSettings(_settingsCopy);
     await registerFcmDevice(force: true);
   }
 

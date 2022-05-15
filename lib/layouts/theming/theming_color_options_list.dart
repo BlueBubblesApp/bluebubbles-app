@@ -49,9 +49,9 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
         return;
       }
 
-      BuildContext context2 = context;
+      BuildContext _context = context;
       showDialog(
-        context: context2,
+        context: context,
         builder: (context) => NewThemeCreateAlert(
           onCreate: (String name) async {
             Navigator.of(context).pop();
@@ -59,9 +59,9 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
             allThemes.add(newTheme);
             currentTheme = newTheme;
             if (widget.isDarkMode) {
-              SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
+              SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: currentTheme);
             } else {
-              SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
+              SettingsManager().saveSelectedTheme(_context, selectedLightTheme: currentTheme);
             }
             setState(() {});
           },

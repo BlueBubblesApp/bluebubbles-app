@@ -99,21 +99,21 @@ class AttachmentHelper {
   }
 
   static Contact parseAppleContact(String appleContact) {
-    VCard c = VCard(appleContact);
-    c.printLines();
+    VCard _contact = VCard(appleContact);
+    _contact.printLines();
 
-    Contact contact = Contact(displayName: c.formattedName ?? "Unknown", id: randomString(8));
+    Contact contact = Contact(displayName: _contact.formattedName ?? "Unknown", id: randomString(8));
 
     List<String> emails = <String>[];
     List<String> phones = <String>[];
 
     // Parse emails from results
-    for (dynamic email in c.typedEmail) {
+    for (dynamic email in _contact.typedEmail) {
       emails.add(email[0]);
     }
 
     // Parse phone numbers from results
-    for (dynamic phone in c.typedTelephone) {
+    for (dynamic phone in _contact.typedTelephone) {
       phones.add(phone[0]);
     }
 

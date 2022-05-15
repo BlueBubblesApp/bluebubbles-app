@@ -151,9 +151,9 @@ class Attachment {
 
   String? get mimeStart {
     if (mimeType == null) return null;
-    String temp = mimeType!;
-    temp = temp.substring(0, temp.indexOf("/"));
-    return temp;
+    String _mimeType = mimeType!;
+    _mimeType = _mimeType.substring(0, _mimeType.indexOf("/"));
+    return _mimeType;
   }
 
   String getPath() {

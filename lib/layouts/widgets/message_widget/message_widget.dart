@@ -290,7 +290,7 @@ class _MessageState extends State<MessageWidget> {
     return Obx(
       () {
         Widget message;
-        bool didTap = tapped.value;
+        bool _tapped = tapped.value;
         if (_message.isFromMe!) {
           message = SentMessage(
             showTail: showTail,
@@ -307,7 +307,7 @@ class _MessageState extends State<MessageWidget> {
             reactionsWidget: reactionsWidget,
             shouldFadeIn: currentChat?.sentMessages.firstWhereOrNull((e) => e?.guid == _message.guid) != null,
             showHero: widget.showHero,
-            showDeliveredReceipt: widget.isFirstSentMessage || didTap,
+            showDeliveredReceipt: widget.isFirstSentMessage || _tapped,
             autoplayEffect: widget.autoplayEffect,
           );
         } else {
@@ -329,7 +329,7 @@ class _MessageState extends State<MessageWidget> {
             stickersWidget: stickersWidget,
             attachmentsWidget: widgetAttachments,
             reactionsWidget: reactionsWidget,
-            showTimeStamp: didTap,
+            showTimeStamp: _tapped,
             autoplayEffect: widget.autoplayEffect,
           );
         }

@@ -103,16 +103,16 @@ abstract class MessageWidgetMixin {
         linkIndexMatches.add(match.end);
       }
       if (!isNullOrEmpty(message.subject)!) {
-        TextStyle finalStyle = message.isFromMe!
+        TextStyle _textStyle = message.isFromMe!
             ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
             : textStyle!.apply(fontWeightDelta: 2);
         if (hideContent) {
-          finalStyle = finalStyle.apply(color: Colors.transparent);
+          _textStyle = _textStyle.apply(color: Colors.transparent);
         }
-        if (colorOverride != null && !hideContent) finalStyle = finalStyle.apply(color: colorOverride);
+        if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
         textSpans.addAll(MessageHelper.buildEmojiText(
           "${message.subject}\n",
-          finalStyle,
+          _textStyle,
         ));
       }
 
@@ -274,16 +274,16 @@ abstract class MessageWidgetMixin {
         }
       }
       if (!isNullOrEmpty(message.subject)!) {
-        TextStyle finalStyle = message.isFromMe!
+        TextStyle _textStyle = message.isFromMe!
             ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
             : textStyle!.apply(fontWeightDelta: 2);
         if (hideContent) {
-          finalStyle = finalStyle.apply(color: Colors.transparent);
+          _textStyle = _textStyle.apply(color: Colors.transparent);
         }
-        if (colorOverride != null && !hideContent) finalStyle = finalStyle.apply(color: colorOverride);
+        if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
         textSpans.addAll(MessageHelper.buildEmojiText(
           "${message.subject}\n",
-          finalStyle,
+          _textStyle,
         ));
       }
 

@@ -233,14 +233,14 @@ class SocketManager {
     }
   }
 
-  String handleNewMessage(message) {
-    Map<String, dynamic>? data = message;
+  String handleNewMessage(_data) {
+    Map<String, dynamic>? data = _data;
     IncomingQueue().add(QueueItem(event: "handle-message", item: {"data": data}));
     return "";
   }
 
-  String handleChatStatusChange(status) {
-    Map<String, dynamic>? data = status;
+  String handleChatStatusChange(_data) {
+    Map<String, dynamic>? data = _data;
     IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
     return "";
   }
@@ -335,10 +335,10 @@ class SocketManager {
        * Handle Private API features
        */
       _manager.socket!.on("chat-read-status-changed", handleChatStatusChange);
-      _manager.socket!.on("typing-indicator", (message) {
+      _manager.socket!.on("typing-indicator", (_data) {
         if (!SettingsManager().settings.enablePrivateAPI.value) return;
 
-        Map<String, dynamic> data = message;
+        Map<String, dynamic> data = _data;
         ChatController? currentChat = ChatManager().getChatControllerByGuid(data["guid"]);
         if (currentChat == null) return;
         if (data["display"]) {
@@ -351,8 +351,8 @@ class SocketManager {
       /**
        * Handle errors sent by the server
        */
-      _manager.socket!.on("message-send-error", (error) async {
-        Map<String, dynamic> data = error;
+      _manager.socket!.on("message-send-error", (_data) async {
+        Map<String, dynamic> data = _data;
         Message message = Message.fromMap(data);
 
         // If there are no chats, try to find it in the DB via the message
@@ -385,9 +385,9 @@ class SocketManager {
        * handle it by replacing the temp-guid with error-guid so we can do
        * something about it (or at least just track it)
        */
-      _manager.socket!.on("message-timeout", (timeout) async {
+      _manager.socket!.on("message-timeout", (_data) async {
         Logger.info("Client received message timeout", tag: tag);
-        Map<String, dynamic> data = timeout;
+        Map<String, dynamic> data = _data;
 
         Message? message = Message.findOne(guid: data["tempGuid"]);
         if (message == null) return Future.value("");
@@ -401,8 +401,8 @@ class SocketManager {
        * When an updated message comes in, update it in the database.
        * This may be when a read/delivered date has been changed.
        */
-      _manager.socket!.on("updated-message", (data) async {
-        IncomingQueue().add(QueueItem(event: "handle-updated-message", item: {"data": data}));
+      _manager.socket!.on("updated-message", (_data) async {
+        IncomingQueue().add(QueueItem(event: "handle-updated-message", item: {"data": _data}));
       });
 
       Logger.info("Connecting to the socket at: $serverAddress");
@@ -436,7 +436,7 @@ class SocketManager {
       String event, Map<String, dynamic>? message, Function(Map<String, dynamic>) cb,
       {String? reason, bool awaitResponse = true}) {
     Completer<Map<String, dynamic>> completer = Completer();
-    int processId = 0;
+    int _processId = 0;
     void socketCB([bool finishWithError = false]) {
       if (finishWithError) {
         cb({
@@ -447,7 +447,7 @@ class SocketManager {
           'status': MessageError.NO_CONNECTION,
           'error': {'message': 'Failed to Connect'}
         });
-        if (awaitResponse) _manager.finishSocketProcess(processId);
+        if (awaitResponse) _manager.finishSocketProcess(_processId);
       } else {
         _manager.socket?.emitWithAck(event, message, ack: (response) {
           if (response.containsKey('encrypted') && response['encrypted']) {
@@ -464,17 +464,17 @@ class SocketManager {
             completer.complete(response);
           }
 
-          if (awaitResponse) _manager.finishSocketProcess(processId);
+          if (awaitResponse) _manager.finishSocketProcess(_processId);
         });
       }
     }
 
     if (awaitResponse) {
-      processId = _manager.addSocketProcess(socketCB);
+      _processId = _manager.addSocketProcess(socketCB);
     } else {
       socketCB();
     }
-    if (reason != null) Logger.info("Added process with id $processId because $reason");
+    if (reason != null) Logger.info("Added process with id $_processId because $reason");
 
     return completer.future;
   }
