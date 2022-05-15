@@ -102,9 +102,9 @@ class SetupBloc {
         result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData!.toMap());
       } on PlatformException catch (e) {
         if (!catchException) {
-          throw Exception("[FCM Auth] -> " + e.toString());
+          throw Exception("[FCM Auth] -> $e");
         } else {
-          Logger.error("Failed to register with FCM: " + e.toString(), tag: 'FCM-Auth');
+          Logger.error("Failed to register with FCM: $e", tag: 'FCM-Auth');
         }
       }
     }

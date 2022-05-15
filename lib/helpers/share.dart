@@ -60,7 +60,7 @@ class Share {
     String? filePath;
     Uint8List? bytes;
     if (!kIsWeb) {
-      filePath = AttachmentHelper.getTempPath() + "/" + fileName;
+      filePath = "${AttachmentHelper.getTempPath()}/$fileName";
       file = await (await File(filePath).create()).writeAsString(vcfString);
     } else {
       bytes = Uint8List.fromList(utf8.encode(vcfString));

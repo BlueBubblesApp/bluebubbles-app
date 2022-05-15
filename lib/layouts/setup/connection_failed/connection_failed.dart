@@ -4,7 +4,7 @@ class ConnectionFailedPopup extends StatefulWidget {
   ConnectionFailedPopup({Key? key}) : super(key: key);
 
   @override
-  _ConnectionFailedPopupState createState() => _ConnectionFailedPopupState();
+  State<ConnectionFailedPopup> createState() => _ConnectionFailedPopupState();
 }
 
 class _ConnectionFailedPopupState extends State<ConnectionFailedPopup> {

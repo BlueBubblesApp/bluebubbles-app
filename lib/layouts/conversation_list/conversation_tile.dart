@@ -53,7 +53,7 @@ class ConversationTile extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ConversationTileState createState() => _ConversationTileState();
+  State<ConversationTile> createState() => _ConversationTileState();
 }
 
 class _ConversationTileState extends State<ConversationTile> with AutomaticKeepAliveClientMixin {

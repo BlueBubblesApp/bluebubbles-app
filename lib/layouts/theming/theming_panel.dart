@@ -18,7 +18,7 @@ class ThemingPanel extends StatefulWidget {
   ThemingPanel({Key? key}) : super(key: key);
 
   @override
-  _ThemingPanelState createState() => _ThemingPanelState();
+  State<ThemingPanel> createState() => _ThemingPanelState();
 }
 
 class _ThemingPanelState extends State<ThemingPanel> {

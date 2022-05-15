@@ -24,7 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:cross_file/cross_file.dart';
 
 class MessagesView extends StatefulWidget {
@@ -161,12 +161,11 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
     if (kIsWeb || kIsDesktop) return await resetReplies();
 
     Logger.info("Getting smart replies...");
-    Map<String, dynamic> results = await smartReply.suggestReplies();
+    SmartReplySuggestionResult results = await smartReply.suggestReplies();
 
-    if (results.containsKey('suggestions')) {
-      List<SmartReplySuggestion> suggestions = results['suggestions'];
-      Logger.info("Smart Replies found: ${suggestions.length}");
-      replies = suggestions.map((e) => e.getText()).toList().toSet().toList();
+    if (results.status == SmartReplySuggestionResultStatus.success) {
+      Logger.info("Smart Replies found: ${results.suggestions.length}");
+      replies = results.suggestions;
       Logger.debug(replies.toString());
     }
 
@@ -299,9 +298,9 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
       reversed.sublist(reversed.length - sampleSize).forEach((message) {
         if (!isEmptyString(message.fullText, stripWhitespace: true) && !kIsWeb && !kIsDesktop) {
           if (message.isFromMe ?? false) {
-            smartReply.addConversationForLocalUser(message.fullText);
+            smartReply.addMessageToConversationFromLocalUser(message.fullText, message.dateCreated?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch);
           } else {
-            smartReply.addConversationForRemoteUser(message.fullText, message.handle?.address ?? "participant");
+            smartReply.addMessageToConversationFromRemoteUser(message.fullText, message.dateCreated?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch, message.handle?.address ?? "participant");
           }
         }
       });

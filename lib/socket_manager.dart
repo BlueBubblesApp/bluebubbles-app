@@ -312,14 +312,14 @@ class SocketManager {
         // TODO: Possibly turn this into a notification for the user?
         // This could act as a "pseudo" security measure so they're alerted
         // when a new device is registered
-        Logger.info("FCM device added: " + data.toString(), tag: tag);
+        Logger.info("FCM device added: $data", tag: tag);
       });
 
       /**
        * If the server sends us an error it ran into, handle it
        */
       _manager.socket!.on("error", (data) {
-        Logger.info("An error occurred: " + data.toString(), tag: tag);
+        Logger.info("An error occurred: $data", tag: tag);
       });
 
       /**
@@ -420,7 +420,7 @@ class SocketManager {
 
   void closeSocket({bool force = false}) {
     if (!force && _manager.socketProcesses.isNotEmpty) {
-      Logger.info("Not closing the socket! Count: " + socketProcesses.length.toString());
+      Logger.info("Not closing the socket! Count: ${socketProcesses.length}");
       return;
     }
     if (_manager.socket != null) {
@@ -474,7 +474,7 @@ class SocketManager {
     } else {
       socketCB();
     }
-    if (reason != null) Logger.info("Added process with id " + _processId.toString() + " because $reason");
+    if (reason != null) Logger.info("Added process with id $_processId because $reason");
 
     return completer.future;
   }

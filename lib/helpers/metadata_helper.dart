@@ -60,7 +60,7 @@ class MetadataHelper {
     // Make sure there is a schema with the URL
     String url = message.getUrl()!;
     if (!url.toLowerCase().startsWith("http://") && !url.toLowerCase().startsWith("https://")) {
-      url = "https://" + url;
+      url = "https://$url";
     }
 
     String originalUrl = url;

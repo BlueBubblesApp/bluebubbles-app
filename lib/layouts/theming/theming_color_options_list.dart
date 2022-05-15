@@ -20,7 +20,7 @@ class ThemingColorOptionsList extends StatefulWidget {
   final StreamController controller;
 
   @override
-  _ThemingColorOptionsListState createState() => _ThemingColorOptionsListState();
+  State<ThemingColorOptionsList> createState() => _ThemingColorOptionsListState();
 }
 
 class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
@@ -266,7 +266,7 @@ class NewThemeCreateAlert extends StatefulWidget {
   final Function() onCancel;
 
   @override
-  _NewThemeCreateAlertState createState() => _NewThemeCreateAlertState();
+  State<NewThemeCreateAlert> createState() => _NewThemeCreateAlertState();
 }
 
 class _NewThemeCreateAlertState extends State<NewThemeCreateAlert> {

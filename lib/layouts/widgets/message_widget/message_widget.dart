@@ -62,7 +62,7 @@ class MessageWidget extends StatefulWidget {
   late final _fakeText = faker.lorem.words(message.text?.split(" ").length ?? 0).join(" ");
 
   @override
-  _MessageState createState() => _MessageState();
+  State<MessageWidget> createState() => _MessageState();
 }
 
 class _MessageState extends State<MessageWidget> {

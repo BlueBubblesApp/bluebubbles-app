@@ -503,16 +503,14 @@ class AboutPanel extends StatelessWidget {
                                                     ),
                                                     if (!kIsDesktop)
                                                       Text(
-                                                          "Version Number: " +
-                                                              (snapshot.hasData ? snapshot.data!.version : "N/A"),
+                                                          "Version Number: ${snapshot.hasData ? snapshot.data!.version : "N/A"}",
                                                           style: context.textTheme.subtitle1!),
                                                     if (!kIsDesktop)
                                                       Text(
-                                                          "Version Code: " +
-                                                              (snapshot.hasData
+                                                          "Version Code: ${snapshot.hasData
                                                                   ? snapshot.data!.buildNumber.toString().lastChars(
                                                                       min(4, snapshot.data!.buildNumber.length))
-                                                                  : "N/A"),
+                                                                  : "N/A"}",
                                                           style: context.textTheme.subtitle1!),
                                                     if (kIsDesktop)
                                                       Text(
