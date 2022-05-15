@@ -15,13 +15,19 @@ class ThemeSwitcher extends StatefulWidget {
   static PageRoute buildPageRoute({required Widget Function(BuildContext context) builder}) {
     switch (SettingsManager().settings.skin.value) {
       case Skins.iOS:
-        return CupertinoPageRoute(builder: builder);
+        return PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) => builder.call(context),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return CupertinoPageTransition(primaryRouteAnimation: animation, secondaryRouteAnimation: secondaryAnimation, child: child, linearTransition: false);
+            });
       case Skins.Material:
         return MaterialPageRoute(builder: builder);
       case Skins.Samsung:
         return MaterialPageRoute(builder: builder);
       default:
-        return CupertinoPageRoute(builder: builder);
+        return PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) => builder.call(context),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return CupertinoPageTransition(primaryRouteAnimation: animation, secondaryRouteAnimation: secondaryAnimation, child: child, linearTransition: false);
+            });
     }
   }
 
