@@ -356,8 +356,6 @@ class MethodChannelInterface {
         return Future.value("");
       case "remove-sendPort":
         IsolateNameServer.removePortNameMapping('bg_isolate');
-        await prefs.remove('objectbox-reference');
-        print("Removed sendPort and objectbox reference because Activity was destroyed");
         store.close();
         return Future.value("");
       default:
@@ -370,7 +368,6 @@ class MethodChannelInterface {
     // Only do this if we are indeed running in the background
     if (headless) {
       Logger.info("Closing the background isolate...", tag: "MCI-CloseThread");
-      await prefs.remove('objectbox-reference');
       store.close();
       // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");

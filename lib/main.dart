@@ -88,7 +88,6 @@ bool get isInDebugMode {
 
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
-bool initializedViaReference = false;
 late final FirebaseApp app;
 late final Store store;
 late final Box<Attachment> attachmentBox;
@@ -194,16 +193,16 @@ Future<Null> initApp(bool isBubble) async {
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
       Future<void> initStore({bool saveThemes = false}) async {
-        String? storeRef = prefs.getString("objectbox-reference");
         bool? useCustomPath = prefs.getBool("use-custom-path");
         String? customStorePath = prefs.getString("custom-path");
-        if (!kIsDesktop && storeRef != null) {
-          Logger.info("Opening ObjectBox store from reference");
+        if (!kIsDesktop) {
+          Logger.info("Trying to attach to an existing ObjectBox store");
           try {
             store = Store.attach(getObjectBoxModel(), join(documentsDirectory.path, 'objectbox'));
-            initializedViaReference = true;
-          } catch (_) {
-            Logger.info("Failed to open store from reference, opening from path");
+          } catch (e, s) {
+            Logger.error(e);
+            Logger.error(s);
+            Logger.info("Failed to attach to existing store, opening from path");
             try {
               store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
             } catch (e, s) {
@@ -651,11 +650,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
           }
         });
-      }
-
-      if (!initializedViaReference) {
-        // Set a reference to the DB so it can be used in another isolate
-        prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
       }
     }
 
