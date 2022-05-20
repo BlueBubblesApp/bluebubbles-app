@@ -44,7 +44,7 @@ class FullSyncManager extends SyncManager {
     Map<String, dynamic> res = chatCountResponse.data;
     int? totalChats;
     if (chatCountResponse.statusCode == 200) {
-      totalChats = res["total"];
+      totalChats = res["data"]["total"];
     }
 
     addToOutput('Received $totalChats chat(s) from the server!');
