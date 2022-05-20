@@ -353,37 +353,37 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                     children: ReactionTypes.toList()
                         .slice(3)
                         .map(
-                          (e) => GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              sendReaction(selfReaction == e ? "-$e" : e);
-                            },
-                            onTapDown: (TapDownDetails details) {
-                              if (currentlySelectedReaction == e) {
-                                currentlySelectedReaction = null;
-                              } else {
-                                currentlySelectedReaction = e;
-                              }
-                              if (mounted) setState(() {});
-                            },
-                            onTapUp: (details) {},
-                            onTapCancel: () {
-                              currentlySelectedReaction = selfReaction;
-                              if (mounted) setState(() {});
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
-                              child: Container(
-                                width: reactionIconSize - 15,
-                                height: reactionIconSize - 15,
-                                decoration: BoxDecoration(
-                                  color: currentlySelectedReaction == e
-                                      ? Theme.of(context).primaryColor
-                                      : Theme.of(context).colorScheme.secondary.withAlpha(150),
-                                  borderRadius: BorderRadius.circular(
-                                    20,
-                                  ),
+                          (e) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
+                            child: Container(
+                              width: reactionIconSize - 15,
+                              height: reactionIconSize - 15,
+                              decoration: BoxDecoration(
+                                color: currentlySelectedReaction == e
+                                    ? Theme.of(context).primaryColor
+                                    : Theme.of(context).colorScheme.secondary.withAlpha(150),
+                                borderRadius: BorderRadius.circular(
+                                  20,
                                 ),
+                              ),
+                              child: GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  sendReaction(selfReaction == e ? "-$e" : e);
+                                },
+                                onTapDown: (TapDownDetails details) {
+                                  if (currentlySelectedReaction == e) {
+                                    currentlySelectedReaction = null;
+                                  } else {
+                                    currentlySelectedReaction = e;
+                                  }
+                                  if (mounted) setState(() {});
+                                },
+                                onTapUp: (details) {},
+                                onTapCancel: () {
+                                  currentlySelectedReaction = selfReaction;
+                                  if (mounted) setState(() {});
+                                },
                                 child: Padding(
                                   padding: const EdgeInsets.all(6),
                                   child: Reaction.getReactionIcon(e, iconColor),
