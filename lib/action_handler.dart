@@ -333,6 +333,7 @@ class ActionHandler {
 
           await Message.replaceMessage(tempGuid, message);
           MessageManager().updateMessage(chat, tempGuid!, message);
+          completer.complete();
         } else {
           Logger.error('Failed to send message! Error: ${error.toString()}');
           handleError().then((value) => completer.complete());
