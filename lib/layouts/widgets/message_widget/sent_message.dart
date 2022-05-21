@@ -479,7 +479,9 @@ class SentMessageHelper {
           builder: (context, isVisible) {
             return GestureDetector(
               onTap: () {
-                if (!SettingsManager().settings.autoOpenKeyboard.value && !isVisible) EventDispatcher().emit('unfocus-keyboard', null);
+                if (!SettingsManager().settings.autoOpenKeyboard.value && !isVisible && !kIsWeb && !kIsDesktop) {
+                  EventDispatcher().emit('unfocus-keyboard', null);
+                }
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
