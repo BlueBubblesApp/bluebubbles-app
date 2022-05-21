@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 import 'package:version/version.dart';
 
@@ -164,19 +165,21 @@ class SettingsManager {
     await saveSettings(temp);
   }
 
-  Future<int?> getMacOSVersion({bool refresh = false}) async {
+  Future<Tuple2<int?, int?>?> getMacOSVersion({bool refresh = false}) async {
     if (refresh) {
       final response = await api.serverInfo();
       if (response.statusCode == 200) {
         final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
+        final minorVersion = int.tryParse(response.data['data']['os_version'].split(".")[1]);
         _serverVersion = response.data['data']['server_version'];
         if (version != null) prefs.setInt("macos-version", version);
-        return version;
+        if (minorVersion != null) prefs.setInt("macos-minor-version", minorVersion);
+        return Tuple2(version, minorVersion);
       } else {
         return null;
       }
     } else {
-      return prefs.getInt("macos-version") ?? 11;
+      return Tuple2(prefs.getInt("macos-version") ?? 11, prefs.getInt("macos-minor-version") ?? 0);
     }
   }
 

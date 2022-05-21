@@ -79,6 +79,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   late double messageTopOffset;
   late double topMinimum;
   double? detailsMenuHeight;
+  bool isSierra = true;
   bool isBigSur = true;
   bool supportsOriginalDownload = false;
 
@@ -101,7 +102,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
       final version = await SettingsManager().getServerVersionCode();
       if (mounted) {
         setState(() {
-          isBigSur = (val ?? 0) >= 11;
+          isSierra = (val?.item1 ?? 0) >= 10 && (val?.item2 ?? 0) > 11;
+          isBigSur = (val?.item1 ?? 0) >= 11;
           showTools = true;
           supportsOriginalDownload = (version ?? 0) > 100;
         });
@@ -167,7 +169,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   Widget build(BuildContext context) {
     bool isSent = !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
     bool hideReactions =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
+        (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value) || !isSierra;
 
     double offsetX = widget.message.isFromMe! ? CustomNavigator.width(context) - widget.childSize!.width - 10 : 10;
 
