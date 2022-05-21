@@ -94,18 +94,14 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         pageBuilder: (context, animation, secondaryAnimation) {
           return FadeTransition(
             opacity: animation,
-            child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                return MessageDetailsPopup(
-                  currentChat: currentChat,
-                  child: widget.popupChild,
-                  childOffsetY: childOffsetY,
-                  childSize: childSize,
-                  message: widget.message,
-                  newerMessage: widget.newerMessage,
-                  messageBloc: widget.messageBloc,
-                );
-              },
+            child: MessageDetailsPopup(
+              currentChat: currentChat,
+              child: widget.popupChild,
+              childOffsetY: childOffsetY,
+              childSize: childSize,
+              message: widget.message,
+              newerMessage: widget.newerMessage,
+              messageBloc: widget.messageBloc,
             ),
           );
         },
