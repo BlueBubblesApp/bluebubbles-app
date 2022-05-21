@@ -390,7 +390,7 @@ class CupertinoNavigationBar extends StatefulWidget implements ObstructingPrefer
   }
 
   @override
-  _CupertinoNavigationBarState createState() {
+  State<CupertinoNavigationBar> createState() {
     return _CupertinoNavigationBarState();
   }
 }
@@ -649,7 +649,7 @@ class CupertinoSliverNavigationBar extends StatefulWidget {
   final bool stretch;
 
   @override
-  _CupertinoSliverNavigationBarState createState() => _CupertinoSliverNavigationBarState();
+  State<CupertinoSliverNavigationBar> createState() => _CupertinoSliverNavigationBarState();
 }
 
 // A state class exists for the nav bar so that the keys of its sub-components

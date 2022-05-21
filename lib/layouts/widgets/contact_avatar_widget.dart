@@ -35,7 +35,7 @@ class ContactAvatarWidget extends StatefulWidget {
   final bool preferHighResAvatar;
 
   @override
-  _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
+  State<ContactAvatarWidget> createState() => _ContactAvatarWidgetState();
 }
 
 class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with AutomaticKeepAliveClientMixin {

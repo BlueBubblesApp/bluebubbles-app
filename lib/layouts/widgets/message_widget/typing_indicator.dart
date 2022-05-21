@@ -21,7 +21,7 @@ class TypingIndicator extends StatefulWidget {
   final bool chatList;
 
   @override
-  _TypingIndicatorState createState() => _TypingIndicatorState();
+  State<TypingIndicator> createState() => _TypingIndicatorState();
 }
 
 class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderStateMixin {

@@ -17,7 +17,7 @@ class WelcomePage extends StatefulWidget {
   final PageController? controller;
 
   @override
-  _WelcomePageState createState() => _WelcomePageState();
+  State<WelcomePage> createState() => _WelcomePageState();
 }
 
 class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin {

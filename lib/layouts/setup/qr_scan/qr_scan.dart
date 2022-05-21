@@ -23,7 +23,7 @@ class QRScan extends StatefulWidget {
   final PageController controller;
 
   @override
-  _QRScanState createState() => _QRScanState();
+  State<QRScan> createState() => _QRScanState();
 }
 
 class _QRScanState extends State<QRScan> {
@@ -510,12 +510,17 @@ class _QRScanState extends State<QRScan> {
     // Check if the URL is valid
     bool isValid = url.isURL;
     if (url.contains(":") && !isValid) {
-      final newUrl = url.split(":").first;
-      isValid = newUrl.isIPv6 || newUrl.isIPv4;
+      if (":".allMatches(url).length == 2) {
+        final newUrl = url.split(":")[1].split("/").last;
+        isValid = newUrl.isIPv6 || newUrl.isIPv4;
+      } else {
+        final newUrl = url.split(":").first;
+        isValid = newUrl.isIPv6 || newUrl.isIPv4;
+      }
     }
     if (url.endsWith(".network") && !isValid) {
       final newUrl = url.split(".network").first;
-      isValid = (newUrl + ".com").isURL;
+      isValid = ("$newUrl.com").isURL;
     }
 
     // If the URL is invalid, or the password is invalid, show an error

@@ -307,7 +307,7 @@ class NotificationManager {
       "CHANNEL_ID": NEW_MESSAGE_CHANNEL +
           (SettingsManager().settings.notificationSound.value == "default"
               ? ""
-              : ("_" + SettingsManager().settings.notificationSound.value)),
+              : ("_${SettingsManager().settings.notificationSound.value}")),
       "CHANNEL_NAME": "New Messages",
       "notificationId": Random().nextInt(9998) + 1,
       "summaryId": summaryId,

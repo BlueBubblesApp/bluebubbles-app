@@ -791,7 +791,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           }
         } else if (chatSelectorController.text[0] != " ") {
           chatSelectorController.text =
-              " " + chatSelectorController.text.substring(0, chatSelectorController.text.length - 1);
+              " ${chatSelectorController.text.substring(0, chatSelectorController.text.length - 1)}";
           chatSelectorController.selection = TextSelection.fromPosition(
             TextPosition(offset: chatSelectorController.text.length),
           );

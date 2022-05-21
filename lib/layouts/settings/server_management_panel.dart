@@ -172,7 +172,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                                         showSnackbar('Copied', "Address copied to clipboard");
                                       }),
                                     TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Latency: ${redact ? "Redacted" : ((controller.latency.value ?? "N/A").toString() + " ms")}"),
+                                    TextSpan(text: "Latency: ${redact ? "Redacted" : ("${controller.latency.value ?? "N/A"} ms")}"),
                                     TextSpan(text: "\n\n"),
                                     TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
                                     TextSpan(text: "\n\n"),
@@ -788,7 +788,7 @@ class SyncDialog extends StatefulWidget {
   SyncDialog({Key? key}) : super(key: key);
 
   @override
-  _SyncDialogState createState() => _SyncDialogState();
+  State<SyncDialog> createState() => _SyncDialogState();
 }
 
 class _SyncDialogState extends State<SyncDialog> {

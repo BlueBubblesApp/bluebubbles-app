@@ -39,7 +39,7 @@ class PinnedConversationTile extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _PinnedConversationTileState createState() => _PinnedConversationTileState();
+  State<PinnedConversationTile> createState() => _PinnedConversationTileState();
 }
 
 class _PinnedConversationTileState extends State<PinnedConversationTile> {

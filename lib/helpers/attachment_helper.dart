@@ -22,6 +22,7 @@ import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -333,8 +334,8 @@ class AttachmentHelper {
     if (!kIsWeb) {
       File file = File(attachment.getPath());
       File jpgFile = File(attachment.getHeicToJpgPath());
-      File thumbnail = File(attachment.getPath() + ".thumbnail");
-      File jpgThumbnail = File(attachment.getHeicToJpgPath() + ".thumbnail");
+      File thumbnail = File("${attachment.getPath()}.thumbnail");
+      File jpgThumbnail = File("${attachment.getHeicToJpgPath()}.thumbnail");
 
       // If neither exist, don't do anything
       bool fExists = file.existsSync();
@@ -384,10 +385,10 @@ class AttachmentHelper {
     try {
       if (!kIsWeb) {
         dynamic file = File(filePath);
-        isg.Size size = await isg.AsyncImageSizeGetter.getSize(AsyncFileInput(file));
+        isg.Size size = await isg.ImageSizeGetter.getSizeAsync(AsyncInput(FileInput(file)));
         return Size(size.width.toDouble(), size.height.toDouble());
       } else {
-        isg.Size size = await isg.AsyncImageSizeGetter.getSize(AsyncMemoryInput(bytes!));
+        isg.Size size = await isg.ImageSizeGetter.getSizeAsync(AsyncInput(isg.MemoryInput(bytes!)));
         return Size(size.width.toDouble(), size.height.toDouble());
       }
     } catch (ex) {
@@ -462,15 +463,15 @@ class AttachmentHelper {
 
     // Handle getting heic images
     if ((attachment.mimeType == 'image/heic' || attachment.mimeType == 'image/heif') && !kIsWeb && !kIsDesktop) {
-      if (await File(filePath + ".jpg").exists()) {
-        originalFile = File(filePath + ".jpg");
+      if (await File("$filePath.jpg").exists()) {
+        originalFile = File("$filePath.jpg");
       } else {
         final file = await FlutterNativeImage.compressImage(
           filePath,
           percentage: 100,
           quality: 100,
         );
-        final cacheFile = File(filePath + ".jpg");
+        final cacheFile = File("$filePath.jpg");
         final bytes = await file.readAsBytes();
         await cacheFile.writeAsBytes(bytes);
         originalFile = file;

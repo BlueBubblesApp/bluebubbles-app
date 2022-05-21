@@ -49,7 +49,7 @@ import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:material_color_utilities/palettes/core_palette.dart';
@@ -339,8 +339,8 @@ Future<Null> initApp(bool isBubble) async {
       try {
         tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
       } catch (_) {}
-      if (!await GoogleMlKit.nlp.entityModelManager().isModelDownloaded(EntityExtractorOptions.ENGLISH)) {
-        GoogleMlKit.nlp.entityModelManager().downloadModel(EntityExtractorOptions.ENGLISH, isWifiRequired: false);
+      if (!await EntityExtractorModelManager().isModelDownloaded(EntityExtractorLanguage.english.name)) {
+        EntityExtractorModelManager().downloadModel(EntityExtractorLanguage.english.name, isWifiRequired: false);
       }
       await FlutterLibphonenumber().init();
     }
@@ -544,7 +544,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
                                           var localAuth = LocalAuthentication();
                                           bool didAuthenticate = await localAuth.authenticate(
                                               localizedReason: 'Please authenticate to unlock BlueBubbles',
-                                              stickyAuth: true);
+                                              options: AuthenticationOptions(stickyAuth: true));
                                           if (didAuthenticate) {
                                             controller!.authSuccess(unlock: true);
                                           }
@@ -581,7 +581,7 @@ class Home extends StatefulWidget {
   Home({Key? key}) : super(key: key);
 
   @override
-  _HomeState createState() => _HomeState();
+  State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
@@ -913,7 +913,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 }
 
 Future<void> initSystemTray() async {
-  final _systemTray = SystemTray();
+  final systemTray = SystemTray();
   String path;
   if (Platform.isWindows) {
     path = p.joinAll([p.dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.ico']);
@@ -924,9 +924,9 @@ Future<void> initSystemTray() async {
   }
 
   // We first init the systray menu and then add the menu entries
-  await _systemTray.initSystemTray(title: "BlueBubbles", iconPath: path, toolTip: "BlueBubbles");
+  await systemTray.initSystemTray(title: "BlueBubbles", iconPath: path, toolTip: "BlueBubbles");
 
-  await _systemTray.setContextMenu(
+  await systemTray.setContextMenu(
     [
       MenuItem(
         label: 'Open App',
@@ -952,13 +952,13 @@ Future<void> initSystemTray() async {
   );
 
   // handle system tray event
-  _systemTray.registerSystemTrayEventHandler((eventName) async {
+  systemTray.registerSystemTrayEventHandler((eventName) async {
     switch (eventName) {
       case 'leftMouseUp':
         appWindow.show();
         break;
       case "rightMouseUp":
-        await _systemTray.popUpContextMenu();
+        await systemTray.popUpContextMenu();
         break;
     }
   });

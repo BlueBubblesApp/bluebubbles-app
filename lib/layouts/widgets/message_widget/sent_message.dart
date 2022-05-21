@@ -583,7 +583,7 @@ class SentMessage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _SentMessageState createState() => _SentMessageState();
+  State<SentMessage> createState() => _SentMessageState();
 }
 
 class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, WidgetsBindingObserver {

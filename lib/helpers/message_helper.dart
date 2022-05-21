@@ -239,18 +239,18 @@ class MessageHelper {
         ? ""
         : message.isFromMe!
             ? "You: "
-            : ContactManager().getContactTitle(message.handle) + ": ";
+            : "${ContactManager().getContactTitle(message.handle)}: ";
     // If the item type is not 0, it's a group event
     if (message.isGroupEvent()) {
       return sender + getGroupEventText(message);
     }
 
     if (message.isInteractive()) {
-      return sender + "Interactive: ${MessageHelper.getInteractiveText(message)}";
+      return "${sender}Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
     if (isNullOrEmpty(message.fullText, trimString: true)! && !message.hasAttachments) {
-      return sender + "Empty message";
+      return "${sender}Empty message";
     }
 
     if (message.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {

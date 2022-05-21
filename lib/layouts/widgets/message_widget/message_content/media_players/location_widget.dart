@@ -22,7 +22,7 @@ class LocationWidget extends StatefulWidget {
   final Attachment attachment;
 
   @override
-  _LocationWidgetState createState() => _LocationWidgetState();
+  State<LocationWidget> createState() => _LocationWidgetState();
 }
 
 class _LocationWidgetState extends State<LocationWidget> {

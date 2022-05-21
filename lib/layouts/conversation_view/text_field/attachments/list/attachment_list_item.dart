@@ -24,7 +24,7 @@ class AttachmentListItem extends StatefulWidget {
   final Function() onRemove;
 
   @override
-  _AttachmentListItemState createState() => _AttachmentListItemState();
+  State<AttachmentListItem> createState() => _AttachmentListItemState();
 }
 
 class _AttachmentListItemState extends State<AttachmentListItem> {
