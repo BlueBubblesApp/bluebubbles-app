@@ -5,8 +5,10 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -127,40 +129,54 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).backgroundColor.computeLuminance() > 0.5
-                                  ? Theme.of(context).colorScheme.secondary.lightenPercent(50)
-                                  : Theme.of(context).colorScheme.secondary.darkenPercent(50),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            width: min(context.width - 50, 500),
-                            height: min(context.height / 2, context.height - itemHeight * 5),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                reverse: true,
-                                itemBuilder: (context, index) {
-                                  return AbsorbPointer(
-                                    absorbing: true,
-                                    child: Padding(
-                                        padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                                        child: MessageWidget(
-                                          key: Key(widget.messages[index].guid!),
-                                          message: widget.messages[index],
-                                          olderMessage: index == widget.messages.length - 1 ? null : widget.messages[index + 1],
-                                          newerMessage: index == 0 ? null : widget.messages[index - 1],
-                                          showHandle: widget.chat.isGroup(),
-                                          isFirstSentMessage: false,
-                                          showHero: false,
-                                          showReplies: true,
-                                          bloc: MessageBloc(widget.chat),
-                                          autoplayEffect: false,
-                                        )),
-                                  );
-                                },
-                                itemCount: widget.messages.length,
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              CustomNavigator.pushAndRemoveUntil(
+                                context,
+                                ConversationView(
+                                  chat: widget.chat,
+                                  existingAttachments: [],
+                                  existingText: null,
+                                ),
+                                (route) => route.isFirst,
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).backgroundColor.computeLuminance() > 0.5
+                                    ? Theme.of(context).colorScheme.secondary.lightenPercent(50)
+                                    : Theme.of(context).colorScheme.secondary.darkenPercent(50),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              width: min(context.width - 50, 500),
+                              height: min(context.height / 2, context.height - itemHeight * 5),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  reverse: true,
+                                  itemBuilder: (context, index) {
+                                    return AbsorbPointer(
+                                      absorbing: true,
+                                      child: Padding(
+                                          padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                                          child: MessageWidget(
+                                            key: Key(widget.messages[index].guid!),
+                                            message: widget.messages[index],
+                                            olderMessage: index == widget.messages.length - 1 ? null : widget.messages[index + 1],
+                                            newerMessage: index == 0 ? null : widget.messages[index - 1],
+                                            showHandle: widget.chat.isGroup(),
+                                            isFirstSentMessage: false,
+                                            showHero: false,
+                                            showReplies: true,
+                                            bloc: MessageBloc(widget.chat),
+                                            autoplayEffect: false,
+                                          )),
+                                    );
+                                  },
+                                  itemCount: widget.messages.length,
+                                ),
                               ),
                             ),
                           ),
