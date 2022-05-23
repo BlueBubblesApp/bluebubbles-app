@@ -101,9 +101,9 @@ class MessageManager {
       if (err is Response) {
         error = err.data["error"]["message"];
       } else {
-        error = err.toString();
+        error = err?.toString();
       }
-      if (!completer.isCompleted) completer.completeError(error);
+      if (!completer.isCompleted) completer.completeError(error ?? "");
     });
 
     return completer.future;
