@@ -21,8 +21,6 @@ import 'package:get/get.dart';
 
 Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
   HapticFeedback.mediumImpact();
-  final position = offset;
-  final chat = c;
   final messages = Chat.getMessages(c, getDetails: true).where((e) => e.associatedMessageGuid == null).toList();
   await Navigator.push(
     Get.context!,
@@ -33,7 +31,7 @@ Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
           opacity: animation,
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
-              return ConversationPeekView(position: position, chat: chat, messages: messages);
+              return ConversationPeekView(position: offset, chat: c, messages: messages);
             },
           ),
         );
@@ -95,105 +93,108 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
-      child: TitleBarWrapper(
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: Container(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                    child: Container(
-                      color: oledDarkTheme.colorScheme.secondary.withOpacity(0.3),
+      child: Theme(
+        data: Theme.of(context).copyWith(primaryColor: widget.chat.isTextForwarding ? Colors.green : Theme.of(context).primaryColor),
+        child: TitleBarWrapper(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Container(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                      child: Container(
+                        color: oledDarkTheme.colorScheme.secondary.withOpacity(0.3),
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: min(widget.position.dx, context.width - min(context.width - 50, 500) - 25),
-                  top: min(widget.position.dy, context.height - min(context.height / 2, context.height - itemHeight * 5) - itemHeight * 5 - 25),
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween<double>(begin: 0.8, end: targetValue),
-                    curve: Curves.easeOutBack,
-                    duration: Duration(milliseconds: 400),
-                    child: FadeTransition(
-                      opacity: CurvedAnimation(
-                        parent: controller,
-                        curve: Interval(0.0, .9, curve: Curves.ease),
-                        reverseCurve: Curves.easeInCubic,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).pop();
-                              CustomNavigator.pushAndRemoveUntil(
-                                context,
-                                ConversationView(
-                                  chat: widget.chat,
-                                  existingAttachments: [],
-                                  existingText: null,
+                  Positioned(
+                    left: min(widget.position.dx, context.width - min(context.width - 50, 500) - 25),
+                    top: min(widget.position.dy, context.height - min(context.height / 2, context.height - itemHeight * 5) - itemHeight * 5 - 25),
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0.8, end: targetValue),
+                      curve: Curves.easeOutBack,
+                      duration: Duration(milliseconds: 400),
+                      child: FadeTransition(
+                        opacity: CurvedAnimation(
+                          parent: controller,
+                          curve: Interval(0.0, .9, curve: Curves.ease),
+                          reverseCurve: Curves.easeInCubic,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).pop();
+                                CustomNavigator.pushAndRemoveUntil(
+                                  context,
+                                  ConversationView(
+                                    chat: widget.chat,
+                                    existingAttachments: [],
+                                    existingText: null,
+                                  ),
+                                  (route) => route.isFirst,
+                                );
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).backgroundColor.computeLuminance() > 0.5
+                                      ? Theme.of(context).colorScheme.secondary.lightenPercent(50)
+                                      : Theme.of(context).colorScheme.secondary.darkenPercent(50),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                (route) => route.isFirst,
-                              );
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).backgroundColor.computeLuminance() > 0.5
-                                    ? Theme.of(context).colorScheme.secondary.lightenPercent(50)
-                                    : Theme.of(context).colorScheme.secondary.darkenPercent(50),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              width: min(context.width - 50, 500),
-                              height: min(context.height / 2, context.height - itemHeight * 5),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  reverse: true,
-                                  itemBuilder: (context, index) {
-                                    return AbsorbPointer(
-                                      absorbing: true,
-                                      child: Padding(
-                                          padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                                          child: MessageWidget(
-                                            key: Key(widget.messages[index].guid!),
-                                            message: widget.messages[index],
-                                            olderMessage: index == widget.messages.length - 1 ? null : widget.messages[index + 1],
-                                            newerMessage: index == 0 ? null : widget.messages[index - 1],
-                                            showHandle: widget.chat.isGroup(),
-                                            isFirstSentMessage: false,
-                                            showHero: false,
-                                            showReplies: true,
-                                            bloc: MessageBloc(widget.chat),
-                                            autoplayEffect: false,
-                                          )),
-                                    );
-                                  },
-                                  itemCount: widget.messages.length,
+                                width: min(context.width - 50, 500),
+                                height: min(context.height / 2, context.height - itemHeight * 5),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    reverse: true,
+                                    itemBuilder: (context, index) {
+                                      return AbsorbPointer(
+                                        absorbing: true,
+                                        child: Padding(
+                                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                                            child: MessageWidget(
+                                              key: Key(widget.messages[index].guid!),
+                                              message: widget.messages[index],
+                                              olderMessage: index == widget.messages.length - 1 ? null : widget.messages[index + 1],
+                                              newerMessage: index == 0 ? null : widget.messages[index - 1],
+                                              showHandle: widget.chat.isGroup(),
+                                              isFirstSentMessage: false,
+                                              showHero: false,
+                                              showReplies: true,
+                                              bloc: MessageBloc(widget.chat),
+                                              autoplayEffect: false,
+                                            )),
+                                      );
+                                    },
+                                    itemCount: widget.messages.length,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          SizedBox(height: 5),
-                          buildDetailsMenu(context)
-                        ],
+                            SizedBox(height: 5),
+                            buildDetailsMenu(context)
+                          ],
+                        ),
                       ),
+                      builder: (context, size, child) {
+                        return Transform.scale(
+                          scale: size,
+                          child: child,
+                        );
+                      },
                     ),
-                    builder: (context, size, child) {
-                      return Transform.scale(
-                        scale: size,
-                        child: child,
-                      );
-                    },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
