@@ -347,8 +347,12 @@ Future<Null> initApp(bool isBubble) async {
       await WindowManager.instance.setTitle('BlueBubbles');
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() {
-        appWindow.minSize = Size(300, 300);
-        appWindow.alignment = Alignment.center;
+        appWindow.minSize = Size(prefs.getDouble("window-width") ?? 300, prefs.getDouble("window-height") ?? 300);
+        if (prefs.getDouble("window-x") != null) {
+          appWindow.position = Offset(prefs.getDouble("window-x")!, prefs.getDouble("window-y")!);
+        } else {
+          appWindow.alignment = Alignment.center;
+        }
         appWindow.title = 'BlueBubbles';
         appWindow.show();
       });
@@ -409,6 +413,18 @@ class DesktopWindowListener extends WindowListener {
   @override
   void onWindowBlur() {
     LifeCycleManager().close();
+  }
+
+  @override
+  void onWindowResized() async {
+    prefs.setDouble("window-width", (await WindowManager.instance.getSize()).width);
+    prefs.setDouble("window-height", (await WindowManager.instance.getSize()).height);
+  }
+
+  @override
+  void onWindowMoved() async {
+    prefs.setDouble("window-x", (await WindowManager.instance.getPosition()).dx);
+    prefs.setDouble("window-y", (await WindowManager.instance.getPosition()).dy);
   }
 }
 
