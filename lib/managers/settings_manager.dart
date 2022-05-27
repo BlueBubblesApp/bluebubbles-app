@@ -183,6 +183,16 @@ class SettingsManager {
     }
   }
 
+  Future<bool> get isMinSierra async {
+    final val = await getMacOSVersion();
+    return (val?.item1 ?? 0) >= 10 && (val?.item2 ?? 0) > 11;
+  }
+
+  Future<bool> get isMinBigSur async {
+    final val = await getMacOSVersion();
+    return (val?.item1 ?? 0) >= 11;
+  }
+
   FutureOr<String?> getServerVersion() async {
     if (_serverVersion == null) {
       final response = await api.serverInfo();
@@ -193,7 +203,7 @@ class SettingsManager {
     return _serverVersion;
   }
 
-  FutureOr<int?> getServerVersionCode() async {
+  Future<int> getServerVersionCode() async {
     final version = await getServerVersion();
     Version code = Version.parse(version);
     return code.major * 100 + code.minor * 21 + code.patch;

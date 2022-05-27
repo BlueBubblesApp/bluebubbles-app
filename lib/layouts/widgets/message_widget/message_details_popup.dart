@@ -98,14 +98,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
     fetchReactions();
 
-    SettingsManager().getMacOSVersion().then((val) async {
-      final version = await SettingsManager().getServerVersionCode();
+    SettingsManager().getServerVersionCode().then((version) async {
       if (mounted) {
+        final minSierra = await SettingsManager().isMinSierra;
+        final minBigSur = await SettingsManager().isMinBigSur;
         setState(() {
-          isSierra = (val?.item1 ?? 0) >= 10 && (val?.item2 ?? 0) > 11;
-          isBigSur = (val?.item1 ?? 0) >= 11;
+          isSierra = minSierra;
+          isBigSur = minBigSur;
           showTools = true;
-          supportsOriginalDownload = (version ?? 0) > 100;
+          supportsOriginalDownload = version > 100;
         });
       }
     });

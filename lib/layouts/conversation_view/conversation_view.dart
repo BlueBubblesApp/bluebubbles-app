@@ -187,7 +187,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   void getShowAlert() async {
-    shouldShowAlert = widget.isCreator && ((await SettingsManager().getMacOSVersion())?.item1 ?? 10) >= 11;
+    shouldShowAlert = widget.isCreator && (await SettingsManager().isMinBigSur);
   }
 
   void initListener() {
@@ -286,7 +286,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
 
       if (chat == null &&
-          ((await SettingsManager().getMacOSVersion())?.item1 ?? 10) > 10) {
+          (await SettingsManager().isMinBigSur)) {
         if (searchQuery.isNotEmpty) {
           selected.add(UniqueContact(address: searchQuery, displayName: searchQuery));
           resetCursor();
