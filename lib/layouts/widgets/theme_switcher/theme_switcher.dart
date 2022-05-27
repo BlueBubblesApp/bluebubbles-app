@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_page_transition.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -17,7 +18,7 @@ class ThemeSwitcher extends StatefulWidget {
       case Skins.iOS:
         return PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) => builder.call(context),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return CupertinoPageTransition(primaryRouteAnimation: animation, secondaryRouteAnimation: secondaryAnimation, child: child, linearTransition: false);
+              return CustomCupertinoPageTransition(primaryRouteAnimation: animation, child: child, linearTransition: false);
             });
       case Skins.Material:
         return MaterialPageRoute(builder: builder);
@@ -26,7 +27,7 @@ class ThemeSwitcher extends StatefulWidget {
       default:
         return PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) => builder.call(context),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return CupertinoPageTransition(primaryRouteAnimation: animation, secondaryRouteAnimation: secondaryAnimation, child: child, linearTransition: false);
+              return CustomCupertinoPageTransition(primaryRouteAnimation: animation, child: child, linearTransition: false);
             });
     }
   }

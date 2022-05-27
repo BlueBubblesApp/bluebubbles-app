@@ -322,9 +322,7 @@ public class NewMessageNotification implements Handler {
 
             NotificationCompat.BubbleMetadata.Builder bubbleMetadataBuilder = new NotificationCompat.BubbleMetadata.Builder()
                     .setIntent(bubbleIntent)
-                    .setDesiredHeight(600)
-                    .setAutoExpandBubble(false)
-                    .setSuppressNotification(true);
+                    .setDesiredHeight(600);
 
             // Set the icon to a user or group or fallback to the BB icon
             if (groupIcon != null) {
