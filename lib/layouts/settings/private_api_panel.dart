@@ -285,7 +285,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                           }),
                           FutureBuilder(
                               initialData: false,
-                              future: SettingsManager().getMacOSVersion().then((val) => (val ?? 0) >= 11),
+                              future: SettingsManager().isMinBigSur,
                               builder: (context, snapshot) {
                                 return Obx(() {
                                   if (controller.serverVersionCode.value >= 63 && snapshot.data as bool) {

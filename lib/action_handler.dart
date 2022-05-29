@@ -46,7 +46,7 @@ class ActionHandler {
     if (chat == null) return;
     if (isNullOrEmpty(text, trimString: true)! && isNullOrEmpty(subject ?? "", trimString: true)!) return;
 
-    if ((await SettingsManager().getMacOSVersion() ?? 10) < 11) {
+    if (!(await SettingsManager().isMinBigSur)) {
       List<Message> messages = <Message>[];
 
       // Check for URLs
