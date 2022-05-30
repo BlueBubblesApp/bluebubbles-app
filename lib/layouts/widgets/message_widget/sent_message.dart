@@ -33,6 +33,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:particles_flutter/particles_flutter.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -474,65 +475,72 @@ class SentMessageHelper {
 
       return Padding(
         padding: EdgeInsets.only(right: rightPadding),
-        child: GestureDetector(
-          onTap: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("Message failed to send", style: TextStyle(color: Colors.black)),
-                  content: Text("Error ($errorCode): $errorText"),
-                  actions: <Widget>[
-                    if (chat != null)
-                      TextButton(
-                        child: Text("Retry"),
-                        onPressed: () async {
-                          // Remove the OG alert dialog
-                          Navigator.of(context).pop();
-                          MessageManager().removeMessage(chat, message.guid);
-                          Message.softDelete(message.guid!);
-                          NotificationManager().clearFailedToSend();
-                          ActionHandler.retryMessage(message);
-                        },
-                      ),
-                    if (chat != null)
-                      TextButton(
-                        child: Text("Remove"),
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          // Delete the message from the DB
-                          Message.softDelete(message.guid!);
+        child: KeyboardVisibilityBuilder(
+          builder: (context, isVisible) {
+            return GestureDetector(
+              onTap: () {
+                if (!SettingsManager().settings.autoOpenKeyboard.value && !isVisible && !kIsWeb && !kIsDesktop) {
+                  EventDispatcher().emit('unfocus-keyboard', null);
+                }
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text("Message failed to send", style: TextStyle(color: Colors.black)),
+                      content: Text("Error ($errorCode): $errorText"),
+                      actions: <Widget>[
+                        if (chat != null)
+                          TextButton(
+                            child: Text("Retry"),
+                            onPressed: () async {
+                              // Remove the OG alert dialog
+                              Navigator.of(context).pop();
+                              MessageManager().removeMessage(chat, message.guid);
+                              Message.softDelete(message.guid!);
+                              NotificationManager().clearFailedToSend();
+                              ActionHandler.retryMessage(message);
+                            },
+                          ),
+                        if (chat != null)
+                          TextButton(
+                            child: Text("Remove"),
+                            onPressed: () async {
+                              Navigator.of(context).pop();
+                              // Delete the message from the DB
+                              Message.softDelete(message.guid!);
 
-                          // Remove the message from the Bloc
-                          MessageManager().removeMessage(chat, message.guid);
-                          NotificationManager().clearFailedToSend();
-                          // Get the "new" latest info
-                          List<Message> latest = Chat.getMessages(chat, limit: 1);
-                          chat.latestMessage = latest.first;
-                          chat.latestMessageDate = latest.first.dateCreated;
-                          chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
+                              // Remove the message from the Bloc
+                              MessageManager().removeMessage(chat, message.guid);
+                              NotificationManager().clearFailedToSend();
+                              // Get the "new" latest info
+                              List<Message> latest = Chat.getMessages(chat, limit: 1);
+                              chat.latestMessage = latest.first;
+                              chat.latestMessageDate = latest.first.dateCreated;
+                              chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
 
-                          // Update it in the Bloc
-                          await ChatBloc().updateChatPosition(chat);
-                        },
-                      ),
-                    TextButton(
-                      child: Text("Cancel"),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        NotificationManager().clearFailedToSend();
-                      },
-                    )
-                  ],
+                              // Update it in the Bloc
+                              await ChatBloc().updateChatPosition(chat);
+                            },
+                          ),
+                        TextButton(
+                          child: Text("Cancel"),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            NotificationManager().clearFailedToSend();
+                          },
+                        )
+                      ],
+                    );
+                  },
                 );
               },
+              child: Icon(
+                  SettingsManager().settings.skin.value == Skins.iOS
+                      ? CupertinoIcons.exclamationmark_circle
+                      : Icons.error_outline,
+                  color: Colors.red),
             );
-          },
-          child: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS
-                  ? CupertinoIcons.exclamationmark_circle
-                  : Icons.error_outline,
-              color: Colors.red),
+          }
         ),
       );
     }

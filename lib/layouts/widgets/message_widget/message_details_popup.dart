@@ -79,6 +79,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   late double messageTopOffset;
   late double topMinimum;
   double? detailsMenuHeight;
+  bool isSierra = true;
   bool isBigSur = true;
   bool supportsOriginalDownload = false;
 
@@ -97,13 +98,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
     fetchReactions();
 
-    SettingsManager().getMacOSVersion().then((val) async {
-      final version = await SettingsManager().getServerVersionCode();
+    SettingsManager().getServerVersionCode().then((version) async {
       if (mounted) {
+        final minSierra = await SettingsManager().isMinSierra;
+        final minBigSur = await SettingsManager().isMinBigSur;
         setState(() {
-          isBigSur = (val ?? 0) >= 11;
+          isSierra = minSierra;
+          isBigSur = minBigSur;
           showTools = true;
-          supportsOriginalDownload = (version ?? 0) > 100;
+          supportsOriginalDownload = version > 100;
         });
       }
     });
@@ -167,7 +170,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   Widget build(BuildContext context) {
     bool isSent = !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
     bool hideReactions =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
+        (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value) || !isSierra;
 
     double offsetX = widget.message.isFromMe! ? CustomNavigator.width(context) - widget.childSize!.width - 10 : 10;
 
