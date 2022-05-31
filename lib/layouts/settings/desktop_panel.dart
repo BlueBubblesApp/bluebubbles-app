@@ -114,6 +114,45 @@ class DesktopPanel extends StatelessWidget {
                   }),
                 ],
               ),
+              SettingsHeader(
+                headerColor: headerColor,
+                tileColor: tileColor,
+                iosSubtitle: iosSubtitle,
+                materialSubtitle: materialSubtitle,
+                text: "Scrolling",
+              ),
+              Obx(
+                () => SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    SettingsSwitch(
+                      initialVal: SettingsManager().settings.betterScrolling.value,
+                      onChanged: (bool val) async {
+                        SettingsManager().settings.betterScrolling.value = val;
+                        saveSettings();
+                      },
+                      title: "Improve Mouse Wheel Scrolling",
+                      subtitle: "Enabling this setting will break touch scrolling and degrade trackpad scrolling.",
+                    ),
+                    if (SettingsManager().settings.betterScrolling.value)
+                      SettingsSlider(
+                        leading: Text("Multiplier"),
+                        max: 14.0,
+                        min: 4.0,
+                        divisions: 20,
+                        startingVal: SettingsManager().settings.betterScrollingMultiplier.value,
+                        text: SettingsManager().settings.betterScrollingMultiplier.value.toString(),
+                        update: (double val) {
+                          SettingsManager().settings.betterScrollingMultiplier.value = val;
+                        },
+                        onChangeEnd: (double val) {
+                          saveSettings();
+                        },
+                        backgroundColor: tileColor,
+                      )
+                  ],
+                ),
+              ),
               if (Platform.isWindows)
                 SettingsHeader(
                     headerColor: headerColor,
@@ -171,7 +210,8 @@ class DesktopPanel extends StatelessWidget {
                                               RxBool hoverLeft = false.obs;
 
                                               return MouseRegion(
-                                                cursor: hardDisabled ? SystemMouseCursors.basic : SystemMouseCursors.click,
+                                                cursor:
+                                                    hardDisabled ? SystemMouseCursors.basic : SystemMouseCursors.click,
                                                 child: GestureDetector(
                                                   behavior: HitTestBehavior.translucent,
                                                   onTap: () {
@@ -196,7 +236,11 @@ class DesktopPanel extends StatelessWidget {
                                                           border: Border.all(
                                                               color: color.withOpacity(selected ? 1 : 0.5),
                                                               width: selected ? 1.5 : 1),
-                                                          color: color.withOpacity(disabled ? 0.2 : selected ? 0.8 : 0.7),
+                                                          color: color.withOpacity(disabled
+                                                              ? 0.2
+                                                              : selected
+                                                                  ? 0.8
+                                                                  : 0.7),
                                                         ),
                                                         foregroundDecoration: BoxDecoration(
                                                           color: color.withOpacity(hardDisabled || disabled ? 0.7 : 0),
@@ -205,18 +249,18 @@ class DesktopPanel extends StatelessWidget {
                                                         curve: Curves.linear,
                                                         duration: Duration(milliseconds: 150),
                                                         child: Center(
-                                                            child: Material(
-                                                              color: Colors.transparent,
-                                                              child: Text(
-                                                                ReactionTypes.reactionToEmoji[value] ?? "Mark Read",
-                                                                style: TextStyle(
-                                                                    fontSize: 16,
-                                                                    color: (hardDisabled && value == "Mark Read")
-                                                                        ? context.textTheme.subtitle1!.color
-                                                                        : null),
-                                                                textAlign: TextAlign.center,
-                                                              ),
+                                                          child: Material(
+                                                            color: Colors.transparent,
+                                                            child: Text(
+                                                              ReactionTypes.reactionToEmoji[value] ?? "Mark Read",
+                                                              style: TextStyle(
+                                                                  fontSize: 16,
+                                                                  color: (hardDisabled && value == "Mark Read")
+                                                                      ? context.textTheme.subtitle1!.color
+                                                                      : null),
+                                                              textAlign: TextAlign.center,
                                                             ),
+                                                          ),
                                                         ),
                                                       ),
                                                       Positioned(

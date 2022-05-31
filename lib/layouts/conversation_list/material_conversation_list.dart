@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -229,7 +230,8 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
         systemNavigationBarIconBrightness:
             context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Obx(() => buildForDevice()),
     );
@@ -573,234 +575,244 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                     }
                     return true;
                   },
-                  child: ListView.builder(
+                  child: ScrollbarWrapper(
+                    showScrollbar: true,
                     controller: widget.parent.scrollController,
-                    physics: ThemeSwitcher.getScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      return Obx(() {
-                        if (SettingsManager().settings.swipableConversationTiles.value) {
-                          return Dismissible(
-                              background: (kIsDesktop || kIsWeb)
-                                  ? null
-                                  : Obx(() => slideRightBackground(ChatBloc()
-                                      .chats
-                                      .archivedHelper(showArchived)
-                                      .unknownSendersHelper(showUnknown)[index])),
-                              secondaryBackground: (kIsDesktop || kIsWeb)
-                                  ? null
-                                  : Obx(() => slideLeftBackground(ChatBloc()
-                                      .chats
-                                      .archivedHelper(showArchived)
-                                      .unknownSendersHelper(showUnknown)[index])),
-                              // Each Dismissible must contain a Key. Keys allow Flutter to
-                              // uniquely identify widgets.
-                              key: UniqueKey(),
-                              // Provide a function that tells the app
-                              // what to do after an item has been swiped away.
-                              onDismissed: (direction) async {
-                                if (direction == DismissDirection.endToStart) {
-                                  if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin) {
-                                    ChatBloc()
+                    child: ListView.builder(
+                      controller: widget.parent.scrollController,
+                      physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                          ? NeverScrollableScrollPhysics()
+                          : ThemeSwitcher.getScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        return Obx(() {
+                          if (SettingsManager().settings.swipableConversationTiles.value) {
+                            return Dismissible(
+                                background: (kIsDesktop || kIsWeb)
+                                    ? null
+                                    : Obx(() => slideRightBackground(ChatBloc()
                                         .chats
                                         .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)[index]
-                                        .togglePin(!ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)
-                                            .unknownSendersHelper(showUnknown)[index]
-                                            .isPinned!);
-                                    EventDispatcher().emit("refresh", null);
-                                    if (mounted) setState(() {});
-                                  } else if (SettingsManager().settings.materialLeftAction.value ==
-                                      MaterialSwipeAction.alerts) {
-                                    ChatBloc()
+                                        .unknownSendersHelper(showUnknown)[index])),
+                                secondaryBackground: (kIsDesktop || kIsWeb)
+                                    ? null
+                                    : Obx(() => slideLeftBackground(ChatBloc()
                                         .chats
                                         .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)[index]
-                                        .toggleMute(ChatBloc()
-                                                .chats
-                                                .archivedHelper(showArchived)
-                                                .unknownSendersHelper(showUnknown)[index]
-                                                .muteType !=
-                                            "mute");
-                                    if (mounted) setState(() {});
-                                  } else if (SettingsManager().settings.materialLeftAction.value ==
-                                      MaterialSwipeAction.delete) {
-                                    ChatBloc().deleteChat(ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)[index]);
-                                    Chat.deleteChat(ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)[index]);
-                                  } else if (SettingsManager().settings.materialLeftAction.value ==
-                                      MaterialSwipeAction.mark_read) {
-                                    ChatBloc().toggleChatUnread(
-                                        ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)
-                                            .unknownSendersHelper(showUnknown)[index],
-                                        !ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)
-                                            .unknownSendersHelper(showUnknown)[index]
-                                            .hasUnreadMessage!);
-                                  } else {
-                                    if (ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)[index]
-                                        .isArchived!) {
-                                      ChatBloc().unArchiveChat(ChatBloc()
-                                          .chats
-                                          .archivedHelper(showArchived)
-                                          .unknownSendersHelper(showUnknown)[index]);
-                                    } else {
-                                      ChatBloc().archiveChat(ChatBloc()
-                                          .chats
-                                          .archivedHelper(showArchived)
-                                          .unknownSendersHelper(showUnknown)[index]);
-                                    }
-                                  }
-                                } else {
-                                  if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin) {
-                                    ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)[index]
-                                        .togglePin(!ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)
-                                            .unknownSendersHelper(showUnknown)[index]
-                                            .isPinned!);
-                                    EventDispatcher().emit("refresh", null);
-                                    if (mounted) setState(() {});
-                                  } else if (SettingsManager().settings.materialRightAction.value ==
-                                      MaterialSwipeAction.alerts) {
-                                    ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)[index]
-                                        .toggleMute(ChatBloc()
-                                                .chats
-                                                .archivedHelper(showArchived)
-                                                .unknownSendersHelper(showUnknown)[index]
-                                                .muteType !=
-                                            "mute");
-                                    if (mounted) setState(() {});
-                                  } else if (SettingsManager().settings.materialRightAction.value ==
-                                      MaterialSwipeAction.delete) {
-                                    ChatBloc().deleteChat(ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)[index]);
-                                    Chat.deleteChat(ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)[index]);
-                                  } else if (SettingsManager().settings.materialRightAction.value ==
-                                      MaterialSwipeAction.mark_read) {
-                                    ChatBloc().toggleChatUnread(
-                                        ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)
-                                            .unknownSendersHelper(showUnknown)[index],
-                                        !ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)
-                                            .unknownSendersHelper(showUnknown)[index]
-                                            .hasUnreadMessage!);
-                                  } else {
-                                    if (ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)[index]
-                                        .isArchived!) {
-                                      ChatBloc().unArchiveChat(ChatBloc()
-                                          .chats
-                                          .archivedHelper(showArchived)
-                                          .unknownSendersHelper(showUnknown)[index]);
-                                    } else {
-                                      ChatBloc().archiveChat(ChatBloc()
-                                          .chats
-                                          .archivedHelper(showArchived)
-                                          .unknownSendersHelper(showUnknown)[index]);
-                                    }
-                                  }
-                                }
-                              },
-                              child: (!showArchived &&
+                                        .unknownSendersHelper(showUnknown)[index])),
+                                // Each Dismissible must contain a Key. Keys allow Flutter to
+                                // uniquely identify widgets.
+                                key: UniqueKey(),
+                                // Provide a function that tells the app
+                                // what to do after an item has been swiped away.
+                                onDismissed: (direction) async {
+                                  if (direction == DismissDirection.endToStart) {
+                                    if (SettingsManager().settings.materialLeftAction.value ==
+                                        MaterialSwipeAction.pin) {
                                       ChatBloc()
                                           .chats
                                           .archivedHelper(showArchived)
                                           .unknownSendersHelper(showUnknown)[index]
-                                          .isArchived!)
-                                  ? Container()
-                                  : (showArchived &&
+                                          .togglePin(!ChatBloc()
+                                              .chats
+                                              .archivedHelper(showArchived)
+                                              .unknownSendersHelper(showUnknown)[index]
+                                              .isPinned!);
+                                      EventDispatcher().emit("refresh", null);
+                                      if (mounted) setState(() {});
+                                    } else if (SettingsManager().settings.materialLeftAction.value ==
+                                        MaterialSwipeAction.alerts) {
+                                      ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .unknownSendersHelper(showUnknown)[index]
+                                          .toggleMute(ChatBloc()
+                                                  .chats
+                                                  .archivedHelper(showArchived)
+                                                  .unknownSendersHelper(showUnknown)[index]
+                                                  .muteType !=
+                                              "mute");
+                                      if (mounted) setState(() {});
+                                    } else if (SettingsManager().settings.materialLeftAction.value ==
+                                        MaterialSwipeAction.delete) {
+                                      ChatBloc().deleteChat(ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .unknownSendersHelper(showUnknown)[index]);
+                                      Chat.deleteChat(ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .unknownSendersHelper(showUnknown)[index]);
+                                    } else if (SettingsManager().settings.materialLeftAction.value ==
+                                        MaterialSwipeAction.mark_read) {
+                                      ChatBloc().toggleChatUnread(
+                                          ChatBloc()
+                                              .chats
+                                              .archivedHelper(showArchived)
+                                              .unknownSendersHelper(showUnknown)[index],
                                           !ChatBloc()
                                               .chats
                                               .archivedHelper(showArchived)
                                               .unknownSendersHelper(showUnknown)[index]
-                                              .isArchived!)
-                                      ? Container()
-                                      : ConversationTile(
-                                          key: UniqueKey(),
-                                          chat: ChatBloc()
+                                              .hasUnreadMessage!);
+                                    } else {
+                                      if (ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .unknownSendersHelper(showUnknown)[index]
+                                          .isArchived!) {
+                                        ChatBloc().unArchiveChat(ChatBloc()
+                                            .chats
+                                            .archivedHelper(showArchived)
+                                            .unknownSendersHelper(showUnknown)[index]);
+                                      } else {
+                                        ChatBloc().archiveChat(ChatBloc()
+                                            .chats
+                                            .archivedHelper(showArchived)
+                                            .unknownSendersHelper(showUnknown)[index]);
+                                      }
+                                    }
+                                  } else {
+                                    if (SettingsManager().settings.materialRightAction.value ==
+                                        MaterialSwipeAction.pin) {
+                                      ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .unknownSendersHelper(showUnknown)[index]
+                                          .togglePin(!ChatBloc()
+                                              .chats
+                                              .archivedHelper(showArchived)
+                                              .unknownSendersHelper(showUnknown)[index]
+                                              .isPinned!);
+                                      EventDispatcher().emit("refresh", null);
+                                      if (mounted) setState(() {});
+                                    } else if (SettingsManager().settings.materialRightAction.value ==
+                                        MaterialSwipeAction.alerts) {
+                                      ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .unknownSendersHelper(showUnknown)[index]
+                                          .toggleMute(ChatBloc()
+                                                  .chats
+                                                  .archivedHelper(showArchived)
+                                                  .unknownSendersHelper(showUnknown)[index]
+                                                  .muteType !=
+                                              "mute");
+                                      if (mounted) setState(() {});
+                                    } else if (SettingsManager().settings.materialRightAction.value ==
+                                        MaterialSwipeAction.delete) {
+                                      ChatBloc().deleteChat(ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .unknownSendersHelper(showUnknown)[index]);
+                                      Chat.deleteChat(ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .unknownSendersHelper(showUnknown)[index]);
+                                    } else if (SettingsManager().settings.materialRightAction.value ==
+                                        MaterialSwipeAction.mark_read) {
+                                      ChatBloc().toggleChatUnread(
+                                          ChatBloc()
                                               .chats
                                               .archivedHelper(showArchived)
                                               .unknownSendersHelper(showUnknown)[index],
-                                          inSelectMode: selected.isNotEmpty,
-                                          selected: selected,
-                                          onSelect: (bool selected) {
-                                            if (selected) {
-                                              this.selected.add(ChatBloc()
-                                                  .chats
-                                                  .archivedHelper(showArchived)
-                                                  .unknownSendersHelper(showUnknown)[index]);
-                                              setState(() {});
-                                            } else {
-                                              this.selected.removeWhere((element) =>
-                                                  element.guid ==
-                                                  ChatBloc()
-                                                      .chats
-                                                      .archivedHelper(showArchived)
-                                                      .unknownSendersHelper(showUnknown)[index]
-                                                      .guid);
-                                              setState(() {});
-                                            }
-                                          },
-                                        ));
-                        } else {
-                          return ConversationTile(
-                            key: UniqueKey(),
-                            chat:
-                                ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
-                            inSelectMode: selected.isNotEmpty,
-                            selected: selected,
-                            onSelect: (bool selected) {
-                              if (selected) {
-                                this.selected.add(ChatBloc()
-                                    .chats
-                                    .archivedHelper(showArchived)
-                                    .unknownSendersHelper(showUnknown)[index]);
-                                setState(() {});
-                              } else {
-                                this.selected.removeWhere((element) =>
-                                    element.guid ==
-                                    ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)[index]
-                                        .guid);
-                                setState(() {});
-                              }
-                            },
-                          );
-                        }
-                      });
-                    },
-                    itemCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).length,
+                                          !ChatBloc()
+                                              .chats
+                                              .archivedHelper(showArchived)
+                                              .unknownSendersHelper(showUnknown)[index]
+                                              .hasUnreadMessage!);
+                                    } else {
+                                      if (ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .unknownSendersHelper(showUnknown)[index]
+                                          .isArchived!) {
+                                        ChatBloc().unArchiveChat(ChatBloc()
+                                            .chats
+                                            .archivedHelper(showArchived)
+                                            .unknownSendersHelper(showUnknown)[index]);
+                                      } else {
+                                        ChatBloc().archiveChat(ChatBloc()
+                                            .chats
+                                            .archivedHelper(showArchived)
+                                            .unknownSendersHelper(showUnknown)[index]);
+                                      }
+                                    }
+                                  }
+                                },
+                                child: (!showArchived &&
+                                        ChatBloc()
+                                            .chats
+                                            .archivedHelper(showArchived)
+                                            .unknownSendersHelper(showUnknown)[index]
+                                            .isArchived!)
+                                    ? Container()
+                                    : (showArchived &&
+                                            !ChatBloc()
+                                                .chats
+                                                .archivedHelper(showArchived)
+                                                .unknownSendersHelper(showUnknown)[index]
+                                                .isArchived!)
+                                        ? Container()
+                                        : ConversationTile(
+                                            key: UniqueKey(),
+                                            chat: ChatBloc()
+                                                .chats
+                                                .archivedHelper(showArchived)
+                                                .unknownSendersHelper(showUnknown)[index],
+                                            inSelectMode: selected.isNotEmpty,
+                                            selected: selected,
+                                            onSelect: (bool selected) {
+                                              if (selected) {
+                                                this.selected.add(ChatBloc()
+                                                    .chats
+                                                    .archivedHelper(showArchived)
+                                                    .unknownSendersHelper(showUnknown)[index]);
+                                                setState(() {});
+                                              } else {
+                                                this.selected.removeWhere((element) =>
+                                                    element.guid ==
+                                                    ChatBloc()
+                                                        .chats
+                                                        .archivedHelper(showArchived)
+                                                        .unknownSendersHelper(showUnknown)[index]
+                                                        .guid);
+                                                setState(() {});
+                                              }
+                                            },
+                                          ));
+                          } else {
+                            return ConversationTile(
+                              key: UniqueKey(),
+                              chat: ChatBloc()
+                                  .chats
+                                  .archivedHelper(showArchived)
+                                  .unknownSendersHelper(showUnknown)[index],
+                              inSelectMode: selected.isNotEmpty,
+                              selected: selected,
+                              onSelect: (bool selected) {
+                                if (selected) {
+                                  this.selected.add(ChatBloc()
+                                      .chats
+                                      .archivedHelper(showArchived)
+                                      .unknownSendersHelper(showUnknown)[index]);
+                                  setState(() {});
+                                } else {
+                                  this.selected.removeWhere((element) =>
+                                      element.guid ==
+                                      ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .unknownSendersHelper(showUnknown)[index]
+                                          .guid);
+                                  setState(() {});
+                                }
+                              },
+                            );
+                          }
+                        });
+                      },
+                      itemCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).length,
+                    ),
                   ),
                 );
               },
