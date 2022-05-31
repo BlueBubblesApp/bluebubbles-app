@@ -185,7 +185,7 @@ class SettingsManager {
 
   Future<bool> get isMinSierra async {
     final val = await getMacOSVersion();
-    return (val?.item1 ?? 0) >= 10 && (val?.item2 ?? 0) > 11;
+    return (val?.item1 ?? 0) > 10 || ((val?.item2 ?? 0) == 10 && (val?.item2 ?? 0) > 11);
   }
 
   Future<bool> get isMinBigSur async {
