@@ -164,6 +164,8 @@ class AttachmentPanel extends StatelessWidget {
                           startingVal: SettingsManager().settings.previewCompressionQuality.value.toDouble(),
                           update: (double val) {
                             SettingsManager().settings.previewCompressionQuality.value = val.toInt();
+                          },
+                          onChangeEnd: (double val) {
                             saveSettings();
                           },
                           formatValue: ((double val) => "${val.toInt()}%"),
@@ -265,6 +267,8 @@ class AttachmentPanel extends StatelessWidget {
                       startingVal: SettingsManager().settings.chunkSize.value.toDouble(),
                       update: (double val) {
                         SettingsManager().settings.chunkSize.value = val.floor();
+                      },
+                      onChangeEnd: (double val) {
                         saveSettings();
                       },
                       formatValue: ((double val) => getSizeString(val)),

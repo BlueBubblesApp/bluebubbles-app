@@ -233,6 +233,8 @@ class ChatListPanel extends StatelessWidget {
                                   divisions: 3,
                                   update: (double val) {
                                     SettingsManager().settings.pinRowsPortrait.value = val.toInt();
+                                  },
+                                  onChangeEnd: (double val) {
                                     saveSettings();
                                   },
                                   startingVal: SettingsManager().settings.pinRowsPortrait.value.toDouble(),
