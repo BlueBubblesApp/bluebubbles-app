@@ -664,6 +664,7 @@ class SettingsSection extends StatelessWidget {
       borderRadius:
           SettingsManager().settings.skin.value == Skins.Samsung ? BorderRadius.circular(25) : BorderRadius.circular(0),
       child: Container(
+        padding: SettingsManager().settings.skin.value == Skins.Samsung ? EdgeInsets.symmetric(vertical: 5) : null,
         color: backgroundColor,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: children),
       ),
