@@ -78,6 +78,9 @@ class Share {
           ),
           chat,
           "",
+          null,
+          null,
+          null,
         ),
       ),
     );

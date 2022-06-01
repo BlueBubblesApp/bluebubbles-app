@@ -409,6 +409,9 @@ class ActionHandler {
             ),
             chat,
             i == message.attachments.length - 1 ? message.text ?? "" : "",
+            message.expressiveSendStyleId,
+            message.subject,
+            message.threadOriginatorGuid,
           ),
         ),
       );

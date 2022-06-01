@@ -27,6 +27,9 @@ class AttachmentSender {
   Chat chat;
   PlatformFile attachment;
   String text;
+  String? effectId;
+  String? subject;
+  String? selectedMessageGuid;
   final String _attachmentGuid = "temp-${randomString(8)}";
   late Uint8List _attachmentBytes;
   late String _attachmentName;
@@ -40,6 +43,9 @@ class AttachmentSender {
     this.attachment,
     this.chat,
     this.text,
+    this.effectId,
+    this.subject,
+    this.selectedMessageGuid,
   );
 
   Future<void> send() async {
@@ -82,6 +88,9 @@ class AttachmentSender {
         hasAttachments: false,
         isFromMe: true,
         handleId: 0,
+        expressiveSendStyleId: effectId,
+        threadOriginatorGuid: selectedMessageGuid,
+        subject: subject,
       );
     }
 
