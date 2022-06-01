@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -708,6 +709,42 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           }
         });
       }
+
+      // check for server updates on app launch
+      api.checkUpdate().then((response) {
+        if (response.statusCode == 200) {
+          bool available = response.data['data']['available'] ?? false;
+          Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
+          if (!available || prefs.getString("update-check") == metadata['version']) return;
+          Get.defaultDialog(
+            title: "Server Update Check",
+            titleStyle: Theme.of(context).textTheme.headline1,
+            textConfirm: "OK",
+            cancel: Container(height: 0, width: 0),
+            content: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  SizedBox(
+                    height: 15.0,
+                  ),
+                  Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyText1),
+                  SizedBox(
+                    height: 15.0,
+                  ),
+                  if (metadata.isNotEmpty)
+                    Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
+                ]
+            ),
+            onConfirm: () {
+              if (metadata['version'] != null) {
+                prefs.setString("update-check", metadata['version']);
+              }
+              Navigator.of(context).pop();
+            },
+            backgroundColor: Theme.of(context).backgroundColor,
+          );
+        }
+      });
 
       if (!kIsWeb && !kIsDesktop) {
         if (!LifeCycleManager().isBubble) {
