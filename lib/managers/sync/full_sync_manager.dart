@@ -49,6 +49,10 @@ class FullSyncManager extends SyncManager {
 
     addToOutput('Received $totalChats chat(s) from the server!');
 
+    if (totalChats == 0) {
+      return await complete();
+    }
+
     try {
       int completedChats = 0;
       await for (final chatEvent in streamChatPages(totalChats)) {
