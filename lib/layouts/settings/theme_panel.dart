@@ -284,6 +284,25 @@ class ThemePanel extends GetView<ThemePanelController> {
                           child: SettingsDivider(color: headerColor),
                         ),
                       ),
+                    SettingsSwitch(
+                      initialVal: controller._settingsCopy.material3.value,
+                      onChanged: (bool val) {
+                        controller._settingsCopy.material3.value = val;
+                        saveSettings();
+                        loadTheme(context);
+                      },
+                      backgroundColor: tileColor,
+                      title: "Material 3",
+                      subtitle:
+                      "Use Material 3 UI design and Android 12's stretchy overscroll indicator",
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(
                             () => SettingsSwitch(
@@ -594,7 +613,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                         "Harmonize - Overwrites primary color, and blends background & accent color with the current theme colors\r\n"
-                            "Full - Overwrites primary, background, and accent colors, along with other minor colors. Also enables Material 3 UI design and scroll physics.\r\n"
+                            "Full - Overwrites primary, background, and accent colors, along with other minor colors.\r\n"
                     )
                 ),
               ),
