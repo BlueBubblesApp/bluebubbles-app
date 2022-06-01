@@ -408,6 +408,7 @@ class _QRScanState extends State<QRScan> {
                                                 shadowColor:
                                                     MaterialStateProperty.all(Theme.of(context).backgroundColor),
                                                 maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                                                minimumSize: MaterialStateProperty.all(Size(30, 30)),
                                               ),
                                               onPressed: () async {
                                                 setState(() {
@@ -447,6 +448,7 @@ class _QRScanState extends State<QRScan> {
                                                 backgroundColor: MaterialStateProperty.all(Colors.transparent),
                                                 shadowColor: MaterialStateProperty.all(Colors.transparent),
                                                 maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                                                minimumSize: MaterialStateProperty.all(Size(30, 30)),
                                               ),
                                               onPressed: () async {
                                                 if (urlController.text == "googleplaytest" &&

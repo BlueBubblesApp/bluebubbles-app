@@ -126,6 +126,7 @@ class _RequestContactsState extends State<RequestContacts> {
                               backgroundColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
                               shadowColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
                               maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                              minimumSize: MaterialStateProperty.all(Size(30, 30)),
                             ),
                             onPressed: () async {
                               widget.controller.previousPage(
@@ -162,6 +163,7 @@ class _RequestContactsState extends State<RequestContacts> {
                               backgroundColor: MaterialStateProperty.all(Colors.transparent),
                               shadowColor: MaterialStateProperty.all(Colors.transparent),
                               maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                              minimumSize: MaterialStateProperty.all(Size(30, 30)),
                             ),
                             onPressed: () async {
                               if (!(await ContactManager().canAccessContacts())) {

@@ -129,6 +129,7 @@ class BatteryOptimizationPage extends StatelessWidget {
                                             backgroundColor: MaterialStateProperty.all(Colors.transparent),
                                             shadowColor: MaterialStateProperty.all(Colors.transparent),
                                             maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                                            minimumSize: MaterialStateProperty.all(Size(30, 30)),
                                           ),
                                           onPressed: () async {
                                             bool? isDisabled =
@@ -243,6 +244,7 @@ class BatteryOptimizationPage extends StatelessWidget {
                                   backgroundColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
                                   shadowColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
                                   maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                                  minimumSize: MaterialStateProperty.all(Size(30, 30)),
                                 ),
                                 onPressed: () async {
                                   controller.previousPage(
@@ -281,6 +283,7 @@ class BatteryOptimizationPage extends StatelessWidget {
                                   backgroundColor: MaterialStateProperty.all(Colors.transparent),
                                   shadowColor: MaterialStateProperty.all(Colors.transparent),
                                   maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                                  minimumSize: MaterialStateProperty.all(Size(30, 30)),
                                 ),
                                 onPressed: () async {
                                   controller.nextPage(
