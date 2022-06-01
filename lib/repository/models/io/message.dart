@@ -835,7 +835,7 @@ class Message {
   bool isBigEmoji() {
     // We are checking the variable first because we want to
     // avoid processing twice for this as it won't change
-    bigEmoji ??= MessageHelper.shouldShowBigEmoji(text ?? "");
+    bigEmoji ??= MessageHelper.shouldShowBigEmoji(fullText);
 
     return bigEmoji!;
   }
