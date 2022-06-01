@@ -272,6 +272,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
   Future<bool> send(
       List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
+    await currentChat!.scrollToBottom();
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
     bool alreadySent = false;
     if (isCreator!) {
