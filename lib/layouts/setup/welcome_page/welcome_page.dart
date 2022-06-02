@@ -269,6 +269,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                                   backgroundColor: MaterialStateProperty.all(Colors.transparent),
                                   shadowColor: MaterialStateProperty.all(Colors.transparent),
                                   maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                                  minimumSize: MaterialStateProperty.all(Size(30, 30)),
                                 ),
                                 onPressed: () async {
                                   widget.controller!.nextPage(
