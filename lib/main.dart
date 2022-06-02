@@ -727,7 +727,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   SizedBox(
                     height: 15.0,
                   ),
-                  Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyText1),
+                  Text("Updates available:", style: context.theme.textTheme.bodyText1),
                   SizedBox(
                     height: 15.0,
                   ),
