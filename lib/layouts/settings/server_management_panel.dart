@@ -743,7 +743,6 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       materialIcon: Icons.dvr,
                     ),
                     onTap: () async {
-
                       final response = await api.checkUpdate();
                       if (response.statusCode == 200) {
                         bool available = response.data['data']['available'] ?? false;
