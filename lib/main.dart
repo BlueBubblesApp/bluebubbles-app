@@ -149,6 +149,11 @@ Future<Null> initApp(bool isBubble) async {
   await Logger.init();
   Logger.startup.value = true;
   Logger.info('Startup Logs');
+
+  if (kIsDesktop) {
+    await WindowManager.instance.ensureInitialized();
+  }
+
   HttpOverrides.global = MyHttpOverrides();
   LifeCycleManager().isBubble = isBubble;
 
@@ -347,12 +352,22 @@ Future<Null> initApp(bool isBubble) async {
       await WindowManager.instance.setTitle('BlueBubbles');
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() {
-        appWindow.minSize = Size(prefs.getDouble("window-width") ?? 300, prefs.getDouble("window-height") ?? 300);
-        if (prefs.getDouble("window-x") != null) {
-          appWindow.position = Offset(prefs.getDouble("window-x")!, prefs.getDouble("window-y")!);
-        } else {
-          appWindow.alignment = Alignment.center;
+        appWindow.minSize = Size(300, 300);
+
+        double? width = prefs.getDouble("window-width");
+        double? height = prefs.getDouble("window-height");
+        if (width != null && height != null) {
+          appWindow.size = Size(width, height);
         }
+
+        appWindow.alignment = Alignment.center;
+
+        double? posX = prefs.getDouble("window-x");
+        double? posY = prefs.getDouble("window-y");
+        if (posX != null && posY != null) {
+          appWindow.position = Offset(posX, posY);
+        }
+
         appWindow.title = 'BlueBubbles';
         appWindow.show();
       });

@@ -9,6 +9,7 @@ import 'package:bluebubbles/layouts/conversation_details/attachment_details_card
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
+import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -135,16 +136,18 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               controller.text.isEmpty ? "Removing name..." : "Changing name to ${controller.text}...",
                               style: Theme.of(context).textTheme.bodyText1,
                             ),
-                            content:
-                            Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-                              Container(
-                                // height: 70,
-                                // color: Colors.black,
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                                ),
-                              ),
-                            ]),
+                            content: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Container(
+                                    // height: 70,
+                                    // color: Colors.black,
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                                    ),
+                                  ),
+                                ]),
                           );
                         });
                     final response = await api.updateChat(chat.guid, controller.text);
@@ -183,8 +186,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
             ),
             title: Text("Change Name"),
           );
-        }
-    );
+        });
   }
 
   @override
@@ -193,40 +195,55 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
     final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo.value;
     final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
     if (generateName) controller.text = "Group Chat";
+    final ScrollController _scrollController = ScrollController();
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+            ? Colors.transparent
+            : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(primaryColor: chat.isTextForwarding ? Colors.green : Theme.of(context).primaryColor),
-        child: Builder(
-          builder: (context) {
-            return Scaffold(
+        data: Theme.of(context)
+            .copyWith(primaryColor: chat.isTextForwarding ? Colors.green : Theme.of(context).primaryColor),
+        child: Builder(builder: (context) {
+          return Scaffold(
+            backgroundColor: Theme.of(context).backgroundColor,
+            appBar: AppBar(
+              leading: SettingsManager().settings.skin.value == Skins.iOS
+                  ? buildBackButton(context,
+                      padding: EdgeInsets.only(left: kIsDesktop ? 5 : 0, top: kIsDesktop ? 15 : 0))
+                  : null,
+              iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+              title: Padding(
+                padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+                child: Text(
+                  "Details",
+                  style: Theme.of(context).textTheme.headline1,
+                ),
+              ),
               backgroundColor: Theme.of(context).backgroundColor,
-              appBar: AppBar(
-                leading: SettingsManager().settings.skin.value == Skins.iOS ? buildBackButton(context, padding: EdgeInsets.only(left: kIsDesktop ? 5 : 0, top: kIsDesktop ? 15 : 0)) : null,
-                      iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-                      title: Padding(padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0), child: Text(
-                        "Details",
-                        style: Theme.of(context).textTheme.headline1,
-                      ),),
-                      backgroundColor: Theme.of(context).backgroundColor,
-                      bottom: PreferredSize(
-                        child: Container(
-                          color: Theme.of(context).dividerColor,
-                          height: 0.5,
-                        ),
-                        preferredSize: Size.fromHeight(0.5),
-                      ),
-                    ),
-              extendBodyBehindAppBar: SettingsManager().settings.skin.value == Skins.iOS ? true : false,
-              body: CustomScrollView(
-                physics: ThemeSwitcher.getScrollPhysics(),
+              bottom: PreferredSize(
+                child: Container(
+                  color: Theme.of(context).dividerColor,
+                  height: 0.5,
+                ),
+                preferredSize: Size.fromHeight(0.5),
+              ),
+            ),
+            extendBodyBehindAppBar: SettingsManager().settings.skin.value == Skins.iOS ? true : false,
+            body: ScrollbarWrapper(
+              controller: _scrollController,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb)
+                    ? NeverScrollableScrollPhysics()
+                    : ThemeSwitcher.getScrollPhysics(),
                 slivers: <Widget>[
                   if (SettingsManager().settings.skin.value == Skins.iOS)
                     SliverToBoxAdapter(
@@ -249,91 +266,93 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       child: Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Center(
-                          child: Text(
-                            controller.text,
-                            style: Theme.of(context).textTheme.bodyText1!.copyWith(fontWeight: FontWeight.bold),
-                            textScaleFactor: 1.75,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          )
-                        ),
+                            child: Text(
+                          controller.text,
+                          style: Theme.of(context).textTheme.bodyText1!.copyWith(fontWeight: FontWeight.bold),
+                          textScaleFactor: 1.75,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        )),
                       ),
                     ),
                   if (chat.isGroup())
                     SliverToBoxAdapter(
                       child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              TextButton(
-                                child: Text("${(chat.displayName?.isNotEmpty ?? false) ? "Change" : "Add"} Name",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyText1!
-                                        .apply(color: Theme.of(context).primaryColor), textScaleFactor: 1.15,),
-                                  onPressed: () {
-                                    if (!SettingsManager().settings.enablePrivateAPI.value || !chat.isIMessage) {
-                                      showChangeName("local");
-                                    } else {
-                                      showChangeName("private-api");
-                                    }
-                                  },
-                                  onLongPress: () {
-                                    showChangeName("local");
-                                  },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextButton(
+                              child: Text(
+                                "${(chat.displayName?.isNotEmpty ?? false) ? "Change" : "Add"} Name",
+                                style:
+                                    Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
+                                textScaleFactor: 1.15,
                               ),
-                              Container(
-                                child: IconButton(
-                                  icon: Icon(
-                                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info_outline,
-                                    size: 15,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                  padding: EdgeInsets.zero,
-                                  iconSize: 15,
-                                  constraints: BoxConstraints(maxWidth: 20, maxHeight: 20),
-                                  onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                            backgroundColor: Theme.of(context).colorScheme.secondary,
-                                            title: Text("Group Naming",
-                                                style:
-                                                TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
-                                            content: Column(
-                                              mainAxisAlignment: MainAxisAlignment.center,
-                                              mainAxisSize: MainAxisSize.min,
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                if (!SettingsManager().settings.enablePrivateAPI.value || !chat.isIMessage)
-                                                  Text(
-                                                      "${!chat.isIMessage ? "This chat is SMS" : "You have Private API disabled"}, so changing the name here will only change it locally for you. You will not see these changes on other devices, and the other members of this chat will not see these changes.",
-                                                      style: Theme.of(context).textTheme.bodyText1),
-                                                if (SettingsManager().settings.enablePrivateAPI.value && chat.isIMessage)
-                                                  Text(
-                                                      "You have Private API enabled, so changing the name here will change the name for everyone in this chat. If you only want to change it locally, you can tap and hold the \"Change Name\" button.",
-                                                      style: Theme.of(context).textTheme.bodyText1),
-                                              ],
-                                            ),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                  child: Text("OK",
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .subtitle1!
-                                                          .apply(color: Theme.of(context).primaryColor)),
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  }),
-                                            ]);
-                                      },
-                                    );
-                                  },
+                              onPressed: () {
+                                if (!SettingsManager().settings.enablePrivateAPI.value || !chat.isIMessage) {
+                                  showChangeName("local");
+                                } else {
+                                  showChangeName("private-api");
+                                }
+                              },
+                              onLongPress: () {
+                                showChangeName("local");
+                              },
+                            ),
+                            Container(
+                              child: IconButton(
+                                icon: Icon(
+                                  SettingsManager().settings.skin.value == Skins.iOS
+                                      ? CupertinoIcons.info
+                                      : Icons.info_outline,
+                                  size: 15,
+                                  color: Theme.of(context).primaryColor,
                                 ),
-                              )
-                            ],
-                          ),
+                                padding: EdgeInsets.zero,
+                                iconSize: 15,
+                                constraints: BoxConstraints(maxWidth: 20, maxHeight: 20),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                          backgroundColor: Theme.of(context).colorScheme.secondary,
+                                          title: Text("Group Naming",
+                                              style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                          content: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              if (!SettingsManager().settings.enablePrivateAPI.value ||
+                                                  !chat.isIMessage)
+                                                Text(
+                                                    "${!chat.isIMessage ? "This chat is SMS" : "You have Private API disabled"}, so changing the name here will only change it locally for you. You will not see these changes on other devices, and the other members of this chat will not see these changes.",
+                                                    style: Theme.of(context).textTheme.bodyText1),
+                                              if (SettingsManager().settings.enablePrivateAPI.value && chat.isIMessage)
+                                                Text(
+                                                    "You have Private API enabled, so changing the name here will change the name for everyone in this chat. If you only want to change it locally, you can tap and hold the \"Change Name\" button.",
+                                                    style: Theme.of(context).textTheme.bodyText1),
+                                            ],
+                                          ),
+                                          actions: <Widget>[
+                                            TextButton(
+                                                child: Text("OK",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .subtitle1!
+                                                        .apply(color: Theme.of(context).primaryColor)),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                }),
+                                          ]);
+                                    },
+                                  );
+                                },
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   SliverList(
@@ -355,7 +374,9 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           trailing: Padding(
                             padding: EdgeInsets.only(right: 15),
                             child: Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.ellipsis : Icons.more_horiz,
+                              SettingsManager().settings.skin.value == Skins.iOS
+                                  ? CupertinoIcons.ellipsis
+                                  : Icons.more_horiz,
                               color: Theme.of(context).primaryColor,
                             ),
                           ),
@@ -372,7 +393,9 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           chat = newChat;
                           if (mounted) setState(() {});
                         },
-                        canBeRemoved: chat.participants.length > 1 && SettingsManager().settings.enablePrivateAPI.value && chat.isIMessage,
+                        canBeRemoved: chat.participants.length > 1 &&
+                            SettingsManager().settings.enablePrivateAPI.value &&
+                            chat.isIMessage,
                       );
                     }, childCount: participants.length + 1),
                   ),
@@ -393,171 +416,175 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                             onPressed: () async {
                               final TextEditingController participantController = TextEditingController();
                               showDialog(
-                                context: context,
-                                builder: (_) {
-                                  return AlertDialog(
-                                    actions: [
-                                      TextButton(
-                                        child: Text("Cancel"),
-                                        onPressed: () => Get.back(),
-                                      ),
-                                      TextButton(
-                                        child: Text("Pick Contact"),
-                                        onPressed: () async {
-                                          final contacts = [];
-                                          final cache = [];
-                                          String slugText(String text) {
-                                            return slugify(text, delimiter: '').toString().replaceAll('-', '');
-                                          }
-
-                                          for (Contact contact in ContactManager().contacts) {
-                                            for (String phone in contact.phones) {
-                                              String cleansed = slugText(phone);
-
-                                              if (!cache.contains(cleansed)) {
-                                                cache.add(cleansed);
-                                                contacts.add(
-                                                  UniqueContact(
-                                                    address: phone,
-                                                    displayName: contact.displayName,
-                                                  ),
-                                                );
-                                              }
+                                  context: context,
+                                  builder: (_) {
+                                    return AlertDialog(
+                                      actions: [
+                                        TextButton(
+                                          child: Text("Cancel"),
+                                          onPressed: () => Get.back(),
+                                        ),
+                                        TextButton(
+                                          child: Text("Pick Contact"),
+                                          onPressed: () async {
+                                            final contacts = [];
+                                            final cache = [];
+                                            String slugText(String text) {
+                                              return slugify(text, delimiter: '').toString().replaceAll('-', '');
                                             }
 
-                                            for (String email in contact.emails) {
-                                              String emailVal = slugText.call(email);
+                                            for (Contact contact in ContactManager().contacts) {
+                                              for (String phone in contact.phones) {
+                                                String cleansed = slugText(phone);
 
-                                              if (!cache.contains(emailVal)) {
-                                                cache.add(emailVal);
-                                                contacts.add(
-                                                  UniqueContact(
-                                                    address: email,
-                                                    displayName: contact.displayName,
-                                                  ),
-                                                );
+                                                if (!cache.contains(cleansed)) {
+                                                  cache.add(cleansed);
+                                                  contacts.add(
+                                                    UniqueContact(
+                                                      address: phone,
+                                                      displayName: contact.displayName,
+                                                    ),
+                                                  );
+                                                }
+                                              }
+
+                                              for (String email in contact.emails) {
+                                                String emailVal = slugText.call(email);
+
+                                                if (!cache.contains(emailVal)) {
+                                                  cache.add(emailVal);
+                                                  contacts.add(
+                                                    UniqueContact(
+                                                      address: email,
+                                                      displayName: contact.displayName,
+                                                    ),
+                                                  );
+                                                }
                                               }
                                             }
-                                          }
-                                          UniqueContact? selected;
-                                          await Get.defaultDialog(
-                                            title: "Pick Contact",
-                                            titleStyle: Theme.of(context).textTheme.headline1,
-                                            backgroundColor: Theme.of(context).backgroundColor,
-                                            buttonColor: Theme.of(context).primaryColor,
-                                            content: Container(
-                                              constraints: BoxConstraints(
-                                                maxHeight: Get.height - 300,
-                                              ),
-                                              child: Center(
-                                                child: Container(
-                                                  width: 300,
-                                                  height: Get.height - 300,
-                                                  constraints: BoxConstraints(
-                                                    maxHeight: Get.height - 300,
-                                                  ),
-                                                  child: StatefulBuilder(
-                                                      builder: (context, setState) {
-                                                        return SingleChildScrollView(
-                                                          child: Column(
-                                                            mainAxisSize: MainAxisSize.min,
-                                                            children: [
-                                                              Padding(
-                                                                padding: const EdgeInsets.all(8.0),
-                                                                child: Text("Select the contact you would like to add"),
-                                                              ),
-                                                              ListView.builder(
-                                                                shrinkWrap: true,
-                                                                itemCount: contacts.length,
-                                                                physics: NeverScrollableScrollPhysics(),
-                                                                itemBuilder: (context, index) {
-                                                                  return ContactSelectorOption(
-                                                                    key: Key("selector-${contacts[index].displayName}"),
-                                                                    item: contacts[index],
-                                                                    onSelected: (contact) {
-                                                                      Get.back();
-                                                                      selected = contact;
-                                                                    },
-                                                                    index: index,
-                                                                  );
-                                                                },
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        );
-                                                      }
+                                            UniqueContact? selected;
+                                            await Get.defaultDialog(
+                                              title: "Pick Contact",
+                                              titleStyle: Theme.of(context).textTheme.headline1,
+                                              backgroundColor: Theme.of(context).backgroundColor,
+                                              buttonColor: Theme.of(context).primaryColor,
+                                              content: Container(
+                                                constraints: BoxConstraints(
+                                                  maxHeight: Get.height - 300,
+                                                ),
+                                                child: Center(
+                                                  child: Container(
+                                                    width: 300,
+                                                    height: Get.height - 300,
+                                                    constraints: BoxConstraints(
+                                                      maxHeight: Get.height - 300,
+                                                    ),
+                                                    child: StatefulBuilder(builder: (context, setState) {
+                                                      return SingleChildScrollView(
+                                                        child: Column(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          children: [
+                                                            Padding(
+                                                              padding: const EdgeInsets.all(8.0),
+                                                              child: Text("Select the contact you would like to add"),
+                                                            ),
+                                                            ListView.builder(
+                                                              shrinkWrap: true,
+                                                              itemCount: contacts.length,
+                                                              physics: NeverScrollableScrollPhysics(),
+                                                              itemBuilder: (context, index) {
+                                                                return ContactSelectorOption(
+                                                                  key: Key("selector-${contacts[index].displayName}"),
+                                                                  item: contacts[index],
+                                                                  onSelected: (contact) {
+                                                                    Get.back();
+                                                                    selected = contact;
+                                                                  },
+                                                                  index: index,
+                                                                );
+                                                              },
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    }),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                            confirm: Container(height: 0, width: 0),
-                                            cancel: Container(height: 0, width: 0),
-                                          );
-                                          if (selected?.address != null) {
-                                            if (!selected!.address!.isEmail) {
-                                              participantController.text = selected!.address!.numericOnly();
-                                            } else {
-                                              participantController.text = selected!.address!;
+                                              confirm: Container(height: 0, width: 0),
+                                              cancel: Container(height: 0, width: 0),
+                                            );
+                                            if (selected?.address != null) {
+                                              if (!selected!.address!.isEmail) {
+                                                participantController.text = selected!.address!.numericOnly();
+                                              } else {
+                                                participantController.text = selected!.address!;
+                                              }
                                             }
-                                          }
-                                        },
-                                      ),
-                                      TextButton(
-                                        child: Text("OK"),
-                                        onPressed: () async {
-                                          if (participantController.text.isEmpty || (!participantController.text.isEmail && !participantController.text.isPhoneNumber)) {
-                                            showSnackbar("Error", "Enter a valid address!");
-                                            return;
-                                          }
-                                          showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                                                  title: Text(
-                                                    "Adding ${participantController.text}...",
-                                                    style: Theme.of(context).textTheme.bodyText1,
-                                                  ),
-                                                  content:
-                                                  Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-                                                    Container(
-                                                      // height: 70,
-                                                      // color: Colors.black,
-                                                      child: CircularProgressIndicator(
-                                                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                                                      ),
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("OK"),
+                                          onPressed: () async {
+                                            if (participantController.text.isEmpty ||
+                                                (!participantController.text.isEmail &&
+                                                    !participantController.text.isPhoneNumber)) {
+                                              showSnackbar("Error", "Enter a valid address!");
+                                              return;
+                                            }
+                                            showDialog(
+                                                context: context,
+                                                builder: (BuildContext context) {
+                                                  return AlertDialog(
+                                                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                                                    title: Text(
+                                                      "Adding ${participantController.text}...",
+                                                      style: Theme.of(context).textTheme.bodyText1,
                                                     ),
-                                                  ]),
-                                                );
-                                              });
-                                          final response = await api.chatParticipant("add", chat.guid, participantController.text);
-                                          if (response.statusCode == 200) {
-                                            Get.back();
-                                            Get.back();
-                                            showSnackbar("Notice", "Added ${participantController.text} successfully!");
-                                          } else {
-                                            Get.back();
-                                            showSnackbar("Error", "Failed to add ${participantController.text}!");
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                    content: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        TextField(
-                                          controller: participantController,
-                                          decoration: InputDecoration(
-                                            labelText: "Phone Number / Email",
-                                            border: OutlineInputBorder(),
-                                          ),
+                                                    content: Row(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        mainAxisAlignment: MainAxisAlignment.center,
+                                                        children: <Widget>[
+                                                          Container(
+                                                            // height: 70,
+                                                            // color: Colors.black,
+                                                            child: CircularProgressIndicator(
+                                                              valueColor: AlwaysStoppedAnimation<Color>(
+                                                                  Theme.of(context).primaryColor),
+                                                            ),
+                                                          ),
+                                                        ]),
+                                                  );
+                                                });
+                                            final response =
+                                                await api.chatParticipant("add", chat.guid, participantController.text);
+                                            if (response.statusCode == 200) {
+                                              Get.back();
+                                              Get.back();
+                                              showSnackbar(
+                                                  "Notice", "Added ${participantController.text} successfully!");
+                                            } else {
+                                              Get.back();
+                                              showSnackbar("Error", "Failed to add ${participantController.text}!");
+                                            }
+                                          },
                                         ),
                                       ],
-                                    ),
-                                    title: Text("Add Participant"),
-                                  );
-                                }
-                              );
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          TextField(
+                                            controller: participantController,
+                                            decoration: InputDecoration(
+                                              labelText: "Phone Number / Email",
+                                              border: OutlineInputBorder(),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      title: Text("Add Participant"),
+                                    );
+                                  });
                             },
                             child: Text(
                               "ADD PARTICIPANT",
@@ -589,7 +616,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                       mainAxisSize: MainAxisSize.min,
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text("You have already set a custom avatar for this chat. What would you like to do?",
+                                        Text(
+                                            "You have already set a custom avatar for this chat. What would you like to do?",
                                             style: Theme.of(context).textTheme.bodyText1),
                                       ],
                                     ),
@@ -655,8 +683,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       onTap: () async {
                         await showDialog(
                           context: context,
-                          builder: (context) =>
-                              SyncDialog(chat: chat, withOffset: true, initialMessage: "Fetching messages...", limit: 100),
+                          builder: (context) => SyncDialog(
+                              chat: chat, withOffset: true, initialMessage: "Fetching messages...", limit: 100),
                         );
 
                         fetchAttachments();
@@ -671,7 +699,9 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         trailing: Padding(
                           padding: EdgeInsets.only(right: 15),
                           child: Icon(
-                            SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
+                            SettingsManager().settings.skin.value == Skins.iOS
+                                ? CupertinoIcons.cloud_download
+                                : Icons.file_download,
                             color: Theme.of(context).primaryColor,
                           ),
                         ),
@@ -683,7 +713,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       onTap: () async {
                         showDialog(
                           context: context,
-                          builder: (context) => SyncDialog(chat: chat, initialMessage: "Syncing messages...", limit: 25),
+                          builder: (context) =>
+                              SyncDialog(chat: chat, initialMessage: "Syncing messages...", limit: 25),
                         );
                       },
                       child: ListTile(
@@ -696,14 +727,19 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         trailing: Padding(
                           padding: EdgeInsets.only(right: 15),
                           child: Icon(
-                            SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_counterclockwise : Icons.replay,
+                            SettingsManager().settings.skin.value == Skins.iOS
+                                ? CupertinoIcons.arrow_counterclockwise
+                                : Icons.replay,
                             color: Theme.of(context).primaryColor,
                           ),
                         ),
                       ),
                     ),
                   ),
-                  if (!kIsWeb && !widget.chat.isGroup() && SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateMarkChatAsRead.value)
+                  if (!kIsWeb &&
+                      !widget.chat.isGroup() &&
+                      SettingsManager().settings.enablePrivateAPI.value &&
+                      SettingsManager().settings.privateMarkChatAsRead.value)
                     SliverToBoxAdapter(
                         child: ListTile(
                             leading: Text("Send Read Receipts",
@@ -721,7 +757,10 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                   EventDispatcher().emit("refresh", null);
                                   if (mounted) setState(() {});
                                 }))),
-                  if (!kIsWeb && !widget.chat.isGroup() && SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSendTypingIndicators.value)
+                  if (!kIsWeb &&
+                      !widget.chat.isGroup() &&
+                      SettingsManager().settings.enablePrivateAPI.value &&
+                      SettingsManager().settings.privateSendTypingIndicators.value)
                     SliverToBoxAdapter(
                         child: ListTile(
                             leading: Text("Send Typing Indicators",
@@ -756,7 +795,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                   widget.chat.togglePin(!widget.chat.isPinned!);
                                   EventDispatcher().emit("refresh", null);
                                   if (mounted) setState(() {});
-                              }))),
+                                }))),
                   if (!kIsWeb)
                     SliverToBoxAdapter(
                         child: ListTile(
@@ -809,8 +848,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               return AlertDialog(
                                   backgroundColor: Theme.of(context).colorScheme.secondary,
                                   title: Text("Are You Sure?",
-                                      style:
-                                      TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                      style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                                   content: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.min,
@@ -858,8 +896,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                         Navigator.of(context).pop();
                                       },
                                     ),
-                                  ]
-                              );
+                                  ]);
                             },
                           );
                         },
@@ -878,11 +915,15 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                   )
                                 : (isCleared)
                                     ? Icon(
-                                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.checkmark : Icons.done,
+                                        SettingsManager().settings.skin.value == Skins.iOS
+                                            ? CupertinoIcons.checkmark
+                                            : Icons.done,
                                         color: Theme.of(context).primaryColor,
                                       )
                                     : Icon(
-                                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete_forever,
+                                        SettingsManager().settings.skin.value == Skins.iOS
+                                            ? CupertinoIcons.trash
+                                            : Icons.delete_forever,
                                         color: Theme.of(context).primaryColor,
                                       ),
                           ),
@@ -903,61 +944,57 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                   "Select timeframe",
                                   style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                                 ),
-                                content: Column(
-                                    mainAxisSize: MainAxisSize.min,
+                                content: Column(mainAxisSize: MainAxisSize.min, children: [
+                                  Padding(
+                                      padding: EdgeInsets.all(15),
+                                      child: Text("Note: Longer timeframes may take a while to generate the txt file")),
+                                  Wrap(
+                                    alignment: WrapAlignment.center,
                                     children: [
-                                      Padding(
-                                          padding: EdgeInsets.all(15),
-                                          child: Text("Note: Longer timeframes may take a while to generate the txt file")
+                                      TextButton(
+                                        child: Text("Cancel"),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
                                       ),
-                                      Wrap(
-                                        alignment: WrapAlignment.center,
-                                        children: [
-                                          TextButton(
-                                            child: Text("Cancel"),
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                          ),
-                                          TextButton(
-                                            child: Text("1 Hour"),
-                                            onPressed: () {
-                                              hours = 1;
-                                              Navigator.of(context).pop();
-                                            },
-                                          ),
-                                          TextButton(
-                                            child: Text("1 Day"),
-                                            onPressed: () {
-                                              days = 1;
-                                              Navigator.of(context).pop();
-                                            },
-                                          ),
-                                          TextButton(
-                                            child: Text("1 Week"),
-                                            onPressed: () {
-                                              days = 7;
-                                              Navigator.of(context).pop();
-                                            },
-                                          ),
-                                          TextButton(
-                                            child: Text("1 Month"),
-                                            onPressed: () {
-                                              days = 30;
-                                              Navigator.of(context).pop();
-                                            },
-                                          ),
-                                          TextButton(
-                                            child: Text("1 Year"),
-                                            onPressed: () {
-                                              days = 365;
-                                              Navigator.of(context).pop();
-                                            },
-                                          ),
-                                        ],
-                                      )
-                                    ]
-                                ),
+                                      TextButton(
+                                        child: Text("1 Hour"),
+                                        onPressed: () {
+                                          hours = 1;
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: Text("1 Day"),
+                                        onPressed: () {
+                                          days = 1;
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: Text("1 Week"),
+                                        onPressed: () {
+                                          days = 7;
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: Text("1 Month"),
+                                        onPressed: () {
+                                          days = 30;
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: Text("1 Year"),
+                                        onPressed: () {
+                                          days = 365;
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  )
+                                ]),
                                 backgroundColor: Theme.of(context).backgroundColor,
                               );
                             },
@@ -968,21 +1005,19 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                             titleStyle: Theme.of(context).textTheme.headline1,
                             confirm: Container(height: 0, width: 0),
                             cancel: Container(height: 0, width: 0),
-                            content: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  SizedBox(
-                                    height: 15.0,
-                                  ),
-                                  buildProgressIndicator(context),
-                                ]
-                            ),
+                            content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                              SizedBox(
+                                height: 15.0,
+                              ),
+                              buildProgressIndicator(context),
+                            ]),
                             barrierDismissible: false,
                             backgroundColor: Theme.of(context).backgroundColor,
                           );
                           final messages = (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true))
                               .reversed
-                              .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
+                              .where((e) => DateTime.now().isWithin(e.dateCreated!,
+                                  hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
                             Get.back();
                             showSnackbar("Error", "No messages found!");
@@ -994,7 +1029,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               m.fetchAttachments();
                             }
                             final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
-                            final deliveredStr = m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
+                            final deliveredStr =
+                                m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
                             final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
                             final text = MessageHelper.getNotificationText(m, withSender: true);
                             final line = "($readStr$deliveredStr$sentStr) $text";
@@ -1005,7 +1041,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           if (kIsDesktop) {
                             filePath = (await getDownloadsDirectory())!.path;
                           }
-                          filePath = p.join(filePath, "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
+                          filePath = p.join(filePath,
+                              "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
                           File file = File(filePath);
                           await file.create(recursive: true);
                           await file.writeAsString(lines.join('\n'));
@@ -1043,61 +1080,57 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                   "Select timeframe",
                                   style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                                 ),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Padding(
-                                        padding: EdgeInsets.all(15),
-                                        child: Text("Note: Longer timeframes may take a while to generate the PDF")
-                                    ),
-                                    Wrap(
-                                      alignment: WrapAlignment.center,
-                                      children: [
-                                        TextButton(
-                                          child: Text("Cancel"),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("1 Hour"),
-                                          onPressed: () {
-                                            hours = 1;
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("1 Day"),
-                                          onPressed: () {
-                                            days = 1;
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("1 Week"),
-                                          onPressed: () {
-                                            days = 7;
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("1 Month"),
-                                          onPressed: () {
-                                            days = 30;
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("1 Year"),
-                                          onPressed: () {
-                                            days = 365;
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                      ],
-                                    )
-                                  ]
-                                ),
+                                content: Column(mainAxisSize: MainAxisSize.min, children: [
+                                  Padding(
+                                      padding: EdgeInsets.all(15),
+                                      child: Text("Note: Longer timeframes may take a while to generate the PDF")),
+                                  Wrap(
+                                    alignment: WrapAlignment.center,
+                                    children: [
+                                      TextButton(
+                                        child: Text("Cancel"),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: Text("1 Hour"),
+                                        onPressed: () {
+                                          hours = 1;
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: Text("1 Day"),
+                                        onPressed: () {
+                                          days = 1;
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: Text("1 Week"),
+                                        onPressed: () {
+                                          days = 7;
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: Text("1 Month"),
+                                        onPressed: () {
+                                          days = 30;
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: Text("1 Year"),
+                                        onPressed: () {
+                                          days = 365;
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  )
+                                ]),
                                 backgroundColor: Theme.of(context).backgroundColor,
                               );
                             },
@@ -1108,21 +1141,19 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                             titleStyle: Theme.of(context).textTheme.headline1,
                             confirm: Container(height: 0, width: 0),
                             cancel: Container(height: 0, width: 0),
-                            content: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  SizedBox(
-                                    height: 15.0,
-                                  ),
-                                  buildProgressIndicator(context),
-                                ]
-                            ),
+                            content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                              SizedBox(
+                                height: 15.0,
+                              ),
+                              buildProgressIndicator(context),
+                            ]),
                             barrierDismissible: false,
                             backgroundColor: Theme.of(context).backgroundColor,
                           );
                           final messages = (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true))
                               .reversed
-                              .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
+                              .where((e) => DateTime.now().isWithin(e.dateCreated!,
+                                  hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
                             Get.back();
                             showSnackbar("Error", "No messages found!");
@@ -1137,11 +1168,15 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               m.fetchAttachments();
                             }
                             final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
-                            final deliveredStr = m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
+                            final deliveredStr =
+                                m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
                             final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
                             if (m.hasAttachments) {
-                              final attachments = m.attachments.where((e) => e?.guid != null && ["image/png", "image/jpg", "image/jpeg"].contains(e!.mimeType));
-                              final files = attachments.map((e) => AttachmentHelper.getContent(e!, autoDownload: false)).whereType<PlatformFile>();
+                              final attachments = m.attachments.where((e) =>
+                                  e?.guid != null && ["image/png", "image/jpg", "image/jpeg"].contains(e!.mimeType));
+                              final files = attachments
+                                  .map((e) => AttachmentHelper.getContent(e!, autoDownload: false))
+                                  .whereType<PlatformFile>();
                               if (files.isNotEmpty) {
                                 for (PlatformFile f in files) {
                                   final a = attachments.firstWhere((e) => e!.transferName == f.name);
@@ -1162,52 +1197,48 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           }
                           final font = await PdfGoogleFonts.openSansRegular();
                           doc.addPage(pw.MultiPage(
-                            maxPages: 1000,
-                            header: (pw.Context context) => pw.Padding(
-                              padding: pw.EdgeInsets.only(bottom: 10),
-                              child: pw.Text(chat.title ?? "Unknown Chat",
-                                  textScaleFactor: 2,
-                                  style: pw.Theme.of(context)
-                                      .defaultTextStyle
-                                      .copyWith(fontWeight: pw.FontWeight.bold, font: font))
-                            ),
-                            build: (pw.Context context) => [
-                              pw.Partitions(
-                                  children: [
-                                    pw.Partition(
-                                      child: pw.Table(
-                                        children: List.generate(timestamps.length, (index) => pw.TableRow(
-                                          children: [
-                                            pw.Padding(
-                                              padding: pw.EdgeInsets.symmetric(horizontal: 3, vertical: 10),
-                                              child: pw.Text(timestamps[index],
-                                                  style: pw.Theme.of(context)
-                                                      .defaultTextStyle
-                                                      .copyWith(font: font)),
-                                            ),
-                                            pw.Container(
-                                              child: pw.Padding(
-                                                  padding: pw.EdgeInsets.symmetric(horizontal: 3, vertical: 10),
-                                                  child: content[index] is pw.MemoryImage
-                                                      ? pw.Image(content[index], width: dimensions[index]!.width, height: dimensions[index]!.height)
-                                                      : pw.Text(content[index].toString(),
-                                                      style: pw.TextStyle(font: font))
-                                              )
-                                            )
-                                          ]
-                                        ))
-                                      )
-                                    ),
-                                  ]
-                              ),
-                            ]
-                          ));
+                              maxPages: 1000,
+                              header: (pw.Context context) => pw.Padding(
+                                  padding: pw.EdgeInsets.only(bottom: 10),
+                                  child: pw.Text(chat.title ?? "Unknown Chat",
+                                      textScaleFactor: 2,
+                                      style: pw.Theme.of(context)
+                                          .defaultTextStyle
+                                          .copyWith(fontWeight: pw.FontWeight.bold, font: font))),
+                              build: (pw.Context context) => [
+                                    pw.Partitions(children: [
+                                      pw.Partition(
+                                          child: pw.Table(
+                                              children: List.generate(
+                                                  timestamps.length,
+                                                  (index) => pw.TableRow(children: [
+                                                        pw.Padding(
+                                                          padding: pw.EdgeInsets.symmetric(horizontal: 3, vertical: 10),
+                                                          child: pw.Text(timestamps[index],
+                                                              style: pw.Theme.of(context)
+                                                                  .defaultTextStyle
+                                                                  .copyWith(font: font)),
+                                                        ),
+                                                        pw.Container(
+                                                            child: pw.Padding(
+                                                                padding: pw.EdgeInsets.symmetric(
+                                                                    horizontal: 3, vertical: 10),
+                                                                child: content[index] is pw.MemoryImage
+                                                                    ? pw.Image(content[index],
+                                                                        width: dimensions[index]!.width,
+                                                                        height: dimensions[index]!.height)
+                                                                    : pw.Text(content[index].toString(),
+                                                                        style: pw.TextStyle(font: font))))
+                                                      ])))),
+                                    ]),
+                                  ]));
                           final now = DateTime.now().toLocal();
                           String filePath = "/storage/emulated/0/Download/";
                           if (kIsDesktop) {
                             filePath = (await getDownloadsDirectory())!.path;
                           }
-                          filePath = p.join(filePath,"${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.pdf");
+                          filePath = p.join(filePath,
+                              "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.pdf");
                           File file = File(filePath);
                           await file.create(recursive: true);
                           await file.writeAsBytes(await doc.save());
@@ -1224,7 +1255,9 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           trailing: Padding(
                             padding: EdgeInsets.only(right: 15),
                             child: Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf,
+                              SettingsManager().settings.skin.value == Skins.iOS
+                                  ? CupertinoIcons.doc_on_doc
+                                  : Icons.picture_as_pdf,
                               color: Theme.of(context).primaryColor,
                             ),
                           ),
@@ -1252,9 +1285,9 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                   SliverToBoxAdapter(child: Container(height: 50))
                 ],
               ),
-            );
-          }
-        ),
+            ),
+          );
+        }),
       ),
     );
   }

@@ -10,6 +10,7 @@ import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
@@ -23,7 +24,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -84,7 +84,8 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
         systemNavigationBarIconBrightness:
             context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Obx(() => buildForDevice(context)),
     );
@@ -150,19 +151,14 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
               ),
         backgroundColor: context.theme.backgroundColor,
         extendBodyBehindAppBar: true,
-        body: ImprovedScrolling(
-          enableMMBScrolling: true,
-          mmbScrollConfig: MMBScrollConfig(
-            customScrollCursor: DefaultCustomScrollCursor(
-              cursorColor: context.textTheme.subtitle1!.color!,
-              backgroundColor: Colors.white,
-              borderColor: context.textTheme.headline1!.color!,
-            ),
-          ),
-          scrollController: widget.parent.scrollController,
+        body: ScrollbarWrapper(
+          showScrollbar: true,
+          controller: widget.parent.scrollController,
           child: CustomScrollView(
             controller: widget.parent.scrollController,
-            physics: ThemeManager().scrollPhysics,
+            physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                ? NeverScrollableScrollPhysics()
+                : ThemeManager().scrollPhysics,
             slivers: <Widget>[
               SliverAppBar(
                 leading: ((SettingsManager().settings.skin.value == Skins.iOS && (showArchived || showUnknown)) ||

@@ -5,15 +5,16 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
 
 class SettingsScaffold extends StatelessWidget {
@@ -28,16 +29,15 @@ class SettingsScaffold extends StatelessWidget {
   final List<Widget> actions;
   final RxDouble remainingHeight = RxDouble(0);
 
-  SettingsScaffold({
-    required this.title,
-    required this.initialHeader,
-    required this.iosSubtitle,
-    required this.materialSubtitle,
-    required this.headerColor,
-    required this.tileColor,
-    required this.bodySlivers,
-    this.actions = const []
-  });
+  SettingsScaffold(
+      {required this.title,
+      required this.initialHeader,
+      required this.iosSubtitle,
+      required this.materialSubtitle,
+      required this.headerColor,
+      required this.tileColor,
+      required this.bodySlivers,
+      this.actions = const []});
 
   @override
   Widget build(BuildContext context) {
@@ -53,61 +53,62 @@ class SettingsScaffold extends StatelessWidget {
     });
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+            ? Colors.transparent
+            : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
-        appBar: SettingsManager().settings.skin.value == Skins.Samsung ? null : PreferredSize(
-          preferredSize: Size(CustomNavigator.width(context), 80),
-          child: ClipRRect(
-            child: BackdropFilter(
-              child: AppBar(
-                systemOverlayStyle: ThemeData.estimateBrightnessForColor(headerColor) == Brightness.dark
-                      ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-                toolbarHeight: 100.0,
-                elevation: 0,
-                leading: buildBackButton(context),
-                backgroundColor: headerColor.withOpacity(0.5),
-                title: Text(
-                  title,
-                  style: Theme.of(context).textTheme.headline1,
+        appBar: SettingsManager().settings.skin.value == Skins.Samsung
+            ? null
+            : PreferredSize(
+                preferredSize: Size(CustomNavigator.width(context), 80),
+                child: ClipRRect(
+                  child: BackdropFilter(
+                    child: AppBar(
+                      systemOverlayStyle: ThemeData.estimateBrightnessForColor(headerColor) == Brightness.dark
+                          ? SystemUiOverlayStyle.light
+                          : SystemUiOverlayStyle.dark,
+                      toolbarHeight: 100.0,
+                      elevation: 0,
+                      leading: buildBackButton(context),
+                      backgroundColor: headerColor.withOpacity(0.5),
+                      title: Text(
+                        title,
+                        style: Theme.of(context).textTheme.headline1,
+                      ),
+                    ),
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                  ),
                 ),
               ),
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            ),
-          ),
-        ),
         body: NotificationListener<ScrollEndNotification>(
           onNotification: (_) {
             if (SettingsManager().settings.skin.value != Skins.Samsung) return false;
             final scrollDistance = context.height / 3 - 57;
-            if (controller.offset > 0 && controller.offset < scrollDistance && controller.offset != controller.position.maxScrollExtent) {
-              final double snapOffset =
-              controller.offset / scrollDistance > 0.5 ? scrollDistance : 0;
+            if (controller.offset > 0 &&
+                controller.offset < scrollDistance &&
+                controller.offset != controller.position.maxScrollExtent) {
+              final double snapOffset = controller.offset / scrollDistance > 0.5 ? scrollDistance : 0;
 
-              Future.microtask(() => controller.animateTo(snapOffset,
-                  duration: Duration(milliseconds: 200), curve: Curves.linear));
+              Future.microtask(
+                  () => controller.animateTo(snapOffset, duration: Duration(milliseconds: 200), curve: Curves.linear));
             }
             return false;
           },
-          child: ImprovedScrolling(
-            enableMMBScrolling: true,
-            mmbScrollConfig: MMBScrollConfig(
-              customScrollCursor: DefaultCustomScrollCursor(
-                cursorColor: context.textTheme.subtitle1!.color!,
-                backgroundColor: Colors.white,
-                borderColor: context.textTheme.headline1!.color!,
-              ),
-            ),
-            scrollController: controller,
+          child: ScrollbarWrapper(
+            showScrollbar: false,
+            controller: controller,
             child: CustomScrollView(
               controller: controller,
               shrinkWrap: true,
-              physics: ThemeSwitcher.getScrollPhysics(),
+              physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                  ? NeverScrollableScrollPhysics()
+                  : ThemeSwitcher.getScrollPhysics(),
               slivers: <Widget>[
                 if (SettingsManager().settings.skin.value == Skins.Samsung)
                   SliverAppBar(
@@ -119,8 +120,7 @@ class SettingsScaffold extends StatelessWidget {
                     automaticallyImplyLeading: false,
                     flexibleSpace: LayoutBuilder(
                       builder: (context, _) {
-                        var expandRatio = 1 - (controller.offset)
-                            / (context.height / 3 - 50);
+                        var expandRatio = 1 - (controller.offset) / (context.height / 3 - 50);
                         if (expandRatio > 1.0) expandRatio = 1.0;
                         if (expandRatio < 0.1) expandRatio = 0.0;
                         final animation = AlwaysStoppedAnimation<double>(expandRatio);
@@ -133,9 +133,7 @@ class SettingsScaffold extends StatelessWidget {
                                 parent: animation,
                                 curve: Interval(0.3, 1.0, curve: Curves.easeIn),
                               )),
-                              child: Center(
-                                  child: Text(title, textScaleFactor: 2.5, textAlign: TextAlign.center)
-                              ),
+                              child: Center(child: Text(title, textScaleFactor: 2.5, textAlign: TextAlign.center)),
                             ),
                             FadeTransition(
                               opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
@@ -188,60 +186,56 @@ class SettingsScaffold extends StatelessWidget {
                     ),
                   ),
                 SliverList(
-                  delegate: SliverChildListDelegate(
-                    [
-                      if (SettingsManager().settings.skin.value != Skins.Samsung && initialHeader != null)
-                        Container(
-                            height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                            alignment: Alignment.bottomLeft,
-                            decoration: SettingsManager().settings.skin.value == Skins.iOS
-                                ? BoxDecoration(
-                              color: headerColor,
-                              border: Border(
-                                  bottom: BorderSide(
-                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                            )
-                                : BoxDecoration(
-                              color: tileColor,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                              child: Text(initialHeader!.psCapitalize,
-                                  style:
+                    delegate: SliverChildListDelegate([
+                  if (SettingsManager().settings.skin.value != Skins.Samsung && initialHeader != null)
+                    Container(
+                        height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                        alignment: Alignment.bottomLeft,
+                        decoration: SettingsManager().settings.skin.value == Skins.iOS
+                            ? BoxDecoration(
+                                color: headerColor,
+                                border: Border(
+                                    bottom: BorderSide(
+                                        color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                              )
+                            : BoxDecoration(
+                                color: tileColor,
+                              ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                          child: Text(initialHeader!.psCapitalize,
+                              style:
                                   SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                            )),
-                      Container(
-                          color: SettingsManager().settings.skin.value == Skins.Samsung ? null : tileColor,
-                          padding: EdgeInsets.only(top: 5.0)
-                      ),
-                    ]
-                  )
-                ),
+                        )),
+                  Container(
+                      color: SettingsManager().settings.skin.value == Skins.Samsung ? null : tileColor,
+                      padding: EdgeInsets.only(top: 5.0)),
+                ])),
                 ...bodySlivers,
                 SliverList(
                   delegate: SliverChildListDelegate(
                     [
-                      Obx(() => SettingsManager().settings.skin.value == Skins.Samsung ? Container(
-                        height: remainingHeight.value
-                      ) : SizedBox.shrink()),
+                      Obx(() => SettingsManager().settings.skin.value == Skins.Samsung
+                          ? Container(height: remainingHeight.value)
+                          : SizedBox.shrink()),
                       Container(
                           color: SettingsManager().settings.skin.value == Skins.Samsung ? null : tileColor,
-                          padding: EdgeInsets.only(top: SettingsManager().settings.skin.value == Skins.Samsung ? 30 : 5.0)
-                      ),
+                          padding:
+                              EdgeInsets.only(top: SettingsManager().settings.skin.value == Skins.Samsung ? 30 : 5.0)),
                       if (SettingsManager().settings.skin.value != Skins.Samsung)
                         Container(
                           height: 30,
                           decoration: SettingsManager().settings.skin.value == Skins.iOS
                               ? BoxDecoration(
-                            color: headerColor,
-                            border: Border(
-                                top: BorderSide(
-                                    color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                          )
+                                  color: headerColor,
+                                  border: Border(
+                                      top: BorderSide(
+                                          color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                                )
                               : null,
                         ),
-                    ]
-                  )
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -292,9 +286,9 @@ class SettingsTile extends StatelessWidget {
           trailing: trailing,
           subtitle: subtitle != null
               ? Text(
-            subtitle!,
-            style: Theme.of(context).textTheme.subtitle1,
-          )
+                  subtitle!,
+                  style: Theme.of(context).textTheme.subtitle1,
+                )
               : null,
           isThreeLine: isThreeLine,
         ),
@@ -306,14 +300,14 @@ class SettingsTile extends StatelessWidget {
 class SettingsTextField extends StatelessWidget {
   const SettingsTextField(
       {Key? key,
-        this.onTap,
-        required this.title,
-        this.trailing,
-        required this.controller,
-        this.placeholder,
-        this.maxLines = 14,
-        this.keyboardType = TextInputType.multiline,
-        this.inputFormatters = const []})
+      this.onTap,
+      required this.title,
+      this.trailing,
+      required this.controller,
+      this.placeholder,
+      this.maxLines = 14,
+      this.keyboardType = TextInputType.multiline,
+      this.inputFormatters = const []})
       : super(key: key);
 
   final TextEditingController controller;
@@ -415,9 +409,9 @@ class SettingsSwitch extends StatelessWidget {
         ),
         subtitle: subtitle != null
             ? Text(
-          subtitle!,
-          style: Theme.of(context).textTheme.subtitle1,
-        )
+                subtitle!,
+                style: Theme.of(context).textTheme.subtitle1,
+              )
             : null,
         value: initialVal,
         activeColor: Theme.of(context).primaryColor,
@@ -501,15 +495,15 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                   ),
                   (subtitle != null)
                       ? Container(
-                    constraints: BoxConstraints(maxWidth: CustomNavigator.width(context) * 2 / 3),
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 3.0),
-                      child: Text(
-                        subtitle ?? "",
-                        style: Theme.of(context).textTheme.subtitle1,
-                      ),
-                    ),
-                  )
+                          constraints: BoxConstraints(maxWidth: CustomNavigator.width(context) * 2 / 3),
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 3.0),
+                            child: Text(
+                              subtitle ?? "",
+                              style: Theme.of(context).textTheme.subtitle1,
+                            ),
+                          ),
+                        )
                       : Container(),
                 ]),
             Container(
@@ -552,19 +546,21 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
 class SettingsSlider extends StatelessWidget {
   SettingsSlider(
       {required this.startingVal,
-        this.update,
-        required this.text,
-        this.formatValue,
-        required this.min,
-        required this.max,
-        required this.divisions,
-        this.leading,
-        this.backgroundColor,
-        Key? key})
+      this.update,
+      this.onChangeEnd,
+      required this.text,
+      this.formatValue,
+      required this.min,
+      required this.max,
+      required this.divisions,
+      this.leading,
+      this.backgroundColor,
+      Key? key})
       : super(key: key);
 
   final double startingVal;
   final Function(double val)? update;
+  final Function(double val)? onChangeEnd;
   final String text;
   final Function(double value)? formatValue;
   final double min;
@@ -588,22 +584,26 @@ class SettingsSlider extends StatelessWidget {
         trailing: Text(value),
         title: SettingsManager().settings.skin.value == Skins.iOS
             ? CupertinoSlider(
-          activeColor: Theme.of(context).primaryColor,
-          value: startingVal,
-          onChanged: update,
-          divisions: divisions,
-          min: min,
-          max: max,
-        ) : Slider(
-          activeColor: Theme.of(context).primaryColor,
-          inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
-          value: startingVal,
-          onChanged: update,
-          label: value,
-          divisions: divisions,
-          min: min,
-          max: max,
-        ),
+                activeColor: Theme.of(context).primaryColor,
+                value: startingVal,
+                onChanged: update,
+                onChangeEnd: onChangeEnd,
+                divisions: divisions,
+                min: min,
+                max: max,
+              )
+            : Slider(
+                activeColor: Theme.of(context).primaryColor,
+                inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                value: startingVal,
+                onChanged: update,
+                onChangeEnd: onChangeEnd,
+                label: value,
+                divisions: divisions,
+                min: min,
+                max: max,
+                mouseCursor: SystemMouseCursors.click,
+              ),
       ),
     );
   }
@@ -618,10 +618,10 @@ class SettingsHeader extends StatelessWidget {
 
   SettingsHeader(
       {required this.headerColor,
-        required this.tileColor,
-        required this.iosSubtitle,
-        required this.materialSubtitle,
-        required this.text});
+      required this.tileColor,
+      required this.iosSubtitle,
+      required this.materialSubtitle,
+      required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -633,15 +633,15 @@ class SettingsHeader extends StatelessWidget {
           alignment: Alignment.bottomLeft,
           decoration: SettingsManager().settings.skin.value == Skins.iOS
               ? BoxDecoration(
-            color: headerColor,
-            border: Border.symmetric(
-                horizontal: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-          )
+                  color: headerColor,
+                  border: Border.symmetric(
+                      horizontal: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                )
               : BoxDecoration(
-            color: tileColor,
-            border:
-            Border(top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-          ),
+                  color: tileColor,
+                  border:
+                      Border(top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                ),
           child: Padding(
             padding: const EdgeInsets.only(bottom: 8.0, left: 15),
             child: Text(text.psCapitalize,
@@ -661,14 +661,12 @@ class SettingsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: SettingsManager().settings.skin.value == Skins.Samsung ? BorderRadius.circular(25) : BorderRadius.circular(0),
+      borderRadius:
+          SettingsManager().settings.skin.value == Skins.Samsung ? BorderRadius.circular(25) : BorderRadius.circular(0),
       child: Container(
+        padding: SettingsManager().settings.skin.value == Skins.Samsung ? EdgeInsets.symmetric(vertical: 5) : null,
         color: backgroundColor,
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: children
-        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: children),
       ),
     );
   }
@@ -691,16 +689,25 @@ class SettingsLeadingIcon extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Material(
-          shape: SettingsManager().settings.skin.value == Skins.Samsung ? SquircleBorder(
-            side: BorderSide(color: SettingsManager().settings.skin.value == Skins.Samsung ? containerColor ?? Colors.grey : Colors.transparent, width: 3.0),
-          ) : null,
-          color: SettingsManager().settings.skin.value == Skins.Samsung ? containerColor ?? Colors.grey : Colors.transparent,
+          shape: SettingsManager().settings.skin.value == Skins.Samsung
+              ? SquircleBorder(
+                  side: BorderSide(
+                      color: SettingsManager().settings.skin.value == Skins.Samsung
+                          ? containerColor ?? Colors.grey
+                          : Colors.transparent,
+                      width: 3.0),
+                )
+              : null,
+          color: SettingsManager().settings.skin.value == Skins.Samsung
+              ? containerColor ?? Colors.grey
+              : Colors.transparent,
           child: Container(
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color:
-              SettingsManager().settings.skin.value == Skins.iOS ? containerColor ?? Colors.grey : Colors.transparent,
+              color: SettingsManager().settings.skin.value == Skins.iOS
+                  ? containerColor ?? Colors.grey
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(5),
             ),
             alignment: Alignment.center,

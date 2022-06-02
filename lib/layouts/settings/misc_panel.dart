@@ -222,6 +222,8 @@ class MiscPanel extends StatelessWidget {
                           startingVal: SettingsManager().settings.scrollVelocity.value,
                           update: (double val) {
                             SettingsManager().settings.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
+                          },
+                          onChangeEnd: (double val) {
                             saveSettings();
                           },
                           formatValue: ((double val) => val.toStringAsFixed(2)),
@@ -261,6 +263,8 @@ class MiscPanel extends StatelessWidget {
                           startingVal: SettingsManager().settings.sendDelay.toDouble(),
                           update: (double val) {
                             SettingsManager().settings.sendDelay.value = val.toInt();
+                          },
+                          onChangeEnd: (double val) {
                             saveSettings();
                           },
                           formatValue: ((double val) => "${val.toStringAsFixed(0)} sec"),
@@ -318,6 +322,8 @@ class MiscPanel extends StatelessWidget {
                           startingVal: SettingsManager().settings.maxAvatarsInGroupWidget.value.toDouble(),
                           update: (double val) {
                             SettingsManager().settings.maxAvatarsInGroupWidget.value = val.toInt();
+                          },
+                          onChangeEnd: (double val) {
                             saveSettings();
                           },
                           formatValue: ((double val) => val.toStringAsFixed(0)),

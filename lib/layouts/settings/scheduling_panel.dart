@@ -3,13 +3,14 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -75,11 +76,14 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+            ? Colors.transparent
+            : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         // extendBodyBehindAppBar: true,
@@ -103,19 +107,13 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
             ),
           ),
         ),
-        body: ImprovedScrolling(
-          enableMMBScrolling: true,
-          mmbScrollConfig: MMBScrollConfig(
-            customScrollCursor: DefaultCustomScrollCursor(
-              cursorColor: context.textTheme.subtitle1!.color!,
-              backgroundColor: Colors.white,
-              borderColor: context.textTheme.headline1!.color!,
-            ),
-          ),
-          scrollController: scrollController,
+        body: ScrollbarWrapper(
+          controller: scrollController,
           child: CustomScrollView(
             controller: scrollController,
-            physics: ThemeSwitcher.getScrollPhysics(),
+            physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                ? NeverScrollableScrollPhysics()
+                : ThemeSwitcher.getScrollPhysics(),
             slivers: <Widget>[
               SliverList(
                 delegate: SliverChildListDelegate(

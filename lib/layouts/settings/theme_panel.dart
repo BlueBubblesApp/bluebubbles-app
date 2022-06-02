@@ -147,6 +147,8 @@ class ThemePanel extends GetView<ThemePanelController> {
                         startingVal: SettingsManager().settings.avatarScale.value.toDouble(),
                         update: (double val) {
                           SettingsManager().settings.avatarScale.value = val;
+                        },
+                        onChangeEnd: (double val) {
                           saveSettings();
                         },
                         formatValue: ((double val) => val.toPrecision(2).toString()),
