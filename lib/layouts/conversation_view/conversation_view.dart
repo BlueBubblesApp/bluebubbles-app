@@ -351,6 +351,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               // This means to send the text when the last attachment is sent
               // If we switched this to i == 0, then it will be send with the first attachment
               i == attachments.length - 1 && !alreadySent ? text : "",
+              effectId,
+              subject,
+              replyGuid,
             ),
           ),
         );
