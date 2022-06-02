@@ -347,11 +347,13 @@ class ChatController {
   }
 
   Future<void> scrollToBottom() async {
-    await scrollController.animateTo(
-      0.0,
-      curve: Curves.easeOut,
-      duration: const Duration(milliseconds: 300),
-    );
+    if (scrollController.positions.first.extentBefore != 0) {
+      await scrollController.animateTo(
+        0.0,
+        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 300),
+      );
+    }
 
     if (SettingsManager().settings.openKeyboardOnSTB.value) {
       EventDispatcher().emit("focus-keyboard", null);
