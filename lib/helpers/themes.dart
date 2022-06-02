@@ -192,14 +192,20 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
             : light.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(50))),
         colorScheme: light.colorScheme.copyWith(
           secondary: light.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(50))),
-        )
+        ),
+        useMaterial3: SettingsManager().useMaterial3,
+        typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
+        splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
     dark = dark.copyWith(
         primaryColor: Color(monetPalette!.primary.get(50)),
         backgroundColor: dark.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(60))),
         colorScheme: dark.colorScheme.copyWith(
           secondary: dark.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(60))),
-        )
+        ),
+        useMaterial3: SettingsManager().useMaterial3,
+        typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
+        splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
   } else if (SettingsManager().isFullMonet && monetPalette != null) {
     light = light.copyWith(
@@ -234,9 +240,9 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
         onInverseSurface: Color(monetPalette!.neutral.get(95)),
         inversePrimary: Color(monetPalette!.primary.get(80)),
       ),
-      useMaterial3: true,
-      typography: Typography.material2021(),
-      splashFactory: InkSparkle.splashFactory,
+      useMaterial3: SettingsManager().useMaterial3,
+      typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
+      splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
     dark = dark.copyWith(
       primaryColor: Color(monetPalette!.primary.get(50)),
@@ -270,9 +276,20 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
         onInverseSurface: Color(monetPalette!.neutral.get(20)),
         inversePrimary: Color(monetPalette!.primary.get(40)),
       ),
-      useMaterial3: true,
-      typography: Typography.material2021(),
-      splashFactory: InkSparkle.splashFactory,
+      useMaterial3: SettingsManager().useMaterial3,
+      typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
+      splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
+    );
+  } else {
+    light = light.copyWith(
+      useMaterial3: SettingsManager().useMaterial3,
+      typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
+      splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
+    );
+    dark = dark.copyWith(
+      useMaterial3: SettingsManager().useMaterial3,
+      typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
+      splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
   }
   return Tuple2(light, dark);
