@@ -97,7 +97,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   Stream get stream => _streamController.stream;
 
-  bool get _canRecord => controller!.text.isEmpty && pickedImages.isEmpty && subjectController!.text.isEmpty;
+  bool get _canRecord => controller!.text.isEmpty && pickedImages.isEmpty && subjectController!.text.isEmpty && !recordDelay;
+  bool recordDelay = false;
+  Timer? _debounce;
 
   final RxBool showShareMenu = false.obs;
 
@@ -1774,6 +1776,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<void> sendMessage({String? effect}) async {
+    // if we actually need to send something, temporarily disable the record button so users don't accidentally press it
+    if (!isNullOrEmpty(controller!.text)! || !isNullOrEmpty(subjectController!.text)! || pickedImages.isNotEmpty) {
+      recordDelay = true;
+      if (_debounce?.isActive ?? false) _debounce?.cancel();
+      _debounce = Timer(const Duration(seconds: 3), () {
+        recordDelay = false;
+        setCanRecord();
+      });
+    }
+
     // If send delay is enabled, delay the sending
     if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
       // Break the delay into 1 second intervals
