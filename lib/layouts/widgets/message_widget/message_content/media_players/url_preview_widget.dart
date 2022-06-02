@@ -200,7 +200,7 @@ class UrlPreviewWidget extends StatelessWidget {
                               child: Text(
                                 message.fullText.isURL ? message.fullText : (Uri.tryParse(message.getUrl()!)?.host ?? ""),
                                 style: Theme.of(context).textTheme.subtitle2!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
-                                overflow: TextOverflow.ellipsis,
+                                overflow: TextOverflow.clip,
                                 maxLines: 1,
                               ),
                             )),
