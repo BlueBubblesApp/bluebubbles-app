@@ -280,8 +280,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   Widget buildSubtitle() {
     return Obx(
       () {
-        String latestText = widget.chat.latestMessage != null
-            ? MessageHelper.getNotificationText(widget.chat.latestMessage!)
+        String latestText = widget.chat.latestMessageGetter != null
+            ? MessageHelper.getNotificationText(widget.chat.latestMessageGetter!)
             : widget.chat.latestMessageText ?? "";
         final hideContent =
             SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
@@ -383,7 +383,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   Widget _buildDate() {
     MessageMarkers? markers = ChatManager().getChatController(widget.chat)?.messageMarkers;
     return Obx(() => !SettingsManager().settings.statusIndicatorsOnChats.value || kIsWeb || markers == null
-        ? Text(buildDate(widget.chat.latestMessageDate),
+        ? Text(buildDate(widget.chat.latestMessageDate ?? widget.chat.latestMessageGetter?.dateCreated),
             textAlign: TextAlign.right,
             style: Theme.of(context).textTheme.subtitle2!.copyWith(
                   color: shouldHighlight.value
