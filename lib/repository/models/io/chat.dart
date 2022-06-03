@@ -1201,10 +1201,10 @@ class Chat {
     if (a.isPinned! && !b.isPinned!) return -1;
 
     // Compare the last message dates
-    if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
-    if (a.latestMessageDate == null) return 1;
-    if (b.latestMessageDate == null) return -1;
-    return -a.latestMessageDate!.compareTo(b.latestMessageDate!);
+    if ((a.latestMessageDate ?? a.latestMessageGetter?.dateCreated) == null && (b.latestMessageDate ?? b.latestMessageGetter?.dateCreated) == null) return 0;
+    if ((a.latestMessageDate ?? a.latestMessageGetter?.dateCreated) == null) return 1;
+    if ((b.latestMessageDate ?? b.latestMessageGetter?.dateCreated) == null) return -1;
+    return -(a.latestMessageDate ?? a.latestMessageGetter?.dateCreated)!.compareTo((b.latestMessageDate ?? b.latestMessageGetter?.dateCreated)!);
   }
 
   static void flush() {
