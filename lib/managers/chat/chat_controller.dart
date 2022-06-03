@@ -347,7 +347,7 @@ class ChatController {
   }
 
   Future<void> scrollToBottom() async {
-    if (scrollController.positions.first.extentBefore != 0) {
+    if (scrollController.positions.isEmpty || scrollController.positions.first.extentBefore != 0) {
       await scrollController.animateTo(
         0.0,
         curve: Curves.easeOut,

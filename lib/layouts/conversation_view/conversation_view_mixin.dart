@@ -645,7 +645,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           leading: GestureDetector(
               onTap: () {
                 if (LifeCycleManager().isBubble) {
-                  ChatManager().setActiveChat(null);
                   SystemNavigator.pop();
                   return;
                 }
@@ -661,6 +660,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     mainAxisAlignment: cupertino.MainAxisAlignment.start,
                     children: [
                       buildBackButton(context, callback: () {
+                        if (LifeCycleManager().isBubble) {
+                          SystemNavigator.pop();
+                          return false;
+                        }
                         EventDispatcher().emit("update-highlight", null);
                         return true;
                       }),

@@ -16,6 +16,7 @@ import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
@@ -60,7 +61,8 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
         prefs.getString('lastOpenedChat') != null &&
         (!context.isPhone || context.isLandscape) &&
         (SettingsManager().settings.tabletMode.value || kIsDesktop) &&
-        ChatManager().activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
+        ChatManager().activeChat?.chat.guid != prefs.getString('lastOpenedChat') &&
+        !LifeCycleManager().isBubble) {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
         context,
@@ -576,7 +578,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
   Widget buildForDevice(BuildContext context) {
     bool showAltLayout =
-        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600;
+        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !LifeCycleManager().isBubble;
     Widget chatList = buildChatList(context, showAltLayout);
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);
