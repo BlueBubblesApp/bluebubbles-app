@@ -885,14 +885,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 },
                 child: Padding(
                   padding: EdgeInsets.only(
+                    top: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 0,
                       right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1,
-                      left: SettingsManager().settings.skin.value == Skins.iOS ? 0.5 : 0),
+                      left: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 2),
                   child: Icon(
-                    Icons.location_on_outlined,
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined,
                     color: SettingsManager().settings.skin.value == Skins.Samsung
                         ? context.theme.textTheme.bodyText1!.color
                         : Colors.white,
-                    size: 26,
+                    size: 20,
                   ),
                 ),
               );
