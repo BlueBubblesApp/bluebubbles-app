@@ -90,7 +90,7 @@ class VideoWidgetController extends GetxController {
       if (status == PlayerStatus.ENDED) {
         showPlayPauseOverlay.value = true;
         await controller.pause();
-        await controller.seekTo(Duration());
+        await controller.seekTo(Duration.zero);
       }
     });
 

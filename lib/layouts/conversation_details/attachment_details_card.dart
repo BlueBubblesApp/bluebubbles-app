@@ -1,11 +1,11 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
@@ -101,7 +101,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
   }
 
   Widget buildPreview(BuildContext context) => SizedBox(
-        width: CustomNavigator.width(context) / 2,
+        width: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
         child: _buildPreview(attachmentFile, context),
       );
 
@@ -181,7 +181,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
   }
 
   Future<void> getVideoPreview(PlatformFile file) async {
-    if (previewImage != null || kIsWeb || kIsDesktop || file.path == null) return;
+    if (previewImage != null || kIsWeb || file.path == null) return;
     
     Size size;
 
@@ -236,8 +236,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
                         alignment: Alignment.center,
                       )
                     : Container()),
-            width: CustomNavigator.width(context) / 2,
-            height: CustomNavigator.width(context) / 2,
+            width: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
+            height: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
           ),
           Material(
             color: Colors.transparent,
@@ -275,8 +275,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
                     )
                   : Container(),
             ),
-            width: CustomNavigator.width(context) / 2,
-            height: CustomNavigator.width(context) / 2,
+            width: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
+            height: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
           ),
           Material(
             color: Colors.transparent,
