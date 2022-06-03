@@ -829,7 +829,7 @@ class Message {
   }
 
   bool isGroupEvent() {
-    return isEmptyString(fullText) && !hasAttachments && balloonBundleId == null;
+    return isEmptyString(fullText) && (!hasAttachments || (itemType == 3 && groupActionType == 1)) && balloonBundleId == null;
   }
 
   bool isBigEmoji() {
