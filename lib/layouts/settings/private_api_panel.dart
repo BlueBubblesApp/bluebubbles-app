@@ -15,13 +15,6 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:version/version.dart';
 
-class PrivateAPIPanelBinding extends Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<PrivateAPIPanelController>(() => PrivateAPIPanelController());
-  }
-}
-
 class PrivateAPIPanelController extends GetxController {
   late Settings _settingsCopy;
   final RxInt serverVersionCode = RxInt(0);
@@ -48,7 +41,9 @@ class PrivateAPIPanelController extends GetxController {
   }
 }
 
-class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
+class PrivateAPIPanel extends StatelessWidget {
+  final controller = Get.put(PrivateAPIPanelController());
+
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =

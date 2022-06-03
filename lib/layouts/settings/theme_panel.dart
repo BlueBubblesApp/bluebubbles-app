@@ -23,13 +23,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 
-class ThemePanelBinding extends Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<ThemePanelController>(() => ThemePanelController());
-  }
-}
-
 class ThemePanelController extends GetxController {
   late Settings _settingsCopy;
   final RxList<DisplayMode> modes = <DisplayMode>[].obs;
@@ -59,7 +52,9 @@ class ThemePanelController extends GetxController {
   }
 }
 
-class ThemePanel extends GetView<ThemePanelController> {
+class ThemePanel extends StatelessWidget {
+  final controller = Get.put(ThemePanelController());
+
   @override
   Widget build(BuildContext context) {
     Widget nextIcon = Obx(() => Icon(
