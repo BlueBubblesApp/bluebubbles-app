@@ -85,6 +85,12 @@ class FullSyncManager extends SyncManager {
                 }
               }
 
+              if (newMessages.isEmpty && skipEmptyChats) {
+                addToOutput('Deleting chat: $displayName (skip empty chats was selected)');
+                Chat.deleteChat(chat);
+                continue;
+              }
+
               addToOutput('Saving chunk of ${newMessages.length} message(s) for chat: $displayName');
 
               // Asyncronously save the messages
