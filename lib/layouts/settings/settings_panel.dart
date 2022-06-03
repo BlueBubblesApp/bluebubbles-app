@@ -85,7 +85,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
           context,
           ServerManagementPanel(),
               (route) => route.isFirst,
-          binding: ServerManagementPanelBinding(),
         );
       }
     });
@@ -173,7 +172,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               context,
                               ServerManagementPanel(),
                                   (route) => route.isFirst,
-                              binding: ServerManagementPanelBinding(),
                             );
                           },
                           onLongPress: () {
@@ -242,7 +240,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             context,
                             ThemePanel(),
                                 (route) => route.isFirst,
-                            binding: ThemePanelBinding(),
                           );
                         },
                         trailing: nextIcon,
@@ -417,7 +414,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             context,
                             PrivateAPIPanel(),
                                 (route) => route.isFirst,
-                            binding: PrivateAPIPanelBinding(),
                           );
                         },
                         leading: SettingsLeadingIcon(

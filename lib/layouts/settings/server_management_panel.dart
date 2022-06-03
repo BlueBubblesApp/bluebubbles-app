@@ -29,13 +29,6 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:version/version.dart';
 
-class ServerManagementPanelBinding extends Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<ServerManagementPanelController>(() => ServerManagementPanelController());
-  }
-}
-
 class ServerManagementPanelController extends GetxController {
   final RxnInt latency = RxnInt();
   final RxnString fetchStatus = RxnString();
@@ -112,7 +105,8 @@ class ServerManagementPanelController extends GetxController {
   }
 }
 
-class ServerManagementPanel extends GetView<ServerManagementPanelController> {
+class ServerManagementPanel extends StatelessWidget {
+  final controller = Get.put(ServerManagementPanelController());
 
   @override
   Widget build(BuildContext context) {
