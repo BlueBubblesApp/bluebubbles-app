@@ -403,6 +403,8 @@ String getGroupEventText(Message message) {
     text = "$handle removed $other from the conversation";
   } else if (message.itemType == 1 && message.groupActionType == 0) {
     text = "$handle added $other to the conversation";
+  } else if (message.itemType == 3 && message.groupActionType == 1) {
+    text = "$handle changed the group photo";
   } else if (message.itemType == 3) {
     text = "$handle left the conversation";
   } else if (message.itemType == 2 && message.groupTitle != null) {
