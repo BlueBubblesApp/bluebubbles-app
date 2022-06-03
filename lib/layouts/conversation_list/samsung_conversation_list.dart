@@ -227,7 +227,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
         context,
-        ConversationView(chat: Chat.findOne(guid: prefs.getString('lastOpenedChat'))),
+        ConversationView(chat: kIsWeb ? await Chat.findOneWeb(guid: prefs.getString('lastOpenedChat')) : Chat.findOne(guid: prefs.getString('lastOpenedChat'))),
         (route) => route.isFirst,
       );
     }
