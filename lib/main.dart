@@ -957,9 +957,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   showUnknownSenders: false,
                 );
               } else {
-                SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.portraitUp,
-                ]);
+                if (context.isPhone) {
+                  SystemChrome.setPreferredOrientations([
+                    DeviceOrientation.portraitUp,
+                  ]);
+                }
                 return WillPopScope(
                   onWillPop: () async => false,
                   child: TitleBarWrapper(

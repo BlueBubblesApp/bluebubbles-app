@@ -926,6 +926,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               RawKeyEventDataWindows? windowsData;
               RawKeyEventDataLinux? linuxData;
               RawKeyEventDataWeb? webData;
+              RawKeyEventDataAndroid? androidData;
               if (event.data is RawKeyEventDataWindows) {
                 windowsData = event.data as RawKeyEventDataWindows;
               } else if (event.data is RawKeyEventDataLinux) {
@@ -933,6 +934,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               } else if (event.data is RawKeyEventDataWeb) {
                 webData = event.data as RawKeyEventDataWeb;
                 print(webData.code);
+              } else if (event.data is RawKeyEventDataAndroid) {
+                androidData = event.data as RawKeyEventDataAndroid;
               }
 
               int maxShown = context.height / 3 ~/ 48;
@@ -940,7 +943,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               int downMovementIndex = maxShown * 2 ~/ 3;
 
               // Down arrow
-              if (windowsData?.keyCode == 40 || linuxData?.keyCode == 65364 || webData?.code == "ArrowDown") {
+              if (windowsData?.keyCode == 40 || linuxData?.keyCode == 65364 || webData?.code == "ArrowDown" || androidData?.physicalKey == PhysicalKeyboardKey.arrowDown) {
                 if (emojiSelectedIndex.value < emojiMatches.value.length - 1) {
                   emojiSelectedIndex.value++;
                   if (emojiSelectedIndex.value >= downMovementIndex &&
@@ -953,7 +956,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
 
               // Up arrow
-              if (windowsData?.keyCode == 38 || linuxData?.keyCode == 65362 || webData?.code == "ArrowUp") {
+              if (windowsData?.keyCode == 38 || linuxData?.keyCode == 65362 || webData?.code == "ArrowUp" || androidData?.physicalKey == PhysicalKeyboardKey.arrowUp) {
                 if (emojiSelectedIndex.value > 0) {
                   emojiSelectedIndex.value--;
                   if (emojiSelectedIndex.value >= upMovementIndex &&
@@ -966,7 +969,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
 
               // Tab
-              if (windowsData?.keyCode == 9 || linuxData?.keyCode == 65289 || webData?.code == "Tab") {
+              if (windowsData?.keyCode == 9 || linuxData?.keyCode == 65289 || webData?.code == "Tab" || androidData?.physicalKey == PhysicalKeyboardKey.tab) {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
                   EventDispatcher()
                       .emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
@@ -988,7 +991,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
 
               // Escape
-              if (windowsData?.keyCode == 27 || linuxData?.keyCode == 65307 || webData?.code == "Escape") {
+              if (windowsData?.keyCode == 27 || linuxData?.keyCode == 65307 || webData?.code == "Escape" || androidData?.physicalKey == PhysicalKeyboardKey.escape) {
                 if (replyToMessage.value != null) {
                   replyToMessage.value = null;
                   return KeyEventResult.handled;
@@ -1223,8 +1226,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           },
                           key: _searchFormKey,
                           onSubmitted: (String value) {
-                            if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                             focusNode!.requestFocus();
+                            if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                             sendMessage();
                           },
                           onContentCommitted: onContentCommit,
@@ -1415,8 +1418,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       cursorColor: Theme.of(context).primaryColor,
                       key: _searchFormKey,
                       onSubmitted: (String value) {
-                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         focusNode!.requestFocus();
+                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         sendMessage();
                       },
                       style: Theme.of(context).textTheme.bodyText1!.apply(
@@ -1644,8 +1647,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       cursorColor: Theme.of(context).primaryColor,
                       key: _searchFormKey,
                       onSubmitted: (String value) {
-                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         focusNode!.requestFocus();
+                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         sendMessage();
                       },
                       style: Theme.of(context).textTheme.bodyText1!.apply(
@@ -1816,8 +1819,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     if (await widget.onSend(pickedImages, controller!.text, subjectController!.text,
         replyToMessage.value?.threadOriginatorGuid ?? replyToMessage.value?.guid, effect)) {
-      controller!.text = "";
-      subjectController!.text = "";
+      controller!.clear();
+      subjectController!.clear();
       replyToMessage.value = null;
       pickedImages.clear();
       updateTextFieldAttachments();
