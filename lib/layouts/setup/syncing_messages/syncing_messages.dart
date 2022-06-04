@@ -187,6 +187,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                                       showArchivedChats: false,
                                       showUnknownSenders: false,
                                     ),
+                                routeName: "",
                                 duration: Duration.zero,
                                 transition: Transition.noTransition);
                           },

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/crypto.dart';
@@ -139,10 +140,17 @@ class SocketManager {
             Logger.error(err);
           });
 
-          if (kIsDesktop && ContactManager().contacts.isEmpty) {
+          if ((kIsDesktop || kIsWeb) && ContactManager().contacts.isEmpty) {
             // Get contacts whenever we connect if we didn't yet
             Future.delayed(Duration.zero, () async {
               await ContactManager().loadContacts();
+              EventDispatcher().emit('refresh', null);
+            });
+          }
+          if (kIsWeb && ChatBloc().chats.isEmpty) {
+            // Get contacts whenever we connect if we didn't yet
+            Future.delayed(Duration.zero, () async {
+              await ChatBloc().refreshChats(force: true);
               EventDispatcher().emit('refresh', null);
             });
           }

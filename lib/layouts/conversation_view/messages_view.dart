@@ -647,7 +647,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
   @override
   void dispose() {
     if (!smartReplyController.isClosed) smartReplyController.close();
-    smartReply.close();
+    if (!kIsWeb && !kIsDesktop) smartReply.close();
     super.dispose();
   }
 }

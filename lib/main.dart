@@ -707,7 +707,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         } catch (_) {}
       }
 
-      if (kIsWeb) {
+      if (kIsWeb && SettingsManager().settings.finishedSetup.value) {
         String? str = await SettingsManager().getServerVersion();
         ver.Version version = ver.Version.parse(str);
         int sum = version.major * 100 + version.minor * 21 + version.patch;
@@ -726,40 +726,42 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       }
 
       // check for server updates on app launch
-      api.checkUpdate().then((response) {
-        if (response.statusCode == 200) {
-          bool available = response.data['data']['available'] ?? false;
-          Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
-          if (!available || prefs.getString("update-check") == metadata['version']) return;
-          Get.defaultDialog(
-            title: "Server Update Check",
-            titleStyle: Theme.of(context).textTheme.headline1,
-            textConfirm: "OK",
-            cancel: Container(height: 0, width: 0),
-            content: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  SizedBox(
-                    height: 15.0,
-                  ),
-                  Text("Updates available:", style: context.theme.textTheme.bodyText1),
-                  SizedBox(
-                    height: 15.0,
-                  ),
-                  if (metadata.isNotEmpty)
-                    Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
-                ]
-            ),
-            onConfirm: () {
-              if (metadata['version'] != null) {
-                prefs.setString("update-check", metadata['version']);
-              }
-              Navigator.of(context).pop();
-            },
-            backgroundColor: Theme.of(context).backgroundColor,
-          );
-        }
-      });
+      if (SettingsManager().settings.finishedSetup.value) {
+        api.checkUpdate().then((response) {
+          if (response.statusCode == 200) {
+            bool available = response.data['data']['available'] ?? false;
+            Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
+            if (!available || prefs.getString("update-check") == metadata['version']) return;
+            Get.defaultDialog(
+              title: "Server Update Check",
+              titleStyle: Theme.of(context).textTheme.headline1,
+              textConfirm: "OK",
+              cancel: Container(height: 0, width: 0),
+              content: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    SizedBox(
+                      height: 15.0,
+                    ),
+                    Text("Updates available:", style: context.theme.textTheme.bodyText1),
+                    SizedBox(
+                      height: 15.0,
+                    ),
+                    if (metadata.isNotEmpty)
+                      Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
+                  ]
+              ),
+              onConfirm: () {
+                if (metadata['version'] != null) {
+                  prefs.setString("update-check", metadata['version']);
+                }
+                Navigator.of(context).pop();
+              },
+              backgroundColor: Theme.of(context).backgroundColor,
+            );
+          }
+        });
+      }
 
       if (!kIsWeb && !kIsDesktop) {
         if (!LifeCycleManager().isBubble) {
