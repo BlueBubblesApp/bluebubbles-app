@@ -14,7 +14,6 @@ class Settings {
   final RxString guidAuthKey = "".obs;
   final RxString serverAddress = "".obs;
   final RxBool finishedSetup = false.obs;
-  final RxInt chunkSize = 500.obs;
   final RxBool autoDownload = true.obs;
   final RxBool onlyWifiDownload = false.obs;
   final RxBool autoSave = false.obs;
@@ -149,8 +148,6 @@ class Settings {
         settings.guidAuthKey.value = entry.value;
       } else if (entry.name == "finishedSetup") {
         settings.finishedSetup.value = entry.value;
-      } else if (entry.name == "chunkSize") {
-        settings.chunkSize.value = entry.value;
       } else if (entry.name == "autoOpenKeyboard") {
         settings.autoOpenKeyboard.value = entry.value;
       } else if (entry.name == "autoDownload") {
@@ -400,7 +397,6 @@ class Settings {
 
   Map<String, dynamic> toMap({bool includeAll = false}) {
     Map<String, dynamic> map = {
-      'chunkSize': chunkSize.value,
       'autoDownload': autoDownload.value,
       'onlyWifiDownload': onlyWifiDownload.value,
       'autoSave': autoSave.value,
@@ -511,7 +507,6 @@ class Settings {
   }
 
   static void updateFromMap(Map<String, dynamic> map) {
-    SettingsManager().settings.chunkSize.value = map['chunkSize'] ?? 500;
     SettingsManager().settings.autoDownload.value = map['autoDownload'] ?? true;
     SettingsManager().settings.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
     SettingsManager().settings.autoSave.value = map['autoSave'] ?? false;
@@ -623,7 +618,6 @@ class Settings {
     s.guidAuthKey.value = map['guidAuthKey'] ?? "";
     s.serverAddress.value = map['serverAddress'] ?? "";
     s.finishedSetup.value = map['finishedSetup'] ?? false;
-    s.chunkSize.value = map['chunkSize'] ?? 500;
     s.autoDownload.value = map['autoDownload'] ?? true;
     s.autoSave.value = map['autoSave'] ?? false;
     s.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;

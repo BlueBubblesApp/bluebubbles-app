@@ -352,32 +352,13 @@ class NotificationPanel extends StatelessWidget {
                                 subtitle: "Mute all chats except when your choice of text is found in a message",
                               ),
                             ]),
-                            Container(
-                                color: SettingsManager().settings.skin.value == Skins.Samsung ? null : tileColor,
-                                padding: EdgeInsets.only(
-                                    top: SettingsManager().settings.skin.value == Skins.Samsung ? 30 : 5.0)),
-                            if (SettingsManager().settings.skin.value != Skins.Samsung)
-                              Container(
-                                  height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                                  alignment: Alignment.bottomLeft,
-                                  decoration: SettingsManager().settings.skin.value == Skins.iOS
-                                      ? BoxDecoration(
-                                          color: headerColor,
-                                          border: Border(
-                                              bottom: BorderSide(
-                                                  color: Theme.of(context).dividerColor.lightenOrDarken(40),
-                                                  width: 0.3)),
-                                        )
-                                      : BoxDecoration(
-                                          color: tileColor,
-                                        ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                                    child: Text("Advanced".psCapitalize,
-                                        style: SettingsManager().settings.skin.value == Skins.iOS
-                                            ? iosSubtitle
-                                            : materialSubtitle),
-                                  )),
+                            SettingsHeader(
+                                headerColor: headerColor,
+                                tileColor: tileColor,
+                                iosSubtitle: iosSubtitle,
+                                materialSubtitle: materialSubtitle,
+                                text: "Advanced"
+                            ),
                             SettingsSection(
                               backgroundColor: tileColor,
                               children: [
