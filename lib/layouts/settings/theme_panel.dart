@@ -1,7 +1,9 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -15,19 +17,22 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:dio/dio.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
+import 'package:universal_io/io.dart';
 
 class ThemePanelController extends GetxController {
   late Settings _settingsCopy;
   final RxList<DisplayMode> modes = <DisplayMode>[].obs;
   final RxList<int> refreshRates = <int>[].obs;
   final RxInt currentMode = 0.obs;
+  final RxnBool gettingIcons = RxnBool();
 
   @override
   void onInit() {
@@ -423,6 +428,51 @@ class ThemePanel extends StatelessWidget {
                         },
                         backgroundColor: tileColor,
                         subtitle: "Customize the avatar for different chats",
+                      ),
+                    if (!kIsWeb)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                    if (!kIsWeb)
+                      SettingsTile(
+                        title: "Sync Group Chat Icons",
+                        trailing: Obx(() => controller.gettingIcons.value == null
+                            ? SizedBox.shrink()
+                            : controller.gettingIcons.value == true ? Container(
+                            constraints: BoxConstraints(
+                              maxHeight: 20,
+                              maxWidth: 20,
+                            ),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3,
+                              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                            )) : Icon(Icons.check, color: Colors.grey)
+                        ),
+                        onTap: () async {
+                          controller.gettingIcons.value = true;
+                          for (Chat c in ChatBloc().chats.where((c) => c.isGroup())) {
+                            final response = await api.getChatIcon(c.guid).catchError((err) async {
+                              Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
+                              return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));
+                            });
+                            if (response.statusCode != 200 || isNullOrEmpty(response.data)!) continue;
+                            Logger.debug("Got chat icon for chat ${c.getTitle()}");
+                            File file = File(c.customAvatarPath ?? "${SettingsManager().appDocDir.path}/avatars/${c.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
+                            if (c.customAvatarPath == null) {
+                              await file.create(recursive: true);
+                            }
+                            await file.writeAsBytes(response.data);
+                            c.customAvatarPath = file.path;
+                            c.save(updateCustomAvatarPath: true);
+                          }
+                          controller.gettingIcons.value = false;
+                        },
+                        backgroundColor: tileColor,
+                        subtitle: "Get iMessage group chat icons. Note: Overrides any custom avatars set for group chats",
                       ),
                   ],
                 ),
