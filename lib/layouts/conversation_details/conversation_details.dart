@@ -1,8 +1,11 @@
+import 'dart:math';
+
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
@@ -1266,7 +1269,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                     ),
                   SliverGrid(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                      crossAxisCount: max(2, CustomNavigator.width(context) ~/ 200),
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, int index) {

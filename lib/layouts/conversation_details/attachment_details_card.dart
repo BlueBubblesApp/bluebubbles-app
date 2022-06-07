@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
@@ -258,7 +259,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
           )
         ],
       );
-    } else if (widget.attachment.mimeType?.startsWith("video/") ?? false) {
+    } else if (!kIsDesktop && (widget.attachment.mimeType?.startsWith("video/") ?? false)) {
       getVideoPreview(file);
 
       return Stack(
