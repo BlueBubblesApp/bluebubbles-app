@@ -51,8 +51,15 @@ class AboutPanel extends StatelessWidget {
                     SettingsTile(
                       backgroundColor: tileColor,
                       title: "Support Us",
+                      subtitle: kIsDesktop || kIsWeb ? "Left click for PayPal / Venmo, right click for Github Sponsors" : "Tap for PayPal / Venmo, tap and hold for GitHub Sponsors",
                       onTap: () async {
                         await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "donate"));
+                      },
+                      onLongPress: () async {
+                        if (kIsWeb) {
+                          (await html.document.onContextMenu.first).preventDefault();
+                        }
+                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "sponsors/BlueBubblesApp"));
                       },
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.money_dollar_circle,

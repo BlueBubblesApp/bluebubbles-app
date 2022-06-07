@@ -256,43 +256,6 @@ class AttachmentPanel extends StatelessWidget {
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
-                  SettingsTile(
-                    title: "Attachment Chunk Size",
-                    subtitle: "Controls the amount of data the app gets from the server on each network request",
-                    backgroundColor: tileColor,
-                    isThreeLine: true,
-                  ),
-                  Obx(() => SettingsSlider(
-                      text: "Attachment Chunk Size",
-                      startingVal: SettingsManager().settings.chunkSize.value.toDouble(),
-                      update: (double val) {
-                        SettingsManager().settings.chunkSize.value = val.floor();
-                      },
-                      onChangeEnd: (double val) {
-                        saveSettings();
-                      },
-                      formatValue: ((double val) => getSizeString(val)),
-                      backgroundColor: tileColor,
-                      leading: Obx(() => SettingsLeadingIcon(
-                        iosIcon: SettingsManager().settings.chunkSize.value < 1000
-                            ? CupertinoIcons.square_grid_3x2 : SettingsManager().settings.chunkSize.value < 2000
-                            ? CupertinoIcons.square_grid_2x2 : CupertinoIcons.square,
-                        materialIcon: SettingsManager().settings.chunkSize.value < 1000
-                            ? Icons.photo_size_select_small : SettingsManager().settings.chunkSize.value < 2000
-                            ? Icons.photo_size_select_large : Icons.photo_size_select_actual,
-                      )),
-                      min: 100,
-                      max: 3000,
-                      divisions: 29
-                  )),
-                  if (!kIsWeb)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
-                      ),
-                    ),
                   if (!kIsWeb)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {

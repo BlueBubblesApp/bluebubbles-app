@@ -296,7 +296,9 @@ class ChatBloc {
   }
 
   Future<void> getChatBatches({int batchSize = 15, bool headless = false}) async {
-    int count = Chat.count() ?? (await api.chatCount()).data['data']['total'];
+    int count = Chat.count() ?? (await api.chatCount().catchError((err) {
+      chatRequest!.completeError(err.toString());
+    })).data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
     } else {

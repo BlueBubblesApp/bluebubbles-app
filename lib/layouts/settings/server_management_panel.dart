@@ -34,6 +34,7 @@ class ServerManagementPanelController extends GetxController {
   final RxnString fetchStatus = RxnString();
   final RxnString serverVersion = RxnString();
   final RxnString macOSVersion = RxnString();
+  final RxnString iCloudAccount = RxnString();
   final RxnInt serverVersionCode = RxnInt();
   final RxBool privateAPIStatus = RxBool(false);
   final RxBool helperBundleStatus = RxBool(false);
@@ -74,6 +75,7 @@ class ServerManagementPanelController extends GetxController {
       privateAPIStatus.value = response.data['data']['private_api'] ?? false;
       helperBundleStatus.value = response.data['data']['helper_connected'] ?? false;
       proxyService.value = response.data['data']['proxy_service'];
+      iCloudAccount.value = response.data['data']['detected_icloud'];
 
       api.serverStatTotals().then((response) {
         if (response.data['status'] == 200) {
@@ -171,6 +173,10 @@ class ServerManagementPanel extends StatelessWidget {
                                     TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
                                     TextSpan(text: "\n\n"),
                                     TextSpan(text: "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
+                                    if (controller.proxyService.value != null)
+                                      TextSpan(text: "\n\n"),
+                                    if (controller.proxyService.value != null)
+                                      TextSpan(text: "iCloud Account: ${redact ? "Redacted" : controller.proxyService.value}"),
                                     TextSpan(text: "\n\n"),
                                     TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
                                   ]
