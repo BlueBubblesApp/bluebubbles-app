@@ -98,6 +98,15 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
           ),
         );
       } else if (mimeType == "video") {
+        if (kIsDesktop) {
+          return MediaFile(
+            attachment: widget.attachment,
+            child: RegularFileOpener(
+              file: content,
+              attachment: widget.attachment,
+            ),
+          );
+        }
         return MediaFile(
           attachment: widget.attachment,
           child: kIsDesktop
