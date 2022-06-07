@@ -613,8 +613,8 @@ class Settings {
     SettingsManager().settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     SettingsManager().settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     SettingsManager().settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    SettingsManager().settings.selectedActionIndices.value = map['selectedActionIndices'] ?? [0, 1, 2, 3, 4];
-    SettingsManager().settings.actionList.value = map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION];
+    SettingsManager().settings.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
+    SettingsManager().settings.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
     SettingsManager().settings.save();
   }
 
@@ -727,8 +727,8 @@ class Settings {
     s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    s.selectedActionIndices.value = map['selectedActionIndices'] ?? [0, 1, 2, 3, 4];
-    s.actionList.value = map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION];
+    s.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
+    s.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
     return s;
   }
 }
