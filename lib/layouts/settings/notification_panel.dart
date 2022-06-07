@@ -306,112 +306,113 @@ class NotificationPanel extends StatelessWidget {
                                       child: SettingsDivider(color: headerColor),
                                     ),
                                   ),*/
-                              SettingsTile(
-                                title: "Text Detection",
-                                onTap: () async {
-                                  final TextEditingController controller = TextEditingController();
-                                  controller.text = SettingsManager().settings.globalTextDetection.value;
-                                  Get.defaultDialog(
-                                    title: "Text detection",
-                                    titleStyle: Theme.of(context).textTheme.headline1,
-                                    backgroundColor: Theme.of(context).backgroundColor,
-                                    buttonColor: Theme.of(context).primaryColor,
-                                    content: Column(mainAxisSize: MainAxisSize.min, children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text(
-                                            "Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
-                                      ),
-                                      Theme(
-                                        data: Theme.of(context).copyWith(
-                                            inputDecorationTheme: const InputDecorationTheme(
-                                          labelStyle: TextStyle(color: Colors.grey),
-                                        )),
-                                        child: TextField(
-                                          controller: controller,
-                                          decoration: InputDecoration(
-                                            labelText: "Enter text to whitelist...",
-                                            enabledBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                              color: Colors.grey,
-                                            )),
-                                            focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                              color: Theme.of(context).primaryColor,
-                                            )),
+                                SettingsTile(
+                                  title: "Text Detection",
+                                  onTap: () async {
+                                    final TextEditingController controller = TextEditingController();
+                                    controller.text = SettingsManager().settings.globalTextDetection.value;
+                                    Get.defaultDialog(
+                                      title: "Text detection",
+                                      titleStyle: Theme.of(context).textTheme.headline1,
+                                      backgroundColor: Theme.of(context).backgroundColor,
+                                      buttonColor: Theme.of(context).primaryColor,
+                                      content: Column(mainAxisSize: MainAxisSize.min, children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                              "Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
+                                        ),
+                                        Theme(
+                                          data: Theme.of(context).copyWith(
+                                              inputDecorationTheme: const InputDecorationTheme(
+                                            labelStyle: TextStyle(color: Colors.grey),
+                                          )),
+                                          child: TextField(
+                                            controller: controller,
+                                            decoration: InputDecoration(
+                                              labelText: "Enter text to whitelist...",
+                                              enabledBorder: OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                color: Colors.grey,
+                                              )),
+                                              focusedBorder: OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                color: Theme.of(context).primaryColor,
+                                              )),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ]),
-                                    onConfirm: () async {
-                                      SettingsManager().settings.globalTextDetection.value = controller.text;
-                                      saveSettings();
-                                      Get.back();
-                                    },
-                                  );
-                                },
-                                backgroundColor: tileColor,
-                                subtitle: "Mute all chats except when your choice of text is found in a message",
-                              ),
-                            ]),
-                            SettingsHeader(
-                                headerColor: headerColor,
-                                tileColor: tileColor,
-                                iosSubtitle: iosSubtitle,
-                                materialSubtitle: materialSubtitle,
-                                text: "Advanced"
-                            ),
-                            SettingsSection(
-                              backgroundColor: tileColor,
-                              children: [
-                                Obx(() => SettingsSwitch(
-                                      onChanged: (bool val) {
-                                        SettingsManager().settings.hideTextPreviews.value = val;
+                                      ]),
+                                      onConfirm: () async {
+                                        SettingsManager().settings.globalTextDetection.value = controller.text;
                                         saveSettings();
+                                        Get.back();
                                       },
-                                      initialVal: SettingsManager().settings.hideTextPreviews.value,
-                                      title: "Hide Message Text",
-                                      subtitle: "Replaces message text with 'iMessage' in notifications",
-                                      backgroundColor: tileColor,
-                                    )),
-                                Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 65.0),
-                                    child: SettingsDivider(color: headerColor),
-                                  ),
+                                    );
+                                  },
+                                  backgroundColor: tileColor,
+                                  subtitle: "Mute all chats except when your choice of text is found in a message",
                                 ),
-                                Obx(() => SettingsSwitch(
-                                      onChanged: (bool val) {
-                                        SettingsManager().settings.showIncrementalSync.value = val;
-                                        saveSettings();
-                                      },
-                                      initialVal: SettingsManager().settings.showIncrementalSync.value,
-                                      title: "Notify when incremental sync complete",
-                                      subtitle: "Show a snackbar whenever a message sync is completed",
-                                      backgroundColor: tileColor,
-                                    )),
-                              ],
-                            ),
-                            if (SettingsManager().settings.skin.value != Skins.Samsung)
-                              Container(
-                                height: 30,
-                                decoration: SettingsManager().settings.skin.value == Skins.iOS
-                                    ? BoxDecoration(
-                                        color: headerColor,
-                                        border: Border(
-                                            top: BorderSide(
-                                                color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                                      )
-                                    : null,
+                              ]),
+                              SettingsHeader(
+                                  headerColor: headerColor,
+                                  tileColor: tileColor,
+                                  iosSubtitle: iosSubtitle,
+                                  materialSubtitle: materialSubtitle,
+                                  text: "Advanced"),
+                              SettingsSection(
+                                backgroundColor: tileColor,
+                                children: [
+                                  Obx(() => SettingsSwitch(
+                                        onChanged: (bool val) {
+                                          SettingsManager().settings.hideTextPreviews.value = val;
+                                          saveSettings();
+                                        },
+                                        initialVal: SettingsManager().settings.hideTextPreviews.value,
+                                        title: "Hide Message Text",
+                                        subtitle: "Replaces message text with 'iMessage' in notifications",
+                                        backgroundColor: tileColor,
+                                      )),
+                                  Container(
+                                    color: tileColor,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 65.0),
+                                      child: SettingsDivider(color: headerColor),
+                                    ),
+                                  ),
+                                  Obx(() => SettingsSwitch(
+                                        onChanged: (bool val) {
+                                          SettingsManager().settings.showIncrementalSync.value = val;
+                                          saveSettings();
+                                        },
+                                        initialVal: SettingsManager().settings.showIncrementalSync.value,
+                                        title: "Notify when incremental sync complete",
+                                        subtitle: "Show a snackbar whenever a message sync is completed",
+                                        backgroundColor: tileColor,
+                                      )),
+                                ],
                               ),
-                          ],
+                              if (SettingsManager().settings.skin.value != Skins.Samsung)
+                                Container(
+                                  height: 30,
+                                  decoration: SettingsManager().settings.skin.value == Skins.iOS
+                                      ? BoxDecoration(
+                                          color: headerColor,
+                                          border: Border(
+                                              top: BorderSide(
+                                                  color: Theme.of(context).dividerColor.lightenOrDarken(40),
+                                                  width: 0.3)),
+                                        )
+                                      : null,
+                                ),
+                            ],
+                          ),
                         ),
-                      ),
-                      SliverPadding(
-                        padding: EdgeInsets.all(40),
-                      ),
-                    ],
+                        SliverPadding(
+                          padding: EdgeInsets.all(40),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
