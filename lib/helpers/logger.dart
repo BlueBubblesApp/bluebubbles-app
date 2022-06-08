@@ -34,22 +34,23 @@ class BaseLogger extends GetxService {
   set setEnabledLevels(List<LogLevel> levels) => enabledLevels = levels;
 
   init() async {
-    // For now, only do startup logs on desktop
-    String startupPath = (await getDownloadsDirectory())!.path;
-    startupPath = join(startupPath, "BlueBubbles_Logs_Startup.txt");
-    startupFile = File(startupPath);
-    if (kIsDesktop && startupFile.existsSync()) {
-      startupFile.writeAsStringSync("", mode: FileMode.writeOnly);
-      startup.listen((val) async {
-        if (val) {
-          await writeToStartupFile('----------------${DateTime.now().toLocal()}----------------');
-        }
-      });
-    }
-    String logPath = (await getApplicationSupportDirectory()).path;
-    logPath = join(logPath, "BlueBubbles_Logs.txt");
-    logFile = File(logPath);
+    // For now, only do logs on desktop
     if (kIsDesktop) {
+      String startupPath = (await getDownloadsDirectory())!.path;
+      startupPath = join(startupPath, "BlueBubbles_Logs_Startup.txt");
+      startupFile = File(startupPath);
+      if (startupFile.existsSync()) {
+        startupFile.writeAsStringSync("", mode: FileMode.writeOnly);
+        startup.listen((val) async {
+          if (val) {
+            await writeToStartupFile('----------------${DateTime.now().toLocal()}----------------');
+          }
+        });
+      }
+
+      String logPath = (await getApplicationSupportDirectory()).path;
+      logPath = join(logPath, "BlueBubbles_Logs.txt");
+      logFile = File(logPath);
       logFile.writeAsStringSync("", mode: FileMode.writeOnly);
       saveLogs.listen((val) async {
         if (val) {
