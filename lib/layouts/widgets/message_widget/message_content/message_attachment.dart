@@ -16,6 +16,8 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'media_players/desktop_video_widget.dart';
+
 class MessageAttachment extends StatefulWidget {
   MessageAttachment({
     Key? key,
@@ -107,22 +109,27 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
         }
         return MediaFile(
           attachment: widget.attachment,
-          child: VideoWidget(
-            attachment: widget.attachment,
-            file: content,
-          ),
+          child: kIsDesktop
+              ? DesktopVideoWidget(
+                  attachment: widget.attachment,
+                  file: content,
+                )
+              : VideoWidget(
+                  attachment: widget.attachment,
+                  file: content,
+                ),
         );
       } else if (mimeType == "audio" && !widget.attachment.mimeType!.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
-          child: AudioPlayerWidget(file: content, context: context, width: kIsDesktop ? null : 250, isFromMe: widget.isFromMe),
+          child: AudioPlayerWidget(
+              file: content, context: context, width: kIsDesktop ? null : 250, isFromMe: widget.isFromMe),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
         return MediaFile(
           attachment: widget.attachment,
           child: LocationWidget(
             file: content,
-            attachment: widget.attachment,
           ),
         );
       } else if (widget.attachment.mimeType == "text/vcard") {
@@ -205,15 +212,15 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
                         : Container(),
                     (content.attachment.mimeType != null)
                         ? Container(
-                          height: 50,
-                          alignment: Alignment.center,
-                          child: Text(
-                            content.attachment.mimeType,
-                            style: Theme.of(context).textTheme.bodyText1,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        )
+                            height: 50,
+                            alignment: Alignment.center,
+                            child: Text(
+                              content.attachment.mimeType,
+                              style: Theme.of(context).textTheme.bodyText1,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )
                         : Container()
                   ],
                 ),

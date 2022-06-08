@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
@@ -16,6 +19,7 @@ import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter/foundation.dart';
 import "package:flutter/material.dart";
 import 'package:flutter/services.dart';
@@ -136,6 +140,15 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
             GoBackIntent: GoBackAction(context),
           },
           child: Scaffold(
+            appBar: kIsDesktop
+                ? AppBar(
+                    leading: SettingsManager().settings.skin.value == Skins.iOS
+                        ? buildBackButton(context, padding: EdgeInsets.only(left: 5, top: 5))
+                        : null,
+                    iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                  )
+                : null,
             backgroundColor: Colors.black,
             body: controller != null
                 ? FocusScope(
@@ -195,7 +208,18 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                     file: content,
                                     showInteractions: widget.showInteractions,
                                   );
-                                } else if (mimeType == "video") {
+                                } else if (!kIsDesktop && mimeType == "video") {
+                                  if (kIsDesktop) {
+                                    Player player = Player(id: attachment.hashCode)
+                                      ..add(Media.file(File(content.path!)));
+                                    player.play();
+                                    Future.delayed(Duration.zero, () async => await player.playbackStream.first)
+                                        .then((state) {
+                                      player.pause();
+                                      player.seek(Duration.zero);
+                                    });
+                                    return Video(player: player);
+                                  }
                                   return VideoViewer(
                                     key: Key(viewerKey),
                                     file: content,
