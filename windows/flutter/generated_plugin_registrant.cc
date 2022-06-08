@@ -8,10 +8,7 @@
 
 #include <bitsdojo_window_windows/bitsdojo_window_plugin.h>
 #include <connectivity_plus_windows/connectivity_plus_windows_plugin.h>
-#include <dart_vlc/dart_vlc_plugin.h>
 #include <desktop_drop/desktop_drop_plugin.h>
-#include <flutter_native_view/flutter_native_view_plugin.h>
-#include <geolocator_windows/geolocator_windows.h>
 #include <maps_launcher/maps_launcher_plugin.h>
 #include <objectbox_flutter_libs/objectbox_flutter_libs_plugin.h>
 #include <pasteboard/pasteboard_plugin.h>
@@ -29,14 +26,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("BitsdojoWindowPlugin"));
   ConnectivityPlusWindowsPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ConnectivityPlusWindowsPlugin"));
-  DartVlcPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("DartVlcPlugin"));
   DesktopDropPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("DesktopDropPlugin"));
-  FlutterNativeViewPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("FlutterNativeViewPlugin"));
-  GeolocatorWindowsRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("GeolocatorWindows"));
   MapsLauncherPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("MapsLauncherPlugin"));
   ObjectboxFlutterLibsPluginRegisterWithRegistrar(

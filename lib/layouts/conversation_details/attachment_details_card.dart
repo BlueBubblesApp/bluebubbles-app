@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
@@ -102,7 +101,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
   }
 
   Widget buildPreview(BuildContext context) => SizedBox(
-        width: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
+        width: CustomNavigator.width(context) / 2,
         child: _buildPreview(attachmentFile, context),
       );
 
@@ -182,7 +181,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
   }
 
   Future<void> getVideoPreview(PlatformFile file) async {
-    if (previewImage != null || kIsWeb || file.path == null) return;
+    if (previewImage != null || kIsWeb || kIsDesktop || file.path == null) return;
     
     Size size;
 
@@ -237,8 +236,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
                         alignment: Alignment.center,
                       )
                     : Container()),
-            width: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
-            height: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
+            width: CustomNavigator.width(context) / 2,
+            height: CustomNavigator.width(context) / 2,
           ),
           Material(
             color: Colors.transparent,
@@ -259,7 +258,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
           )
         ],
       );
-    } else if (!kIsDesktop && (widget.attachment.mimeType?.startsWith("video/") ?? false)) {
+    } else if (widget.attachment.mimeType?.startsWith("video/") ?? false) {
       getVideoPreview(file);
 
       return Stack(
@@ -276,8 +275,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
                     )
                   : Container(),
             ),
-            width: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
-            height: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
+            width: CustomNavigator.width(context) / 2,
+            height: CustomNavigator.width(context) / 2,
           ),
           Material(
             color: Colors.transparent,

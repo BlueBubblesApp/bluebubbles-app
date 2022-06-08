@@ -620,7 +620,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       children: <Widget>[
         buildShareButton(),
         if (kIsWeb || kIsDesktop) buildGIFButton(),
-        if (kIsDesktop) buildLocationButton(),
         Flexible(
           flex: 1,
           fit: FlexFit.loose,
@@ -845,55 +844,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         ? context.theme.textTheme.bodyText1!.color
                         : Colors.white,
                     size: 26,
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildLocationButton() {
-    double size = SettingsManager().settings.skin.value == Skins.iOS ? 37 : 40;
-    return Container(
-      height: size,
-      width: size,
-      margin: EdgeInsets.only(
-          right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
-      child: ClipOval(
-        child: Material(
-          color: SettingsManager().settings.skin.value == Skins.Samsung
-              ? Colors.transparent
-              : Theme.of(context).primaryColor,
-          child: Theme(
-            data: Theme.of(context).copyWith(
-              bottomSheetTheme: BottomSheetThemeData(
-                backgroundColor: Theme.of(context).backgroundColor,
-                modalBackgroundColor: Theme.of(context).backgroundColor,
-              ),
-              brightness:
-              Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.light : Brightness.dark,
-              canvasColor: Theme.of(context).backgroundColor,
-              iconTheme: IconThemeData(color: Colors.black45),
-            ),
-            child: Builder(builder: (context) {
-              return InkWell(
-                onTap: () async {
-                  await Share.locationDesktop(ChatController.forGuid(widget.chatGuid)!.chat);
-                },
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    top: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 0,
-                      right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1,
-                      left: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 2),
-                  child: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined,
-                    color: SettingsManager().settings.skin.value == Skins.Samsung
-                        ? context.theme.textTheme.bodyText1!.color
-                        : Colors.white,
-                    size: 20,
                   ),
                 ),
               );
