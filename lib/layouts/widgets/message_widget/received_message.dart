@@ -391,7 +391,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                         fakeSubject: widget.fakeSubject,
                         fakeText: widget.fakeText),
                     builder: (context, snapshot) {
-                      return (kIsDesktop || kIsWeb) && !widget.message.hasAttachments &&
+                      return (kIsDesktop || kIsWeb) &&
                               ((ModalRoute.of(context)?.settings.arguments as Map?)?['hideTail'] ?? false)
                           ? Theme(
                               data: context.theme.copyWith(

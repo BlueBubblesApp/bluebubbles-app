@@ -1,22 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:supercharged/supercharged.dart';
 import 'package:version/version.dart';
 
 class ContactManager {
@@ -187,10 +183,10 @@ class ContactManager {
               ))
           .toList();
 
-      // This is _required_ for the `getContacts()` function to be used
-      await buildCacheMap();
+        // This is _required_ for the `getContacts()` function to be used
+        await buildCacheMap();
     } else {
-      await fetchContactsDesktop(logger: print);
+      await fetchContactsDesktop();
     }
 
     loadFakeInfo();
@@ -274,47 +270,28 @@ class ContactManager {
     }
 
     await buildCacheMap();
-    EventDispatcher().emit('update-contacts', null);
 
     logger?.call("Fetching contacts (with avatars)...");
     try {
-      api.contacts(withAvatars: true).then((response) async {
+      api.contacts(withAvatars: true).then((response) {
         if (!isNullOrEmpty(response.data['data'])!) {
           logger?.call("Found contacts!");
 
           for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar'])!)) {
-            final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
-            logger?.call("Adding avatar for contact: $displayName");
+            logger?.call(
+                "Adding avatar for contact: ${getDisplayName(map['displayName'], map['firstName'], map['lastName'])}");
             final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
             final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
-            for (Contact contact in contacts) {
-              bool updateAvatar = !contact.hasAvatar && (contact.id == (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString());
-              List<String> addresses = [...contact.phones, ...contact.emails];
-              List<String> _addresses = [...phones, ...emails];
-              for (String a in addresses) {
-                if (updateAvatar) {
-                  break;
-                }
-                String? formatA = await getFormattedAddress(a);
-                if (formatA == null || formatA.isEmpty) continue;
-                for (String _a in _addresses) {
-                  String? _formatA = await getFormattedAddress(_a);
-                  if (formatA == _formatA) {
-                    updateAvatar = true;
-                    break;
-                  }
-                }
-              }
-              if (updateAvatar) {
-                contact.avatar.value = base64Decode(map['avatar'].toString());
-                contact.avatarHiRes.value = base64Decode(map['avatar'].toString());
-              }
-            }
+            final contact = contacts.firstWhereOrNull((e) => e.id == (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString());
+            contact?.avatar.value = base64Decode(map['avatar'].toString());
+            contact?.avatarHiRes.value = base64Decode(map['avatar'].toString());
           }
         } else {
           logger?.call("No contacts found!");
         }
         logger?.call("Finished contacts sync (with avatars)");
+
+        buildCacheMap();
       });
     } catch (e, s) {
       logger?.call("Got exception: $e");

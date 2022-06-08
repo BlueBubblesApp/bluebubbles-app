@@ -229,10 +229,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
         context,
-        ConversationView(
-            chat: kIsWeb
-                ? await Chat.findOneWeb(guid: prefs.getString('lastOpenedChat'))
-                : Chat.findOne(guid: prefs.getString('lastOpenedChat'))),
+        ConversationView(chat: kIsWeb ? await Chat.findOneWeb(guid: prefs.getString('lastOpenedChat')) : Chat.findOne(guid: prefs.getString('lastOpenedChat'))),
         (route) => route.isFirst,
       );
     }
@@ -460,41 +457,107 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
             child: ScrollbarWrapper(
               showScrollbar: true,
               controller: scrollController,
-              child: Obx(
-                () => CustomScrollView(
-                  physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                      ? NeverScrollableScrollPhysics()
-                      : ThemeSwitcher.getScrollPhysics(),
-                  controller: scrollController,
-                  slivers: [
-                    SliverAppBar(
-                      backgroundColor: context.theme.backgroundColor,
-                      pinned: true,
-                      stretch: true,
-                      expandedHeight: context.height / 3,
-                      elevation: 0,
-                      flexibleSpace: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final expandRatio = _calculateExpandRatio(constraints, context);
-                          final animation = AlwaysStoppedAnimation(expandRatio);
+              child: CustomScrollView(
+                physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                    ? NeverScrollableScrollPhysics()
+                    : ThemeSwitcher.getScrollPhysics(),
+                controller: scrollController,
+                slivers: [
+                  SliverAppBar(
+                    backgroundColor: context.theme.backgroundColor,
+                    pinned: true,
+                    stretch: true,
+                    expandedHeight: context.height / 3,
+                    elevation: 0,
+                    flexibleSpace: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final expandRatio = _calculateExpandRatio(constraints, context);
+                        final animation = AlwaysStoppedAnimation(expandRatio);
 
-                          return Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              _extendedTitle(animation),
-                              _collapsedTitle(animation),
-                              _actions(),
-                            ],
-                          );
-                        },
-                      ),
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            _extendedTitle(animation),
+                            _collapsedTitle(animation),
+                            _actions(),
+                          ],
+                        );
+                      },
                     ),
-                    if (hasPinnedChat())
-                      SliverList(
-                          delegate: SliverChildListDelegate([
+                  ),
+                  if (hasPinnedChat())
+                    SliverList(
+                        delegate: SliverChildListDelegate([
+                      SingleChildScrollView(
+                        child: Obx(
+                          () {
+                            return Container(
+                              color: Theme.of(context).backgroundColor,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  final chat = ChatBloc()
+                                      .chats
+                                      .archivedHelper(showArchived)
+                                      .unknownSendersHelper(showUnknown)
+                                      .bigPinHelper(true)[index];
+                                  return buildChatItem(chat);
+                                },
+                                itemCount: ChatBloc()
+                                    .chats
+                                    .archivedHelper(showArchived)
+                                    .unknownSendersHelper(showUnknown)
+                                    .bigPinHelper(true)
+                                    .length,
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    ])),
+                  if (hasPinnedChat()) SliverToBoxAdapter(child: SizedBox(height: 15)),
+                  SliverList(
+                    delegate: SliverChildListDelegate(
+                      [
                         SingleChildScrollView(
                           child: Obx(
                             () {
+                              if (!ChatBloc().loadedChatBatch.value) {
+                                return Center(
+                                  child: Container(
+                                    padding: EdgeInsets.only(top: 50.0),
+                                    child: Column(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            "Loading chats...",
+                                            style: Theme.of(context).textTheme.subtitle1,
+                                          ),
+                                        ),
+                                        buildProgressIndicator(context, size: 15),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+                              if (ChatBloc().loadedChatBatch.value &&
+                                  ChatBloc()
+                                      .chats
+                                      .archivedHelper(showArchived)
+                                      .unknownSendersHelper(showUnknown)
+                                      .isEmpty) {
+                                return Center(
+                                  child: Container(
+                                    padding: EdgeInsets.only(top: 50.0),
+                                    child: Text(
+                                      "You have no archived chats :(",
+                                      style: context.textTheme.subtitle1,
+                                    ),
+                                  ),
+                                );
+                              }
                               return Container(
                                 color: Theme.of(context).backgroundColor,
                                 child: ListView.builder(
@@ -505,93 +568,25 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                                         .chats
                                         .archivedHelper(showArchived)
                                         .unknownSendersHelper(showUnknown)
-                                        .bigPinHelper(true)[index];
+                                        .bigPinHelper(false)[index];
                                     return buildChatItem(chat);
                                   },
                                   itemCount: ChatBloc()
                                       .chats
                                       .archivedHelper(showArchived)
                                       .unknownSendersHelper(showUnknown)
-                                      .bigPinHelper(true)
+                                      .bigPinHelper(false)
                                       .length,
                                 ),
                               );
                             },
                           ),
                         )
-                      ])),
-                    if (hasPinnedChat()) SliverToBoxAdapter(child: SizedBox(height: 15)),
-                    SliverList(
-                      delegate: SliverChildListDelegate(
-                        [
-                          SingleChildScrollView(
-                            child: Obx(
-                              () {
-                                if (!ChatBloc().loadedChatBatch.value) {
-                                  return Center(
-                                    child: Container(
-                                      padding: EdgeInsets.only(top: 50.0),
-                                      child: Column(
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Text(
-                                              "Loading chats...",
-                                              style: Theme.of(context).textTheme.subtitle1,
-                                            ),
-                                          ),
-                                          buildProgressIndicator(context, size: 15),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }
-                                if (ChatBloc().loadedChatBatch.value &&
-                                    ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)
-                                        .isEmpty) {
-                                  return Center(
-                                    child: Container(
-                                      padding: EdgeInsets.only(top: 50.0),
-                                      child: Text(
-                                        "You have no archived chats :(",
-                                        style: context.textTheme.subtitle1,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                return Container(
-                                  color: Theme.of(context).backgroundColor,
-                                  child: ListView.builder(
-                                    shrinkWrap: true,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    itemBuilder: (context, index) {
-                                      final chat = ChatBloc()
-                                          .chats
-                                          .archivedHelper(showArchived)
-                                          .unknownSendersHelper(showUnknown)
-                                          .bigPinHelper(false)[index];
-                                      return buildChatItem(chat);
-                                    },
-                                    itemCount: ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .unknownSendersHelper(showUnknown)
-                                        .bigPinHelper(false)
-                                        .length,
-                                  ),
-                                );
-                              },
-                            ),
-                          )
-                        ],
-                      ),
+                      ],
                     ),
-                    SliverToBoxAdapter(child: Obx(() => SizedBox(height: 100 + remainingHeight.value))),
-                  ],
-                ),
+                  ),
+                  SliverToBoxAdapter(child: Obx(() => SizedBox(height: 100 + remainingHeight.value))),
+                ],
               ),
             ),
           ),

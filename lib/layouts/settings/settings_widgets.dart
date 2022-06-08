@@ -103,144 +103,141 @@ class SettingsScaffold extends StatelessWidget {
           child: ScrollbarWrapper(
             showScrollbar: false,
             controller: controller,
-            child: Obx(
-              () => CustomScrollView(
-                controller: controller,
-                shrinkWrap: true,
-                physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                    ? NeverScrollableScrollPhysics()
-                    : ThemeSwitcher.getScrollPhysics(),
-                slivers: <Widget>[
-                  if (SettingsManager().settings.skin.value == Skins.Samsung)
-                    SliverAppBar(
-                      backgroundColor: headerColor,
-                      pinned: true,
-                      stretch: true,
-                      expandedHeight: context.height / 3,
-                      elevation: 0,
-                      automaticallyImplyLeading: false,
-                      flexibleSpace: LayoutBuilder(
-                        builder: (context, _) {
-                          var expandRatio = 1 - (controller.offset) / (context.height / 3 - 50);
-                          if (expandRatio > 1.0) expandRatio = 1.0;
-                          if (expandRatio < 0.1) expandRatio = 0.0;
-                          final animation = AlwaysStoppedAnimation<double>(expandRatio);
+            child: CustomScrollView(
+              controller: controller,
+              shrinkWrap: true,
+              physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                  ? NeverScrollableScrollPhysics()
+                  : ThemeSwitcher.getScrollPhysics(),
+              slivers: <Widget>[
+                if (SettingsManager().settings.skin.value == Skins.Samsung)
+                  SliverAppBar(
+                    backgroundColor: headerColor,
+                    pinned: true,
+                    stretch: true,
+                    expandedHeight: context.height / 3,
+                    elevation: 0,
+                    automaticallyImplyLeading: false,
+                    flexibleSpace: LayoutBuilder(
+                      builder: (context, _) {
+                        var expandRatio = 1 - (controller.offset) / (context.height / 3 - 50);
+                        if (expandRatio > 1.0) expandRatio = 1.0;
+                        if (expandRatio < 0.1) expandRatio = 0.0;
+                        final animation = AlwaysStoppedAnimation<double>(expandRatio);
 
-                          return Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              FadeTransition(
-                                opacity: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-                                  parent: animation,
-                                  curve: Interval(0.3, 1.0, curve: Curves.easeIn),
-                                )),
-                                child: Center(child: Text(title, textScaleFactor: 2.5, textAlign: TextAlign.center)),
-                              ),
-                              FadeTransition(
-                                opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
-                                  parent: animation,
-                                  curve: Interval(0.0, 0.7, curve: Curves.easeOut),
-                                )),
-                                child: Align(
-                                  alignment: Alignment.bottomLeft,
-                                  child: Container(
-                                    padding: EdgeInsets.only(left: 50),
-                                    height: 50,
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        title,
-                                        style: Theme.of(context).textTheme.headline1,
-                                      ),
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            FadeTransition(
+                              opacity: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+                                parent: animation,
+                                curve: Interval(0.3, 1.0, curve: Curves.easeIn),
+                              )),
+                              child: Center(child: Text(title, textScaleFactor: 2.5, textAlign: TextAlign.center)),
+                            ),
+                            FadeTransition(
+                              opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
+                                parent: animation,
+                                curve: Interval(0.0, 0.7, curve: Curves.easeOut),
+                              )),
+                              child: Align(
+                                alignment: Alignment.bottomLeft,
+                                child: Container(
+                                  padding: EdgeInsets.only(left: 50),
+                                  height: 50,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      title,
+                                      style: Theme.of(context).textTheme.headline1,
                                     ),
                                   ),
                                 ),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Align(
-                                  alignment: Alignment.bottomLeft,
-                                  child: Container(
-                                    height: 50,
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: buildBackButton(context),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Align(
-                                alignment: Alignment.bottomRight,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: Align(
+                                alignment: Alignment.bottomLeft,
                                 child: Container(
                                   height: 50,
                                   child: Align(
-                                    alignment: Alignment.centerRight,
-                                    child: Row(
-                                      children: actions,
-                                    ),
+                                    alignment: Alignment.centerLeft,
+                                    child: buildBackButton(context),
                                   ),
                                 ),
                               ),
-                            ],
-                          );
-                        },
-                      ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: Container(
+                                height: 50,
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Row(
+                                    children: actions,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
-                  SliverList(
-                      delegate: SliverChildListDelegate([
-                    if (SettingsManager().settings.skin.value != Skins.Samsung && initialHeader != null)
+                  ),
+                SliverList(
+                    delegate: SliverChildListDelegate([
+                  if (SettingsManager().settings.skin.value != Skins.Samsung && initialHeader != null)
+                    Container(
+                        height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                        alignment: Alignment.bottomLeft,
+                        decoration: SettingsManager().settings.skin.value == Skins.iOS
+                            ? BoxDecoration(
+                                color: headerColor,
+                                border: Border(
+                                    bottom: BorderSide(
+                                        color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                              )
+                            : BoxDecoration(
+                                color: tileColor,
+                              ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                          child: Text(initialHeader!.psCapitalize,
+                              style:
+                                  SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                        )),
+                  Container(
+                      color: SettingsManager().settings.skin.value == Skins.Samsung ? null : tileColor,
+                      padding: EdgeInsets.only(top: 5.0)),
+                ])),
+                ...bodySlivers,
+                SliverList(
+                  delegate: SliverChildListDelegate(
+                    [
+                      Obx(() => SettingsManager().settings.skin.value == Skins.Samsung
+                          ? Container(height: remainingHeight.value)
+                          : SizedBox.shrink()),
                       Container(
-                          height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                          alignment: Alignment.bottomLeft,
+                          color: SettingsManager().settings.skin.value == Skins.Samsung ? null : tileColor,
+                          padding:
+                              EdgeInsets.only(top: SettingsManager().settings.skin.value == Skins.Samsung ? 30 : 5.0)),
+                      if (SettingsManager().settings.skin.value != Skins.Samsung)
+                        Container(
+                          height: 30,
                           decoration: SettingsManager().settings.skin.value == Skins.iOS
                               ? BoxDecoration(
                                   color: headerColor,
                                   border: Border(
-                                      bottom: BorderSide(
+                                      top: BorderSide(
                                           color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
                                 )
-                              : BoxDecoration(
-                                  color: tileColor,
-                                ),
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                            child: Text(initialHeader!.psCapitalize,
-                                style: SettingsManager().settings.skin.value == Skins.iOS
-                                    ? iosSubtitle
-                                    : materialSubtitle),
-                          )),
-                    Container(
-                        color: SettingsManager().settings.skin.value == Skins.Samsung ? null : tileColor,
-                        padding: EdgeInsets.only(top: 5.0)),
-                  ])),
-                  ...bodySlivers,
-                  SliverList(
-                    delegate: SliverChildListDelegate(
-                      [
-                        Obx(() => SettingsManager().settings.skin.value == Skins.Samsung
-                            ? Container(height: remainingHeight.value)
-                            : SizedBox.shrink()),
-                        Container(
-                            color: SettingsManager().settings.skin.value == Skins.Samsung ? null : tileColor,
-                            padding: EdgeInsets.only(
-                                top: SettingsManager().settings.skin.value == Skins.Samsung ? 30 : 5.0)),
-                        if (SettingsManager().settings.skin.value != Skins.Samsung)
-                          Container(
-                            height: 30,
-                            decoration: SettingsManager().settings.skin.value == Skins.iOS
-                                ? BoxDecoration(
-                                    color: headerColor,
-                                    border: Border(
-                                        top: BorderSide(
-                                            color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                                  )
-                                : null,
-                          ),
-                      ],
-                    ),
+                              : null,
+                        ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

@@ -1117,21 +1117,19 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             List<UniqueContact>? data = snapshot.hasData ? snapshot.data : [];
             return ScrollbarWrapper(
               controller: _scrollController,
-              child: Obx(
-                () => ListView.builder(
-                  controller: _scrollController,
-                  physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                      ? NeverScrollableScrollPhysics()
-                      : ThemeSwitcher.getScrollPhysics(),
-                  itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
-                    key: Key("selector-${data![index].displayName}"),
-                    item: data[index],
-                    onSelected: onSelected,
-                    index: index,
-                    shouldShowChatType: data.firstWhereOrNull((e) => !(e.chat?.isIMessage ?? true)) != null,
-                  ),
-                  itemCount: data?.length ?? 0,
+              child: ListView.builder(
+                controller: _scrollController,
+                physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                    ? NeverScrollableScrollPhysics()
+                    : ThemeSwitcher.getScrollPhysics(),
+                itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
+                  key: Key("selector-${data![index].displayName}"),
+                  item: data[index],
+                  onSelected: onSelected,
+                  index: index,
+                  shouldShowChatType: data.firstWhereOrNull((e) => !(e.chat?.isIMessage ?? true)) != null,
                 ),
+                itemCount: data?.length ?? 0,
               ),
             );
           },

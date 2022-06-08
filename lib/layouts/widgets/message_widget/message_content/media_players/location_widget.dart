@@ -16,10 +16,10 @@ class LocationWidget extends StatefulWidget {
   LocationWidget({
     Key? key,
     required this.file,
-    this.showOpen = true
+    required this.attachment,
   }) : super(key: key);
   final PlatformFile file;
-  final bool showOpen;
+  final Attachment attachment;
 
   @override
   State<LocationWidget> createState() => _LocationWidgetState();
@@ -74,7 +74,7 @@ class _LocationWidgetState extends State<LocationWidget> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     SizedBox(
-                        height: widget.showOpen ? 200 : 240,
+                        height: 200,
                         child: FlutterMap(
                           options: MapOptions(
                             center: LatLng(location!.longitude!, location!.latitude!),
@@ -92,21 +92,19 @@ class _LocationWidgetState extends State<LocationWidget> {
                                   width: 40.0,
                                   height: 40.0,
                                   point: LatLng(location!.longitude!, location!.latitude!),
-                                  anchorPos: AnchorPos.align(AnchorAlign.top),
                                   builder: (ctx) => Container(
-                                    child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on, color: Colors.red, size: 40),
+                                    child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location : Icons.pin_drop, color: Colors.red, size: 45),
                                   ),
                                 ),
                               ],
                             ),
                           ],
                         )),
-                    if (widget.showOpen)
-                      InkWell(
-                          onTap: openMaps,
-                          child: Padding(
-                              padding: EdgeInsets.only(top: 10, bottom: 10),
-                              child: Text("Open in Maps", style: Theme.of(context).textTheme.bodyText1)))
+                    InkWell(
+                        onTap: openMaps,
+                        child: Padding(
+                            padding: EdgeInsets.only(top: 11, bottom: 10),
+                            child: Text("Open in Maps", style: Theme.of(context).textTheme.bodyText1)))
                   ])));
     } else {
       return Container(

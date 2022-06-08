@@ -35,7 +35,6 @@ import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
-import 'package:dart_vlc/dart_vlc.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_dart/firebase_dart.dart';
@@ -154,7 +153,6 @@ Future<Null> initApp(bool isBubble) async {
 
   if (kIsDesktop) {
     await WindowManager.instance.ensureInitialized();
-    DartVLC.initialize(useFlutterNativeView: true);
   }
 
   HttpOverrides.global = MyHttpOverrides();
@@ -354,13 +352,13 @@ Future<Null> initApp(bool isBubble) async {
     if (kIsDesktop) {
       await WindowManager.instance.setTitle('BlueBubbles');
       WindowManager.instance.addListener(DesktopWindowListener());
-      doWhenWindowReady(() async {
+      doWhenWindowReady(() {
         appWindow.minSize = Size(300, 300);
 
         double? width = prefs.getDouble("window-width");
         double? height = prefs.getDouble("window-height");
         if (width != null && height != null) {
-          await WindowManager.instance.setSize(Size(width, height));
+          appWindow.size = Size(width, height);
         }
 
         appWindow.alignment = Alignment.center;

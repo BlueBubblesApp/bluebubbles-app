@@ -11,7 +11,6 @@ import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:chewie_audio/chewie_audio.dart';
-import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
@@ -38,12 +37,9 @@ class ChatController {
   Map<String, Map<String, Uint8List>> stickerData = {};
   Map<String, Metadata> urlPreviews = {};
   Map<String, VideoPlayerController> currentPlayingVideo = {};
-  Map<String, Player> videoPlayersDesktop = {};
   Map<String, Tuple2<ChewieAudioController, VideoPlayerController>> audioPlayers = {};
-  Map<String, Tuple2<Player, Player>> audioPlayersDesktop = {};
   Map<String, List<EntityAnnotation>> mlKitParsedText = {};
   List<VideoPlayerController> videoControllersToDispose = [];
-  List<Player> videoControllersToDisposeDesktop = [];
   List<Attachment> chatAttachments = [];
   List<Message?> sentMessages = [];
   bool showTypingIndicator = false;
@@ -164,7 +160,6 @@ class ChatController {
     audioPlayers = {};
     urlPreviews = {};
     videoControllersToDispose = [];
-    videoControllersToDisposeDesktop = [];
     chatAttachments = [];
     sentMessages = [];
     entry = null;
@@ -307,22 +302,6 @@ class ChatController {
     );
   }
 
-  void addVideoDesktop(Map<String, Player> video) {
-    if (!isNullOrEmpty(videoPlayersDesktop)!) {
-      for (Player element in videoPlayersDesktop.values) {
-        print('added');
-        videoControllersToDisposeDesktop.add(element);
-      }
-    }
-    videoPlayersDesktop.addAll(video);
-    _stream.sink.add(
-      {
-        "type": ChatControllerEvent.VideoPlaying,
-        "data": video,
-      },
-    );
-  }
-
   /// Dispose all of the controllers and whatnot
   void dispose() {
     if (!isNullOrEmpty(currentPlayingVideo)!) {
@@ -393,11 +372,6 @@ class ChatController {
       element.dispose();
     }
     videoControllersToDispose = [];
-
-    for (Player element in videoControllersToDisposeDesktop) {
-      element.dispose();
-    }
-    videoControllersToDisposeDesktop = [];
   }
 
   void disposeAudioControllers() {
