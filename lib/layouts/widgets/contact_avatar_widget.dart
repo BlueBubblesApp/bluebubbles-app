@@ -8,6 +8,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:collection/collection.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -53,6 +54,10 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       if (event["type"] == 'refresh-avatar' && event["data"][0] == widget.handle?.address && mounted) {
         widget.handle?.color = event['data'][1];
         setState(() {});
+      }
+
+      if (contact == null && event["type"] == 'update-contacts') {
+        contact = ContactManager().getContact(widget.handle?.address);
       }
     });
   }
@@ -143,7 +148,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
         ),
         child: Obx(() {
           Uint8List? avatar;
-          if (contact?.avatar.value != null || contact?.avatarHiRes.value != null) {
+          if (contact?.hasAvatar ?? false) {
             if (widget.preferHighResAvatar) {
               avatar = contact?.avatarHiRes.value ?? contact?.avatar.value;
             } else {

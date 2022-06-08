@@ -56,13 +56,12 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         !sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
 
-    childOffsetY =
-        offset.dy -
-            (doNotIncreaseHeight
-                ? 0
-                : widget.message.getReactions().isNotEmpty
-                    ? 20.0
-                    : 23.0);
+    childOffsetY = offset.dy -
+        (doNotIncreaseHeight
+            ? 0
+            : widget.message.getReactions().isNotEmpty
+                ? 20.0
+                : 23.0);
     childSize = Size(
         size.width + (increaseWidth ? 35 : 0),
         size.height +
@@ -125,39 +124,48 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardVisibilityBuilder(
-      builder: (context, isVisible) {
-        return GestureDetector(
-          key: containerKey,
-          onDoubleTap: SettingsManager().settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
-              ? () => openMessageDetails(isVisible)
-              : SettingsManager().settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
-                  ? () {
-                      if (widget.message.guid!.startsWith('temp')) return;
-                      HapticFeedback.lightImpact();
-                      sendReaction(SettingsManager().settings.quickTapbackType.value);
+    return KeyboardVisibilityBuilder(builder: (context, isVisible) {
+      return GestureDetector(
+        key: containerKey,
+        onDoubleTap: SettingsManager().settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
+            ? () => openMessageDetails(isVisible)
+            : SettingsManager().settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
+                ? () {
+                    if (widget.message.guid!.startsWith('temp')) return;
+                    if (kIsDesktop &&
+                        (ChatManager()
+                                .activeChat
+                                ?.videoPlayersDesktop
+                                .keys
+                                .any((String guid) => widget.message.attachments.any((a) => a?.guid == guid)) ??
+                            false)) {
+                      return;
                     }
-                  : null,
-          onLongPress: SettingsManager().settings.doubleTapForDetails.value && SettingsManager().settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
-              ? () {
-                  if (widget.message.guid!.startsWith('temp')) return;
-                  HapticFeedback.lightImpact();
-                  sendReaction(SettingsManager().settings.quickTapbackType.value);
-                }
-              : () => openMessageDetails(isVisible),
-          onSecondaryTapUp: (details) async {
-            if (!kIsWeb && !kIsDesktop) return;
-            if (kIsWeb) {
-              (await html.document.onContextMenu.first).preventDefault();
-            }
-            openMessageDetails(isVisible);
-          },
-          child: Opacity(
-            child: widget.child,
-            opacity: visible ? 1 : 0,
-          ),
-        );
-      }
-    );
+                    HapticFeedback.lightImpact();
+                    sendReaction(SettingsManager().settings.quickTapbackType.value);
+                  }
+                : null,
+        onLongPress: SettingsManager().settings.doubleTapForDetails.value &&
+                SettingsManager().settings.enableQuickTapback.value &&
+                (ChatManager().activeChat?.chat.isIMessage ?? true)
+            ? () {
+                if (widget.message.guid!.startsWith('temp')) return;
+                HapticFeedback.lightImpact();
+                sendReaction(SettingsManager().settings.quickTapbackType.value);
+              }
+            : () => openMessageDetails(isVisible),
+        onSecondaryTapUp: (details) async {
+          if (!kIsWeb && !kIsDesktop) return;
+          if (kIsWeb) {
+            (await html.document.onContextMenu.first).preventDefault();
+          }
+          openMessageDetails(isVisible);
+        },
+        child: Opacity(
+          child: widget.child,
+          opacity: visible ? 1 : 0,
+        ),
+      );
+    });
   }
 }
