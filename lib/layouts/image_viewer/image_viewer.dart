@@ -81,7 +81,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       opacity: showOverlay ? 1.0 : 0.0,
       duration: Duration(milliseconds: 125),
       child: Container(
-        height: 115.0,
+        height: kIsDesktop ? 50 : 115.0,
         width: CustomNavigator.width(context),
         color: Colors.black.withOpacity(0.65),
         child: SafeArea(
@@ -90,7 +90,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
           bottom: false,
           child: Container(
             height: 50,
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            child: Row(mainAxisAlignment: kIsDesktop ? MainAxisAlignment.end : MainAxisAlignment.spaceBetween, children: [
+              if (!kIsDesktop)
               Padding(
                 padding: EdgeInsets.only(top: 10.0, left: 5),
                 child: CupertinoButton(

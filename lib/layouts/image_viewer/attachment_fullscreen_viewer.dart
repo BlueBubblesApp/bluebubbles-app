@@ -143,17 +143,10 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
             appBar: kIsDesktop
                 ? AppBar(
                     leading: SettingsManager().settings.skin.value == Skins.iOS
-                        ? buildBackButton(context, padding: EdgeInsets.only(left: 5, top: 15))
+                        ? buildBackButton(context, padding: EdgeInsets.only(left: 5, top: 5))
                         : null,
                     iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-                    backgroundColor: Theme.of(context).backgroundColor,
-                    bottom: PreferredSize(
-                      child: Container(
-                        color: Theme.of(context).dividerColor,
-                        height: 0.5,
-                      ),
-                      preferredSize: Size.fromHeight(0.5),
-                    ),
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
                   )
                 : null,
             backgroundColor: Colors.black,
@@ -215,7 +208,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                     file: content,
                                     showInteractions: widget.showInteractions,
                                   );
-                                } else if (mimeType == "video") {
+                                } else if (!kIsDesktop && mimeType == "video") {
                                   if (kIsDesktop) {
                                     Player player = Player(id: attachment.hashCode)
                                       ..add(Media.file(File(content.path!)));
