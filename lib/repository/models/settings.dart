@@ -557,7 +557,7 @@ class Settings {
     SettingsManager().settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
     SettingsManager().settings.closeToTray.value = map['closeToTray'] ?? true;
     SettingsManager().settings.betterScrolling.value = map['betterScrolling'] ?? false;
-    SettingsManager().settings.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'].toDouble() ?? 7.0);
+    SettingsManager().settings.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'] ?? 7.0).toDouble();
     SettingsManager().settings.minimizeToTray.value = map['minimizeToTray'] ?? false;
     SettingsManager().settings.askWhereToSave.value = map['askWhereToSave'] ?? false;
     SettingsManager().settings.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
@@ -670,7 +670,7 @@ class Settings {
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
     s.closeToTray.value = map['closeToTray'] ?? true;
     s.betterScrolling.value = map['betterScrolling'] ?? false;
-    s.betterScrollingMultiplier.value = map['betterScrollingMultiplier'].toDouble() ?? 7.0;
+    s.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'] ?? 7.0).toDouble();
     s.minimizeToTray.value = map['minimizeToTray'] ?? false;
     s.askWhereToSave.value = map['askWhereToSave'] ?? false;
     s.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
