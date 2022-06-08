@@ -136,6 +136,8 @@ dependencies:
       path: packages/win_toast
   dynamic_color: ^1.2.2
   material_color_utilities: ^0.1.5
+  dart_vlc: ^0.2.1
+  geolocator: ^8.2.1
 
 dependency_overrides:
   rxdart: ^0.27.3
@@ -259,7 +261,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 1.9.4.0
+  msix_version: 1.9.5.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico

@@ -24,6 +24,7 @@ class BaseLogger extends GetxService {
   List<LogLevel> enabledLevels = [LogLevel.INFO, LogLevel.WARN, LogLevel.DEBUG, LogLevel.ERROR];
   final String _directoryPath = "/storage/emulated/0/Download/BlueBubbles-log-";
   late final File startupFile;
+  late final File logFile;
 
   String get logPath {
     DateTime now = DateTime.now().toLocal();
@@ -34,15 +35,27 @@ class BaseLogger extends GetxService {
 
   init() async {
     // For now, only do startup logs on desktop
-    if (kIsDesktop) {
-      String startupPath = "${_directoryPath}startup.txt";
-      startupPath = (await getDownloadsDirectory())!.path;
-      startupPath = join(startupPath, "BlueBubbles_Logs_Startup.txt");
-      startupFile = File(startupPath);
+    String startupPath = (await getDownloadsDirectory())!.path;
+    startupPath = join(startupPath, "BlueBubbles_Logs_Startup.txt");
+    startupFile = File(startupPath);
+    if (kIsDesktop && startupFile.existsSync()) {
       startupFile.writeAsStringSync("", mode: FileMode.writeOnly);
       startup.listen((val) async {
         if (val) {
           await writeToStartupFile('----------------${DateTime.now().toLocal()}----------------');
+        }
+      });
+    }
+    String logPath = (await getApplicationSupportDirectory()).path;
+    logPath = join(logPath, "BlueBubbles_Logs.txt");
+    logFile = File(logPath);
+    if (kIsDesktop) {
+      logFile.writeAsStringSync("", mode: FileMode.writeOnly);
+      saveLogs.listen((val) async {
+        if (val) {
+          await writeLiveLogs('---------------- START LOG ${DateTime.now().toLocal()}----------------');
+        } else {
+          await writeLiveLogs('----------------   END LOG ${DateTime.now().toLocal()}----------------');
         }
       });
     }
@@ -63,8 +76,14 @@ class BaseLogger extends GetxService {
   }
 
   Future<void> writeToStartupFile(String log) async {
-    if (kIsDesktop) {
+    if (kIsDesktop && startupFile.existsSync()) {
       startupFile.writeAsStringSync('$log\n', mode: FileMode.writeOnlyAppend);
+    }
+  }
+
+  Future<void> writeLiveLogs(String log) async {
+    if (kIsDesktop) {
+      logFile.writeAsStringSync('$log\n', mode: FileMode.writeOnlyAppend);
     }
   }
 
@@ -80,10 +99,10 @@ class BaseLogger extends GetxService {
     }
     String filePath = logPath;
     if (kIsDesktop) {
-      filePath = (await getDownloadsDirectory())!.path;
+      filePath = (await getApplicationSupportDirectory()).path;
       DateTime now = DateTime.now().toLocal();
-      filePath = join(
-          filePath, "BlueBubbles_Logs_${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
+      filePath = join(filePath, "Saved Logs",
+          "BlueBubbles_Logs_${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
     }
     File file = File(filePath);
     await file.create(recursive: true);
@@ -92,19 +111,19 @@ class BaseLogger extends GetxService {
     // Show the snackbar when finished
     showSnackbar(
       "Success",
-      "Logs exported successfully to downloads folder",
-      durationMs: 2500,
-      button: TextButton(
-        style: TextButton.styleFrom(
-          backgroundColor: Get.theme.colorScheme.secondary,
-        ),
-        onPressed: () {
-          Share.file("BlueBubbles Logs", filePath);
-        },
-        child: kIsDesktop || kIsWeb
-            ? Container()
-            : Text("SHARE", style: TextStyle(color: Theme.of(Get.context!).primaryColor)),
-      ),
+      "Logs exported successfully to $filePath",
+      durationMs: kIsDesktop ? 5000 : 2500,
+      button: kIsDesktop || kIsWeb
+          ? null
+          : TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Get.theme.colorScheme.secondary,
+              ),
+              onPressed: () {
+                Share.file("BlueBubbles Logs", filePath);
+              },
+              child: Text("SHARE", style: TextStyle(color: Theme.of(Get.context!).primaryColor)),
+            ),
     );
   }
 
@@ -127,8 +146,11 @@ class BaseLogger extends GetxService {
       debugPrint(theLog);
 
       // If we are in startup, write the log to the startup file
-      if (kIsDesktop && startup.value) {
-        writeToStartupFile(theLog);
+      if (kIsDesktop) {
+        if (startup.value) {
+          writeToStartupFile(theLog);
+        }
+        writeLiveLogs(theLog);
       }
 
       // If we aren't saving logs, return here

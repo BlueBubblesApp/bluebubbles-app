@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_linux
+  dart_vlc
   desktop_drop
   maps_launcher
   objectbox_flutter_libs
