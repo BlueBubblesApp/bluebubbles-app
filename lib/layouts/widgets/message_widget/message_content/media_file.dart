@@ -48,7 +48,7 @@ class _MediaFileState extends State<MediaFile> {
             if (data.item2) {
               return Text(
                 "Unable to send",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               );
             }
 

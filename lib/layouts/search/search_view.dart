@@ -163,7 +163,7 @@ class SearchViewState extends State<SearchView> {
                 backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                 title: Text(
                   "Search",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Theme.of(context).textTheme.headlineMedium,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -180,7 +180,7 @@ class SearchViewState extends State<SearchView> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search,
-                          color: Theme.of(context).textTheme.bodyText1!.color),
+                          color: Theme.of(context).textTheme.bodyMedium!.color),
                       Container(padding: EdgeInsets.only(right: 5.0)),
                       Flexible(
                           fit: FlexFit.loose,
@@ -193,8 +193,8 @@ class SearchViewState extends State<SearchView> {
                             padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
                             controller: textEditingController,
                             placeholder: "Enter a search term...",
-                            style: Theme.of(context).textTheme.bodyText1,
-                            placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            placeholderStyle: Theme.of(context).textTheme.labelLarge,
                             decoration: BoxDecoration(
                                 color: Theme.of(context).backgroundColor,
                                 borderRadius: BorderRadius.circular(20),
@@ -205,7 +205,7 @@ class SearchViewState extends State<SearchView> {
                           ? CupertinoButton(
                               padding: EdgeInsets.all(0),
                               child: Icon(Icons.arrow_forward,
-                                  color: Theme.of(context).textTheme.bodyText1!.color, size: 30),
+                                  color: Theme.of(context).textTheme.bodyMedium!.color, size: 30),
                               onPressed: () {
                                 search(textEditingController.text);
                               })
@@ -233,7 +233,7 @@ class SearchViewState extends State<SearchView> {
             (!isSearching && noResults)
                 ? Padding(
                     padding: EdgeInsets.only(top: 25.0),
-                    child: Text("No results found!", style: Theme.of(context).textTheme.bodyText1))
+                    child: Text("No results found!", style: Theme.of(context).textTheme.bodyMedium))
                 : (!isSearching)
                     ? Flexible(
                         fit: FlexFit.loose,
@@ -271,22 +271,22 @@ class SearchViewState extends State<SearchView> {
                                 // Add the beginning string
                                 spans.add(TextSpan(
                                     text: subText.substring(0, termIndex).trimLeft(),
-                                    style: Theme.of(context).textTheme.subtitle1));
+                                    style: Theme.of(context).textTheme.labelLarge));
 
                                 // Add the search term
                                 spans.add(TextSpan(
                                     text: subText.substring(termIndex, termEnd),
                                     style: Theme.of(context)
                                         .textTheme
-                                        .subtitle1!
+                                        .labelLarge!
                                         .apply(color: Theme.of(context).primaryColor, fontWeightDelta: 2)));
 
                                 // Add the ending string
                                 spans.add(TextSpan(
                                     text: subText.substring(termEnd, subText.length).trimRight(),
-                                    style: Theme.of(context).textTheme.subtitle1));
+                                    style: Theme.of(context).textTheme.labelLarge));
                               } else {
-                                spans.add(TextSpan(text: message.text, style: Theme.of(context).textTheme.subtitle1));
+                                spans.add(TextSpan(text: message.text, style: Theme.of(context).textTheme.labelLarge));
                               }
 
                               return Column(
@@ -316,10 +316,10 @@ class SearchViewState extends State<SearchView> {
                                       mainAxisAlignment: MainAxisAlignment.start,
                                       children: [
                                         Text(buildDate(message.dateCreated),
-                                            style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -2)),
+                                            style: Theme.of(context).textTheme.labelLarge!.apply(fontSizeDelta: -2)),
                                         Container(height: 5.0),
                                         Text(chat?.title ?? "Unknown title",
-                                            style: Theme.of(context).textTheme.bodyText1),
+                                            style: Theme.of(context).textTheme.bodyMedium),
                                       ],
                                     ),
                                     subtitle: Padding(
@@ -332,7 +332,7 @@ class SearchViewState extends State<SearchView> {
                                       SettingsManager().settings.skin.value == Skins.iOS
                                           ? CupertinoIcons.forward
                                           : Icons.arrow_forward_ios,
-                                      color: Theme.of(context).textTheme.bodyText1!.color,
+                                      color: Theme.of(context).textTheme.bodyMedium!.color,
                                     ),
                                   ),
                                   Divider(color: Theme.of(context).colorScheme.secondary)

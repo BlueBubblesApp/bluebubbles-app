@@ -30,13 +30,13 @@ class AttachmentDownloaderWidget extends StatelessWidget {
             children: <Widget>[
               Text(
                 attachment.getFriendlySize(),
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.cloud_download, size: 28.0),
               (attachment.mimeType != null)
                   ? Text(
                       attachment.mimeType!,
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: Theme.of(context).textTheme.bodyMedium,
                     )
                   : Container()
             ],

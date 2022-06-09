@@ -31,7 +31,7 @@ import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:collection/collection.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -118,10 +118,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
         ));
 
     final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+        Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context)
         .textTheme
-        .subtitle1
+        .labelLarge
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
     Color tileColor = context.theme.tileColor;
@@ -520,14 +520,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           onTap: () {
                             Get.defaultDialog(
                               title: "Backup and Restore",
-                              titleStyle: Theme.of(context).textTheme.headline1,
+                              titleStyle: Theme.of(context).textTheme.headlineMedium,
                               confirm: Container(height: 0, width: 0),
                               cancel: Container(height: 0, width: 0),
                               content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
                                 SizedBox(
                                   height: 15.0,
                                 ),
-                                Text("Load From / Save To Server", style: Theme.of(context).textTheme.subtitle1),
+                                Text("Load From / Save To Server", style: Theme.of(context).textTheme.labelLarge),
                                 Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                                   child: Container(color: Colors.grey, height: 0.5),
@@ -564,7 +564,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                       child: Text(
                                         "Save Settings",
                                         style: TextStyle(
-                                          color: Theme.of(context).textTheme.bodyText1!.color,
+                                          color: Theme.of(context).textTheme.bodyMedium!.color,
                                           fontSize: 13,
                                         ),
                                       ),
@@ -585,7 +585,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             Get.back();
                                             Get.defaultDialog(
                                               title: "Settings Backups",
-                                              titleStyle: Theme.of(context).textTheme.headline1,
+                                              titleStyle: Theme.of(context).textTheme.headlineMedium,
                                               confirm: Container(height: 0, width: 0),
                                               cancel: Container(height: 0, width: 0),
                                               backgroundColor: Theme.of(context).backgroundColor,
@@ -648,7 +648,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                       finalName = json[index]['name'].toString();
                                                                     }
                                                                     return ListTile(
-                                                                      title: Text(finalName, style: Theme.of(context).textTheme.headline1),
+                                                                      title: Text(finalName, style: Theme.of(context).textTheme.headlineMedium),
                                                                       onTap: () {
                                                                         Settings.updateFromMap(json[index]);
                                                                         Get.back();
@@ -678,7 +678,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                       child: Text(
                                         "Load Settings",
                                         style: TextStyle(
-                                          color: Theme.of(context).textTheme.bodyText1!.color,
+                                          color: Theme.of(context).textTheme.bodyMedium!.color,
                                           fontSize: 13,
                                         ),
                                       ),
@@ -697,41 +697,37 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             primary: Theme.of(context).primaryColor,
                                           ),
                                           onPressed: () async {
-                                            List<ThemeObject> allThemes = ThemeObject.getThemes().where((element) => !element.isPreset).toList();
-                                            for (ThemeObject e in allThemes) {
-                                              List<dynamic> entryJson = [];
-                                              e.fetchData();
-                                              for (ThemeEntry e2 in e.entries) {
-                                                entryJson.add(e2.toMap());
-                                              }
-                                              Map<String, dynamic> map = e.toMap();
-                                              map['entries'] = entryJson;
-                                              String name = "Android_${e.name}";
-                                              var response = await api.setTheme(name, map);
+                                            List<ThemeStruct> allThemes = ThemeStruct.getThemes().where((element) => !element.isPreset).toList();
+                                            bool errored = false;
+                                            for (ThemeStruct e in allThemes) {
+                                              String name = "BlueBubbles Custom Theme - ${e.name}";
+                                              var response = await api.setTheme(name, e.toMap());
                                               if (response.statusCode != 200) {
-                                                showSnackbar(
-                                                  "Error",
-                                                  "Somthing went wrong",
-                                                );
-                                              } else {
-                                                showSnackbar(
-                                                  "Success",
-                                                  "Theme ${e.name} exported successfully to server",
-                                                );
+                                                errored = true;
                                               }
                                             }
+                                            Get.back();
                                             if (allThemes.isEmpty) {
                                               showSnackbar(
                                                 "Notice",
                                                 "No custom themes found!",
                                               );
+                                            } else if (errored) {
+                                              showSnackbar(
+                                                "Error",
+                                                "Somthing went wrong",
+                                              );
+                                            } else {
+                                              showSnackbar(
+                                                "Success",
+                                                "Themes exported successfully to server",
+                                              );
                                             }
-                                            Get.back();
                                           },
                                           child: Text(
                                             "Save Theming",
                                             style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: Theme.of(context).textTheme.bodyMedium!.color,
                                               fontSize: 13,
                                             ),
                                           ),
@@ -752,7 +748,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                 Get.back();
                                                 Get.defaultDialog(
                                                   title: "Theme Backups",
-                                                  titleStyle: Theme.of(context).textTheme.headline1,
+                                                  titleStyle: Theme.of(context).textTheme.headlineMedium,
                                                   confirm: Container(height: 0, width: 0),
                                                   cancel: Container(height: 0, width: 0),
                                                   backgroundColor: Theme.of(context).backgroundColor,
@@ -784,18 +780,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                       physics: NeverScrollableScrollPhysics(),
                                                                       itemBuilder: (context, index) {
                                                                         return ListTile(
-                                                                          title: Text(json[index]['name'], style: Theme.of(context).textTheme.headline1),
+                                                                          title: Text(json[index]['name'], style: Theme.of(context).textTheme.headlineMedium),
                                                                           onTap: () async {
-                                                                            ThemeObject object = ThemeObject.fromMap(json[index]);
-                                                                            List<dynamic> entriesJson = json[index]['entries'];
-                                                                            List<ThemeEntry> entries = [];
-                                                                            for (var e2 in entriesJson) {
-                                                                              entries.add(ThemeEntry.fromMap(e2));
-                                                                            }
-                                                                            object.entries = entries;
-                                                                            object.data = object.themeData;
+                                                                            ThemeStruct object = ThemeStruct.fromMap(json[index]);
+                                                                            object.id = null;
                                                                             object.save();
-                                                                            SettingsManager().saveSelectedTheme(context);
                                                                             Get.back();
                                                                             showSnackbar("Success", "Theming restored successfully");
                                                                           },
@@ -823,7 +812,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                           child: Text(
                                             "Load Theming",
                                             style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: Theme.of(context).textTheme.bodyMedium!.color,
                                               fontSize: 13,
                                             ),
                                           ),
@@ -833,7 +822,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                   SizedBox(
                                     height: 15.0,
                                   ),
-                                  Text("Load / Save Locally", style: Theme.of(context).textTheme.subtitle1),
+                                  Text("Load / Save Locally", style: Theme.of(context).textTheme.labelLarge),
                                   Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                                     child: Container(color: Colors.grey, height: 0.5),
@@ -897,7 +886,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         child: Text(
                                           "Save Settings",
                                           style: TextStyle(
-                                            color: Theme.of(context).textTheme.bodyText1!.color,
+                                            color: Theme.of(context).textTheme.bodyMedium!.color,
                                             fontSize: 13,
                                           ),
                                         ),
@@ -929,7 +918,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                       child: Text(
                                         "Load Settings",
                                         style: TextStyle(
-                                          color: Theme.of(context).textTheme.bodyText1!.color,
+                                          color: Theme.of(context).textTheme.bodyMedium!.color,
                                           fontSize: 13,
                                         ),
                                       ),
@@ -948,29 +937,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                           primary: Theme.of(context).primaryColor,
                                         ),
                                         onPressed: () async {
-                                          List<ThemeObject> allThemes = ThemeObject.getThemes().where((element) => !element.isPreset).toList();
-                                          String jsonStr = "[";
-                                          allThemes.forEachIndexed((index, e) async {
-                                            String entryJson = "[";
-                                            e.fetchData();
-                                            e.entries.forEachIndexed((index, e2) {
-                                              entryJson = entryJson + jsonEncode(e2.toMap());
-                                              if (index != e.entries.length - 1) {
-                                                entryJson = "$entryJson,";
-                                              } else {
-                                                entryJson = "$entryJson]";
-                                              }
-                                            });
-                                            Map<String, dynamic> map = e.toMap();
-                                            Logger.debug(entryJson);
-                                            map['entries'] = jsonDecode(entryJson);
-                                            jsonStr = jsonStr + jsonEncode(map);
-                                            if (index != allThemes.length - 1) {
-                                              jsonStr = "$jsonStr,";
-                                            } else {
-                                              jsonStr = "$jsonStr]";
-                                            }
-                                          });
+                                          List<ThemeStruct> allThemes = ThemeStruct.getThemes().where((element) => !element.isPreset).toList();
+                                          final List<Map<String, dynamic>> themeData = [];
+                                          for (ThemeStruct e in allThemes) {
+                                            themeData.add(e.toMap());
+                                          }
+                                          String jsonStr = jsonEncode(themeData);
                                           String directoryPath = "/storage/emulated/0/Download/BlueBubbles-theming-";
                                           DateTime now = DateTime.now().toLocal();
                                           String filePath = "$directoryPath${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.json";
@@ -1017,7 +989,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         child: Text(
                                           "Save Theming",
                                           style: TextStyle(
-                                            color: Theme.of(context).textTheme.bodyText1!.color,
+                                            color: Theme.of(context).textTheme.bodyMedium!.color,
                                             fontSize: 13,
                                           ),
                                         ),
@@ -1039,18 +1011,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             String jsonString = Utf8Decoder().convert(res.files.first.bytes!);
                                             List<dynamic> json = jsonDecode(jsonString);
                                             for (var e in json) {
-                                              ThemeObject object = ThemeObject.fromMap(e);
+                                              ThemeStruct object = ThemeStruct.fromMap(e);
                                               if (object.isPreset) continue;
-                                              object.selectedLightTheme = false;
-                                              object.selectedDarkTheme = false;
                                               object.id = null;
-                                              List<dynamic> entriesJson = e['entries'];
-                                              List<ThemeEntry> entries = [];
-                                              for (var e2 in entriesJson) {
-                                                entries.add(ThemeEntry.fromMap(e2));
-                                              }
-                                              object.entries = entries;
-                                              object.data = object.themeData;
                                               object.save();
                                             }
                                             Get.back();
@@ -1063,7 +1026,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         child: Text(
                                           "Load Theming",
                                           style: TextStyle(
-                                            color: Theme.of(context).textTheme.bodyText1!.color,
+                                            color: Theme.of(context).textTheme.bodyMedium!.color,
                                             fontSize: 13,
                                           ),
                                         ),
@@ -1111,7 +1074,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                 contentPadding: EdgeInsets.symmetric(horizontal: 20),
                                 titlePadding: EdgeInsets.only(top: 15),
                                 title: "Uploading contacts...",
-                                titleStyle: Theme.of(context).textTheme.headline1,
+                                titleStyle: Theme.of(context).textTheme.headlineMedium,
                                 confirm: Obx(() => uploadingContacts.value
                                     ? Container(height: 0, width: 0)
                                     : Container(
@@ -1205,7 +1168,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                 return AlertDialog(
                                   title: Text(
                                     "Are you sure?",
-                                    style: Theme.of(context).textTheme.bodyText1,
+                                    style: Theme.of(context).textTheme.bodyMedium,
                                   ),
                                   backgroundColor: Theme.of(context).backgroundColor,
                                   actions: <Widget>[
@@ -1223,15 +1186,19 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                       onPressed: () async {
                                         await DBProvider.deleteDB();
                                         await SettingsManager().resetConnection();
-                                        SettingsManager().settings.finishedSetup.value = false;
-                                        Get.offAll(() => WillPopScope(
-                                          onWillPop: () async => false,
-                                          child: TitleBarWrapper(child: SetupView()),
-                                        ), duration: Duration.zero, transition: Transition.noTransition);
                                         SettingsManager().settings = Settings();
                                         SettingsManager().settings.save();
                                         SettingsManager().fcmData = null;
                                         FCMData.deleteFcmData();
+                                        prefs.setString("selected-dark", "OLED Dark");
+                                        prefs.setString("selected-light", "Bright White");
+                                        for (ThemeStruct theme in Themes.defaultThemes) {
+                                          theme.save(updateIfNotAbsent: false);
+                                        }
+                                        Get.offAll(() => WillPopScope(
+                                          onWillPop: () async => false,
+                                          child: TitleBarWrapper(child: SetupView()),
+                                        ), duration: Duration.zero, transition: Transition.noTransition);
                                       },
                                     ),
                                     TextButton(
@@ -1321,7 +1288,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       body: Center(
                         child: Container(
                             child: Text("Select a settings page from the list",
-                                style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))),
+                                style: Theme.of(Get.context!).textTheme.labelLarge!.copyWith(fontSize: 18))),
                       ))),
             ],
           ),

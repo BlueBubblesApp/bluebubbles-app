@@ -75,7 +75,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                             : hideInfo
                                 ? "          "
                                 : contact.displayName!.trim(),
-                        style: Theme.of(context).textTheme.bodyText1),
+                        style: Theme.of(context).textTheme.bodyMedium),
                     SizedBox(
                       width: 5.0,
                     ),
@@ -125,10 +125,10 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           maxLines: 1,
           autocorrect: false,
           placeholder: "  Type a name...",
-          placeholderStyle: Theme.of(context).textTheme.subtitle1!,
+          placeholderStyle: Theme.of(context).textTheme.labelLarge!,
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
-          style: Theme.of(context).textTheme.bodyText1!.apply(
+          style: Theme.of(context).textTheme.bodyMedium!.apply(
                 color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
                     ? Colors.black
                     : Colors.white,
@@ -151,7 +151,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             padding: const EdgeInsets.only(right: 12),
             child: Text(
               "To: ",
-              style: Theme.of(context).textTheme.subtitle1,
+              style: Theme.of(context).textTheme.labelLarge,
             ),
           ),
           Flexible(
@@ -175,7 +175,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           //     },
           //     child: Text(
           //       ChatSelector.of(context).widget.isCreator ? "Create" : "Add",
-          //       style: Theme.of(context).textTheme.bodyText1,
+          //       style: Theme.of(context).textTheme.bodyMedium,
           //     ),
           //   ),
           // )

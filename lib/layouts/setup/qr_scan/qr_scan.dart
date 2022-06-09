@@ -69,7 +69,7 @@ class _QRScanState extends State<QRScan> {
     } catch (e) {
       Get.defaultDialog(
           title: "Error",
-          titleStyle: Theme.of(context).textTheme.headline1,
+          titleStyle: Theme.of(context).textTheme.headlineMedium,
           backgroundColor: Theme.of(context).backgroundColor.lightenPercent(),
           buttonColor: Theme.of(context).primaryColor,
           content: Container(
@@ -164,7 +164,7 @@ class _QRScanState extends State<QRScan> {
                                       child: Text("Server Connection",
                                           style: Theme.of(context)
                                               .textTheme
-                                              .bodyText1!
+                                              .bodyMedium!
                                               .apply(
                                                 fontSizeFactor: 2.5,
                                                 fontWeightDelta: 2,
@@ -183,7 +183,7 @@ class _QRScanState extends State<QRScan> {
                                             : "We've created a QR code on your server that you can scan with your phone for easy setup.\n\nAlternatively, you can manually input your URL and password.",
                                         style: Theme.of(context)
                                             .textTheme
-                                            .bodyText1!
+                                            .bodyMedium!
                                             .apply(
                                               fontSizeFactor: 1.1,
                                               color: Colors.grey,
@@ -204,7 +204,7 @@ class _QRScanState extends State<QRScan> {
                               child: Text(error,
                                   style: Theme.of(context)
                                       .textTheme
-                                      .bodyText1!
+                                      .bodyMedium!
                                       .apply(
                                         fontSizeFactor: 1.1,
                                         color: Colors.red,
@@ -259,7 +259,7 @@ class _QRScanState extends State<QRScan> {
                                       child: Text("Scan QR Code",
                                           style: Theme.of(context)
                                               .textTheme
-                                              .bodyText1!
+                                              .bodyMedium!
                                               .apply(fontSizeFactor: 1.1, color: Colors.white)),
                                     ),
                                   ],
@@ -299,10 +299,10 @@ class _QRScanState extends State<QRScan> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(CupertinoIcons.text_cursor,
-                                    color: Theme.of(context).textTheme.bodyText1!.color, size: 20),
+                                    color: Theme.of(context).textTheme.bodyMedium!.color, size: 20),
                                 SizedBox(width: 10),
                                 Text("Manual entry",
-                                    style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)),
+                                    style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.1)),
                               ],
                             ),
                           ),
@@ -423,7 +423,7 @@ class _QRScanState extends State<QRScan> {
                                                   Text("Cancel",
                                                       style: Theme.of(context)
                                                           .textTheme
-                                                          .bodyText1!
+                                                          .bodyMedium!
                                                           .apply(fontSizeFactor: 1.1)),
                                                 ],
                                               ),
@@ -464,7 +464,7 @@ class _QRScanState extends State<QRScan> {
                                                   Text("Connect",
                                                       style: Theme.of(context)
                                                           .textTheme
-                                                          .bodyText1!
+                                                          .bodyMedium!
                                                           .apply(fontSizeFactor: 1.1, color: Colors.white)),
                                                   SizedBox(width: 10),
                                                   Icon(Icons.arrow_forward, color: Colors.white, size: 20),

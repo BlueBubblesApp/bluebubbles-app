@@ -138,7 +138,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                       : showUnknown
                                           ? "Unknown Senders"
                                           : "Messages",
-                                  style: context.textTheme.bodyText1,
+                                  style: context.textTheme.bodyMedium,
                                 ),
                               ],
                             ),
@@ -443,7 +443,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Text(
                                   "Loading chats...",
-                                  style: Theme.of(context).textTheme.subtitle1,
+                                  style: Theme.of(context).textTheme.labelLarge,
                                 ),
                               ),
                               buildProgressIndicator(context, size: 15),
@@ -464,7 +464,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                 : showUnknown
                                     ? "You have no messages from unknown senders :)"
                                     : "You have no chats :(",
-                            style: Theme.of(context).textTheme.subtitle1,
+                            style: Theme.of(context).textTheme.labelLarge,
                           ),
                         ),
                       ),
@@ -571,7 +571,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                     body: Center(
                       child: Container(
                           child: Text("Select a chat from the list",
-                              style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))),
+                              style: Theme.of(Get.context!).textTheme.labelLarge!.copyWith(fontSize: 18))),
                     ),
                   ),
                 ),

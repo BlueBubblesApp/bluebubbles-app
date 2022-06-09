@@ -515,20 +515,20 @@ class Message {
     // initialize constraints for text rendering
     final constraints = BoxConstraints(
       maxWidth: maxWidthOverride ?? CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
-      minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodyText2!.fontSize!,
+      minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodySmall!.fontSize!,
     );
     final renderParagraph = RichText(
       text: TextSpan(
         text: textOverride ?? fullText,
-        style: context.theme.textTheme.bodyText2!.apply(color: Colors.white),
+        style: context.theme.textTheme.bodySmall!.apply(color: Colors.white),
       ),
     ).createRenderObject(context);
     // get the text size
     Size size = renderParagraph.getDryLayout(constraints);
     // if the text is shorter than the full width, add 28 to account for the
     // container margins
-    if (size.height < context.theme.textTheme.bodyText2!.fontSize! * 2 ||
-        (subject != null && size.height < context.theme.textTheme.bodyText2!.fontSize! * 3)) {
+    if (size.height < context.theme.textTheme.bodySmall!.fontSize! * 2 ||
+        (subject != null && size.height < context.theme.textTheme.bodySmall!.fontSize! * 3)) {
       size = Size(size.width + 28, size.height);
     }
     // if we have a URL preview, extend to the full width

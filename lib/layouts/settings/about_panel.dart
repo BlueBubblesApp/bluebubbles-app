@@ -26,10 +26,10 @@ class AboutPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+        Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context)
         .textTheme
-        .subtitle1
+        .labelLarge
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
     Color tileColor = context.theme.tileColor;
@@ -157,23 +157,23 @@ class AboutPanel extends StatelessWidget {
                                 styleSheet: MarkdownStyleSheet.fromTheme(
                                   Theme.of(context)
                                     ..textTheme.copyWith(
-                                      headline1: TextStyle(
+                                      headlineMedium: TextStyle(
                                         color: Colors.white,
                                       ),
                                     ),
                                 ).copyWith(
                                   h1: Theme.of(context)
                                       .textTheme
-                                      .headline1!
+                                      .headlineMedium!
                                       .copyWith(fontSize: 20, fontWeight: FontWeight.bold),
                                   h2: Theme.of(context)
                                       .textTheme
-                                      .headline2!
+                                      .titleMedium!
                                       .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
                                   h3: Theme.of(context).textTheme.headline3!.copyWith(
                                         fontSize: 17,
                                         fontWeight: FontWeight.bold,
-                                        color: Theme.of(context).textTheme.headline1?.color,
+                                        color: Theme.of(context).textTheme.headlineMedium?.color,
                                       ),
                                 ),
                               ),
@@ -182,7 +182,7 @@ class AboutPanel extends StatelessWidget {
                                 backgroundColor: Theme.of(context).colorScheme.secondary,
                                 middle: Text(
                                   "Changelog",
-                                  style: Theme.of(context).textTheme.headline1,
+                                  style: Theme.of(context).textTheme.headlineMedium,
                                 ),
                               ),
                             ),
@@ -210,7 +210,7 @@ class AboutPanel extends StatelessWidget {
                           builder: (context) => AlertDialog(
                             title: Text(
                               "Developers! Developers!",
-                              style: Theme.of(context).textTheme.headline1,
+                              style: Theme.of(context).textTheme.headlineMedium,
                               textAlign: TextAlign.center,
                             ),
                             backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -266,7 +266,7 @@ class AboutPanel extends StatelessWidget {
                                     padding: EdgeInsets.all(8),
                                     child: Text(
                                       "Maxwell",
-                                      style: Theme.of(context).textTheme.bodyText1,
+                                      style: Theme.of(context).textTheme.bodyMedium,
                                     ),
                                   ),
                                 ],
@@ -276,7 +276,7 @@ class AboutPanel extends StatelessWidget {
                               TextButton(
                                 child: Text(
                                   "Close",
-                                  style: Theme.of(context).textTheme.bodyText1!.copyWith(
+                                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                                         color: Theme.of(context).primaryColor,
                                       ),
                                 ),
@@ -308,7 +308,7 @@ class AboutPanel extends StatelessWidget {
                               context: context,
                               builder: (BuildContext context) {
                                 return AlertDialog(
-                                  title: Text('Keyboard Shortcuts', style: context.theme.textTheme.bodyText1),
+                                  title: Text('Keyboard Shortcuts', style: context.theme.textTheme.bodyMedium),
                                   scrollable: true,
                                   backgroundColor: context.theme.backgroundColor.lightenOrDarken(),
                                   content: Container(
@@ -504,25 +504,25 @@ class AboutPanel extends StatelessWidget {
                                                   children: <Widget>[
                                                     Text(
                                                       "BlueBubbles",
-                                                      style: context.textTheme.headline2!.copyWith(
+                                                      style: context.textTheme.titleMedium!.copyWith(
                                                         fontSize: 24,
                                                       ),
                                                     ),
                                                     if (!kIsDesktop)
                                                       Text(
                                                           "Version Number: ${snapshot.hasData ? snapshot.data!.version : "N/A"}",
-                                                          style: context.textTheme.subtitle1!),
+                                                          style: context.textTheme.labelLarge!),
                                                     if (!kIsDesktop)
                                                       Text(
                                                           "Version Code: ${snapshot.hasData
                                                                   ? snapshot.data!.buildNumber.toString().lastChars(
                                                                       min(4, snapshot.data!.buildNumber.length))
                                                                   : "N/A"}",
-                                                          style: context.textTheme.subtitle1!),
+                                                          style: context.textTheme.labelLarge!),
                                                     if (kIsDesktop)
                                                       Text(
                                                         "${desktopVersion}_${Platform.operatingSystem.capitalizeFirst!}${desktopPre ? "_Beta" : ""}",
-                                                        style: context.textTheme.subtitle1!,
+                                                        style: context.textTheme.labelLarge!,
                                                       ),
                                                   ],
                                                 ),

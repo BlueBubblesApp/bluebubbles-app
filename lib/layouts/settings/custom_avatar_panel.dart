@@ -60,7 +60,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
                           "Loading chats...",
-                          style: Theme.of(context).textTheme.subtitle1,
+                          style: Theme.of(context).textTheme.labelLarge,
                         ),
                       ),
                       buildProgressIndicator(context, size: 15),
@@ -77,7 +77,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                   padding: EdgeInsets.only(top: 50.0),
                   child: Text(
                     "You have no chats :(",
-                    style: Theme.of(context).textTheme.subtitle1,
+                    style: Theme.of(context).textTheme.labelLarge,
                   ),
                 ),
               ),
@@ -101,7 +101,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                               backgroundColor: Theme.of(context).colorScheme.secondary,
                               title: Text("Custom Avatar",
                                   style:
-                                  TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                  TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color)),
                               content: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
@@ -109,7 +109,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                 children: [
                                   Text(
                                       "You have already set a custom avatar for this chat. What would you like to do?",
-                                      style: Theme.of(context).textTheme.bodyText1),
+                                      style: Theme.of(context).textTheme.bodyMedium),
                                 ],
                               ),
                               actions: <Widget>[
@@ -117,7 +117,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                     child: Text("Cancel",
                                         style: Theme.of(context)
                                             .textTheme
-                                            .subtitle1!
+                                            .labelLarge!
                                             .apply(color: Theme.of(context).primaryColor)),
                                     onPressed: () {
                                       Navigator.of(context).pop();
@@ -126,7 +126,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                     child: Text("Reset",
                                         style: Theme.of(context)
                                             .textTheme
-                                            .subtitle1!
+                                            .labelLarge!
                                             .apply(color: Theme.of(context).primaryColor)),
                                     onPressed: () {
                                       File file = File(ChatBloc().chats[index].customAvatarPath!);
@@ -139,7 +139,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                     child: Text("Set New",
                                         style: Theme.of(context)
                                             .textTheme
-                                            .subtitle1!
+                                            .labelLarge!
                                             .apply(color: Theme.of(context).primaryColor)),
                                     onPressed: () {
                                       Navigator.of(context).pop();

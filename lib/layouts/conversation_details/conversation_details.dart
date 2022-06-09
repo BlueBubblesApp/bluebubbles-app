@@ -137,7 +137,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                             backgroundColor: Theme.of(context).colorScheme.secondary,
                             title: Text(
                               controller.text.isEmpty ? "Removing name..." : "Changing name to ${controller.text}...",
-                              style: Theme.of(context).textTheme.bodyText1,
+                              style: Theme.of(context).textTheme.bodyMedium,
                             ),
                             content: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -227,7 +227,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                 padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
                 child: Text(
                   "Details",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Theme.of(context).textTheme.headlineMedium,
                 ),
               ),
               backgroundColor: Theme.of(context).backgroundColor,
@@ -271,7 +271,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         child: Center(
                             child: Text(
                           controller.text,
-                          style: Theme.of(context).textTheme.bodyText1!.copyWith(fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
                           textScaleFactor: 1.75,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -288,7 +288,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               child: Text(
                                 "${(chat.displayName?.isNotEmpty ?? false) ? "Change" : "Add"} Name",
                                 style:
-                                    Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
+                                    Theme.of(context).textTheme.bodyMedium!.apply(color: Theme.of(context).primaryColor),
                                 textScaleFactor: 1.15,
                               ),
                               onPressed: () {
@@ -321,7 +321,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                       return AlertDialog(
                                           backgroundColor: Theme.of(context).colorScheme.secondary,
                                           title: Text("Group Naming",
-                                              style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color)),
                                           content: Column(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             mainAxisSize: MainAxisSize.min,
@@ -331,11 +331,11 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                                   !chat.isIMessage)
                                                 Text(
                                                     "${!chat.isIMessage ? "This chat is SMS" : "You have Private API disabled"}, so changing the name here will only change it locally for you. You will not see these changes on other devices, and the other members of this chat will not see these changes.",
-                                                    style: Theme.of(context).textTheme.bodyText1),
+                                                    style: Theme.of(context).textTheme.bodyMedium),
                                               if (SettingsManager().settings.enablePrivateAPI.value && chat.isIMessage)
                                                 Text(
                                                     "You have Private API enabled, so changing the name here will change the name for everyone in this chat. If you only want to change it locally, you can tap and hold the \"Change Name\" button.",
-                                                    style: Theme.of(context).textTheme.bodyText1),
+                                                    style: Theme.of(context).textTheme.bodyMedium),
                                             ],
                                           ),
                                           actions: <Widget>[
@@ -343,7 +343,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                                 child: Text("OK",
                                                     style: Theme.of(context)
                                                         .textTheme
-                                                        .subtitle1!
+                                                        .labelLarge!
                                                         .apply(color: Theme.of(context).primaryColor)),
                                                 onPressed: () {
                                                   Navigator.of(context).pop();
@@ -468,7 +468,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                             UniqueContact? selected;
                                             await Get.defaultDialog(
                                               title: "Pick Contact",
-                                              titleStyle: Theme.of(context).textTheme.headline1,
+                                              titleStyle: Theme.of(context).textTheme.headlineMedium,
                                               backgroundColor: Theme.of(context).backgroundColor,
                                               buttonColor: Theme.of(context).primaryColor,
                                               content: Container(
@@ -542,7 +542,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                                     backgroundColor: Theme.of(context).colorScheme.secondary,
                                                     title: Text(
                                                       "Adding ${participantController.text}...",
-                                                      style: Theme.of(context).textTheme.bodyText1,
+                                                      style: Theme.of(context).textTheme.bodyMedium,
                                                     ),
                                                     content: Row(
                                                         mainAxisSize: MainAxisSize.min,
@@ -592,7 +592,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                             child: Text(
                               "ADD PARTICIPANT",
                               style: TextStyle(
-                                color: Theme.of(context).textTheme.bodyText1!.color,
+                                color: Theme.of(context).textTheme.bodyMedium!.color,
                                 fontSize: 13,
                               ),
                             ),
@@ -613,7 +613,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                 return AlertDialog(
                                     backgroundColor: Theme.of(context).colorScheme.secondary,
                                     title: Text("Custom Avatar",
-                                        style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color)),
                                     content: Column(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       mainAxisSize: MainAxisSize.min,
@@ -621,7 +621,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                       children: [
                                         Text(
                                             "You have already set a custom avatar for this chat. What would you like to do?",
-                                            style: Theme.of(context).textTheme.bodyText1),
+                                            style: Theme.of(context).textTheme.bodyMedium),
                                       ],
                                     ),
                                     actions: <Widget>[
@@ -629,7 +629,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                           child: Text("Cancel",
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .subtitle1!
+                                                  .labelLarge!
                                                   .apply(color: Theme.of(context).primaryColor)),
                                           onPressed: () {
                                             Navigator.of(context).pop();
@@ -638,7 +638,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                           child: Text("Reset",
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .subtitle1!
+                                                  .labelLarge!
                                                   .apply(color: Theme.of(context).primaryColor)),
                                           onPressed: () {
                                             File file = File(chat.customAvatarPath!);
@@ -651,7 +651,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                           child: Text("Set New",
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .subtitle1!
+                                                  .labelLarge!
                                                   .apply(color: Theme.of(context).primaryColor)),
                                           onPressed: () {
                                             Navigator.of(context).pop();
@@ -851,7 +851,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               return AlertDialog(
                                   backgroundColor: Theme.of(context).colorScheme.secondary,
                                   title: Text("Are You Sure?",
-                                      style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                      style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color)),
                                   content: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.min,
@@ -859,7 +859,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                     children: [
                                       Text(
                                         'Clearing the transcript will permanently prevent all stored messages from being loaded by the client app, until you perform a full reset.',
-                                        style: context.theme.textTheme.subtitle1,
+                                        style: context.theme.textTheme.labelLarge,
                                       ),
                                     ],
                                   ),
@@ -945,7 +945,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               return AlertDialog(
                                 title: Text(
                                   "Select timeframe",
-                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                                  style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
                                 ),
                                 content: Column(mainAxisSize: MainAxisSize.min, children: [
                                   Padding(
@@ -1005,7 +1005,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           if (hours == 0 && days == 0) return;
                           Get.defaultDialog(
                             title: "Generating transcript...",
-                            titleStyle: Theme.of(context).textTheme.headline1,
+                            titleStyle: Theme.of(context).textTheme.headlineMedium,
                             confirm: Container(height: 0, width: 0),
                             cancel: Container(height: 0, width: 0),
                             content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
@@ -1081,7 +1081,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               return AlertDialog(
                                 title: Text(
                                   "Select timeframe",
-                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                                  style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
                                 ),
                                 content: Column(mainAxisSize: MainAxisSize.min, children: [
                                   Padding(
@@ -1141,7 +1141,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           if (hours == 0 && days == 0) return;
                           Get.defaultDialog(
                             title: "Generating PDF...",
-                            titleStyle: Theme.of(context).textTheme.headline1,
+                            titleStyle: Theme.of(context).textTheme.headlineMedium,
                             confirm: Container(height: 0, width: 0),
                             cancel: Container(height: 0, width: 0),
                             content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
@@ -1379,7 +1379,7 @@ class _SyncDialogState extends State<SyncDialog> {
           },
           child: Text(
             "Ok",
-            style: Theme.of(context).textTheme.bodyText1!.apply(
+            style: Theme.of(context).textTheme.bodyMedium!.apply(
                   color: Theme.of(context).primaryColor,
                 ),
           ),

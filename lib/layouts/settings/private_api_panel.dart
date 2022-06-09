@@ -47,10 +47,10 @@ class PrivateAPIPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+        Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context)
         .textTheme
-        .subtitle1
+        .labelLarge
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
     Color tileColor = context.theme.tileColor;
@@ -100,7 +100,7 @@ class PrivateAPIPanel extends StatelessWidget {
                                         text:
                                             "You must have the Private API bundle installed on the server for these features to function, regardless of whether you enable the setting here."),
                                   ],
-                                  style: Theme.of(context).textTheme.bodyText1,
+                                  style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                               ),
                             )),
@@ -183,7 +183,7 @@ class PrivateAPIPanel extends StatelessWidget {
                             child: SwitchListTile(
                               title: Text(
                                 "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Quick Tapback",
-                                style: Theme.of(context).textTheme.bodyText1,
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
                               value: SettingsManager().settings.enableQuickTapback.value,
                               activeColor: Theme.of(context).primaryColor,
@@ -203,7 +203,7 @@ class PrivateAPIPanel extends StatelessWidget {
                               },
                               subtitle: Text(
                                   "Send a tapback of your choosing when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
-                                  style: Theme.of(context).textTheme.subtitle1),
+                                  style: Theme.of(context).textTheme.labelLarge),
                               tileColor: tileColor,
                             ),
                           ),

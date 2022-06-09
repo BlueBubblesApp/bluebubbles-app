@@ -433,11 +433,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Reply",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.reply : Icons.reply,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -466,13 +466,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Download to Device",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.cloud_download
                     : Icons.file_download,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -493,13 +493,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open In Browser",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.macwindow
                     : Icons.open_in_browser,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -517,13 +517,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open In New Tab",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.macwindow
                     : Icons.open_in_browser,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -539,12 +539,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             },
             child: ListTile(
               dense: !kIsDesktop && !kIsWeb,
-              title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
+              title: Text("Copy", style: Theme.of(context).textTheme.bodyMedium),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.doc_on_clipboard
                     : Icons.content_copy,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -580,7 +580,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 contentPadding: EdgeInsets.symmetric(horizontal: 20),
                 titlePadding: EdgeInsets.only(top: 15),
                 title: "Downloading attachment${length > 1 ? "s" : ""}...",
-                titleStyle: Theme.of(context).textTheme.headline1,
+                titleStyle: Theme.of(context).textTheme.headlineMedium,
                 confirm: Obx(
                   () => downloadingAttachments.value
                       ? Container(height: 0, width: 0)
@@ -657,13 +657,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Download Original to Device",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.cloud_download
                     : Icons.file_download,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -679,7 +679,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   builder: (_) {
                     Widget title = Text(
                       "Copy",
-                      style: Theme.of(context).textTheme.headline1,
+                      style: Theme.of(context).textTheme.headlineMedium,
                     );
                     Widget content = Container(
                       constraints: BoxConstraints(
@@ -689,7 +689,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                         physics: ThemeSwitcher.getScrollPhysics(),
                         child: SelectableText(
                           widget.message.fullText,
-                          style: Theme.of(context).textTheme.bodyText1,
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
                     );
@@ -697,7 +697,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                       TextButton(
                         child: Text(
                           "Done",
-                          // style: Theme.of(context).textTheme.bodyText1,
+                          // style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         onPressed: () {
                           Navigator.of(context).pop('dialog');
@@ -724,13 +724,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Copy Selection",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.doc_on_clipboard
                     : Icons.content_copy,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -759,13 +759,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open Direct Message",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.arrow_up_right_square
                     : Icons.open_in_new,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -784,13 +784,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "View Thread",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.bubble_left_bubble_right
                     : Icons.forum,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -832,13 +832,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Start Conversation",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.chat_bubble
                     : Icons.message,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -879,13 +879,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Forward",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.arrow_right
                     : Icons.forward,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -906,11 +906,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Re-download from Server",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.refresh : Icons.refresh,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -939,11 +939,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Share",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.share : Icons.share,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -960,7 +960,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   return AlertDialog(
                     title: Text(
                       "Select Reminder Time",
-                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                      style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
                     ),
                     content: Column(mainAxisSize: MainAxisSize.min, children: [
                       Wrap(
@@ -1033,11 +1033,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Remind Later",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.alarm : Icons.alarm,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
             ),
           ),
@@ -1054,11 +1054,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               "Delete",
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             trailing: Icon(
               SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
-              color: Theme.of(context).textTheme.bodyText1!.color,
+              color: Theme.of(context).textTheme.bodyMedium!.color,
             ),
           ),
         ),
@@ -1139,12 +1139,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                     },
                     child: ListTile(
                       dense: !kIsDesktop && !kIsWeb,
-                      title: Text("More...", style: Theme.of(context).textTheme.bodyText1),
+                      title: Text("More...", style: Theme.of(context).textTheme.bodyMedium),
                       trailing: Icon(
                         SettingsManager().settings.skin.value == Skins.iOS
                             ? cupertino.CupertinoIcons.ellipsis
                             : Icons.more_vert,
-                        color: Theme.of(context).textTheme.bodyText1!.color,
+                        color: Theme.of(context).textTheme.bodyMedium!.color,
                       ),
                     ),
                   ),

@@ -219,13 +219,13 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               widget.chat.isPinned! ? "Unpin" : "Pin",
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             trailing: Icon(
               widget.chat.isPinned!
                   ? (ios ? cupertino.CupertinoIcons.pin_slash : Icons.star_outline)
                   : (ios ? cupertino.CupertinoIcons.pin : Icons.star),
-              color: Theme.of(context).textTheme.bodyText1!.color,
+              color: Theme.of(context).textTheme.bodyMedium!.color,
             ),
           ),
         ),
@@ -242,13 +242,13 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             trailing: Icon(
               widget.chat.muteType == "mute"
                   ? (ios ? cupertino.CupertinoIcons.bell : Icons.notifications_active)
                   : (ios ? cupertino.CupertinoIcons.bell_slash : Icons.notifications_off),
-              color: Theme.of(context).textTheme.bodyText1!.color,
+              color: Theme.of(context).textTheme.bodyMedium!.color,
             ),
           ),
         ),
@@ -265,13 +265,13 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             trailing: Icon(
               widget.chat.hasUnreadMessage!
                   ? (ios ? cupertino.CupertinoIcons.person_crop_circle_badge_xmark : Icons.mark_chat_unread)
                   : (ios ? cupertino.CupertinoIcons.person_crop_circle_badge_checkmark : Icons.mark_chat_read),
-              color: Theme.of(context).textTheme.bodyText1!.color,
+              color: Theme.of(context).textTheme.bodyMedium!.color,
             ),
           ),
         ),
@@ -292,13 +292,13 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               widget.chat.isArchived! ? 'Unarchive' : 'Archive',
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             trailing: Icon(
               widget.chat.isArchived!
                   ? (ios ? cupertino.CupertinoIcons.tray_arrow_up : Icons.unarchive)
                   : (ios ? cupertino.CupertinoIcons.tray_arrow_down : Icons.archive),
-              color: Theme.of(context).textTheme.bodyText1!.color,
+              color: Theme.of(context).textTheme.bodyMedium!.color,
             ),
           ),
         ),
@@ -316,11 +316,11 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               'Delete',
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             trailing: Icon(
               cupertino.CupertinoIcons.trash,
-              color: Theme.of(context).textTheme.bodyText1!.color,
+              color: Theme.of(context).textTheme.bodyMedium!.color,
             ),
           ),
         ),

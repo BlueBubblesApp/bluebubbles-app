@@ -46,12 +46,12 @@ class MessageTimeStampSeparator extends StatelessWidget {
             padding: const EdgeInsets.all(14.0),
             child: RichText(
               text: TextSpan(
-                style: Theme.of(context).textTheme.subtitle2,
+                style: Theme.of(context).textTheme.labelMedium,
                 children: [
                   if (timeStamp["date"] != null)
                     TextSpan(
                       text: "${timeStamp["date"]}, ",
-                      style: Theme.of(context).textTheme.subtitle2!.apply(fontWeightDelta: 10),
+                      style: Theme.of(context).textTheme.labelMedium!.apply(fontWeightDelta: 10),
                     ),
                   TextSpan(text: "${timeStamp["time"]}")
                 ],

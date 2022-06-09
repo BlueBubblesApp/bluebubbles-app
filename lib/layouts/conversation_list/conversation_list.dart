@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
@@ -24,6 +25,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -70,7 +72,7 @@ class ConversationListState extends State<ConversationList> {
   }
 
   Widget getHeaderTextWidget({double? size}) {
-    TextStyle? style = context.textTheme.headline1;
+    TextStyle? style = context.textTheme.headlineMedium;
     if (size != null) style = style!.copyWith(fontSize: size);
 
     return Padding(
@@ -181,7 +183,7 @@ class ConversationListState extends State<ConversationList> {
                   return AlertDialog(
                     title: Text(
                       "Are you sure?",
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     backgroundColor: Theme.of(context).backgroundColor,
                     actions: <Widget>[
@@ -190,18 +192,19 @@ class ConversationListState extends State<ConversationList> {
                         onPressed: () async {
                           await DBProvider.deleteDB();
                           await SettingsManager().resetConnection();
-                          SettingsManager().settings.finishedSetup.value = false;
-                          Get.offAll(
-                              () => WillPopScope(
-                                    onWillPop: () async => false,
-                                    child: TitleBarWrapper(child: SetupView()),
-                                  ),
-                              duration: Duration.zero,
-                              transition: Transition.noTransition);
                           SettingsManager().settings = Settings();
                           SettingsManager().settings.save();
                           SettingsManager().fcmData = null;
                           FCMData.deleteFcmData();
+                          prefs.setString("selected-dark", "OLED Dark");
+                          prefs.setString("selected-light", "Bright White");
+                          for (ThemeStruct theme in Themes.defaultThemes) {
+                            theme.save(updateIfNotAbsent: false);
+                          }
+                          Get.offAll(() => WillPopScope(
+                            onWillPop: () async => false,
+                            child: TitleBarWrapper(child: SetupView()),
+                          ), duration: Duration.zero, transition: Transition.noTransition);
                         },
                       ),
                       TextButton(
@@ -222,14 +225,14 @@ class ConversationListState extends State<ConversationList> {
                 value: 0,
                 child: Text(
                   'Mark all as read',
-                  style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                  style: context.textTheme.bodyMedium!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                 ),
               ),
               PopupMenuItem(
                 value: 1,
                 child: Text(
                   'Archived',
-                  style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                  style: context.textTheme.bodyMedium!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                 ),
               ),
               if (SettingsManager().settings.filterUnknownSenders.value)
@@ -237,14 +240,14 @@ class ConversationListState extends State<ConversationList> {
                   value: 3,
                   child: Text(
                     'Unknown Senders',
-                    style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                    style: context.textTheme.bodyMedium!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                   ),
                 ),
               PopupMenuItem(
                 value: 2,
                 child: Text(
                   'Settings',
-                  style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                  style: context.textTheme.bodyMedium!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                 ),
               ),
               if (kIsWeb)
@@ -252,13 +255,13 @@ class ConversationListState extends State<ConversationList> {
                     value: 4,
                     child: Text(
                       'Logout',
-                      style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                      style: context.textTheme.bodyMedium!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                     ))
             ];
           },
           icon: SettingsManager().settings.skin.value == Skins.Material ? Icon(
                   Icons.more_vert,
-                  color: context.textTheme.bodyText1!.color,
+                  color: context.textTheme.bodyMedium!.color,
                   size: 25,
                 ) : null,
           child: SettingsManager().settings.skin.value == Skins.Material
@@ -280,7 +283,7 @@ class ConversationListState extends State<ConversationList> {
                   materialSkin: Container(),
                   samsungSkin: Icon(
                     Icons.more_vert,
-                    color: context.textTheme.bodyText1!.color,
+                    color: context.textTheme.bodyMedium!.color,
                     size: 25,
                   ),
                 ),

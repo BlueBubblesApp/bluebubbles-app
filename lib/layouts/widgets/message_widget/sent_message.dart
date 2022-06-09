@@ -119,14 +119,14 @@ class SentMessageHelper {
                             child: Text(
                               "emoji",
                               textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyText1,
+                              style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           )),
                     )
                   : RichText(
                       text: TextSpan(
                           children: MessageHelper.buildEmojiText(
-                              message!.text!, Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 4)))),
+                              message!.text!, Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 4)))),
             ),
           );
         })
@@ -235,7 +235,7 @@ class SentMessageHelper {
                                             if (!isNullOrEmpty(message!.subject)!)
                                               TextSpan(
                                                 text: "$subject\n",
-                                                style: Theme.of(context).textTheme.bodyText2!.apply(
+                                                style: Theme.of(context).textTheme.bodySmall!.apply(
                                                     fontWeightDelta: 2,
                                                     color: hideContent ? Colors.transparent : Colors.white),
                                               ),
@@ -243,13 +243,13 @@ class SentMessageHelper {
                                               text: text,
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .bodyText2!
+                                                  .bodySmall!
                                                   .apply(color: hideContent ? Colors.transparent : Colors.white),
                                             ),
                                           ],
                                           style: Theme.of(context)
                                               .textTheme
-                                              .bodyText2!
+                                              .bodySmall!
                                               .apply(color: hideContent ? Colors.transparent : Colors.white),
                                         ),
                                       ),
@@ -261,21 +261,21 @@ class SentMessageHelper {
                                             if (!isNullOrEmpty(message.subject)!)
                                               TextSpan(
                                                 text: "$subject\n",
-                                                style: Theme.of(context).textTheme.bodyText2!.apply(
+                                                style: Theme.of(context).textTheme.bodySmall!.apply(
                                                     fontWeightDelta: 2,
                                                     fontSizeFactor: value,
                                                     color: hideContent ? Colors.transparent : Colors.white),
                                               ),
                                             TextSpan(
                                               text: text,
-                                              style: Theme.of(context).textTheme.bodyText2!.apply(
+                                              style: Theme.of(context).textTheme.bodySmall!.apply(
                                                   fontSizeFactor: value,
                                                   color: hideContent ? Colors.transparent : Colors.white),
                                             ),
                                           ],
                                           style: Theme.of(context)
                                               .textTheme
-                                              .bodyText2!
+                                              .bodySmall!
                                               .apply(color: hideContent ? Colors.transparent : Colors.white),
                                         ),
                                       ),
@@ -317,7 +317,7 @@ class SentMessageHelper {
                                       TextSpan(
                                         children:
                                             snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
-                                        style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                        style: Theme.of(context).textTheme.bodySmall!.apply(color: Colors.white),
                                       ),
                                       cursorWidth: 0,
                                       selectionControls: CupertinoTextSelectionControls(),
@@ -329,7 +329,7 @@ class SentMessageHelper {
                                       text: TextSpan(
                                         children:
                                             snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
-                                        style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                        style: Theme.of(context).textTheme.bodySmall!.apply(color: Colors.white),
                                       ),
                                     ),
                                   );
@@ -994,7 +994,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                         " sent with $effect",
                         style: Theme.of(context)
                             .textTheme
-                            .subtitle2!
+                            .labelMedium!
                             .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                       ),
                     ]),
@@ -1005,7 +1005,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                       "↺ sent with $effect",
                       style: Theme.of(context)
                           .textTheme
-                          .subtitle2!
+                          .labelMedium!
                           .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                     ),
                   ),
@@ -1024,7 +1024,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                   "${list.length} repl${list.length > 1 ? "ies" : "y"}",
                   style: Theme.of(context)
                       .textTheme
-                      .subtitle2!
+                      .labelMedium!
                       .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                 ),
               ),

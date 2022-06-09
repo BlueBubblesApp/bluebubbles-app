@@ -60,7 +60,7 @@ class ContactSelectorOption extends StatelessWidget {
   Widget getTextWidget(BuildContext context, String? text) {
     return TextOneLine(
       text!,
-      style: Theme.of(context).textTheme.subtitle1,
+      style: Theme.of(context).textTheme.labelLarge,
       overflow: TextOverflow.ellipsis,
     );
   }
@@ -122,7 +122,7 @@ class ContactSelectorOption extends StatelessWidget {
         onTap: () => onSelected(item),
         title: Text(
           title,
-          style: Theme.of(context).textTheme.bodyText1,
+          style: Theme.of(context).textTheme.bodyMedium,
           overflow: TextOverflow.ellipsis,
         ),
         tileColor: SettingsManager().settings.skin.value == Skins.Samsung ? null : Theme.of(context).backgroundColor,

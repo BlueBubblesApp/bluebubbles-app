@@ -16,10 +16,10 @@ class SearchTextBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       placeholder: "Search",
-      placeholderStyle: Theme.of(context).textTheme.bodyText1!.apply(
-            color: Theme.of(context).textTheme.bodyText1!.color!.lightenOrDarken(40),
+      placeholderStyle: Theme.of(context).textTheme.bodyMedium!.apply(
+            color: Theme.of(context).textTheme.bodyMedium!.color!.lightenOrDarken(40),
           ),
-      style: Theme.of(context).textTheme.bodyText1,
+      style: Theme.of(context).textTheme.bodyMedium,
       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
     );
   }

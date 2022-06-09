@@ -273,7 +273,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                   if (content.error.value = true) {
                                     return Text(
                                       "Error loading",
-                                      style: Theme.of(context).textTheme.bodyText1,
+                                      style: Theme.of(context).textTheme.bodyMedium,
                                     );
                                   }
                                   if (content.file.value != null) {
@@ -304,7 +304,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                                   (content.attachment.mimeType != null)
                                                       ? Text(
                                                           content.attachment.mimeType,
-                                                          style: Theme.of(context).textTheme.bodyText1,
+                                                          style: Theme.of(context).textTheme.bodyMedium,
                                                         )
                                                       : Container()
                                                 ],
@@ -322,7 +322,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                   children: [
                                     Text(
                                       "Error loading",
-                                      style: Theme.of(context).textTheme.bodyText1,
+                                      style: Theme.of(context).textTheme.bodyMedium,
                                     ),
                                   ],
                                 );

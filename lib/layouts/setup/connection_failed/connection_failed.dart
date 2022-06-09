@@ -18,7 +18,7 @@ class _ConnectionFailedPopupState extends State<ConnectionFailedPopup> {
         TextButton(
           child: Text(
             "Start over",
-            style: Theme.of(context).textTheme.bodyText1!.apply(
+            style: Theme.of(context).textTheme.bodyMedium!.apply(
                   color: Theme.of(context).primaryColor,
                 ),
           ),

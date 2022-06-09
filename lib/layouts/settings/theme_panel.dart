@@ -70,10 +70,10 @@ class ThemePanel extends StatelessWidget {
     /// for some reason we need a [GetBuilder] here otherwise the theme switching refuses to work right
     return GetBuilder<ThemePanelController>(builder: (_) {
       final iosSubtitle =
-          Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+          Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
       final materialSubtitle = Theme.of(context)
           .textTheme
-          .subtitle1
+          .labelLarge
           ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
       Color headerColor = context.theme.headerColor;
       Color tileColor = context.theme.tileColor;
@@ -313,26 +313,24 @@ class ThemePanel extends StatelessWidget {
                             try {
                               await MethodChannelInterface().invokeMethod("start-notif-listener");
                               if (val) {
-                                var allThemes = ThemeObject.getThemes();
-                                var currentLight = ThemeObject.getLightTheme();
-                                var currentDark = ThemeObject.getDarkTheme();
-                                currentLight.previousLightTheme = true;
-                                currentDark.previousDarkTheme = true;
-                                currentLight.save();
-                                currentDark.save();
+                                var allThemes = ThemeStruct.getThemes();
+                                var currentLight = ThemeStruct.getLightTheme();
+                                var currentDark = ThemeStruct.getDarkTheme();
+                                prefs.setString("previous-light", currentLight.name);
+                                prefs.setString("previous-dark", currentDark.name);
                                 SettingsManager().saveSelectedTheme(context,
                                     selectedLightTheme:
                                     allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
                                     selectedDarkTheme:
                                     allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
                               } else {
-                                var allThemes = ThemeObject.getThemes();
-                                var previousLight = allThemes.firstWhere((e) => e.previousLightTheme);
-                                var previousDark = allThemes.firstWhere((e) => e.previousDarkTheme);
-                                previousLight.previousLightTheme = false;
-                                previousDark.previousDarkTheme = false;
-                                previousLight.save();
-                                previousDark.save();
+                                var allThemes = ThemeStruct.getThemes();
+                                final lightName = prefs.getString("previous-light");
+                                final darkName = prefs.getString("previous-dark");
+                                var previousLight = allThemes.firstWhere((e) => e.name == lightName);
+                                var previousDark = allThemes.firstWhere((e) => e.name == darkName);
+                                prefs.remove("previous-light");
+                                prefs.remove("previous-dark");
                                 SettingsManager().saveSelectedTheme(context,
                                     selectedLightTheme: previousLight, selectedDarkTheme: previousDark);
                               }
@@ -536,7 +534,7 @@ class ThemePanel extends StatelessWidget {
                                 contentPadding: EdgeInsets.symmetric(horizontal: 20),
                                 titlePadding: EdgeInsets.only(top: 15),
                                 title: "Downloading font file...",
-                                titleStyle: Theme.of(context).textTheme.headline1,
+                                titleStyle: Theme.of(context).textTheme.headlineMedium,
                                 confirm: Obx(() => downloadingFont.value
                                   ? Container(height: 0, width: 0)
                                   : Container(
@@ -648,7 +646,7 @@ class ThemePanel extends StatelessWidget {
   void showMonetDialog(BuildContext context) {
     Get.defaultDialog(
         title: "Monet Theming Info",
-        titleStyle: Theme.of(context).textTheme.headline1,
+        titleStyle: Theme.of(context).textTheme.headlineMedium,
         backgroundColor: Theme.of(context).backgroundColor.lightenPercent(),
         buttonColor: Theme.of(context).primaryColor,
         content: Column(

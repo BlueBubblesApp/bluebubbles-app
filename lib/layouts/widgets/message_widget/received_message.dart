@@ -245,14 +245,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                       child: Text(
                         "emoji",
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     )),
               )
             : RichText(
                 text: TextSpan(
                     children: MessageHelper.buildEmojiText(
-                        message.text!, Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 4)))),
+                        message.text!, Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 4)))),
       );
     } else {
       child = Stack(
@@ -340,7 +340,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                             : null,
                                         fakeSubject: widget.fakeSubject,
                                         fakeText: widget.fakeText),
-                                    style: Theme.of(context).textTheme.bodyText2,
+                                    style: Theme.of(context).textTheme.bodySmall,
                                   ),
                                 ),
                               ),
@@ -353,7 +353,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                             : null,
                                         fakeSubject: widget.fakeSubject,
                                         fakeText: widget.fakeText),
-                                    style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: value),
+                                    style: Theme.of(context).textTheme.bodySmall!.apply(fontSizeFactor: value),
                                   ),
                                 ),
                               if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop)
@@ -409,7 +409,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                         fakeSubject: widget.fakeSubject,
                                         fakeText: widget.fakeText,
                                       ),
-                                  style: Theme.of(context).textTheme.bodyText2,
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                                 cursorWidth: 0,
                                 selectionControls: CupertinoTextSelectionControls(),
@@ -429,7 +429,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                         fakeSubject: widget.fakeSubject,
                                         fakeText: widget.fakeText,
                                       ),
-                                  style: Theme.of(context).textTheme.bodyText2,
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ),
                             );
@@ -574,7 +574,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().isNotEmpty ? 0.0 : 3.0),
           child: Text(
             getContactName(context, contactTitle, widget.message.handle?.address),
-            style: Theme.of(context).textTheme.subtitle1,
+            style: Theme.of(context).textTheme.labelLarge,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -736,7 +736,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().isNotEmpty ? 0.0 : 3.0),
           child: Text(
             getContactName(context, contactTitle, widget.message.handle?.address),
-            style: Theme.of(context).textTheme.subtitle1,
+            style: Theme.of(context).textTheme.labelLarge,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -989,7 +989,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                       " sent with $effect",
                                       style: Theme.of(context)
                                           .textTheme
-                                          .subtitle2!
+                                          .labelMedium!
                                           .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                                     ),
                                   ]),
@@ -1000,7 +1000,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                     "↺ sent with $effect",
                                     style: Theme.of(context)
                                         .textTheme
-                                        .subtitle2!
+                                        .labelMedium!
                                         .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                                   ),
                                 ),
@@ -1020,7 +1020,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                 "${list.length} repl${list.length > 1 ? "ies" : "y"}",
                                 style: Theme.of(context)
                                     .textTheme
-                                    .subtitle2!
+                                    .labelMedium!
                                     .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                               ),
                             ),

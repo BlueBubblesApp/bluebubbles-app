@@ -1,7 +1,9 @@
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/scheduler.dart';
 
 class ThemeManager {
   factory ThemeManager() {
@@ -26,5 +28,11 @@ class ThemeManager {
         parent: ClampingScrollPhysics(),
       );
     }
+  }
+
+  bool inDarkMode(BuildContext context) {
+    return (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ||
+        (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.system &&
+            SchedulerBinding.instance.window.platformBrightness == Brightness.dark));
   }
 }

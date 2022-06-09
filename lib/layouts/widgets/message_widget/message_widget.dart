@@ -408,7 +408,7 @@ class _MessageState extends State<MessageWidget> {
                           child: Icon(
                             SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
                             size: min(replyThreshold, offset.value) * (offset.value >= replyThreshold ? 0.5 : 0.4),
-                            color: context.textTheme.headline1!.color,
+                            color: context.textTheme.headlineMedium!.color,
                           ),
                         ),
                       ),

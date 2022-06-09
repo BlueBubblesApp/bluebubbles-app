@@ -20,12 +20,12 @@ class MiscPanel extends StatelessWidget {
     Theme
         .of(context)
         .textTheme
-        .subtitle1
+        .labelLarge
         ?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme
         .of(context)
         .textTheme
-        .subtitle1
+        .labelLarge
         ?.copyWith(color: Theme
         .of(context)
         .primaryColor, fontWeight: FontWeight.bold);
@@ -101,11 +101,11 @@ class MiscPanel extends StatelessWidget {
                                     style: Theme
                                         .of(context)
                                         .textTheme
-                                        .subtitle1
+                                        .labelLarge
                                         ?.copyWith(color: Theme
                                         .of(context)
                                         .textTheme
-                                        .bodyText1
+                                        .bodyMedium
                                         ?.color),
                                   ),
                                 ),

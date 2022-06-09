@@ -9,23 +9,14 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
 
-enum DarkThemes {
-  OLED,
-  Nord,
-}
-
-enum LightThemes {
-  Bright_White,
-}
-
 class Themes {
-  static List<ThemeObject> get themes => [
-        ThemeObject.fromData(oledDarkTheme, "OLED Dark"),
-        ThemeObject.fromData(whiteLightTheme, "Bright White"),
-        ThemeObject.fromData(nordDarkTheme, "Nord Theme"),
-        ThemeObject.fromData(whiteLightTheme, "Music Theme (Light)", gradientBg: true),
-        ThemeObject.fromData(oledDarkTheme, "Music Theme (Dark)", gradientBg: true),
-      ];
+  static List<ThemeStruct> get defaultThemes => [
+    ThemeStruct(name: "OLED Dark", themeData: oledDarkTheme),
+    ThemeStruct(name: "Bright White", themeData: whiteLightTheme),
+    ThemeStruct(name: "Nord Theme", themeData: nordDarkTheme),
+    ThemeStruct(name: "Music Theme (Light)", themeData: whiteLightTheme, gradientBg: true),
+    ThemeStruct(name: "Music Theme (Dark)", themeData: oledDarkTheme, gradientBg: true),
+  ];
 }
 
 bool isEqual(ThemeData one, ThemeData two) {
@@ -35,42 +26,13 @@ bool isEqual(ThemeData one, ThemeData two) {
 ThemeData oledDarkTheme = ThemeData(
   primarySwatch: Colors.blue,
   splashFactory: InkRipple.splashFactory,
-  textTheme: TextTheme(
-    headline1: TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.normal,
-      fontSize: 18,
-    ),
-    headline2: TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.normal,
-      fontSize: 14,
-    ),
-    bodyText1: TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.normal,
-      fontSize: 15,
-    ),
-    bodyText2: TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.normal,
-      fontSize: 15,
-    ),
-    subtitle1: TextStyle(
-      color: HexColor('919191'),
-      fontSize: 14,
-      fontWeight: FontWeight.normal,
-    ),
-    subtitle2: TextStyle(
-      color: HexColor('7d7d7d'),
-      fontSize: 11,
-      fontWeight: FontWeight.normal,
-    ),
-  ),
+  textTheme: Typography.englishLike2021.merge(Typography.whiteRedmond),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: Colors.blue,
     backgroundColor: Colors.black,
-    accentColor: HexColor('26262a'),
+    cardColor: HexColor('26262a'),
+    errorColor: Colors.red,
+    brightness: Brightness.dark,
   ),
   dividerColor: HexColor('27272a'),
   backgroundColor: Colors.black,
@@ -80,42 +42,13 @@ ThemeData oledDarkTheme = ThemeData(
 ThemeData nordDarkTheme = ThemeData(
   primarySwatch: Colors.blue,
   splashFactory: InkRipple.splashFactory,
-  textTheme: TextTheme(
-    headline1: TextStyle(
-      color: HexColor('ECEFF4'),
-      fontWeight: FontWeight.normal,
-      fontSize: 18,
-    ),
-    headline2: TextStyle(
-      color: HexColor('E5E9F0'),
-      fontWeight: FontWeight.normal,
-      fontSize: 14,
-    ),
-    bodyText1: TextStyle(
-      color: HexColor('ECEFF4'),
-      fontWeight: FontWeight.normal,
-      fontSize: 15,
-    ),
-    bodyText2: TextStyle(
-      color: HexColor('E5E9F0'),
-      fontWeight: FontWeight.normal,
-      fontSize: 15,
-    ),
-    subtitle1: TextStyle(
-      color: HexColor('a5a5a5'),
-      fontSize: 14,
-      fontWeight: FontWeight.normal,
-    ),
-    subtitle2: TextStyle(
-      color: HexColor('b9b9b9'),
-      fontSize: 11,
-      fontWeight: FontWeight.normal,
-    ),
-  ),
+  textTheme: Typography.englishLike2021.merge(Typography.whiteRedmond),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: Colors.blue,
     backgroundColor: HexColor('2E3440'),
-    accentColor: HexColor('4C566A'),
+    cardColor: HexColor('4C566A'),
+    errorColor: Colors.red,
+    brightness: Brightness.dark,
   ),
   dividerColor: HexColor('4C566A'),
   backgroundColor: HexColor('2E3440'),
@@ -125,53 +58,24 @@ ThemeData nordDarkTheme = ThemeData(
 ThemeData whiteLightTheme = ThemeData(
   primarySwatch: Colors.blue,
   splashFactory: InkRipple.splashFactory,
-  textTheme: TextTheme(
-    headline1: TextStyle(
-      color: Colors.black,
-      fontWeight: FontWeight.normal,
-      fontSize: 18,
-    ),
-    headline2: TextStyle(
-      color: Colors.black,
-      fontWeight: FontWeight.normal,
-      fontSize: 14,
-    ),
-    bodyText1: TextStyle(
-      color: Colors.black,
-      fontWeight: FontWeight.normal,
-      fontSize: 15,
-    ),
-    bodyText2: TextStyle(
-      color: Colors.black,
-      fontWeight: FontWeight.normal,
-      fontSize: 15,
-    ),
-    subtitle1: TextStyle(
-      color: HexColor('9a9a9f'),
-      fontSize: 14,
-      fontWeight: FontWeight.normal,
-    ),
-    subtitle2: TextStyle(
-      color: HexColor('9a9a9f'),
-      fontSize: 11,
-      fontWeight: FontWeight.normal,
-    ),
-  ),
+  textTheme: Typography.englishLike2021.merge(Typography.blackRedmond),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: Colors.blue,
     backgroundColor: Colors.white,
-    accentColor: HexColor('e5e5ea'),
+    cardColor: HexColor('e5e5ea'),
+    errorColor: Colors.red,
+    brightness: Brightness.light,
   ),
   dividerColor: HexColor('e5e5ea').withOpacity(0.5),
   backgroundColor: Colors.white,
 );
 
-void loadTheme(BuildContext? context, {ThemeObject? lightOverride, ThemeObject? darkOverride}) {
+void loadTheme(BuildContext? context, {ThemeStruct? lightOverride, ThemeStruct? darkOverride}) {
   if (context == null) return;
 
   // Set the theme to match those of the settings
-  ThemeData light = (lightOverride ?? ThemeObject.getLightTheme()).themeData;
-  ThemeData dark = (darkOverride ?? ThemeObject.getDarkTheme()).themeData;
+  ThemeData light = (lightOverride ?? ThemeStruct.getLightTheme()).data;
+  ThemeData dark = (darkOverride ?? ThemeStruct.getDarkTheme()).data;
 
   final tuple = applyMonet(light, dark);
   light = tuple.item1;
@@ -295,30 +199,30 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
   return Tuple2(light, dark);
 }
 
-ThemeObject revertToPreviousDarkTheme() {
-  List<ThemeObject> allThemes = ThemeObject.getThemes();
-  ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
+ThemeStruct revertToPreviousDarkTheme() {
+  List<ThemeStruct> allThemes = ThemeStruct.getThemes();
+  final darkName = prefs.getString("previous-dark");
+  ThemeStruct? previous = allThemes.firstWhereOrNull((e) => e.name == darkName);
 
-  previous ??= Themes.themes.firstWhereOrNull((element) => element.name == "OLED Dark");
+  previous ??= Themes.defaultThemes.firstWhere((element) => element.name == "OLED Dark");
 
   // Remove the previous flags
-  previous!.previousDarkTheme = false;
+  prefs.remove("previous-dark");
 
-  // Save the theme and set it accordingly
-  return previous.save();
+  return previous;
 }
 
-ThemeObject revertToPreviousLightTheme() {
-  List<ThemeObject> allThemes = ThemeObject.getThemes();
-  ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
+ThemeStruct revertToPreviousLightTheme() {
+  List<ThemeStruct> allThemes = ThemeStruct.getThemes();
+  final lightName = prefs.getString("previous-light");
+  ThemeStruct? previous = allThemes.firstWhereOrNull((e) => e.name == lightName);
 
-  previous ??= Themes.themes.firstWhereOrNull((element) => element.name == "Bright White");
+  previous ??= Themes.defaultThemes.firstWhere((element) => element.name == "Bright White");
 
   // Remove the previous flags
-  previous!.previousDarkTheme = false;
+  prefs.remove("previous-light");
 
-  // Save the theme and set it accordingly
-  return previous.save();
+  return previous;
 }
 
 extension SettingsThemeData on ThemeData {

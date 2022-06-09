@@ -52,7 +52,7 @@ class RegularFileOpener extends StatelessWidget {
                     return AlertDialog(
                       title: Text(
                         "Confirm save",
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       content: Text("This file already exists.\nAre you sure you want to overwrite it?"),
                       backgroundColor: context.theme.colorScheme.secondary,
@@ -112,18 +112,18 @@ class RegularFileOpener extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyText2,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Icon(
                   fileIcon,
-                  color: Theme.of(context).textTheme.bodyText2!.color,
+                  color: Theme.of(context).textTheme.bodySmall!.color,
                 ),
               ),
               Text(
                 attachment.mimeType!,
-                style: Theme.of(context).textTheme.bodyText2,
+                style: Theme.of(context).textTheme.bodySmall,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),

@@ -116,7 +116,7 @@ class _SetupViewState extends State<SetupView> {
                               "BlueBubbles",
                               style: Theme.of(context)
                                   .textTheme
-                                  .bodyText1!
+                                  .bodyMedium!
                                   .apply(fontWeightDelta: 2, fontSizeFactor: 1.35),
                             ),
                           ],
@@ -138,13 +138,13 @@ class _SetupViewState extends State<SetupView> {
                                       text: "$currentPage",
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodyText1!
+                                          .bodyMedium!
                                           .copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
                                   TextSpan(
                                       text: " of ${kIsWeb ? "4" : kIsDesktop ? "5" : "7"}",
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodyText1!
+                                          .bodyMedium!
                                           .copyWith(color: Colors.white38, fontWeight: FontWeight.bold)),
                                 ],
                               ),

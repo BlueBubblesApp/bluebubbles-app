@@ -28,6 +28,7 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
@@ -176,10 +177,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   void getAdjustBackground() async {
-    var lightTheme = ThemeObject.getLightTheme(fetchData: false);
-    var darkTheme = ThemeObject.getDarkTheme(fetchData: false);
-    if ((lightTheme.gradientBg && !ThemeObject.inDarkMode(Get.context!)) ||
-        (darkTheme.gradientBg && ThemeObject.inDarkMode(Get.context!))) {
+    var lightTheme = ThemeStruct.getLightTheme();
+    var darkTheme = ThemeStruct.getDarkTheme();
+    if ((lightTheme.gradientBg && !ThemeManager().inDarkMode(Get.context!)) ||
+        (darkTheme.gradientBg && ThemeManager().inDarkMode(Get.context!))) {
       if (adjustBackground.value != true) adjustBackground.value = true;
     } else {
       if (adjustBackground.value != false) adjustBackground.value = false;
@@ -203,20 +204,20 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         if (event.type == MessageBlocEventType.insert && mounted && event.outGoing) {
           final constraints = BoxConstraints(
             maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
-            minHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
-            maxHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
+            minHeight: Theme.of(context).textTheme.bodySmall!.fontSize!,
+            maxHeight: Theme.of(context).textTheme.bodySmall!.fontSize!,
           );
           final renderParagraph = RichText(
             text: TextSpan(
               text: event.message!.text,
-              style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+              style: Theme.of(context).textTheme.bodySmall!.apply(color: Colors.white),
             ),
             maxLines: 1,
           ).createRenderObject(context);
           final renderParagraph2 = RichText(
             text: TextSpan(
               text: event.message!.subject ?? "",
-              style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+              style: Theme.of(context).textTheme.bodySmall!.apply(color: Colors.white),
             ),
             maxLines: 1,
           ).createRenderObject(context);
@@ -388,7 +389,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           child: widget.selectIcon ??
               Icon(
                 Icons.check,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
           backgroundColor: Theme.of(context).primaryColor,
         ),
@@ -409,7 +410,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           onPressed: currentChat!.scrollToBottom,
           child: Icon(
             Icons.arrow_downward,
-            color: Theme.of(context).textTheme.bodyText1!.color,
+            color: Theme.of(context).textTheme.bodyMedium!.color,
           ),
           backgroundColor: Theme.of(context).colorScheme.secondary,
         ),
@@ -439,7 +440,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       child: Text(
                         "\u{2193} Scroll to bottom \u{2193}",
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
                   ),
@@ -521,7 +522,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
                               "Loading existing chats...",
-                              style: Theme.of(context).textTheme.subtitle1,
+                              style: Theme.of(context).textTheme.labelLarge,
                             ),
                           ),
                           buildProgressIndicator(context, size: 15),
@@ -551,7 +552,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                         padding: const EdgeInsets.all(8.0),
                                         child: Text(
                                           "Loading chat...",
-                                          style: Theme.of(context).textTheme.subtitle1,
+                                          style: Theme.of(context).textTheme.labelLarge,
                                         ),
                                       ),
                                       buildProgressIndicator(context, size: 15),

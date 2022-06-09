@@ -55,7 +55,7 @@ abstract class MessageWidgetMixin {
             SettingsManager().settings.hideMessageContent.value &&
             !generateContent);
 
-    TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
+    TextStyle? textStyle = Theme.of(context).textTheme.bodySmall;
     if (!message!.isFromMe!) {
       if (SettingsManager().settings.colorfulBubbles.value) {
         if (!isNullOrEmpty(colors)!) {
@@ -63,20 +63,20 @@ abstract class MessageWidgetMixin {
           if (!dark) {
             textStyle = Theme.of(context)
                 .textTheme
-                .bodyText2!
+                .bodySmall!
                 .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
           } else {
-            textStyle = Theme.of(context).textTheme.bodyText2;
+            textStyle = Theme.of(context).textTheme.bodySmall;
             if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
           }
         } else {
-          textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+          textStyle = Theme.of(context).textTheme.bodySmall!.apply(
               color: hideContent
                   ? Colors.transparent
                   : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
         }
       } else if (SettingsManager().isFullMonet) {
-        textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+        textStyle = Theme.of(context).textTheme.bodySmall!.apply(
             color: hideContent
                 ? Colors.transparent
                 : Theme.of(context).colorScheme.onSecondary);
@@ -195,7 +195,7 @@ abstract class MessageWidgetMixin {
             SettingsManager().settings.hideMessageContent.value &&
             !generateContent);
 
-    TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
+    TextStyle? textStyle = Theme.of(context).textTheme.bodySmall;
     if (message == null) return [];
     if (!message.isFromMe!) {
       if (SettingsManager().settings.colorfulBubbles.value) {
@@ -204,20 +204,20 @@ abstract class MessageWidgetMixin {
           if (!dark) {
             textStyle = Theme.of(context)
                 .textTheme
-                .bodyText2!
+                .bodySmall!
                 .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
           } else {
-            textStyle = Theme.of(context).textTheme.bodyText2;
+            textStyle = Theme.of(context).textTheme.bodySmall;
             if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
           }
         } else {
-          textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+          textStyle = Theme.of(context).textTheme.bodySmall!.apply(
               color: hideContent
                   ? Colors.transparent
                   : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
         }
       } else if (SettingsManager().isFullMonet) {
-        textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+        textStyle = Theme.of(context).textTheme.bodySmall!.apply(
             color: hideContent
                 ? Colors.transparent
                 : Theme.of(context).colorScheme.onSecondary);
