@@ -75,6 +75,7 @@ class _FutureLoaderDialogState extends State<FutureLoaderDialog> {
                 "Success!",
                 style: context.theme.textTheme.titleLarge,
               ),
+              backgroundColor: context.theme.colorScheme.surface,
               content: Text(
                 "Connected!",
                 style: context.theme.textTheme.bodyLarge,
