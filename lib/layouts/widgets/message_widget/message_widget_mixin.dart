@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:faker/faker.dart';
@@ -9,10 +9,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:maps_launcher/maps_launcher.dart';
 import 'package:tuple/tuple.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 // Mixin just for commonly shared functions and properties between the SentMessage and ReceivedMessage
 abstract class MessageWidgetMixin {
@@ -74,6 +75,11 @@ abstract class MessageWidgetMixin {
                   ? Colors.transparent
                   : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
         }
+      } else if (SettingsManager().isFullMonet) {
+        textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+            color: hideContent
+                ? Colors.transparent
+                : Theme.of(context).colorScheme.onSecondary);
       } else if (hideContent) {
         textStyle = textStyle!.apply(color: Colors.transparent);
       }
@@ -132,10 +138,10 @@ abstract class MessageWidgetMixin {
                     ..onTap = () async {
                       String url = text;
                       if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                        url = "http://" + url;
+                        url = "http://$url";
                       }
 
-                      await launch(url);
+                      await launchUrlString(url);
                     },
                   style: textStyle!.apply(decoration: TextDecoration.underline),
                 ),
@@ -210,6 +216,11 @@ abstract class MessageWidgetMixin {
                   ? Colors.transparent
                   : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
         }
+      } else if (SettingsManager().isFullMonet) {
+        textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+            color: hideContent
+                ? Colors.transparent
+                : Theme.of(context).colorScheme.onSecondary);
       } else if (hideContent) {
         textStyle = textStyle!.apply(color: Colors.transparent);
       }
@@ -229,7 +240,7 @@ abstract class MessageWidgetMixin {
       if (!kIsWeb && !kIsDesktop) {
         if (ChatManager().activeChat?.mlKitParsedText[message.guid!] == null) {
           ChatManager().activeChat?.mlKitParsedText[message.guid!] =
-              await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
+              await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english).annotateText(message.text!);
         }
         final entities = ChatManager().activeChat?.mlKitParsedText[message.guid!] ?? [];
         List<EntityAnnotation> normalizedEntities = [];
@@ -300,16 +311,16 @@ abstract class MessageWidgetMixin {
                       if (type == "link") {
                         String url = text;
                         if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                          url = "http://" + url;
+                          url = "http://$url";
                         }
 
-                        await launch(url);
+                        await launchUrlString(url);
                       } else if (type == "map") {
                         await MapsLauncher.launchQuery(text);
                       } else if (type == "phone") {
-                        await launch("tel://$text");
+                        await launchUrl(Uri(scheme: "tel", path: text));
                       } else if (type == "email") {
-                        await launch("mailto:$text");
+                        await launchUrl(Uri(scheme: "mailto", path: text));
                       }
                     },
                   style: textStyle!.apply(decoration: TextDecoration.underline),

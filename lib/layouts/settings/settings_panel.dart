@@ -11,6 +11,7 @@ import 'package:bluebubbles/layouts/settings/about_panel.dart';
 import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
 import 'package:bluebubbles/layouts/settings/chat_list_panel.dart';
 import 'package:bluebubbles/layouts/settings/conversation_panel.dart';
+import 'package:bluebubbles/layouts/settings/desktop_panel.dart';
 import 'package:bluebubbles/layouts/settings/misc_panel.dart';
 import 'package:bluebubbles/layouts/settings/notification_panel.dart';
 import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
@@ -31,17 +32,16 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
-
-import 'desktop_panel.dart';
 
 List disconnectedStates = [SocketState.DISCONNECTED, SocketState.ERROR, SocketState.FAILED];
 
@@ -49,7 +49,7 @@ class SettingsPanel extends StatefulWidget {
   SettingsPanel({Key? key}) : super(key: key);
 
   @override
-  _SettingsPanelState createState() => _SettingsPanelState();
+  State<SettingsPanel> createState() => _SettingsPanelState();
 }
 
 class _SettingsPanelState extends State<SettingsPanel> {
@@ -58,6 +58,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
   bool pushedServerManagement = false;
   int? lastRestart;
   final ScrollController scrollController = ScrollController();
+  final RxBool uploadingContacts = false.obs;
+  final RxnDouble progress = RxnDouble();
+  final RxnInt totalSize = RxnInt();
 
   @override
   void initState() {
@@ -82,7 +85,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
           context,
           ServerManagementPanel(),
               (route) => route.isFirst,
-          binding: ServerManagementPanelBinding(),
         );
       }
     });
@@ -98,6 +100,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Actions(
         actions: {
@@ -120,19 +123,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
         .textTheme
         .subtitle1
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor;
-    Color tileColor;
-    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
-    } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
-      tileColor = headerColor;
-    }
+    Color headerColor = context.theme.headerColor;
+    Color tileColor = context.theme.tileColor;
 
     return Obx(() => SettingsScaffold(
         title: "Settings",
@@ -180,7 +172,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               context,
                               ServerManagementPanel(),
                                   (route) => route.isFirst,
-                              binding: ServerManagementPanelBinding(),
                             );
                           },
                           onLongPress: () {
@@ -243,16 +234,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       SettingsTile(
                         backgroundColor: tileColor,
                         title: "Appearance Settings",
-                        subtitle: SettingsManager().settings.skin.value.toString().split(".").last +
-                            "   |   " +
-                            AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst! +
-                            " Mode",
+                        subtitle: "${SettingsManager().settings.skin.value.toString().split(".").last}   |   ${AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst!} Mode",
                         onTap: () {
                           CustomNavigator.pushAndRemoveSettingsUntil(
                             context,
                             ThemePanel(),
                                 (route) => route.isFirst,
-                            binding: ThemePanelBinding(),
                           );
                         },
                         trailing: nextIcon,
@@ -427,7 +414,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             context,
                             PrivateAPIPanel(),
                                 (route) => route.isFirst,
-                            binding: PrivateAPIPanelBinding(),
                           );
                         },
                         leading: SettingsLeadingIcon(
@@ -649,10 +635,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                         }
                                                                       }
                                                                       if(int.parse(min) < 10){
-                                                                        min = "0" + min;
+                                                                        min = "0$min";
                                                                       }
                                                                       if(int.parse(sec) < 10){
-                                                                        sec = "0" + sec;
+                                                                        sec = "0$sec";
                                                                       }
                                                                       if(int.parse(hour) > 12 && !SettingsManager().settings.use24HrFormat.value){
                                                                         hour = (int.parse(hour) -12).toString();
@@ -970,9 +956,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             e.entries.forEachIndexed((index, e2) {
                                               entryJson = entryJson + jsonEncode(e2.toMap());
                                               if (index != e.entries.length - 1) {
-                                                entryJson = entryJson + ",";
+                                                entryJson = "$entryJson,";
                                               } else {
-                                                entryJson = entryJson + "]";
+                                                entryJson = "$entryJson]";
                                               }
                                             });
                                             Map<String, dynamic> map = e.toMap();
@@ -980,16 +966,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             map['entries'] = jsonDecode(entryJson);
                                             jsonStr = jsonStr + jsonEncode(map);
                                             if (index != allThemes.length - 1) {
-                                              jsonStr = jsonStr + ",";
+                                              jsonStr = "$jsonStr,";
                                             } else {
-                                              jsonStr = jsonStr + "]";
+                                              jsonStr = "$jsonStr]";
                                             }
                                           });
                                           String directoryPath = "/storage/emulated/0/Download/BlueBubbles-theming-";
                                           DateTime now = DateTime.now().toLocal();
-                                          String filePath = directoryPath +
-                                              "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" +
-                                              ".json";
+                                          String filePath = "$directoryPath${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.json";
                                           if (kIsWeb) {
                                             final bytes = utf8.encode(jsonStr);
                                             final content = base64.encode(bytes);
@@ -1056,6 +1040,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             List<dynamic> json = jsonDecode(jsonString);
                                             for (var e in json) {
                                               ThemeObject object = ThemeObject.fromMap(e);
+                                              if (object.isPreset) continue;
+                                              object.selectedLightTheme = false;
+                                              object.selectedDarkTheme = false;
+                                              object.id = null;
                                               List<dynamic> entriesJson = e['entries'];
                                               List<ThemeEntry> entries = [];
                                               for (var e2 in entriesJson) {
@@ -1065,7 +1053,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                               object.data = object.themeData;
                                               object.save();
                                             }
-                                            SettingsManager().saveSelectedTheme(context);
                                             Get.back();
                                             showSnackbar("Success", "Theming restored successfully");
                                           } catch (_) {
@@ -1106,18 +1093,92 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           SettingsTile(
                             backgroundColor: tileColor,
                             onTap: () async {
-                              String json = "[";
-                              ContactManager().contacts.forEachIndexed((index, c) {
-                                var map = c.toMap();
-                                map.remove("avatar");
-                                json = json + jsonEncode(map);
-                                if (index != ContactManager().contacts.length - 1) {
-                                  json = json + ",";
-                                } else {
-                                  json = json + "]";
+                              void closeDialog() {
+                                if (Get.isSnackbarOpen ?? false) {
+                                  Get.close(1);
                                 }
+                                Get.back();
+                                Future.delayed(Duration(milliseconds: 400), ()
+                                {
+                                  progress.value = null;
+                                  totalSize.value = null;
+                                });
+                              }
+
+                              Get.defaultDialog(
+                                backgroundColor: context.theme.colorScheme.secondary,
+                                radius: 15.0,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                                titlePadding: EdgeInsets.only(top: 15),
+                                title: "Uploading contacts...",
+                                titleStyle: Theme.of(context).textTheme.headline1,
+                                confirm: Obx(() => uploadingContacts.value
+                                    ? Container(height: 0, width: 0)
+                                    : Container(
+                                  margin: EdgeInsets.only(bottom: 10),
+                                  child: TextButton(
+                                    child: Text("CLOSE"),
+                                    onPressed: () async {
+                                      closeDialog.call();
+                                    },
+                                  ),
+                                ),
+                                ),
+                                cancel: Container(height: 0, width: 0),
+                                content: ConstrainedBox(
+                                  constraints: BoxConstraints(maxWidth: 300),
+                                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                                    Obx(
+                                          () => Text(
+                                          '${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)'),
+                                    ),
+                                    SizedBox(height: 10.0),
+                                    Obx(
+                                          () => ClipRRect(
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: LinearProgressIndicator(
+                                          backgroundColor: Colors.white,
+                                          value: progress.value,
+                                          minHeight: 5,
+                                          valueColor:
+                                          AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: 15.0,
+                                    ),
+                                    Obx(() => Text(
+                                      progress.value == 1 ? "Upload Complete!" : "You can close this dialog. Contacts will continue to upload in the background.",
+                                      maxLines: 2,
+                                      textAlign: TextAlign.center,
+                                    ),),
+                                  ]),
+                                ),
+                              );
+                              final contacts = <Map<String, dynamic>>[];
+                              for (Contact c in ContactManager().contacts) {
+                                var map = c.toMap();
+                                contacts.add(map);
+                              }
+                              api.createContact(contacts, onSendProgress: (count, total) {
+                                uploadingContacts.value = true;
+                                progress.value = count / total;
+                                totalSize.value = total;
+                                if (progress.value == 1.0) {
+                                  uploadingContacts.value = false;
+                                  showSnackbar("Notice", "Successfully exported contacts to server");
+                                }
+                              }).catchError((err) {
+                                if (err is Response) {
+                                  Logger.error(err.data["error"]["message"].toString());
+                                } else {
+                                  Logger.error(err.toString());
+                                }
+
+                                closeDialog.call();
+                                showSnackbar("Error", "Failed to export contacts to server");
                               });
-                              SocketManager().sendMessage("save-vcf", {"vcf": json}, (_) => showSnackbar("Notice", "Successfully exported contacts to server"));
                             },
                             leading: SettingsLeadingIcon(
                               iosIcon: CupertinoIcons.group,
@@ -1224,19 +1285,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
   }
 
   Widget buildForLandscape(BuildContext context, Widget settingsList) {
-    Color headerColor;
-    Color tileColor;
-    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
-    } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
-      tileColor = headerColor;
-    }
+    Color headerColor = context.theme.headerColor;
+    Color tileColor = context.theme.tileColor;
     return VerticalSplitView(
       initialRatio: 0.4,
       minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,

@@ -1,4 +1,5 @@
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:emojis/emojis.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -49,6 +50,23 @@ class ReactionTypes {
     "-$QUESTION": "removed a question mark from",
   };
 
+  static final Map<String, String> reactionToEmoji = {
+    LOVE: Emojis.redHeart,
+    LIKE: Emojis.thumbsUp,
+    DISLIKE: Emojis.thumbsDown,
+    LAUGH: Emojis.faceWithTearsOfJoy,
+    EMPHASIZE: Emojis.redExclamationMark,
+    QUESTION: Emojis.redQuestionMark,
+  };
+
+  static final Map<String, String> emojiToReaction = {
+    Emojis.redHeart: LOVE,
+    Emojis.thumbsUp: LIKE,
+    Emojis.thumbsDown: DISLIKE,
+    Emojis.faceWithTearsOfJoy: LAUGH,
+    Emojis.redExclamationMark: EMPHASIZE,
+    Emojis.redQuestionMark: QUESTION,
+  };
 }
 
 class Reaction {

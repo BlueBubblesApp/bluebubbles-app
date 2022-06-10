@@ -1,3 +1,4 @@
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/repository/database.dart';
@@ -17,7 +18,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/cupertino_conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/material_conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/samsung_conversation_list.dart';
-import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -110,17 +110,14 @@ class ConversationListState extends State<ConversationList> {
     if (!camera) {
       bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
       if (!granted) {
-        showSnackbar(
-            "Error",
-            "Camera was denied"
-        );
+        showSnackbar("Error", "Camera was denied");
         return;
       }
     }
 
     String appDocPath = SettingsManager().appDocDir.path;
     String ext = ".png";
-    File file = File("$appDocPath/attachments/" + randomString(16) + ext);
+    File file = File("$appDocPath/attachments/${randomString(16)}$ext");
     await file.create(recursive: true);
 
     // Take the picture after opening the camera
@@ -133,28 +130,34 @@ class ConversationListState extends State<ConversationList> {
       return;
     }
 
-    openNewChatCreator(existing: [PlatformFile(
-      name: file.path.split("/").last,
-      path: file.path,
-      bytes: file.readAsBytesSync(),
-      size: file.lengthSync(),
-    )]);
+    openNewChatCreator(existing: [
+      PlatformFile(
+        name: file.path.split("/").last,
+        path: file.path,
+        bytes: file.readAsBytesSync(),
+        size: file.lengthSync(),
+      )
+    ]);
   }
 
   Widget buildSettingsButton() => !widget.showArchivedChats && !widget.showUnknownSenders
       ? PopupMenuButton(
           color: context.theme.colorScheme.secondary,
+          shape: SettingsManager().settings.skin.value != Skins.Material ? RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(20.0),
+            ),
+          ) : null,
           onSelected: (dynamic value) {
             if (value == 0) {
               ChatBloc().markAllAsRead();
             } else if (value == 1) {
               CustomNavigator.pushLeft(
-                context,
-                ConversationList(
-                  showArchivedChats: true,
-                  showUnknownSenders: false,
-                )
-              );
+                  context,
+                  ConversationList(
+                    showArchivedChats: true,
+                    showUnknownSenders: false,
+                  ));
             } else if (value == 2) {
               Navigator.of(context).push(
                 ThemeSwitcher.buildPageRoute(
@@ -165,12 +168,11 @@ class ConversationListState extends State<ConversationList> {
               );
             } else if (value == 3) {
               CustomNavigator.pushLeft(
-                context,
-                ConversationList(
-                  showArchivedChats: false,
-                  showUnknownSenders: true,
-                )
-              );
+                  context,
+                  ConversationList(
+                    showArchivedChats: false,
+                    showUnknownSenders: true,
+                  ));
             } else if (value == 4) {
               showDialog(
                 barrierDismissible: false,
@@ -189,13 +191,13 @@ class ConversationListState extends State<ConversationList> {
                           await DBProvider.deleteDB();
                           await SettingsManager().resetConnection();
                           SettingsManager().settings.finishedSetup.value = false;
-                          Get.offAll(() => WillPopScope(
-                              onWillPop: () async => false,
-                              child: TitleBarWrapper(child: SetupView()),
-                            ),
-                            duration: Duration.zero,
-                            transition: Transition.noTransition
-                          );
+                          Get.offAll(
+                              () => WillPopScope(
+                                    onWillPop: () async => false,
+                                    child: TitleBarWrapper(child: SetupView()),
+                                  ),
+                              duration: Duration.zero,
+                              transition: Transition.noTransition);
                           SettingsManager().settings = Settings();
                           SettingsManager().settings.save();
                           SettingsManager().fcmData = null;
@@ -220,14 +222,14 @@ class ConversationListState extends State<ConversationList> {
                 value: 0,
                 child: Text(
                   'Mark all as read',
-                  style: context.textTheme.bodyText1,
+                  style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                 ),
               ),
               PopupMenuItem(
                 value: 1,
                 child: Text(
                   'Archived',
-                  style: context.textTheme.bodyText1,
+                  style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                 ),
               ),
               if (SettingsManager().settings.filterUnknownSenders.value)
@@ -235,84 +237,86 @@ class ConversationListState extends State<ConversationList> {
                   value: 3,
                   child: Text(
                     'Unknown Senders',
-                    style: context.textTheme.bodyText1,
+                    style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                   ),
                 ),
               PopupMenuItem(
                 value: 2,
                 child: Text(
                   'Settings',
-                  style: context.textTheme.bodyText1,
+                  style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                 ),
               ),
               if (kIsWeb)
                 PopupMenuItem(
-                  value: 4,
-                  child: Text(
-                    'Logout',
-                    style: context.textTheme.bodyText1,
-                  )
-                )
+                    value: 4,
+                    child: Text(
+                      'Logout',
+                      style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                    ))
             ];
           },
           icon: SettingsManager().settings.skin.value == Skins.Material ? Icon(
-            Icons.more_vert,
-            color: context.textTheme.bodyText1!.color,
-            size: 25,
-          ) : null,
-          child: SettingsManager().settings.skin.value == Skins.Material ? null : ThemeSwitcher(
-            iOSSkin: Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(40),
-                color: context.theme.colorScheme.secondary,
-              ),
-              child: Icon(
-                Icons.more_horiz,
-                color: context.theme.primaryColor,
-                size: 15,
-              ),
-            ),
-            materialSkin: Container(),
-            samsungSkin: Icon(
-              Icons.more_vert,
-              color: context.textTheme.bodyText1!.color,
-              size: 25,
-            ),
-          ),
+                  Icons.more_vert,
+                  color: context.textTheme.bodyText1!.color,
+                  size: 25,
+                ) : null,
+          child: SettingsManager().settings.skin.value == Skins.Material
+              ? null
+              : ThemeSwitcher(
+                  iOSSkin: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(40),
+                      color: context.theme.colorScheme.secondary,
+                    ),
+                    child: Icon(
+                      Icons.more_horiz,
+                      color: context.theme.primaryColor,
+                      size: 15,
+                    ),
+                  ),
+                  materialSkin: Container(),
+                  samsungSkin: Icon(
+                    Icons.more_vert,
+                    color: context.textTheme.bodyText1!.color,
+                    size: 25,
+                  ),
+                ),
         )
       : Container();
 
   Widget buildFloatingActionButton() {
     return Obx(() => Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        if (SettingsManager().settings.cameraFAB.value && SettingsManager().settings.skin.value != Skins.Material)
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 45,
-              maxHeight: 45,
-            ),
-            child: FloatingActionButton(
-              child: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
-                size: 20,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            if (SettingsManager().settings.cameraFAB.value && SettingsManager().settings.skin.value != Skins.Material)
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 45,
+                  maxHeight: 45,
+                ),
+                child: FloatingActionButton(
+                  child: Icon(
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
+                    size: 20,
+                  ),
+                  onPressed: openCamera,
+                  heroTag: null,
+                ),
               ),
-              onPressed: openCamera,
-              heroTag: null,
-            ),
-          ),
-        if (SettingsManager().settings.cameraFAB.value)
-          SizedBox(
-            height: 10,
-          ),
-        FloatingActionButton(
-            backgroundColor: context.theme.primaryColor,
-            child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
-            onPressed: openNewChatCreator),
-      ],
-    ));
+            if (SettingsManager().settings.cameraFAB.value)
+              SizedBox(
+                height: 10,
+              ),
+            FloatingActionButton(
+                backgroundColor: context.theme.primaryColor,
+                child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message,
+                    color: Colors.white, size: 25),
+                onPressed: openNewChatCreator),
+          ],
+        ));
   }
 
   Widget getConnectionIndicatorWidget() {
@@ -320,8 +324,8 @@ class ConversationListState extends State<ConversationList> {
 
     return Obx(() => Padding(
           padding: EdgeInsets.only(right: SettingsManager().settings.skin.value != Skins.Material ? 10 : 0.0),
-      child: getIndicatorIcon(SocketManager().state.value, size: 12),
-    ));
+          child: getIndicatorIcon(SocketManager().state.value, size: 12),
+        ));
   }
 
   @override

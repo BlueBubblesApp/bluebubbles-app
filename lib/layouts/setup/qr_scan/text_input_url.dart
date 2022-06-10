@@ -5,8 +5,9 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 
 class TextInputURL extends StatefulWidget {
   TextInputURL({Key? key, required this.onConnect, required this.onClose}) : super(key: key);
@@ -14,7 +15,7 @@ class TextInputURL extends StatefulWidget {
   final Function() onClose;
 
   @override
-  _TextInputURLState createState() => _TextInputURLState();
+  State<TextInputURL> createState() => _TextInputURLState();
 }
 
 class _TextInputURLState extends State<TextInputURL> {
@@ -33,7 +34,7 @@ class _TextInputURLState extends State<TextInputURL> {
   void connect(String url, String password) async {
     SocketManager().closeSocket(force: true);
     Settings copy = SettingsManager().settings;
-    String? addr = getServerAddress(address: url);
+    String? addr = sanitizeServerAddress(address: url);
     if (addr == null) {
       error = "Server address is invalid!";
       if (mounted) setState(() {});
@@ -52,18 +53,24 @@ class _TextInputURLState extends State<TextInputURL> {
   }
 
   void retreiveFCMData() {
-    SocketManager().sendMessage("get-fcm-client", {}, (_data) {
-      if (_data["status"] != 200) {
-        error = _data["error"]["message"];
-        if (mounted) setState(() {});
-        return;
+    // Get the FCM Client and make sure we have a valid response
+    // If so, save. Let the parent widget know we've connected as long as
+    // we get 200 from the API.
+    api.fcmClient().then((response) {
+      Map<String, dynamic>? data = response.data["data"];
+      if (!isNullOrEmpty(data)!) {
+        FCMData newData = FCMData.fromMap(data!);
+        SettingsManager().saveFCMData(newData);
       }
-      FCMData? copy = SettingsManager().fcmData;
-      Map<String, dynamic> data = _data["data"];
-      copy = FCMData.fromMap(data);
 
-      SettingsManager().saveFCMData(copy);
       widget.onConnect();
+    }).catchError((err) {
+      if (err is Response) {
+        error = err.data["error"]["message"];
+      } else {
+        error = err.toString();
+      }
+      if (mounted) setState(() {});
     });
   }
 
@@ -133,7 +140,7 @@ class _TextInputURLState extends State<TextInputURL> {
             if (mounted) {
               setState(() {
                 error =
-                    "Failed to connect to ${getServerAddress()}! Please check that the url is correct (including http://) and the server logs for more info.";
+                    "Failed to connect to ${sanitizeServerAddress()}! Please check that the url is correct (including http://) and the server logs for more info.";
               });
             }
           }

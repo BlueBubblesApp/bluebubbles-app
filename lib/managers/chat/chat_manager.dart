@@ -1,13 +1,15 @@
+import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-
-import '../socket_manager.dart';
+import 'package:bluebubbles/socket_manager.dart';
+import 'package:dio/dio.dart';
 
 class ChatManager {
   factory ChatManager() {
@@ -156,7 +158,7 @@ class ChatManager {
     // Handle Private API features
     if (SettingsManager().settings.enablePrivateAPI.value) {
       if (SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
-        SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+        await api.markChatRead(chat.guid);
       }
 
       if (!MethodChannelInterface().headless && SettingsManager().settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
@@ -169,5 +171,77 @@ class ChatManager {
     if (!LifeCycleManager().isBubble) {
       await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
     }
+  }
+
+  /// Fetch chat information from the server
+  Future<Chat?> fetchChat(String chatGuid, {withParticipants = true, withLastMessage = false}) async {
+    Logger.info("Fetching full chat metadata from server.", tag: "Fetch-Chat");
+
+    final withQuery = <String>[];
+    if (withParticipants) withQuery.add("participants");
+    if (withLastMessage) withQuery.add("lastmessage");
+
+    final response = await api.singleChat(chatGuid, withQuery: withQuery.join(",")).catchError((err) {
+      if (err is! Response) {
+        Logger.error("Failed to fetch chat metadata! ${err.toString()}", tag: "Fetch-Chat");
+      }
+    });
+
+    if (response.statusCode == 200 && response.data["data"] != null) {
+      Map<String, dynamic> chatData = response.data["data"];
+
+      Logger.info("Got updated chat metadata from server. Saving.", tag: "Fetch-Chat");
+      Chat newChat = Chat.fromMap(chatData);
+      newChat.save();
+      return newChat;
+    }
+
+    return null;
+  }
+
+  Future<List<Chat>> getChats({bool withParticipants = false, bool withLastMessage = false, int offset = 0, int limit = 100,}) async {
+    final withQuery = <String>[];
+    if (withParticipants) withQuery.add("participants");
+    if (withLastMessage) withQuery.add("lastmessage");
+
+    final response = await api.chats(withQuery: withQuery, offset: offset, limit: limit).catchError((err) {
+      if (err is! Response) {
+        Logger.error("Failed to fetch chat metadata! ${err.toString()}", tag: "Fetch-Chat");
+      }
+    });
+
+    // parse chats from the response
+    final chats = <Chat>[];
+    for (var item in response.data["data"]) {
+      try {
+        var chat = Chat.fromMap(item);
+        chats.add(chat);
+      } catch (ex) {
+        chats.add(Chat(guid: "ERROR", displayName: item.toString()));
+      }
+    }
+
+    return chats;
+  }
+
+  Future<List<dynamic>> getMessages(String guid, {bool withAttachment = true, bool withHandle = true, int offset = 0, int limit = 25}) async {
+    Completer<List<dynamic>> completer = Completer();
+    final withQuery = <String>[];
+    if (withAttachment) withQuery.add("attachment");
+    if (withHandle) withQuery.add("handle");
+
+    api.chatMessages(guid, withQuery: withQuery.join(","), offset: offset, limit: limit).then((response) {
+      if (!completer.isCompleted) completer.complete(response.data["data"]);
+    }).catchError((err) {
+      late final dynamic error;
+      if (err is Response) {
+        error = err.data["error"]["message"];
+      } else {
+        error = err.toString();
+      }
+      if (!completer.isCompleted) completer.completeError(error);
+    });
+
+    return completer.future;
   }
 }

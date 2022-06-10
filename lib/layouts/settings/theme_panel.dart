@@ -1,6 +1,9 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -14,26 +17,22 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:dio/dio.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:get/get.dart';
-
-class ThemePanelBinding extends Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<ThemePanelController>(() => ThemePanelController());
-  }
-}
+import 'package:get/get.dart' hide Response;
+import 'package:universal_io/io.dart';
 
 class ThemePanelController extends GetxController {
   late Settings _settingsCopy;
   final RxList<DisplayMode> modes = <DisplayMode>[].obs;
   final RxList<int> refreshRates = <int>[].obs;
   final RxInt currentMode = 0.obs;
+  final RxnBool gettingIcons = RxnBool();
 
   @override
   void onInit() {
@@ -58,7 +57,9 @@ class ThemePanelController extends GetxController {
   }
 }
 
-class ThemePanel extends GetView<ThemePanelController> {
+class ThemePanel extends StatelessWidget {
+  final controller = Get.put(ThemePanelController());
+
   @override
   Widget build(BuildContext context) {
     Widget nextIcon = Obx(() => Icon(
@@ -74,19 +75,8 @@ class ThemePanel extends GetView<ThemePanelController> {
           .textTheme
           .subtitle1
           ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-      Color headerColor;
-      Color tileColor;
-      if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
-          SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-        headerColor = Theme.of(context).colorScheme.secondary;
-        tileColor = Theme.of(context).backgroundColor;
-      } else {
-        headerColor = Theme.of(context).backgroundColor;
-        tileColor = Theme.of(context).colorScheme.secondary;
-      }
-      if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
-        tileColor = headerColor;
-      }
+      Color headerColor = context.theme.headerColor;
+      Color tileColor = context.theme.tileColor;
 
       return SettingsScaffold(
         title: "Theming & Styles",
@@ -157,6 +147,8 @@ class ThemePanel extends GetView<ThemePanelController> {
                         startingVal: SettingsManager().settings.avatarScale.value.toDouble(),
                         update: (double val) {
                           SettingsManager().settings.avatarScale.value = val;
+                        },
+                        onChangeEnd: (double val) {
                           saveSettings();
                         },
                         formatValue: ((double val) => val.toPrecision(2).toString()),
@@ -249,6 +241,70 @@ class ThemePanel extends GetView<ThemePanelController> {
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
+                    if (!kIsWeb && !kIsDesktop && monetPalette != null)
+                      Obx(() {
+                        if (SettingsManager().settings.skin.value == Skins.iOS) {
+                          return SettingsTile(
+                            backgroundColor: tileColor,
+                            title: "Material You",
+                            subtitle:
+                            "Use Android 12's Monet engine to provide wallpaper-based coloring to your theme. Tap for more info.",
+                            onTap: () {
+                              showMonetDialog(context);
+                            },
+                          );
+                        } else {
+                          return SizedBox.shrink();
+                        }
+                      }),
+                    if (!kIsWeb && !kIsDesktop && monetPalette != null)
+                      GestureDetector(
+                        onTap: () {
+                          showMonetDialog(context);
+                        },
+                        child: SettingsOptions<Monet>(
+                          initial: controller._settingsCopy.monetTheming.value,
+                          onChanged: (val) {
+                            controller._settingsCopy.monetTheming.value = val ?? Monet.none;
+                            saveSettings();
+                            loadTheme(context);
+                          },
+                          options: Monet.values,
+                          textProcessing: (val) => val.toString().split(".").last,
+                          title: "Material You",
+                          subtitle:
+                          "Use Android 12's Monet engine to provide wallpaper-based coloring to your theme. Tap for more info.",
+                          backgroundColor: tileColor,
+                          secondaryColor: headerColor,
+                        ),
+                      ),
+                    if (!kIsWeb && !kIsDesktop && monetPalette != null)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                    SettingsSwitch(
+                      initialVal: controller._settingsCopy.material3.value,
+                      onChanged: (bool val) {
+                        controller._settingsCopy.material3.value = val;
+                        saveSettings();
+                        loadTheme(context);
+                      },
+                      backgroundColor: tileColor,
+                      title: "Material 3",
+                      subtitle:
+                      "Use Material 3 UI design and Android 12's stretchy overscroll indicator",
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(
                             () => SettingsSwitch(
@@ -373,6 +429,51 @@ class ThemePanel extends GetView<ThemePanelController> {
                         backgroundColor: tileColor,
                         subtitle: "Customize the avatar for different chats",
                       ),
+                    if (!kIsWeb)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                    if (!kIsWeb)
+                      SettingsTile(
+                        title: "Sync Group Chat Icons",
+                        trailing: Obx(() => controller.gettingIcons.value == null
+                            ? SizedBox.shrink()
+                            : controller.gettingIcons.value == true ? Container(
+                            constraints: BoxConstraints(
+                              maxHeight: 20,
+                              maxWidth: 20,
+                            ),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3,
+                              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                            )) : Icon(Icons.check, color: Colors.grey)
+                        ),
+                        onTap: () async {
+                          controller.gettingIcons.value = true;
+                          for (Chat c in ChatBloc().chats.where((c) => c.isGroup())) {
+                            final response = await api.getChatIcon(c.guid).catchError((err) async {
+                              Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
+                              return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));
+                            });
+                            if (response.statusCode != 200 || isNullOrEmpty(response.data)!) continue;
+                            Logger.debug("Got chat icon for chat ${c.getTitle()}");
+                            File file = File(c.customAvatarPath ?? "${SettingsManager().appDocDir.path}/avatars/${c.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
+                            if (c.customAvatarPath == null) {
+                              await file.create(recursive: true);
+                            }
+                            await file.writeAsBytes(response.data);
+                            c.customAvatarPath = file.path;
+                            c.save(updateCustomAvatarPath: true);
+                          }
+                          controller.gettingIcons.value = false;
+                        },
+                        backgroundColor: tileColor,
+                        subtitle: "Get iMessage group chat icons. Note: Overrides any custom avatars set for group chats",
+                      ),
                   ],
                 ),
                 if (!kIsWeb && !kIsDesktop)
@@ -403,7 +504,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                               saveSettings();
                             },
                             options: controller.refreshRates,
-                            textProcessing: (val) => val == 0 ? "Auto" : val.toString() + " Hz",
+                            textProcessing: (val) => val == 0 ? "Auto" : "$val Hz",
                             title: "Display",
                             backgroundColor: tileColor,
                             secondaryColor: headerColor,
@@ -491,7 +592,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                               final DynamicCachedFonts dynamicCachedFont = DynamicCachedFonts(
                                 fontFamily: "Apple Color Emoji",
                                 url:
-                                "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
+                                "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
                               );
                               dynamicCachedFont.load().listen((data) {
                                 if (data is FileInfo) {
@@ -519,7 +620,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                         if (fontExistsOnDisk.value) {
                           return SettingsTile(
                             onTap: () async {
-                              await DynamicCachedFonts.removeCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf");
+                              await DynamicCachedFonts.removeCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf");
                               fontExistsOnDisk.value = false;
                               showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
                             },
@@ -542,5 +643,39 @@ class ThemePanel extends GetView<ThemePanelController> {
 
   void saveSettings() {
     SettingsManager().saveSettings(controller._settingsCopy);
+  }
+
+  void showMonetDialog(BuildContext context) {
+    Get.defaultDialog(
+        title: "Monet Theming Info",
+        titleStyle: Theme.of(context).textTheme.headline1,
+        backgroundColor: Theme.of(context).backgroundColor.lightenPercent(),
+        buttonColor: Theme.of(context).primaryColor,
+        content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(left: 10, right: 10),
+                child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                        "Harmonize - Overwrites primary color, and blends background & accent color with the current theme colors\r\n"
+                            "Full - Overwrites primary, background, and accent colors, along with other minor colors.\r\n"
+                    )
+                ),
+              ),
+            ]
+        ),
+        cancel: Container(
+          height: 0,
+          width: 0,
+        ),
+        textConfirm: "OK",
+        confirmTextColor: context.theme.dialogBackgroundColor,
+        barrierDismissible: false,
+        onConfirm: () {
+          Get.back();
+        }
+    );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_page_transition.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,13 +16,19 @@ class ThemeSwitcher extends StatefulWidget {
   static PageRoute buildPageRoute({required Widget Function(BuildContext context) builder}) {
     switch (SettingsManager().settings.skin.value) {
       case Skins.iOS:
-        return CupertinoPageRoute(builder: builder);
+        return PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) => builder.call(context),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return CustomCupertinoPageTransition(primaryRouteAnimation: animation, child: child, linearTransition: false);
+            });
       case Skins.Material:
         return MaterialPageRoute(builder: builder);
       case Skins.Samsung:
         return MaterialPageRoute(builder: builder);
       default:
-        return CupertinoPageRoute(builder: builder);
+        return PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) => builder.call(context),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return CustomCupertinoPageTransition(primaryRouteAnimation: animation, child: child, linearTransition: false);
+            });
     }
   }
 
@@ -47,7 +54,7 @@ class ThemeSwitcher extends StatefulWidget {
   }
 
   @override
-  _ThemeSwitcherState createState() => _ThemeSwitcherState();
+  State<ThemeSwitcher> createState() => _ThemeSwitcherState();
 }
 
 class _ThemeSwitcherState extends State<ThemeSwitcher> {

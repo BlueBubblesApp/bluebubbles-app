@@ -5,15 +5,16 @@ import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:chewie_audio/chewie_audio.dart';
+import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
@@ -37,9 +38,12 @@ class ChatController {
   Map<String, Map<String, Uint8List>> stickerData = {};
   Map<String, Metadata> urlPreviews = {};
   Map<String, VideoPlayerController> currentPlayingVideo = {};
+  Map<String, Player> videoPlayersDesktop = {};
   Map<String, Tuple2<ChewieAudioController, VideoPlayerController>> audioPlayers = {};
+  Map<String, Tuple2<Player, Player>> audioPlayersDesktop = {};
   Map<String, List<EntityAnnotation>> mlKitParsedText = {};
   List<VideoPlayerController> videoControllersToDispose = [];
+  List<Player> videoControllersToDisposeDesktop = [];
   List<Attachment> chatAttachments = [];
   List<Message?> sentMessages = [];
   bool showTypingIndicator = false;
@@ -160,6 +164,7 @@ class ChatController {
     audioPlayers = {};
     urlPreviews = {};
     videoControllersToDispose = [];
+    videoControllersToDisposeDesktop = [];
     chatAttachments = [];
     sentMessages = [];
     entry = null;
@@ -302,6 +307,22 @@ class ChatController {
     );
   }
 
+  void addVideoDesktop(Map<String, Player> video) {
+    if (!isNullOrEmpty(videoPlayersDesktop)!) {
+      for (Player element in videoPlayersDesktop.values) {
+        print('added');
+        videoControllersToDisposeDesktop.add(element);
+      }
+    }
+    videoPlayersDesktop.addAll(video);
+    _stream.sink.add(
+      {
+        "type": ChatControllerEvent.VideoPlaying,
+        "data": video,
+      },
+    );
+  }
+
   /// Dispose all of the controllers and whatnot
   void dispose() {
     if (!isNullOrEmpty(currentPlayingVideo)!) {
@@ -347,11 +368,13 @@ class ChatController {
   }
 
   Future<void> scrollToBottom() async {
-    await scrollController.animateTo(
-      0.0,
-      curve: Curves.easeOut,
-      duration: const Duration(milliseconds: 300),
-    );
+    if (scrollController.positions.isEmpty || scrollController.positions.first.extentBefore != 0) {
+      await scrollController.animateTo(
+        0.0,
+        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 300),
+      );
+    }
 
     if (SettingsManager().settings.openKeyboardOnSTB.value) {
       EventDispatcher().emit("focus-keyboard", null);
@@ -370,6 +393,11 @@ class ChatController {
       element.dispose();
     }
     videoControllersToDispose = [];
+
+    for (Player element in videoControllersToDisposeDesktop) {
+      element.dispose();
+    }
+    videoControllersToDisposeDesktop = [];
   }
 
   void disposeAudioControllers() {

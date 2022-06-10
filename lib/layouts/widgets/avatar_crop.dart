@@ -20,7 +20,7 @@ class AvatarCrop extends StatefulWidget {
   AvatarCrop({this.index, this.chat});
 
   @override
-  _AvatarCropState createState() => _AvatarCropState();
+  State<AvatarCrop> createState() => _AvatarCropState();
 }
 
 class _AvatarCropState extends State<AvatarCrop> {
@@ -62,6 +62,7 @@ class _AvatarCropState extends State<AvatarCrop> {
         systemNavigationBarIconBrightness:
         Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
           backgroundColor: Theme.of(context).backgroundColor,

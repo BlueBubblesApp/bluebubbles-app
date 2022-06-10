@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 class FailureToStart extends StatelessWidget {
   const FailureToStart({Key? key, this.e, this.s, this.otherTitle}) : super(key: key);
@@ -16,6 +17,7 @@ class FailureToStart extends StatelessWidget {
           systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
           systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
           statusBarColor: Colors.transparent, // status bar color
+          statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         ),
         child: Scaffold(
           backgroundColor: Colors.black,

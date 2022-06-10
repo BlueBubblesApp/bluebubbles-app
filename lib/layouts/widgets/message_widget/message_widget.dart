@@ -14,10 +14,10 @@ import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
@@ -62,7 +62,7 @@ class MessageWidget extends StatefulWidget {
   late final _fakeText = faker.lorem.words(message.text?.split(" ").length ?? 0).join(" ");
 
   @override
-  _MessageState createState() => _MessageState();
+  State<MessageWidget> createState() => _MessageState();
 }
 
 class _MessageState extends State<MessageWidget> {
@@ -110,7 +110,7 @@ class _MessageState extends State<MessageWidget> {
     fetchAttachments();
 
     // Listen for new messages
-    subscription = NewMessageManager().stream.listen((data) {
+    subscription = MessageManager().stream.listen((data) {
       // If the message doesn't apply to this chat, ignore it
       if (data.chatGuid != currentChat?.chat.guid) return;
 

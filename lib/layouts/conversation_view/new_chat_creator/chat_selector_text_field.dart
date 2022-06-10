@@ -28,7 +28,7 @@ class ChatSelectorTextField extends StatefulWidget {
   final Function(UniqueContact item) onSelected;
 
   @override
-  _ChatSelectorTextFieldState createState() => _ChatSelectorTextFieldState();
+  State<ChatSelectorTextField> createState() => _ChatSelectorTextFieldState();
 }
 
 class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {

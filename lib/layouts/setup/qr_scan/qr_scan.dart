@@ -3,16 +3,17 @@ import 'dart:convert';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
+import 'package:bluebubbles/layouts/setup/connecting_alert/future_loader_dialog.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:simple_animations/stateless_animation/custom_animation.dart';
@@ -22,7 +23,7 @@ class QRScan extends StatefulWidget {
   final PageController controller;
 
   @override
-  _QRScanState createState() => _QRScanState();
+  State<QRScan> createState() => _QRScanState();
 }
 
 class _QRScanState extends State<QRScan> {
@@ -35,9 +36,10 @@ class _QRScanState extends State<QRScan> {
   bool obscureText = true;
 
   Future<void> scanQRCode() async {
-    PermissionStatus status = await Permission.contacts.status;
+    // Make sure we have the correct permissions
+    PermissionStatus status = await Permission.camera.status;
     if (!status.isPermanentlyDenied && !status.isGranted) {
-      final result = await Permission.contacts.request();
+      final result = await Permission.camera.request();
       if (!result.isGranted) {
         showSnackbar("Error", "Camera permission required for QR scanning!");
         return;
@@ -46,7 +48,10 @@ class _QRScanState extends State<QRScan> {
       showSnackbar("Error", "Camera permission permanently denied, please modify permissions from Android settings.");
       return;
     }
+
+    // Open the QR Scanner and get the result
     dynamic result;
+
     try {
       result = await Navigator.of(context).push(
         CupertinoPageRoute(
@@ -101,103 +106,21 @@ class _QRScanState extends State<QRScan> {
           });
       return;
     }
-    if (result != null && result.length > 0) {
-      FCMData? fcmData;
 
-      if (result.length > 2) {
-        fcmData = FCMData(
-          projectID: result[2],
-          storageBucket: result[3],
-          apiKey: result[4],
-          firebaseURL: result[5],
-          clientID: result[6],
-          applicationID: result[7],
-        );
-      } else {
-        try {
-          // Fetch FCM data from the server
-          Map<String, dynamic> fcmMeta = await SocketManager().getFcmClient();
-
-          // Parse out the new FCM data
-          fcmData = parseFcmJson(fcmMeta);
-        } catch (ex) {
-          // If we fail, who cares!
-        }
-      }
-
-      String? password = result[0];
-      String? serverURL = getServerAddress(address: result[1]);
-
-      showDialog(
-        context: context,
-        builder: (connectContext) => ConnectingAlert(
-          onConnect: (bool result) {
-            if (result) {
-              if (Navigator.of(connectContext).canPop()) {
-                Navigator.of(connectContext).pop();
-              }
-
-              goToNextPage();
-            }
-          },
-        ),
-        barrierDismissible: false,
-      );
-
-      try {
-        if (fcmData == null) {
-          throw Exception("FCM data was null! Failed to register device!");
-        } else if (serverURL == null) {
-          throw Exception("Server URL was null! Failed to register device!");
-        } else if (password == null) {
-          throw Exception("Password was null! Failed to register device!");
-        }
-
-        await SocketManager().setup.connectToServer(fcmData, serverURL, password);
-      } catch (e) {
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        }
-
-        Get.defaultDialog(
-            title: "Error",
-            titleStyle: Theme.of(context).textTheme.headline1,
-            backgroundColor: Theme.of(context).backgroundColor.lightenPercent(),
-            buttonColor: Theme.of(context).primaryColor,
-            content: Container(
-              constraints: BoxConstraints(
-                maxHeight: 300,
-              ),
-              child: Center(
-                child: Container(
-                  width: 300,
-                  height: 200,
-                  constraints: BoxConstraints(
-                    maxHeight: Get.height - 300,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: SingleChildScrollView(
-                        child: Text(
-                            e.toString().contains("ROWID")
-                                ? "iMessage is not configured on the macOS server, please sign in with an Apple ID and try again."
-                                : e.toString(),
-                            textAlign: TextAlign.center)),
-                  ),
-                ),
-              ),
-            ),
-            textConfirm: "OK",
-            textCancel: "COPY",
-            cancelTextColor: Theme.of(context).primaryColor,
-            onConfirm: () async {
-              Navigator.of(context).pop();
-            },
-            onCancel: () {
-              Clipboard.setData(ClipboardData(text: e.toString()));
-            });
-      }
+    if (result == null || (result is! List) || result.length < 2) {
+      showSnackbar("Error", "Received invalid data from QR Scanner!");
+      return;
     }
+
+    // Make sure we have a URL and password
+    String? password = result[0];
+    String? serverURL = sanitizeServerAddress(address: result[1]);
+    if (serverURL == null || serverURL.isEmpty || password == null || password.isEmpty) {
+      showSnackbar("Error", "Your server URL or password was unable to be parsed!");
+      return;
+    }
+
+    connect(serverURL, password);
   }
 
   @override
@@ -210,6 +133,8 @@ class _QRScanState extends State<QRScan> {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
@@ -332,7 +257,10 @@ class _QRScanState extends State<QRScan> {
                                     Padding(
                                       padding: const EdgeInsets.only(right: 0.0, left: 5.0),
                                       child: Text("Scan QR Code",
-                                          style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1!
+                                              .apply(fontSizeFactor: 1.1, color: Colors.white)),
                                     ),
                                   ],
                                 ),
@@ -363,23 +291,6 @@ class _QRScanState extends State<QRScan> {
                               minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
                             ),
                             onPressed: () async {
-                              // showDialog(
-                              //   context: context,
-                              //   builder: (connectContext) => TextInputURL(
-                              //     onConnect: () {
-                              //       if (Navigator.of(connectContext).canPop()) {
-                              //         Navigator.of(connectContext).pop();
-                              //       }
-                              //
-                              //       goToNextPage();
-                              //     },
-                              //     onClose: () {
-                              //       if (Navigator.of(connectContext).canPop()) {
-                              //         Navigator.of(connectContext).pop();
-                              //       }
-                              //     },
-                              //   ),
-                              // );
                               setState(() {
                                 showManualEntry = !showManualEntry;
                               });
@@ -387,7 +298,8 @@ class _QRScanState extends State<QRScan> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(CupertinoIcons.text_cursor, color: Theme.of(context).textTheme.bodyText1!.color, size: 20),
+                                Icon(CupertinoIcons.text_cursor,
+                                    color: Theme.of(context).textTheme.bodyText1!.color, size: 20),
                                 SizedBox(width: 10),
                                 Text("Manual entry",
                                     style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)),
@@ -496,6 +408,7 @@ class _QRScanState extends State<QRScan> {
                                                 shadowColor:
                                                     MaterialStateProperty.all(Theme.of(context).backgroundColor),
                                                 maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                                                minimumSize: MaterialStateProperty.all(Size(30, 30)),
                                               ),
                                               onPressed: () async {
                                                 setState(() {
@@ -535,6 +448,7 @@ class _QRScanState extends State<QRScan> {
                                                 backgroundColor: MaterialStateProperty.all(Colors.transparent),
                                                 shadowColor: MaterialStateProperty.all(Colors.transparent),
                                                 maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                                                minimumSize: MaterialStateProperty.all(Size(30, 30)),
                                               ),
                                               onPressed: () async {
                                                 if (urlController.text == "googleplaytest" &&
@@ -580,7 +494,6 @@ class _QRScanState extends State<QRScan> {
     if (kIsWeb) {
       // Set the number of messages to sync
       SocketManager().setup.numberOfMessagesPerPage = 25;
-      SocketManager().setup.downloadAttachments = false;
       SocketManager().setup.skipEmptyChats = true;
 
       // Start syncing
@@ -596,78 +509,88 @@ class _QRScanState extends State<QRScan> {
   }
 
   void connect(String url, String password) async {
+    // Check if the URL is valid
     bool isValid = url.isURL;
     if (url.contains(":") && !isValid) {
-      final newUrl = url.split(":").first;
-      isValid = newUrl.isIPv6 || newUrl.isIPv4;
+      if (":".allMatches(url).length == 2) {
+        final newUrl = url.split(":")[1].split("/").last;
+        isValid = newUrl.isIPv6 || newUrl.isIPv4;
+      } else {
+        final newUrl = url.split(":").first;
+        isValid = newUrl.isIPv6 || newUrl.isIPv4;
+      }
     }
     if (url.endsWith(".network") && !isValid) {
       final newUrl = url.split(".network").first;
-      isValid = (newUrl + ".com").isURL;
+      isValid = ("$newUrl.com").isURL;
     }
+
+    // If the URL is invalid, or the password is invalid, show an error
     if (!isValid || password.isEmpty) {
-      setState(() {
+      return setState(() {
         error = "Please enter a valid URL and password!";
       });
-      return;
     }
-    Get.dialog(
-      ConnectingAlert(
-        onConnect: (bool result) {
+
+    String? addr = sanitizeServerAddress(address: url);
+    if (addr == null && mounted) {
+      return setState(() {
+        error = "Server address is invalid!";
+      });
+    }
+
+    SettingsManager().settings.serverAddress.value = addr!;
+    SettingsManager().settings.guidAuthKey.value = password;
+    SettingsManager().settings.save();
+
+    // Request data from the API
+    Future<dio.Response> fcmFuture = api.fcmClient();
+
+    Get.dialog(FutureLoaderDialog(
+      future: fcmFuture,
+      showErrorDialog: false,
+      onConnect: (bool result, Object? err) async {
+        if (result) {
           if (Get.isDialogOpen ?? false) {
             Get.back();
           }
-          if (result) {
-            setState(() {
-              showManualEntry = false;
+
+          setState(() {
+            showManualEntry = false;
+          });
+
+          dio.Response fcmResponse = await fcmFuture;
+          Map<String, dynamic> data = fcmResponse.data;
+          if (fcmResponse.statusCode != 200) {
+            return setState(() {
+              error =
+                  "Failed to connect to server! ${data["error"]?["type"] ?? "API_ERROR"}: ${data["message"] ?? data["error"]["message"]}";
             });
-            retreiveFCMData();
-          } else {
-            if (mounted) {
+          }
+
+          FCMData fcmData = FCMData.fromMap(data["data"]);
+          SettingsManager().saveFCMData(fcmData);
+          goToNextPage();
+        } else if (mounted) {
+          if (err != null) {
+            final errorData = jsonDecode(err as String);
+            if (errorData['status'] == 401) {
               setState(() {
-                error =
-                    "Failed to connect to ${getServerAddress()}! Please ensure your credentials are correct (including http://) and check the server logs for more info.";
+                error = "Authentication failed. Incorrect password!";
+              });
+            } else {
+              setState(() {
+                error = "Failed to connect! Error: [${errorData['status']}] ${errorData['message']}";
               });
             }
+          } else {
+            setState(() {
+              error =
+                  "Failed to connect to $addr! Please ensure your credentials are correct (including http://) and check the server logs for more info.";
+            });
           }
-        },
-      ),
-      barrierDismissible: false,
-    );
-    SocketManager().closeSocket(force: true);
-    String? addr = getServerAddress(address: url);
-    if (addr == null) {
-      error = "Server address is invalid!";
-      if (mounted) setState(() {});
-      return;
-    }
-
-    SettingsManager().settings.serverAddress.value = addr;
-    SettingsManager().settings.guidAuthKey.value = password;
-    SettingsManager().settings.save();
-    try {
-      SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
-    } catch (e) {
-      error = e.toString();
-      if (mounted) setState(() {});
-    }
-  }
-
-  void retreiveFCMData() {
-    SocketManager().sendMessage("get-fcm-client", {}, (_data) {
-      if (_data["status"] != 200) {
-        error = _data["error"]["message"];
-        if (mounted) setState(() {});
-        return;
-      }
-      FCMData? copy = SettingsManager().fcmData;
-      Map<String, dynamic>? data = _data["data"];
-      if (data != null && data.isNotEmpty) {
-        copy = FCMData.fromMap(data);
-
-        SettingsManager().saveFCMData(copy);
-      }
-      goToNextPage();
-    });
+        }
+      },
+    ));
   }
 }

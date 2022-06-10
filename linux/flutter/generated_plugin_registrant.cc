@@ -7,9 +7,11 @@
 #include "generated_plugin_registrant.h"
 
 #include <bitsdojo_window_linux/bitsdojo_window_plugin.h>
+#include <dart_vlc/dart_vlc_plugin.h>
 #include <desktop_drop/desktop_drop_plugin.h>
 #include <maps_launcher/maps_launcher_plugin.h>
 #include <objectbox_flutter_libs/objectbox_flutter_libs_plugin.h>
+#include <pasteboard/pasteboard_plugin.h>
 #include <printing/printing_plugin.h>
 #include <quick_notify/quick_notify_plugin.h>
 #include <system_tray/system_tray_plugin.h>
@@ -20,6 +22,9 @@ void fl_register_plugins(FlPluginRegistry* registry) {
   g_autoptr(FlPluginRegistrar) bitsdojo_window_linux_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "BitsdojoWindowPlugin");
   bitsdojo_window_plugin_register_with_registrar(bitsdojo_window_linux_registrar);
+  g_autoptr(FlPluginRegistrar) dart_vlc_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(registry, "DartVlcPlugin");
+  dart_vlc_plugin_register_with_registrar(dart_vlc_registrar);
   g_autoptr(FlPluginRegistrar) desktop_drop_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "DesktopDropPlugin");
   desktop_drop_plugin_register_with_registrar(desktop_drop_registrar);
@@ -29,6 +34,9 @@ void fl_register_plugins(FlPluginRegistry* registry) {
   g_autoptr(FlPluginRegistrar) objectbox_flutter_libs_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "ObjectboxFlutterLibsPlugin");
   objectbox_flutter_libs_plugin_register_with_registrar(objectbox_flutter_libs_registrar);
+  g_autoptr(FlPluginRegistrar) pasteboard_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(registry, "PasteboardPlugin");
+  pasteboard_plugin_register_with_registrar(pasteboard_registrar);
   g_autoptr(FlPluginRegistrar) printing_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "PrintingPlugin");
   printing_plugin_register_with_registrar(printing_registrar);

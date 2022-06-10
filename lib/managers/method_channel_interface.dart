@@ -15,8 +15,9 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.da
 import 'package:bluebubbles/layouts/testing_mode.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/firebase/database_manager.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
@@ -96,10 +97,10 @@ class MethodChannelInterface {
         String address = call.arguments.toString();
 
         // We remove the brackets from the formatting
-        address = getServerAddress(address: address.substring(1, address.length - 1))!;
+        address = sanitizeServerAddress(address: address.substring(1, address.length - 1))!;
 
         // And then tell the socket to set the new server address
-        await SocketManager().newServer(address);
+        await fdb.connectNewAddress(address);
 
         return Future.value("");
       case "new-message":
@@ -184,12 +185,19 @@ class MethodChannelInterface {
           return Future.value("");
         }
 
-        // Remove the notificaiton from that chat
-        SocketManager().removeChatNotification(chat);
+        // Remove the notification from that chat
+        await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
 
         if (SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
-          await SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+          await api.markChatRead(chat.guid);
         }
+
+        // In case this method is called when the app is in a background isolate
+        await closeThread();
+
+        return Future.value("");
+      case "chat-read-status-changed":
+        await ActionHandler.handleChatStatusChange(call.arguments["chatGuid"], !call.arguments["read"]);
 
         // In case this method is called when the app is in a background isolate
         await closeThread();
@@ -302,9 +310,7 @@ class MethodChannelInterface {
           previousLightBg = lightBg;
           previousDarkBg = darkBg;
           isRunning = true;
-          print("primary color is $primary");
-          print("light bg color is $lightBg");
-          print("dark bg color is $darkBg");
+
           var darkTheme = ThemeObject.getThemes().firstWhere((e) => e.name == "Music Theme (Dark)");
           var lightTheme = ThemeObject.getThemes().firstWhere((e) => e.name == "Music Theme (Light)");
           darkTheme.fetchData();
@@ -350,8 +356,6 @@ class MethodChannelInterface {
         return Future.value("");
       case "remove-sendPort":
         IsolateNameServer.removePortNameMapping('bg_isolate');
-        await prefs.remove('objectbox-reference');
-        print("Removed sendPort and objectbox reference because Activity was destroyed");
         store.close();
         return Future.value("");
       default:
@@ -364,7 +368,6 @@ class MethodChannelInterface {
     // Only do this if we are indeed running in the background
     if (headless) {
       Logger.info("Closing the background isolate...", tag: "MCI-CloseThread");
-      await prefs.remove('objectbox-reference');
       store.close();
       // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");

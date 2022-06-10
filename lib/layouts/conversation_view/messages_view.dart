@@ -6,26 +6,26 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
-import 'package:cross_file/cross_file.dart';
+import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 
 class MessagesView extends StatefulWidget {
   final MessageBloc? messageBloc;
@@ -129,9 +129,9 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
     if (widget.initComplete != null) widget.initComplete!();
 
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) async {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       widgetsBuilt = true;
       EventDispatcher().emit("update-highlight", widget.chat!.guid);
       // See if we need to load anything from the message bloc
@@ -161,12 +161,11 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
     if (kIsWeb || kIsDesktop) return await resetReplies();
 
     Logger.info("Getting smart replies...");
-    Map<String, dynamic> results = await smartReply.suggestReplies();
+    SmartReplySuggestionResult results = await smartReply.suggestReplies();
 
-    if (results.containsKey('suggestions')) {
-      List<SmartReplySuggestion> suggestions = results['suggestions'];
-      Logger.info("Smart Replies found: ${suggestions.length}");
-      replies = suggestions.map((e) => e.getText()).toList().toSet().toList();
+    if (results.status == SmartReplySuggestionResultStatus.success) {
+      Logger.info("Smart Replies found: ${results.suggestions.length}");
+      replies = results.suggestions;
       Logger.debug(replies.toString());
     }
 
@@ -299,9 +298,13 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
       reversed.sublist(reversed.length - sampleSize).forEach((message) {
         if (!isEmptyString(message.fullText, stripWhitespace: true) && !kIsWeb && !kIsDesktop) {
           if (message.isFromMe ?? false) {
-            smartReply.addConversationForLocalUser(message.fullText);
+            smartReply.addMessageToConversationFromLocalUser(
+                message.fullText, message.dateCreated?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch);
           } else {
-            smartReply.addConversationForRemoteUser(message.fullText, message.handle?.address ?? "participant");
+            smartReply.addMessageToConversationFromRemoteUser(
+                message.fullText,
+                message.dateCreated?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch,
+                message.handle?.address ?? "participant");
           }
         }
       });
@@ -317,9 +320,9 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
       if (originalMessageLength < _messages.length) {
         for (int i = originalMessageLength; i < _messages.length; i++) {
           if (_listKey != null && _listKey!.currentState != null) {
-            if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+            if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
               // wait for the end of that frame.
-              await SchedulerBinding.instance!.endOfFrame;
+              await SchedulerBinding.instance.endOfFrame;
             }
             _listKey!.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
           }
@@ -328,9 +331,9 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
         for (int i = originalMessageLength; i >= _messages.length; i--) {
           if (_listKey != null && _listKey!.currentState != null) {
             try {
-              if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+              if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
                 // wait for the end of that frame.
-                await SchedulerBinding.instance!.endOfFrame;
+                await SchedulerBinding.instance.endOfFrame;
               }
               _listKey!.currentState!
                   .removeItem(i, (context, animation) => Container(), duration: Duration(milliseconds: 0));
@@ -417,43 +420,45 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
     final _scrollController = scrollController ?? ScrollController();
     final Widget child = FocusScope(
       node: _node,
+      onFocusChange:
+          kIsDesktop || kIsWeb ? (focus) => focus ? EventDispatcher().emit('focus-keyboard', null) : null : null,
       child: Stack(
         children: [
           GestureDetector(
-              behavior: HitTestBehavior.deferToChild,
-              // I have no idea why this works
-              onPanDown: kIsDesktop || kIsWeb ? (details) => _node.requestFocus() : null,
-              onHorizontalDragStart: (details) {},
-              onHorizontalDragUpdate: (details) {
-                if (SettingsManager().settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
-                  ChatManager().activeChat!.timeStampOffset += details.delta.dx * 0.3;
-                }
-              },
-              onHorizontalDragEnd: (details) {
-                if (SettingsManager().settings.skin.value != Skins.Samsung) ChatManager().activeChat!.timeStampOffset = 0;
-              },
-              onHorizontalDragCancel: () {
-                if (SettingsManager().settings.skin.value != Skins.Samsung) ChatManager().activeChat!.timeStampOffset = 0;
-              },
-              child: ImprovedScrolling(
-                enableMMBScrolling: true,
-                mmbScrollConfig: MMBScrollConfig(
-                  velocityBackpropagationPercent: -30.0 / 100.0,
-                  customScrollCursor: DefaultCustomScrollCursor(
-                    cursorColor: context.textTheme.subtitle1!.color!,
-                    backgroundColor: Colors.white,
-                    borderColor: context.textTheme.headline1!.color!,
-                  ),
-                ),
-                scrollController: _scrollController,
-                child: AnimatedOpacity(
-                  opacity: _messages.isEmpty ? 0 : 1,
-                  duration: Duration(milliseconds: 150),
-                  curve: Curves.easeIn,
-                  child: CustomScrollView(
+            behavior: HitTestBehavior.deferToChild,
+            // I have no idea why this works
+            onPanDown: kIsDesktop || kIsWeb ? (details) => _node.requestFocus() : null,
+            onHorizontalDragStart: (details) {},
+            onHorizontalDragUpdate: (details) {
+              if (SettingsManager().settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
+                ChatManager().activeChat!.timeStampOffset += details.delta.dx * 0.3;
+              }
+            },
+            onHorizontalDragEnd: (details) {
+              if (SettingsManager().settings.skin.value != Skins.Samsung) {
+                ChatManager().activeChat!.timeStampOffset = 0;
+              }
+            },
+            onHorizontalDragCancel: () {
+              if (SettingsManager().settings.skin.value != Skins.Samsung) {
+                ChatManager().activeChat!.timeStampOffset = 0;
+              }
+            },
+            child: AnimatedOpacity(
+              opacity: _messages.isEmpty ? 0 : 1,
+              duration: Duration(milliseconds: 150),
+              curve: Curves.easeIn,
+              child: ScrollbarWrapper(
+                reverse: true,
+                controller: _scrollController,
+                showScrollbar: true,
+                child: Obx(
+                  () => CustomScrollView(
                     controller: _scrollController,
                     reverse: true,
-                    physics: ThemeSwitcher.getScrollPhysics(),
+                    physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                        ? NeverScrollableScrollPhysics()
+                        : ThemeSwitcher.getScrollPhysics(),
                     slivers: <Widget>[
                       if (showSmartReplies)
                         StreamBuilder<List<String?>>(
@@ -601,7 +606,9 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                     ],
                   ),
                 ),
-              )),
+              ),
+            ),
+          ),
           Positioned.fill(
             child: IgnorePointer(
               child: Obx(() => Container(
@@ -642,7 +649,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
   @override
   void dispose() {
     if (!smartReplyController.isClosed) smartReplyController.close();
-    smartReply.close();
+    if (!kIsWeb && !kIsDesktop) smartReply.close();
     super.dispose();
   }
 }

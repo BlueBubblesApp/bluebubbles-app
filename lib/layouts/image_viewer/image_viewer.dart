@@ -7,7 +7,7 @@ import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
@@ -30,7 +30,7 @@ class ImageViewer extends StatefulWidget {
   final bool showInteractions;
 
   @override
-  _ImageViewerState createState() => _ImageViewerState();
+  State<ImageViewer> createState() => _ImageViewerState();
 }
 
 class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClientMixin {
@@ -81,7 +81,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       opacity: showOverlay ? 1.0 : 0.0,
       duration: Duration(milliseconds: 125),
       child: Container(
-        height: 115.0,
+        height: kIsDesktop ? 50 : 115.0,
         width: CustomNavigator.width(context),
         color: Colors.black.withOpacity(0.65),
         child: SafeArea(
@@ -90,7 +90,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
           bottom: false,
           child: Container(
             height: 50,
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            child: Row(mainAxisAlignment: kIsDesktop ? MainAxisAlignment.end : MainAxisAlignment.spaceBetween, children: [
+              if (!kIsDesktop)
               Padding(
                 padding: EdgeInsets.only(top: 10.0, left: 5),
                 child: CupertinoButton(
@@ -113,7 +114,11 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       padding: EdgeInsets.symmetric(horizontal: 5),
                       onPressed: () async {
                         List<Widget> metaWidgets = [];
-                        for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
+                        final metadataMap = <String, dynamic>{
+                          'filename': widget.attachment.transferName,
+                          'mime': widget.attachment.mimeType,
+                        }..addAll(widget.attachment.metadata ?? {});
+                        for (var entry in metadataMap.entries.where((element) => element.value != null)) {
                           metaWidgets.add(RichText(
                               text: TextSpan(children: [
                             TextSpan(
@@ -251,6 +256,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: Colors.black,

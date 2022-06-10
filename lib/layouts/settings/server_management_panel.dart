@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -9,6 +8,8 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
+import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -28,18 +29,12 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:version/version.dart';
 
-class ServerManagementPanelBinding extends Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<ServerManagementPanelController>(() => ServerManagementPanelController());
-  }
-}
-
 class ServerManagementPanelController extends GetxController {
   final RxnInt latency = RxnInt();
   final RxnString fetchStatus = RxnString();
   final RxnString serverVersion = RxnString();
   final RxnString macOSVersion = RxnString();
+  final RxnString iCloudAccount = RxnString();
   final RxnInt serverVersionCode = RxnInt();
   final RxBool privateAPIStatus = RxBool(false);
   final RxBool helperBundleStatus = RxBool(false);
@@ -63,18 +58,25 @@ class ServerManagementPanelController extends GetxController {
     _settingsCopy = SettingsManager().settings;
     _fcmDataCopy = SettingsManager().fcmData;
     if (SocketManager().state.value == SocketState.CONNECTED) {
-      int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-      SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-        int later = DateTime.now().toUtc().millisecondsSinceEpoch;
-        latency.value = later - now;
-        macOSVersion.value = res['data']['os_version'];
-        serverVersion.value = res['data']['server_version'];
-        Version version = Version.parse(serverVersion.value);
-        serverVersionCode.value = version.major * 100 + version.minor * 21 + version.patch;
-        privateAPIStatus.value = res['data']['private_api'] ?? false;
-        helperBundleStatus.value = res['data']['helper_connected'] ?? false;
-        proxyService.value = res['data']['proxy_service'];
-      });
+      getServerStats();
+    }
+    super.onInit();
+  }
+
+  void getServerStats() {
+    int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    api.serverInfo().then((response) {
+      int later = DateTime.now().toUtc().millisecondsSinceEpoch;
+      latency.value = later - now;
+      macOSVersion.value = response.data['data']['os_version'];
+      serverVersion.value = response.data['data']['server_version'];
+      Version version = Version.parse(serverVersion.value);
+      serverVersionCode.value = version.major * 100 + version.minor * 21 + version.patch;
+      privateAPIStatus.value = response.data['data']['private_api'] ?? false;
+      helperBundleStatus.value = response.data['data']['helper_connected'] ?? false;
+      proxyService.value = response.data['data']['proxy_service'];
+      iCloudAccount.value = response.data['data']['detected_icloud'];
+
       api.serverStatTotals().then((response) {
         if (response.data['status'] == 200) {
           stats.addAll(response.data['data'] ?? {});
@@ -84,9 +86,14 @@ class ServerManagementPanelController extends GetxController {
             }
           });
         }
+        opacity.value = 1.0;
+      }).catchError((_) {
+        showSnackbar("Error", "Failed to load server statistics!");
+        opacity.value = 1.0;
       });
-    }
-    super.onInit();
+    }).catchError((_) {
+      showSnackbar("Error", "Failed to load server details!");
+    });
   }
 
   void saveSettings() async {
@@ -100,25 +107,15 @@ class ServerManagementPanelController extends GetxController {
   }
 }
 
-class ServerManagementPanel extends GetView<ServerManagementPanelController> {
+class ServerManagementPanel extends StatelessWidget {
+  final controller = Get.put(ServerManagementPanelController());
 
   @override
   Widget build(BuildContext context) {
     final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor;
-    Color tileColor;
-    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
-    } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
-      tileColor = headerColor;
-    }
+    Color headerColor = context.theme.headerColor;
+    Color tileColor = context.theme.tileColor;
 
     return SettingsScaffold(
       title: "Connection & Server Management",
@@ -171,11 +168,15 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                                         showSnackbar('Copied', "Address copied to clipboard");
                                       }),
                                     TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Latency: ${redact ? "Redacted" : ((controller.latency.value ?? "N/A").toString() + " ms")}"),
+                                    TextSpan(text: "Latency: ${redact ? "Redacted" : ("${controller.latency.value ?? "N/A"} ms")}"),
                                     TextSpan(text: "\n\n"),
                                     TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
                                     TextSpan(text: "\n\n"),
                                     TextSpan(text: "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
+                                    if (controller.iCloudAccount.value != null)
+                                      TextSpan(text: "\n\n"),
+                                    if (controller.iCloudAccount.value != null)
+                                      TextSpan(text: "iCloud Account: ${redact ? "Redacted" : controller.iCloudAccount.value}"),
                                     TextSpan(text: "\n\n"),
                                     TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
                                   ]
@@ -183,17 +184,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                               onTap: () {
                                 if (SocketManager().state.value != SocketState.CONNECTED) return;
                                 controller.opacity.value = 0.0;
-                                int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                                SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-                                  int later = DateTime.now().toUtc().millisecondsSinceEpoch;
-                                  controller.latency.value = later - now;
-                                  controller.macOSVersion.value = res['data']['os_version'];
-                                  controller.serverVersion.value = res['data']['server_version'];
-                                  controller.privateAPIStatus.value = res['data']['private_api'];
-                                  controller.helperBundleStatus.value = res['data']['helper_connected'];
-                                  controller.proxyService.value = res['data']['proxy_service'];
-                                  controller.opacity.value = 1.0;
-                                });
+                                controller.getServerStats();
                               },
                             ),
                           ),
@@ -392,20 +383,20 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                   ) : SizedBox.shrink()),*/
                   SettingsTile(
                     title: "Re-configure with BlueBubbles Server",
-                    subtitle: kIsWeb || kIsDesktop ? "Tap for manual entry" : "Tap to scan QR code\nLong press for manual entry",
+                    subtitle: kIsWeb || kIsDesktop ? "Click for manual entry" : "Tap to scan QR code\nLong press for manual entry",
                     isThreeLine: kIsWeb || kIsDesktop ? false : true,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.gear,
                       materialIcon: Icons.room_preferences,
                     ),
                     backgroundColor: tileColor,
-                    onLongPress: () {
+                    onLongPress: kIsWeb || kIsDesktop ? null : () {
                       showDialog(
                         context: context,
                         builder: (connectContext) => TextInputURL(
                           onConnect: () {
                             Get.back();
-                            SocketManager().registerFcmDevice();
+                            fcm.registerDevice();
                             SocketManager()
                                 .startSocketIO(forceNewConnection: true);
                           },
@@ -421,7 +412,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         builder: (connectContext) => TextInputURL(
                           onConnect: () {
                             Get.back();
-                            SocketManager().registerFcmDevice();
+                            fcm.registerDevice();
                             SocketManager()
                                 .startSocketIO(forceNewConnection: true);
                           },
@@ -445,7 +436,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       } catch (e) {
                         return;
                       }
-                      if (fcmData != null && fcmData[0] != null && getServerAddress(address: fcmData[1]) != null) {
+                      if (fcmData != null && fcmData[0] != null && sanitizeServerAddress(address: fcmData[1]) != null) {
                         controller._fcmDataCopy = FCMData(
                           projectID: fcmData[2],
                           storageBucket: fcmData[3],
@@ -455,11 +446,11 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                           applicationID: fcmData[7],
                         );
                         controller._settingsCopy.guidAuthKey.value = fcmData[0];
-                        controller._settingsCopy.serverAddress.value = getServerAddress(address: fcmData[1])!;
+                        controller._settingsCopy.serverAddress.value = sanitizeServerAddress(address: fcmData[1])!;
 
                         SettingsManager().saveSettings(controller._settingsCopy);
                         SettingsManager().saveFCMData(controller._fcmDataCopy!);
-                        SocketManager().registerFcmDevice();
+                        fcm.registerDevice();
                       }
                     },
                   ),
@@ -524,21 +515,15 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
 
                       controller.fetchStatus.value = "Fetching logs, please wait...";
 
-                      SocketManager().sendMessage("get-logs", {"count": 500}, (Map<String, dynamic> res) async {
-                        if (res['status'] != 200) {
-                          controller.fetchStatus.value = "Failed to fetch logs!";
-
-                          return;
-                        }
-
+                      api.serverLogs().then((response) async {
                         if (kIsDesktop) {
                           String downloadsPath = (await getDownloadsDirectory())!.path;
-                          File(join(downloadsPath, "main.log")).writeAsStringSync(res['data']);
+                          File(join(downloadsPath, "main.log")).writeAsStringSync(response.data['data']);
                           return showSnackbar('Success', 'Saved logs to $downloadsPath!');
                         }
 
                         if (kIsWeb) {
-                          final bytes = utf8.encode(res['data']);
+                          final bytes = utf8.encode(response.data['data']);
                           final content = base64.encode(bytes);
                           html.AnchorElement(
                               href: "data:application/octet-stream;charset=utf-16le;base64,$content")
@@ -554,7 +539,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                           logFile.deleteSync();
                         }
 
-                        logFile.writeAsStringSync(res['data']);
+                        logFile.writeAsStringSync(response.data['data']);
 
                         try {
                           Share.file("BlueBubbles Server Log", logFile.absolute.path);
@@ -562,6 +547,8 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         } catch (ex) {
                           controller.fetchStatus.value = "Failed to share file! ${ex.toString()}";
                         }
+                      }).catchError((_) {
+                        controller.fetchStatus.value = "Failed to fetch logs!";
                       });
                     },
                   )),
@@ -582,7 +569,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         materialIcon: Icons.sms,
                       ),
                       onTap: () async {
-                        if (![SocketState.CONNECTED].contains(SocketManager().state.value) || controller.isRestartingMessages.value) return;
+                        if (SocketManager().state.value != SocketState.CONNECTED || controller.isRestartingMessages.value) return;
 
                         controller.isRestartingMessages.value = true;
 
@@ -593,22 +580,12 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         // Save the last time we restarted
                         controller.lastRestartMessages = now;
 
-                        // Create a temporary functon so we can call it easily
-                        void stopRestarting() {
-                          controller.isRestartingMessages.value = false;
-                        }
-
                         // Execute the restart
-                        try {
-                          // If it fails or there is an endpoint error, stop the loader
-                          await SocketManager().sendMessage("restart-messages-app", null, (_) {
-                            stopRestarting();
-                          }).catchError((_) {
-                            stopRestarting();
-                          });
-                        } finally {
-                          stopRestarting();
-                        }
+                        api.restartImessage().then((_) {
+                          controller.isRestartingMessages.value = false;
+                        }).catchError((_) {
+                          controller.isRestartingMessages.value = false;
+                        });
                       },
                       trailing: Obx(() => (!controller.isRestartingMessages.value)
                           ? Icon(Icons.refresh, color: Colors.grey)
@@ -638,7 +615,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                     if (SettingsManager().settings.enablePrivateAPI.value
                         && (controller.serverVersionCode.value ?? 0) >= 41) {
                       return SettingsTile(
-                          title: "Restart Private API",
+                          title: "Restart Private API & Services",
                           subtitle: controller.isRestartingPrivateAPI.value && SocketManager().state.value == SocketState.CONNECTED
                               ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the Private API" : "Disconnected, cannot restart",
                           backgroundColor: tileColor,
@@ -647,7 +624,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                             materialIcon: Icons.gpp_maybe,
                           ),
                           onTap: () async {
-                            if (![SocketState.CONNECTED].contains(SocketManager().state.value) || controller.isRestartingPrivateAPI.value) return;
+                            if (SocketManager().state.value != SocketState.CONNECTED || controller.isRestartingPrivateAPI.value) return;
 
                             controller.isRestartingPrivateAPI.value = true;
 
@@ -658,22 +635,12 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                             // Save the last time we restarted
                             controller.lastRestartPrivateAPI = now;
 
-                            // Create a temporary functon so we can call it easily
-                            void stopRestarting() {
-                              controller.isRestartingPrivateAPI.value = false;
-                            }
-
                             // Execute the restart
-                            try {
-                              // If it fails or there is an endpoint error, stop the loader
-                              await SocketManager().sendMessage("restart-private-api", null, (_) {
-                                stopRestarting();
-                              }).catchError((_) {
-                                stopRestarting();
-                              });
-                            } finally {
-                              stopRestarting();
-                            }
+                            api.softRestart().then((_) {
+                              controller.isRestartingPrivateAPI.value = false;
+                            }).catchError((_) {
+                              controller.isRestartingPrivateAPI.value = false;
+                            });
                           },
                           trailing: (!controller.isRestartingPrivateAPI.value)
                               ? Icon(Icons.refresh, color: Colors.grey)
@@ -728,12 +695,12 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                           if (kIsDesktop || kIsWeb) {
                             var db = FirebaseDatabase(databaseURL: SettingsManager().fcmData?.firebaseURL);
                             var ref = db.reference().child('config').child('nextRestart');
-                            ref.set(DateTime
+                            await ref.set(DateTime
                                 .now()
                                 .toUtc()
                                 .millisecondsSinceEpoch);
                           } else {
-                            MethodChannelInterface().invokeMethod(
+                            await MethodChannelInterface().invokeMethod(
                                 "set-next-restart", {"value": DateTime
                                 .now()
                                 .toUtc()
@@ -776,10 +743,10 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       materialIcon: Icons.dvr,
                     ),
                     onTap: () async {
-                      var data = await SocketManager().sendMessage("check-for-server-update", {}, (_) {});
-                      if (data['status'] == 200) {
-                        bool available = data['data']['available'] ?? false;
-                        Map<String, dynamic> metadata = data['data']['metadata'] ?? {};
+                      final response = await api.checkUpdate();
+                      if (response.statusCode == 200) {
+                        bool available = response.data['data']['available'] ?? false;
+                        Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
                         Get.defaultDialog(
                           title: "Update Check",
                           titleStyle: Theme.of(context).textTheme.headline1,
@@ -820,7 +787,7 @@ class SyncDialog extends StatefulWidget {
   SyncDialog({Key? key}) : super(key: key);
 
   @override
-  _SyncDialogState createState() => _SyncDialogState();
+  State<SyncDialog> createState() => _SyncDialogState();
 }
 
 class _SyncDialogState extends State<SyncDialog> {
@@ -835,7 +802,7 @@ class _SyncDialogState extends State<SyncDialog> {
     if (lookback == null) return;
 
     DateTime now = DateTime.now().toUtc().subtract(lookback!);
-    SocketManager().fetchMessages(null, after: now.millisecondsSinceEpoch)!.then((dynamic messages) {
+    MessageManager().getMessages(withChats: true, withAttachments: true, withHandles: true, after: now.millisecondsSinceEpoch, limit: 100).then((dynamic messages) {
       if (mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";

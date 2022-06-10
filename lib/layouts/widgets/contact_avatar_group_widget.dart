@@ -21,7 +21,7 @@ class ContactAvatarGroupWidget extends StatefulWidget {
   final Function()? onTap;
 
   @override
-  _ContactAvatarGroupWidgetState createState() => _ContactAvatarGroupWidgetState();
+  State<ContactAvatarGroupWidget> createState() => _ContactAvatarGroupWidgetState();
 }
 
 class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
@@ -53,7 +53,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
     return Obx(
       () {
         final avatarSize = widget.size * SettingsManager().settings.avatarScale.value;
-        if (widget.chat.customAvatarPath != null) {
+        if (widget.chat.customAvatarPath != null && !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value)) {
           dynamic file = File(widget.chat.customAvatarPath!);
           return Stack(
             children: [

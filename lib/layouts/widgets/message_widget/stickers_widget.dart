@@ -3,7 +3,7 @@ import 'dart:isolate';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +17,7 @@ class StickersWidget extends StatefulWidget {
   final Size size;
 
   @override
-  _StickersWidgetState createState() => _StickersWidgetState();
+  State<StickersWidget> createState() => _StickersWidgetState();
 }
 
 class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAliveClientMixin {

@@ -1,18 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:supercharged/supercharged.dart';
 import 'package:version/version.dart';
 
 class ContactManager {
@@ -120,6 +124,32 @@ class ContactManager {
     return match;
   }
 
+  Future<String?> getFormattedAddress(String address) async {
+    if (address.isEmpty) return null;
+
+    String saniAddress = address.numericOnly();
+    String? match = _addressToFormatted[saniAddress];
+
+    // If we can't find the match, we want to match based on last 7 digits
+    if (match == null) {
+      String? matchedAddress = findAddressMatch(saniAddress);
+      if (matchedAddress != null) {
+        match = _addressToFormatted[matchedAddress];
+      }
+    }
+
+    if (match == null) {
+      try {
+        match = await formatPhoneNumber(saniAddress);
+        _addressToFormatted[saniAddress] = match;
+      } catch (ex) {
+        // Dont do anything
+      }
+    }
+
+    return match;
+  }
+
   Future<bool> loadContacts({headless = false, force = false, loadAvatars = false}) async {
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
@@ -156,12 +186,12 @@ class ContactManager {
                 id: e.id,
               ))
           .toList();
-    } else {
-      await fetchContactsDesktop();
-    }
 
-    // This is _reuquired_ for the `getContacts()` function to be used
-    await buildCacheMap();
+      // This is _required_ for the `getContacts()` function to be used
+      await buildCacheMap();
+    } else {
+      await fetchContactsDesktop(logger: print);
+    }
 
     loadFakeInfo();
 
@@ -213,50 +243,83 @@ class ContactManager {
   }
 
   Future<void> fetchContactsDesktop({Function(String)? logger}) async {
+    contacts.clear();
+
+    logger?.call("Fetching contacts (no avatars)...");
     try {
-      contacts.clear();
-      logger?.call("Trying to fetch contacts from Android...");
-      var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
-      if (vcfs['data'] != null) {
-        logger?.call("Found Android contacts!");
-        if (vcfs['data'] is String) {
-          logger?.call("Parsing string into JSON...");
-          vcfs['data'] = jsonDecode(vcfs['data']);
+      final response = await api.contacts();
+
+      if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])!) {
+        logger?.call("Found contacts!");
+
+        for (Map<String, dynamic> map in response.data['data']) {
+          final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
+          final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+          final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+          logger?.call("Parsing contact: $displayName");
+          contacts.add(Contact(
+            id: (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString(),
+            displayName: displayName,
+            emails: emails,
+            phones: phones,
+          ));
         }
-        for (var c in vcfs['data']) {
-          logger?.call("Parsing contact: ${c['displayName']}");
-          contacts.add(Contact.fromMap(c));
-        }
+      } else {
+        logger?.call("No contacts found!");
       }
+      logger?.call("Finished contacts sync (no avatars)");
     } catch (e, s) {
-      print(e);
-      print(s);
       logger?.call("Got exception: $e");
       logger?.call(s.toString());
     }
-    if (contacts.isEmpty) {
-      logger?.call("Android contacts didn't exist, falling back to macOS contacts...");
-      try {
-        var response = await api.contacts();
-        logger?.call("Found macOS contacts!");
-        for (Map<String, dynamic> map in response.data['data']) {
-          logger?.call(
-              "Parsing contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
-          contacts.add(Contact(
-            id: randomString(8),
-            displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
-            emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-            phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-          ));
+
+    await buildCacheMap();
+    EventDispatcher().emit('update-contacts', null);
+
+    logger?.call("Fetching contacts (with avatars)...");
+    try {
+      api.contacts(withAvatars: true).then((response) async {
+        if (!isNullOrEmpty(response.data['data'])!) {
+          logger?.call("Found contacts!");
+
+          for (Map<String, dynamic> map in response.data['data'].where((e) => !isNullOrEmpty(e['avatar'])!)) {
+            final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
+            logger?.call("Adding avatar for contact: $displayName");
+            final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+            final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
+            for (Contact contact in contacts) {
+              bool updateAvatar = !contact.hasAvatar && (contact.id == (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString());
+              List<String> addresses = [...contact.phones, ...contact.emails];
+              List<String> _addresses = [...phones, ...emails];
+              for (String a in addresses) {
+                if (updateAvatar) {
+                  break;
+                }
+                String? formatA = await getFormattedAddress(a);
+                if (formatA == null || formatA.isEmpty) continue;
+                for (String _a in _addresses) {
+                  String? _formatA = await getFormattedAddress(_a);
+                  if (formatA == _formatA) {
+                    updateAvatar = true;
+                    break;
+                  }
+                }
+              }
+              if (updateAvatar) {
+                contact.avatar.value = base64Decode(map['avatar'].toString());
+                contact.avatarHiRes.value = base64Decode(map['avatar'].toString());
+              }
+            }
+          }
+        } else {
+          logger?.call("No contacts found!");
         }
-      } catch (e, s) {
-        print(e);
-        print(s);
-        logger?.call("Got exception: $e");
-        logger?.call(s.toString());
-      }
+        logger?.call("Finished contacts sync (with avatars)");
+      });
+    } catch (e, s) {
+      logger?.call("Got exception: $e");
+      logger?.call(s.toString());
     }
-    logger?.call("Finished contacts sync");
   }
 
   void loadFakeInfo() {
@@ -324,7 +387,6 @@ class ContactManager {
     String address = handle.address;
     Contact? contact = getContact(address);
     if (contact != null) return contact.displayName;
-
 
     if (address.startsWith("e:")) {
       address = address.substring(2);

@@ -16,7 +16,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/send_effect_picker.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -36,6 +36,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:get/get.dart';
 import 'package:giphy_get/giphy_get.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
 import 'package:transparent_pointer/transparent_pointer.dart';
@@ -96,7 +97,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   Stream get stream => _streamController.stream;
 
-  bool get _canRecord => controller!.text.isEmpty && pickedImages.isEmpty && subjectController!.text.isEmpty;
+  bool get _canRecord => controller!.text.isEmpty && pickedImages.isEmpty && subjectController!.text.isEmpty && !recordDelay;
+  bool recordDelay = false;
+  Timer? _debounce;
 
   final RxBool showShareMenu = false.obs;
 
@@ -130,7 +133,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           RegExpMatch match = matches.lastWhere((m) => m.start < controller!.selection.start);
           String char = emojiMatches.value[index].char;
           emojiMatches.value = <Emoji>[];
-          String _text = text.substring(0, match.start) + char + " " + text.substring(match.end);
+          String _text = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
           controller!.text = _text;
           controller!.selection = TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1));
         } else {
@@ -548,7 +551,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       focusNode!.unfocus();
       subjectFocusNode!.unfocus();
     }
-    if (!showMenu && !(await PhotoManager.requestPermission())) {
+    if (!showMenu && !(await PhotoManager.requestPermissionExtend()).isAuth) {
       showShareMenu.value = false;
       return;
     }
@@ -617,6 +620,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       children: <Widget>[
         buildShareButton(),
         if (kIsWeb || kIsDesktop) buildGIFButton(),
+        if (kIsDesktop) buildLocationButton(),
         Flexible(
           flex: 1,
           fit: FlexFit.loose,
@@ -819,7 +823,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         final Uint8List data = response.data;
                         addAttachment(PlatformFile(
                           path: null,
-                          name: (gif.title ?? randomString(8)) + ".gif",
+                          name: "${gif.title ?? randomString(8)}.gif",
                           size: data.length,
                           bytes: data,
                         ));
@@ -841,6 +845,55 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         ? context.theme.textTheme.bodyText1!.color
                         : Colors.white,
                     size: 26,
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildLocationButton() {
+    double size = SettingsManager().settings.skin.value == Skins.iOS ? 37 : 40;
+    return Container(
+      height: size,
+      width: size,
+      margin: EdgeInsets.only(
+          right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
+      child: ClipOval(
+        child: Material(
+          color: SettingsManager().settings.skin.value == Skins.Samsung
+              ? Colors.transparent
+              : Theme.of(context).primaryColor,
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              bottomSheetTheme: BottomSheetThemeData(
+                backgroundColor: Theme.of(context).backgroundColor,
+                modalBackgroundColor: Theme.of(context).backgroundColor,
+              ),
+              brightness:
+              Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.light : Brightness.dark,
+              canvasColor: Theme.of(context).backgroundColor,
+              iconTheme: IconThemeData(color: Colors.black45),
+            ),
+            child: Builder(builder: (context) {
+              return InkWell(
+                onTap: () async {
+                  await Share.locationDesktop(ChatController.forGuid(widget.chatGuid)!.chat);
+                },
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 0,
+                      right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1,
+                      left: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 2),
+                  child: Icon(
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined,
+                    color: SettingsManager().settings.skin.value == Skins.Samsung
+                        ? context.theme.textTheme.bodyText1!.color
+                        : Colors.white,
+                    size: 20,
                   ),
                 ),
               );
@@ -923,6 +976,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               RawKeyEventDataWindows? windowsData;
               RawKeyEventDataLinux? linuxData;
               RawKeyEventDataWeb? webData;
+              RawKeyEventDataAndroid? androidData;
               if (event.data is RawKeyEventDataWindows) {
                 windowsData = event.data as RawKeyEventDataWindows;
               } else if (event.data is RawKeyEventDataLinux) {
@@ -930,6 +984,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               } else if (event.data is RawKeyEventDataWeb) {
                 webData = event.data as RawKeyEventDataWeb;
                 print(webData.code);
+              } else if (event.data is RawKeyEventDataAndroid) {
+                androidData = event.data as RawKeyEventDataAndroid;
               }
 
               int maxShown = context.height / 3 ~/ 48;
@@ -937,7 +993,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               int downMovementIndex = maxShown * 2 ~/ 3;
 
               // Down arrow
-              if (windowsData?.keyCode == 40 || linuxData?.keyCode == 65364 || webData?.code == "ArrowDown") {
+              if (windowsData?.keyCode == 40 || linuxData?.keyCode == 65364 || webData?.code == "ArrowDown" || androidData?.physicalKey == PhysicalKeyboardKey.arrowDown) {
                 if (emojiSelectedIndex.value < emojiMatches.value.length - 1) {
                   emojiSelectedIndex.value++;
                   if (emojiSelectedIndex.value >= downMovementIndex &&
@@ -945,12 +1001,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     emojiController
                         .jumpTo(max((emojiSelectedIndex.value - downMovementIndex) * 48, emojiController.offset));
                   }
+                  return KeyEventResult.handled;
                 }
-                return KeyEventResult.handled;
               }
 
               // Up arrow
-              if (windowsData?.keyCode == 38 || linuxData?.keyCode == 65362 || webData?.code == "ArrowUp") {
+              if (windowsData?.keyCode == 38 || linuxData?.keyCode == 65362 || webData?.code == "ArrowUp" || androidData?.physicalKey == PhysicalKeyboardKey.arrowUp) {
                 if (emojiSelectedIndex.value > 0) {
                   emojiSelectedIndex.value--;
                   if (emojiSelectedIndex.value >= upMovementIndex &&
@@ -958,12 +1014,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     emojiController
                         .jumpTo(min((emojiSelectedIndex.value - upMovementIndex) * 48, emojiController.offset));
                   }
+                  return KeyEventResult.handled;
                 }
-                return KeyEventResult.handled;
               }
 
               // Tab
-              if (windowsData?.keyCode == 9 || linuxData?.keyCode == 65289 || webData?.code == "Tab") {
+              if (windowsData?.keyCode == 9 || linuxData?.keyCode == 65289 || webData?.code == "Tab" || androidData?.physicalKey == PhysicalKeyboardKey.tab) {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
                   EventDispatcher()
                       .emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
@@ -985,7 +1041,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
 
               // Escape
-              if (windowsData?.keyCode == 27 || linuxData?.keyCode == 65307 || webData?.code == "Escape") {
+              if (windowsData?.keyCode == 27 || linuxData?.keyCode == 65307 || webData?.code == "Escape" || androidData?.physicalKey == PhysicalKeyboardKey.escape) {
                 if (replyToMessage.value != null) {
                   replyToMessage.value = null;
                   return KeyEventResult.handled;
@@ -1010,9 +1066,25 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               focusNode!.requestFocus();
               return KeyEventResult.handled;
             }
-            if (event.data is RawKeyEventDataWeb) {
-              var data = event.data as RawKeyEventDataWeb;
-              if ((data.physicalKey == PhysicalKeyboardKey.keyV || data.logicalKey == LogicalKeyboardKey.keyV) &&
+
+            if (windowsData != null) {
+              if ((windowsData.physicalKey == PhysicalKeyboardKey.keyV ||
+                      windowsData.logicalKey == LogicalKeyboardKey.keyV) &&
+                  (event.isControlPressed)) {
+                Pasteboard.image.then((image) {
+                  if (image != null) {
+                    addAttachment(PlatformFile(
+                      name: "${randomString(8)}.png",
+                      bytes: image,
+                      size: image.length,
+                    ));
+                  }
+                });
+              }
+            }
+
+            if (webData != null) {
+              if ((webData.physicalKey == PhysicalKeyboardKey.keyV || webData.logicalKey == LogicalKeyboardKey.keyV) &&
                   (event.isControlPressed || previousKeyCode == 0x1700000000)) {
                 getPastedImageWeb().then((value) {
                   if (value != null) {
@@ -1022,7 +1094,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       if (r.result != null && r.result is Uint8List) {
                         Uint8List data = r.result as Uint8List;
                         addAttachment(PlatformFile(
-                          name: randomString(8) + ".png",
+                          name: "${randomString(8)}.png",
                           bytes: data,
                           size: data.length,
                         ));
@@ -1031,7 +1103,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   }
                 });
               }
-              previousKeyCode = data.logicalKey.keyId;
+              previousKeyCode = webData.logicalKey.keyId;
               return KeyEventResult.ignored;
             }
             if (kIsDesktop || kIsWeb) return KeyEventResult.ignored;
@@ -1106,7 +1178,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                           text: reply.isFromMe!
                                               ? "You"
                                               : generateContactInfo
-                                                  ? ContactManager().getContact(reply.handle?.address)?.fakeName ?? "You"
+                                                  ? ContactManager().getContact(reply.handle?.address)?.fakeName ??
+                                                      "You"
                                                   : ContactManager()
                                                           .getContact(reply.handle?.address ?? "")
                                                           ?.displayName ??
@@ -1203,8 +1276,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           },
                           key: _searchFormKey,
                           onSubmitted: (String value) {
-                            if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                             focusNode!.requestFocus();
+                            if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                             sendMessage();
                           },
                           onContentCommitted: onContentCommit,
@@ -1219,7 +1292,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     ? Colors.black
                                     : Colors.white,
                                 fontSizeDelta: -0.25,
-                                fontFamily: kIsDesktop ? "Apple Color Emoji" : null,
                               ),
                           keyboardType: TextInputType.multiline,
                           maxLines: 14,
@@ -1305,9 +1377,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                         TextSpan(children: [
                                           TextSpan(text: "Replying to "),
                                           TextSpan(
-                                              text: ContactManager()
-                                                      .getContact(reply.handle?.address)
-                                                      ?.displayName ??
+                                              text: ContactManager().getContact(reply.handle?.address)?.displayName ??
                                                   replyToMessage.value!.handle?.address ??
                                                   "You",
                                               style: Theme.of(context)
@@ -1398,8 +1468,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       cursorColor: Theme.of(context).primaryColor,
                       key: _searchFormKey,
                       onSubmitted: (String value) {
-                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         focusNode!.requestFocus();
+                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         sendMessage();
                       },
                       style: Theme.of(context).textTheme.bodyText1!.apply(
@@ -1520,9 +1590,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                         TextSpan(children: [
                                           TextSpan(text: "Replying to "),
                                           TextSpan(
-                                              text: ContactManager()
-                                                      .getContact(reply.handle?.address)
-                                                      ?.displayName ??
+                                              text: ContactManager().getContact(reply.handle?.address)?.displayName ??
                                                   reply.handle?.address ??
                                                   "You",
                                               style: Theme.of(context)
@@ -1629,8 +1697,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       cursorColor: Theme.of(context).primaryColor,
                       key: _searchFormKey,
                       onSubmitted: (String value) {
-                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         focusNode!.requestFocus();
+                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         sendMessage();
                       },
                       style: Theme.of(context).textTheme.bodyText1!.apply(
@@ -1725,7 +1793,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (!isRecording.value) {
       await Record().start(
         path: pathName, // required
-        encoder: AudioEncoder.AAC, // by default
+        encoder: AudioEncoder.aacHe, // by default
         bitRate: 196000, // by default
         samplingRate: 44100, // by default
       );
@@ -1761,6 +1829,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<void> sendMessage({String? effect}) async {
+    // if we actually need to send something, temporarily disable the record button so users don't accidentally press it
+    if (!isNullOrEmpty(controller!.text)! || !isNullOrEmpty(subjectController!.text)! || pickedImages.isNotEmpty) {
+      recordDelay = true;
+      if (_debounce?.isActive ?? false) _debounce?.cancel();
+      _debounce = Timer(const Duration(seconds: 3), () {
+        recordDelay = false;
+        setCanRecord();
+      });
+    }
+
     // If send delay is enabled, delay the sending
     if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
       // Break the delay into 1 second intervals
@@ -1791,8 +1869,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     if (await widget.onSend(pickedImages, controller!.text, subjectController!.text,
         replyToMessage.value?.threadOriginatorGuid ?? replyToMessage.value?.guid, effect)) {
-      controller!.text = "";
-      subjectController!.text = "";
+      controller!.clear();
+      subjectController!.clear();
       replyToMessage.value = null;
       pickedImages.clear();
       updateTextFieldAttachments();
@@ -2020,7 +2098,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         updateTextFieldAttachments();
         if (mounted) setState(() {});
         return;
-      } else if (!kIsWeb && image.path == file.path) {
+      } else if (!kIsWeb && !kIsDesktop && image.path == file.path) {
         pickedImages.removeWhere((element) => element.path == file.path);
         updateTextFieldAttachments();
         if (mounted) setState(() {});

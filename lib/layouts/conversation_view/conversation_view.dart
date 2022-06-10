@@ -22,7 +22,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/screen_effects_widget.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
@@ -163,9 +163,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     initListener();
 
     // Bind the lifecycle events
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       ChatManager().setActiveChat(chat);
       if (widget.isCreator) {
         setState(() {
@@ -187,7 +187,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   void getShowAlert() async {
-    shouldShowAlert = widget.isCreator && (await SettingsManager().getMacOSVersion())! >= 11;
+    shouldShowAlert = widget.isCreator && (await SettingsManager().isMinBigSur);
   }
 
   void initListener() {
@@ -272,6 +272,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
   Future<bool> send(
       List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
+    await currentChat!.scrollToBottom();
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
     bool alreadySent = false;
     if (isCreator!) {
@@ -286,8 +287,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
 
       if (chat == null &&
-          (await SettingsManager().getMacOSVersion() ?? 10) >
-              10 /*&& SettingsManager().settings.enablePrivateAPI.value == false*/) {
+          (await SettingsManager().isMinBigSur)) {
         if (searchQuery.isNotEmpty) {
           selected.add(UniqueContact(address: searchQuery, displayName: searchQuery));
           resetCursor();
@@ -352,14 +352,16 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               // This means to send the text when the last attachment is sent
               // If we switched this to i == 0, then it will be send with the first attachment
               i == attachments.length - 1 && !alreadySent ? text : "",
+              effectId,
+              subject,
+              replyGuid,
             ),
           ),
         );
       }
     } else if (chat != null && !alreadySent) {
       // We include messageBloc here because the bloc listener may not be instantiated yet
-      ActionHandler.sendMessage(chat!, text,
-          messageBloc: messageBloc, subject: subject, replyGuid: replyGuid, effectId: effectId);
+      ActionHandler.sendMessage(chat!, text, subject: subject, replyGuid: replyGuid, effectId: effectId);
     }
 
     if (alreadySent) {
@@ -673,6 +675,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Theme(
         data: Theme.of(context)

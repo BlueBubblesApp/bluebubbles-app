@@ -317,7 +317,6 @@ public class BubbleActivity extends FlutterFragmentActivity {
     @Override
     protected void onDestroy() {
         Log.d("BubbleActivity", "Removing Activity from memory");
-        new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("remove-sendPort", null);
         engine = null;
         super.onDestroy();
     }

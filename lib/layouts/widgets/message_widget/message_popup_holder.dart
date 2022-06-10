@@ -4,8 +4,8 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -36,7 +36,7 @@ class MessagePopupHolder extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _MessagePopupHolderState createState() => _MessagePopupHolderState();
+  State<MessagePopupHolder> createState() => _MessagePopupHolderState();
 }
 
 class _MessagePopupHolderState extends State<MessagePopupHolder> {
@@ -56,13 +56,12 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         !sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
 
-    childOffsetY =
-        offset.dy -
-            (doNotIncreaseHeight
-                ? 0
-                : widget.message.getReactions().isNotEmpty
-                    ? 20.0
-                    : 23.0);
+    childOffsetY = offset.dy -
+        (doNotIncreaseHeight
+            ? 0
+            : widget.message.getReactions().isNotEmpty
+                ? 20.0
+                : 23.0);
     childSize = Size(
         size.width + (increaseWidth ? 35 : 0),
         size.height +
@@ -94,18 +93,14 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         pageBuilder: (context, animation, secondaryAnimation) {
           return FadeTransition(
             opacity: animation,
-            child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                return MessageDetailsPopup(
-                  currentChat: currentChat,
-                  child: widget.popupChild,
-                  childOffsetY: childOffsetY,
-                  childSize: childSize,
-                  message: widget.message,
-                  newerMessage: widget.newerMessage,
-                  messageBloc: widget.messageBloc,
-                );
-              },
+            child: MessageDetailsPopup(
+              currentChat: currentChat,
+              child: widget.popupChild,
+              childOffsetY: childOffsetY,
+              childSize: childSize,
+              message: widget.message,
+              newerMessage: widget.newerMessage,
+              messageBloc: widget.messageBloc,
             ),
           );
         },
@@ -114,7 +109,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       ),
     );
     widget.popupPushed.call(false);
-    if (keyboardStatus) EventDispatcher().emit('focus-keyboard', null);
+    if (keyboardStatus || kIsDesktop || kIsWeb) EventDispatcher().emit('focus-keyboard', null);
     if (mounted) {
       setState(() {
         visible = true;
@@ -123,45 +118,54 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
   }
 
   void sendReaction(String type) {
-    Logger.info("Sending reaction type: " + type);
-    ActionHandler.sendReaction(ChatManager().activeChat!.chat, widget.message, type);
+    Logger.info("Sending reaction type: $type");
+    ActionHandler.sendReaction(widget.message.getChat() ?? ChatManager().activeChat!.chat, widget.message, type);
   }
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardVisibilityBuilder(
-      builder: (context, isVisible) {
-        return GestureDetector(
-          key: containerKey,
-          onDoubleTap: SettingsManager().settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
-              ? () => openMessageDetails(isVisible)
-              : SettingsManager().settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
-                  ? () {
-                      if (widget.message.guid!.startsWith('temp')) return;
-                      HapticFeedback.lightImpact();
-                      sendReaction(SettingsManager().settings.quickTapbackType.value);
+    return KeyboardVisibilityBuilder(builder: (context, isVisible) {
+      return GestureDetector(
+        key: containerKey,
+        onDoubleTap: SettingsManager().settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
+            ? () => openMessageDetails(isVisible)
+            : SettingsManager().settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
+                ? () {
+                    if (widget.message.guid!.startsWith('temp')) return;
+                    if (kIsDesktop &&
+                        (ChatManager()
+                                .activeChat
+                                ?.videoPlayersDesktop
+                                .keys
+                                .any((String guid) => widget.message.attachments.any((a) => a?.guid == guid)) ??
+                            false)) {
+                      return;
                     }
-                  : null,
-          onLongPress: SettingsManager().settings.doubleTapForDetails.value && SettingsManager().settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
-              ? () {
-                  if (widget.message.guid!.startsWith('temp')) return;
-                  HapticFeedback.lightImpact();
-                  sendReaction(SettingsManager().settings.quickTapbackType.value);
-                }
-              : () => openMessageDetails(isVisible),
-          onSecondaryTapUp: (details) async {
-            if (!kIsWeb && !kIsDesktop) return;
-            if (kIsWeb) {
-              (await html.document.onContextMenu.first).preventDefault();
-            }
-            openMessageDetails(isVisible);
-          },
-          child: Opacity(
-            child: widget.child,
-            opacity: visible ? 1 : 0,
-          ),
-        );
-      }
-    );
+                    HapticFeedback.lightImpact();
+                    sendReaction(SettingsManager().settings.quickTapbackType.value);
+                  }
+                : null,
+        onLongPress: SettingsManager().settings.doubleTapForDetails.value &&
+                SettingsManager().settings.enableQuickTapback.value &&
+                (ChatManager().activeChat?.chat.isIMessage ?? true)
+            ? () {
+                if (widget.message.guid!.startsWith('temp')) return;
+                HapticFeedback.lightImpact();
+                sendReaction(SettingsManager().settings.quickTapbackType.value);
+              }
+            : () => openMessageDetails(isVisible),
+        onSecondaryTapUp: (details) async {
+          if (!kIsWeb && !kIsDesktop) return;
+          if (kIsWeb) {
+            (await html.document.onContextMenu.first).preventDefault();
+          }
+          openMessageDetails(isVisible);
+        },
+        child: Opacity(
+          child: widget.child,
+          opacity: visible ? 1 : 0,
+        ),
+      );
+    });
   }
 }

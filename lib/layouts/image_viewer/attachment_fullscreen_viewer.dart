@@ -1,21 +1,25 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/custom_dismissible.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter/foundation.dart';
 import "package:flutter/material.dart";
 import 'package:flutter/services.dart';
@@ -70,7 +74,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
     }
 
     if (widget.currentChat != null) {
-      newMessageEventStream = NewMessageManager().stream.listen((event) async {
+      newMessageEventStream = MessageManager().stream.listen((event) async {
         // We don't need to do anything if there isn't a new message
         if (event.type != NewMessageType.ADD) return;
 
@@ -83,10 +87,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
         await widget.currentChat!.updateChatAttachments();
         List<Attachment> newer = widget.currentChat!.chatAttachments.sublist(0);
         if (newer.length > older.length) {
-          Logger.info("Increasing currentIndex from " +
-              currentIndex.toString() +
-              " to " +
-              (newer.length - older.length + currentIndex).toString());
+          Logger.info("Increasing currentIndex from $currentIndex to ${newer.length - older.length + currentIndex}");
           currentIndex += newer.length - older.length;
           controller!.animateToPage(currentIndex, duration: Duration(milliseconds: 0), curve: Curves.easeIn);
         }
@@ -132,12 +133,22 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
           systemNavigationBarIconBrightness:
               Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
           statusBarColor: Colors.transparent, // status bar color
+          statusBarIconBrightness: Brightness.light,
         ),
         child: Actions(
           actions: {
             GoBackIntent: GoBackAction(context),
           },
           child: Scaffold(
+            appBar: kIsDesktop
+                ? AppBar(
+                    leading: SettingsManager().settings.skin.value == Skins.iOS
+                        ? buildBackButton(context, padding: EdgeInsets.only(left: 5, top: 5))
+                        : null,
+                    iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                  )
+                : null,
             backgroundColor: Colors.black,
             body: controller != null
                 ? FocusScope(
@@ -176,7 +187,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                 '${kIsWeb ? widget.attachment.guid : widget.currentChat != null ? widget.currentChat!.chatAttachments[index].guid : widget.attachment.guid}'),
                             onDismissed: (_) => Navigator.of(context).pop(),
                             child: Builder(builder: (_) {
-                              Logger.info("Showing index: " + index.toString());
+                              Logger.info("Showing index: $index");
                               Attachment attachment = !kIsWeb && widget.currentChat != null
                                   ? widget.currentChat!.chatAttachments[index]
                                   : widget.attachment;
@@ -197,7 +208,18 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                     file: content,
                                     showInteractions: widget.showInteractions,
                                   );
-                                } else if (mimeType == "video") {
+                                } else if (!kIsDesktop && mimeType == "video") {
+                                  if (kIsDesktop) {
+                                    Player player = Player(id: attachment.hashCode)
+                                      ..add(Media.file(File(content.path!)));
+                                    player.play();
+                                    Future.delayed(Duration.zero, () async => await player.playbackStream.first)
+                                        .then((state) {
+                                      player.pause();
+                                      player.seek(Duration.zero);
+                                    });
+                                    return Video(player: player);
+                                  }
                                   return VideoViewer(
                                     key: Key(viewerKey),
                                     file: content,

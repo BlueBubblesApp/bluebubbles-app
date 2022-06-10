@@ -1,8 +1,10 @@
 import 'dart:async';
 
-import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -12,7 +14,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
+import 'package:version/version.dart';
 
 /// [SettingsManager] is responsible for making the current settings accessible to other managers and for saving new settings
 ///
@@ -101,18 +105,16 @@ class SettingsManager {
       try {
         if (settings.finishedSetup.value) {
           SocketManager().startSocketIO();
-          SocketManager().registerFcmDevice();
+          fcm.registerDevice();
         }
       } catch (_) {}
     }
   }
 
   /// Saves a [Settings] instance to disk
-  ///
-  /// @param [newSettings] are the settings to save
-  Future<void> saveSettings(Settings newSettings) async {
+  Future<void> saveSettings([Settings? newSettings]) async {
     // Set the new settings as the current settings in the manager
-    settings = newSettings;
+    settings = newSettings ?? settings;
     settings.save();
     try {
       // Set the [displayMode] to that saved in settings
@@ -138,12 +140,7 @@ class SettingsManager {
     selectedDarkTheme?.save();
     ThemeObject.setSelectedTheme(light: selectedLightTheme?.id, dark: selectedDarkTheme?.id);
 
-    ThemeData lightTheme = ThemeObject.getLightTheme().themeData;
-    ThemeData darkTheme = ThemeObject.getDarkTheme().themeData;
-    AdaptiveTheme.of(context).setTheme(
-      light: lightTheme,
-      dark: darkTheme,
-    );
+    loadTheme(context);
   }
 
   /// Updates FCM data and saves to disk. It will also run [registerFcmDevice] automatically
@@ -152,7 +149,7 @@ class SettingsManager {
   void saveFCMData(FCMData data) {
     fcmData = data;
     fcmData!.save();
-    SocketManager().registerFcmDevice();
+    fcm.registerDevice();
   }
 
   Future<void> resetConnection() async {
@@ -168,22 +165,51 @@ class SettingsManager {
     await saveSettings(temp);
   }
 
-  Future<int?> getMacOSVersion({bool refresh = false}) async {
+  Future<Tuple2<int?, int?>?> getMacOSVersion({bool refresh = false}) async {
     if (refresh) {
-      var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
-      final version = int.tryParse(res['data']['os_version'].split(".")[0]);
-      if (version != null) prefs.setInt("macos-version", version);
-      return version;
+      final response = await api.serverInfo();
+      if (response.statusCode == 200) {
+        final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
+        final minorVersion = int.tryParse(response.data['data']['os_version'].split(".")[1]);
+        _serverVersion = response.data['data']['server_version'];
+        if (version != null) prefs.setInt("macos-version", version);
+        if (minorVersion != null) prefs.setInt("macos-minor-version", minorVersion);
+        return Tuple2(version, minorVersion);
+      } else {
+        return null;
+      }
     } else {
-      return prefs.getInt("macos-version") ?? 11;
+      return Tuple2(prefs.getInt("macos-version") ?? 11, prefs.getInt("macos-minor-version") ?? 0);
     }
+  }
+
+  Future<bool> get isMinSierra async {
+    final val = await getMacOSVersion();
+    return (val?.item1 ?? 0) > 10 || ((val?.item1 ?? 0) == 10 && (val?.item2 ?? 0) > 11);
+  }
+
+  Future<bool> get isMinBigSur async {
+    final val = await getMacOSVersion();
+    return (val?.item1 ?? 0) >= 11;
   }
 
   FutureOr<String?> getServerVersion() async {
     if (_serverVersion == null) {
-      var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
-      _serverVersion = res['data']?['server_version'];
+      final response = await api.serverInfo();
+      if (response.statusCode == 200) {
+        _serverVersion = response.data['data']['server_version'];
+      }
     }
     return _serverVersion;
   }
+
+  Future<int> getServerVersionCode() async {
+    final version = await getServerVersion();
+    Version code = Version.parse(version);
+    return code.major * 100 + code.minor * 21 + code.patch;
+  }
+
+  bool get isFullMonet => SettingsManager().settings.monetTheming.value == Monet.full;
+
+  bool get useMaterial3 => SettingsManager().settings.material3.value;
 }

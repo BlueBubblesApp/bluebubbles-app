@@ -7,19 +7,25 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/firebase/database_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
-import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' show join;
 import 'package:path_provider/path_provider.dart';
+import 'package:path_provider_android/path_provider_android.dart';
+import 'package:path_provider_linux/path_provider_linux.dart';
+import 'package:path_provider_windows/path_provider_windows.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_android/shared_preferences_android.dart';
+import 'package:shared_preferences_linux/shared_preferences_linux.dart';
+import 'package:shared_preferences_windows/shared_preferences_windows.dart';
 import 'package:universal_io/io.dart';
 
 abstract class BackgroundIsolateInterface {
@@ -34,6 +40,20 @@ callbackHandler() async {
   debugPrint("(ISOLATE) Starting up...");
   MethodChannel _backgroundChannel = MethodChannel("com.bluebubbles.messaging");
   WidgetsFlutterBinding.ensureInitialized();
+  // due to a flutter change we need to manually register plugins
+  // should be removeable in flutter 2.11
+  if (Platform.isAndroid) {
+    SharedPreferencesAndroid.registerWith();
+    PathProviderAndroid.registerWith();
+  } else if (kIsWeb) {
+    // do nothing
+  } else if (Platform.isLinux) {
+    SharedPreferencesLinux.registerWith();
+    PathProviderLinux.registerWith();
+  } else if (Platform.isWindows) {
+    SharedPreferencesWindows.registerWith();
+    PathProviderWindows.registerWith();
+  }
   prefs = await SharedPreferences.getInstance();
   if (!kIsWeb) {
     var documentsDirectory =
@@ -43,39 +63,27 @@ callbackHandler() async {
     final sqlitePath = join(documentsDirectory.path, "chat.db");
 
     Future<void> initStore({bool saveThemes = false}) async {
-      String? storeRef = prefs.getString("objectbox-reference");
       bool? useCustomPath = prefs.getBool("use-custom-path");
       String? customStorePath = prefs.getString("custom-path");
-      if (useCustomPath != true && storeRef != null) {
-        debugPrint("Opening ObjectBox store from reference");
+      if (!kIsDesktop) {
+        debugPrint("Trying to attach to an existing ObjectBox store");
         try {
-          store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
-        } catch (_) {
-          debugPrint("Failed to open store from reference, opening from path");
+          store = Store.attach(getObjectBoxModel(), join(documentsDirectory.path, 'objectbox'));
+        } catch (e, s) {
+          debugPrint(e.toString());
+          debugPrint(s.toString());
+          debugPrint("Failed to attach to existing store, opening from path");
           try {
-            if (kIsDesktop) {
-              Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
-            }
             store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
-          } catch (_) {
-            if (Platform.isWindows) {
-              debugPrint("Failed to open store from default path. Using custom path");
-              customStorePath ??= "C:\\bluebubbles_app";
-              prefs.setBool("use-custom-path", true);
-              objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-              objectBoxDirectory.createSync(recursive: true);
-              debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
-              store = await openStore(directory: join(customStorePath, 'objectbox'));
-            }
-            // TODO Linux fallback
+          } catch (e, s) {
+            debugPrint(e.toString());
+            debugPrint(s.toString());
           }
         }
       } else if (useCustomPath == true && Platform.isWindows) {
         customStorePath ??= "C:\\bluebubbles_app";
         objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-        if (kIsDesktop) {
-          objectBoxDirectory.createSync(recursive: true);
-        }
+        objectBoxDirectory.createSync(recursive: true);
         debugPrint("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
         store = await openStore(directory: join(customStorePath, "objectbox"));
       } else {
@@ -85,7 +93,9 @@ callbackHandler() async {
           }
           debugPrint("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
           store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
-        } catch (_) {
+        }  catch (e, s) {
+          debugPrint(e.toString());
+          debugPrint(s.toString());
           if (Platform.isWindows) {
             debugPrint("Failed to open store from default path. Using custom path");
             customStorePath ??= "C:\\bluebubbles_app";
@@ -98,7 +108,6 @@ callbackHandler() async {
           // TODO Linux fallback
         }
       }
-      prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
       debugPrint("Opening boxes");
       attachmentBox = store.box<Attachment>();
       chatBox = store.box<Chat>();
@@ -143,6 +152,6 @@ callbackHandler() async {
   await SettingsManager().getSavedSettings(headless: true);
   if (!ContactManager().hasFetchedContacts) await ContactManager().loadContacts(headless: true);
   MethodChannelInterface().init(customChannel: _backgroundChannel);
-  await SocketManager().refreshConnection(connectToSocket: false);
+  await fdb.fetchNewUrl(connectToSocket: false);
   Get.put(AttachmentDownloadService());
 }

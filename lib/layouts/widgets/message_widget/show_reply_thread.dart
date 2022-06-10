@@ -6,6 +6,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 void showReplyThread(BuildContext context, Message message, MessageBloc? messageBloc) {
   List<Message> _messages = [];
@@ -35,6 +36,7 @@ void showReplyThread(BuildContext context, Message message, MessageBloc? message
                   systemNavigationBarIconBrightness:
                   Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
                   statusBarColor: Colors.transparent, // status bar color
+                  statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
                 ),
                 child: Scaffold(
                   backgroundColor: Colors.transparent,

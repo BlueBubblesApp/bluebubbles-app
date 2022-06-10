@@ -19,13 +19,14 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -84,7 +85,7 @@ class ReceivedMessage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ReceivedMessageState createState() => _ReceivedMessageState();
+  State<ReceivedMessage> createState() => _ReceivedMessageState();
 }
 
 class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMixin, WidgetsBindingObserver {
@@ -123,8 +124,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     });
 
     if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble && widget.message.datePlayed == null) {
-      WidgetsBinding.instance!.addObserver(this);
-      WidgetsBinding.instance!.addPostFrameCallback((_) async {
+      WidgetsBinding.instance.addObserver(this);
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         EventDispatcher().emit('play-effect', {
           'type': effect,
           'size': key.globalPaintBounds(context),
@@ -390,16 +391,48 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                         fakeSubject: widget.fakeSubject,
                         fakeText: widget.fakeText),
                     builder: (context, snapshot) {
-                      return RichText(
-                        text: TextSpan(
-                          children: snapshot.data ??
-                              MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                                  colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null,
-                                  fakeSubject: widget.fakeSubject,
-                                  fakeText: widget.fakeText),
-                          style: Theme.of(context).textTheme.bodyText2,
-                        ),
-                      );
+                      return (kIsDesktop || kIsWeb) && !widget.message.hasAttachments &&
+                              ((ModalRoute.of(context)?.settings.arguments as Map?)?['hideTail'] ?? false)
+                          ? Theme(
+                              data: context.theme.copyWith(
+                                  textSelectionTheme: TextSelectionThemeData(
+                                      selectionColor: context.theme.primaryColor.withAlpha(150))),
+                              child: SelectableText.rich(
+                                TextSpan(
+                                  children: snapshot.data ??
+                                      MessageWidgetMixin.buildMessageSpans(
+                                        context,
+                                        widget.message,
+                                        colors: widget.message.handle?.color != null
+                                            ? getBubbleColors(widget.message)
+                                            : null,
+                                        fakeSubject: widget.fakeSubject,
+                                        fakeText: widget.fakeText,
+                                      ),
+                                  style: Theme.of(context).textTheme.bodyText2,
+                                ),
+                                cursorWidth: 0,
+                                selectionControls: CupertinoTextSelectionControls(),
+                              ),
+                            )
+                          : Padding(
+                              padding: EdgeInsets.only(left: 1),
+                              child: RichText(
+                                text: TextSpan(
+                                  children: snapshot.data ??
+                                      MessageWidgetMixin.buildMessageSpans(
+                                        context,
+                                        widget.message,
+                                        colors: widget.message.handle?.color != null
+                                            ? getBubbleColors(widget.message)
+                                            : null,
+                                        fakeSubject: widget.fakeSubject,
+                                        fakeText: widget.fakeText,
+                                      ),
+                                  style: Theme.of(context).textTheme.bodyText2,
+                                ),
+                              ),
+                            );
                     }),
           ),
         ],
@@ -529,17 +562,18 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     bool showSender = SettingsManager().settings.alwaysShowAvatars.value ||
         isGroup ||
         widget.message.guid == "redacted-mode-demo" ||
-        widget.message.guid!.contains("theme-selector");
+        widget.message.guid!.contains("theme-selector") ||
+        widget.showHandle;
     if (widget.message.guid == "redacted-mode-demo" ||
         widget.message.guid!.contains("theme-selector") ||
-        (isGroup &&
+        ((isGroup || widget.showHandle) &&
             (!sameSender(widget.message, widget.olderMessage) ||
                 !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30)))) {
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().isNotEmpty ? 0.0 : 3.0),
           child: Text(
-            getContactName(context, contactTitle, widget.message.handle!.address),
+            getContactName(context, contactTitle, widget.message.handle?.address),
             style: Theme.of(context).textTheme.subtitle1,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -701,7 +735,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().isNotEmpty ? 0.0 : 3.0),
           child: Text(
-            getContactName(context, contactTitle, widget.message.handle!.address),
+            getContactName(context, contactTitle, widget.message.handle?.address),
             style: Theme.of(context).textTheme.subtitle1,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

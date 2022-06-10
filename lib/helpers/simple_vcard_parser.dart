@@ -21,7 +21,7 @@ class VCard {
       if (!lines[i].startsWith(RegExp(r'^\S+(:|;)'))) {
         String tmpLine = lines[i];
         String prevLine = lines[i - 1];
-        lines[i - 1] = prevLine + ', ' + tmpLine;
+        lines[i - 1] = '$prevLine, $tmpLine';
         lines.removeAt(i);
       }
     }

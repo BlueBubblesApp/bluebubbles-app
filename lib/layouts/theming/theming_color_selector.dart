@@ -14,7 +14,7 @@ class ThemingColorSelector extends StatefulWidget {
   final bool editable;
 
   @override
-  _ThemingColorSelectorState createState() => _ThemingColorSelectorState();
+  State<ThemingColorSelector> createState() => _ThemingColorSelectorState();
 }
 
 class _ThemingColorSelectorState extends State<ThemingColorSelector> {
@@ -87,7 +87,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                                       min: 1,
                                       max: 9,
                                       divisions: 8,
-                                      label: "w" + fontWeight.toString() + "00" + (fontWeight == 4 ? " (Default)" : ""),
+                                      label: "w${fontWeight}00${fontWeight == 4 ? " (Default)" : ""}",
                                     ),
                                   if (widget.entry.isFont!)
                                     Padding(
