@@ -77,13 +77,13 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: context.theme.colorScheme.background,
         body: LayoutBuilder(
           builder: (context, size) {
             return SingleChildScrollView(
@@ -104,9 +104,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                               child: Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(25),
-                                  color: Theme.of(context).backgroundColor.computeLuminance() > 0.5
-                                      ? Theme.of(context).colorScheme.secondary.lightenPercent(50)
-                                      : Theme.of(context).colorScheme.secondary.darkenPercent(50),
+                                  color: context.theme.colorScheme.surfaceVariant,
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -219,10 +217,9 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                                     width: context.width * 2 / 3,
                                     child: Text(
                                         "Welcome to BlueBubbles",
-                                        style: Theme.of(context).textTheme.bodyMedium!.apply(
-                                          fontSizeFactor: 2.5,
+                                        style: context.theme.textTheme.displaySmall!.apply(
                                           fontWeightDelta: 2,
-                                        ).copyWith(height: 1.5)
+                                        ).copyWith(height: 1.35, color: context.theme.colorScheme.onBackground)
                                     ),
                                   ),
                                 ),
@@ -236,9 +233,9 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                                   alignment: Alignment.centerLeft,
                                   child: Text(
                                       "Experience a clean, customizable iMessage client across all platforms.",
-                                      style: Theme.of(context).textTheme.bodyMedium!.apply(
-                                        fontSizeFactor: 1.1,
-                                        color: Colors.grey,
+                                      style: context.theme.textTheme.bodyLarge!.apply(
+                                        fontSizeDelta: 1.5,
+                                        color: context.theme.colorScheme.outline,
                                       ).copyWith(height: 2)
                                   ),
                                 ),
@@ -287,7 +284,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                                         padding: const EdgeInsets.only(right: 30.0),
                                         child: Text(
                                             "Next",
-                                            style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.1, color: Colors.white)
+                                            style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)
                                         ),
                                       ),
                                       Positioned(

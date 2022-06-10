@@ -462,8 +462,8 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
 
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
-      light: lightTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.primaryColor)),
-      dark: darkTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: darkTheme.primaryColor)),
+      light: lightTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.colorScheme.primary)),
+      dark: darkTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: darkTheme.colorScheme.primary)),
 
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
@@ -542,9 +542,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
                       opacity: 1.0,
                       lockedBuilder: (context, controller) =>
                           Container(
-                            color: Theme
-                                .of(context)
-                                .backgroundColor,
+                            color: context.theme.colorScheme.background,
                             child: Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -553,23 +551,17 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
                                     padding: EdgeInsets.symmetric(horizontal: 20.0),
                                     child: Text(
                                       "BlueBubbles is currently locked. Please unlock to access your messages.",
-                                      style: Theme
-                                          .of(context)
-                                          .textTheme
-                                          .bodyMedium!
-                                          .apply(fontSizeFactor: 1.5),
+                                      style: context.theme.textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
                                   Container(height: 20.0),
                                   ClipOval(
                                     child: Material(
-                                      color: Theme
-                                          .of(context)
-                                          .primaryColor, // button color
+                                      color: context.theme.colorScheme.primary, // button color
                                       child: InkWell(
                                         child: SizedBox(
-                                            width: 60, height: 60, child: Icon(Icons.lock_open, color: Colors.white)),
+                                            width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
                                         onTap: () async {
                                           var localAuth = LocalAuthentication();
                                           bool didAuthenticate = await localAuth.authenticate(
@@ -733,7 +725,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             if (!available || prefs.getString("update-check") == metadata['version']) return;
             Get.defaultDialog(
               title: "Server Update Check",
-              titleStyle: Theme.of(context).textTheme.headlineMedium,
+              titleStyle: context.theme.textTheme.headlineMedium,
               textConfirm: "OK",
               cancel: Container(height: 0, width: 0),
               content: Column(
@@ -756,7 +748,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 }
                 Navigator.of(context).pop();
               },
-              backgroundColor: Theme.of(context).backgroundColor,
+              backgroundColor: context.theme.colorScheme.surface,
             );
           }
         });
@@ -896,34 +888,24 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
           ? Colors.transparent
-          : Theme
-          .of(context)
-          .backgroundColor, // navigation bar color
-      systemNavigationBarIconBrightness:
-      Theme
-          .of(context)
-          .backgroundColor
-          .computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+          : context.theme.colorScheme.background, // navigation bar color
+      systemNavigationBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5
+            ? Brightness.dark : Brightness.light,
       statusBarColor: Colors.transparent, // status bar color
-      statusBarIconBrightness:
-      context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+      statusBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5
+          ? Brightness.dark : Brightness.light,
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
             ? Colors.transparent
-            : Theme
-            .of(context)
-            .backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-        Theme
-            .of(context)
-            .backgroundColor
-            .computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5
+            ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness:
-        context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5
+            ? Brightness.dark : Brightness.light,
       ),
       child: Actions(
         actions: {
@@ -936,7 +918,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           GoBackIntent: GoBackAction(context),
         },
         child: Scaffold(
-          backgroundColor: context.theme.backgroundColor,
+          backgroundColor: context.theme.colorScheme.background,
           body: Builder(
             builder: (BuildContext context) {
               if (SettingsManager().settings.finishedSetup.value) {

@@ -12,9 +12,8 @@ class UpgradingDB extends StatelessWidget {
       title: 'BlueBubbles',
       home: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
-          systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-          systemNavigationBarIconBrightness:
-              Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+          systemNavigationBarColor: Colors.black, // navigation bar color
+          systemNavigationBarIconBrightness: Brightness.light,
           statusBarColor: Colors.transparent, // status bar color
           statusBarIconBrightness: Brightness.light,
         ),

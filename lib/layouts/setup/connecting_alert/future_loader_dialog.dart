@@ -1,6 +1,7 @@
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class FutureLoaderDialog extends StatefulWidget {
   FutureLoaderDialog({Key? key, required this.onConnect, required this.future, this.showErrorDialog = true})
@@ -52,10 +53,14 @@ class _FutureLoaderDialogState extends State<FutureLoaderDialog> {
                 return false;
               },
               child: AlertDialog(
-                title: Text("Connecting..."),
+                title: Text(
+                  "Connecting...",
+                  style: context.theme.textTheme.titleLarge,
+                ),
+                backgroundColor: context.theme.colorScheme.surface,
                 content: LinearProgressIndicator(
-                  backgroundColor: Colors.grey,
-                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                  backgroundColor: context.theme.colorScheme.outline,
+                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                 ),
               ),
             );
@@ -66,8 +71,14 @@ class _FutureLoaderDialogState extends State<FutureLoaderDialog> {
               return false;
             },
             child: AlertDialog(
-              title: Text("Success"),
-              content: Text("Connected!"),
+              title: Text(
+                "Success!",
+                style: context.theme.textTheme.titleLarge,
+              ),
+              content: Text(
+                "Connected!",
+                style: context.theme.textTheme.bodyLarge,
+              ),
             ),
           );
         });

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 
 class FailureToStart extends StatelessWidget {
   const FailureToStart({Key? key, this.e, this.s, this.otherTitle}) : super(key: key);
@@ -14,10 +13,10 @@ class FailureToStart extends StatelessWidget {
       title: 'BlueBubbles',
       home: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
-          systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-          systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+          systemNavigationBarColor: Colors.black, // navigation bar color
+          systemNavigationBarIconBrightness: Brightness.light,
           statusBarColor: Colors.transparent, // status bar color
-          statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+          statusBarIconBrightness: Brightness.light,
         ),
         child: Scaffold(
           backgroundColor: Colors.black,

@@ -63,7 +63,7 @@ class _SetupViewState extends State<SetupView> {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: context.theme.colorScheme.background,
         body: SafeArea(
           child: Padding(
             padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
@@ -99,7 +99,7 @@ class _SetupViewState extends State<SetupView> {
                   ],
                 ),
                 Container(
-                  color: Theme.of(context).backgroundColor,
+                  color: context.theme.colorScheme.background,
                   child: Padding(
                     padding: EdgeInsets.only(top: 20, left: 20, right: 20),
                     child: Row(
@@ -114,9 +114,9 @@ class _SetupViewState extends State<SetupView> {
                             SizedBox(width: 10),
                             Text(
                               "BlueBubbles",
-                              style: Theme.of(context)
+                              style: context.theme
                                   .textTheme
-                                  .bodyMedium!
+                                  .bodyLarge!
                                   .apply(fontWeightDelta: 2, fontSizeFactor: 1.35),
                             ),
                           ],
@@ -136,15 +136,15 @@ class _SetupViewState extends State<SetupView> {
                                 children: [
                                   TextSpan(
                                       text: "$currentPage",
-                                      style: Theme.of(context)
+                                      style: context.theme
                                           .textTheme
-                                          .bodyMedium!
+                                          .bodyLarge!
                                           .copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
                                   TextSpan(
                                       text: " of ${kIsWeb ? "4" : kIsDesktop ? "5" : "7"}",
-                                      style: Theme.of(context)
+                                      style: context.theme
                                           .textTheme
-                                          .bodyMedium!
+                                          .bodyLarge!
                                           .copyWith(color: Colors.white38, fontWeight: FontWeight.bold)),
                                 ],
                               ),
