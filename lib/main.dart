@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -35,7 +34,7 @@ import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
-import 'package:dart_vlc/dart_vlc.dart';
+import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_dart/firebase_dart.dart';
