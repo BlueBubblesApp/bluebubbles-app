@@ -20,7 +20,7 @@ class FailedToConnectDialog extends StatelessWidget {
           TextButton(
             child: Text(
               "Ok",
-              style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
+              style: Theme.of(context).textTheme.bodyMedium!.apply(color: Theme.of(context).primaryColor),
             ),
             onPressed: onDismiss,
           ),

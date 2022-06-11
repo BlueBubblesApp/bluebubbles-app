@@ -38,7 +38,6 @@ class SettingsManager {
   /// [settings] is just an instance of the current settings that are saved
   late Settings settings;
   FCMData? fcmData;
-  late List<ThemeObject> themes;
   String? countryCode;
   String? _serverVersion;
   bool canAuthenticate = false;
@@ -83,10 +82,6 @@ class SettingsManager {
 
     fcmData = FCMData.getFCM();
     if (headless) return;
-    themes = ThemeObject.getThemes();
-    for (ThemeObject theme in themes) {
-      theme.fetchData();
-    }
 
     try {
       // Set the [displayMode] to that saved in settings
@@ -133,12 +128,13 @@ class SettingsManager {
   /// @param [context] is the [BuildContext] used to set the theme of the new settings
   void saveSelectedTheme(
     BuildContext context, {
-    ThemeObject? selectedLightTheme,
-    ThemeObject? selectedDarkTheme,
+    ThemeStruct? selectedLightTheme,
+    ThemeStruct? selectedDarkTheme,
   }) {
     selectedLightTheme?.save();
     selectedDarkTheme?.save();
-    ThemeObject.setSelectedTheme(light: selectedLightTheme?.id, dark: selectedDarkTheme?.id);
+    if (selectedLightTheme != null) prefs.setString("selected-light", selectedLightTheme.name);
+    if (selectedDarkTheme != null) prefs.setString("selected-dark", selectedDarkTheme.name);
 
     loadTheme(context);
   }

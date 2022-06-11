@@ -444,11 +444,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.secondary,
-          title: Text("Send it?", style: Theme.of(context).textTheme.headline1),
+          title: Text("Send it?", style: Theme.of(context).textTheme.headlineMedium),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Review your audio snippet before sending it", style: Theme.of(context).textTheme.subtitle1),
+              Text("Review your audio snippet before sending it", style: Theme.of(context).textTheme.labelLarge),
               Container(height: 10.0),
               AudioPlayerWidget(
                 key: Key("AudioMessage-${file.size}"),
@@ -459,7 +459,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           ),
           actions: <Widget>[
             TextButton(
-                child: Text("Discard", style: Theme.of(context).textTheme.subtitle1),
+                child: Text("Discard", style: Theme.of(context).textTheme.labelLarge),
                 onPressed: () {
                   // Dispose of the audio controller
                   if (!kIsWeb) disposeAudioFile(originalContext, file);
@@ -470,7 +470,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             TextButton(
               child: Text(
                 "Send",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               onPressed: () async {
                 ChatController? thisChat = ChatController.of(originalContext);
@@ -510,12 +510,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (kIsWeb) {
       Get.defaultDialog(
         title: "What would you like to do?",
-        titleStyle: Theme.of(context).textTheme.headline1,
+        titleStyle: Theme.of(context).textTheme.headlineMedium,
         confirm: Container(height: 0, width: 0),
         cancel: Container(height: 0, width: 0),
         content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
           ListTile(
-            title: Text("Upload file", style: Theme.of(context).textTheme.bodyText1),
+            title: Text("Upload file", style: Theme.of(context).textTheme.bodyMedium),
             onTap: () async {
               final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
               if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
@@ -532,7 +532,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             },
           ),
           ListTile(
-            title: Text("Send location", style: Theme.of(context).textTheme.bodyText1),
+            title: Text("Send location", style: Theme.of(context).textTheme.bodyMedium),
             onTap: () async {
               Share.location(ChatController.forGuid(widget.chatGuid)!.chat);
               Get.back();
@@ -690,12 +690,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                             Text(
                                               emojis[index].char,
                                               style:
-                                                  context.textTheme.subtitle1!.apply(fontFamily: "Apple Color Emoji"),
+                                                  context.textTheme.labelLarge!.apply(fontFamily: "Apple Color Emoji"),
                                             ),
                                             SizedBox(width: 8),
                                             Text(
                                               ":${emojis[index].shortName}:",
-                                              style: context.textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold),
+                                              style: context.textTheme.labelLarge!.copyWith(fontWeight: FontWeight.bold),
                                             ),
                                           ],
                                         ),
@@ -771,7 +771,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     ? Icons.add
                                     : Icons.share,
                             color: SettingsManager().settings.skin.value == Skins.Samsung
-                                ? context.theme.textTheme.bodyText1!.color
+                                ? context.theme.textTheme.bodyMedium!.color
                                 : Colors.white,
                             size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                           ),
@@ -842,7 +842,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   child: Icon(
                     Icons.gif,
                     color: SettingsManager().settings.skin.value == Skins.Samsung
-                        ? context.theme.textTheme.bodyText1!.color
+                        ? context.theme.textTheme.bodyMedium!.color
                         : Colors.white,
                     size: 26,
                   ),
@@ -891,7 +891,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   child: Icon(
                     SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined,
                     color: SettingsManager().settings.skin.value == Skins.Samsung
-                        ? context.theme.textTheme.bodyText1!.color
+                        ? context.theme.textTheme.bodyMedium!.color
                         : Colors.white,
                     size: 20,
                   ),
@@ -1162,7 +1162,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     padding: EdgeInsets.symmetric(horizontal: 8),
                                     icon: Icon(
                                       CupertinoIcons.xmark_circle,
-                                      color: Theme.of(context).textTheme.subtitle1!.color,
+                                      color: Theme.of(context).textTheme.labelLarge!.color,
                                       size: 17,
                                     ),
                                     onPressed: () {
@@ -1185,19 +1185,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                                           ?.displayName ??
                                                       reply.handle?.address ??
                                                       "You",
-                                          style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                                          style: Theme.of(context).textTheme.labelLarge!.copyWith(
                                               fontWeight: FontWeight.bold,
                                               color: hideContactInfo ? Colors.transparent : null),
                                         ),
                                         TextSpan(
                                           text:
                                               " - ${generateContent ? faker.lorem.words(MessageHelper.getNotificationText(reply).split(" ").length).join(" ") : MessageHelper.getNotificationText(reply)}",
-                                          style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                                          style: Theme.of(context).textTheme.labelLarge!.copyWith(
                                               fontStyle: FontStyle.italic,
                                               color: hideContent ? Colors.transparent : null),
                                         ),
                                       ]),
-                                      style: Theme.of(context).textTheme.subtitle1,
+                                      style: Theme.of(context).textTheme.labelLarge,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -1230,7 +1230,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         autocorrect: true,
                         controller: subjectController,
                         scrollPhysics: CustomBouncingScrollPhysics(),
-                        style: Theme.of(context).textTheme.bodyText1!.apply(
+                        style: Theme.of(context).textTheme.bodyMedium!.apply(
                               color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
                                       Brightness.light
                                   ? Colors.black
@@ -1242,7 +1242,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         minLines: 1,
                         placeholder: "Subject",
                         padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                        placeholderStyle: Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold),
+                        placeholderStyle: Theme.of(context).textTheme.labelLarge!.copyWith(fontWeight: FontWeight.bold),
                         autofocus: false,
                         decoration: BoxDecoration(
                           color: Theme.of(context).backgroundColor,
@@ -1286,7 +1286,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           autocorrect: true,
                           controller: controller,
                           scrollPhysics: CustomBouncingScrollPhysics(),
-                          style: Theme.of(context).textTheme.bodyText1!.apply(
+                          style: Theme.of(context).textTheme.bodyMedium!.apply(
                                 color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
                                         Brightness.light
                                     ? Colors.black
@@ -1302,7 +1302,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                   ? "Text Forwarding"
                                   : "iMessage",
                           padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                          placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                          placeholderStyle: Theme.of(context).textTheme.labelLarge,
                           autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
                               !widget.isCreator!,
                           decoration: BoxDecoration(
@@ -1364,7 +1364,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       padding: EdgeInsets.symmetric(horizontal: 8),
                                       icon: Icon(
                                         CupertinoIcons.xmark_circle,
-                                        color: Theme.of(context).textTheme.subtitle1!.color,
+                                        color: Theme.of(context).textTheme.labelLarge!.color,
                                         size: 17,
                                       ),
                                       onPressed: () {
@@ -1382,16 +1382,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                                   "You",
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .subtitle1!
+                                                  .labelLarge!
                                                   .copyWith(fontWeight: FontWeight.bold)),
                                           TextSpan(
                                               text: " - ${MessageHelper.getNotificationText(reply)}",
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .subtitle1!
+                                                  .labelLarge!
                                                   .copyWith(fontStyle: FontStyle.italic)),
                                         ]),
-                                        style: Theme.of(context).textTheme.subtitle1,
+                                        style: Theme.of(context).textTheme.labelLarge,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -1417,7 +1417,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         onSubmitted: (String value) {
                           focusNode!.requestFocus();
                         },
-                        style: Theme.of(context).textTheme.bodyText1!.apply(
+                        style: Theme.of(context).textTheme.bodyMedium!.apply(
                               color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
                                       Brightness.light
                                   ? Colors.black
@@ -1433,7 +1433,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           focusedBorder:
                               OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
                           hintText: "Subject",
-                          hintStyle: Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold),
+                          hintStyle: Theme.of(context).textTheme.labelLarge!.copyWith(fontWeight: FontWeight.bold),
                           contentPadding: EdgeInsets.only(
                             left: 10,
                             top: 15,
@@ -1472,7 +1472,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         sendMessage();
                       },
-                      style: Theme.of(context).textTheme.bodyText1!.apply(
+                      style: Theme.of(context).textTheme.bodyMedium!.apply(
                             color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
                                     Brightness.light
                                 ? Colors.black
@@ -1526,7 +1526,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             : chat?.isTextForwarding ?? false
                                 ? "Text Forwarding"
                                 : "iMessage",
-                        hintStyle: Theme.of(context).textTheme.subtitle1,
+                        hintStyle: Theme.of(context).textTheme.labelLarge,
                         contentPadding: EdgeInsets.only(
                           left: 10,
                           top: 15,
@@ -1577,7 +1577,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       padding: EdgeInsets.symmetric(horizontal: 8),
                                       icon: Icon(
                                         CupertinoIcons.xmark_circle,
-                                        color: Theme.of(context).textTheme.subtitle1!.color,
+                                        color: Theme.of(context).textTheme.labelLarge!.color,
                                         size: 17,
                                       ),
                                       onPressed: () {
@@ -1595,16 +1595,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                                   "You",
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .subtitle1!
+                                                  .labelLarge!
                                                   .copyWith(fontWeight: FontWeight.bold)),
                                           TextSpan(
                                               text: " - ${MessageHelper.getNotificationText(reply)}",
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .subtitle1!
+                                                  .labelLarge!
                                                   .copyWith(fontStyle: FontStyle.italic)),
                                         ]),
-                                        style: Theme.of(context).textTheme.subtitle1,
+                                        style: Theme.of(context).textTheme.labelLarge,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -1632,7 +1632,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         onSubmitted: (String value) {
                           focusNode!.requestFocus();
                         },
-                        style: Theme.of(context).textTheme.bodyText1!.apply(
+                        style: Theme.of(context).textTheme.bodyMedium!.apply(
                               color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
                                       Brightness.light
                                   ? Colors.black
@@ -1660,7 +1660,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             borderRadius: BorderRadius.circular(20),
                           ),
                           hintText: "Subject",
-                          hintStyle: Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold),
+                          hintStyle: Theme.of(context).textTheme.labelLarge!.copyWith(fontWeight: FontWeight.bold),
                           contentPadding: EdgeInsets.only(
                             left: 10,
                             top: 15,
@@ -1701,7 +1701,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         sendMessage();
                       },
-                      style: Theme.of(context).textTheme.bodyText1!.apply(
+                      style: Theme.of(context).textTheme.bodyMedium!.apply(
                             color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
                                     Brightness.light
                                 ? Colors.black
@@ -1752,7 +1752,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             : chat?.isTextForwarding ?? false
                                 ? "Text Forwarding"
                                 : "iMessage",
-                        hintStyle: Theme.of(context).textTheme.subtitle1,
+                        hintStyle: Theme.of(context).textTheme.labelLarge,
                         contentPadding: EdgeInsets.only(
                           left: 10,
                           top: 15,
@@ -2045,7 +2045,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                         color: (isRecording.value)
                                             ? Colors.red
                                             : SettingsManager().settings.skin.value == Skins.Samsung
-                                                ? context.theme.textTheme.bodyText1!.color
+                                                ? context.theme.textTheme.bodyMedium!.color
                                                 : Colors.white,
                                         size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                                       ),
@@ -2059,7 +2059,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       child: Icon(
                                         Icons.send,
                                         color: SettingsManager().settings.skin.value == Skins.Samsung
-                                            ? context.theme.textTheme.bodyText1!.color
+                                            ? context.theme.textTheme.bodyMedium!.color
                                             : Colors.white,
                                         size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                                       ),

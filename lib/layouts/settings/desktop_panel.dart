@@ -24,10 +24,10 @@ class DesktopPanel extends StatelessWidget {
     final RxnBool useCustomPath = RxnBool(prefs.getBool("use-custom-path"));
     final RxnString customPath = RxnString(prefs.getString("custom-path"));
     final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+        Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context)
         .textTheme
-        .subtitle1
+        .labelLarge
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
     Color tileColor = context.theme.tileColor;
@@ -256,7 +256,7 @@ class DesktopPanel extends StatelessWidget {
                                                               style: TextStyle(
                                                                   fontSize: 16,
                                                                   color: (hardDisabled && value == "Mark Read")
-                                                                      ? context.textTheme.subtitle1!.color
+                                                                      ? context.textTheme.labelLarge!.color
                                                                       : null),
                                                               textAlign: TextAlign.center,
                                                             ),
@@ -335,7 +335,7 @@ class DesktopPanel extends StatelessWidget {
                                                                     curve: Curves.bounceInOut,
                                                                     duration: Duration(milliseconds: 100),
                                                                     child: Icon(Icons.arrow_left,
-                                                                        color: context.theme.textTheme.bodyText1!.color,
+                                                                        color: context.theme.textTheme.bodyMedium!.color,
                                                                         size: 24),
                                                                   ),
                                                                 ),
@@ -421,7 +421,7 @@ class DesktopPanel extends StatelessWidget {
                                                                     curve: Curves.bounceInOut,
                                                                     duration: Duration(milliseconds: 100),
                                                                     child: Icon(Icons.arrow_right,
-                                                                        color: context.theme.textTheme.bodyText1!.color,
+                                                                        color: context.theme.textTheme.bodyMedium!.color,
                                                                         size: 24),
                                                                   ),
                                                                 ),
@@ -501,7 +501,7 @@ class DesktopPanel extends StatelessWidget {
                                             child: Center(
                                               child: Text(
                                                 "BlueBubbles",
-                                                style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.0305),
+                                                style: context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.0305),
                                                 textAlign: TextAlign.center,
                                               ),
                                             ),
@@ -520,7 +520,7 @@ class DesktopPanel extends StatelessWidget {
                                             left: size * 0.216,
                                             child: Text(
                                               "John Doe",
-                                              style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.036),
+                                              style: context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.036),
                                             ),
                                           ),
                                           Positioned(
@@ -528,7 +528,7 @@ class DesktopPanel extends StatelessWidget {
                                             left: size * 0.216,
                                             child: Text(
                                               "${(numActions > (showMarkRead ? 1 : 0)) ? "Message" : "All"} notifications will look like this.",
-                                              style: context.textTheme.subtitle1!.copyWith(fontSize: size * 0.036),
+                                              style: context.textTheme.labelLarge!.copyWith(fontSize: size * 0.036),
                                             ),
                                           ),
                                           Positioned(
@@ -536,7 +536,7 @@ class DesktopPanel extends StatelessWidget {
                                             right: size * 0.15,
                                             child: Center(
                                               child: Icon(Icons.more_horiz,
-                                                  size: size * 0.04, color: context.textTheme.subtitle1!.color),
+                                                  size: size * 0.04, color: context.textTheme.labelLarge!.color),
                                             ),
                                           ),
                                           Positioned(
@@ -544,7 +544,7 @@ class DesktopPanel extends StatelessWidget {
                                             right: size * 0.05,
                                             child: Center(
                                               child: Icon(Icons.close_rounded,
-                                                  size: size * 0.04, color: context.textTheme.subtitle1!.color),
+                                                  size: size * 0.04, color: context.textTheme.labelLarge!.color),
                                             ),
                                           ),
                                           ...List.generate(
@@ -581,7 +581,7 @@ class DesktopPanel extends StatelessWidget {
                                                           decoration: BoxDecoration(
                                                             borderRadius: BorderRadius.circular(5),
                                                             border: Border.all(
-                                                                color: context.textTheme.bodyText1!.color!
+                                                                color: context.textTheme.bodyMedium!.color!
                                                                     .withOpacity(0.1)),
                                                             color: context.theme.colorScheme.secondary.withOpacity(0.6),
                                                           ),
@@ -591,7 +591,7 @@ class DesktopPanel extends StatelessWidget {
                                                                   ? SettingsManager().settings.actionList[index]
                                                                   : ReactionTypes.reactionToEmoji[
                                                                       SettingsManager().settings.actionList[index]]!,
-                                                              style: context.textTheme.bodyText1!
+                                                              style: context.textTheme.bodyMedium!
                                                                   .copyWith(fontSize: size * 0.037),
                                                               textAlign: TextAlign.center,
                                                             ),
@@ -645,7 +645,7 @@ class DesktopPanel extends StatelessWidget {
                                             child: Center(
                                               child: Text(
                                                 "BlueBubbles",
-                                                style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.0305),
+                                                style: context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.0305),
                                                 textAlign: TextAlign.center,
                                               ),
                                             ),
@@ -664,7 +664,7 @@ class DesktopPanel extends StatelessWidget {
                                             left: size * 0.216,
                                             child: Text(
                                               "John Doe",
-                                              style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.036),
+                                              style: context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.036),
                                             ),
                                           ),
                                           Positioned(
@@ -672,7 +672,7 @@ class DesktopPanel extends StatelessWidget {
                                             left: size * 0.216,
                                             child: Text(
                                               "Reaction notifications will look like this.",
-                                              style: context.textTheme.subtitle1!.copyWith(fontSize: size * 0.036),
+                                              style: context.textTheme.labelLarge!.copyWith(fontSize: size * 0.036),
                                             ),
                                           ),
                                           Positioned(
@@ -680,7 +680,7 @@ class DesktopPanel extends StatelessWidget {
                                             right: size * 0.15,
                                             child: Center(
                                               child: Icon(Icons.more_horiz,
-                                                  size: size * 0.04, color: context.textTheme.subtitle1!.color),
+                                                  size: size * 0.04, color: context.textTheme.labelLarge!.color),
                                             ),
                                           ),
                                           Positioned(
@@ -688,7 +688,7 @@ class DesktopPanel extends StatelessWidget {
                                             right: size * 0.05,
                                             child: Center(
                                               child: Icon(Icons.close_rounded,
-                                                  size: size * 0.04, color: context.textTheme.subtitle1!.color),
+                                                  size: size * 0.04, color: context.textTheme.labelLarge!.color),
                                             ),
                                           ),
                                           if (showMarkRead)
@@ -703,14 +703,14 @@ class DesktopPanel extends StatelessWidget {
                                                 decoration: BoxDecoration(
                                                   borderRadius: BorderRadius.circular(5),
                                                   border: Border.all(
-                                                      color: context.textTheme.bodyText1!.color!.withOpacity(0.1)),
+                                                      color: context.textTheme.bodyMedium!.color!.withOpacity(0.1)),
                                                   color: context.theme.colorScheme.secondary.withOpacity(0.6),
                                                 ),
                                                 child: Center(
                                                   child: Text(
                                                     "Mark Read",
                                                     style:
-                                                        context.textTheme.bodyText1!.copyWith(fontSize: size * 0.037),
+                                                        context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.037),
                                                     textAlign: TextAlign.center,
                                                   ),
                                                 ),
@@ -751,7 +751,7 @@ class DesktopPanel extends StatelessWidget {
                               return AlertDialog(
                                 title: Text(
                                   "Are you sure?",
-                                  style: Theme.of(context).textTheme.bodyText1,
+                                  style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                                 content: Text(
                                     "All of your data and settings will be deleted, and you will have to set the app up again from scratch."),
@@ -813,7 +813,7 @@ class DesktopPanel extends StatelessWidget {
                                     return AlertDialog(
                                       title: Text(
                                         "Are you sure?",
-                                        style: Theme.of(context).textTheme.bodyText1,
+                                        style: Theme.of(context).textTheme.bodyMedium,
                                       ),
                                       content: Text(
                                           "The database will now be stored at $path\n\nAll of your data and settings will be deleted, and you will have to set the app up again from scratch."),

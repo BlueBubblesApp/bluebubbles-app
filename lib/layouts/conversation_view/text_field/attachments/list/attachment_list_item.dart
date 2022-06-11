@@ -141,7 +141,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
             children: [
               Icon(
                 AttachmentHelper.getIcon(mimeType),
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
               Align(
                 alignment: Alignment.bottomCenter,
@@ -149,7 +149,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                   padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
                   child: Text(
                     name,
-                    style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeDelta: -2),
+                    style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeDelta: -2),
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,

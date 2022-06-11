@@ -124,7 +124,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                                     child: Icon(
                                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.group_solid : Icons.people,
                                       size: size * 0.65,
-                                      color: context.textTheme.subtitle1!.color!.withOpacity(0.8),
+                                      color: context.textTheme.labelLarge!.color!.withOpacity(0.8),
                                     ),
                                   ),
                                 ),

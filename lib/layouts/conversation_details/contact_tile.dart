@@ -75,7 +75,7 @@ class ContactTile extends StatelessWidget {
                 text: TextSpan(
                     children: MessageHelper.buildEmojiText(
                         getContactName(context, contact?.displayName ?? "", handle.address, currentChat: chat),
-                        Theme.of(context).textTheme.bodyText1!)),
+                        Theme.of(context).textTheme.bodyMedium!)),
               )
             : FutureBuilder<String>(
                 future: formatPhoneNumber(handle),
@@ -83,19 +83,19 @@ class ContactTile extends StatelessWidget {
                   if (!snapshot.hasData) {
                     return Text(
                       handle.address,
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: Theme.of(context).textTheme.bodyMedium,
                     );
                   }
 
                   return RichText(
                       text: TextSpan(
                           children: MessageHelper.buildEmojiText(
-                              snapshot.data ?? "Unknown contact details", Theme.of(context).textTheme.bodyText1!)));
+                              snapshot.data ?? "Unknown contact details", Theme.of(context).textTheme.bodyMedium!)));
                 }),
         subtitle: (contact == null || hideInfo || generateName)
             ? Text(
                 generateName ? ContactManager().getContact(handle.address)?.fakeAddress ?? "" : "",
-                style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -0.5),
+                style: Theme.of(context).textTheme.labelLarge!.apply(fontSizeDelta: -0.5),
               )
             : FutureBuilder<String>(
                 future: formatPhoneNumber(handle),
@@ -103,13 +103,13 @@ class ContactTile extends StatelessWidget {
                   if (!snapshot.hasData) {
                     return Text(
                       handle.address,
-                      style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -0.5),
+                      style: Theme.of(context).textTheme.labelLarge!.apply(fontSizeDelta: -0.5),
                     );
                   }
 
                   return Text(
                     snapshot.data ?? "Unknown contact details",
-                    style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -0.5),
+                    style: Theme.of(context).textTheme.labelLarge!.apply(fontSizeDelta: -0.5),
                   );
                 }),
         leading: ContactAvatarWidget(
@@ -183,7 +183,7 @@ class ContactTile extends StatelessWidget {
             return AlertDialog(
               backgroundColor: Theme.of(context).colorScheme.secondary,
               title:
-                  Text("Select a Phone Number", style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                  Text("Select a Phone Number", style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color)),
               content: ObxValue<Rx<bool>>(
                   (data) => Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -193,7 +193,7 @@ class ContactTile extends StatelessWidget {
                           for (int i = 0; i < phones.length; i++)
                             TextButton(
                               child: Text(phones[i],
-                                  style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color),
+                                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
                                   textAlign: TextAlign.start),
                               onPressed: () {
                                 if (data.value) {
@@ -230,7 +230,7 @@ class ContactTile extends StatelessWidget {
                           ),
                           Text(
                             "Long press the call button to reset your default selection",
-                            style: Theme.of(context).textTheme.subtitle1,
+                            style: Theme.of(context).textTheme.labelLarge,
                           )
                         ],
                       ),

@@ -95,7 +95,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                               child: Text(hasPlayed ? "Sync complete!" : "Syncing...",
                                   style: Theme.of(context)
                                       .textTheme
-                                      .bodyText1!
+                                      .bodyMedium!
                                       .apply(
                                         fontSizeFactor: 2.5,
                                         fontWeightDelta: 2,
@@ -111,7 +111,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         children: [
                           Text(
                             "${(progress * 100).round()}%",
-                            style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                            style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
                           ),
                           SizedBox(height: 15),
                           Padding(
@@ -214,7 +214,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                                   child: Text("Finish",
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodyText1!
+                                          .bodyMedium!
                                           .apply(fontSizeFactor: 1.2, color: Colors.white)),
                                 ),
                               ],

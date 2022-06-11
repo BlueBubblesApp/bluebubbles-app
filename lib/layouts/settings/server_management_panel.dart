@@ -112,8 +112,8 @@ class ServerManagementPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+    final iosSubtitle = Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+    final materialSubtitle = Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
     Color tileColor = context.theme.tileColor;
 
@@ -749,7 +749,7 @@ class ServerManagementPanel extends StatelessWidget {
                         Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
                         Get.defaultDialog(
                           title: "Update Check",
-                          titleStyle: Theme.of(context).textTheme.headline1,
+                          titleStyle: Theme.of(context).textTheme.headlineMedium,
                           confirm: Container(height: 0, width: 0),
                           cancel: Container(height: 0, width: 0),
                           content: Column(
@@ -758,7 +758,7 @@ class ServerManagementPanel extends StatelessWidget {
                                 SizedBox(
                                   height: 15.0,
                                 ),
-                                Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyText1),
+                                Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyMedium),
                                 SizedBox(
                                   height: 15.0,
                                 ),
@@ -863,7 +863,7 @@ class _SyncDialogState extends State<SyncDialog> {
         },
         child: Text(
           "Ok",
-          style: Theme.of(context).textTheme.bodyText1!.apply(
+          style: Theme.of(context).textTheme.bodyMedium!.apply(
                 color: Theme.of(context).primaryColor,
               ),
         ),
@@ -879,7 +879,7 @@ class _SyncDialogState extends State<SyncDialog> {
             padding: EdgeInsets.symmetric(horizontal: 20.0),
             child: Text(
               "Days: ${lookback?.inDays ?? "1"}",
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
           ),
@@ -915,7 +915,7 @@ class _SyncDialogState extends State<SyncDialog> {
           },
           child: Text(
             "Sync",
-            style: Theme.of(context).textTheme.bodyText1!.apply(
+            style: Theme.of(context).textTheme.bodyMedium!.apply(
                   color: Theme.of(context).primaryColor,
                 ),
           ),
@@ -925,7 +925,7 @@ class _SyncDialogState extends State<SyncDialog> {
 
     return AlertDialog(
       backgroundColor: Theme.of(context).backgroundColor,
-      title: Text(title, style: Theme.of(context).textTheme.headline1),
+      title: Text(title, style: Theme.of(context).textTheme.headlineMedium),
       content: content,
       actions: actions,
     );

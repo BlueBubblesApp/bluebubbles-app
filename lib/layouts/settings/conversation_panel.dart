@@ -10,10 +10,10 @@ class ConversationPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+        Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context)
         .textTheme
-        .subtitle1
+        .labelLarge
         ?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
     Color tileColor = context.theme.tileColor;
@@ -204,7 +204,7 @@ class ConversationPanel extends StatelessWidget {
                     child: Obx(() => SwitchListTile(
                       title: Text(
                         "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Details",
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       value: SettingsManager().settings.doubleTapForDetails.value,
                       activeColor: Theme.of(context).primaryColor,
@@ -224,7 +224,7 @@ class ConversationPanel extends StatelessWidget {
                       },
                       subtitle: Text(
                           "Opens the message details popup when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
-                          style: Theme.of(context).textTheme.subtitle1),
+                          style: Theme.of(context).textTheme.labelLarge),
                       tileColor: tileColor,
                     )),
                   ),

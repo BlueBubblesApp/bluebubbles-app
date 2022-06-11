@@ -17,10 +17,10 @@ class ChatListPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+        Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context)
         .textTheme
-        .subtitle1
+        .labelLarge
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
     Color tileColor = context.theme.tileColor;
@@ -354,7 +354,7 @@ class ChatListPanel extends StatelessWidget {
                                                         padding: EdgeInsets.only(left: 2, top: 3),
                                                         child: Text(
                                                           "Messages",
-                                                          style: context.textTheme.subtitle1!.copyWith(fontSize: 4),
+                                                          style: context.textTheme.labelLarge!.copyWith(fontSize: 4),
                                                           textAlign: TextAlign.left,
                                                         )),
                                                     Obx(

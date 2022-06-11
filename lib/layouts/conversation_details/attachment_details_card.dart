@@ -87,13 +87,13 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
         children: <Widget>[
           Text(
             widget.attachment.getFriendlySize(),
-            style: Theme.of(context).textTheme.bodyText1,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
           Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.cloud_download, size: 28.0),
           (widget.attachment.mimeType != null && attachmentFile.path != null)
               ? Text(
                   basename(attachmentFile.path!),
-                  style: Theme.of(context).textTheme.bodyText1,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 )
               : Container()
         ],

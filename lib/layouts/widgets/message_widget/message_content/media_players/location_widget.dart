@@ -106,14 +106,14 @@ class _LocationWidgetState extends State<LocationWidget> {
                           onTap: openMaps,
                           child: Padding(
                               padding: EdgeInsets.only(top: 10, bottom: 10),
-                              child: Text("Open in Maps", style: Theme.of(context).textTheme.bodyText1)))
+                              child: Text("Open in Maps", style: Theme.of(context).textTheme.bodyMedium)))
                   ])));
     } else {
       return Container(
         padding: EdgeInsets.all(10),
         child: Text(
           "Could not load location",
-          style: Theme.of(context).textTheme.bodyText1,
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
       );
     }

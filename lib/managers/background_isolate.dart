@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
@@ -62,7 +61,7 @@ callbackHandler() async {
     Directory objectBoxDirectory = Directory(join(documentsDirectory.path, 'objectbox'));
     final sqlitePath = join(documentsDirectory.path, "chat.db");
 
-    Future<void> initStore({bool saveThemes = false}) async {
+    Future<void> initStore() async {
       bool? useCustomPath = prefs.getBool("use-custom-path");
       String? customStorePath = prefs.getString("custom-path");
       if (!kIsDesktop) {
@@ -115,12 +114,11 @@ callbackHandler() async {
       handleBox = store.box<Handle>();
       messageBox = store.box<Message>();
       scheduledBox = store.box<ScheduledMessage>();
-      themeEntryBox = store.box<ThemeEntry>();
-      themeObjectBox = store.box<ThemeObject>();
-      if (saveThemes && themeObjectBox.isEmpty()) {
-        for (ThemeObject theme in Themes.themes) {
-          if (theme.name == "OLED Dark") theme.selectedDarkTheme = true;
-          if (theme.name == "Bright White") theme.selectedLightTheme = true;
+      themeBox = store.box<ThemeStruct>();
+      if (themeBox.isEmpty()) {
+        prefs.setString("selected-dark", "OLED Dark");
+        prefs.setString("selected-light", "Bright White");
+        for (ThemeStruct theme in Themes.defaultThemes) {
           theme.save(updateIfNotAbsent: false);
         }
       }

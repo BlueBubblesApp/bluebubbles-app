@@ -106,7 +106,7 @@ class Share {
           width: 150,
           child: Text(
             "Location Services must be enabled to send Locations",
-            style: Get.textTheme.bodyText1,
+            style: Get.textTheme.bodyMedium,
           ),
         ),
         actionsAlignment: MainAxisAlignment.spaceBetween,
@@ -131,7 +131,7 @@ class Share {
           width: 150,
           child: Text(
             "BlueBubbles needs the Location Permission to send Locations",
-            style: Get.textTheme.bodyText1,
+            style: Get.textTheme.bodyMedium,
           ),
         ),
         actionsAlignment: MainAxisAlignment.spaceBetween,
@@ -171,7 +171,7 @@ class Share {
       titlePadding: EdgeInsets.all(20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       backgroundColor: Get.theme.colorScheme.secondary,
-      title: Text("Send Location?", style: Get.textTheme.headline1),
+      title: Text("Send Location?", style: Get.textTheme.headlineMedium),
       content: Container(
         width: 150,
         child: LocationWidget(file: pFile, showOpen: false),

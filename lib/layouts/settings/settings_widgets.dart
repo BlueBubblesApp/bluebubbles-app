@@ -79,7 +79,7 @@ class SettingsScaffold extends StatelessWidget {
                       backgroundColor: headerColor.withOpacity(0.5),
                       title: Text(
                         title,
-                        style: Theme.of(context).textTheme.headline1,
+                        style: Theme.of(context).textTheme.headlineMedium,
                       ),
                     ),
                     filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -150,7 +150,7 @@ class SettingsScaffold extends StatelessWidget {
                                       alignment: Alignment.centerLeft,
                                       child: Text(
                                         title,
-                                        style: Theme.of(context).textTheme.headline1,
+                                        style: Theme.of(context).textTheme.headlineMedium,
                                       ),
                                     ),
                                   ),
@@ -284,13 +284,13 @@ class SettingsTile extends StatelessWidget {
           leading: leading,
           title: Text(
             title!,
-            style: Theme.of(context).textTheme.bodyText1,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
           trailing: trailing,
           subtitle: subtitle != null
               ? Text(
                   subtitle!,
-                  style: Theme.of(context).textTheme.subtitle1,
+                  style: Theme.of(context).textTheme.labelLarge,
                 )
               : null,
           isThreeLine: isThreeLine,
@@ -333,7 +333,7 @@ class SettingsTextField extends StatelessWidget {
             ListTile(
               title: Text(
                 title,
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               trailing: trailing,
               subtitle: Padding(
@@ -351,7 +351,7 @@ class SettingsTextField extends StatelessWidget {
                   autocorrect: true,
                   controller: controller,
                   scrollPhysics: CustomBouncingScrollPhysics(),
-                  style: Theme.of(context).textTheme.bodyText1!.apply(
+                  style: Theme.of(context).textTheme.bodyMedium!.apply(
                       color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
                           ? Colors.black
                           : Colors.white,
@@ -361,7 +361,7 @@ class SettingsTextField extends StatelessWidget {
                   minLines: 1,
                   placeholder: placeholder ?? "Enter your text here",
                   padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                  placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                  placeholderStyle: Theme.of(context).textTheme.labelLarge,
                   autofocus: SettingsManager().settings.autoOpenKeyboard.value,
                   decoration: BoxDecoration(
                     color: Theme.of(context).backgroundColor,
@@ -408,12 +408,12 @@ class SettingsSwitch extends StatelessWidget {
         tileColor: SettingsManager().settings.skin.value == Skins.Samsung ? null : backgroundColor,
         title: Text(
           title,
-          style: Theme.of(context).textTheme.bodyText1,
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
         subtitle: subtitle != null
             ? Text(
                 subtitle!,
-                style: Theme.of(context).textTheme.subtitle1,
+                style: Theme.of(context).textTheme.labelLarge,
               )
             : null,
         value: initialVal,
@@ -493,7 +493,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                   Container(
                     child: Text(
                       title,
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
                   (subtitle != null)
@@ -503,7 +503,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                             padding: EdgeInsets.only(top: 3.0),
                             child: Text(
                               subtitle ?? "",
-                              style: Theme.of(context).textTheme.subtitle1,
+                              style: Theme.of(context).textTheme.labelLarge,
                             ),
                           ),
                         )
@@ -521,7 +521,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                     dropdownColor: Theme.of(context).colorScheme.secondary,
                     icon: Icon(
                       Icons.arrow_drop_down,
-                      color: Theme.of(context).textTheme.bodyText1!.color,
+                      color: Theme.of(context).textTheme.bodyMedium!.color,
                     ),
                     value: initial,
                     items: options.map<DropdownMenuItem<T>>((e) {
@@ -529,7 +529,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                         value: e,
                         child: Text(
                           capitalize ? textProcessing!(e).capitalize! : textProcessing!(e),
-                          style: Theme.of(context).textTheme.bodyText1,
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       );
                     }).toList(),

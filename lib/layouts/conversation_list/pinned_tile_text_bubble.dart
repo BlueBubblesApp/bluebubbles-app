@@ -34,7 +34,7 @@ class PinnedTileTextBubble extends StatelessWidget {
       return Container();
     }
 
-    TextStyle style = Get.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
+    TextStyle style = Get.textTheme.labelLarge!.apply(fontSizeFactor: 0.85);
 
     if (hide && !generate) style = style.apply(color: Colors.transparent);
 

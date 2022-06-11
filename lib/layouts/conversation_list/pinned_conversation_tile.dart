@@ -126,7 +126,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style =
-        context.textTheme.subtitle1!.apply(fontSizeFactor: 0.85, color: shouldHighlight.value ? Colors.white : null);
+        context.textTheme.labelLarge!.apply(fontSizeFactor: 0.85, color: shouldHighlight.value ? Colors.white : null);
     if (widget.chat.title == null) widget.chat.getTitle();
     if (widget.chat.title == null || kIsWeb || kIsDesktop) widget.chat.getTitle();
     String title = widget.chat.title ?? "Fake Person";
@@ -280,7 +280,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                                 borderRadius: BorderRadius.circular(maxWidth * 0.1),
                                                 color: (widget.chat.hasUnreadMessage ?? false)
                                                     ? alphaWithoutAlpha
-                                                    : context.textTheme.subtitle1!.color,
+                                                    : context.textTheme.labelLarge!.color,
                                               ),
                                             ),
                                             Icon(
@@ -298,7 +298,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                     top: maxWidth * 0.075,
                                   ),
                                   child: ConstrainedBox(
-                                    constraints: BoxConstraints(minHeight: context.textTheme.subtitle1!.fontSize! * 2),
+                                    constraints: BoxConstraints(minHeight: context.textTheme.labelLarge!.fontSize! * 2),
                                     child: buildSubtitle(),
                                   ),
                                 ),
@@ -347,7 +347,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                               borderRadius: BorderRadius.circular(30),
                                               color: (widget.chat.hasUnreadMessage ?? false)
                                                   ? alphaWithoutAlpha
-                                                  : context.textTheme.subtitle1!.color,
+                                                  : context.textTheme.labelLarge!.color,
                                             ),
                                           ),
                                           Transform.rotate(
@@ -408,7 +408,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                               },
                             ),
                             Positioned(
-                              bottom: context.textTheme.subtitle1!.fontSize! * 2 + maxWidth * 0.05,
+                              bottom: context.textTheme.labelLarge!.fontSize! * 2 + maxWidth * 0.05,
                               width: maxWidth,
                               child: PinnedTileTextBubble(
                                 chat: widget.chat,

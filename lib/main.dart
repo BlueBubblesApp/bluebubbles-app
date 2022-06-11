@@ -97,8 +97,7 @@ late final Box<FCMData> fcmDataBox;
 late final Box<Handle> handleBox;
 late final Box<Message> messageBox;
 late final Box<ScheduledMessage> scheduledBox;
-late final Box<ThemeEntry> themeEntryBox;
-late final Box<ThemeObject> themeObjectBox;
+late final Box<ThemeStruct> themeBox;
 final RxBool fontExistsOnDisk = false.obs;
 final RxBool downloadingFont = false.obs;
 final RxnDouble progress = RxnDouble();
@@ -199,7 +198,7 @@ Future<Null> initApp(bool isBubble) async {
       Directory objectBoxDirectory = Directory(join(documentsDirectory.path, 'objectbox'));
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
-      Future<void> initStore({bool saveThemes = false}) async {
+      Future<void> initStore() async {
         bool? useCustomPath = prefs.getBool("use-custom-path");
         String? customStorePath = prefs.getString("custom-path");
         if (!kIsDesktop) {
@@ -253,12 +252,11 @@ Future<Null> initApp(bool isBubble) async {
         handleBox = store.box<Handle>();
         messageBox = store.box<Message>();
         scheduledBox = store.box<ScheduledMessage>();
-        themeEntryBox = store.box<ThemeEntry>();
-        themeObjectBox = store.box<ThemeObject>();
-        if (saveThemes && themeObjectBox.isEmpty()) {
-          for (ThemeObject theme in Themes.themes) {
-            if (theme.name == "OLED Dark") theme.selectedDarkTheme = true;
-            if (theme.name == "Bright White") theme.selectedLightTheme = true;
+        themeBox = store.box<ThemeStruct>();
+        if (themeBox.isEmpty()) {
+          prefs.setString("selected-dark", "OLED Dark");
+          prefs.setString("selected-light", "Bright White");
+          for (ThemeStruct theme in Themes.defaultThemes) {
             theme.save(updateIfNotAbsent: false);
           }
         }
@@ -282,7 +280,7 @@ Future<Null> initApp(bool isBubble) async {
           s.stop();
           print("Migrated in ${s.elapsedMilliseconds} ms");
         } else {
-          await initStore(saveThemes: true);
+          await initStore();
         }
       }
     }
@@ -400,12 +398,12 @@ Future<Null> initApp(bool isBubble) async {
   monetPalette = await DynamicColorPlugin.getCorePalette();
 
   if (exception == null) {
-    ThemeData light = ThemeObject
+    ThemeData light = ThemeStruct
         .getLightTheme()
-        .themeData;
-    ThemeData dark = ThemeObject
+        .data;
+    ThemeData dark = ThemeStruct
         .getDarkTheme()
-        .themeData;
+        .data;
 
     final tuple = applyMonet(light, dark);
     light = tuple.item1;
@@ -558,7 +556,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
                                       style: Theme
                                           .of(context)
                                           .textTheme
-                                          .bodyText1!
+                                          .bodyMedium!
                                           .apply(fontSizeFactor: 1.5),
                                       textAlign: TextAlign.center,
                                     ),
@@ -735,7 +733,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             if (!available || prefs.getString("update-check") == metadata['version']) return;
             Get.defaultDialog(
               title: "Server Update Check",
-              titleStyle: Theme.of(context).textTheme.headline1,
+              titleStyle: Theme.of(context).textTheme.headlineMedium,
               textConfirm: "OK",
               cancel: Container(height: 0, width: 0),
               content: Column(
@@ -744,7 +742,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                     SizedBox(
                       height: 15.0,
                     ),
-                    Text("Updates available:", style: context.theme.textTheme.bodyText1),
+                    Text("Updates available:", style: context.theme.textTheme.bodyMedium),
                     SizedBox(
                       height: 15.0,
                     ),

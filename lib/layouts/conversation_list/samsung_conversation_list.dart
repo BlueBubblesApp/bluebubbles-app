@@ -332,7 +332,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                         padding: const EdgeInsets.all(8.0),
                         child: Icon(
                           Icons.search,
-                          color: context.textTheme.bodyText1!.color,
+                          color: context.textTheme.bodyMedium!.color,
                         ),
                       ),
                     )
@@ -353,7 +353,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                         padding: const EdgeInsets.all(8.0),
                         child: Icon(
                           Icons.create,
-                          color: context.textTheme.bodyText1!.color,
+                          color: context.textTheme.bodyMedium!.color,
                         ),
                       ),
                     )
@@ -402,7 +402,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                         padding: const EdgeInsets.all(8.0),
                         child: Icon(
                           Icons.photo_camera,
-                          color: context.textTheme.bodyText1!.color,
+                          color: context.textTheme.bodyMedium!.color,
                         ),
                       ),
                     )
@@ -537,7 +537,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
                                               "Loading chats...",
-                                              style: Theme.of(context).textTheme.subtitle1,
+                                              style: Theme.of(context).textTheme.labelLarge,
                                             ),
                                           ),
                                           buildProgressIndicator(context, size: 15),
@@ -557,7 +557,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                                       padding: EdgeInsets.only(top: 50.0),
                                       child: Text(
                                         "You have no archived chats :(",
-                                        style: context.textTheme.subtitle1,
+                                        style: context.textTheme.labelLarge,
                                       ),
                                     ),
                                   );
@@ -617,7 +617,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                           padding: const EdgeInsets.all(8.0),
                           child: Icon(
                             selected[0].hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
-                            color: context.textTheme.bodyText1!.color,
+                            color: context.textTheme.bodyMedium!.color,
                           ),
                         ),
                       ),
@@ -635,7 +635,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                           padding: const EdgeInsets.all(8.0),
                           child: Icon(
                             selected[0].muteType == "mute" ? Icons.notifications_active : Icons.notifications_off,
-                            color: context.textTheme.bodyText1!.color,
+                            color: context.textTheme.bodyMedium!.color,
                           ),
                         ),
                       ),
@@ -653,7 +653,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                           padding: const EdgeInsets.all(8.0),
                           child: Icon(
                             selected[0].isPinned! ? Icons.star_outline : Icons.star,
-                            color: context.textTheme.bodyText1!.color,
+                            color: context.textTheme.bodyMedium!.color,
                           ),
                         ),
                       ),
@@ -673,7 +673,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                         padding: const EdgeInsets.all(8.0),
                         child: Icon(
                           showArchived ? Icons.unarchive : Icons.archive,
-                          color: context.textTheme.bodyText1!.color,
+                          color: context.textTheme.bodyMedium!.color,
                         ),
                       ),
                     ),
@@ -692,7 +692,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                           padding: const EdgeInsets.all(8.0),
                           child: Icon(
                             Icons.delete_forever,
-                            color: context.textTheme.bodyText1!.color,
+                            color: context.textTheme.bodyMedium!.color,
                           ),
                         ),
                       ),
@@ -767,7 +767,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                     body: Center(
                       child: Container(
                           child: Text("Select a chat from the list",
-                              style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))),
+                              style: Theme.of(Get.context!).textTheme.labelLarge!.copyWith(fontSize: 18))),
                     ),
                   ))
             ],

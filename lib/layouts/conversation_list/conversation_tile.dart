@@ -246,7 +246,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       final hideInfo = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
       final generateNames =
           SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
-      TextStyle style = Theme.of(context).textTheme.bodyText1!.copyWith(
+      TextStyle style = Theme.of(context).textTheme.bodyMedium!.copyWith(
           fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
               (widget.chat.hasUnreadMessage ?? false)
               ? FontWeight.bold
@@ -288,18 +288,18 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         final generateContent = SettingsManager().settings.redactedMode.value &&
             SettingsManager().settings.generateFakeMessageContent.value;
 
-        TextStyle style = Theme.of(context).textTheme.subtitle1!.copyWith(
+        TextStyle style = Theme.of(context).textTheme.labelLarge!.copyWith(
               fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
                   (widget.chat.hasUnreadMessage ?? false)
                   ? FontWeight.w600
                   : shouldHighlight.value ? FontWeight.w500 : null,
               color: SettingsManager().settings.skin.value == Skins.Material &&
                   (widget.chat.hasUnreadMessage ?? false)
-                  ? Theme.of(context).textTheme.bodyText1!.color : shouldHighlight.value
+                  ? Theme.of(context).textTheme.bodyMedium!.color : shouldHighlight.value
                   ? SettingsManager().settings.skin.value == Skins.iOS
                       ? Colors.white.withOpacity(0.75)
                       : null
-                  : context.textTheme.subtitle1!.color!.withOpacity(0.85),
+                  : context.textTheme.labelLarge!.color!.withOpacity(0.85),
             ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 0.95 : 1.0);
 
         if (generateContent) {
@@ -333,7 +333,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               snapshot.data["type"] == ChatControllerEvent.TypingStatus) {
             showTypingIndicator = snapshot.data["data"];
           }
-          double height = Theme.of(context).textTheme.subtitle1!.fontSize! * 1.25;
+          double height = Theme.of(context).textTheme.labelLarge!.fontSize! * 1.25;
           return Stack(
             clipBehavior: Clip.none,
             children: <Widget>[
@@ -356,7 +356,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                         child: Center(
                           child: Icon(
                             Icons.check,
-                            color: Theme.of(context).textTheme.bodyText1!.color,
+                            color: Theme.of(context).textTheme.bodyMedium!.color,
                             size: 20,
                           ),
                         ),
@@ -385,12 +385,12 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     return Obx(() => !SettingsManager().settings.statusIndicatorsOnChats.value || kIsWeb || markers == null
         ? Text(buildDate(widget.chat.latestMessageDate ?? widget.chat.latestMessageGetter?.dateCreated),
             textAlign: TextAlign.right,
-            style: Theme.of(context).textTheme.subtitle2!.copyWith(
+            style: Theme.of(context).textTheme.labelMedium!.copyWith(
                   color: shouldHighlight.value
                       ? SettingsManager().settings.skin.value == Skins.iOS
                           ? Colors.white.withOpacity(0.75)
                           : null
-                      : context.textTheme.subtitle1!.color!.withOpacity(0.85),
+                      : context.textTheme.labelLarge!.color!.withOpacity(0.85),
                 ),
             overflow: TextOverflow.clip)
         : ConstrainedBox(
@@ -410,14 +410,14 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                                   ? "Sent\n${buildDate(message?.dateCreated)}"
                                   : buildDate(message?.dateCreated))),
                   textAlign: TextAlign.right,
-                  style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                  style: Theme.of(context).textTheme.labelMedium!.copyWith(
                         color: (message?.error ?? 0) > 0
                             ? Colors.red
                             : shouldHighlight.value
                                 ? SettingsManager().settings.skin.value == Skins.iOS
                                     ? Colors.white.withOpacity(0.75)
                                     : null
-                                : context.textTheme.subtitle1!.color!.withOpacity(0.85),
+                                : context.textTheme.labelLarge!.color!.withOpacity(0.85),
                       ),
                   overflow: TextOverflow.clip);
             }),
@@ -557,7 +557,7 @@ class _Cupertino extends StatelessWidget {
                                         : Icons.arrow_forward,
                                     color: parent.shouldHighlight.value
                                         ? Colors.white
-                                        : context.textTheme.subtitle1!.color!,
+                                        : context.textTheme.labelLarge!.color!,
                                     size: 15,
                                   ),
                                 ],
@@ -605,7 +605,7 @@ class _Cupertino extends StatelessWidget {
                                       ? Colors.white
                                       : parentProps.chat.hasUnreadMessage!
                                           ? Theme.of(context).primaryColor.withOpacity(0.8)
-                                          : Theme.of(context).textTheme.subtitle1!.color,
+                                          : Theme.of(context).textTheme.labelLarge!.color,
                                   width: 10,
                                   height: 10,
                                 )
@@ -754,14 +754,14 @@ class _Material extends StatelessWidget {
                                       children: [
                                         if (parent.widget.chat.isPinned!)
                                           Icon(Icons.push_pin,
-                                              size: 15, color: Theme.of(context).textTheme.subtitle1!.color),
+                                              size: 15, color: Theme.of(context).textTheme.labelLarge!.color),
                                         SizedBox(width: 5),
                                         if (parent.widget.chat.muteType == "mute")
                                           Icon(
                                             Icons.notifications_off,
                                             color: parent.widget.chat.hasUnreadMessage!
                                                 ? Theme.of(context).primaryColor.withOpacity(0.8)
-                                                : Theme.of(context).textTheme.subtitle1!.color,
+                                                : Theme.of(context).textTheme.labelLarge!.color,
                                             size: 15,
                                           ),
                                       ],
@@ -893,7 +893,7 @@ class _Samsung extends StatelessWidget {
                                 if (parent.widget.chat.muteType == "mute")
                                   Icon(
                                     Icons.notifications_off,
-                                    color: Theme.of(context).textTheme.subtitle1!.color,
+                                    color: Theme.of(context).textTheme.labelLarge!.color,
                                     size: 15,
                                   ),
                                 Container(

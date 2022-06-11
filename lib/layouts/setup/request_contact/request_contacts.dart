@@ -55,7 +55,7 @@ class _RequestContactsState extends State<RequestContacts> {
                               child: Text("Contacts Permission",
                                   style: Theme.of(context)
                                       .textTheme
-                                      .bodyText1!
+                                      .bodyMedium!
                                       .apply(
                                         fontSizeFactor: 2.5,
                                         fontWeightDelta: 2,
@@ -71,7 +71,7 @@ class _RequestContactsState extends State<RequestContacts> {
                             child: Text("We'd like to access your contacts to show contact info in the app.",
                                 style: Theme.of(context)
                                     .textTheme
-                                    .bodyText1!
+                                    .bodyMedium!
                                     .apply(
                                       fontSizeFactor: 1.1,
                                       color: Colors.grey,
@@ -91,7 +91,7 @@ class _RequestContactsState extends State<RequestContacts> {
                                 child: Text("Permission Status: ${granted ? "Granted" : "Denied"}",
                                     style: Theme.of(context)
                                         .textTheme
-                                        .bodyText1!
+                                        .bodyMedium!
                                         .apply(
                                           fontSizeFactor: 1.1,
                                           color: granted ? Colors.green : Colors.red,
@@ -137,9 +137,9 @@ class _RequestContactsState extends State<RequestContacts> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.arrow_back, color: Theme.of(context).textTheme.bodyText1!.color, size: 20),
+                                Icon(Icons.arrow_back, color: Theme.of(context).textTheme.bodyMedium!.color, size: 20),
                                 SizedBox(width: 10),
-                                Text("Back", style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)),
+                                Text("Back", style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.1)),
                               ],
                             ),
                           ),
@@ -169,7 +169,7 @@ class _RequestContactsState extends State<RequestContacts> {
                               if (!(await ContactManager().canAccessContacts())) {
                                 Get.defaultDialog(
                                   title: "Notice",
-                                  titleStyle: Theme.of(context).textTheme.headline1,
+                                  titleStyle: Theme.of(context).textTheme.headlineMedium,
                                   backgroundColor: Theme.of(context).backgroundColor.lightenPercent(),
                                   buttonColor: Theme.of(context).primaryColor,
                                   content: Center(
@@ -200,7 +200,7 @@ class _RequestContactsState extends State<RequestContacts> {
                                   Padding(
                                     padding: const EdgeInsets.only(right: 30.0),
                                     child: Text("Next",
-                                        style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                                        style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                                   ),
                                   Positioned(
                                     left: 40,
@@ -257,7 +257,7 @@ class _ContactPermissionWarningDialogState extends State<ContactPermissionWarnin
         TextButton(
           child: Text(
             "Accept",
-            style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
+            style: Theme.of(context).textTheme.bodyMedium!.apply(color: Theme.of(context).primaryColor),
           ),
           onPressed: () {
             Navigator.of(context).pop(true);
@@ -266,7 +266,7 @@ class _ContactPermissionWarningDialogState extends State<ContactPermissionWarnin
         TextButton(
           child: Text(
             "Cancel",
-            style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
+            style: Theme.of(context).textTheme.bodyMedium!.apply(color: Theme.of(context).primaryColor),
           ),
           onPressed: () {
             Navigator.of(context).pop(false);

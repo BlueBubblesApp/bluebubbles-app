@@ -121,7 +121,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                 backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                 title: Text(
                   "Message Scheduler",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Theme.of(context).textTheme.headlineMedium,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -205,7 +205,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                       Center(
                           child: Text(
                         isNullOrEmpty(errors)! ? "" : errors.join("\n"),
-                        style: Theme.of(context).textTheme.bodyText1!.apply(color: Colors.red[300]),
+                        style: Theme.of(context).textTheme.bodyMedium!.apply(color: Colors.red[300]),
                         textAlign: TextAlign.center,
                       ))
                     ],

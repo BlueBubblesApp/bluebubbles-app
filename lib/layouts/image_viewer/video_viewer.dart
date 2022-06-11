@@ -121,15 +121,15 @@ class _VideoViewerState extends State<VideoViewer> {
                   text: TextSpan(children: [
                     TextSpan(
                         text: "${entry.key}: ",
-                        style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
-                    TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
+                        style: Theme.of(context).textTheme.bodyMedium!.apply(fontWeightDelta: 2)),
+                    TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyMedium)
                   ])));
             }
 
             if (metaWidgets.isEmpty) {
               metaWidgets.add(Text(
                 "No metadata available",
-                style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
+                style: Theme.of(context).textTheme.bodyMedium!.apply(fontWeightDelta: 2),
                 textAlign: TextAlign.center,
               ));
             }
@@ -139,7 +139,7 @@ class _VideoViewerState extends State<VideoViewer> {
               builder: (context) => AlertDialog(
                 title: Text(
                   "Metadata",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Theme.of(context).textTheme.headlineMedium,
                   textAlign: TextAlign.center,
                 ),
                 backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -163,7 +163,7 @@ class _VideoViewerState extends State<VideoViewer> {
                   TextButton(
                     child: Text(
                       "Close",
-                      style: Theme.of(context).textTheme.bodyText1!.copyWith(
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         color: Theme.of(context).primaryColor,
                       ),
                     ),
@@ -334,15 +334,15 @@ class _VideoViewerState extends State<VideoViewer> {
                             text: TextSpan(children: [
                           TextSpan(
                               text: "${entry.key}: ",
-                              style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
-                          TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
+                              style: Theme.of(context).textTheme.bodyMedium!.apply(fontWeightDelta: 2)),
+                          TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyMedium)
                         ])));
                       }
 
                       if (metaWidgets.isEmpty) {
                         metaWidgets.add(Text(
                           "No metadata available",
-                          style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
+                          style: Theme.of(context).textTheme.bodyMedium!.apply(fontWeightDelta: 2),
                           textAlign: TextAlign.center,
                         ));
                       }
@@ -352,7 +352,7 @@ class _VideoViewerState extends State<VideoViewer> {
                         builder: (context) => AlertDialog(
                           title: Text(
                             "Metadata",
-                            style: Theme.of(context).textTheme.headline1,
+                            style: Theme.of(context).textTheme.headlineMedium,
                             textAlign: TextAlign.center,
                           ),
                           backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -376,7 +376,7 @@ class _VideoViewerState extends State<VideoViewer> {
                             TextButton(
                               child: Text(
                                 "Close",
-                                style: Theme.of(context).textTheme.bodyText1!.copyWith(
+                                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                                       color: Theme.of(context).primaryColor,
                                     ),
                               ),
@@ -535,7 +535,7 @@ class _VideoViewerState extends State<VideoViewer> {
                               dialogBackgroundColor: Theme.of(context).colorScheme.secondary,
                               iconTheme: Theme.of(context)
                                   .iconTheme
-                                  .copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
+                                  .copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
                           child: Chewie(
                                   controller: chewieController!,
                                 ),

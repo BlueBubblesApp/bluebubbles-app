@@ -95,11 +95,11 @@ class _ContactWidgetState extends State<ContactWidget> {
                         children: [
                           Text(
                             "Contact Card",
-                            style: Theme.of(context).textTheme.subtitle2,
+                            style: Theme.of(context).textTheme.labelMedium,
                           ),
                           Text(
                             (contact?.displayName ?? '').isEmpty ? 'Unknown' : contact!.displayName,
-                            style: Theme.of(context).textTheme.bodyText1,
+                            style: Theme.of(context).textTheme.bodyMedium,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
                             softWrap: true,
@@ -124,10 +124,10 @@ class _ContactWidgetState extends State<ContactWidget> {
                                 SettingsManager().settings.skin.value == Skins.iOS
                                     ? CupertinoIcons.person_fill
                                     : Icons.person,
-                                color: Theme.of(context).textTheme.headline1?.color!)
+                                color: Theme.of(context).textTheme.headlineMedium?.color!)
                             : Text(
                                 initials,
-                                style: Theme.of(context).textTheme.headline1,
+                                style: Theme.of(context).textTheme.headlineMedium,
                             ),
                           alignment: AlignmentDirectional.center,
                         ),

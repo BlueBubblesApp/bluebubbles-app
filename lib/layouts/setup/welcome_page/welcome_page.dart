@@ -219,7 +219,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                                     width: context.width * 2 / 3,
                                     child: Text(
                                         "Welcome to BlueBubbles",
-                                        style: Theme.of(context).textTheme.bodyText1!.apply(
+                                        style: Theme.of(context).textTheme.bodyMedium!.apply(
                                           fontSizeFactor: 2.5,
                                           fontWeightDelta: 2,
                                         ).copyWith(height: 1.5)
@@ -236,7 +236,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                                   alignment: Alignment.centerLeft,
                                   child: Text(
                                       "Experience a clean, customizable iMessage client across all platforms.",
-                                      style: Theme.of(context).textTheme.bodyText1!.apply(
+                                      style: Theme.of(context).textTheme.bodyMedium!.apply(
                                         fontSizeFactor: 1.1,
                                         color: Colors.grey,
                                       ).copyWith(height: 2)
@@ -287,7 +287,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                                         padding: const EdgeInsets.only(right: 30.0),
                                         child: Text(
                                             "Next",
-                                            style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)
+                                            style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.1, color: Colors.white)
                                         ),
                                       ),
                                       Positioned(

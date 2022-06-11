@@ -92,17 +92,17 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
                           children: [
                             Container(height: 4, width: 4, decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(25),
-                              color: Theme.of(context).textTheme.subtitle1?.color,
+                              color: Theme.of(context).textTheme.labelLarge?.color,
                             )),
                             SizedBox(height: 20,),
                             Container(height: 4, width: 4, decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(25),
-                              color: Theme.of(context).textTheme.subtitle1?.color,
+                              color: Theme.of(context).textTheme.labelLarge?.color,
                             )),
                             SizedBox(height: 20,),
                             Container(height: 4, width: 4, decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(25),
-                              color: Theme.of(context).textTheme.subtitle1?.color,
+                              color: Theme.of(context).textTheme.labelLarge?.color,
                             )),
                           ],
                         ),

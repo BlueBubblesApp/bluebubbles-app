@@ -50,7 +50,7 @@ class MessageTimeStamp extends StatelessWidget {
                     textAlign: (message.isFromMe! && SettingsManager().settings.skin.value == Skins.Samsung)
                         ? TextAlign.right
                         : TextAlign.left,
-                    style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeFactor: 0.8),
+                    style: Theme.of(context).textTheme.labelLarge!.apply(fontSizeFactor: 0.8),
                     overflow: TextOverflow.visible,
                     maxLines: 2,
                   ),

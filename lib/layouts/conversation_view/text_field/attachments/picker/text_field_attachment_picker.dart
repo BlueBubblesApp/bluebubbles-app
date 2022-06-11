@@ -172,13 +172,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
                                               SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.folder_open : Icons.folder_open,
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: Theme.of(context).textTheme.bodyMedium!.color,
                                             ),
                                           ),
                                           Text(
                                             "Files",
                                             style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: Theme.of(context).textTheme.bodyMedium!.color,
                                               fontSize: 13,
                                             ),
                                           ),
@@ -208,7 +208,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                             backgroundColor: Theme.of(context).colorScheme.secondary,
                                             title: Text(
                                               "Send Current Location?",
-                                              style: Theme.of(context).textTheme.headline1,
+                                              style: Theme.of(context).textTheme.headlineMedium,
                                             ),
                                             actions: <Widget>[
                                               TextButton(
@@ -217,7 +217,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                                 ),
                                                 child: Text(
                                                   "Send",
-                                                  style: Theme.of(context).textTheme.bodyText1,
+                                                  style: Theme.of(context).textTheme.bodyMedium,
                                                 ),
                                                 onPressed: () async {
                                                   Share.location(ChatManager().activeChat!.chat);
@@ -230,7 +230,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                                 ),
                                                 child: Text(
                                                   "Cancel",
-                                                  style: Theme.of(context).textTheme.bodyText1,
+                                                  style: Theme.of(context).textTheme.bodyMedium,
                                                 ),
                                                 onPressed: () {
                                                   Navigator.of(context).pop();
@@ -247,13 +247,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
                                               SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location : Icons.location_on,
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: Theme.of(context).textTheme.bodyMedium!.color,
                                             ),
                                           ),
                                           Text(
                                             "Location",
                                             style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: Theme.of(context).textTheme.bodyMedium!.color,
                                               fontSize: 13,
                                             ),
                                           ),
@@ -295,13 +295,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
                                               SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: Theme.of(context).textTheme.bodyMedium!.color,
                                             ),
                                           ),
                                           Text(
                                             "Camera",
                                             style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: Theme.of(context).textTheme.bodyMedium!.color,
                                               fontSize: 13,
                                             ),
                                           ),
@@ -334,13 +334,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
                                               SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam,
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: Theme.of(context).textTheme.bodyMedium!.color,
                                             ),
                                           ),
                                           Text(
                                             "Video",
                                             style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: Theme.of(context).textTheme.bodyMedium!.color,
                                               fontSize: 13,
                                             ),
                                           ),

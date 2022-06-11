@@ -405,7 +405,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                 text: TextSpan(
                   children: MessageHelper.buildEmojiText(
                     text,
-                    Theme.of(context).textTheme.bodyText1!,
+                    Theme.of(context).textTheme.bodyMedium!,
                   ),
                 ),
               ),
@@ -472,14 +472,14 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                                   duration: Duration(milliseconds: 400),
                                   child: internalSmartReplies.isEmpty && replies.isNotEmpty
                                       ? Container(
-                                          height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,
+                                          height: Theme.of(context).textTheme.bodyMedium!.fontSize! + 35,
                                           child: ListView(
                                               reverse: true,
                                               scrollDirection: Axis.horizontal,
                                               children: replies.map((e) => _buildReply(e).value).toList()))
                                       : internalSmartReplies.isNotEmpty
                                           ? Container(
-                                              height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,
+                                              height: Theme.of(context).textTheme.bodyMedium!.fontSize! + 35,
                                               child: ListView(
                                                   reverse: true,
                                                   scrollDirection: Axis.horizontal,

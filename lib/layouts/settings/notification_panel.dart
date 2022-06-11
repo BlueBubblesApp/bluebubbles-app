@@ -32,7 +32,7 @@ class NotificationPanelController extends GetxController with SingleGetTickerPro
     tabs.add(Tab(
         icon: Icon(
           SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.globe : Icons.public,
-          color: Theme.of(Get.context!).textTheme.bodyText1!.color,
+          color: Theme.of(Get.context!).textTheme.bodyMedium!.color,
         ),
         text: "GLOBAL OPTIONS"));
     if (!kIsWeb) {
@@ -41,7 +41,7 @@ class NotificationPanelController extends GetxController with SingleGetTickerPro
             SettingsManager().settings.skin.value == Skins.iOS
                 ? CupertinoIcons.conversation_bubble
                 : Icons.chat_bubble_outline,
-            color: Theme.of(Get.context!).textTheme.bodyText1!.color,
+            color: Theme.of(Get.context!).textTheme.bodyMedium!.color,
           ),
           text: "CHAT-SPECIFIC OPTIONS"));
     }
@@ -55,10 +55,10 @@ class NotificationPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+        Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context)
         .textTheme
-        .subtitle1
+        .labelLarge
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
     Color tileColor = context.theme.tileColor;
@@ -93,7 +93,7 @@ class NotificationPanel extends StatelessWidget {
                         backgroundColor: headerColor.withOpacity(0.5),
                         title: Text(
                           "Notifications",
-                          style: Theme.of(context).textTheme.headline1,
+                          style: Theme.of(context).textTheme.headlineMedium,
                         ),
                       ),
                       filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -167,7 +167,7 @@ class NotificationPanel extends StatelessWidget {
                                             alignment: Alignment.centerLeft,
                                             child: Text(
                                               "Notifications",
-                                              style: Theme.of(context).textTheme.headline1,
+                                              style: Theme.of(context).textTheme.headlineMedium,
                                             ),
                                           ),
                                         ),
@@ -313,7 +313,7 @@ class NotificationPanel extends StatelessWidget {
                                     controller.text = SettingsManager().settings.globalTextDetection.value;
                                     Get.defaultDialog(
                                       title: "Text detection",
-                                      titleStyle: Theme.of(context).textTheme.headline1,
+                                      titleStyle: Theme.of(context).textTheme.headlineMedium,
                                       backgroundColor: Theme.of(context).backgroundColor,
                                       buttonColor: Theme.of(context).primaryColor,
                                       content: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -423,7 +423,7 @@ class NotificationPanel extends StatelessWidget {
             color: tileColor,
             child: TabBar(
               indicatorColor: Theme.of(context).primaryColor,
-              labelColor: Theme.of(Get.context!).textTheme.bodyText1!.color,
+              labelColor: Theme.of(Get.context!).textTheme.bodyMedium!.color,
               indicator: BoxDecoration(
                 border: Border(
                   top: BorderSide(
@@ -546,7 +546,7 @@ class ChatListState extends State<ChatList> {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 "Notifications",
-                                style: Theme.of(context).textTheme.headline1,
+                                style: Theme.of(context).textTheme.headlineMedium,
                               ),
                             ),
                           ),
@@ -582,7 +582,7 @@ class ChatListState extends State<ChatList> {
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
                             "Loading chats...",
-                            style: Theme.of(context).textTheme.subtitle1,
+                            style: Theme.of(context).textTheme.labelLarge,
                           ),
                         ),
                         buildProgressIndicator(context, size: 15),
@@ -599,7 +599,7 @@ class ChatListState extends State<ChatList> {
                     padding: EdgeInsets.only(top: 50.0),
                     child: Text(
                       "You have no chats :(",
-                      style: Theme.of(context).textTheme.subtitle1,
+                      style: Theme.of(context).textTheme.labelLarge,
                     ),
                   ),
                 ),
@@ -631,12 +631,12 @@ class ChatListState extends State<ChatList> {
                             chat: ChatBloc().chats[index],
                             inSelectMode: true,
                             subtitle: Text(getSubtitle(ChatBloc().chats[index]),
-                                style: Theme.of(context).textTheme.subtitle1),
+                                style: Theme.of(context).textTheme.labelLarge),
                             onSelect: (_) async {
                               final chat = ChatBloc().chats[index];
                               await Get.defaultDialog(
                                 title: "Chat-Specific Settings",
-                                titleStyle: Theme.of(context).textTheme.headline1,
+                                titleStyle: Theme.of(context).textTheme.headlineMedium,
                                 confirm: Container(height: 0, width: 0),
                                 cancel: Container(height: 0, width: 0),
                                 content: Container(
@@ -645,10 +645,10 @@ class ChatListState extends State<ChatList> {
                                     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
                                       ListTile(
                                         title: Text(chat.muteType == "mute" ? "Unmute" : "Mute",
-                                            style: Theme.of(context).textTheme.bodyText1),
+                                            style: Theme.of(context).textTheme.bodyMedium),
                                         subtitle: Text(
                                             "Completely ${chat.muteType == "mute" ? "unmute" : "mute"} this chat",
-                                            style: Theme.of(context).textTheme.subtitle1),
+                                            style: Theme.of(context).textTheme.labelLarge),
                                         onTap: () async {
                                           Get.back();
                                           chat.toggleMute(chat.muteType != "mute");
@@ -658,9 +658,9 @@ class ChatListState extends State<ChatList> {
                                         },
                                       ),
                                       ListTile(
-                                        title: Text("Mute Individuals", style: Theme.of(context).textTheme.bodyText1),
+                                        title: Text("Mute Individuals", style: Theme.of(context).textTheme.bodyMedium),
                                         subtitle: Text("Mute certain individuals in this chat",
-                                            style: Theme.of(context).textTheme.subtitle1),
+                                            style: Theme.of(context).textTheme.labelLarge),
                                         onTap: () async {
                                           Get.back();
                                           List<String?> names = chat.participants
@@ -669,7 +669,7 @@ class ChatListState extends State<ChatList> {
                                           List<String> existing = chat.muteArgs?.split(",") ?? [];
                                           Get.defaultDialog(
                                             title: "Mute Individuals",
-                                            titleStyle: Theme.of(context).textTheme.headline1,
+                                            titleStyle: Theme.of(context).textTheme.headlineMedium,
                                             backgroundColor: Theme.of(context).backgroundColor,
                                             buttonColor: Theme.of(context).primaryColor,
                                             content: Container(
@@ -701,7 +701,7 @@ class ChatListState extends State<ChatList> {
                                                               return Theme(
                                                                 data: Theme.of(context).copyWith(
                                                                     unselectedWidgetColor:
-                                                                        Theme.of(context).textTheme.headline1!.color),
+                                                                        Theme.of(context).textTheme.headlineMedium!.color),
                                                                 child: CheckboxListTile(
                                                                   value: existing
                                                                       .contains(chat.participants[index].address),
@@ -719,7 +719,7 @@ class ChatListState extends State<ChatList> {
                                                                   activeColor: Theme.of(context).primaryColor,
                                                                   title: Text(
                                                                       names[index] ?? chat.participants[index].address,
-                                                                      style: Theme.of(context).textTheme.headline1),
+                                                                      style: Theme.of(context).textTheme.headlineMedium),
                                                                 ),
                                                               );
                                                             },
@@ -752,12 +752,12 @@ class ChatListState extends State<ChatList> {
                                             chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs)
                                                 ? "Delete Temporary Mute"
                                                 : "Temporary Mute",
-                                            style: Theme.of(context).textTheme.bodyText1),
+                                            style: Theme.of(context).textTheme.bodyMedium),
                                         subtitle: Text(
                                             chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs)
                                                 ? ""
                                                 : "Mute this chat temporarily",
-                                            style: Theme.of(context).textTheme.subtitle1),
+                                            style: Theme.of(context).textTheme.labelLarge),
                                         onTap: () async {
                                           Get.back();
                                           if (shouldMuteDateTime(chat.muteArgs)) {
@@ -788,10 +788,10 @@ class ChatListState extends State<ChatList> {
                                         },
                                       ),
                                       ListTile(
-                                        title: Text("Text Detection", style: Theme.of(context).textTheme.bodyText1),
+                                        title: Text("Text Detection", style: Theme.of(context).textTheme.bodyMedium),
                                         subtitle: Text(
                                             "Completely mute this chat, except when a message contains certain text",
-                                            style: Theme.of(context).textTheme.subtitle1),
+                                            style: Theme.of(context).textTheme.labelLarge),
                                         onTap: () async {
                                           Get.back();
                                           final TextEditingController controller = TextEditingController();
@@ -800,7 +800,7 @@ class ChatListState extends State<ChatList> {
                                           }
                                           Get.defaultDialog(
                                             title: "Text detection",
-                                            titleStyle: Theme.of(context).textTheme.headline1,
+                                            titleStyle: Theme.of(context).textTheme.headlineMedium,
                                             backgroundColor: Theme.of(context).backgroundColor,
                                             buttonColor: Theme.of(context).primaryColor,
                                             content: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -848,9 +848,9 @@ class ChatListState extends State<ChatList> {
                                       ),
                                       ListTile(
                                         title: Text("Reset chat-specific settings",
-                                            style: Theme.of(context).textTheme.bodyText1),
+                                            style: Theme.of(context).textTheme.bodyMedium),
                                         subtitle: Text("Delete your custom settings",
-                                            style: Theme.of(context).textTheme.subtitle1),
+                                            style: Theme.of(context).textTheme.labelLarge),
                                         onTap: () async {
                                           Get.back();
                                           chat.toggleMute(false);

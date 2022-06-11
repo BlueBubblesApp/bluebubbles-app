@@ -216,7 +216,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
                             alignment: Alignment.center,
                             child: Text(
                               content.attachment.mimeType,
-                              style: Theme.of(context).textTheme.bodyText1,
+                              style: Theme.of(context).textTheme.bodyMedium,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -232,7 +232,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
     } else {
       return Text(
         "Error loading",
-        style: Theme.of(context).textTheme.bodyText1,
+        style: Theme.of(context).textTheme.bodyMedium,
       );
       //     return Container();
     }

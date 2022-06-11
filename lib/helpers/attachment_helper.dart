@@ -164,7 +164,7 @@ class AttachmentHelper {
               return AlertDialog(
                 title: Text(
                   "Confirm save",
-                  style: Theme.of(context).textTheme.bodyText1,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 content: Text("This file already exists.\nAre you sure you want to overwrite it?"),
                 backgroundColor: context.theme.colorScheme.secondary,

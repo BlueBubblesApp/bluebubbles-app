@@ -119,7 +119,7 @@ void sendEffectAction(
                                       child: Column(children: [
                                         Text(
                                           "Send with effect",
-                                          style: Theme.of(context).textTheme.subtitle1!,
+                                          style: Theme.of(context).textTheme.labelLarge!,
                                           textScaleFactor: 1.75,
                                         ),
                                         Padding(
@@ -311,7 +311,7 @@ void sendEffectAction(
                                                 : "Send with $screenSelected",
                                             style: Theme.of(context)
                                                 .textTheme
-                                                .bodyText1!
+                                                .bodyMedium!
                                                 .apply(color: Theme.of(context).primaryColor),
                                             textScaleFactor: 1.15,
                                           ),

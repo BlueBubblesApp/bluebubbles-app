@@ -115,12 +115,12 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                       chat.isPinned!
                           ? (ios ? CupertinoIcons.pin_slash : Icons.star_outline)
                           : (ios ? CupertinoIcons.pin : Icons.star),
-                      color: textTheme.bodyText1!.color,
+                      color: textTheme.bodyMedium!.color,
                     ),
                   ),
                   Text(
                     chat.isPinned! ? "Unpin" : "Pin",
-                    style: textTheme.bodyText1!,
+                    style: textTheme.bodyMedium!,
                   ),
                 ],
               ),
@@ -147,10 +147,10 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                       chat.muteType == "mute"
                           ? (ios ? CupertinoIcons.bell : Icons.notifications_active)
                           : (ios ? CupertinoIcons.bell_slash : Icons.notifications_off),
-                      color: textTheme.bodyText1!.color,
+                      color: textTheme.bodyMedium!.color,
                     ),
                   ),
-                  Text(chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts', style: textTheme.bodyText1!),
+                  Text(chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts', style: textTheme.bodyMedium!),
                 ],
               ),
             ),
@@ -175,10 +175,10 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                     chat.hasUnreadMessage!
                         ? (ios ? CupertinoIcons.person_crop_circle_badge_xmark : Icons.mark_chat_unread)
                         : (ios ? CupertinoIcons.person_crop_circle_badge_checkmark : Icons.mark_chat_read),
-                    color: textTheme.bodyText1!.color,
+                    color: textTheme.bodyMedium!.color,
                   ),
                 ),
-                Text(chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread', style: textTheme.bodyText1!),
+                Text(chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread', style: textTheme.bodyMedium!),
               ],
             ),
           ),
@@ -208,12 +208,12 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                       chat.isArchived!
                           ? (ios ? CupertinoIcons.tray_arrow_up : Icons.unarchive)
                           : (ios ? CupertinoIcons.tray_arrow_down : Icons.archive),
-                      color: textTheme.bodyText1!.color,
+                      color: textTheme.bodyMedium!.color,
                     ),
                   ),
                   Text(
                     chat.isArchived! ? 'Unarchive' : 'Archive',
-                    style: textTheme.bodyText1!,
+                    style: textTheme.bodyMedium!,
                   ),
                 ],
               ),
@@ -239,12 +239,12 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                     padding: EdgeInsets.only(right: 10),
                     child: Icon(
                       Icons.delete_forever,
-                      color: textTheme.bodyText1!.color,
+                      color: textTheme.bodyMedium!.color,
                     ),
                   ),
                   Text(
                     'Delete',
-                    style: textTheme.bodyText1!,
+                    style: textTheme.bodyMedium!,
                   ),
                 ],
               ),

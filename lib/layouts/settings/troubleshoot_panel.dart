@@ -14,10 +14,10 @@ class TroubleshootPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+        Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context)
         .textTheme
-        .subtitle1
+        .labelLarge
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor = context.theme.headerColor;
     Color tileColor = context.theme.tileColor;
@@ -78,7 +78,7 @@ class TroubleshootPanel extends StatelessWidget {
                             contentPadding: EdgeInsets.symmetric(horizontal: 20),
                             titlePadding: EdgeInsets.only(top: 15),
                             title: "Fetching contacts...",
-                            titleStyle: Theme.of(context).textTheme.headline1,
+                            titleStyle: Theme.of(context).textTheme.headlineMedium,
                             confirm: Container(
                               margin: EdgeInsets.only(bottom: 10),
                               child: TextButton(

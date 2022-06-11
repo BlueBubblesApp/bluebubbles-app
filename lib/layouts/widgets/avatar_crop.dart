@@ -79,7 +79,7 @@ class _AvatarCropState extends State<AvatarCrop> {
                   backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                   title: Text(
                     "Select & Crop Image",
-                    style: Theme.of(context).textTheme.headline1,
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   actions: [
                     AbsorbPointer(
@@ -88,12 +88,12 @@ class _AvatarCropState extends State<AvatarCrop> {
                           child: Text("SAVE",
                               style: Theme.of(context)
                                   .textTheme
-                                  .subtitle1!
+                                  .labelLarge!
                                   .apply(color: _imageData == null || _isLoading ? Colors.grey : Theme.of(context).primaryColor)),
                           onPressed: () {
                             Get.defaultDialog(
                               title: "Saving avatar...",
-                              titleStyle: Theme.of(context).textTheme.headline1,
+                              titleStyle: Theme.of(context).textTheme.headlineMedium,
                               confirm: Container(height: 0, width: 0),
                               cancel: Container(height: 0, width: 0),
                               content: Column(
@@ -168,7 +168,7 @@ class _AvatarCropState extends State<AvatarCrop> {
                     if (res.files.first.name.endsWith("gif")) {
                       Get.defaultDialog(
                         title: "Saving avatar...",
-                        titleStyle: Theme.of(context).textTheme.headline1,
+                        titleStyle: Theme.of(context).textTheme.headlineMedium,
                         confirm: Container(height: 0, width: 0),
                         cancel: Container(height: 0, width: 0),
                         content: Column(
@@ -192,7 +192,7 @@ class _AvatarCropState extends State<AvatarCrop> {
                   child: Text(
                     _imageData != null ? "Pick New Image" : "Pick Image",
                     style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyText1!.color,
+                      color: Theme.of(context).textTheme.bodyMedium!.color,
                       fontSize: 13,
                     ),
                   ),

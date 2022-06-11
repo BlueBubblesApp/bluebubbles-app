@@ -238,7 +238,7 @@ void showSnackbar(String title, String message,
     {int animationMs = 250, int durationMs = 1500, Function(GetBar)? onTap, TextButton? button}) {
   Get.snackbar(title, message,
       snackPosition: SnackPosition.BOTTOM,
-      colorText: Get.textTheme.bodyText1!.color,
+      colorText: Get.textTheme.bodyMedium!.color,
       backgroundColor: Get.theme.colorScheme.secondary,
       margin: EdgeInsets.only(bottom: 10),
       maxWidth: Get.width - 20,
@@ -858,7 +858,7 @@ Future<void> paintGroupAvatar({
             style: TextStyle(
                 fontSize: adjustedWidth * 0.3,
                 fontFamily: icon.fontFamily,
-                color: Get.context?.textTheme.subtitle1!.color!.withOpacity(0.8)))
+                color: Get.context?.textTheme.labelLarge!.color!.withOpacity(0.8)))
         ..layout()
         ..paint(canvas, Offset(left + realSize * 0.25, top + realSize * 0.25));
     } else {

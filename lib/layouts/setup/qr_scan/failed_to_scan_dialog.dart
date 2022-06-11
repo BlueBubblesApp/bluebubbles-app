@@ -27,7 +27,7 @@ class FailedToScan extends StatelessWidget {
         TextButton(
           child: Text(
             "Ok",
-            style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
+            style: Theme.of(context).textTheme.bodyMedium!.apply(color: Theme.of(context).primaryColor),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -35,7 +35,7 @@ class FailedToScan extends StatelessWidget {
           TextButton(
             child: Text(
               "Copy",
-              style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
+              style: Theme.of(context).textTheme.bodyMedium!.apply(color: Theme.of(context).primaryColor),
             ),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: exception));

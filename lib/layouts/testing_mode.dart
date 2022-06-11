@@ -32,7 +32,7 @@ class TestingMode extends GetView<TestingModeController> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Testing Mode",
-                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -41,7 +41,7 @@ class TestingMode extends GetView<TestingModeController> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Use the button below to send a test notification.",
-                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),

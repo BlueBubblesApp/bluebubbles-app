@@ -83,7 +83,7 @@ class CustomAvatarColorPanel extends GetView<CustomAvatarColorPanelController> {
                     padding: EdgeInsets.all(30),
                     child: Text(
                       "No avatars have been customized! To get started, turn on colorful avatars and tap an avatar in the conversation details page.",
-                      style: Theme.of(context).textTheme.subtitle1?.copyWith(height: 1.5),
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(height: 1.5),
                       textAlign: TextAlign.center,
                     )),
               for (Widget handleWidget in controller.handleWidgets) handleWidget

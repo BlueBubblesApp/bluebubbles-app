@@ -36,14 +36,14 @@ class PinnedOrderPanel extends StatelessWidget {
                 backgroundColor: Theme.of(context).backgroundColor.withOpacity(0.5),
                 title: Text(
                   "Pinned Chat Order",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 actions: [
                   TextButton(
                       child: Text("RESET",
                           style: Theme.of(context)
                               .textTheme
-                              .subtitle1!
+                              .labelLarge!
                               .apply(color: Theme.of(context).primaryColor)),
                       onPressed: () {
                         ChatBloc().removePinIndices();
@@ -75,7 +75,7 @@ class PinnedOrderPanel extends StatelessWidget {
                               padding: const EdgeInsets.all(8.0),
                               child: Text(
                                 "Loading chats...",
-                                style: Theme.of(context).textTheme.subtitle1,
+                                style: Theme.of(context).textTheme.labelLarge,
                               ),
                             ),
                             buildProgressIndicator(context, size: 15),
@@ -90,7 +90,7 @@ class PinnedOrderPanel extends StatelessWidget {
                         padding: EdgeInsets.only(top: 50.0),
                         child: Text(
                           "You have no pinned chats :(",
-                          style: Theme.of(context).textTheme.subtitle1,
+                          style: Theme.of(context).textTheme.labelLarge,
                         ),
                       ),
                     );

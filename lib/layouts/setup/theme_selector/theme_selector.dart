@@ -189,7 +189,7 @@ class ThemeSelector extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 20.0),
                     child: Text(
                       "Select your app theme and skin",
-                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                      style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -761,7 +761,7 @@ class TriangleBorder extends ShapeBorder {
 
 Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData theme) {
   Color backgroundColor = theme.backgroundColor;
-  Color? fontColor = theme.textTheme.headline1!.color;
+  Color? fontColor = theme.textTheme.headlineMedium!.color;
   String? title = chat.title ?? chat.displayName;
   Skins skin = Skin.of(context)!.skin;
   if (skin == Skins.Material ||
@@ -772,7 +772,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
       elevation: 0.0,
       title: Text(
         title!,
-        style: theme.textTheme.headline1!.apply(color: fontColor),
+        style: theme.textTheme.headlineMedium!.apply(color: fontColor),
       ),
       bottom: PreferredSize(
         child: Container(
@@ -816,7 +816,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
     );
   }
 
-  TextStyle? titleStyle = theme.textTheme.bodyText1;
+  TextStyle? titleStyle = theme.textTheme.bodyMedium;
 
   // Calculate separation factor
   // Anything below -60 won't work due to the alignment
@@ -888,7 +888,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
                               text: TextSpan(
-                                style: theme.textTheme.headline2,
+                                style: theme.textTheme.titleMedium,
                                 children: [
                                   TextSpan(
                                     text: title,
@@ -900,11 +900,11 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
                           ),
                           RichText(
                             text: TextSpan(
-                              style: theme.textTheme.headline2,
+                              style: theme.textTheme.titleMedium,
                               children: [
                                 TextSpan(
                                   text: " >",
-                                  style: theme.textTheme.subtitle1,
+                                  style: theme.textTheme.labelLarge,
                                 ),
                               ],
                             ),

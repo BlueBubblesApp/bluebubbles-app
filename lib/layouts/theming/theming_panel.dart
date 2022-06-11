@@ -8,7 +8,7 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,7 +22,7 @@ class ThemingPanel extends StatefulWidget {
 }
 
 class _ThemingPanelState extends State<ThemingPanel> {
-  int index = ThemeObject.inDarkMode(Get.context!) ? 1 : 0;
+  int index = ThemeManager().inDarkMode(Get.context!) ? 1 : 0;
   StreamController streamController = StreamController.broadcast();
 
   @override
@@ -62,7 +62,7 @@ class _ThemingPanelState extends State<ThemingPanel> {
                   backgroundColor: headerColor.withOpacity(0.5),
                   title: Text(
                     "Theming",
-                    style: Theme.of(context).textTheme.headline1,
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                 ),
                 filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -129,14 +129,14 @@ class _ThemingPanelState extends State<ThemingPanel> {
                   child: Tab(
                     icon: Icon(
                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.sun_max : Icons.brightness_high,
-                      color: Theme.of(context).textTheme.bodyText1!.color,
+                      color: Theme.of(context).textTheme.bodyMedium!.color,
                     ),
                   ),
                 ),
                 Tab(
                   icon: Icon(
                     SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.moon : Icons.brightness_3,
-                    color: Theme.of(context).textTheme.bodyText1!.color,
+                    color: Theme.of(context).textTheme.bodyMedium!.color,
                   ),
                 ),
               ],

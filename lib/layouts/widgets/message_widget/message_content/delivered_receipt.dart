@@ -88,7 +88,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> {
         if (shouldShow(markers?.myLastMessage.value, markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value)) {
           return Text(
             getText(),
-            style: Theme.of(context).textTheme.subtitle2,
+            style: Theme.of(context).textTheme.labelMedium,
           );
         } else {
           return Container();
