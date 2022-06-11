@@ -13,6 +13,7 @@ class FailedToConnectDialog extends StatelessWidget {
         return true;
       },
       child: AlertDialog(
+        backgroundColor: context.theme.colorScheme.surface,
         title: Text(
           "Failed To Connect!",
           style: context.theme.textTheme.titleLarge,

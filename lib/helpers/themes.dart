@@ -41,10 +41,10 @@ ThemeData nordDarkTheme = ThemeData(
     primarySwatch: createMaterialColor(HexColor("5E81AC")),
     accentColor: HexColor("88C0D0"),
     backgroundColor: HexColor("3B4252"),
+    cardColor: HexColor("4C566A"),
     errorColor: Colors.red,
     brightness: Brightness.dark,
   ).copyWith(
-    surface: HexColor("4C566A"),
     primaryContainer: HexColor("49688e"),
     outline: Colors.grey,
   ),
