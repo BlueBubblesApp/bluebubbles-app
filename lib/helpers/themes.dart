@@ -24,50 +24,41 @@ bool isEqual(ThemeData one, ThemeData two) {
 }
 
 ThemeData oledDarkTheme = ThemeData(
-  primarySwatch: Colors.blue,
   splashFactory: InkRipple.splashFactory,
   textTheme: Typography.englishLike2021.merge(Typography.whiteRedmond),
-  colorScheme: ColorScheme.fromSwatch(
-    primarySwatch: Colors.blue,
-    backgroundColor: Colors.black,
-    cardColor: HexColor('26262a'),
-    errorColor: Colors.red,
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: Colors.blue,
+    background: Colors.black,
+    error: Colors.red,
     brightness: Brightness.dark,
   ),
-  dividerColor: HexColor('27272a'),
-  backgroundColor: Colors.black,
-  splashColor: Colors.white.withOpacity(0.35),
 );
 
 ThemeData nordDarkTheme = ThemeData(
-  primarySwatch: Colors.blue,
   splashFactory: InkRipple.splashFactory,
   textTheme: Typography.englishLike2021.merge(Typography.whiteRedmond),
   colorScheme: ColorScheme.fromSwatch(
-    primarySwatch: Colors.blue,
-    backgroundColor: HexColor('2E3440'),
-    cardColor: HexColor('4C566A'),
+    primarySwatch: createMaterialColor(HexColor("5E81AC")),
+    accentColor: HexColor("88C0D0"),
+    backgroundColor: HexColor("3B4252"),
+    cardColor: HexColor("4C566A"),
     errorColor: Colors.red,
     brightness: Brightness.dark,
+  ).copyWith(
+    primaryContainer: HexColor("49688e"),
+    outline: Colors.grey,
   ),
-  dividerColor: HexColor('4C566A'),
-  backgroundColor: HexColor('2E3440'),
-  splashColor: Colors.white.withOpacity(0.35),
 );
 
 ThemeData whiteLightTheme = ThemeData(
-  primarySwatch: Colors.blue,
   splashFactory: InkRipple.splashFactory,
   textTheme: Typography.englishLike2021.merge(Typography.blackRedmond),
-  colorScheme: ColorScheme.fromSwatch(
-    primarySwatch: Colors.blue,
-    backgroundColor: Colors.white,
-    cardColor: HexColor('e5e5ea'),
-    errorColor: Colors.red,
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: Colors.blue,
+    background: Colors.white,
+    error: Colors.red,
     brightness: Brightness.light,
   ),
-  dividerColor: HexColor('e5e5ea').withOpacity(0.5),
-  backgroundColor: Colors.white,
 );
 
 void loadTheme(BuildContext? context, {ThemeStruct? lightOverride, ThemeStruct? darkOverride}) {

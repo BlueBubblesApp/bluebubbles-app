@@ -15,14 +15,14 @@ class SetupMacApp extends StatelessWidget {
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
             ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
+            : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+          context.theme.colorScheme.background.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: context.theme.colorScheme.background,
         body: LayoutBuilder(builder: (context, size) {
           return SingleChildScrollView(
             child: ConstrainedBox(
@@ -43,14 +43,9 @@ class SetupMacApp extends StatelessWidget {
                             child: Container(
                               width: context.width * 2 / 3,
                               child: Text("Setup Check",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium!
-                                      .apply(
-                                        fontSizeFactor: 2.5,
-                                        fontWeightDelta: 2,
-                                      )
-                                      .copyWith(height: 1.5)),
+                                  style: context.theme.textTheme.displaySmall!.apply(
+                                    fontWeightDelta: 2,
+                                  ).copyWith(height: 1.35, color: context.theme.colorScheme.onBackground)),
                             ),
                           ),
                         ),
@@ -60,14 +55,10 @@ class SetupMacApp extends StatelessWidget {
                             alignment: Alignment.centerLeft,
                             child: Text(
                                 "Please ensure you have set up the BlueBubbles Server on macOS before proceeding.\n\nAdditionally, please ensure iMessage is signed into your Apple ID on macOS.",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium!
-                                    .apply(
-                                      fontSizeFactor: 1.1,
-                                      color: Colors.grey,
-                                    )
-                                    .copyWith(height: 2)),
+                                style: context.theme.textTheme.bodyLarge!.apply(
+                              fontSizeDelta: 1.5,
+                              color: context.theme.colorScheme.outline,
+                            ).copyWith(height: 2)),
                           ),
                         ),
                         Padding(
@@ -106,7 +97,7 @@ class SetupMacApp extends StatelessWidget {
                                     children: [
                                       Text(
                                           "Server setup instructions",
-                                          style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.1, color: Colors.white)
+                                          style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)
                                       ),
                                       SizedBox(width: 10),
                                       Icon(Icons.arrow_forward, color: Colors.white, size: 20),
@@ -139,8 +130,8 @@ class SetupMacApp extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(20.0),
                                 ),
                               ),
-                              backgroundColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
-                              shadowColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
+                              backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                              shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
                               maximumSize: MaterialStateProperty.all(Size(200, 36)),
                               minimumSize: MaterialStateProperty.all(Size(30, 30)),
                             ),
@@ -153,9 +144,11 @@ class SetupMacApp extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.arrow_back, color: Theme.of(context).textTheme.bodyMedium!.color, size: 20),
+                                Icon(Icons.arrow_back,
+                                    color: context.theme.colorScheme.onBackground, size: 20),
                                 SizedBox(width: 10),
-                                Text("Back", style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.1)),
+                                Text("Back",
+                                    style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
                               ],
                             ),
                           ),
@@ -190,7 +183,7 @@ class SetupMacApp extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text("Next", style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                                Text("Next", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                                 SizedBox(width: 10),
                                 Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                               ],

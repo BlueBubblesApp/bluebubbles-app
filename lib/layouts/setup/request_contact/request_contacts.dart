@@ -19,20 +19,21 @@ class RequestContacts extends StatefulWidget {
 class _RequestContactsState extends State<RequestContacts> {
   CustomAnimationControl controller = CustomAnimationControl.mirror;
   Tween<double> tween = Tween<double>(begin: 0, end: 5);
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
             ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
+            : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        context.theme.colorScheme.background.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: context.theme.colorScheme.background,
         body: LayoutBuilder(builder: (context, size) {
           return SingleChildScrollView(
             child: ConstrainedBox(
@@ -53,14 +54,9 @@ class _RequestContactsState extends State<RequestContacts> {
                             child: Container(
                               width: context.width * 2 / 3,
                               child: Text("Contacts Permission",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium!
-                                      .apply(
-                                        fontSizeFactor: 2.5,
+                                  style: context.theme.textTheme.displaySmall!.apply(
                                         fontWeightDelta: 2,
-                                      )
-                                      .copyWith(height: 1.5)),
+                                      ).copyWith(height: 1.35, color: context.theme.colorScheme.onBackground)),
                             ),
                           ),
                         ),
@@ -69,14 +65,11 @@ class _RequestContactsState extends State<RequestContacts> {
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Text("We'd like to access your contacts to show contact info in the app.",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium!
-                                    .apply(
-                                      fontSizeFactor: 1.1,
-                                      color: Colors.grey,
-                                    )
-                                    .copyWith(height: 2)),
+                                style: context.theme.textTheme.bodyLarge!.apply(
+                                  fontSizeDelta: 1.5,
+                                  color: context.theme.colorScheme.outline,
+                                ).copyWith(height: 2)
+                            ),
                           ),
                         ),
                         FutureBuilder<PermissionStatus>(
@@ -89,14 +82,10 @@ class _RequestContactsState extends State<RequestContacts> {
                               child: Align(
                                 alignment: Alignment.centerLeft,
                                 child: Text("Permission Status: ${granted ? "Granted" : "Denied"}",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium!
-                                        .apply(
-                                          fontSizeFactor: 1.1,
-                                          color: granted ? Colors.green : Colors.red,
-                                        )
-                                        .copyWith(height: 2)),
+                                    style: context.theme.textTheme.bodyLarge!.apply(
+                                      fontSizeDelta: 1.5,
+                                      color: granted ? Colors.green : context.theme.colorScheme.error,
+                                    ).copyWith(height: 2)),
                               ),
                             );
                           },
@@ -123,8 +112,8 @@ class _RequestContactsState extends State<RequestContacts> {
                                   borderRadius: BorderRadius.circular(20.0),
                                 ),
                               ),
-                              backgroundColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
-                              shadowColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
+                              backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                              shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
                               maximumSize: MaterialStateProperty.all(Size(200, 36)),
                               minimumSize: MaterialStateProperty.all(Size(30, 30)),
                             ),
@@ -137,9 +126,9 @@ class _RequestContactsState extends State<RequestContacts> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.arrow_back, color: Theme.of(context).textTheme.bodyMedium!.color, size: 20),
+                                Icon(Icons.arrow_back, color: context.theme.colorScheme.onBackground, size: 20),
                                 SizedBox(width: 10),
-                                Text("Back", style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.1)),
+                                Text("Back", style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
                               ],
                             ),
                           ),
@@ -167,24 +156,37 @@ class _RequestContactsState extends State<RequestContacts> {
                             ),
                             onPressed: () async {
                               if (!(await ContactManager().canAccessContacts())) {
-                                Get.defaultDialog(
-                                  title: "Notice",
-                                  titleStyle: Theme.of(context).textTheme.headlineMedium,
-                                  backgroundColor: Theme.of(context).backgroundColor.lightenPercent(),
-                                  buttonColor: Theme.of(context).primaryColor,
-                                  content: Center(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                          "We weren't able to access your contacts.\n\nAre you sure you want to proceed without contacts?",
-                                          textAlign: TextAlign.center),
-                                    ),
-                                  ),
-                                  textConfirm: "YES",
-                                  textCancel: "NO",
-                                  cancelTextColor: Theme.of(context).primaryColor,
-                                  onConfirm: () async {
-                                    continueToNextPage();
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Text(
+                                        "Notice",
+                                        style: context.theme.textTheme.titleLarge,
+                                      ),
+                                      backgroundColor: context.theme.colorScheme.surface,
+                                      content: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text(
+                                            "We weren't able to access your contacts.\n\nAre you sure you want to proceed without contacts?",
+                                            style: context.theme.textTheme.bodyLarge),
+                                      ),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                            continueToNextPage();
+                                          },
+                                        ),
+                                      ],
+                                    );
                                   },
                                 );
                               } else {
@@ -200,7 +202,7 @@ class _RequestContactsState extends State<RequestContacts> {
                                   Padding(
                                     padding: const EdgeInsets.only(right: 30.0),
                                     child: Text("Next",
-                                        style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.1, color: Colors.white)),
+                                        style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                                   ),
                                   Positioned(
                                     left: 40,
@@ -238,44 +240,6 @@ class _RequestContactsState extends State<RequestContacts> {
     widget.controller.nextPage(
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-    );
-  }
-}
-
-class ContactPermissionWarningDialog extends StatefulWidget {
-  ContactPermissionWarningDialog({Key? key}) : super(key: key);
-
-  @override
-  State<ContactPermissionWarningDialog> createState() => _ContactPermissionWarningDialogState();
-}
-
-class _ContactPermissionWarningDialogState extends State<ContactPermissionWarningDialog> {
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      actions: [
-        TextButton(
-          child: Text(
-            "Accept",
-            style: Theme.of(context).textTheme.bodyMedium!.apply(color: Theme.of(context).primaryColor),
-          ),
-          onPressed: () {
-            Navigator.of(context).pop(true);
-          },
-        ),
-        TextButton(
-          child: Text(
-            "Cancel",
-            style: Theme.of(context).textTheme.bodyMedium!.apply(color: Theme.of(context).primaryColor),
-          ),
-          onPressed: () {
-            Navigator.of(context).pop(false);
-          },
-        ),
-      ],
-      title: Text("Failed to get Contact Permission"),
-      content: Text(
-          "We were unable to get contact permissions. It is recommended to use BlueBubbles with contacts. Are you sure you want to proceed?"),
     );
   }
 }

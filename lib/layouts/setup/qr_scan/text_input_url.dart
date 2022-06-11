@@ -78,29 +78,54 @@ class _TextInputURLState extends State<TextInputURL> {
   Widget build(BuildContext context) {
     if (!connecting) {
       return AlertDialog(
-        scrollable: true,
-        title: Text("Type in your server details"),
+        title: Text(
+          "Enter Server Details",
+          style: context.theme.textTheme.titleLarge,
+        ),
+        backgroundColor: context.theme.colorScheme.surface,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              cursorColor: Theme.of(context).primaryColor,
+              cursorColor: context.theme.colorScheme.primary,
               autocorrect: false,
               autofocus: true,
               controller: urlController,
+              textInputAction: TextInputAction.next,
               decoration: InputDecoration(
-                border: OutlineInputBorder(),
+                enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: context.theme.colorScheme.outline),
+                    borderRadius: BorderRadius.circular(20)),
+                focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: context.theme.colorScheme.primary),
+                    borderRadius: BorderRadius.circular(20)),
                 labelText: "URL",
               ),
             ),
             SizedBox(height: 10),
             TextField(
-              cursorColor: Theme.of(context).primaryColor,
+              cursorColor: context.theme.colorScheme.primary,
               autocorrect: false,
-              autofocus: true,
+              autofocus: false,
               controller: passwordController,
+              textInputAction: TextInputAction.next,
+              onSubmitted: (_) {
+                if (urlController.text == "googleplaytest" &&
+                    passwordController.text == "googleplaytest") {
+                  Get.toNamed("/testing-mode");
+                  return;
+                }
+                connect(urlController.text, passwordController.text);
+                connecting = true;
+                if (mounted) setState(() {});
+              },
               decoration: InputDecoration(
-                border: OutlineInputBorder(),
+                enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: context.theme.colorScheme.outline),
+                    borderRadius: BorderRadius.circular(20)),
+                focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: context.theme.colorScheme.primary),
+                    borderRadius: BorderRadius.circular(20)),
                 labelText: "Password",
               ),
               obscureText: true,
@@ -109,7 +134,11 @@ class _TextInputURLState extends State<TextInputURL> {
         ),
         actions: [
           TextButton(
-            child: Text("OK"),
+            child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+            onPressed: widget.onClose,
+          ),
+          TextButton(
+            child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
             onPressed: () {
               if (urlController.text == "googleplaytest" && passwordController.text == "googleplaytest") {
                 Get.toNamed("/testing-mode");
@@ -120,10 +149,6 @@ class _TextInputURLState extends State<TextInputURL> {
               if (mounted) setState(() {});
             },
           ),
-          TextButton(
-            child: Text("Cancel"),
-            onPressed: widget.onClose,
-          )
         ],
       );
     } else if (error != null) {
