@@ -19,7 +19,7 @@ class BalloonBundleWidget extends StatefulWidget {
   final Message? message;
 
   @override
-  _BalloonBubbleState createState() => _BalloonBubbleState();
+  State<BalloonBundleWidget> createState() => _BalloonBubbleState();
 }
 
 class _BalloonBubbleState extends State<BalloonBundleWidget> {

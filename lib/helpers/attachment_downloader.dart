@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -46,7 +46,6 @@ class AttachmentDownloadController extends GetxController {
   final RxnNum progress = RxnNum();
   final Rxn<PlatformFile> file = Rxn<PlatformFile>();
   final RxBool error = RxBool(false);
-  int chunkSize = 500;
   Stopwatch stopwatch = Stopwatch();
   bool isFetching = false;
 
@@ -58,7 +57,6 @@ class AttachmentDownloadController extends GetxController {
 
   @override
   void onInit() {
-    chunkSize = SettingsManager().settings.chunkSize.value * 1024;
     Get.find<AttachmentDownloadService>().addToQueue(this);
     super.onInit();
   }
@@ -66,8 +64,6 @@ class AttachmentDownloadController extends GetxController {
   Future<void> fetchAttachment() async {
     if (attachment.guid == null) return;
     isFetching = true;
-    int numOfChunks = (attachment.totalBytes! / chunkSize).ceil();
-    Logger.info("Fetching $numOfChunks attachment chunks");
     stopwatch.start();
     var response = await api.downloadAttachment(attachment.guid!,
         onReceiveProgress: (count, total) => setProgress(kIsWeb ? (count / total) : (count / attachment.totalBytes!)));

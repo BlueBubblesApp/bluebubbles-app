@@ -20,10 +20,10 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -33,6 +33,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:particles_flutter/particles_flutter.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -123,13 +124,9 @@ class SentMessageHelper {
                           )),
                     )
                   : RichText(
-                  text: TextSpan(
-                      children: MessageHelper.buildEmojiText(
-                          message!.text!,
-                          Theme.of(context)
-                              .textTheme
-                              .bodyText1!
-                              .apply(fontSizeFactor: 4)))),
+                      text: TextSpan(
+                          children: MessageHelper.buildEmojiText(
+                              message!.text!, Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 4)))),
             ),
           );
         })
@@ -165,159 +162,180 @@ class SentMessageHelper {
             ),
           LayoutBuilder(builder: (_, constraints) {
             return Container(
-                width: customWidth != null ? constraints.maxWidth : null,
-                constraints: customWidth == null
-                    ? BoxConstraints(
-                        maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+              width: customWidth != null ? constraints.maxWidth : null,
+              constraints: customWidth == null
+                  ? BoxConstraints(
+                      maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+                    )
+                  : null,
+              margin: EdgeInsets.only(
+                top: hasReactions && margin ? 18 : 0,
+                left: margin ? 10 : 0,
+                right: margin ? 10 : 0,
+              ),
+              padding: EdgeInsets.symmetric(
+                vertical: padding ? 8 : 0,
+                horizontal: padding ? 14 : 0,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: currentSkin == Skins.iOS
+                    ? BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(17),
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
                       )
-                    : null,
-                margin: EdgeInsets.only(
-                  top: hasReactions && margin ? 18 : 0,
-                  left: margin ? 10 : 0,
-                  right: margin ? 10 : 0,
-                ),
-                padding: EdgeInsets.symmetric(
-                  vertical: padding ? 8 : 0,
-                  horizontal: padding ? 14 : 0,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: currentSkin == Skins.iOS
-                      ? BorderRadius.only(
-                          bottomLeft: Radius.circular(20),
-                          bottomRight: Radius.circular(17),
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
-                        )
-                      : (currentSkin == Skins.Material)
-                          ? BorderRadius.only(
-                              topLeft: Radius.circular(20),
-                              topRight:
-                                  olderMessage == null || MessageHelper.getShowTail(context, olderMessage, message)
-                                      ? Radius.circular(20)
-                                      : Radius.circular(5),
-                              bottomLeft: Radius.circular(20),
-                              bottomRight: Radius.circular(showTail ? 20 : 5),
-                            )
-                          : (currentSkin == Skins.Samsung)
-                              ? BorderRadius.only(
-                                  topLeft: Radius.circular(17.5),
-                                  topRight: Radius.circular(17.5),
-                                  bottomRight: Radius.circular(17.5),
-                                  bottomLeft: Radius.circular(17.5),
-                                )
-                              : null,
-                  color: customColor ?? bubbleColor,
-                ),
-                child: customContent ??
-                    (effect.isBubble && controller != CustomAnimationControl.stop
-                        ? CustomAnimation<TimelineValue<String>>(
-                            control: controller,
-                            tween: tween!,
-                            duration: Duration(milliseconds: 1800),
-                            builder: (context, child, anim) {
-                              double value = anim.get("size");
-                              return StatefulBuilder(builder: (context, setState) {
-                                return GestureDetector(
-                                  onHorizontalDragUpdate: (DragUpdateDetails details) {
-                                    if (effect != MessageEffect.invisibleInk) return;
-                                    if ((details.primaryDelta ?? 0).abs() > 1) {
-                                      message?.setPlayedDate();
-                                      setState(() {
-                                        opacity = 1 - opacity;
-                                      });
-                                      updateController?.call();
-                                    }
-                                  },
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Opacity(
-                                        opacity: 1 - opacity,
-                                        child: RichText(
-                                          text: TextSpan(
-                                            children: [
-                                              if (!isNullOrEmpty(message!.subject)!)
-                                                TextSpan(
-                                                  text: "$subject\n",
-                                                  style: Theme.of(context).textTheme.bodyText2!.apply(
-                                                      fontWeightDelta: 2,
-                                                      color: hideContent ? Colors.transparent : Colors.white),
-                                                ),
+                    : (currentSkin == Skins.Material)
+                        ? BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            topRight: olderMessage == null || MessageHelper.getShowTail(context, olderMessage, message)
+                                ? Radius.circular(20)
+                                : Radius.circular(5),
+                            bottomLeft: Radius.circular(20),
+                            bottomRight: Radius.circular(showTail ? 20 : 5),
+                          )
+                        : (currentSkin == Skins.Samsung)
+                            ? BorderRadius.only(
+                                topLeft: Radius.circular(17.5),
+                                topRight: Radius.circular(17.5),
+                                bottomRight: Radius.circular(17.5),
+                                bottomLeft: Radius.circular(17.5),
+                              )
+                            : null,
+                color: customColor ?? bubbleColor,
+              ),
+              child: customContent ??
+                  (effect.isBubble && controller != CustomAnimationControl.stop
+                      ? CustomAnimation<TimelineValue<String>>(
+                          control: controller,
+                          tween: tween!,
+                          duration: Duration(milliseconds: 1800),
+                          builder: (context, child, anim) {
+                            double value = anim.get("size");
+                            return StatefulBuilder(builder: (context, setState) {
+                              return GestureDetector(
+                                onHorizontalDragUpdate: (DragUpdateDetails details) {
+                                  if (effect != MessageEffect.invisibleInk) return;
+                                  if ((details.primaryDelta ?? 0).abs() > 1) {
+                                    message?.setPlayedDate();
+                                    setState(() {
+                                      opacity = 1 - opacity;
+                                    });
+                                    updateController?.call();
+                                  }
+                                },
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Opacity(
+                                      opacity: 1 - opacity,
+                                      child: RichText(
+                                        text: TextSpan(
+                                          children: [
+                                            if (!isNullOrEmpty(message!.subject)!)
                                               TextSpan(
-                                                text: text,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyText2!
-                                                    .apply(color: hideContent ? Colors.transparent : Colors.white),
+                                                text: "$subject\n",
+                                                style: Theme.of(context).textTheme.bodyText2!.apply(
+                                                    fontWeightDelta: 2,
+                                                    color: hideContent ? Colors.transparent : Colors.white),
                                               ),
-                                            ],
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText2!
-                                                .apply(color: hideContent ? Colors.transparent : Colors.white),
-                                          ),
+                                            TextSpan(
+                                              text: text,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyText2!
+                                                  .apply(color: hideContent ? Colors.transparent : Colors.white),
+                                            ),
+                                          ],
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText2!
+                                              .apply(color: hideContent ? Colors.transparent : Colors.white),
                                         ),
                                       ),
-                                      if (effect == MessageEffect.gentle)
-                                        RichText(
-                                          text: TextSpan(
-                                            children: [
-                                              if (!isNullOrEmpty(message.subject)!)
-                                                TextSpan(
-                                                  text: "$subject\n",
-                                                  style: Theme.of(context).textTheme.bodyText2!.apply(
-                                                      fontWeightDelta: 2,
-                                                      fontSizeFactor: value,
-                                                      color: hideContent ? Colors.transparent : Colors.white),
-                                                ),
+                                    ),
+                                    if (effect == MessageEffect.gentle)
+                                      RichText(
+                                        text: TextSpan(
+                                          children: [
+                                            if (!isNullOrEmpty(message.subject)!)
                                               TextSpan(
-                                                text: text,
+                                                text: "$subject\n",
                                                 style: Theme.of(context).textTheme.bodyText2!.apply(
+                                                    fontWeightDelta: 2,
                                                     fontSizeFactor: value,
                                                     color: hideContent ? Colors.transparent : Colors.white),
                                               ),
-                                            ],
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText2!
-                                                .apply(color: hideContent ? Colors.transparent : Colors.white),
-                                          ),
-                                        ),
-                                      if (effect == MessageEffect.invisibleInk &&
-                                          controller != CustomAnimationControl.stop)
-                                        Opacity(
-                                          opacity: opacity,
-                                          child: AbsorbPointer(
-                                            absorbing: true,
-                                            child: CircularParticle(
-                                              key: UniqueKey(),
-                                              numberOfParticles: bubbleSize.height * bubbleSize.width / 25,
-                                              speedOfParticles: 0.25,
-                                              height: bubbleSize.height - 20,
-                                              width: bubbleSize.width - 25,
-                                              particleColor: Colors.white.withAlpha(150),
-                                              maxParticleSize: (bubbleSize.height / 75).clamp(0.5, 1),
-                                              isRandSize: true,
-                                              isRandomColor: false,
+                                            TextSpan(
+                                              text: text,
+                                              style: Theme.of(context).textTheme.bodyText2!.apply(
+                                                  fontSizeFactor: value,
+                                                  color: hideContent ? Colors.transparent : Colors.white),
                                             ),
+                                          ],
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText2!
+                                              .apply(color: hideContent ? Colors.transparent : Colors.white),
+                                        ),
+                                      ),
+                                    if (effect == MessageEffect.invisibleInk &&
+                                        controller != CustomAnimationControl.stop)
+                                      Opacity(
+                                        opacity: opacity,
+                                        child: AbsorbPointer(
+                                          absorbing: true,
+                                          child: CircularParticle(
+                                            key: UniqueKey(),
+                                            numberOfParticles: bubbleSize.height * bubbleSize.width / 25,
+                                            speedOfParticles: 0.25,
+                                            height: bubbleSize.height - 20,
+                                            width: bubbleSize.width - 25,
+                                            particleColor: Colors.white.withAlpha(150),
+                                            maxParticleSize: (bubbleSize.height / 75).clamp(0.5, 1),
+                                            isRandSize: true,
+                                            isRandomColor: false,
                                           ),
                                         ),
-                                    ],
-                                  ),
-                                );
-                              });
-                            })
-                        : FutureBuilder<List<InlineSpan>>(
-                            future: msgSpanFuture,
-                            initialData: MessageWidgetMixin.buildMessageSpans(context, message),
-                            builder: (context, snapshot) {
-                              return RichText(
-                                text: TextSpan(
-                                  children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
-                                  style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                      ),
+                                  ],
                                 ),
                               );
-                            })));
+                            });
+                          })
+                      : FutureBuilder<List<InlineSpan>>(
+                          future: msgSpanFuture,
+                          initialData: MessageWidgetMixin.buildMessageSpans(context, message),
+                          builder: (context, snapshot) {
+                            return (kIsDesktop || kIsWeb) &&
+                                ((ModalRoute.of(context)?.settings.arguments as Map?)?['hideTail'] ?? false)
+                                ? Theme(
+                                    data: context.theme.copyWith(
+                                        textSelectionTheme: TextSelectionThemeData(
+                                            selectionColor: context.theme.colorScheme.secondary.withAlpha(150))),
+                                    child: SelectableText.rich(
+                                      TextSpan(
+                                        children:
+                                            snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
+                                        style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                      ),
+                                      cursorWidth: 0,
+                                      selectionControls: CupertinoTextSelectionControls(),
+                                    ),
+                                  )
+                                : Padding(
+                                    padding: EdgeInsets.only(right: 1),
+                                    child: RichText(
+                                      text: TextSpan(
+                                        children:
+                                            snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
+                                        style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                      ),
+                                    ),
+                                  );
+                          },
+                        )),
+            );
           }),
         ],
       );
@@ -457,65 +475,72 @@ class SentMessageHelper {
 
       return Padding(
         padding: EdgeInsets.only(right: rightPadding),
-        child: GestureDetector(
-          onTap: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("Message failed to send", style: TextStyle(color: Colors.black)),
-                  content: Text("Error ($errorCode): $errorText"),
-                  actions: <Widget>[
-                    if (chat != null)
-                      TextButton(
-                        child: Text("Retry"),
-                        onPressed: () async {
-                          // Remove the OG alert dialog
-                          Navigator.of(context).pop();
-                          NewMessageManager().removeMessage(chat, message.guid);
-                          Message.softDelete(message.guid!);
-                          NotificationManager().clearFailedToSend();
-                          ActionHandler.retryMessage(message);
-                        },
-                      ),
-                    if (chat != null)
-                      TextButton(
-                        child: Text("Remove"),
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          // Delete the message from the DB
-                          Message.softDelete(message.guid!);
+        child: KeyboardVisibilityBuilder(
+          builder: (context, isVisible) {
+            return GestureDetector(
+              onTap: () {
+                if (!SettingsManager().settings.autoOpenKeyboard.value && !isVisible && !kIsWeb && !kIsDesktop) {
+                  EventDispatcher().emit('unfocus-keyboard', null);
+                }
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text("Message failed to send", style: TextStyle(color: Colors.black)),
+                      content: Text("Error ($errorCode): $errorText"),
+                      actions: <Widget>[
+                        if (chat != null)
+                          TextButton(
+                            child: Text("Retry"),
+                            onPressed: () async {
+                              // Remove the OG alert dialog
+                              Navigator.of(context).pop();
+                              MessageManager().removeMessage(chat, message.guid);
+                              Message.softDelete(message.guid!);
+                              NotificationManager().clearFailedToSend();
+                              ActionHandler.retryMessage(message);
+                            },
+                          ),
+                        if (chat != null)
+                          TextButton(
+                            child: Text("Remove"),
+                            onPressed: () async {
+                              Navigator.of(context).pop();
+                              // Delete the message from the DB
+                              Message.softDelete(message.guid!);
 
-                          // Remove the message from the Bloc
-                          NewMessageManager().removeMessage(chat, message.guid);
-                          NotificationManager().clearFailedToSend();
-                          // Get the "new" latest info
-                          List<Message> latest = Chat.getMessages(chat, limit: 1);
-                          chat.latestMessage = latest.first;
-                          chat.latestMessageDate = latest.first.dateCreated;
-                          chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
+                              // Remove the message from the Bloc
+                              MessageManager().removeMessage(chat, message.guid);
+                              NotificationManager().clearFailedToSend();
+                              // Get the "new" latest info
+                              List<Message> latest = Chat.getMessages(chat, limit: 1);
+                              chat.latestMessage = latest.first;
+                              chat.latestMessageDate = latest.first.dateCreated;
+                              chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
 
-                          // Update it in the Bloc
-                          await ChatBloc().updateChatPosition(chat);
-                        },
-                      ),
-                    TextButton(
-                      child: Text("Cancel"),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        NotificationManager().clearFailedToSend();
-                      },
-                    )
-                  ],
+                              // Update it in the Bloc
+                              await ChatBloc().updateChatPosition(chat);
+                            },
+                          ),
+                        TextButton(
+                          child: Text("Cancel"),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            NotificationManager().clearFailedToSend();
+                          },
+                        )
+                      ],
+                    );
+                  },
                 );
               },
+              child: Icon(
+                  SettingsManager().settings.skin.value == Skins.iOS
+                      ? CupertinoIcons.exclamationmark_circle
+                      : Icons.error_outline,
+                  color: Colors.red),
             );
-          },
-          child: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS
-                  ? CupertinoIcons.exclamationmark_circle
-                  : Icons.error_outline,
-              color: Colors.red),
+          }
         ),
       );
     }
@@ -566,7 +591,7 @@ class SentMessage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _SentMessageState createState() => _SentMessageState();
+  State<SentMessage> createState() => _SentMessageState();
 }
 
 class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, WidgetsBindingObserver {
@@ -589,11 +614,12 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
         : effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ??
             "unknown";
 
-    if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble
-        && widget.message.datePlayed == null
-        && mounted && !(widget.message.guid?.contains("redacted-mode-demo") ?? false)) {
-      WidgetsBinding.instance!.addObserver(this);
-      WidgetsBinding.instance!.addPostFrameCallback((_) async {
+    if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble &&
+        widget.message.datePlayed == null &&
+        mounted &&
+        !(widget.message.guid?.contains("redacted-mode-demo") ?? false)) {
+      WidgetsBinding.instance.addObserver(this);
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
         EventDispatcher().emit('play-effect', {
           'type': effect,
@@ -959,28 +985,34 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                 });
               }
             },
-            child: kIsWeb ? Padding(
-              padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Icon(Icons.refresh, size: 10, color: Theme.of(context).primaryColor),
-                    Text(
-                      " sent with $effect",
-                      style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+            child: kIsWeb
+                ? Padding(
+                    padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                      Icon(Icons.refresh, size: 10, color: Theme.of(context).primaryColor),
+                      Text(
+                        " sent with $effect",
+                        style: Theme.of(context)
+                            .textTheme
+                            .subtitle2!
+                            .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                      ),
+                    ]),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
+                    child: Text(
+                      "↺ sent with $effect",
+                      style: Theme.of(context)
+                          .textTheme
+                          .subtitle2!
+                          .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                     ),
-                  ]
-              ),
-            ): Padding(
-              padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
-              child: Text(
-                "↺ sent with $effect",
-                style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
-              ),
-            ),
+                  ),
           ),
         Obx(() {
-          final list = widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ?? [].obs.reversed;
+          final list =
+              widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ?? [].obs.reversed;
           if (list.isNotEmpty) {
             return GestureDetector(
               onTap: () {
@@ -990,8 +1022,10 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                 padding: const EdgeInsets.only(left: 8.0, right: 18.0, top: 2, bottom: 4),
                 child: Text(
                   "${list.length} repl${list.length > 1 ? "ies" : "y"}",
-                  style:
-                      Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                  style: Theme.of(context)
+                      .textTheme
+                      .subtitle2!
+                      .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                 ),
               ),
             );

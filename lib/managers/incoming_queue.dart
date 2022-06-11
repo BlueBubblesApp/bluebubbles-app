@@ -37,7 +37,7 @@ class IncomingQueue extends QueueManager {
       case HANDLE_CHAT_STATUS_CHANGE:
         {
           Map<String, dynamic> params = item.item;
-          await ActionHandler.handleChatStatusChange(params["chatGuid"], params["status"]);
+          await ActionHandler.handleChatStatusChange(params['data']["chatGuid"], !params['data']["read"]);
           break;
         }
       default:

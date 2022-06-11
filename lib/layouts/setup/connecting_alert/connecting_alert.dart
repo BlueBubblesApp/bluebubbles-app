@@ -9,7 +9,7 @@ class ConnectingAlert extends StatefulWidget {
   final Function(bool) onConnect;
 
   @override
-  _ConnectingAlertState createState() => _ConnectingAlertState();
+  State<ConnectingAlert> createState() => _ConnectingAlertState();
 }
 
 class _ConnectingAlertState extends State<ConnectingAlert> {

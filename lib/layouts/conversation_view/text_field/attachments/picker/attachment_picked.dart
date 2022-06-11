@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
@@ -18,7 +18,7 @@ class AttachmentPicked extends StatefulWidget {
   final Function onTap;
 
   @override
-  _AttachmentPickedState createState() => _AttachmentPickedState();
+  State<AttachmentPicked> createState() => _AttachmentPickedState();
 }
 
 class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepAliveClientMixin {

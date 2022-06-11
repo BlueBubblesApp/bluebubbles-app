@@ -18,7 +18,7 @@ class ThemingPanel extends StatefulWidget {
   ThemingPanel({Key? key}) : super(key: key);
 
   @override
-  _ThemingPanelState createState() => _ThemingPanelState();
+  State<ThemingPanel> createState() => _ThemingPanelState();
 }
 
 class _ThemingPanelState extends State<ThemingPanel> {
@@ -33,19 +33,8 @@ class _ThemingPanelState extends State<ThemingPanel> {
 
   @override
   Widget build(BuildContext context) {
-    Color headerColor;
-    Color tileColor;
-    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-        || SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
-    } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
-      tileColor = headerColor;
-    }
+    Color headerColor = context.theme.headerColor;
+    Color tileColor = context.theme.tileColor;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -53,6 +42,7 @@ class _ThemingPanelState extends State<ThemingPanel> {
         systemNavigationBarIconBrightness:
         headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: DefaultTabController(
         length: 2,

@@ -1,14 +1,12 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -18,10 +16,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_html/html.dart' as html;
 
 class AboutPanel extends StatelessWidget {
   // Not sure how to do this other than manually yet
-  final desktopVersion = "1.8.0.0";
+  final desktopVersion = "1.9.5.0";
   final desktopPre = false;
 
   @override
@@ -32,21 +31,8 @@ class AboutPanel extends StatelessWidget {
         .textTheme
         .subtitle1
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor;
-    Color tileColor;
-    if ((Theme.of(context).colorScheme.secondary.computeLuminance() <
-                Theme.of(context).backgroundColor.computeLuminance() ||
-            SettingsManager().settings.skin.value == Skins.Material) &&
-        (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
-    } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
-      tileColor = headerColor;
-    }
+    Color headerColor = context.theme.headerColor;
+    Color tileColor = context.theme.tileColor;
 
     return SettingsScaffold(
         title: "About & Links",
@@ -65,8 +51,15 @@ class AboutPanel extends StatelessWidget {
                     SettingsTile(
                       backgroundColor: tileColor,
                       title: "Support Us",
+                      subtitle: kIsDesktop || kIsWeb ? "Left click for PayPal / Venmo, right click for Github Sponsors" : "Tap for PayPal / Venmo, tap and hold for GitHub Sponsors",
                       onTap: () async {
-                        await launch("https://bluebubbles.app/donate/");
+                        await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "donate"));
+                      },
+                      onLongPress: () async {
+                        if (kIsWeb) {
+                          (await html.document.onContextMenu.first).preventDefault();
+                        }
+                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "sponsors/BlueBubblesApp"));
                       },
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.money_dollar_circle,
@@ -84,7 +77,7 @@ class AboutPanel extends StatelessWidget {
                       backgroundColor: tileColor,
                       title: "Website",
                       onTap: () async {
-                        await launch("https://bluebubbles.app/");
+                        await launchUrl(Uri(scheme: "https", host: "bluebubbles.app"));
                       },
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.globe,
@@ -101,8 +94,15 @@ class AboutPanel extends StatelessWidget {
                     SettingsTile(
                       backgroundColor: tileColor,
                       title: "Source Code",
+                      subtitle: kIsWeb || kIsDesktop ? "Right click to report a bug" : "Tap and hold to report a bug",
                       onTap: () async {
-                        await launch("https://github.com/BlueBubblesApp");
+                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp"));
+                      },
+                      onLongPress: () async {
+                        if (kIsWeb) {
+                          (await html.document.onContextMenu.first).preventDefault();
+                        }
+                        await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp/bluebubbles-app/issues"));
                       },
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
@@ -120,7 +120,7 @@ class AboutPanel extends StatelessWidget {
                       backgroundColor: tileColor,
                       title: "Join Our Discord",
                       onTap: () async {
-                        await launch("https://discord.gg/hbx7EhNFjp");
+                        await launchUrl(Uri(scheme: "https", host: "discord.gg", path: "hbx7EhNFjp"));
                       },
                       leading: SvgPicture.asset(
                         "assets/icon/discord.svg",
@@ -231,7 +231,7 @@ class AboutPanel extends StatelessWidget {
                                           style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () async {
-                                              await launch("https://github.com/zlshames");
+                                              await launchUrl(Uri(scheme: "https", host: "github.com", path: "zlshames"));
                                             }),
                                     ),
                                   ),
@@ -244,7 +244,7 @@ class AboutPanel extends StatelessWidget {
                                           style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () async {
-                                              await launch("https://github.com/tneotia");
+                                              await launchUrl(Uri(scheme: "https", host: "github.com", path: "tneotia"));
                                             }),
                                     ),
                                   ),
@@ -257,7 +257,7 @@ class AboutPanel extends StatelessWidget {
                                           style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () async {
-                                              await launch("https://github.com/jjoelj");
+                                              await launchUrl(Uri(scheme: "https", host: "github.com", path: "jjoelj"));
                                             }),
                                     ),
                                   ),
@@ -510,16 +510,14 @@ class AboutPanel extends StatelessWidget {
                                                     ),
                                                     if (!kIsDesktop)
                                                       Text(
-                                                          "Version Number: " +
-                                                              (snapshot.hasData ? snapshot.data!.version : "N/A"),
+                                                          "Version Number: ${snapshot.hasData ? snapshot.data!.version : "N/A"}",
                                                           style: context.textTheme.subtitle1!),
                                                     if (!kIsDesktop)
                                                       Text(
-                                                          "Version Code: " +
-                                                              (snapshot.hasData
+                                                          "Version Code: ${snapshot.hasData
                                                                   ? snapshot.data!.buildNumber.toString().lastChars(
                                                                       min(4, snapshot.data!.buildNumber.length))
-                                                                  : "N/A"),
+                                                                  : "N/A"}",
                                                           style: context.textTheme.subtitle1!),
                                                     if (kIsDesktop)
                                                       Text(

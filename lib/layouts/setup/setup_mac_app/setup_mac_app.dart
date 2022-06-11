@@ -19,6 +19,7 @@ class SetupMacApp extends StatelessWidget {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
@@ -92,9 +93,10 @@ class SetupMacApp extends StatelessWidget {
                                   backgroundColor: MaterialStateProperty.all(Colors.transparent),
                                   shadowColor: MaterialStateProperty.all(Colors.transparent),
                                   maximumSize: MaterialStateProperty.all(Size(300, 36)),
+                                  minimumSize: MaterialStateProperty.all(Size(30, 30)),
                                 ),
                                 onPressed: () async {
-                                  await launch("https://bluebubbles.app/install/");
+                                  await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "install"));
                                 },
                                 child: Shimmer.fromColors(
                                   baseColor: Colors.white70,
@@ -140,6 +142,7 @@ class SetupMacApp extends StatelessWidget {
                               backgroundColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
                               shadowColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
                               maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                              minimumSize: MaterialStateProperty.all(Size(30, 30)),
                             ),
                             onPressed: () async {
                               controller.previousPage(
@@ -176,6 +179,7 @@ class SetupMacApp extends StatelessWidget {
                               backgroundColor: MaterialStateProperty.all(Colors.transparent),
                               shadowColor: MaterialStateProperty.all(Colors.transparent),
                               maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                              minimumSize: MaterialStateProperty.all(Size(30, 30)),
                             ),
                             onPressed: () async {
                               controller.nextPage(

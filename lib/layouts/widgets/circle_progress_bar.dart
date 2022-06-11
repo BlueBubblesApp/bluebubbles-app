@@ -37,7 +37,7 @@ class CircleProgressBarState extends State<CircleProgressBar> with SingleTickerP
   @override
   void initState() {
     super.initState();
-    int duration = SettingsManager().settings.chunkSize.value;
+    int duration = 500;
 
     // Don't go lower than 200 ms or higher than 800
     // These are arbitrary, but just what I found worked best

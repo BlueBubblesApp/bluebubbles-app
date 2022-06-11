@@ -5,7 +5,7 @@ import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -30,7 +30,7 @@ class TextFieldAttachmentPicker extends StatefulWidget {
   final Function(PlatformFile?) onAddAttachment;
 
   @override
-  _TextFieldAttachmentPickerState createState() => _TextFieldAttachmentPickerState();
+  State<TextFieldAttachmentPicker> createState() => _TextFieldAttachmentPickerState();
 }
 
 class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
@@ -93,7 +93,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
     // Create a file that the camera can write to
     String appDocPath = SettingsManager().appDocDir.path;
     String ext = (type == 'video') ? ".mp4" : ".png";
-    File file = File("$appDocPath/attachments/" + randomString(16) + ext);
+    File file = File("$appDocPath/attachments/${randomString(16)}$ext");
     await file.create(recursive: true);
 
     // Take the picture after opening the camera
@@ -361,7 +361,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                 (context, index) {
                               AssetEntity element = _images[index];
                               return AttachmentPicked(
-                                key: Key("attachmentPicked" + _images[index].id),
+                                key: Key("attachmentPicked${_images[index].id}"),
                                 data: element,
                                 onTap: () async {
                                   dynamic file = await element.file;

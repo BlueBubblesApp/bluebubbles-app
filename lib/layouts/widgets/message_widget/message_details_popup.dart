@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -22,13 +23,13 @@ import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -42,6 +43,7 @@ import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sprung/sprung.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class MessageDetailsPopup extends StatefulWidget {
   MessageDetailsPopup({
@@ -78,7 +80,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   late double messageTopOffset;
   late double topMinimum;
   double? detailsMenuHeight;
+  bool isSierra = true;
   bool isBigSur = true;
+  bool supportsOriginalDownload = false;
 
   @override
   void initState() {
@@ -95,11 +99,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
     fetchReactions();
 
-    SettingsManager().getMacOSVersion().then((val) {
+    SettingsManager().getServerVersionCode().then((version) async {
       if (mounted) {
+        final minSierra = await SettingsManager().isMinSierra;
+        final minBigSur = await SettingsManager().isMinBigSur;
         setState(() {
-          isBigSur = (val ?? 0) >= 11;
+          isSierra = minSierra;
+          isBigSur = minBigSur;
           showTools = true;
+          supportsOriginalDownload = version > 100;
         });
       }
     });
@@ -109,7 +117,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     fetchReactions();
-    SchedulerBinding.instance!.addPostFrameCallback((_) {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
           messageTopOffset = max(topMinimum, min(widget.childOffsetY, context.height - widget.childSize!.height - 200));
@@ -142,18 +150,18 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   }
 
   void sendReaction(String type) {
-    Logger.info("Sending reaction type: " + type);
-    ActionHandler.sendReaction(widget.currentChat!.chat, widget.message, type);
+    Logger.info("Sending reaction type: $type");
+    ActionHandler.sendReaction(widget.message.getChat() ?? widget.currentChat!.chat, widget.message, type);
     Navigator.of(context).pop();
   }
-  
+
   void popDetails() {
     bool dialogOpen = Get.isDialogOpen ?? false;
     if (dialogOpen) {
       if (kIsWeb) {
         Get.back();
       } else {
-        Navigator.of(context).pop();
+        Get.close(1);
       }
     }
     Navigator.of(context).pop();
@@ -163,7 +171,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   Widget build(BuildContext context) {
     bool isSent = !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
     bool hideReactions =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
+        (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value) || !isSierra;
 
     double offsetX = widget.message.isFromMe! ? CustomNavigator.width(context) - widget.childSize!.width - 10 : 10;
 
@@ -175,6 +183,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: TitleBarWrapper(
         child: Scaffold(
@@ -301,35 +311,35 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                       .map(
                         (e) => Padding(
                           padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
-                          child: Container(
-                            width: reactionIconSize - 15,
-                            height: reactionIconSize - 15,
-                            decoration: BoxDecoration(
-                              color: currentlySelectedReaction == e
-                                  ? Theme.of(context).primaryColor
-                                  : Theme.of(context).colorScheme.secondary.withAlpha(150),
-                              borderRadius: BorderRadius.circular(
-                                20,
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              sendReaction(selfReaction == e ? "-$e" : e);
+                            },
+                            onTapDown: (TapDownDetails details) {
+                              if (currentlySelectedReaction == e) {
+                                currentlySelectedReaction = null;
+                              } else {
+                                currentlySelectedReaction = e;
+                              }
+                              if (mounted) setState(() {});
+                            },
+                            onTapUp: (details) {},
+                            onTapCancel: () {
+                              currentlySelectedReaction = selfReaction;
+                              if (mounted) setState(() {});
+                            },
+                            child: Container(
+                              width: reactionIconSize - 15,
+                              height: reactionIconSize - 15,
+                              decoration: BoxDecoration(
+                                color: currentlySelectedReaction == e
+                                    ? Theme.of(context).primaryColor
+                                    : Theme.of(context).colorScheme.secondary.withAlpha(150),
+                                borderRadius: BorderRadius.circular(
+                                  20,
+                                ),
                               ),
-                            ),
-                            child: GestureDetector(
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                sendReaction(selfReaction == e ? "-$e" : e);
-                              },
-                              onTapDown: (TapDownDetails details) {
-                                if (currentlySelectedReaction == e) {
-                                  currentlySelectedReaction = null;
-                                } else {
-                                  currentlySelectedReaction = e;
-                                }
-                                if (mounted) setState(() {});
-                              },
-                              onTapUp: (details) {},
-                              onTapCancel: () {
-                                currentlySelectedReaction = selfReaction;
-                                if (mounted) setState(() {});
-                              },
                               child: Padding(
                                 padding: const EdgeInsets.all(6),
                                 child: Reaction.getReactionIcon(e, iconColor),
@@ -441,6 +451,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 for (Attachment? element in widget.message.attachments) {
                   dynamic content = AttachmentHelper.getContent(element!);
                   if (content is PlatformFile) {
+                    if (element.guid == widget.message.attachments.last?.guid) {
+                      popDetails();
+                    }
                     await AttachmentHelper.saveToGallery(content);
                   }
                 }
@@ -448,7 +461,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Logger.error(trace.toString());
                 showSnackbar("Download Error", ex.toString());
               }
-              popDetails();
             },
             child: ListTile(
               dense: !kIsDesktop && !kIsWeb,
@@ -474,10 +486,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           child: InkWell(
             onTap: () async {
               Metadata? data = await MetadataHelper.fetchMetadata(widget.message);
-              MethodChannelInterface().invokeMethod(
-                "open-link",
-                {"link": data?.url ?? widget.message.text, "forceBrowser": true},
-              );
+              await launchUrl(Uri.parse(data?.url ?? widget.message.text ?? ''), mode: LaunchMode.externalApplication);
               popDetails();
             },
             child: ListTile(
@@ -500,8 +509,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              await launch(
-                  widget.message.attachments.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
+              await launchUrlString(
+                  "${widget.message.attachments.first!.webUrl!}?guid=${SettingsManager().settings.guidAuthKey}");
               popDetails();
             },
             child: ListTile(
@@ -540,7 +549,126 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-      if (!isEmptyString(widget.message.fullText))
+      if (showDownload &&
+          supportsOriginalDownload &&
+          widget.message.attachments
+              .where((element) =>
+                  (element?.uti?.contains("heic") ?? false) ||
+                  (element?.uti?.contains("heif") ?? false) ||
+                  (element?.uti?.contains("quicktime") ?? false) ||
+                  (element?.uti?.contains("coreaudio") ?? false) ||
+                  (element?.uti?.contains("tiff") ?? false))
+              .isNotEmpty)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              final RxBool downloadingAttachments = true.obs;
+              final RxnDouble progress = RxnDouble();
+              final Rxn<Attachment> attachmentObs = Rxn<Attachment>();
+              final toDownload = widget.message.attachments.where((element) =>
+                  (element?.uti?.contains("heic") ?? false) ||
+                  (element?.uti?.contains("heif") ?? false) ||
+                  (element?.uti?.contains("quicktime") ?? false) ||
+                  (element?.uti?.contains("coreaudio") ?? false) ||
+                  (element?.uti?.contains("tiff") ?? false));
+              final length = toDownload.length;
+              Get.defaultDialog(
+                backgroundColor: context.theme.colorScheme.secondary,
+                radius: 15.0,
+                barrierDismissible: false,
+                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+                titlePadding: EdgeInsets.only(top: 15),
+                title: "Downloading attachment${length > 1 ? "s" : ""}...",
+                titleStyle: Theme.of(context).textTheme.headline1,
+                confirm: Obx(
+                  () => downloadingAttachments.value
+                      ? Container(height: 0, width: 0)
+                      : Container(
+                          margin: EdgeInsets.only(bottom: 10),
+                          child: TextButton(
+                            child: Text("CLOSE"),
+                            onPressed: () async {
+                              if (Get.isSnackbarOpen ?? false) {
+                                Get.close(1);
+                              }
+                              Get.back();
+                              popDetails();
+                            },
+                          ),
+                        ),
+                ),
+                cancel: Container(height: 0, width: 0),
+                content: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 300),
+                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                    Obx(
+                      () => Text(
+                          '${progress.value != null && attachmentObs.value != null ? getSizeString(progress.value! * attachmentObs.value!.totalBytes! / 1000) : ""} / ${getSizeString(attachmentObs.value!.totalBytes!.toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)'),
+                    ),
+                    SizedBox(height: 10.0),
+                    Obx(
+                      () => ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: LinearProgressIndicator(
+                          backgroundColor: Colors.white,
+                          value: progress.value,
+                          minHeight: 5,
+                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 15.0,
+                    ),
+                    Obx(
+                      () => Text(
+                        progress.value == 1 ? "Download Complete!" : "Downloading attachment ",
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ]),
+                ),
+              );
+              try {
+                for (Attachment? element in toDownload) {
+                  attachmentObs.value = element;
+                  final response = await api.downloadAttachment(element!.guid!,
+                      original: true,
+                      onReceiveProgress: (count, total) =>
+                          progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
+                  final file = PlatformFile(
+                    name: element.transferName!,
+                    path: kIsWeb ? null : element.getPath(),
+                    size: response.data.length,
+                    bytes: response.data,
+                  );
+                  bool lastAttachment = element.guid == toDownload.last?.guid;
+                  await AttachmentHelper.saveToGallery(file, showAlert: lastAttachment);
+                }
+                downloadingAttachments.value = false;
+              } catch (ex, trace) {
+                Logger.error(trace.toString());
+                showSnackbar("Download Error", ex.toString());
+              }
+            },
+            child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Download Original to Device",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.cloud_download
+                    : Icons.file_download,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if (!kIsDesktop && !kIsWeb && !isEmptyString(widget.message.fullText))
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -720,7 +848,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              Navigator.of(context).pop();
+              popDetails();
               Navigator.pushReplacement(
                 context,
                 cupertino.CupertinoPageRoute(
@@ -918,7 +1046,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
+            MessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
             Message.softDelete(widget.message.guid!);
             popDetails();
           },
@@ -989,24 +1117,25 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () {
+                    onTap: () async {
                       Widget content = Column(
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: moreActions,
                       );
                       Get.dialog(
-                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoAlertDialog(
-                            backgroundColor: Theme.of(context).colorScheme.secondary,
-                            content: content,
-                          ) : AlertDialog(
-                            contentPadding: EdgeInsets.all(5),
-                            shape: cupertino.RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                            backgroundColor: Theme.of(context).colorScheme.secondary,
-                            content: content,
-                          ),
-                        name: 'Popup Menu'
-                      );
+                          SettingsManager().settings.skin.value == Skins.iOS
+                              ? CupertinoAlertDialog(
+                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  content: content,
+                                )
+                              : AlertDialog(
+                                  contentPadding: EdgeInsets.all(5),
+                                  shape: cupertino.RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  content: content,
+                                ),
+                          name: 'Popup Menu');
                     },
                     child: ListTile(
                       dense: !kIsDesktop && !kIsWeb,

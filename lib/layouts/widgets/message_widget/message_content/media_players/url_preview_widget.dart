@@ -6,7 +6,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
@@ -157,13 +157,18 @@ class UrlPreviewWidget extends StatelessWidget {
                         Obx(() {
                           if (controller.data.value == null && !controller.gotError.value) {
                             return Text("Loading Preview...",
-                                style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2));
+                                style: Theme.of(context).textTheme.bodyText1!.apply(
+                                    fontWeightDelta: 2,
+                                    color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null)
+                            );
                           } else if (controller.data.value != null &&
                               controller.data.value!.title != null &&
                               controller.data.value!.title != "Image Preview") {
                             return Text(
                               controller.data.value?.title ?? "<No Title>",
-                              style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
+                              style: Theme.of(context).textTheme.bodyText1!.apply(
+                                  fontWeightDelta: 2,
+                                  color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 2,
                             );
@@ -171,7 +176,10 @@ class UrlPreviewWidget extends StatelessWidget {
                             return Container();
                           } else {
                             return Text("Unable to Load Preview",
-                                style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2));
+                                style: Theme.of(context).textTheme.bodyText1!.apply(
+                                    fontWeightDelta: 2,
+                                    color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null)
+                            );
                           }
                         }),
                         Obx(() => controller.data.value != null && controller.data.value!.description != null
@@ -181,7 +189,9 @@ class UrlPreviewWidget extends StatelessWidget {
                                   controller.data.value!.description!,
                                   maxLines: 3,
                                   overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeDelta: -5),
+                                  style: Theme.of(context).textTheme.bodyText1!.apply(
+                                      fontSizeDelta: -5,
+                                      color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
                                 ))
                             : Container()),
                         Obx(() => Padding(
@@ -189,8 +199,8 @@ class UrlPreviewWidget extends StatelessWidget {
                                   top: (controller.data.value?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
                               child: Text(
                                 message.fullText.isURL ? message.fullText : (Uri.tryParse(message.getUrl()!)?.host ?? ""),
-                                style: Theme.of(context).textTheme.subtitle2,
-                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.subtitle2!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                                overflow: TextOverflow.clip,
                                 maxLines: 1,
                               ),
                             )),
@@ -250,7 +260,7 @@ class UrlPreviewWidget extends StatelessWidget {
                   child: InkResponse(
                     borderRadius: BorderRadius.circular(20),
                     onTap: () async {
-                      await launch(controller.data.value?.url ?? message.text ?? '');
+                      await launchUrl(Uri.parse(controller.data.value?.url ?? message.text ?? ''));
                     },
                     child: Container(
                       // The minus 5 here is so the timestamps show OK during swipe

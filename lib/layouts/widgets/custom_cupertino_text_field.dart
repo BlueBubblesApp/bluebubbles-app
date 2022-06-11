@@ -758,7 +758,7 @@ class CustomCupertinoTextField extends StatefulWidget {
   final bool enableIMEPersonalizedLearning;
 
   @override
-  _CustomCupertinoTextFieldState createState() => _CustomCupertinoTextFieldState();
+  State<CustomCupertinoTextField> createState() => _CustomCupertinoTextFieldState();
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {

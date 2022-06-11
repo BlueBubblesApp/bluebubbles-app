@@ -2,6 +2,8 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +12,8 @@ import 'package:local_auth/local_auth.dart';
 import 'package:secure_application/secure_application.dart';
 
 class MiscPanel extends StatelessWidget {
+  final RxnBool refreshingContacts = RxnBool();
+
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
@@ -25,19 +29,8 @@ class MiscPanel extends StatelessWidget {
         ?.copyWith(color: Theme
         .of(context)
         .primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor;
-    Color tileColor;
-    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
-    } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
-      tileColor = headerColor;
-    }
+    Color headerColor = context.theme.headerColor;
+    Color tileColor = context.theme.tileColor;
 
     return SettingsScaffold(
       title: "Miscellaneous & Advanced",
@@ -62,7 +55,7 @@ class MiscPanel extends StatelessWidget {
                               bool didAuthenticate = await localAuth.authenticate(
                                   localizedReason:
                                   'Please authenticate to ${val == true ? "enable" : "disable"} security',
-                                  stickyAuth: true);
+                                  options: AuthenticationOptions(stickyAuth: true));
                               if (didAuthenticate) {
                                 SettingsManager().settings.shouldSecure.value = val;
                                 if (val == false) {
@@ -129,7 +122,7 @@ class MiscPanel extends StatelessWidget {
                             onChanged: (val) async {
                               var localAuth = LocalAuthentication();
                               bool didAuthenticate = await localAuth.authenticate(
-                                  localizedReason: 'Please authenticate to change your security level', stickyAuth: true);
+                                  localizedReason: 'Please authenticate to change your security level', options: AuthenticationOptions(stickyAuth: true));
                               if (didAuthenticate) {
                                 if (val != null) {
                                   SettingsManager().settings.securityLevel.value = val;
@@ -229,6 +222,8 @@ class MiscPanel extends StatelessWidget {
                           startingVal: SettingsManager().settings.scrollVelocity.value,
                           update: (double val) {
                             SettingsManager().settings.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
+                          },
+                          onChangeEnd: (double val) {
                             saveSettings();
                           },
                           formatValue: ((double val) => val.toStringAsFixed(2)),
@@ -268,9 +263,11 @@ class MiscPanel extends StatelessWidget {
                           startingVal: SettingsManager().settings.sendDelay.toDouble(),
                           update: (double val) {
                             SettingsManager().settings.sendDelay.value = val.toInt();
+                          },
+                          onChangeEnd: (double val) {
                             saveSettings();
                           },
-                          formatValue: ((double val) => val.toStringAsFixed(0) + " sec"),
+                          formatValue: ((double val) => "${val.toStringAsFixed(0)} sec"),
                           backgroundColor: tileColor,
                           min: 1,
                           max: 10,
@@ -325,6 +322,8 @@ class MiscPanel extends StatelessWidget {
                           startingVal: SettingsManager().settings.maxAvatarsInGroupWidget.value.toDouble(),
                           update: (double val) {
                             SettingsManager().settings.maxAvatarsInGroupWidget.value = val.toInt();
+                          },
+                          onChangeEnd: (double val) {
                             saveSettings();
                           },
                           formatValue: ((double val) => val.toStringAsFixed(0)),
@@ -335,6 +334,34 @@ class MiscPanel extends StatelessWidget {
                       }
                     },
                   ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  SettingsTile(
+                      title: "Refresh contacts",
+                      backgroundColor: tileColor,
+                      onTap: () async {
+                          refreshingContacts.value = true;
+                          await ContactManager().loadContacts(force: true);
+                          EventDispatcher().emit("refresh-all", null);
+                          refreshingContacts.value = false;
+                      },
+                      trailing: Obx(() => refreshingContacts.value == null
+                          ? SizedBox.shrink()
+                          : refreshingContacts.value == true ? Container(
+                          constraints: BoxConstraints(
+                            maxHeight: 20,
+                            maxWidth: 20,
+                          ),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                          )) : Icon(Icons.check, color: Colors.grey)
+                      )),
                 ],
               ),
             ],

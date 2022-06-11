@@ -22,21 +22,8 @@ class ChatListPanel extends StatelessWidget {
         .textTheme
         .subtitle1
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor;
-    Color tileColor;
-    if ((Theme.of(context).colorScheme.secondary.computeLuminance() <
-                Theme.of(context).backgroundColor.computeLuminance() ||
-            SettingsManager().settings.skin.value == Skins.Material) &&
-        (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
-    } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
-      tileColor = headerColor;
-    }
+    Color headerColor = context.theme.headerColor;
+    Color tileColor = context.theme.tileColor;
 
     return SettingsScaffold(
         title: "Chat List",
@@ -97,6 +84,23 @@ class ChatListPanel extends StatelessWidget {
                           subtitle: "Replaces the colored connection indicator with icons to aid accessibility",
                           backgroundColor: tileColor,
                         )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.statusIndicatorsOnChats.value = val;
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.statusIndicatorsOnChats.value,
+                      title: "Message Status Indicators",
+                      subtitle: "Adds status indicators to the chat list for the sent / delivered / read status of your most recent message",
+                      backgroundColor: tileColor,
+                    )),
                   ],
                 ),
                 SettingsHeader(
@@ -148,35 +152,23 @@ class ChatListPanel extends StatelessWidget {
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    Obx(() {
-                      if (SettingsManager().settings.skin.value != Skins.Samsung) {
-                        return SettingsSwitch(
-                          onChanged: (bool val) {
-                            SettingsManager().settings.hideDividers.value = val;
-                            saveSettings();
-                          },
-                          initialVal: SettingsManager().settings.hideDividers.value,
-                          title: "Hide Dividers",
-                          backgroundColor: tileColor,
-                          subtitle: "Hides dividers between tiles",
-                        );
-                      } else {
-                        return SizedBox.shrink();
-                      }
-                    }),
-                    Obx(() {
-                      if (SettingsManager().settings.skin.value != Skins.Samsung) {
-                        return Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 65.0),
-                            child: SettingsDivider(color: headerColor),
-                          ),
-                        );
-                      } else {
-                        return SizedBox.shrink();
-                      }
-                    }),
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.hideDividers.value = val;
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.hideDividers.value,
+                      title: "Hide Dividers",
+                      backgroundColor: tileColor,
+                      subtitle: "Hides dividers between tiles",
+                    )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             SettingsManager().settings.denseChatTiles.value = val;
@@ -241,17 +233,17 @@ class ChatListPanel extends StatelessWidget {
                                   divisions: 3,
                                   update: (double val) {
                                     SettingsManager().settings.pinRowsPortrait.value = val.toInt();
+                                  },
+                                  onChangeEnd: (double val) {
                                     saveSettings();
                                   },
                                   startingVal: SettingsManager().settings.pinRowsPortrait.value.toDouble(),
                                   text: "Maximum Pin Rows",
                                   backgroundColor: tileColor,
                                   formatValue: (val) =>
-                                      SettingsManager().settings.pinRowsPortrait.value.toString() +
-                                      " row${SettingsManager().settings.pinRowsPortrait.value > 1 ? "s" : ""} of " +
-                                      (kIsDesktop
+                                      "${SettingsManager().settings.pinRowsPortrait.value} row${SettingsManager().settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${kIsDesktop
                                           ? SettingsManager().settings.pinColumnsLandscape.value.toString()
-                                          : SettingsManager().settings.pinColumnsPortrait.value.toString()),
+                                          : SettingsManager().settings.pinColumnsPortrait.value.toString()}",
                                 ),
                               ),
                               SizedBox(width: 20),

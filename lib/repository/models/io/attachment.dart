@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/message.dart';
@@ -138,6 +138,10 @@ class Attachment {
     data.id ??= json.containsKey("id") ? json["id"] : null;
 
     return data;
+  }
+
+  static int count() {
+    return attachmentBox.count();
   }
 
   /// Save a new attachment or update an existing attachment on disk

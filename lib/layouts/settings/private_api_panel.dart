@@ -15,23 +15,16 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:version/version.dart';
 
-class PrivateAPIPanelBinding extends Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<PrivateAPIPanelController>(() => PrivateAPIPanelController());
-  }
-}
-
 class PrivateAPIPanelController extends GetxController {
   late Settings _settingsCopy;
-  final RxnInt serverVersionCode = RxnInt();
+  final RxInt serverVersionCode = RxInt(0);
 
   @override
   void onInit() {
     super.onInit();
     _settingsCopy = SettingsManager().settings;
-    SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-      final String? serverVersion = res['data']['server_version'];
+    api.serverInfo().then((response) {
+      final String? serverVersion = response.data['data']['server_version'];
       Version version = Version.parse(serverVersion);
       serverVersionCode.value = version.major * 100 + version.minor * 21 + version.patch;
     });
@@ -48,7 +41,9 @@ class PrivateAPIPanelController extends GetxController {
   }
 }
 
-class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
+class PrivateAPIPanel extends StatelessWidget {
+  final controller = Get.put(PrivateAPIPanelController());
+
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
@@ -57,20 +52,8 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
         .textTheme
         .subtitle1
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor;
-    Color tileColor;
-    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
-            SettingsManager().settings.skin.value == Skins.Material) &&
-        (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).colorScheme.secondary;
-      tileColor = Theme.of(context).backgroundColor;
-    } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).colorScheme.secondary;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
-      tileColor = headerColor;
-    }
+    Color headerColor = context.theme.headerColor;
+    Color tileColor = context.theme.tileColor;
 
     return SettingsScaffold(
         title: "Private API Features",
@@ -126,8 +109,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                           title: "Set up Private API Features",
                           subtitle: "View instructions on how to set up these features",
                           onTap: () async {
-                            await launch(
-                                "https://docs.bluebubbles.app/helper-bundle/installation");
+                            await launchUrl(Uri(scheme: "https", host: "docs.bluebubbles.app", path: "helper-bundle/installation"));
                           },
                           leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.checkmark_shield,
@@ -282,7 +264,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                             }
                           }),
                           Obx(() {
-                            if ((controller.serverVersionCode.value ?? 0) >= 63) {
+                            if (controller.serverVersionCode.value >= 63) {
                               return SettingsSwitch(
                                 onChanged: (bool val) {
                                   controller._settingsCopy.privateSubjectLine.value = val;
@@ -298,10 +280,10 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                           }),
                           FutureBuilder(
                               initialData: false,
-                              future: SettingsManager().getMacOSVersion().then((val) => (val ?? 0) >= 11),
+                              future: SettingsManager().isMinBigSur,
                               builder: (context, snapshot) {
                                 return Obx(() {
-                                  if ((controller.serverVersionCode.value ?? 0) >= 63 && snapshot.data as bool) {
+                                  if (controller.serverVersionCode.value >= 63 && snapshot.data as bool) {
                                     return SettingsSwitch(
                                       onChanged: (bool val) {
                                         controller._settingsCopy.swipeToReply.value = val;
@@ -317,7 +299,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                                 });
                               }),
                           Obx(() {
-                            if ((controller.serverVersionCode.value ?? 0) >= 84) {
+                            if (controller.serverVersionCode.value >= 84) {
                               return SettingsSwitch(
                                 onChanged: (bool val) {
                                   controller._settingsCopy.privateAPISend.value = val;

@@ -596,7 +596,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   final String? restorationId;
 
   @override
-  _CupertinoTextFieldState createState() => _CupertinoTextFieldState();
+  State<ContactSelectorCustomCupertinoTextfield> createState() => _CupertinoTextFieldState();
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
@@ -881,14 +881,14 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
       formatters.add(LengthLimitingTextInputFormatter(widget.maxLength));
     }
     final CupertinoThemeData themeData = CupertinoTheme.of(context);
-    final TextStyle? resolvedStyle = widget.style.copyWith(
+    final TextStyle resolvedStyle = widget.style.copyWith(
       color: CupertinoDynamicColor.maybeResolve(widget.style.color, context),
       backgroundColor: CupertinoDynamicColor.maybeResolve(widget.style.backgroundColor, context),
     );
 
     final TextStyle textStyle = themeData.textTheme.textStyle.merge(resolvedStyle);
 
-    final TextStyle? resolvedPlaceholderStyle = widget.placeholderStyle.copyWith(
+    final TextStyle resolvedPlaceholderStyle = widget.placeholderStyle.copyWith(
       color: CupertinoDynamicColor.maybeResolve(widget.placeholderStyle.color, context),
       backgroundColor: CupertinoDynamicColor.maybeResolve(widget.placeholderStyle.backgroundColor, context),
     );
@@ -919,7 +919,7 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
             );
     }
 
-    final BoxDecoration? effectiveDecoration = widget.decoration.copyWith(
+    final BoxDecoration effectiveDecoration = widget.decoration.copyWith(
       border: resolvedBorder,
       color: decorationColor,
     );

@@ -5,18 +5,18 @@ import 'package:bluebubbles/helpers/indicator.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_list/conversation_peek_view.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_tile_text_bubble.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
@@ -39,7 +39,7 @@ class PinnedConversationTile extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _PinnedConversationTileState createState() => _PinnedConversationTileState();
+  State<PinnedConversationTile> createState() => _PinnedConversationTileState();
 }
 
 class _PinnedConversationTileState extends State<PinnedConversationTile> {
@@ -47,6 +47,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
   RxBool showTypingIndicator = false.obs;
   RxBool shouldHighlight = false.obs;
   RxBool shouldPartialHighlight = false.obs;
+  RxBool hoverHighlight = false.obs;
 
   @override
   void initState() {
@@ -57,7 +58,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
     }
 
     // Listen for changes in the group
-    NewMessageManager().stream.listen((NewMessageEvent event) async {
+    MessageManager().stream.listen((NewMessageEvent event) async {
       // Make sure we have the required data to qualify for this tile
       if (event.chatGuid != widget.chat.guid) return;
       if (!event.event.containsKey("message")) return;
@@ -67,7 +68,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
 
       // If it's a group event, let's fetch the new information and save it
       try {
-        await fetchChatSingleton(widget.chat.guid);
+        await ChatManager().fetchChat(widget.chat.guid);
       } catch (ex) {
         Logger.error(ex.toString());
       }
@@ -161,259 +162,267 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
   Widget build(BuildContext context) {
     late Offset _tapPosition;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onLongPressStart: (details) {
-        _tapPosition = details.globalPosition;
-      },
-      onTap: onTapUpBypass,
-      onLongPress: () async {
-        shouldPartialHighlight.value = true;
-        await showConversationTileMenu(
-          context,
-          this,
-          widget.chat,
-          _tapPosition,
-          context.textTheme,
-        );
-        shouldPartialHighlight.value = false;
-      },
-      onSecondaryTapUp: (details) async {
-        if (kIsWeb) {
-          (await html.document.onContextMenu.first).preventDefault();
-        }
-        shouldPartialHighlight.value = true;
-        await showConversationTileMenu(
-          context,
-          this,
-          widget.chat,
-          details.globalPosition,
-          context.textTheme,
-        );
-        shouldPartialHighlight.value = false;
-      },
-      child: Obx(
-        () => Container(
-          margin: EdgeInsets.only(left: 7, right: 7, top: 1, bottom: 3),
-          padding: EdgeInsets.only(
-            top: 4,
-            left: 8,
-            right: 8,
-            bottom: 2,
-          ),
-          decoration: BoxDecoration(
-            color: shouldPartialHighlight.value
-                ? context.theme.primaryColor.withAlpha(100)
-                : shouldHighlight.value
-                    ? context.theme.primaryColor
-                    : context.theme.backgroundColor,
-            borderRadius: BorderRadius.circular(shouldPartialHighlight.value || shouldHighlight.value ? 8 : 0),
-          ),
-          child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              return Obx(
-                () {
-                  // Great math right here
-                  double availableWidth = constraints.maxWidth;
-                  int colCount = kIsDesktop
-                      ? SettingsManager().settings.pinColumnsLandscape.value
-                      : SettingsManager().settings.pinColumnsPortrait.value;
-                  double spaceBetween = (colCount - 1) * 30;
-                  double maxWidth = ((availableWidth - spaceBetween) / colCount).floorToDouble();
+    return Container(
+      margin: EdgeInsets.only(left: 7, right: 7, top: 1, bottom: 3),
+      child: MouseRegion(
+        onEnter: (event) => hoverHighlight.value = true,
+        onExit: (event) => hoverHighlight.value = false,
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onLongPressStart: (details) {
+            _tapPosition = details.globalPosition;
+          },
+          onTap: onTapUpBypass,
+          onLongPress: () async {
+            await peekChat(context, widget.chat, _tapPosition);
+          },
+          onSecondaryTapUp: (details) async {
+            if (kIsWeb) {
+              (await html.document.onContextMenu.first).preventDefault();
+            }
+            shouldPartialHighlight.value = true;
+            await showConversationTileMenu(
+              context,
+              this,
+              widget.chat,
+              details.globalPosition,
+              context.textTheme,
+            );
+            shouldPartialHighlight.value = false;
+          },
+          child: Obx(
+            () => AnimatedContainer(
+              duration: Duration(milliseconds: 100),
+              clipBehavior: Clip.none,
+              padding: EdgeInsets.only(
+                top: 4,
+                left: 8,
+                right: 8,
+                bottom: 2,
+              ),
+              decoration: BoxDecoration(
+                color: shouldPartialHighlight.value
+                    ? context.theme.primaryColor.withAlpha(100)
+                    : shouldHighlight.value
+                        ? context.theme.primaryColor
+                        : hoverHighlight.value
+                            ? context.theme.colorScheme.secondary.withAlpha(200)
+                            : context.theme.backgroundColor,
+                borderRadius: BorderRadius.circular(
+                    shouldPartialHighlight.value || shouldHighlight.value || hoverHighlight.value ? 8 : 0),
+              ),
+              child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  return Obx(
+                    () {
+                      // Great math right here
+                      double availableWidth = constraints.maxWidth;
+                      int colCount = kIsDesktop
+                          ? SettingsManager().settings.pinColumnsLandscape.value
+                          : SettingsManager().settings.pinColumnsPortrait.value;
+                      double spaceBetween = (colCount - 1) * 30;
+                      double maxWidth = ((availableWidth - spaceBetween) / colCount).floorToDouble();
 
-                  Color alphaWithoutAlpha = Color.fromARGB(
-                    255,
-                    (context.theme.primaryColor.red * 0.8).toInt() + (context.theme.backgroundColor.red * 0.2).toInt(),
-                    (context.theme.primaryColor.green * 0.8).toInt() +
-                        (context.theme.backgroundColor.green * 0.2).toInt(),
-                    (context.theme.primaryColor.blue * 0.8).toInt() +
-                        (context.theme.backgroundColor.blue * 0.2).toInt(),
-                  );
-                  MessageMarkers? markers = ChatManager().getChatController(widget.chat)?.messageMarkers;
-                  return ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: maxWidth,
-                    ),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.center,
-                      children: <Widget>[
-                        Column(
-                          children: [
-                            Stack(
-                              children: <Widget>[
-                                ContactAvatarGroupWidget(
-                                  chat: widget.chat,
-                                  size: maxWidth,
-                                  editable: false,
-                                  onTap: onTapUpBypass,
-                                ),
-                                if (widget.chat.muteType != "mute" && (widget.chat.hasUnreadMessage ?? false))
-                                  Positioned(
-                                    left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
-                                    top: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
-                                    child: Container(
-                                      width: maxWidth * 0.2,
-                                      height: maxWidth * 0.2,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(maxWidth * 0.1),
-                                        color: alphaWithoutAlpha,
-                                      ),
-                                      margin: EdgeInsets.only(right: 3),
+                      Color alphaWithoutAlpha = Color.fromARGB(
+                        255,
+                        (context.theme.primaryColor.red * 0.8).toInt() +
+                            (context.theme.backgroundColor.red * 0.2).toInt(),
+                        (context.theme.primaryColor.green * 0.8).toInt() +
+                            (context.theme.backgroundColor.green * 0.2).toInt(),
+                        (context.theme.primaryColor.blue * 0.8).toInt() +
+                            (context.theme.backgroundColor.blue * 0.2).toInt(),
+                      );
+                      MessageMarkers? markers = ChatManager().getChatController(widget.chat)?.messageMarkers;
+                      return ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: maxWidth,
+                        ),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.center,
+                          children: <Widget>[
+                            Column(
+                              children: [
+                                Stack(
+                                  children: <Widget>[
+                                    ContactAvatarGroupWidget(
+                                      chat: widget.chat,
+                                      size: maxWidth,
+                                      editable: false,
+                                      onTap: onTapUpBypass,
                                     ),
-                                  ),
-                                if (widget.chat.muteType == "mute")
-                                  Positioned(
-                                    left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
-                                    top: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      children: <Widget>[
-                                        Container(
+                                    if (widget.chat.muteType != "mute" && (widget.chat.hasUnreadMessage ?? false))
+                                      Positioned(
+                                        left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
+                                        top: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
+                                        child: Container(
                                           width: maxWidth * 0.2,
                                           height: maxWidth * 0.2,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(maxWidth * 0.1),
-                                            color: (widget.chat.hasUnreadMessage ?? false)
-                                                ? alphaWithoutAlpha
-                                                : context.textTheme.subtitle1!.color,
+                                            color: alphaWithoutAlpha,
                                           ),
+                                          margin: EdgeInsets.only(right: 3),
                                         ),
-                                        Icon(
-                                          CupertinoIcons.bell_slash_fill,
-                                          size: maxWidth * 0.14,
-                                          color: Colors.white,
+                                      ),
+                                    if (widget.chat.muteType == "mute")
+                                      Positioned(
+                                        left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
+                                        top: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: <Widget>[
+                                            Container(
+                                              width: maxWidth * 0.2,
+                                              height: maxWidth * 0.2,
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(maxWidth * 0.1),
+                                                color: (widget.chat.hasUnreadMessage ?? false)
+                                                    ? alphaWithoutAlpha
+                                                    : context.textTheme.subtitle1!.color,
+                                              ),
+                                            ),
+                                            Icon(
+                                              CupertinoIcons.bell_slash_fill,
+                                              size: maxWidth * 0.14,
+                                              color: Colors.white,
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: EdgeInsets.only(
+                                    top: maxWidth * 0.075,
                                   ),
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(minHeight: context.textTheme.subtitle1!.fontSize! * 2),
+                                    child: buildSubtitle(),
+                                  ),
+                                ),
                               ],
                             ),
-                            Container(
-                              padding: EdgeInsets.only(
-                                top: maxWidth * 0.075,
-                              ),
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(minHeight: context.textTheme.subtitle1!.fontSize! * 2),
-                                child: buildSubtitle(),
-                              ),
-                            ),
-                          ],
-                        ),
-                        StreamBuilder<Map<String, dynamic>>(
-                          stream: ChatManager().getChatController(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
-                          builder: (BuildContext context, AsyncSnapshot snapshot) {
-                            if (snapshot.connectionState == ConnectionState.active &&
-                                snapshot.hasData &&
-                                snapshot.data["type"] == ChatControllerEvent.TypingStatus) {
-                              showTypingIndicator.value = snapshot.data["data"];
-                            }
-                            return Obx(() {
-                              if (showTypingIndicator.value) {
-                                return Positioned(
-                                  top: -sqrt(maxWidth / 2),
-                                  right: -sqrt(maxWidth / 2) - maxWidth * 0.25,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(maxHeight: 32),
-                                    child: FittedBox(
-                                      child: TypingIndicator(
-                                        visible: true,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
-                              if (!widget.chat.isGroup() &&
-                                  shouldShow(widget.chat.latestMessageGetter, markers?.myLastMessage.value,
-                                          markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value) !=
-                                      Indicator.NONE) {
-                                return Positioned(
-                                  left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
-                                  top: maxWidth - maxWidth * 0.13 * 2,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: <Widget>[
-                                      Container(
-                                        width: maxWidth * 0.27,
-                                        height: maxWidth * 0.27,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: Theme.of(context).backgroundColor, width: 1),
-                                          borderRadius: BorderRadius.circular(30),
-                                          color: (widget.chat.hasUnreadMessage ?? false)
-                                              ? alphaWithoutAlpha
-                                              : context.textTheme.subtitle1!.color,
+                            StreamBuilder<Map<String, dynamic>>(
+                              stream:
+                                  ChatManager().getChatController(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
+                              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                                if (snapshot.connectionState == ConnectionState.active &&
+                                    snapshot.hasData &&
+                                    snapshot.data["type"] == ChatControllerEvent.TypingStatus) {
+                                  showTypingIndicator.value = snapshot.data["data"];
+                                }
+                                return Obx(() {
+                                  if (showTypingIndicator.value) {
+                                    return Positioned(
+                                      top: -sqrt(maxWidth / 2),
+                                      right: -sqrt(maxWidth / 2) - maxWidth * 0.25,
+                                      child: ConstrainedBox(
+                                        constraints: BoxConstraints(maxHeight: 32),
+                                        child: FittedBox(
+                                          child: TypingIndicator(
+                                            visible: true,
+                                          ),
                                         ),
                                       ),
-                                      Transform.rotate(
-                                        angle: shouldShow(
-                                                    widget.chat.latestMessage,
-                                                    markers?.myLastMessage.value,
-                                                    markers?.lastReadMessage.value,
-                                                    markers?.lastDeliveredMessage.value) !=
-                                                Indicator.SENT
-                                            ? pi / 2
-                                            : 0,
-                                        child: Icon(
-                                          shouldShow(
-                                                      widget.chat.latestMessage,
-                                                      markers?.myLastMessage.value,
-                                                      markers?.lastReadMessage.value,
-                                                      markers?.lastDeliveredMessage.value) ==
-                                                  Indicator.DELIVERED
-                                              ? CupertinoIcons.location_north_fill
-                                              : shouldShow(
+                                    );
+                                  }
+                                  if (SettingsManager().settings.statusIndicatorsOnChats.value &&
+                                      !widget.chat.isGroup() &&
+                                      shouldShow(widget.chat.latestMessageGetter, markers?.myLastMessage.value,
+                                              markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value) !=
+                                          Indicator.NONE) {
+                                    return Positioned(
+                                      left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
+                                      top: maxWidth - maxWidth * 0.13 * 2,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: <Widget>[
+                                          Container(
+                                            width: maxWidth * 0.27,
+                                            height: maxWidth * 0.27,
+                                            decoration: BoxDecoration(
+                                              border: Border.all(color: Theme.of(context).backgroundColor, width: 1),
+                                              borderRadius: BorderRadius.circular(30),
+                                              color: (widget.chat.hasUnreadMessage ?? false)
+                                                  ? alphaWithoutAlpha
+                                                  : context.textTheme.subtitle1!.color,
+                                            ),
+                                          ),
+                                          Transform.rotate(
+                                            angle: shouldShow(
+                                                        widget.chat.latestMessage,
+                                                        markers?.myLastMessage.value,
+                                                        markers?.lastReadMessage.value,
+                                                        markers?.lastDeliveredMessage.value) !=
+                                                    Indicator.SENT
+                                                ? pi / 2
+                                                : 0,
+                                            child: Icon(
+                                              shouldShow(
                                                           widget.chat.latestMessage,
                                                           markers?.myLastMessage.value,
                                                           markers?.lastReadMessage.value,
                                                           markers?.lastDeliveredMessage.value) ==
-                                                      Indicator.READ
-                                                  ? CupertinoIcons.location_north
-                                                  : CupertinoIcons.location_fill,
-                                          color: Colors.white,
-                                          size: maxWidth * 0.14,
-                                        ),
+                                                      Indicator.DELIVERED
+                                                  ? CupertinoIcons.location_north_fill
+                                                  : shouldShow(
+                                                              widget.chat.latestMessage,
+                                                              markers?.myLastMessage.value,
+                                                              markers?.lastReadMessage.value,
+                                                              markers?.lastDeliveredMessage.value) ==
+                                                          Indicator.READ
+                                                      ? CupertinoIcons.location_north
+                                                      : CupertinoIcons.location_fill,
+                                              color: Colors.white,
+                                              size: maxWidth * 0.14,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    );
+                                  }
+                                  return Container();
+                                });
+                              },
+                            ),
+                            Builder(
+                              builder: (BuildContext context) {
+                                if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
+                                if (showTypingIndicator.value) return Container();
+                                Message? message = widget.chat.latestMessageGetter;
+                                if ([null, ""].contains(message?.associatedMessageGuid) ||
+                                    (message?.isFromMe ?? false)) {
+                                  return Container();
+                                }
+
+                                return Positioned(
+                                  top: -sqrt(maxWidth / 2),
+                                  right: -sqrt(maxWidth / 2) - maxWidth * 0.15,
+                                  child: ReactionsWidget(
+                                    associatedMessages: [message!],
+                                    bigPin: true,
                                   ),
                                 );
-                              }
-                              return Container();
-                            });
-                          },
-                        ),
-                        Builder(
-                          builder: (BuildContext context) {
-                            if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
-                            if (showTypingIndicator.value) return Container();
-                            Message? message = widget.chat.latestMessageGetter;
-                            if ([null, ""].contains(message?.associatedMessageGuid) || (message?.isFromMe ?? false)) {
-                              return Container();
-                            }
-
-                            return Positioned(
-                              top: -sqrt(maxWidth / 2),
-                              right: -sqrt(maxWidth / 2) - maxWidth * 0.15,
-                              child: ReactionsWidget(
-                                associatedMessages: [message!],
-                                bigPin: true,
+                              },
+                            ),
+                            Positioned(
+                              bottom: context.textTheme.subtitle1!.fontSize! * 2 + maxWidth * 0.05,
+                              width: maxWidth,
+                              child: PinnedTileTextBubble(
+                                chat: widget.chat,
+                                size: maxWidth,
                               ),
-                            );
-                          },
+                            ),
+                          ],
                         ),
-                        Positioned(
-                          bottom: context.textTheme.subtitle1!.fontSize! * 2 + maxWidth * 0.05,
-                          width: maxWidth,
-                          child: PinnedTileTextBubble(
-                            chat: widget.chat,
-                            size: maxWidth,
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
-              );
-            },
+              ),
+            ),
           ),
         ),
       ),

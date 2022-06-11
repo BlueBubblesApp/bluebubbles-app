@@ -14,7 +14,6 @@ class Settings {
   final RxString guidAuthKey = "".obs;
   final RxString serverAddress = "".obs;
   final RxBool finishedSetup = false.obs;
-  final RxInt chunkSize = 500.obs;
   final RxBool autoDownload = true.obs;
   final RxBool onlyWifiDownload = false.obs;
   final RxBool autoSave = false.obs;
@@ -57,6 +56,7 @@ class Settings {
   final RxBool notifyReactions = true.obs;
   final RxString notificationSound = "default".obs;
   final RxBool colorsFromMedia = false.obs;
+  final Rx<Monet> monetTheming = Monet.none.obs;
   final RxString globalTextDetection = "".obs;
   final RxBool filterUnknownSenders = false.obs;
   final RxBool tabletMode = true.obs;
@@ -64,6 +64,8 @@ class Settings {
   final RxBool immersiveMode = false.obs;
   final RxDouble avatarScale = 1.0.obs;
   final RxBool askWhereToSave = false.obs;
+  final RxBool statusIndicatorsOnChats = false.obs;
+  final RxBool material3 = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -124,6 +126,14 @@ class Settings {
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
 
+  // Scrolling
+  final RxBool betterScrolling = false.obs;
+  final RxDouble betterScrollingMultiplier = 7.0.obs;
+
+  // Notification actions
+  final RxList<int> selectedActionIndices = [0, 1, 2, 3, 4].obs;
+  final RxList<String> actionList = RxList.from(["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]);
+
   // Linux settings
   final RxBool useCustomTitleBar = RxBool(true);
 
@@ -138,8 +148,6 @@ class Settings {
         settings.guidAuthKey.value = entry.value;
       } else if (entry.name == "finishedSetup") {
         settings.finishedSetup.value = entry.value;
-      } else if (entry.name == "chunkSize") {
-        settings.chunkSize.value = entry.value;
       } else if (entry.name == "autoOpenKeyboard") {
         settings.autoOpenKeyboard.value = entry.value;
       } else if (entry.name == "autoDownload") {
@@ -290,6 +298,8 @@ class Settings {
         settings.notificationSound.value = entry.value;
       } else if (entry.name == "colorsFromMedia") {
         settings.colorsFromMedia.value = entry.value;
+      } else if (entry.name == "monetTheming") {
+        settings.monetTheming.value = Monet.values[entry.value];
       } else if (entry.name == "globalTextDetection") {
         settings.globalTextDetection.value = entry.value;
       } else if (entry.name == "filterUnknownSenders") {
@@ -310,10 +320,22 @@ class Settings {
         settings.minimizeToTray.value = entry.value;
       } else if (entry.name == "closeToTray") {
         settings.closeToTray.value = entry.value;
+      } else if (entry.name == "selectedActionIndices") {
+        settings.selectedActionIndices.value = entry.value;
+      } else if (entry.name == "actionList") {
+        settings.actionList.value = entry.value;
       } else if (entry.name == "askWhereToSave") {
         settings.askWhereToSave.value = entry.value;
+      } else if (entry.name == "indicatorsOnPinnedChats") {
+        settings.statusIndicatorsOnChats.value = entry.value;
+      } else if (entry.name == "material3") {
+        settings.material3.value = entry.value;
       } else if (entry.name == "useCustomTitleBar") {
         settings.useCustomTitleBar.value = entry.value;
+      } else if (entry.name == "betterScrolling") {
+        settings.betterScrolling.value = entry.value;
+      } else if (entry.name == "betterScrollingMultiplier") {
+        settings.betterScrollingMultiplier.value = entry.value;
       }
     }
     settings.save();
@@ -375,7 +397,6 @@ class Settings {
 
   Map<String, dynamic> toMap({bool includeAll = false}) {
     Map<String, dynamic> map = {
-      'chunkSize': chunkSize.value,
       'autoDownload': autoDownload.value,
       'onlyWifiDownload': onlyWifiDownload.value,
       'autoSave': autoSave.value,
@@ -424,8 +445,14 @@ class Settings {
       'avatarScale': avatarScale.value,
       'launchAtStartup': launchAtStartup.value,
       'closeToTray': closeToTray.value,
+      'betterScrolling': betterScrolling.value,
+      'betterScrollingMultiplier': betterScrollingMultiplier.value,
       'minimizeToTray': minimizeToTray.value,
+      'selectedActionIndices': selectedActionIndices,
+      'actionList': actionList,
       'askWhereToSave': askWhereToSave.value,
+      'indicatorsOnPinnedChats': statusIndicatorsOnChats.value,
+      'material3': material3.value,
       'swipeToReply': swipeToReply.value,
       'privateAPISend': privateAPISend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
@@ -473,13 +500,13 @@ class Settings {
         'serverAddress': serverAddress.value,
         'finishedSetup': finishedSetup.value,
         'colorsFromMedia': colorsFromMedia.value,
+        'monetTheming': monetTheming.value.index,
       });
     }
     return map;
   }
 
   static void updateFromMap(Map<String, dynamic> map) {
-    SettingsManager().settings.chunkSize.value = map['chunkSize'] ?? 500;
     SettingsManager().settings.autoDownload.value = map['autoDownload'] ?? true;
     SettingsManager().settings.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
     SettingsManager().settings.autoSave.value = map['autoSave'] ?? false;
@@ -529,8 +556,12 @@ class Settings {
     SettingsManager().settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     SettingsManager().settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
     SettingsManager().settings.closeToTray.value = map['closeToTray'] ?? true;
+    SettingsManager().settings.betterScrolling.value = map['betterScrolling'] ?? false;
+    SettingsManager().settings.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'] ?? 7.0).toDouble();
     SettingsManager().settings.minimizeToTray.value = map['minimizeToTray'] ?? false;
     SettingsManager().settings.askWhereToSave.value = map['askWhereToSave'] ?? false;
+    SettingsManager().settings.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
+    SettingsManager().settings.material3.value = map['material3'] ?? false;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.privateAPISend.value = map['privateAPISend'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -577,6 +608,8 @@ class Settings {
     SettingsManager().settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     SettingsManager().settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     SettingsManager().settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
+    SettingsManager().settings.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
+    SettingsManager().settings.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
     SettingsManager().settings.save();
   }
 
@@ -585,7 +618,6 @@ class Settings {
     s.guidAuthKey.value = map['guidAuthKey'] ?? "";
     s.serverAddress.value = map['serverAddress'] ?? "";
     s.finishedSetup.value = map['finishedSetup'] ?? false;
-    s.chunkSize.value = map['chunkSize'] ?? 500;
     s.autoDownload.value = map['autoDownload'] ?? true;
     s.autoSave.value = map['autoSave'] ?? false;
     s.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
@@ -628,6 +660,7 @@ class Settings {
     s.notifyReactions.value = map['notifyReactions'] ?? true;
     s.notificationSound.value = map['notificationSound'] ?? "default";
     s.colorsFromMedia.value = map['colorsFromMedia'] ?? false;
+    s.monetTheming.value = map['monetTheming'] != null ? Monet.values[map['monetTheming']] : Monet.none;
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     s.tabletMode.value = map['tabletMode'] ?? true;
@@ -636,8 +669,12 @@ class Settings {
     s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
     s.closeToTray.value = map['closeToTray'] ?? true;
+    s.betterScrolling.value = map['betterScrolling'] ?? false;
+    s.betterScrollingMultiplier.value = (map['betterScrollingMultiplier'] ?? 7.0).toDouble();
     s.minimizeToTray.value = map['minimizeToTray'] ?? false;
     s.askWhereToSave.value = map['askWhereToSave'] ?? false;
+    s.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
+    s.material3.value = map['material3'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -684,6 +721,8 @@ class Settings {
     s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
+    s.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
+    s.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
     return s;
   }
 }

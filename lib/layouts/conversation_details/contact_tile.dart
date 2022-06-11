@@ -6,9 +6,10 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -42,31 +43,12 @@ class ContactTile extends StatelessWidget {
 
   Future<void> makeCall(String phoneNumber) async {
     if (await Permission.phone.request().isGranted) {
-      launch("tel://$phoneNumber");
+      launchUrl(Uri(scheme: "tel", path: phoneNumber));
     }
   }
 
   Future<void> startEmail(String email) async {
-    launch('mailto:$email');
-  }
-
-  List<String> getUniqueNumbers(Iterable<String> numbers) {
-    List<String> phones = [];
-    for (String phone in numbers) {
-      bool exists = false;
-      for (String current in phones) {
-        if (cleansePhoneNumber(phone) == cleansePhoneNumber(current)) {
-          exists = true;
-          break;
-        }
-      }
-
-      if (!exists) {
-        phones.add(phone);
-      }
-    }
-
-    return phones;
+    launchUrl(Uri(scheme: "mailto", path: email));
   }
 
   Widget _buildContactTile(BuildContext context) {
@@ -286,22 +268,27 @@ class ContactTile extends StatelessWidget {
                           );
                         });
 
-                    Map<String, dynamic> params = {};
-                    params["identifier"] = chat.guid;
-                    params["address"] = handle.address;
-                    SocketManager().sendMessage("remove-participant", params, (response) async {
-                      Logger.info("Removed participant participant " + response.toString());
+                    api.chatParticipant("remove", chat.guid, handle.address).then((response) async {
+                      Logger.info("Removed participant ${handle.address}");
+                      Chat updatedChat = Chat.fromMap(response.data["data"]);
+                      updatedChat.save();
+                      await ChatBloc().updateChatPosition(updatedChat);
+                      Chat chatWithParticipants = updatedChat.getParticipants();
 
-                      if (response["status"] == 200) {
-                        Chat updatedChat = Chat.fromMap(response["data"]);
-                        updatedChat.save();
-                        await ChatBloc().updateChatPosition(updatedChat);
-                        Chat chatWithParticipants = updatedChat.getParticipants();
+                      Logger.info("Updating chat with ${chatWithParticipants.participants.length} participants");
+                      updateChat.call(chatWithParticipants);
+                      Navigator.of(context).pop();
+                    }).catchError((err) {
+                      Logger.error("Failed to remove participant ${handle.address}");
 
-                        Logger.info("Updating chat with ${chatWithParticipants.participants.length} participants");
-                        updateChat(chatWithParticipants);
-                        Navigator.of(context).pop();
+                      late final String error;
+                      if (err is Response) {
+                        error = err.data["error"]["message"].toString();
+                      } else {
+                        error = err.toString();
                       }
+
+                      showSnackbar("Error", "Failed to remove participant: $error");
                     });
                   },
                 ),

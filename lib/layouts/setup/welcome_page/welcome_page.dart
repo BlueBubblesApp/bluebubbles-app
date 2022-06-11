@@ -17,7 +17,7 @@ class WelcomePage extends StatefulWidget {
   final PageController? controller;
 
   @override
-  _WelcomePageState createState() => _WelcomePageState();
+  State<WelcomePage> createState() => _WelcomePageState();
 }
 
 class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin {
@@ -38,7 +38,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     super.initState();
     _titleController = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
 
-    SchedulerBinding.instance!.addPostFrameCallback((_) async {
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
       await animateTitle();
       await animateSubtitle();
     });
@@ -80,6 +80,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
@@ -268,6 +269,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                                   backgroundColor: MaterialStateProperty.all(Colors.transparent),
                                   shadowColor: MaterialStateProperty.all(Colors.transparent),
                                   maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                                  minimumSize: MaterialStateProperty.all(Size(30, 30)),
                                 ),
                                 onPressed: () async {
                                   widget.controller!.nextPage(

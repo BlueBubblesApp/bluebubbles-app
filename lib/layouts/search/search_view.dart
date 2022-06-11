@@ -1,18 +1,21 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 class SearchView extends StatefulWidget {
   SearchView({
@@ -74,13 +77,13 @@ class SearchViewState extends State<SearchView> {
       });
     }
 
-    List<dynamic> results = await SocketManager().fetchMessages(null, limit: 50, where: [
+    List<dynamic> results = await MessageManager().getMessages(limit: 50, withChats: true, withHandles: true, where: [
       {
         'statement': 'message.text LIKE :term',
         'args': {'term': "%${textEditingController.text}%"}
       },
       {'statement': 'message.associated_message_guid IS NULL', 'args': null}
-    ])!;
+    ]);
 
     List<dynamic> _results = [];
     for (dynamic item in results) {
@@ -130,11 +133,17 @@ class SearchViewState extends State<SearchView> {
 
   @override
   Widget build(BuildContext context) {
+    final ScrollController _scrollController = ScrollController();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+            ? Colors.transparent
+            : Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness:
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         // extendBodyBehindAppBar: true,
@@ -144,8 +153,10 @@ class SearchViewState extends State<SearchView> {
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                systemOverlayStyle: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.dark
-                      ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+                systemOverlayStyle:
+                    ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.dark
+                        ? SystemUiOverlayStyle.light
+                        : SystemUiOverlayStyle.dark,
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: buildBackButton(context),
@@ -168,7 +179,8 @@ class SearchViewState extends State<SearchView> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search, color: Theme.of(context).textTheme.bodyText1!.color),
+                      Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search,
+                          color: Theme.of(context).textTheme.bodyText1!.color),
                       Container(padding: EdgeInsets.only(right: 5.0)),
                       Flexible(
                           fit: FlexFit.loose,
@@ -199,14 +211,22 @@ class SearchViewState extends State<SearchView> {
                               })
                           : Padding(
                               padding: const EdgeInsets.all(12.0),
-                              child: SettingsManager().settings.skin.value == Skins.iOS ? Theme(
-                                data: ThemeData(
-                                  cupertinoOverrideTheme: CupertinoThemeData(
-                                      brightness:
-                                          ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
-                                ),
-                                child: CupertinoActivityIndicator(),
-                              ) : Container(height: 20, width: 20, child: Center(child: CircularProgressIndicator(strokeWidth: 2,))),
+                              child: SettingsManager().settings.skin.value == Skins.iOS
+                                  ? Theme(
+                                      data: ThemeData(
+                                        cupertinoOverrideTheme: CupertinoThemeData(
+                                            brightness: ThemeData.estimateBrightnessForColor(
+                                                Theme.of(context).backgroundColor)),
+                                      ),
+                                      child: CupertinoActivityIndicator(),
+                                    )
+                                  : Container(
+                                      height: 20,
+                                      width: 20,
+                                      child: Center(
+                                          child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ))),
                             )
                     ])),
             Divider(color: Theme.of(context).colorScheme.secondary),
@@ -217,99 +237,109 @@ class SearchViewState extends State<SearchView> {
                 : (!isSearching)
                     ? Flexible(
                         fit: FlexFit.loose,
-                        child: AnimatedList(
-                          key: _listKey,
-                          initialItemCount: results.length,
-                          itemBuilder: (BuildContext context, int index, Animation<double> animation) {
-                            Message message = results[index]['message'];
-                            Chat? chat = results[index]['chat'];
+                        child: ScrollbarWrapper(
+                          controller: _scrollController,
+                          child: AnimatedList(
+                            key: _listKey,
+                            controller: _scrollController,
+                            physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                                ? NeverScrollableScrollPhysics()
+                                : ThemeSwitcher.getScrollPhysics(),
+                            initialItemCount: results.length,
+                            itemBuilder: (BuildContext context, int index, Animation<double> animation) {
+                              Message message = results[index]['message'];
+                              Chat? chat = results[index]['chat'];
 
-                            // Create the textspans
-                            List<InlineSpan> spans = [];
+                              // Create the textspans
+                              List<InlineSpan> spans = [];
 
-                            // Get the current position of the search term
-                            int termIndex =
-                                (message.text ?? "").toLowerCase().indexOf(textEditingController.text.toLowerCase());
-                            int termEnd = termIndex + textEditingController.text.length;
+                              // Get the current position of the search term
+                              int termIndex =
+                                  (message.text ?? "").toLowerCase().indexOf(textEditingController.text.toLowerCase());
+                              int termEnd = termIndex + textEditingController.text.length;
 
-                            if (termIndex >= 0) {
-                              // We only want a snippet of the text, so only get a 50x50 range
-                              // of characters from the string, with the search term in the middle
-                              String subText = message.text!.substring((termIndex - 50 >= 0) ? termIndex - 50 : 0,
-                                  (termEnd + 50 < message.text!.length) ? termEnd + 50 : message.text!.length);
+                              if (termIndex >= 0) {
+                                // We only want a snippet of the text, so only get a 50x50 range
+                                // of characters from the string, with the search term in the middle
+                                String subText = message.text!.substring((termIndex - 50 >= 0) ? termIndex - 50 : 0,
+                                    (termEnd + 50 < message.text!.length) ? termEnd + 50 : message.text!.length);
 
-                              // Recarculate the term position in the snippet
-                              termIndex = subText.toLowerCase().indexOf(textEditingController.text.toLowerCase());
-                              termEnd = termIndex + textEditingController.text.length;
+                                // Recarculate the term position in the snippet
+                                termIndex = subText.toLowerCase().indexOf(textEditingController.text.toLowerCase());
+                                termEnd = termIndex + textEditingController.text.length;
 
-                              // Add the beginning string
-                              spans.add(TextSpan(
-                                  text: subText.substring(0, termIndex).trimLeft(),
-                                  style: Theme.of(context).textTheme.subtitle1));
+                                // Add the beginning string
+                                spans.add(TextSpan(
+                                    text: subText.substring(0, termIndex).trimLeft(),
+                                    style: Theme.of(context).textTheme.subtitle1));
 
-                              // Add the search term
-                              spans.add(TextSpan(
-                                  text: subText.substring(termIndex, termEnd),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .subtitle1!
-                                      .apply(color: Theme.of(context).primaryColor, fontWeightDelta: 2)));
+                                // Add the search term
+                                spans.add(TextSpan(
+                                    text: subText.substring(termIndex, termEnd),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .subtitle1!
+                                        .apply(color: Theme.of(context).primaryColor, fontWeightDelta: 2)));
 
-                              // Add the ending string
-                              spans.add(TextSpan(
-                                  text: subText.substring(termEnd, subText.length).trimRight(),
-                                  style: Theme.of(context).textTheme.subtitle1));
-                            } else {
-                              spans.add(TextSpan(text: message.text, style: Theme.of(context).textTheme.subtitle1));
-                            }
+                                // Add the ending string
+                                spans.add(TextSpan(
+                                    text: subText.substring(termEnd, subText.length).trimRight(),
+                                    style: Theme.of(context).textTheme.subtitle1));
+                              } else {
+                                spans.add(TextSpan(text: message.text, style: Theme.of(context).textTheme.subtitle1));
+                              }
 
-                            return Column(
-                              key: Key("result-${message.guid}"),
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                ListTile(
-                                  onTap: () {
-                                    MessageBloc customBloc = MessageBloc(chat, canLoadMore: false);
-                                    CustomNavigator.push(
-                                      context,
-                                      ConversationView(
-                                        chat: chat,
-                                        existingAttachments: [],
-                                        existingText: null,
-                                        isCreator: false,
-                                        customMessageBloc: customBloc,
-                                        onMessagesViewComplete: () {
-                                          customBloc.loadSearchChunk(message);
-                                        },
+                              return Column(
+                                key: Key("result-${message.guid}"),
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  ListTile(
+                                    onTap: () {
+                                      MessageBloc customBloc = MessageBloc(chat, canLoadMore: false);
+                                      CustomNavigator.push(
+                                        context,
+                                        ConversationView(
+                                          chat: chat,
+                                          existingAttachments: [],
+                                          existingText: null,
+                                          isCreator: false,
+                                          customMessageBloc: customBloc,
+                                          onMessagesViewComplete: () {
+                                            customBloc.loadSearchChunk(message);
+                                          },
+                                        ),
+                                      );
+                                    },
+                                    dense: true,
+                                    title: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Text(buildDate(message.dateCreated),
+                                            style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -2)),
+                                        Container(height: 5.0),
+                                        Text(chat?.title ?? "Unknown title",
+                                            style: Theme.of(context).textTheme.bodyText1),
+                                      ],
+                                    ),
+                                    subtitle: Padding(
+                                      padding: EdgeInsets.only(top: 5.0),
+                                      child: RichText(
+                                        text: TextSpan(children: spans),
                                       ),
-                                    );
-                                  },
-                                  dense: true,
-                                  title: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Text(buildDate(message.dateCreated),
-                                          style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -2)),
-                                      Container(height: 5.0),
-                                      Text(chat?.title ?? "Unknown title", style: Theme.of(context).textTheme.bodyText1),
-                                    ],
-                                  ),
-                                  subtitle: Padding(
-                                    padding: EdgeInsets.only(top: 5.0),
-                                    child: RichText(
-                                      text: TextSpan(children: spans),
+                                    ),
+                                    trailing: Icon(
+                                      SettingsManager().settings.skin.value == Skins.iOS
+                                          ? CupertinoIcons.forward
+                                          : Icons.arrow_forward_ios,
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
                                     ),
                                   ),
-                                  trailing: Icon(
-                                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward_ios,
-                                    color: Theme.of(context).textTheme.bodyText1!.color,
-                                  ),
-                                ),
-                                Divider(color: Theme.of(context).colorScheme.secondary)
-                              ],
-                            );
-                          },
+                                  Divider(color: Theme.of(context).colorScheme.secondary)
+                                ],
+                              );
+                            },
+                          ),
                         ),
                       )
                     : Container()

@@ -4,12 +4,11 @@ import 'dart:collection';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/chat_controller.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:get/get.dart';
-
-import '../socket_manager.dart';
 
 abstract class MessageBlocEventType {
   static String insert = "INSERT";
@@ -72,7 +71,7 @@ class MessageBloc {
     _canLoadMore = canLoadMore;
     _currentChat = chat;
 
-    NewMessageManager().stream.listen((msgEvent) {
+    MessageManager().stream.listen((msgEvent) {
       // Ignore any events that don't have to do with the current chat
       if (msgEvent.chatGuid != currentChat?.guid) return;
 
@@ -287,7 +286,7 @@ class MessageBloc {
       if (isNullOrEmpty(messages)!) {
         try {
           // Fetch messages from the server
-          List<dynamic> _messages = await SocketManager().loadMessageChunk(currChat, offset + reactionCnt);
+          List<dynamic> _messages = await ChatManager().getMessages(currChat.guid, offset: offset + reactionCnt);
           count = _messages.length;
 
           // Handle the messages

@@ -1,35 +1,19 @@
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:get/get.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QRCodeScanner extends StatefulWidget {
   QRCodeScanner({Key? key}) : super(key: key);
 
   @override
-  _QRCodeScannerState createState() => _QRCodeScannerState();
+  State<QRCodeScanner> createState() => _QRCodeScannerState();
 }
 
 class _QRCodeScannerState extends State<QRCodeScanner> {
-  QRViewController? controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  var qrText = "";
-
-  @override
-  void dispose() {
-    controller?.dispose();
-    super.dispose();
-  }
-
-  void _onQRViewCreated(QRViewController controller) {
-    this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
-      if (qrText.isEmpty) {
-        qrText = scanData.code;
-        Navigator.of(context).pop(qrText);
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,19 +22,17 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
-        body: QRView(
+        body: MobileScanner(
           key: qrKey,
-          overlay: QrScannerOverlayShape(
-            borderColor: Theme.of(context).primaryColor,
-            borderRadius: 10,
-            borderLength: 30,
-            borderWidth: 10,
-            cutOutSize:
-                (MediaQuery.of(context).size.width < 400 || MediaQuery.of(context).size.height < 400) ? 250.0 : 450.0,
-          ),
-          onQRViewCreated: _onQRViewCreated,
+          allowDuplicates: false,
+          onDetect: (barcode, args) {
+            if (!isNullOrEmpty(barcode.rawValue)!) {
+              Navigator.of(context).pop(barcode.rawValue);
+            }
+          },
         ),
       ),
     );

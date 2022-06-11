@@ -1,6 +1,6 @@
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
-import 'package:bluebubbles/managers/chat_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
@@ -68,7 +68,7 @@ class MessageAttachments extends StatelessWidget {
     if (message?.guid == "redacted-mode-demo" || message!.guid!.contains("theme-selector") || message!.guid!.startsWith("temp-")) {
       items = message!.attachments;
     } else {
-      items = ChatManager().activeChat?.getAttachmentsForMessage(message) ?? [];
+      items = ChatManager().activeChat?.getAttachmentsForMessage(message) ?? (message?.attachments ?? []);
     }
     for (Attachment? attachment in items) {
       if (attachment!.mimeType != null) {

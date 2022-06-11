@@ -22,6 +22,7 @@ import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -155,8 +156,42 @@ class AttachmentHelper {
       );
       Logger.info(savePath);
       if (savePath != null) {
-        File(file.path!).copy(savePath);
-        return showSnackbar('Success', 'Saved attachment to $savePath!');
+        if (await File(savePath).exists()) {
+          await showDialog(
+            barrierDismissible: false,
+            context: Get.context!,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(
+                  "Confirm save",
+                  style: Theme.of(context).textTheme.bodyText1,
+                ),
+                content: Text("This file already exists.\nAre you sure you want to overwrite it?"),
+                backgroundColor: context.theme.colorScheme.secondary,
+                actions: <Widget>[
+                  TextButton(
+                    child: Text("Yes"),
+                    onPressed: () async {
+                      File(file.path!).copy(savePath);
+                      Navigator.of(context).pop();
+                      showSnackbar('Success', 'Saved attachment to $savePath!');
+                    },
+                  ),
+                  TextButton(
+                    child: Text("No"),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          File(file.path!).copy(savePath);
+          showSnackbar('Success', 'Saved attachment to $savePath!');
+        }
+        return;
       }
       return showSnackbar('Failed', 'You didn\'t select a file path!');
     }
@@ -179,10 +214,6 @@ class AttachmentHelper {
       return showDeniedSnackbar(err: "BlueBubbles does not have the required permissions!");
     }
 
-    if (file.path == null) {
-      return showDeniedSnackbar();
-    }
-
     if (SettingsManager().settings.askWhereToSave.value && showAlert) {
       dynamic dir = Directory("/storage/emulated/0/");
       String? path = await FilesystemPicker.open(
@@ -194,19 +225,23 @@ class AttachmentHelper {
         folderIconColor: Theme.of(Get.context!).primaryColor,
       );
       if (path != null) {
-        final bytes = await File(file.path!).readAsBytes();
+        final bytes = file.bytes ?? await File(file.path!).readAsBytes();
         await File(join(path, file.name)).writeAsBytes(bytes);
       }
       return;
     }
 
     try {
-      await ImageGallerySaver.saveFile(file.path!);
+      if (file.path == null && file.bytes != null) {
+        await ImageGallerySaver.saveImage(file.bytes!, quality: 100, name: file.name);
+      } else {
+        await ImageGallerySaver.saveFile(file.path!);
+      }
       if (showAlert) showSnackbar('Success', 'Saved attachment to gallery!');
     } catch (_) {
       File toSave = File("/storage/emulated/0/Download/${file.name}");
       await toSave.create(recursive: true);
-      final bytes = await File(file.path!).readAsBytes();
+      final bytes = file.bytes ?? await File(file.path!).readAsBytes();
       await toSave.writeAsBytes(bytes);
       if (showAlert) showSnackbar('Success', 'Saved attachment to downloads folder!');
     }
@@ -299,15 +334,21 @@ class AttachmentHelper {
     if (!kIsWeb) {
       File file = File(attachment.getPath());
       File jpgFile = File(attachment.getHeicToJpgPath());
+      File thumbnail = File("${attachment.getPath()}.thumbnail");
+      File jpgThumbnail = File("${attachment.getHeicToJpgPath()}.thumbnail");
 
       // If neither exist, don't do anything
       bool fExists = file.existsSync();
       bool cExists = jpgFile.existsSync();
+      bool tExists = thumbnail.existsSync();
+      bool tcExists = jpgThumbnail.existsSync();
       if (!fExists && !cExists) return;
 
       // Delete them if they exist
       if (fExists) file.deleteSync();
       if (cExists) jpgFile.deleteSync();
+      if (tExists) thumbnail.deleteSync();
+      if (tcExists) jpgThumbnail.deleteSync();
     }
 
     // Redownload the attachment
@@ -344,10 +385,10 @@ class AttachmentHelper {
     try {
       if (!kIsWeb) {
         dynamic file = File(filePath);
-        isg.Size size = await isg.AsyncImageSizeGetter.getSize(AsyncFileInput(file));
+        isg.Size size = await isg.ImageSizeGetter.getSizeAsync(AsyncInput(FileInput(file)));
         return Size(size.width.toDouble(), size.height.toDouble());
       } else {
-        isg.Size size = await isg.AsyncImageSizeGetter.getSize(AsyncMemoryInput(bytes!));
+        isg.Size size = await isg.ImageSizeGetter.getSizeAsync(AsyncInput(isg.MemoryInput(bytes!)));
         return Size(size.width.toDouble(), size.height.toDouble());
       }
     } catch (ex) {
@@ -422,15 +463,15 @@ class AttachmentHelper {
 
     // Handle getting heic images
     if ((attachment.mimeType == 'image/heic' || attachment.mimeType == 'image/heif') && !kIsWeb && !kIsDesktop) {
-      if (await File(filePath + ".jpg").exists()) {
-        originalFile = File(filePath + ".jpg");
+      if (await File("$filePath.jpg").exists()) {
+        originalFile = File("$filePath.jpg");
       } else {
         final file = await FlutterNativeImage.compressImage(
           filePath,
           percentage: 100,
           quality: 100,
         );
-        final cacheFile = File(filePath + ".jpg");
+        final cacheFile = File("$filePath.jpg");
         final bytes = await file.readAsBytes();
         await cacheFile.writeAsBytes(bytes);
         originalFile = file;

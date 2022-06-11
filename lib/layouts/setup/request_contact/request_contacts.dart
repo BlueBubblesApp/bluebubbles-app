@@ -13,7 +13,7 @@ class RequestContacts extends StatefulWidget {
   final PageController controller;
 
   @override
-  _RequestContactsState createState() => _RequestContactsState();
+  State<RequestContacts> createState() => _RequestContactsState();
 }
 
 class _RequestContactsState extends State<RequestContacts> {
@@ -29,6 +29,7 @@ class _RequestContactsState extends State<RequestContacts> {
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
@@ -125,6 +126,7 @@ class _RequestContactsState extends State<RequestContacts> {
                               backgroundColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
                               shadowColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
                               maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                              minimumSize: MaterialStateProperty.all(Size(30, 30)),
                             ),
                             onPressed: () async {
                               widget.controller.previousPage(
@@ -161,6 +163,7 @@ class _RequestContactsState extends State<RequestContacts> {
                               backgroundColor: MaterialStateProperty.all(Colors.transparent),
                               shadowColor: MaterialStateProperty.all(Colors.transparent),
                               maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                              minimumSize: MaterialStateProperty.all(Size(30, 30)),
                             ),
                             onPressed: () async {
                               if (!(await ContactManager().canAccessContacts())) {
@@ -243,7 +246,7 @@ class ContactPermissionWarningDialog extends StatefulWidget {
   ContactPermissionWarningDialog({Key? key}) : super(key: key);
 
   @override
-  _ContactPermissionWarningDialogState createState() => _ContactPermissionWarningDialogState();
+  State<ContactPermissionWarningDialog> createState() => _ContactPermissionWarningDialogState();
 }
 
 class _ContactPermissionWarningDialogState extends State<ContactPermissionWarningDialog> {

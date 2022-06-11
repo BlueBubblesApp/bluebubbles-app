@@ -65,7 +65,10 @@ class TestingMode extends GetView<TestingModeController> {
                           "Testing #${Random().nextInt(9998)}",
                           DateTime.now(),
                           false,
-                          Random().nextInt(9998) + 1
+                          Random().nextInt(9998) + 1,
+                          false,
+                          null,
+                          null
                       );
                     },
                   ),
