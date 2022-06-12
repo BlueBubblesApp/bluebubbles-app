@@ -105,7 +105,7 @@ class ThemeStruct {
 
   static List<ThemeStruct> getThemes() {
     if (kIsWeb) return Themes.defaultThemes;
-    return themeBox.getAll();
+    return themeBox.getAll().isEmpty ? Themes.defaultThemes : themeBox.getAll();
   }
 
   Map<String, dynamic> toMap() => {
@@ -257,37 +257,50 @@ class ThemeStruct {
     );
   }
 
-  Map<String, Color> get colors => {
-    "primary": data.colorScheme.primary,
-    "onPrimary": data.colorScheme.onPrimary,
-    "primaryContainer": data.colorScheme.primaryContainer,
-    "onPrimaryContainer": data.colorScheme.onPrimaryContainer,
-    "secondary": data.colorScheme.secondary,
-    "onSecondary": data.colorScheme.onSecondary,
-    "secondaryContainer": data.colorScheme.secondaryContainer,
-    "onSecondaryContainer": data.colorScheme.onSecondaryContainer,
-    "tertiary": data.colorScheme.tertiary,
-    "onTertiary": data.colorScheme.onTertiary,
-    "tertiaryContainer": data.colorScheme.tertiaryContainer,
-    "onTertiaryContainer": data.colorScheme.onTertiaryContainer,
-    "error": data.colorScheme.error,
-    "onError": data.colorScheme.onError,
-    "errorContainer": data.colorScheme.errorContainer,
-    "onErrorContainer": data.colorScheme.onErrorContainer,
-    "background": data.colorScheme.background,
-    "onBackground": data.colorScheme.onBackground,
-    "surface": data.colorScheme.surface,
-    "onSurface": data.colorScheme.onSurface,
-    "surfaceVariant": data.colorScheme.surfaceVariant,
-    "onSurfaceVariant": data.colorScheme.onSurfaceVariant,
-    "inverseSurface": data.colorScheme.inverseSurface,
-    "onInverseSurface": data.colorScheme.onInverseSurface,
-    // the following get their own customization card, rather than
-    // being paired like the above
-    "outline": data.colorScheme.outline,
-    "shadow": data.colorScheme.shadow,
-    "inversePrimary": data.colorScheme.inversePrimary,
-  };
+  /// Returns the colors for a theme. Returns colors overwritten by Material You
+  /// theming if [returnMaterialYou] is true
+  Map<String, Color> colors(bool dark, {bool returnMaterialYou = true}) {
+    ThemeData finalData = data;
+    if (returnMaterialYou) {
+      final tuple = applyMonet(data, data);
+      if (dark) {
+        finalData = tuple.item2;
+      } else {
+        finalData = tuple.item1;
+      }
+    }
+    return {
+      "primary": finalData.colorScheme.primary,
+      "onPrimary": finalData.colorScheme.onPrimary,
+      "primaryContainer": finalData.colorScheme.primaryContainer,
+      "onPrimaryContainer": finalData.colorScheme.onPrimaryContainer,
+      "secondary": finalData.colorScheme.secondary,
+      "onSecondary": finalData.colorScheme.onSecondary,
+      "secondaryContainer": finalData.colorScheme.secondaryContainer,
+      "onSecondaryContainer": finalData.colorScheme.onSecondaryContainer,
+      "tertiary": finalData.colorScheme.tertiary,
+      "onTertiary": finalData.colorScheme.onTertiary,
+      "tertiaryContainer": finalData.colorScheme.tertiaryContainer,
+      "onTertiaryContainer": finalData.colorScheme.onTertiaryContainer,
+      "error": finalData.colorScheme.error,
+      "onError": finalData.colorScheme.onError,
+      "errorContainer": finalData.colorScheme.errorContainer,
+      "onErrorContainer": finalData.colorScheme.onErrorContainer,
+      "background": finalData.colorScheme.background,
+      "onBackground": finalData.colorScheme.onBackground,
+      "surface": finalData.colorScheme.surface,
+      "onSurface": finalData.colorScheme.onSurface,
+      "surfaceVariant": finalData.colorScheme.surfaceVariant,
+      "onSurfaceVariant": finalData.colorScheme.onSurfaceVariant,
+      "inverseSurface": finalData.colorScheme.inverseSurface,
+      "onInverseSurface": finalData.colorScheme.onInverseSurface,
+      // the following get their own customization card, rather than
+      // being paired like the above
+      "outline": finalData.colorScheme.outline,
+      "shadow": finalData.colorScheme.shadow,
+      "inversePrimary": finalData.colorScheme.inversePrimary,
+    }; 
+  }
 
   @override
   bool operator ==(Object other) =>
