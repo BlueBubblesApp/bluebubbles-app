@@ -44,6 +44,7 @@ import com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgrou
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenCamera;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenFile;
+import com.bluebubbles.messaging.method_call_handler.handlers.OpenLink;
 import com.bluebubbles.messaging.method_call_handler.handlers.PickFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.PushShareTargets;
 import com.bluebubbles.messaging.method_call_handler.handlers.SaveToFile;
@@ -111,6 +112,8 @@ public class FlutterFirebaseMessagingBackgroundExecutor implements MethodCallHan
             new ClearSocketIssue(context, call, result).Handle();
         } else if (call.method.equals(OpenFile.TAG)) {
             new OpenFile(context, call, result).Handle();
+        } else if (call.method.equals(OpenLink.TAG)) {
+            new OpenLink(context, call, result).Handle();
         } else if (call.method.equals(ClearChatNotifs.TAG)) {
             new ClearChatNotifs(context, call, result).Handle();
         } else if (call.method.equals(GetLastLocation.TAG)) {
