@@ -418,7 +418,9 @@ class _QRScanState extends State<QRScan> {
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Icon(Icons.close, color: Colors.white, size: 20),
+                                                  Icon(Icons.close, color: Theme.of(context)
+                                                          .textTheme
+                                                          .bodyText1!.color, size: 20),
                                                   SizedBox(width: 10),
                                                   Text("Cancel",
                                                       style: Theme.of(context)
