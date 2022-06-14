@@ -44,9 +44,12 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
   @override
   Widget build(BuildContext context) {
     if (participants.isEmpty) {
-      return Container(
-        width: widget.size * SettingsManager().settings.avatarScale.value,
-        height: widget.size * SettingsManager().settings.avatarScale.value,
+      return ContactAvatarWidget(
+        handle: Handle(address: ''),
+        size: widget.size * SettingsManager().settings.avatarScale.value,
+        editable: false,
+        onTap: widget.onTap,
+        scaleSize: false,
       );
     }
 
