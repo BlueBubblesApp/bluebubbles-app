@@ -9,6 +9,8 @@ Below are the last few BlueBubbles App release changelogs
 * Fixes issues creating new chats
 * Fixes issue with scroll-to-bottom when scrolled up in a chat, and trying sending a message
 * Fixes invisible icon during setup
+* Fixes missing avatars for chats with no participants
+    - A chat having no participants is technically a bug, however, we still want to maintain a good UI
 
 ## 1.9.0
 
