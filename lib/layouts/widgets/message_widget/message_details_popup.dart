@@ -484,11 +484,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              Metadata? data = await MetadataHelper.fetchMetadata(widget.message);
-              MethodChannelInterface().invokeMethod(
-                "open-link",
-                {"link": data?.url ?? widget.message.text, "forceBrowser": true},
-              );
+              String? url = widget.message.getUrl();
+              MethodChannelInterface().invokeMethod("open-link", {"link": url ?? widget.message.text, "forceBrowser": true});
               popDetails();
             },
             child: ListTile(
