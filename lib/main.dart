@@ -60,6 +60,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:secure_application/secure_application.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:system_tray/system_tray.dart';
@@ -354,24 +355,31 @@ Future<Null> initApp(bool isBubble) async {
       await WindowManager.instance.setTitle('BlueBubbles');
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
-        appWindow.minSize = Size(300, 300);
+        await WindowManager.instance.setMinimumSize(Size(300, 300));
+        Display primary = await ScreenRetriever.instance.getPrimaryDisplay();
+        Size size = primary.size;
+        Rect bounds = Rect.fromLTWH(0, 0, size.width, size.height);
 
         double? width = prefs.getDouble("window-width");
         double? height = prefs.getDouble("window-height");
         if (width != null && height != null) {
+          width = width.clamp(300, bounds.width);
+          height = height.clamp(300, bounds.height);
           await WindowManager.instance.setSize(Size(width, height));
         }
 
-        appWindow.alignment = Alignment.center;
-
         double? posX = prefs.getDouble("window-x");
         double? posY = prefs.getDouble("window-y");
-        if (posX != null && posY != null) {
-          appWindow.position = Offset(posX, posY);
+        if (posX != null && posY != null && width != null && height != null) {
+          posX = posX.clamp(bounds.left, bounds.right - width);
+          posY = posY.clamp(bounds.top, bounds.bottom - height);
+          await WindowManager.instance.setPosition(Offset(posX, posY));
+        } else {
+          await WindowManager.instance.setAlignment(Alignment.center);
         }
 
-        appWindow.title = 'BlueBubbles';
-        appWindow.show();
+        await WindowManager.instance.setTitle('BlueBubbles');
+        await WindowManager.instance.show();
       });
     }
     if (!kIsWeb) {
@@ -997,22 +1005,22 @@ Future<void> initSystemTray() async {
     [
       MenuItem(
         label: 'Open App',
-        onClicked: () {
+        onClicked: () async {
           LifeCycleManager().opened(null);
-          appWindow.show();
+          await WindowManager.instance.show();
         },
       ),
       MenuItem(
         label: 'Hide App',
-        onClicked: () {
+        onClicked: () async {
           LifeCycleManager().close();
-          appWindow.hide();
+          await WindowManager.instance.hide();
         },
       ),
       MenuItem(
         label: 'Close App',
-        onClicked: () {
-          appWindow.close();
+        onClicked: () async {
+          await WindowManager.instance.close();
         },
       ),
     ],
@@ -1022,7 +1030,7 @@ Future<void> initSystemTray() async {
   systemTray.registerSystemTrayEventHandler((eventName) async {
     switch (eventName) {
       case 'leftMouseUp':
-        appWindow.show();
+        await WindowManager.instance.show();
         break;
       case "rightMouseUp":
         await systemTray.popUpContextMenu();

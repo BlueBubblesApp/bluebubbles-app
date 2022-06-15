@@ -18,6 +18,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:reorderables/reorderables.dart';
+import 'package:window_manager/window_manager.dart';
 
 class DesktopPanel extends StatelessWidget {
   @override
@@ -622,7 +623,7 @@ class DesktopPanel extends StatelessWidget {
                                       SettingsManager().settings.save();
                                       SettingsManager().fcmData = null;
                                       FCMData.deleteFcmData();
-                                      appWindow.close();
+                                      await WindowManager.instance.close();
                                     },
                                   ),
                                   TextButton(
@@ -686,7 +687,7 @@ class DesktopPanel extends StatelessWidget {
                                             FCMData.deleteFcmData();
                                             prefs.setBool("use-custom-path", true);
                                             prefs.setString("custom-path", path);
-                                            appWindow.close();
+                                            await WindowManager.instance.close();
                                           },
                                         ),
                                         TextButton(
