@@ -17,6 +17,7 @@ import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:reorderables/reorderables.dart';
 
 class DesktopPanel extends StatelessWidget {
   @override
@@ -167,7 +168,8 @@ class DesktopPanel extends StatelessWidget {
                     SettingsTile(
                       title: "Actions",
                       subtitle:
-                          "Click actions to toggle them. Click the arrows to move them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
+                          "Click actions to toggle them. Drag actions to move them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
+                      backgroundColor: tileColor,
                     ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,9 +182,36 @@ class DesktopPanel extends StatelessWidget {
                                 Padding(
                                   padding: EdgeInsets.all(15),
                                   child: Center(
-                                    child: Wrap(
+                                    child: ReorderableWrap(
+                                      needsLongPressDraggable: false,
                                       spacing: 10,
                                       alignment: WrapAlignment.center,
+                                      buildDraggableFeedback: (context, constraints, child) => AnimatedScale(
+                                          duration: Duration(milliseconds: 250), scale: 1.1, child: child),
+                                      onReorder: (int oldIndex, int newIndex) {
+                                        List<String> selected = SettingsManager()
+                                            .settings
+                                            .selectedActionIndices
+                                            .map((index) => SettingsManager().settings.actionList[index])
+                                            .toList();
+                                        String? temp = SettingsManager().settings.actionList[oldIndex];
+                                        // If dragging to the right
+                                        for (int i = oldIndex; i <= newIndex - 1; i++) {
+                                          SettingsManager().settings.actionList[i] =
+                                              SettingsManager().settings.actionList[i + 1];
+                                        }
+                                        // If dragging to the left
+                                        for (int i = oldIndex; i >= newIndex + 1; i--) {
+                                          SettingsManager().settings.actionList[i] =
+                                              SettingsManager().settings.actionList[i - 1];
+                                        }
+                                        SettingsManager().settings.actionList[newIndex] = temp;
+
+                                        List<int> selectedIndices = selected
+                                            .map((s) => SettingsManager().settings.actionList.indexOf(s))
+                                            .toList();
+                                        SettingsManager().settings.selectedActionIndices.value = selectedIndices;
+                                      },
                                       children: List.generate(
                                         ReactionTypes.toList().length + 1,
                                         (int index) => MouseRegion(
@@ -206,9 +235,6 @@ class DesktopPanel extends StatelessWidget {
                                                   ? context.theme.primaryColor
                                                   : context.theme.colorScheme.secondary;
 
-                                              RxBool hoverRight = false.obs;
-                                              RxBool hoverLeft = false.obs;
-
                                               return MouseRegion(
                                                 cursor:
                                                     hardDisabled ? SystemMouseCursors.basic : SystemMouseCursors.click,
@@ -223,214 +249,42 @@ class DesktopPanel extends StatelessWidget {
                                                       SettingsManager().settings.selectedActionIndices.add(index);
                                                     }
                                                   },
-                                                  child: Stack(
-                                                    clipBehavior: Clip.none,
-                                                    children: [
-                                                      AnimatedContainer(
-                                                        margin: EdgeInsets.symmetric(vertical: 5),
-                                                        height: 56,
-                                                        width: 90,
-                                                        padding: EdgeInsets.symmetric(horizontal: 9),
-                                                        decoration: BoxDecoration(
-                                                          borderRadius: BorderRadius.circular(8),
-                                                          border: Border.all(
-                                                              color: color.withOpacity(selected ? 1 : 0.5),
-                                                              width: selected ? 1.5 : 1),
-                                                          color: color.withOpacity(disabled
-                                                              ? 0.2
-                                                              : selected
-                                                                  ? 0.8
-                                                                  : 0.7),
-                                                        ),
-                                                        foregroundDecoration: BoxDecoration(
-                                                          color: color.withOpacity(hardDisabled || disabled ? 0.7 : 0),
-                                                          borderRadius: BorderRadius.circular(8),
-                                                        ),
-                                                        curve: Curves.linear,
-                                                        duration: Duration(milliseconds: 150),
-                                                        child: Center(
-                                                          child: Material(
-                                                            color: Colors.transparent,
-                                                            child: Text(
-                                                              ReactionTypes.reactionToEmoji[value] ?? "Mark Read",
-                                                              style: TextStyle(
-                                                                  fontSize: 16,
-                                                                  color: (hardDisabled && value == "Mark Read")
-                                                                      ? context.textTheme.subtitle1!.color
-                                                                      : null),
-                                                              textAlign: TextAlign.center,
-                                                            ),
-                                                          ),
+                                                  child: AnimatedContainer(
+                                                    margin: EdgeInsets.symmetric(vertical: 5),
+                                                    height: 56,
+                                                    width: 90,
+                                                    padding: EdgeInsets.symmetric(horizontal: 9),
+                                                    decoration: BoxDecoration(
+                                                      borderRadius: BorderRadius.circular(8),
+                                                      border: Border.all(
+                                                          color: color.withOpacity(selected ? 1 : 0.5),
+                                                          width: selected ? 1.5 : 1),
+                                                      color: color.withOpacity(disabled
+                                                          ? 0.2
+                                                          : selected
+                                                              ? 0.8
+                                                              : 0.7),
+                                                    ),
+                                                    foregroundDecoration: BoxDecoration(
+                                                      color: color.withOpacity(hardDisabled || disabled ? 0.7 : 0),
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    curve: Curves.linear,
+                                                    duration: Duration(milliseconds: 150),
+                                                    child: Center(
+                                                      child: Material(
+                                                        color: Colors.transparent,
+                                                        child: Text(
+                                                          ReactionTypes.reactionToEmoji[value] ?? "Mark Read",
+                                                          style: TextStyle(
+                                                              fontSize: 16,
+                                                              color: (hardDisabled && value == "Mark Read")
+                                                                  ? context.textTheme.subtitle1!.color
+                                                                  : null),
+                                                          textAlign: TextAlign.center,
                                                         ),
                                                       ),
-                                                      Positioned(
-                                                        left: -1,
-                                                        top: 4,
-                                                        height: 60,
-                                                        width: 24,
-                                                        child: AnimatedScale(
-                                                          duration: Duration(milliseconds: 100),
-                                                          scale: index != 0 && showButtons[index] ? 1 : 0,
-                                                          curve: Curves.bounceIn,
-                                                          child: MouseRegion(
-                                                            cursor: SystemMouseCursors.click,
-                                                            onEnter: (event) {
-                                                              if (hoverLeft.value != true) {
-                                                                hoverLeft.value = true;
-                                                              }
-                                                            },
-                                                            onExit: (event) {
-                                                              if (hoverLeft.value != false) {
-                                                                hoverLeft.value = false;
-                                                              }
-                                                            },
-                                                            child: GestureDetector(
-                                                              onTap: () {
-                                                                bool currentSelected = SettingsManager()
-                                                                    .settings
-                                                                    .selectedActionIndices
-                                                                    .contains(index);
-                                                                bool previousSelected = SettingsManager()
-                                                                    .settings
-                                                                    .selectedActionIndices
-                                                                    .contains(index - 1);
-                                                                String temp =
-                                                                    SettingsManager().settings.actionList[index];
-                                                                SettingsManager().settings.actionList[index] =
-                                                                    SettingsManager().settings.actionList[index - 1];
-                                                                SettingsManager().settings.actionList[index - 1] = temp;
-                                                                if (!previousSelected && currentSelected) {
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .remove(index);
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .add(index - 1);
-                                                                }
-                                                                if (previousSelected && !currentSelected) {
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .add(index);
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .remove(index - 1);
-                                                                }
-                                                              },
-                                                              child: Obx(
-                                                                () => AnimatedContainer(
-                                                                  duration: Duration(milliseconds: 100),
-                                                                  decoration: BoxDecoration(
-                                                                    borderRadius: BorderRadius.only(
-                                                                        topLeft: Radius.circular(8),
-                                                                        bottomLeft: Radius.circular(8)),
-                                                                  ),
-                                                                  width: 24,
-                                                                  height: 60,
-                                                                  child: AnimatedScale(
-                                                                    scale: hoverLeft.value ? 1.5 : 1,
-                                                                    curve: Curves.bounceInOut,
-                                                                    duration: Duration(milliseconds: 100),
-                                                                    child: Icon(Icons.arrow_left,
-                                                                        color: context.theme.textTheme.bodyText1!.color,
-                                                                        size: 24),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Positioned(
-                                                        right: -1,
-                                                        top: 4,
-                                                        height: 60,
-                                                        width: 24,
-                                                        child: AnimatedScale(
-                                                          duration: Duration(milliseconds: 100),
-                                                          scale: index != ReactionTypes.toList().length &&
-                                                                  showButtons[index]
-                                                              ? 1
-                                                              : 0,
-                                                          curve: Curves.bounceIn,
-                                                          child: MouseRegion(
-                                                            cursor: SystemMouseCursors.click,
-                                                            onEnter: (event) {
-                                                              if (hoverRight.value != true) {
-                                                                hoverRight.value = true;
-                                                              }
-                                                            },
-                                                            onExit: (event) {
-                                                              if (hoverRight.value != false) {
-                                                                hoverRight.value = false;
-                                                              }
-                                                            },
-                                                            child: GestureDetector(
-                                                              behavior: HitTestBehavior.opaque,
-                                                              onTap: () {
-                                                                bool currentSelected = SettingsManager()
-                                                                    .settings
-                                                                    .selectedActionIndices
-                                                                    .contains(index);
-                                                                bool nextSelected = SettingsManager()
-                                                                    .settings
-                                                                    .selectedActionIndices
-                                                                    .contains(index + 1);
-                                                                String temp =
-                                                                    SettingsManager().settings.actionList[index];
-                                                                SettingsManager().settings.actionList[index] =
-                                                                    SettingsManager().settings.actionList[index + 1];
-                                                                SettingsManager().settings.actionList[index + 1] = temp;
-                                                                if (!nextSelected && currentSelected) {
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .remove(index);
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .add(index + 1);
-                                                                }
-                                                                if (nextSelected && !currentSelected) {
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .add(index);
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .remove(index + 1);
-                                                                }
-                                                              },
-                                                              child: Obx(
-                                                                () => AnimatedContainer(
-                                                                  duration: Duration(milliseconds: 100),
-                                                                  decoration: BoxDecoration(
-                                                                    borderRadius: BorderRadius.only(
-                                                                        topRight: Radius.circular(8),
-                                                                        bottomRight: Radius.circular(8)),
-                                                                    color: Colors.transparent,
-                                                                  ),
-                                                                  width: 24,
-                                                                  height: 60,
-                                                                  child: AnimatedScale(
-                                                                    scale: hoverRight.value ? 1.5 : 1,
-                                                                    curve: Curves.bounceInOut,
-                                                                    duration: Duration(milliseconds: 100),
-                                                                    child: Icon(Icons.arrow_right,
-                                                                        color: context.theme.textTheme.bodyText1!.color,
-                                                                        size: 24),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
+                                                    ),
                                                   ),
                                                 ),
                                               );

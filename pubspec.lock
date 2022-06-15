@@ -290,7 +290,7 @@ packages:
       name: confetti
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.7.0"
+    version: "0.6.0"
   connectivity_plus:
     dependency: "direct main"
     description:
@@ -1804,6 +1804,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.4.3"
+  reorderables:
+    dependency: "direct main"
+    description:
+      name: reorderables
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.5.0"
   rxdart:
     dependency: "direct overridden"
     description:
@@ -2130,7 +2137,7 @@ packages:
       path: "."
       ref: "576d7cc17fbab10bcdb40468a0db012d2365462e"
       resolved-ref: "576d7cc17fbab10bcdb40468a0db012d2365462e"
-      url: "https://github.com/antler119/system_tray.git"
+      url: "https://github.com/BlueBubblesApp/system_tray.git"
     source: git
     version: "0.1.0"
   term_glyph:
