@@ -230,55 +230,49 @@ class AboutPanel extends StatelessWidget {
                               textAlign: TextAlign.center,
                             ),
                             backgroundColor: context.theme.colorScheme.surface,
-                            content: SizedBox(
-                              width: CustomNavigator.width(context) * 3 / 5,
-                              height: context.height * 1 / 9,
-                              child: ListView(
-                                physics: AlwaysScrollableScrollPhysics(
-                                  parent: BouncingScrollPhysics(),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.all(8),
+                                  child: RichText(
+                                    text: TextSpan(
+                                        text: "Zach",
+                                        style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: context.theme.colorScheme.primary),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () async {
+                                            await launchUrl(Uri(scheme: "https", host: "github.com", path: "zlshames"));
+                                          }),
+                                  ),
                                 ),
-                                children: [
-                                  Container(
-                                    alignment: Alignment.center,
-                                    padding: EdgeInsets.all(8),
-                                    child: RichText(
-                                      text: TextSpan(
-                                          text: "Zach",
-                                          style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: Colors.blue),
-                                          recognizer: TapGestureRecognizer()
-                                            ..onTap = () async {
-                                              await launchUrl(Uri(scheme: "https", host: "github.com", path: "zlshames"));
-                                            }),
-                                    ),
+                                Container(
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.all(8),
+                                  child: RichText(
+                                    text: TextSpan(
+                                        text: "Tanay",
+                                        style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: context.theme.colorScheme.primary),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () async {
+                                            await launchUrl(Uri(scheme: "https", host: "github.com", path: "tneotia"));
+                                          }),
                                   ),
-                                  Container(
-                                    alignment: Alignment.center,
-                                    padding: EdgeInsets.all(8),
-                                    child: RichText(
-                                      text: TextSpan(
-                                          text: "Tanay",
-                                          style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: Colors.blue),
-                                          recognizer: TapGestureRecognizer()
-                                            ..onTap = () async {
-                                              await launchUrl(Uri(scheme: "https", host: "github.com", path: "tneotia"));
-                                            }),
-                                    ),
+                                ),
+                                Container(
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.all(8),
+                                  child: RichText(
+                                    text: TextSpan(
+                                        text: "Joel",
+                                        style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: context.theme.colorScheme.primary),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () async {
+                                            await launchUrl(Uri(scheme: "https", host: "github.com", path: "jjoelj"));
+                                          }),
                                   ),
-                                  Container(
-                                    alignment: Alignment.center,
-                                    padding: EdgeInsets.all(8),
-                                    child: RichText(
-                                      text: TextSpan(
-                                          text: "Joel",
-                                          style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: Colors.blue),
-                                          recognizer: TapGestureRecognizer()
-                                            ..onTap = () async {
-                                              await launchUrl(Uri(scheme: "https", host: "github.com", path: "jjoelj"));
-                                            }),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                             actions: [
                               TextButton(

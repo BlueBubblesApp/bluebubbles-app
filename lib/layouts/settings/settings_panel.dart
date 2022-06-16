@@ -805,7 +805,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
             Text("Load From / Save To Server", style: context.theme.textTheme.labelLarge),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              child: Container(color: Colors.grey, height: 0.5),
+              child: Container(color: context.theme.textTheme.labelLarge!.color, height: 0.5),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -842,7 +842,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   child: Text(
                     "Save Settings",
                     style: TextStyle(
-                      color: context.theme.textTheme.bodyMedium!.color,
+                      color: context.theme.colorScheme.onPrimary,
                       fontSize: 13,
                     ),
                   ),
@@ -1008,7 +1008,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       child: Text(
                         "Save Theming",
                         style: TextStyle(
-                          color: context.theme.textTheme.bodyMedium!.color,
+                          color: context.theme.colorScheme.onPrimary,
                           fontSize: 13,
                         ),
                       ),
@@ -1106,7 +1106,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
             Text("Load / Save Locally", style: context.theme.textTheme.labelLarge),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              child: Container(color: Colors.grey, height: 0.5),
+              child: Container(color: context.theme.textTheme.labelLarge!.color, height: 0.5),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1170,7 +1170,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   child: Text(
                     "Save Settings",
                     style: TextStyle(
-                      color: context.theme.textTheme.bodyMedium!.color,
+                      color: context.theme.colorScheme.onPrimary,
                       fontSize: 13,
                     ),
                   ),
@@ -1279,7 +1279,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     child: Text(
                       "Save Theming",
                       style: TextStyle(
-                        color: context.theme.textTheme.bodyMedium!.color,
+                        color: context.theme.colorScheme.onPrimary,
                         fontSize: 13,
                       ),
                     ),

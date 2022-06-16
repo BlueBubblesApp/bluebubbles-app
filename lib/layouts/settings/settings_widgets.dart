@@ -454,6 +454,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     this.capitalize = true,
     this.backgroundColor,
     this.secondaryColor,
+    this.useCupertino = true,
   }) : super(key: key);
   final String title;
   final void Function(T?) onChanged;
@@ -466,10 +467,11 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
   final bool capitalize;
   final Color? backgroundColor;
   final Color? secondaryColor;
+  final bool useCupertino;
 
   @override
   Widget build(BuildContext context) {
-    if (SettingsManager().settings.skin.value == Skins.iOS) {
+    if (SettingsManager().settings.skin.value == Skins.iOS && useCupertino) {
       final texts = options.map((e) => Text(capitalize ? textProcessing!(e).capitalize! : textProcessing!(e), style: context.theme.textTheme.bodyLarge!.copyWith(color: e == initial ? context.theme.colorScheme.onPrimary : null)));
       final map = Map<T, Widget>.fromIterables(options, cupertinoCustomWidgets ?? texts);
       return Container(
@@ -528,12 +530,12 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 9),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: surfaceColor,
+                color: secondaryColor ?? surfaceColor,
               ),
               child: Center(
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<T>(
-                    dropdownColor: surfaceColor,
+                    dropdownColor: secondaryColor ?? surfaceColor,
                     icon: Icon(
                       Icons.arrow_drop_down,
                       color: context.theme.textTheme.bodyLarge!.color,
