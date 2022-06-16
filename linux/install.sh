@@ -1,8 +1,7 @@
 #!/bin/bash
 #
 # Check that script is running as root
-# FIXME - This doesn't work!
-if (( $(whoami) != 'root' )); then
+if (( $(id -u) != 0 )); then
   echo -e 'Make sure you run the script as root.'
   exit 1
 fi
