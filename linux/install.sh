@@ -7,12 +7,12 @@ if (( $(whoami) != 'root' )); then
 fi
 # Check that Bluebubbles.desktop is present
 if [ ! -f ./Bluebubbles.desktop ]; then
-  echo 'Make sure Bluebubbles.desktop exists in the working directory'
+  echo -e 'Make sure Bluebubbles.desktop exists in the working directory'
   exit 1
 fi
 # Check that bluebubbles_linux.zip is present
 if [ ! -f ./bluebubbles_linux.zip ]; then
-  echo 'Make sure bluebubbles_linux.zip exists in the working directory'
+  echo -e 'Make sure bluebubbles_linux.zip exists in the working directory'
   exit 1
 fi
 
