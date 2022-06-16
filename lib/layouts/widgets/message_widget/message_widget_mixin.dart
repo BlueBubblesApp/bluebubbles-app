@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
@@ -239,8 +240,12 @@ abstract class MessageWidgetMixin {
       List<Tuple2<String, int>> linkIndexMatches = <Tuple2<String, int>>[];
       if (!kIsWeb && !kIsDesktop) {
         if (ChatManager().activeChat?.mlKitParsedText[message.guid!] == null) {
-          ChatManager().activeChat?.mlKitParsedText[message.guid!] =
-              await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english).annotateText(message.text!);
+          try {
+            ChatManager().activeChat?.mlKitParsedText[message.guid!] =
+                await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english).annotateText(message.text!);
+          } catch (ex) {
+            Logger.warn('Failed to extract entities using mlkit! Error: ${ex.toString()}');
+          }
         }
         final entities = ChatManager().activeChat?.mlKitParsedText[message.guid!] ?? [];
         List<EntityAnnotation> normalizedEntities = [];

@@ -42,7 +42,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sprung/sprung.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class MessageDetailsPopup extends StatefulWidget {
@@ -485,8 +484,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              Metadata? data = await MetadataHelper.fetchMetadata(widget.message);
-              await launchUrl(Uri.parse(data?.url ?? widget.message.text ?? ''), mode: LaunchMode.externalApplication);
+              String? url = widget.message.getUrl();
+              MethodChannelInterface().invokeMethod("open-link", {"link": url ?? widget.message.text, "forceBrowser": true});
               popDetails();
             },
             child: ListTile(
