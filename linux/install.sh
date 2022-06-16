@@ -1,8 +1,9 @@
 #!/bin/bash
 #
 # Check that script is running as root
+# FIXME - This doesn't work!
 if (( $(whoami) != 'root' )); then
-  echo 'Make sure you run the script as root.'
+  echo -e 'Make sure you run the script as root.'
   exit 1
 fi
 # Check that Bluebubbles.desktop is present
@@ -20,12 +21,16 @@ fi
 # Remove any old version of bluebubbles, if any
 echo 'Removing old versions of Bluebubbles'
 rm -rf /opt/bluebubbles_app/bundle
-rm -f /usr//share/applications/Bluebubbles.desktop
+rm -f /usr/share/applications/Bluebubbles.desktop
+rm -f /usr/lib/libobjectbox.so
 
 # Unzip the bundle to /opt/bluebubbles_app/
 echo 'Unzipping the Bundle to the install location'
 mkdir -p /opt/bluebubbles_app/
 unzip ./bluebubbles_linux.zip -d /opt/bluebubbles_app/
+
+# Symlink libobjectbox to the correct place
+ls -s /opt/bluebubbles_app/bundle/lib/libobjectbox.so /usr/lib
 
 # Make the binary executable and add it to a location on PATH
 echo 'Making the Binary executable'
