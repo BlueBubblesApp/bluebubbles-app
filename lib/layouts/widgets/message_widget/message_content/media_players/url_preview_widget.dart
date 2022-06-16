@@ -128,7 +128,7 @@ class UrlPreviewWidget extends StatelessWidget {
             if (!kIsWeb)
               Obx(() {
                 if (controller.data.value?.image != null && controller.data.value!.image!.isNotEmpty) {
-                  if (controller.data.value!.image!.startsWith("/")) {
+                  if ((kIsDesktop && File(controller.data.value!.image!).existsSync()) || controller.data.value!.image!.startsWith("/")) {
                     dynamic file = File(controller.data.value!.image!);
                     return Image.file(file,
                         filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
