@@ -2,7 +2,6 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -15,6 +14,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:dio/dio.dart';
@@ -62,21 +62,37 @@ class ThemePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget nextIcon = Obx(() => Icon(
-          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-          color: Colors.grey,
-        ));
+    Widget nextIcon = Obx(() => SettingsManager().settings.skin.value != Skins.Material ? Icon(
+      SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+      color: context.theme.colorScheme.outline,
+      size: SettingsManager().settings.skin.value == Skins.iOS ? 18 : 24,
+    ) : SizedBox.shrink());
 
     /// for some reason we need a [GetBuilder] here otherwise the theme switching refuses to work right
     return GetBuilder<ThemePanelController>(builder: (_) {
       final iosSubtitle =
-          Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-      final materialSubtitle = Theme.of(context)
+      context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onSurface, fontWeight: FontWeight.w300);
+      final materialSubtitle = context.theme
           .textTheme
           .labelLarge
-          ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-      Color headerColor = context.theme.headerColor;
-      Color tileColor = context.theme.tileColor;
+          ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
+      // Samsung theme should always use the background color as the "header" color
+      Color headerColor = ThemeManager().inDarkMode(context)
+          || SettingsManager().settings.skin.value == Skins.Samsung
+          ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+      Color tileColor = ThemeManager().inDarkMode(context)
+          || SettingsManager().settings.skin.value == Skins.Samsung
+          ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
+      // make sure the tile color is at least different from the header color on Samsung and iOS
+      if (tileColor == headerColor) {
+        tileColor = context.theme.colorScheme.surfaceVariant;
+      }
+      // reverse material color mapping to be more accurate
+      if (SettingsManager().settings.skin.value == Skins.Material) {
+        final temp = headerColor;
+        headerColor = tileColor;
+        tileColor = temp;
+      }
 
       return SettingsScaffold(
         title: "Theming & Styles",
@@ -110,8 +126,8 @@ class ThemePanel extends StatelessWidget {
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     if (!kIsWeb)
@@ -131,16 +147,16 @@ class ThemePanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     Container(
                       decoration: BoxDecoration(
                         color: tileColor,
                       ),
-                      padding: EdgeInsets.only(left: 15),
-                      child: Text("Avatar Scale Factor"),
+                      padding: EdgeInsets.only(left: 15, top: 10),
+                      child: Text("Avatar Scale Factor", style: context.theme.textTheme.bodyLarge),
                     ),
                     Obx(() => SettingsSlider(
                         text: "Avatar Scale Factor",
@@ -181,7 +197,7 @@ class ThemePanel extends StatelessWidget {
                       options: Skins.values,
                       textProcessing: (val) {
                         var output = val.toString().split(".").last;
-                        return output == 'Samsung' ? 'Samsung (Beta)' : output;
+                        return output == 'Samsung' ? 'Samsung (β)' : output;
                       },
                       capitalize: false,
                       title: "App Skin",
@@ -191,8 +207,8 @@ class ThemePanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     Obx(() => SettingsSwitch(
@@ -204,13 +220,14 @@ class ThemePanel extends StatelessWidget {
                       title: "Tablet Mode",
                       backgroundColor: tileColor,
                       subtitle: "Enables tablet mode (split view) depending on screen width",
+                      isThreeLine: true,
                     )),
                     if (!kIsWeb && !kIsDesktop)
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop)
@@ -228,8 +245,13 @@ class ThemePanel extends StatelessWidget {
                         initialVal: controller._settingsCopy.immersiveMode.value,
                         title: "Immersive Mode",
                         backgroundColor: tileColor,
-                        subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation. Note: This option may cause slight choppiness in some animations due to an Android limitation",
+                        subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
+                        isThreeLine: true,
                       )),
+                    if (!kIsWeb && !kIsDesktop)
+                      SettingsSubtitle(
+                        subtitle: "Note: This option may cause slight choppiness in some animations due to an Android limitation.",
+                      ),
                   ],
                 ),
                 SettingsHeader(
@@ -252,6 +274,7 @@ class ThemePanel extends StatelessWidget {
                             onTap: () {
                               showMonetDialog(context);
                             },
+                            isThreeLine: true,
                           );
                         } else {
                           return SizedBox.shrink();
@@ -293,8 +316,8 @@ class ThemePanel extends StatelessWidget {
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     SettingsSwitch(
@@ -308,12 +331,13 @@ class ThemePanel extends StatelessWidget {
                       title: "Material 3",
                       subtitle:
                       "Use Material 3 UI design and Android 12's stretchy overscroll indicator",
+                      isThreeLine: true,
                     ),
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     if (!kIsWeb && !kIsDesktop)
@@ -361,15 +385,19 @@ class ThemePanel extends StatelessWidget {
                           title: "Colors from Media",
                           backgroundColor: tileColor,
                           subtitle:
-                          "Pull app colors from currently playing media. Note: Requires full notification access & a custom theme to be set",
+                          "Pull app colors from currently playing media",
                         ),
+                      ),
+                    if (!kIsWeb && !kIsDesktop)
+                      SettingsSubtitle(
+                        subtitle: "Note: Requires full notification access. Enabling this option will set a custom Music Theme as the selected theme.",
                       ),
                     if (!kIsWeb && !kIsDesktop)
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     Obx(() => SettingsSwitch(
@@ -385,8 +413,8 @@ class ThemePanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     Obx(() => SettingsSwitch(
@@ -403,8 +431,8 @@ class ThemePanel extends StatelessWidget {
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     if (!kIsWeb)
@@ -415,7 +443,6 @@ class ThemePanel extends StatelessWidget {
                           CustomNavigator.pushSettings(
                             context,
                             CustomAvatarColorPanel(),
-                            binding: CustomAvatarColorPanelBinding(),
                           );
                         },
                         backgroundColor: tileColor,
@@ -425,8 +452,8 @@ class ThemePanel extends StatelessWidget {
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     if (!kIsWeb)
@@ -437,7 +464,6 @@ class ThemePanel extends StatelessWidget {
                           CustomNavigator.pushSettings(
                             context,
                             CustomAvatarPanel(),
-                            binding: CustomAvatarPanelBinding(),
                           );
                         },
                         backgroundColor: tileColor,
@@ -447,8 +473,8 @@ class ThemePanel extends StatelessWidget {
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     if (!kIsWeb)
@@ -463,8 +489,8 @@ class ThemePanel extends StatelessWidget {
                             ),
                             child: CircularProgressIndicator(
                               strokeWidth: 3,
-                              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                            )) : Icon(Icons.check, color: Colors.grey)
+                              valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                            )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
                         ),
                         onTap: () async {
                           controller.gettingIcons.value = true;
@@ -486,11 +512,15 @@ class ThemePanel extends StatelessWidget {
                           controller.gettingIcons.value = false;
                         },
                         backgroundColor: tileColor,
-                        subtitle: "Get iMessage group chat icons. Note: Overrides any custom avatars set for group chats",
+                        subtitle: "Get iMessage group chat icons from the server",
+                      ),
+                    if (!kIsWeb)
+                      SettingsSubtitle(
+                        subtitle: "Note: Overrides any custom avatars set for group chats.",
                       ),
                   ],
                 ),
-                if (!kIsWeb && !kIsDesktop)
+                if (!kIsWeb && !kIsDesktop && controller.refreshRates.length > 2)
                   Obx(() {
                     if (controller.refreshRates.length > 2) {
                       return SettingsHeader(
@@ -503,29 +533,25 @@ class ThemePanel extends StatelessWidget {
                       return SizedBox.shrink();
                     }
                   }),
-                if (!kIsWeb && !kIsDesktop)
+                if (!kIsWeb && !kIsDesktop && controller.refreshRates.length > 2)
                   SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       Obx(() {
-                        if (controller.refreshRates.length > 2) {
-                          return SettingsOptions<int>(
-                            initial: controller.currentMode.value,
-                            onChanged: (val) async {
-                              if (val == null) return;
-                              controller.currentMode.value = val;
-                              controller._settingsCopy.refreshRate.value = controller.currentMode.value;
-                              saveSettings();
-                            },
-                            options: controller.refreshRates,
-                            textProcessing: (val) => val == 0 ? "Auto" : "$val Hz",
-                            title: "Display",
-                            backgroundColor: tileColor,
-                            secondaryColor: headerColor,
-                          );
-                        } else {
-                          return SizedBox.shrink();
-                        }
+                        return SettingsOptions<int>(
+                          initial: controller.currentMode.value,
+                          onChanged: (val) async {
+                            if (val == null) return;
+                            controller.currentMode.value = val;
+                            controller._settingsCopy.refreshRate.value = controller.currentMode.value;
+                            saveSettings();
+                          },
+                          options: controller.refreshRates,
+                          textProcessing: (val) => val == 0 ? "Auto" : "$val Hz",
+                          title: "Display",
+                          backgroundColor: tileColor,
+                          secondaryColor: headerColor,
+                        );
                       }),
                     ],
                   ),
@@ -544,24 +570,52 @@ class ThemePanel extends StatelessWidget {
                         if (!fontExistsOnDisk.value) {
                           return SettingsTile(
                             onTap: () async {
-                              Get.defaultDialog(
-                                backgroundColor: context.theme.colorScheme.secondary,
-                                radius: 15.0,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                                titlePadding: EdgeInsets.only(top: 15),
-                                title: "Downloading font file...",
-                                titleStyle: Theme.of(context).textTheme.headlineMedium,
-                                confirm: Obx(() => downloadingFont.value
-                                  ? Container(height: 0, width: 0)
-                                  : Container(
-                                    margin: EdgeInsets.only(bottom: 10),
-                                    child: TextButton(
-                                      child: Text("CLOSE"),
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: context.theme.colorScheme.surface,
+                                  title: Text("Downloading font file...", style: context.theme.textTheme.titleLarge),
+                                  content: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        Obx(
+                                              () => Text(
+                                              '${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)',
+                                                style: context.theme.textTheme.bodyLarge),
+                                        ),
+                                        SizedBox(height: 10.0),
+                                        Obx(
+                                              () => ClipRRect(
+                                            borderRadius: BorderRadius.circular(20),
+                                            child: LinearProgressIndicator(
+                                              backgroundColor: context.theme.colorScheme.outline,
+                                              valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                              value: progress.value,
+                                              minHeight: 5,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: 15.0,
+                                        ),
+                                        Obx(() => Text(
+                                          progress.value == 1 ? "Download Complete!" : "You can close this dialog. The font will continue to download in the background.",
+                                          maxLines: 2,
+                                          textAlign: TextAlign.center,
+                                          style: context.theme.textTheme.bodyLarge,
+                                        )),
+                                  ]),
+                                  actions: [
+                                    Obx(() => downloadingFont.value
+                                        ? Container(height: 0, width: 0)
+                                        : TextButton(
+                                      child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                       onPressed: () async {
                                         if (Get.isSnackbarOpen ?? false) {
                                           Get.close(1);
                                         }
-                                        Get.back();
+                                        Navigator.of(context).pop();
                                         Future.delayed(Duration(milliseconds: 400), ()
                                         {
                                           progress.value = null;
@@ -569,38 +623,8 @@ class ThemePanel extends StatelessWidget {
                                         });
                                       },
                                     ),
-                                  ),
-                                ),
-                                cancel: Container(height: 0, width: 0),
-                                content: ConstrainedBox(
-                                  constraints: BoxConstraints(maxWidth: 300),
-                                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-                                    Obx(
-                                          () => Text(
-                                          '${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)'),
                                     ),
-                                    SizedBox(height: 10.0),
-                                    Obx(
-                                          () => ClipRRect(
-                                        borderRadius: BorderRadius.circular(20),
-                                        child: LinearProgressIndicator(
-                                          backgroundColor: Colors.white,
-                                          value: progress.value,
-                                          minHeight: 5,
-                                          valueColor:
-                                          AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 15.0,
-                                    ),
-                                    Obx(() => Text(
-                                      progress.value == 1 ? "Download Complete!" : "You can close this dialog. The font will continue to download in the background.",
-                                      maxLines: 2,
-                                      textAlign: TextAlign.center,
-                                    ),),
-                                  ]),
+                                  ],
                                 ),
                               );
                               final DynamicCachedFonts dynamicCachedFont = DynamicCachedFonts(
@@ -660,36 +684,23 @@ class ThemePanel extends StatelessWidget {
   }
 
   void showMonetDialog(BuildContext context) {
-    Get.defaultDialog(
-        title: "Monet Theming Info",
-        titleStyle: Theme.of(context).textTheme.headlineMedium,
-        backgroundColor: Theme.of(context).backgroundColor.lightenPercent(),
-        buttonColor: Theme.of(context).primaryColor,
-        content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: EdgeInsets.only(left: 10, right: 10),
-                child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                        "Harmonize - Overwrites primary color, and blends background & accent color with the current theme colors\r\n"
-                            "Full - Overwrites primary, background, and accent colors, along with other minor colors.\r\n"
-                    )
-                ),
-              ),
-            ]
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Monet Theming Info", style: context.theme.textTheme.titleLarge),
+        backgroundColor: context.theme.colorScheme.surface,
+        content: Text(
+            "Harmonize - Overwrites primary color, and blends background & accent color with the current theme colors\r\n"
+                "Full - Overwrites primary, background, and accent colors, along with other minor colors.\r\n",
+          style: context.theme.textTheme.bodyLarge,
         ),
-        cancel: Container(
-          height: 0,
-          width: 0,
-        ),
-        textConfirm: "OK",
-        confirmTextColor: context.theme.dialogBackgroundColor,
-        barrierDismissible: false,
-        onConfirm: () {
-          Get.back();
-        }
+        actions: [
+          TextButton(
+              child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+              onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      )
     );
   }
 }

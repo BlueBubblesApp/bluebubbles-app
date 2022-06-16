@@ -1,10 +1,9 @@
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -47,13 +46,28 @@ class PrivateAPIPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-        Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context)
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onSurface, fontWeight: FontWeight.w300);
+    final materialSubtitle = context.theme
         .textTheme
         .labelLarge
-        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        || SettingsManager().settings.skin.value == Skins.Samsung
+        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        || SettingsManager().settings.skin.value == Skins.Samsung
+        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
+    // make sure the tile color is at least different from the header color on Samsung and iOS
+    if (tileColor == headerColor) {
+      tileColor = context.theme.colorScheme.surfaceVariant;
+    }
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
 
     return SettingsScaffold(
         title: "Private API Features",
@@ -69,41 +83,30 @@ class PrivateAPIPanel extends StatelessWidget {
                     SettingsSection(
                       backgroundColor: tileColor,
                       children: [
-                        Container(
-                            decoration: SettingsManager().settings.skin.value == Skins.iOS
-                                ? BoxDecoration(
-                                    color: tileColor,
-                                    border: Border(
-                                        bottom: BorderSide(
-                                            color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                                  )
-                                : BoxDecoration(
-                                    color: tileColor,
-                                  ),
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                              child: RichText(
-                                text: TextSpan(
-                                  children: [
-                                    TextSpan(text: "Private API features give you the ability to:\n"),
-                                    TextSpan(text: " - Send tapbacks\n"),
-                                    TextSpan(text: " - Send read receipts\n"),
-                                    TextSpan(text: " - Send & receive typing indicators\n"),
-                                    TextSpan(text: " - Mark chats read on the Mac server\n"),
-                                    TextSpan(text: " - Send messages with subject lines\n"),
-                                    TextSpan(text: " - Send message effects\n"),
-                                    TextSpan(text: " - Change group chat names\n"),
-                                    TextSpan(text: " - Add & remove people from group chats\n"),
-                                    TextSpan(text: " - Send replies (requires Big Sur and up)"),
-                                    TextSpan(text: "\n\n"),
-                                    TextSpan(
-                                        text:
-                                            "You must have the Private API bundle installed on the server for these features to function, regardless of whether you enable the setting here."),
-                                  ],
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                            )),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(text: "Private API features give you the ability to:\n"),
+                                TextSpan(text: " - Send tapbacks\n"),
+                                TextSpan(text: " - Send read receipts\n"),
+                                TextSpan(text: " - Send & receive typing indicators\n"),
+                                TextSpan(text: " - Mark chats read on the Mac server\n"),
+                                TextSpan(text: " - Send messages with subject lines\n"),
+                                TextSpan(text: " - Send message effects\n"),
+                                TextSpan(text: " - Change group chat names\n"),
+                                TextSpan(text: " - Add & remove people from group chats\n"),
+                                TextSpan(text: " - Send replies (requires Big Sur and up)"),
+                                TextSpan(text: "\n\n"),
+                                TextSpan(
+                                    text:
+                                        "You must have the Private API bundle installed on the server for these features to function, regardless of whether you enable the setting here."),
+                              ],
+                              style: context.theme.textTheme.bodyMedium,
+                            ),
+                          ),
+                        ),
                         SettingsTile(
                           backgroundColor: tileColor,
                           title: "Set up Private API Features",
@@ -119,8 +122,8 @@ class PrivateAPIPanel extends StatelessWidget {
                         Container(
                           color: tileColor,
                           child: Padding(
-                            padding: const EdgeInsets.only(left: 65.0),
-                            child: SettingsDivider(color: headerColor),
+                            padding: const EdgeInsets.only(left: 15.0),
+                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                           ),
                         ),
                         SettingsSwitch(
@@ -154,20 +157,38 @@ class PrivateAPIPanel extends StatelessWidget {
                             subtitle: "Sends typing indicators to other iMessage users",
                             backgroundColor: tileColor,
                           ),
-                          SettingsSwitch(
-                            onChanged: (bool val) {
-                              controller._settingsCopy.privateMarkChatAsRead.value = val;
-                              if (val) {
-                                controller._settingsCopy.privateManualMarkAsRead.value = false;
-                              }
-                              saveSettings();
-                            },
-                            initialVal: controller._settingsCopy.privateMarkChatAsRead.value,
-                            title: "Mark Chats as Read / Send Read Receipts",
-                            subtitle:
-                                "Marks chats read in the iMessage app on your server and sends read receipts to other iMessage users",
-                            backgroundColor: tileColor,
-                          ),
+                          if (!controller._settingsCopy.privateManualMarkAsRead.value)
+                            Container(
+                              color: tileColor,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 15.0),
+                                child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                              ),
+                            ),
+                          if (!controller._settingsCopy.privateManualMarkAsRead.value)
+                            SettingsSwitch(
+                              onChanged: (bool val) {
+                                controller._settingsCopy.privateMarkChatAsRead.value = val;
+                                if (val) {
+                                  controller._settingsCopy.privateManualMarkAsRead.value = false;
+                                }
+                                saveSettings();
+                              },
+                              initialVal: controller._settingsCopy.privateMarkChatAsRead.value,
+                              title: "Automatic Mark Read / Send Read Receipts",
+                              subtitle:
+                                  "Marks chats read in the iMessage app on your server and sends read receipts to other iMessage users",
+                              backgroundColor: tileColor,
+                              isThreeLine: true,
+                            ),
+                          if (!controller._settingsCopy.privateMarkChatAsRead.value)
+                            Container(
+                              color: tileColor,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 15.0),
+                                child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                              ),
+                            ),
                           if (!controller._settingsCopy.privateMarkChatAsRead.value)
                             SettingsSwitch(
                               onChanged: (bool val) {
@@ -175,79 +196,68 @@ class PrivateAPIPanel extends StatelessWidget {
                                 saveSettings();
                               },
                               initialVal: controller._settingsCopy.privateManualMarkAsRead.value,
-                              title: "Show Manually Mark Chat as Read Button",
+                              title: "Manual Mark Read / Send Read Receipts",
+                              subtitle: "Only mark a chat read when pressing the manual mark read button",
                               backgroundColor: tileColor,
+                              isThreeLine: true,
                             ),
                           Container(
                             color: tileColor,
-                            child: SwitchListTile(
-                              title: Text(
-                                "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Quick Tapback",
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              value: SettingsManager().settings.enableQuickTapback.value,
-                              activeColor: Theme.of(context).primaryColor,
-                              activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                              inactiveTrackColor: tileColor == Theme.of(context).colorScheme.secondary
-                                  ? Theme.of(context).backgroundColor.withOpacity(0.6)
-                                  : Theme.of(context).colorScheme.secondary.withOpacity(0.6),
-                              inactiveThumbColor: tileColor == Theme.of(context).colorScheme.secondary
-                                  ? Theme.of(context).backgroundColor
-                                  : Theme.of(context).colorScheme.secondary,
-                              onChanged: (bool val) {
-                                SettingsManager().settings.enableQuickTapback.value = val;
-                                if (val && SettingsManager().settings.doubleTapForDetails.value) {
-                                  SettingsManager().settings.doubleTapForDetails.value = false;
-                                }
-                                saveSettings();
-                              },
-                              subtitle: Text(
-                                  "Send a tapback of your choosing when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
-                                  style: Theme.of(context).textTheme.labelLarge),
-                              tileColor: tileColor,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 15.0),
+                              child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                             ),
                           ),
-                          Obx(() => SettingsManager().settings.enableQuickTapback.value
-                              ? Container(
-                                  color: tileColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 65.0),
-                                    child: SettingsDivider(color: headerColor),
-                                  ),
-                                )
-                              : SizedBox.shrink()),
-                          Obx(() {
-                            if (SettingsManager().settings.enableQuickTapback.value &&
-                                SettingsManager().settings.skin.value == Skins.iOS) {
-                              return Container(
-                                decoration: BoxDecoration(
-                                  color: tileColor,
-                                ),
-                                padding: EdgeInsets.only(left: 15),
-                                child: Text("Select Quick Tapback"),
-                              );
-                            } else {
-                              return SizedBox.shrink();
-                            }
-                          }),
+                          SettingsSwitch(
+                            title: "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Quick Tapback",
+                            initialVal: SettingsManager().settings.enableQuickTapback.value,
+                            onChanged: (bool val) {
+                              SettingsManager().settings.enableQuickTapback.value = val;
+                              if (val && SettingsManager().settings.doubleTapForDetails.value) {
+                                SettingsManager().settings.doubleTapForDetails.value = false;
+                              }
+                              saveSettings();
+                            },
+                            subtitle: "Send a tapback of your choosing when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
+                            backgroundColor: tileColor,
+                            isThreeLine: true,
+                          ),
                           Obx(() {
                             if (SettingsManager().settings.enableQuickTapback.value) {
                               return SettingsOptions<String>(
                                 title: "Quick Tapback",
                                 options: ReactionTypes.toList(),
                                 cupertinoCustomWidgets: [
-                                  Reaction(reactionType: ReactionTypes.LOVE).getSmallWidget(context,
-                                      message: Message(isFromMe: true), isReactionPicker: true)!,
-                                  Reaction(reactionType: ReactionTypes.LIKE).getSmallWidget(context,
-                                      message: Message(isFromMe: true), isReactionPicker: true)!,
-                                  Reaction(reactionType: ReactionTypes.DISLIKE).getSmallWidget(context,
-                                      message: Message(isFromMe: true), isReactionPicker: true)!,
-                                  Reaction(reactionType: ReactionTypes.LAUGH).getSmallWidget(context,
-                                      message: Message(isFromMe: true), isReactionPicker: true)!,
-                                  Reaction(reactionType: ReactionTypes.EMPHASIZE).getSmallWidget(context,
-                                      message: Message(isFromMe: true), isReactionPicker: true)!,
-                                  Reaction(reactionType: ReactionTypes.QUESTION).getSmallWidget(context,
-                                      message: Message(isFromMe: true), isReactionPicker: true)!,
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: Reaction(reactionType: ReactionTypes.LOVE).getSmallWidget(context,
+                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: SettingsManager().settings.quickTapbackType.value == ReactionTypes.LOVE)!,
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: Reaction(reactionType: ReactionTypes.LIKE).getSmallWidget(context,
+                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: SettingsManager().settings.quickTapbackType.value == ReactionTypes.LIKE)!,
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: Reaction(reactionType: ReactionTypes.DISLIKE).getSmallWidget(context,
+                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: SettingsManager().settings.quickTapbackType.value == ReactionTypes.DISLIKE)!,
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: Reaction(reactionType: ReactionTypes.LAUGH).getSmallWidget(context,
+                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: SettingsManager().settings.quickTapbackType.value == ReactionTypes.LAUGH)!,
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: Reaction(reactionType: ReactionTypes.EMPHASIZE).getSmallWidget(context,
+                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: SettingsManager().settings.quickTapbackType.value == ReactionTypes.EMPHASIZE)!,
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: Reaction(reactionType: ReactionTypes.QUESTION).getSmallWidget(context,
+                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: SettingsManager().settings.quickTapbackType.value == ReactionTypes.QUESTION)!,
+                                  ),
                                 ],
                                 initial: SettingsManager().settings.quickTapbackType.value,
                                 textProcessing: (val) => val,
@@ -263,6 +273,13 @@ class PrivateAPIPanel extends StatelessWidget {
                               return SizedBox.shrink();
                             }
                           }),
+                          Obx(() => controller.serverVersionCode.value >= 63 ? Container(
+                            color: tileColor,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 15.0),
+                              child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                            ),
+                          ) : SizedBox.shrink()),
                           Obx(() {
                             if (controller.serverVersionCode.value >= 63) {
                               return SettingsSwitch(
@@ -284,20 +301,38 @@ class PrivateAPIPanel extends StatelessWidget {
                               builder: (context, snapshot) {
                                 return Obx(() {
                                   if (controller.serverVersionCode.value >= 63 && snapshot.data as bool) {
-                                    return SettingsSwitch(
-                                      onChanged: (bool val) {
-                                        controller._settingsCopy.swipeToReply.value = val;
-                                        saveSettings();
-                                      },
-                                      initialVal: controller._settingsCopy.swipeToReply.value,
-                                      title: "Swipe Messages to Reply",
-                                      backgroundColor: tileColor,
+                                    return Column(
+                                      children: [
+                                        Container(
+                                          color: tileColor,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(left: 15.0),
+                                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                                          ),
+                                        ),
+                                        SettingsSwitch(
+                                          onChanged: (bool val) {
+                                            controller._settingsCopy.swipeToReply.value = val;
+                                            saveSettings();
+                                          },
+                                          initialVal: controller._settingsCopy.swipeToReply.value,
+                                          title: "Swipe Messages to Reply",
+                                          backgroundColor: tileColor,
+                                        ),
+                                      ],
                                     );
                                   } else {
                                     return SizedBox.shrink();
                                   }
                                 });
                               }),
+                          Obx(() => controller.serverVersionCode.value >= 84 ? Container(
+                            color: tileColor,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 15.0),
+                              child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                            ),
+                          ) : SizedBox.shrink()),
                           Obx(() {
                             if (controller.serverVersionCode.value >= 84) {
                               return SettingsSwitch(
@@ -309,6 +344,7 @@ class PrivateAPIPanel extends StatelessWidget {
                                 title: "Private API Send",
                                 subtitle: "Send regular iMessages using the Private API for much faster speed",
                                 backgroundColor: tileColor,
+                                isThreeLine: true,
                               );
                             } else {
                               return SizedBox.shrink();

@@ -127,7 +127,7 @@ class Reaction {
     messages.add(message);
   }
 
-  Widget? getSmallWidget(BuildContext context, {Message? message, bool bigPin = false, bool isReactionPicker = true}) {
+  Widget? getSmallWidget(BuildContext context, {Message? message, bool bigPin = false, bool isReactionPicker = true, bool isSelected = false}) {
     if (messages.isEmpty && message == null) return null;
     if (messages.isEmpty && message != null) messages = [message];
 
@@ -194,7 +194,7 @@ class Reaction {
                 margin: EdgeInsets.only(right: bigPin ? 10 : 0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100),
-                  color: messages[i].isFromMe! ? context.theme.primaryColor : context.theme.colorScheme.secondary,
+                  color: isReactionPicker ? (isSelected ? context.theme.colorScheme.background : context.theme.colorScheme.primary) : messages[i].isFromMe! ? context.theme.colorScheme.primary : context.theme.colorScheme.secondary,
                   boxShadow: isReactionPicker
                       ? null
                       : [

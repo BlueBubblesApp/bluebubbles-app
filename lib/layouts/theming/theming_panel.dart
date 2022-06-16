@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -21,9 +19,16 @@ class ThemingPanel extends StatefulWidget {
   State<ThemingPanel> createState() => _ThemingPanelState();
 }
 
-class _ThemingPanelState extends State<ThemingPanel> {
+class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderStateMixin {
   int index = ThemeManager().inDarkMode(Get.context!) ? 1 : 0;
   StreamController streamController = StreamController.broadcast();
+  late final TabController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = TabController(length: 2, vsync: this, initialIndex: index);
+  }
 
   @override
   void dispose() {
@@ -33,115 +38,101 @@ class _ThemingPanelState extends State<ThemingPanel> {
 
   @override
   Widget build(BuildContext context) {
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        || SettingsManager().settings.skin.value == Skins.Samsung
+        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        || SettingsManager().settings.skin.value == Skins.Samsung
+        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
+    // make sure the tile color is at least different from the header color on Samsung and iOS
+    if (tileColor == headerColor) {
+      tileColor = context.theme.colorScheme.surfaceVariant;
+    }
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness,
       ),
-      child: DefaultTabController(
-        length: 2,
-        initialIndex: index,
-        child: Scaffold(
-          backgroundColor: tileColor,
-          appBar: PreferredSize(
-            preferredSize: Size(CustomNavigator.width(context), 80),
-            child: ClipRRect(
-              child: BackdropFilter(
-                child: AppBar(
-                  systemOverlayStyle: ThemeData.estimateBrightnessForColor(headerColor) == Brightness.dark
-                      ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-                  toolbarHeight: 100.0,
-                  elevation: 0,
-                  leading: buildBackButton(context),
-                  backgroundColor: headerColor.withOpacity(0.5),
-                  title: Text(
-                    "Theming",
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ),
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              ),
+      child: Scaffold(
+        backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
+        appBar: PreferredSize(
+          preferredSize: Size(CustomNavigator.width(context), 50),
+          child: AppBar(
+            systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
+                ? SystemUiOverlayStyle.light
+                : SystemUiOverlayStyle.dark,
+            toolbarHeight: 50,
+            elevation: 0,
+            scrolledUnderElevation: 3,
+            surfaceTintColor: context.theme.colorScheme.primary,
+            leading: buildBackButton(context),
+            backgroundColor: headerColor,
+            centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
+            title: Text(
+              "Advanced Theming",
+              style: context.theme.textTheme.titleLarge,
             ),
           ),
-          body: TabBarView(
-            physics: ThemeSwitcher.getScrollPhysics(),
-            children: <Widget>[
-              ThemingColorOptionsList(
-                isDarkMode: false,
-                controller: streamController,
-              ),
-              ThemingColorOptionsList(
-                isDarkMode: true,
-                controller: streamController,
-              )
-            ],
-          ),
-          floatingActionButton: Padding(
-            padding: const EdgeInsets.only(bottom: .0),
-            child: FloatingActionButton(
-              backgroundColor: Colors.blue,
-              onPressed: () {
-                streamController.sink.add(null);
-              },
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Icon(
-                    Icons.copy,
-                    color: Colors.white,
-                  ),
-                  PositionedDirectional(
-                    start: 7.5,
-                    top: 8,
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.edit,
-                      color: Colors.white,
-                      size: 12,
-                    ),
-                  ),
-                ]
-              )
+        ),
+        body: TabBarView(
+          physics: ThemeSwitcher.getScrollPhysics(),
+          controller: controller,
+          children: <Widget>[
+            ThemingColorOptionsList(
+              isDarkMode: false,
+              controller: streamController,
             ),
+            ThemingColorOptionsList(
+              isDarkMode: true,
+              controller: streamController,
+            )
+          ],
+        ),
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(bottom: .0),
+          child: FloatingActionButton.extended(
+            backgroundColor: context.theme.colorScheme.primary,
+            onPressed: () {
+              streamController.sink.add(null);
+            },
+            label: Text("Create New", style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.onPrimary)),
+            icon: Icon(
+              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.edit,
+              color: context.theme.colorScheme.onPrimary,
+            )
           ),
-          bottomSheet: Container(
-            color: tileColor,
-            child: TabBar(
-              indicatorColor: Theme.of(context).primaryColor,
-              indicator: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.blue,
-                    width: 3.0,
-                  ),
-                ),
-              ),
-              onTap: (val) {
-                index = val;
-              },
-              tabs: [
-                Container(
-                  child: Tab(
-                    icon: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.sun_max : Icons.brightness_high,
-                      color: Theme.of(context).textTheme.bodyMedium!.color,
-                    ),
-                  ),
-                ),
-                Tab(
-                  icon: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.moon : Icons.brightness_3,
-                    color: Theme.of(context).textTheme.bodyMedium!.color,
-                  ),
-                ),
-              ],
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: index,
+          backgroundColor: headerColor,
+          destinations: [
+            NavigationDestination(
+              icon: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.sun_max : Icons.brightness_high),
+              label: "LIGHT THEME",
             ),
-          ),
+            NavigationDestination(
+              icon: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.moon : Icons.brightness_3,
+              ),
+              label: "DARK THEME",
+            ),
+          ],
+          onDestinationSelected: (page) {
+            setState(() {
+              index = page;
+            });
+            controller.animateTo(page);
+          },
         ),
       ),
     );

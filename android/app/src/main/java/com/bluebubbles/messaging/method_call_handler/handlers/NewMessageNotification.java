@@ -304,6 +304,12 @@ public class NewMessageNotification implements Handler {
         // Disable the alert if it's from you
         notificationBuilder.setOnlyAlertOnce(messageIsFromMe);
 
+        // Add the "reply" and "mark as read" actions for wearable devices.
+        NotificationCompat.WearableExtender wearableExtender = new NotificationCompat.WearableExtender()
+                .addAction(dismissAction)
+                .addAction(replyActionBuilder.build());
+        notificationBuilder.extend(wearableExtender);
+
         // Generate contextual interactive buttons
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             notificationBuilder.setAllowSystemGeneratedContextualActions(true);

@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -26,13 +28,28 @@ class AboutPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-        Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context)
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onSurface, fontWeight: FontWeight.w300);
+    final materialSubtitle = context.theme
         .textTheme
         .labelLarge
-        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        || SettingsManager().settings.skin.value == Skins.Samsung
+        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        || SettingsManager().settings.skin.value == Skins.Samsung
+        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
+    // make sure the tile color is at least different from the header color on Samsung and iOS
+    if (tileColor == headerColor) {
+      tileColor = context.theme.colorScheme.surfaceVariant;
+    }
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
 
     return SettingsScaffold(
         title: "About & Links",
@@ -51,7 +68,7 @@ class AboutPanel extends StatelessWidget {
                     SettingsTile(
                       backgroundColor: tileColor,
                       title: "Support Us",
-                      subtitle: kIsDesktop || kIsWeb ? "Left click for PayPal / Venmo, right click for Github Sponsors" : "Tap for PayPal / Venmo, tap and hold for GitHub Sponsors",
+                      subtitle: kIsDesktop || kIsWeb ? "Left click for PayPal / Venmo\nRight click for Github Sponsors" : "Tap for PayPal / Venmo\nTap and hold for GitHub Sponsors",
                       onTap: () async {
                         await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "donate"));
                       },
@@ -65,12 +82,13 @@ class AboutPanel extends StatelessWidget {
                         iosIcon: CupertinoIcons.money_dollar_circle,
                         materialIcon: Icons.attach_money,
                       ),
+                      isThreeLine: true,
                     ),
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     SettingsTile(
@@ -87,8 +105,8 @@ class AboutPanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     SettingsTile(
@@ -112,8 +130,8 @@ class AboutPanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     SettingsTile(
@@ -155,34 +173,32 @@ class AboutPanel extends StatelessWidget {
                                   parent: BouncingScrollPhysics(),
                                 ),
                                 styleSheet: MarkdownStyleSheet.fromTheme(
-                                  Theme.of(context)
+                                  context.theme
                                     ..textTheme.copyWith(
                                       headlineMedium: TextStyle(
                                         color: Colors.white,
                                       ),
                                     ),
                                 ).copyWith(
-                                  h1: Theme.of(context)
+                                  h1: context.theme
                                       .textTheme
-                                      .headlineMedium!
-                                      .copyWith(fontSize: 20, fontWeight: FontWeight.bold),
-                                  h2: Theme.of(context)
+                                      .titleLarge!
+                                      .copyWith(fontWeight: FontWeight.bold),
+                                  h2: context.theme
                                       .textTheme
                                       .titleMedium!
-                                      .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
-                                  h3: Theme.of(context).textTheme.headline3!.copyWith(
-                                        fontSize: 17,
+                                      .copyWith(fontWeight: FontWeight.bold),
+                                  h3: context.theme.textTheme.titleSmall!.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        color: Theme.of(context).textTheme.headlineMedium?.color,
                                       ),
                                 ),
                               ),
-                              backgroundColor: Theme.of(context).backgroundColor,
+                              backgroundColor: context.theme.colorScheme.background,
                               appBar: CupertinoNavigationBar(
-                                backgroundColor: Theme.of(context).colorScheme.secondary,
+                                backgroundColor: headerColor,
                                 middle: Text(
                                   "Changelog",
-                                  style: Theme.of(context).textTheme.headlineMedium,
+                                  style: context.theme.textTheme.titleLarge,
                                 ),
                               ),
                             ),
@@ -197,8 +213,8 @@ class AboutPanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     SettingsTile(
@@ -210,76 +226,59 @@ class AboutPanel extends StatelessWidget {
                           builder: (context) => AlertDialog(
                             title: Text(
                               "Developers! Developers!",
-                              style: Theme.of(context).textTheme.headlineMedium,
+                              style: context.theme.textTheme.titleLarge,
                               textAlign: TextAlign.center,
                             ),
-                            backgroundColor: Theme.of(context).colorScheme.secondary,
-                            content: SizedBox(
-                              width: CustomNavigator.width(context) * 3 / 5,
-                              height: context.height * 1 / 9,
-                              child: ListView(
-                                physics: AlwaysScrollableScrollPhysics(
-                                  parent: BouncingScrollPhysics(),
+                            backgroundColor: context.theme.colorScheme.surface,
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.all(8),
+                                  child: RichText(
+                                    text: TextSpan(
+                                        text: "Zach",
+                                        style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: context.theme.colorScheme.primary),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () async {
+                                            await launchUrl(Uri(scheme: "https", host: "github.com", path: "zlshames"));
+                                          }),
+                                  ),
                                 ),
-                                children: [
-                                  Container(
-                                    alignment: Alignment.center,
-                                    padding: EdgeInsets.all(8),
-                                    child: RichText(
-                                      text: TextSpan(
-                                          text: "Zach",
-                                          style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
-                                          recognizer: TapGestureRecognizer()
-                                            ..onTap = () async {
-                                              await launchUrl(Uri(scheme: "https", host: "github.com", path: "zlshames"));
-                                            }),
-                                    ),
+                                Container(
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.all(8),
+                                  child: RichText(
+                                    text: TextSpan(
+                                        text: "Tanay",
+                                        style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: context.theme.colorScheme.primary),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () async {
+                                            await launchUrl(Uri(scheme: "https", host: "github.com", path: "tneotia"));
+                                          }),
                                   ),
-                                  Container(
-                                    alignment: Alignment.center,
-                                    padding: EdgeInsets.all(8),
-                                    child: RichText(
-                                      text: TextSpan(
-                                          text: "Tanay",
-                                          style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
-                                          recognizer: TapGestureRecognizer()
-                                            ..onTap = () async {
-                                              await launchUrl(Uri(scheme: "https", host: "github.com", path: "tneotia"));
-                                            }),
-                                    ),
+                                ),
+                                Container(
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.all(8),
+                                  child: RichText(
+                                    text: TextSpan(
+                                        text: "Joel",
+                                        style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: context.theme.colorScheme.primary),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () async {
+                                            await launchUrl(Uri(scheme: "https", host: "github.com", path: "jjoelj"));
+                                          }),
                                   ),
-                                  Container(
-                                    alignment: Alignment.center,
-                                    padding: EdgeInsets.all(8),
-                                    child: RichText(
-                                      text: TextSpan(
-                                          text: "Joel",
-                                          style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
-                                          recognizer: TapGestureRecognizer()
-                                            ..onTap = () async {
-                                              await launchUrl(Uri(scheme: "https", host: "github.com", path: "jjoelj"));
-                                            }),
-                                    ),
-                                  ),
-                                  Container(
-                                    alignment: Alignment.center,
-                                    padding: EdgeInsets.all(8),
-                                    child: Text(
-                                      "Maxwell",
-                                      style: Theme.of(context).textTheme.bodyMedium,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                             actions: [
                               TextButton(
                                 child: Text(
                                   "Close",
-                                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                        color: Theme.of(context).primaryColor,
-                                      ),
-                                ),
+                                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                 onPressed: () => Navigator.of(context).pop(),
                               ),
                             ],
@@ -295,8 +294,8 @@ class AboutPanel extends StatelessWidget {
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     if (kIsWeb || kIsDesktop)
@@ -308,26 +307,26 @@ class AboutPanel extends StatelessWidget {
                               context: context,
                               builder: (BuildContext context) {
                                 return AlertDialog(
-                                  title: Text('Keyboard Shortcuts', style: context.theme.textTheme.bodyMedium),
+                                  title: Text('Keyboard Shortcuts', style: context.theme.textTheme.titleLarge),
                                   scrollable: true,
-                                  backgroundColor: context.theme.backgroundColor.lightenOrDarken(),
+                                  backgroundColor: context.theme.colorScheme.surface,
                                   content: Container(
                                     height: MediaQuery.of(context).size.height / 2,
                                     child: SingleChildScrollView(
                                       child: DataTable(
                                         columnSpacing: 5,
                                         dataRowHeight: 75,
+                                        dataTextStyle: context.theme.textTheme.bodyLarge,
+                                        headingTextStyle: context.theme.textTheme.bodyLarge!.copyWith(fontStyle: FontStyle.italic),
                                         columns: const <DataColumn>[
                                           DataColumn(
                                             label: Text(
                                               'Key Combination',
-                                              style: TextStyle(fontStyle: FontStyle.italic),
                                             ),
                                           ),
                                           DataColumn(
                                             label: Text(
                                               'Action',
-                                              style: TextStyle(fontStyle: FontStyle.italic),
                                             ),
                                           ),
                                         ],
@@ -456,8 +455,8 @@ class AboutPanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     SettingsTile(
@@ -483,14 +482,14 @@ class AboutPanel extends StatelessWidget {
                                       ),
                                     ),
                                     scrollable: true,
-                                    backgroundColor: context.theme.colorScheme.secondary,
+                                    backgroundColor: context.theme.colorScheme.surface,
                                     content: ListBody(
                                       children: <Widget>[
                                         Row(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: <Widget>[
                                             IconTheme(
-                                              data: Theme.of(context).iconTheme,
+                                              data: context.theme.iconTheme,
                                               child: Image.asset(
                                                 "assets/icon/icon.png",
                                                 width: 30,
@@ -504,25 +503,23 @@ class AboutPanel extends StatelessWidget {
                                                   children: <Widget>[
                                                     Text(
                                                       "BlueBubbles",
-                                                      style: context.textTheme.titleMedium!.copyWith(
-                                                        fontSize: 24,
-                                                      ),
+                                                      style: context.theme.textTheme.titleLarge,
                                                     ),
                                                     if (!kIsDesktop)
                                                       Text(
                                                           "Version Number: ${snapshot.hasData ? snapshot.data!.version : "N/A"}",
-                                                          style: context.textTheme.labelLarge!),
+                                                          style: context.theme.textTheme.bodyLarge),
                                                     if (!kIsDesktop)
                                                       Text(
                                                           "Version Code: ${snapshot.hasData
                                                                   ? snapshot.data!.buildNumber.toString().lastChars(
                                                                       min(4, snapshot.data!.buildNumber.length))
                                                                   : "N/A"}",
-                                                          style: context.textTheme.labelLarge!),
+                                                          style: context.theme.textTheme.bodyLarge),
                                                     if (kIsDesktop)
                                                       Text(
                                                         "${desktopVersion}_${Platform.operatingSystem.capitalizeFirst!}${desktopPre ? "_Beta" : ""}",
-                                                        style: context.textTheme.labelLarge!,
+                                                        style: context.theme.textTheme.bodyLarge,
                                                       ),
                                                   ],
                                                 ),
@@ -534,7 +531,7 @@ class AboutPanel extends StatelessWidget {
                                     ),
                                     actions: <Widget>[
                                       TextButton(
-                                        child: Text(MaterialLocalizations.of(context).viewLicensesButtonLabel),
+                                        child: Text("View Licenses", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                         onPressed: () {
                                           Navigator.of(context).push(MaterialPageRoute<void>(
                                             builder: (BuildContext context) => Theme(
@@ -553,7 +550,7 @@ class AboutPanel extends StatelessWidget {
                                         },
                                       ),
                                       TextButton(
-                                        child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+                                        child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                         onPressed: () {
                                           Navigator.pop(context);
                                         },

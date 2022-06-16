@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 class HexColor extends Color {
@@ -75,6 +77,18 @@ extension ColorHelpers on Color {
   //TODO Complete saturation color helper
   Color withSaturation([double amount = .1]) =>
       HSLColor.fromColor(this).withSaturation(amount).toColor();
+
+  double computeDifference(Color? other) {
+    if (other == null) return 100;
+    final r1 = red;
+    final g1 = green;
+    final b1 = blue;
+    final r2 = other.red;
+    final g2 = other.green;
+    final b2 = other.blue;
+    final d = sqrt((r2-r1)^2+(g2-g1)^2+(b2-b1)^2);
+    return d / sqrt((255)^2+(255)^2+(255)^2) * 100;
+  }
 }
 
 MaterialColor createMaterialColor(Color color) {

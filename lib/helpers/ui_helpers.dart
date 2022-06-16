@@ -20,9 +20,9 @@ Widget buildBackButton(BuildContext context,
       child: IconButton(
         iconSize: iconSize ?? (SettingsManager().settings.skin.value != Skins.Material ? 30 : 24),
         icon: skin != null
-            ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: Theme.of(context).primaryColor)
+            ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: context.theme.colorScheme.primary)
             : Obx(() => Icon(SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
-                color: Theme.of(context).primaryColor)),
+                color: context.theme.colorScheme.primary)),
         onPressed: () {
           final result = callback?.call() ?? true;
           if (result) {
