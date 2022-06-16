@@ -265,6 +265,17 @@ class ThemePanel extends StatelessWidget {
                         child: SettingsOptions<Monet>(
                           initial: controller._settingsCopy.monetTheming.value,
                           onChanged: (val) {
+                            // disable colors from music
+                            final currentTheme = ThemeStruct.getLightTheme();
+                            if (currentTheme.name == "Music Theme (Light)" ||
+                                currentTheme.name == "Music Theme (Dark)") {
+                              SettingsManager().settings.colorsFromMedia.value = false;
+                              SettingsManager().saveSettings(SettingsManager().settings);
+                              ThemeStruct previousDark = revertToPreviousDarkTheme();
+                              ThemeStruct previousLight = revertToPreviousLightTheme();
+                              SettingsManager().saveSelectedTheme(context,
+                                  selectedLightTheme: previousLight, selectedDarkTheme: previousDark);
+                            }
                             controller._settingsCopy.monetTheming.value = val ?? Monet.none;
                             saveSettings();
                             loadTheme(context);
@@ -310,9 +321,12 @@ class ThemePanel extends StatelessWidget {
                             () => SettingsSwitch(
                           onChanged: (bool val) async {
                             await MethodChannelInterface().invokeMethod("request-notif-permission");
-                            try {
-                              await MethodChannelInterface().invokeMethod("start-notif-listener");
-                              if (val) {
+                            if (val) {
+                              try {
+                                await MethodChannelInterface().invokeMethod("start-notif-listener");
+                                // disable monet theming if music theme enabled
+                                controller._settingsCopy.monetTheming.value = Monet.none;
+                                saveSettings();
                                 var allThemes = ThemeStruct.getThemes();
                                 var currentLight = ThemeStruct.getLightTheme();
                                 var currentDark = ThemeStruct.getDarkTheme();
@@ -323,22 +337,24 @@ class ThemePanel extends StatelessWidget {
                                     allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
                                     selectedDarkTheme:
                                     allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
-                              } else {
-                                var allThemes = ThemeStruct.getThemes();
-                                final lightName = prefs.getString("previous-light");
-                                final darkName = prefs.getString("previous-dark");
-                                var previousLight = allThemes.firstWhere((e) => e.name == lightName);
-                                var previousDark = allThemes.firstWhere((e) => e.name == darkName);
-                                prefs.remove("previous-light");
-                                prefs.remove("previous-dark");
-                                SettingsManager().saveSelectedTheme(context,
-                                    selectedLightTheme: previousLight, selectedDarkTheme: previousDark);
+                                controller._settingsCopy.colorsFromMedia.value = val;
+                                saveSettings();
+                              } catch (e) {
+                                showSnackbar(
+                                    "Error", "Something went wrong, please ensure you granted the permission correctly!");
                               }
+                            } else {
+                              var allThemes = ThemeStruct.getThemes();
+                              final lightName = prefs.getString("previous-light");
+                              final darkName = prefs.getString("previous-dark");
+                              var previousLight = allThemes.firstWhere((e) => e.name == lightName);
+                              var previousDark = allThemes.firstWhere((e) => e.name == darkName);
+                              prefs.remove("previous-light");
+                              prefs.remove("previous-dark");
+                              SettingsManager().saveSelectedTheme(context,
+                                  selectedLightTheme: previousLight, selectedDarkTheme: previousDark);
                               controller._settingsCopy.colorsFromMedia.value = val;
                               saveSettings();
-                            } catch (e) {
-                              showSnackbar(
-                                  "Error", "Something went wrong, please ensure you granted the permission correctly!");
                             }
                           },
                           initialVal: controller._settingsCopy.colorsFromMedia.value,

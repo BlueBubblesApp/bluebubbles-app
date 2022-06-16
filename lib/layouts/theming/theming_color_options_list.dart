@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -51,7 +52,14 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
         builder: (context) => NewThemeCreateAlert(
           onCreate: (String name) async {
             Navigator.of(context).pop();
-            ThemeStruct newTheme = ThemeStruct(themeData: currentTheme.data, name: name);
+            final tuple = applyMonet(currentTheme.data, currentTheme.data);
+            ThemeData finalData = currentTheme.data;
+            if (widget.isDarkMode) {
+              finalData = tuple.item2;
+            } else {
+              finalData = tuple.item1;
+            }
+            ThemeStruct newTheme = ThemeStruct(themeData: finalData, name: name);
             allThemes.add(newTheme);
             currentTheme = newTheme;
             if (widget.isDarkMode) {
@@ -71,10 +79,10 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
 
   @override
   Widget build(BuildContext context) {
-    editable = !currentTheme.isPreset;
+    editable = !currentTheme.isPreset && SettingsManager().settings.monetTheming.value == Monet.none;
     Color headerColor = context.theme.headerColor;
     Color tileColor = context.theme.tileColor;
-    final length = currentTheme.colors.keys.where((e) => e != "outline" && e != "shadow" && e != "inversePrimary").length ~/ 2 + 3;
+    final length = currentTheme.colors(widget.isDarkMode, returnMaterialYou: false).keys.where((e) => e != "outline" && e != "shadow" && e != "inversePrimary").length ~/ 2 + 3;
     return CustomScrollView(
       physics: ThemeSwitcher.getScrollPhysics(),
       slivers: <Widget>[
@@ -121,6 +129,9 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                         value.save();
 
                         if (value.name == "Music Theme (Light)" || value.name == "Music Theme (Dark)") {
+                          // disable monet theming if music theme enabled
+                          SettingsManager().settings.monetTheming.value = Monet.none;
+                          SettingsManager().saveSettings(SettingsManager().settings);
                           await MethodChannelInterface().invokeMethod("request-notif-permission");
                           try {
                             await MethodChannelInterface().invokeMethod("start-notif-listener");
@@ -215,9 +226,9 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
             (context, index) {
               return ThemingColorSelector(
                 currentTheme: currentTheme,
-                tuple: Tuple2(currentTheme.colors.entries.toList()[index < length - 3
-                    ? index * 2 : currentTheme.colors.entries.length - (length - index)],
-                    index < length - 3 ? currentTheme.colors.entries.toList()[index * 2 + 1] : null),
+                tuple: Tuple2(currentTheme.colors(widget.isDarkMode).entries.toList()[index < length - 3
+                    ? index * 2 : currentTheme.colors(widget.isDarkMode).entries.length - (length - index)],
+                    index < length - 3 ? currentTheme.colors(widget.isDarkMode).entries.toList()[index * 2 + 1] : null),
                 editable: editable,
               );
             },
