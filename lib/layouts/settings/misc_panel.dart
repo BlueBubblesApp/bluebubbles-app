@@ -1,10 +1,10 @@
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -17,20 +17,28 @@ class MiscPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-    Theme
-        .of(context)
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onSurface, fontWeight: FontWeight.w300);
+    final materialSubtitle = context.theme
         .textTheme
         .labelLarge
-        ?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme
-        .of(context)
-        .textTheme
-        .labelLarge
-        ?.copyWith(color: Theme
-        .of(context)
-        .primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        || SettingsManager().settings.skin.value == Skins.Samsung
+        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        || SettingsManager().settings.skin.value == Skins.Samsung
+        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
+    // make sure the tile color is at least different from the header color on Samsung and iOS
+    if (tileColor == headerColor) {
+      tileColor = context.theme.colorScheme.surfaceVariant;
+    }
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
 
     return SettingsScaffold(
       title: "Miscellaneous & Advanced",
@@ -47,73 +55,63 @@ class MiscPanel extends StatelessWidget {
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    if (SettingsManager().canAuthenticate)
-                      Obx(() =>
-                          SettingsSwitch(
-                            onChanged: (bool val) async {
-                              var localAuth = LocalAuthentication();
-                              bool didAuthenticate = await localAuth.authenticate(
-                                  localizedReason:
-                                  'Please authenticate to ${val == true ? "enable" : "disable"} security',
-                                  options: AuthenticationOptions(stickyAuth: true));
-                              if (didAuthenticate) {
-                                SettingsManager().settings.shouldSecure.value = val;
-                                if (val == false) {
-                                  SecureApplicationProvider.of(context, listen: false)!.open();
-                                } else if (SettingsManager().settings.securityLevel.value ==
-                                    SecurityLevel.locked_and_secured) {
-                                  SecureApplicationProvider.of(context, listen: false)!.secure();
-                                }
-                                saveSettings();
+                    Obx(() =>
+                        SettingsSwitch(
+                          onChanged: (bool val) async {
+                            var localAuth = LocalAuthentication();
+                            bool didAuthenticate = await localAuth.authenticate(
+                                localizedReason:
+                                'Please authenticate to ${val == true ? "enable" : "disable"} security',
+                                options: AuthenticationOptions(stickyAuth: true));
+                            if (didAuthenticate) {
+                              SettingsManager().settings.shouldSecure.value = val;
+                              if (val == false) {
+                                SecureApplicationProvider.of(context, listen: false)!.open();
+                              } else if (SettingsManager().settings.securityLevel.value ==
+                                  SecurityLevel.locked_and_secured) {
+                                SecureApplicationProvider.of(context, listen: false)!.secure();
                               }
-                            },
-                            initialVal: SettingsManager().settings.shouldSecure.value,
-                            title: "Secure App",
-                            subtitle: "Secure app with a fingerprint or pin",
-                            backgroundColor: tileColor,
-                          )),
-                    if (SettingsManager().canAuthenticate && SettingsManager().settings.shouldSecure.value)
-                      Obx(() {
-                        if (SettingsManager().settings.shouldSecure.value) {
-                          return Container(
-                              color: tileColor,
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                                child: RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(text: "Security Info", style: TextStyle(fontWeight: FontWeight.bold)),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(
-                                          text:
-                                          "BlueBubbles will use the fingerprints and pin/password set on your device as authentication. Please note that BlueBubbles does not have access to your authentication information - all biometric checks are handled securely by your operating system. The app is only notified when the unlock is successful."),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(text: "There are two different security levels you can choose from:"),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(text: "Locked", style: TextStyle(fontWeight: FontWeight.bold)),
-                                      TextSpan(text: " - Requires biometrics/pin only when the app is first started"),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(text: "Locked and secured", style: TextStyle(fontWeight: FontWeight.bold)),
-                                      TextSpan(
-                                          text:
-                                          " - Requires biometrics/pin any time the app is brought into the foreground, hides content in the app switcher, and disables screenshots & screen recordings"),
-                                    ],
-                                    style: Theme
-                                        .of(context)
-                                        .textTheme
-                                        .labelLarge
-                                        ?.copyWith(color: Theme
-                                        .of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.color),
-                                  ),
+                              saveSettings();
+                            }
+                          },
+                          initialVal: SettingsManager().settings.shouldSecure.value,
+                          title: "Secure App",
+                          subtitle: "Secure app with a fingerprint or pin",
+                          backgroundColor: tileColor,
+                        )),
+                    Obx(() {
+                      if (SettingsManager().settings.shouldSecure.value) {
+                        return Container(
+                            color: tileColor,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(text: "Security Info", style: TextStyle(fontWeight: FontWeight.bold)),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(
+                                        text:
+                                        "BlueBubbles will use the fingerprints and pin/password set on your device as authentication. Please note that BlueBubbles does not have access to your authentication information - all biometric checks are handled securely by your operating system. The app is only notified when the unlock is successful."),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(text: "There are two different security levels you can choose from:"),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(text: "Locked", style: TextStyle(fontWeight: FontWeight.bold)),
+                                    TextSpan(text: " - Requires biometrics/pin only when the app is first started"),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(text: "Locked and secured", style: TextStyle(fontWeight: FontWeight.bold)),
+                                    TextSpan(
+                                        text:
+                                        " - Requires biometrics/pin any time the app is brought into the foreground, hides content in the app switcher, and disables screenshots & screen recordings"),
+                                  ],
+                                  style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface),
                                 ),
-                              ));
-                        } else {
-                          return SizedBox.shrink();
-                        }
-                      }),
+                              ),
+                            ));
+                      } else {
+                        return SizedBox.shrink();
+                      }
+                    }),
                     if (SettingsManager().canAuthenticate)
                       Obx(() {
                         if (SettingsManager().settings.shouldSecure.value) {
@@ -152,8 +150,8 @@ class MiscPanel extends StatelessWidget {
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop)
@@ -165,6 +163,7 @@ class MiscPanel extends StatelessWidget {
                         initialVal: SettingsManager().settings.incognitoKeyboard.value,
                         title: "Incognito Keyboard",
                         subtitle: "Disables keyboard suggestions and prevents the keyboard from learning or storing any words you type in the message text field",
+                        isThreeLine: true,
                         backgroundColor: tileColor,
                       )),
                   ],
@@ -189,6 +188,7 @@ class MiscPanel extends StatelessWidget {
                         title: "Low Memory Mode",
                         subtitle:
                         "Reduces background processes and deletes cached storage items to improve performance on lower-end devices",
+                        isThreeLine: true,
                         backgroundColor: tileColor,
                       )),
                   Obx(() {
@@ -196,8 +196,8 @@ class MiscPanel extends StatelessWidget {
                       return Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       );
                     } else {
@@ -279,8 +279,8 @@ class MiscPanel extends StatelessWidget {
                   Container(
                     color: tileColor,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      padding: const EdgeInsets.only(left: 15.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
                   Obx(() =>
@@ -296,8 +296,8 @@ class MiscPanel extends StatelessWidget {
                   Container(
                     color: tileColor,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      padding: const EdgeInsets.only(left: 15.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
                   Obx(() {
@@ -305,6 +305,7 @@ class MiscPanel extends StatelessWidget {
                       return SettingsTile(
                         title: "Maximum Group Avatar Count",
                         subtitle: "Controls the maximum number of contact avatars in a group chat's widget",
+                        isThreeLine: true,
                         backgroundColor: tileColor,
                       );
                     } else {
@@ -337,8 +338,8 @@ class MiscPanel extends StatelessWidget {
                   Container(
                     color: tileColor,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      padding: const EdgeInsets.only(left: 15.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
                   SettingsTile(
@@ -359,8 +360,8 @@ class MiscPanel extends StatelessWidget {
                           ),
                           child: CircularProgressIndicator(
                             strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                          )) : Icon(Icons.check, color: Colors.grey)
+                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                          )) : Icon(Icons.check, color: context.theme.colorScheme.outline)
                       )),
                 ],
               ),

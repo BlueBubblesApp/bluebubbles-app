@@ -2,14 +2,15 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -24,13 +25,28 @@ class DesktopPanel extends StatelessWidget {
     final RxnBool useCustomPath = RxnBool(prefs.getBool("use-custom-path"));
     final RxnString customPath = RxnString(prefs.getString("custom-path"));
     final iosSubtitle =
-        Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context)
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onSurface, fontWeight: FontWeight.w300);
+    final materialSubtitle = context.theme
         .textTheme
         .labelLarge
-        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        || SettingsManager().settings.skin.value == Skins.Samsung
+        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        || SettingsManager().settings.skin.value == Skins.Samsung
+        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
+    // make sure the tile color is at least different from the header color on Samsung and iOS
+    if (tileColor == headerColor) {
+      tileColor = context.theme.colorScheme.surfaceVariant;
+    }
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
 
     RxList showButtons = RxList.generate(ReactionTypes.toList().length + 1, (index) => false);
 
@@ -751,14 +767,21 @@ class DesktopPanel extends StatelessWidget {
                               return AlertDialog(
                                 title: Text(
                                   "Are you sure?",
-                                  style: Theme.of(context).textTheme.bodyMedium,
+                                  style: context.theme.textTheme.titleLarge,
                                 ),
                                 content: Text(
-                                    "All of your data and settings will be deleted, and you will have to set the app up again from scratch."),
-                                backgroundColor: context.theme.colorScheme.secondary,
+                                    "All of your data and settings will be deleted, and you will have to set the app up again from scratch.", style: context.theme.textTheme.bodyLarge),
+                                backgroundColor: context.theme.colorScheme.surface,
                                 actions: <Widget>[
                                   TextButton(
-                                    child: Text("Yes"),
+                                    child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                    onPressed: () {
+                                      useCustomPath.value = true;
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                  TextButton(
+                                    child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                     onPressed: () async {
                                       prefs.setBool("use-custom-path", val);
                                       await DBProvider.deleteDB();
@@ -769,13 +792,6 @@ class DesktopPanel extends StatelessWidget {
                                       SettingsManager().fcmData = null;
                                       FCMData.deleteFcmData();
                                       appWindow.close();
-                                    },
-                                  ),
-                                  TextButton(
-                                    child: Text("Cancel"),
-                                    onPressed: () {
-                                      useCustomPath.value = true;
-                                      Navigator.of(context).pop();
                                     },
                                   ),
                                 ],
@@ -813,14 +829,20 @@ class DesktopPanel extends StatelessWidget {
                                     return AlertDialog(
                                       title: Text(
                                         "Are you sure?",
-                                        style: Theme.of(context).textTheme.bodyMedium,
+                                        style: context.theme.textTheme.titleLarge,
                                       ),
                                       content: Text(
-                                          "The database will now be stored at $path\n\nAll of your data and settings will be deleted, and you will have to set the app up again from scratch."),
-                                      backgroundColor: context.theme.colorScheme.secondary,
+                                          "The database will now be stored at $path\n\nAll of your data and settings will be deleted, and you will have to set the app up again from scratch.", style: context.theme.textTheme.bodyLarge,),
+                                      backgroundColor: context.theme.colorScheme.surface,
                                       actions: <Widget>[
                                         TextButton(
-                                          child: Text("Yes"),
+                                          child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                           onPressed: () async {
                                             customPath.value = path;
                                             await DBProvider.deleteDB();
@@ -833,12 +855,6 @@ class DesktopPanel extends StatelessWidget {
                                             prefs.setBool("use-custom-path", true);
                                             prefs.setString("custom-path", path);
                                             appWindow.close();
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("Cancel"),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
                                           },
                                         ),
                                       ],
