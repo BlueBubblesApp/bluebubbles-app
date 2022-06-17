@@ -3,10 +3,12 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
 
 class Themes {
@@ -25,7 +27,7 @@ bool isEqual(ThemeData one, ThemeData two) {
 
 ThemeData oledDarkTheme = ThemeData(
   splashFactory: InkRipple.splashFactory,
-  textTheme: Typography.englishLike2021.merge(Typography.whiteRedmond),
+  textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
   colorScheme: ColorScheme.fromSeed(
     seedColor: Colors.blue,
     background: Colors.black,
@@ -36,7 +38,7 @@ ThemeData oledDarkTheme = ThemeData(
 
 ThemeData nordDarkTheme = ThemeData(
   splashFactory: InkRipple.splashFactory,
-  textTheme: Typography.englishLike2021.merge(Typography.whiteRedmond),
+  textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: createMaterialColor(HexColor("5E81AC")),
     accentColor: HexColor("88C0D0"),
@@ -52,7 +54,7 @@ ThemeData nordDarkTheme = ThemeData(
 
 ThemeData whiteLightTheme = ThemeData(
   splashFactory: InkRipple.splashFactory,
-  textTheme: Typography.englishLike2021.merge(Typography.blackRedmond),
+  textTheme: Typography.englishLike2021.merge(Typography.blackMountainView),
   colorScheme: ColorScheme.fromSeed(
     seedColor: Colors.blue,
     background: Colors.white,
@@ -222,28 +224,5 @@ extension SettingsThemeData on ThemeData {
   }
   bool get isMonoColorPanel {
     return SettingsManager().settings.skin.value == Skins.iOS && isOled;
-  }
-  Color get tileColor {
-    if (SettingsManager().isFullMonet) {
-      return colorScheme.surfaceVariant;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && (backgroundColor == Colors.black || isEqual(this, nordDarkTheme))) {
-      return headerColor;
-    }
-    if ((colorScheme.secondary.computeLuminance() < backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(this, whiteLightTheme))) {
-      return backgroundColor;
-    } else {
-      return colorScheme.secondary;
-    }
-
-  }
-  Color get headerColor {
-    if ((colorScheme.secondary.computeLuminance() < backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(this, whiteLightTheme))) {
-      return colorScheme.secondary;
-    } else {
-      return backgroundColor;
-    }
   }
 }

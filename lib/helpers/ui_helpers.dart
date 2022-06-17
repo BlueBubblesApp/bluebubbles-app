@@ -42,7 +42,7 @@ Widget buildProgressIndicator(BuildContext context, {double size = 20, double st
       ? Theme(
           data: ThemeData(
             cupertinoOverrideTheme:
-                CupertinoThemeData(brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
+                CupertinoThemeData(brightness: ThemeData.estimateBrightnessForColor(context.theme.colorScheme.background)),
           ),
           child: CupertinoActivityIndicator(
             radius: size / 2,
@@ -52,7 +52,7 @@ Widget buildProgressIndicator(BuildContext context, {double size = 20, double st
           constraints: BoxConstraints(maxHeight: size, maxWidth: size),
           child: CircularProgressIndicator(
             strokeWidth: strokeWidth,
-            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
           ));
 }
 
@@ -63,7 +63,7 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
   // If the image doesn't have a valid size, show the loader with static height/width
   if (!attachment.hasValidSize) {
     return Container(
-        width: placeholderWidth, height: placeholderHeight, color: Theme.of(context).colorScheme.secondary, child: child);
+        width: placeholderWidth, height: placeholderHeight, color: context.theme.colorScheme.surface, child: child);
   }
 
   // If we have a valid size, we want to calculate the aspect ratio so the image doesn't "jitter" when loading
@@ -78,14 +78,14 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
       constraints: BoxConstraints(maxHeight: height, maxWidth: width),
       child: AspectRatio(
           aspectRatio: ratio,
-          child: Container(width: width, height: height, color: Theme.of(context).colorScheme.secondary, child: child)));
+          child: Container(width: width, height: height, color: context.theme.colorScheme.surface, child: child)));
 }
 
 Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textTheme) async {
   bool ios = SettingsManager().settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   await showMenu(
-    color: Theme.of(context).colorScheme.secondary,
+    color: context.theme.colorScheme.surface,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(ios ? 10 : 0)),
     context: context,
     position: RelativeRect.fromLTRB(
@@ -115,12 +115,12 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                       chat.isPinned!
                           ? (ios ? CupertinoIcons.pin_slash : Icons.star_outline)
                           : (ios ? CupertinoIcons.pin : Icons.star),
-                      color: textTheme.bodyMedium!.color,
+                      color: context.theme.colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     chat.isPinned! ? "Unpin" : "Pin",
-                    style: textTheme.bodyMedium!,
+                    style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurface),
                   ),
                 ],
               ),
@@ -147,10 +147,10 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                       chat.muteType == "mute"
                           ? (ios ? CupertinoIcons.bell : Icons.notifications_active)
                           : (ios ? CupertinoIcons.bell_slash : Icons.notifications_off),
-                      color: textTheme.bodyMedium!.color,
+                      color: context.theme.colorScheme.onSurface,
                     ),
                   ),
-                  Text(chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts', style: textTheme.bodyMedium!),
+                  Text(chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurface)),
                 ],
               ),
             ),
@@ -175,10 +175,10 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                     chat.hasUnreadMessage!
                         ? (ios ? CupertinoIcons.person_crop_circle_badge_xmark : Icons.mark_chat_unread)
                         : (ios ? CupertinoIcons.person_crop_circle_badge_checkmark : Icons.mark_chat_read),
-                    color: textTheme.bodyMedium!.color,
+                    color: context.theme.colorScheme.onSurface,
                   ),
                 ),
-                Text(chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread', style: textTheme.bodyMedium!),
+                Text(chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurface)),
               ],
             ),
           ),
@@ -208,12 +208,12 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                       chat.isArchived!
                           ? (ios ? CupertinoIcons.tray_arrow_up : Icons.unarchive)
                           : (ios ? CupertinoIcons.tray_arrow_down : Icons.archive),
-                      color: textTheme.bodyMedium!.color,
+                      color: context.theme.colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     chat.isArchived! ? 'Unarchive' : 'Archive',
-                    style: textTheme.bodyMedium!,
+                    style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurface),
                   ),
                 ],
               ),
@@ -239,12 +239,12 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                     padding: EdgeInsets.only(right: 10),
                     child: Icon(
                       Icons.delete_forever,
-                      color: textTheme.bodyMedium!.color,
+                      color: context.theme.colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     'Delete',
-                    style: textTheme.bodyMedium!,
+                    style: textTheme.bodyLarge!.copyWith(context.theme.colorScheme.onSurface),
                   ),
                 ],
               ),

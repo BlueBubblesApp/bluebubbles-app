@@ -118,12 +118,12 @@ class BaseLogger extends GetxService {
           ? null
           : TextButton(
               style: TextButton.styleFrom(
-                backgroundColor: Get.theme.colorScheme.secondary,
+                backgroundColor: Get.theme.colorScheme.surfaceVariant,
               ),
               onPressed: () {
                 Share.file("BlueBubbles Logs", filePath);
               },
-              child: Text("SHARE", style: TextStyle(color: Theme.of(Get.context!).primaryColor)),
+              child: Text("SHARE", style: TextStyle(color: Get.theme.colorScheme.onSurfaceVariant)),
             ),
     );
   }

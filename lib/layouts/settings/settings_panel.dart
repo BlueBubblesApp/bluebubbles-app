@@ -744,8 +744,23 @@ class _SettingsPanelState extends State<SettingsPanel> {
   }
 
   Widget buildForLandscape(BuildContext context, Widget settingsList) {
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        || SettingsManager().settings.skin.value == Skins.Samsung
+        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        || SettingsManager().settings.skin.value == Skins.Samsung
+        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
+    // make sure the tile color is at least different from the header color on Samsung and iOS
+    if (tileColor == headerColor) {
+      tileColor = context.theme.colorScheme.surfaceVariant;
+    }
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
     return VerticalSplitView(
       initialRatio: 0.4,
       minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
