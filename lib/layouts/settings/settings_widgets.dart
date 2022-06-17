@@ -406,6 +406,8 @@ class SettingsSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final thumbColor = context.theme.colorScheme.surface.computeDifference(backgroundColor) < 15
+        ? context.theme.colorScheme.onSurface.withOpacity(0.6) : context.theme.colorScheme.surface;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -428,10 +430,13 @@ class SettingsSwitch extends StatelessWidget {
           value: initialVal,
           activeColor: context.theme.colorScheme.primary,
           activeTrackColor: context.theme.colorScheme.primaryContainer,
+          // make sure the track color does not blend in with the background color of the tiles
           inactiveTrackColor: context.theme.colorScheme.surfaceVariant.computeDifference(backgroundColor) < 15
-              ? context.theme.colorScheme.surface.withOpacity(0.6) : context.theme.colorScheme.surfaceVariant,
-          inactiveThumbColor: context.theme.colorScheme.surface.computeDifference(backgroundColor) < 15
-              ? context.theme.colorScheme.onSurface.withOpacity(0.6) : context.theme.colorScheme.surface,
+              ? context.theme.colorScheme.surface.computeDifference(backgroundColor) < 15
+              ? thumbColor.darkenPercent(20)
+              : context.theme.colorScheme.surface.withOpacity(0.6)
+              : context.theme.colorScheme.surfaceVariant,
+          inactiveThumbColor: thumbColor,
           onChanged: onChanged,
           isThreeLine: isThreeLine,
         ),

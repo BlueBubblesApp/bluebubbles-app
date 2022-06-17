@@ -26,9 +26,9 @@ class HexColor extends Color {
 }
 
 extension ColorSchemeHelpers on ColorScheme {
-  Color get properSurface => surface.computeDifference(background) < 15 ? surfaceVariant : surface;
+  Color get properSurface => surface.computeDifference(background) < 20 ? surfaceVariant : surface;
 
-  Color get properOnSurface => surface.computeDifference(background) < 15 ? onSurfaceVariant : onSurface;
+  Color get properOnSurface => surface.computeDifference(background) < 20 ? onSurfaceVariant : onSurface;
 }
 
 extension ColorHelpers on Color {
