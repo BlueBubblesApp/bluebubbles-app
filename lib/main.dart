@@ -551,7 +551,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
                                     padding: EdgeInsets.symmetric(horizontal: 20.0),
                                     child: Text(
                                       "BlueBubbles is currently locked. Please unlock to access your messages.",
-                                      style: context.theme.textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
+                                      style: context.theme.textTheme.titleLarge,
                                       textAlign: TextAlign.center,
                                     ),
                                   ),

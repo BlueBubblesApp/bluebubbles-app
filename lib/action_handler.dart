@@ -178,21 +178,18 @@ class ActionHandler {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: Theme.of(context).colorScheme.secondary,
+            backgroundColor: context.theme.colorScheme.surface,
             title: Text(
               "Creating a new chat...",
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: context.theme.textTheme.titleLarge,
             ),
-            content:
-            Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-              Container(
-                // height: 70,
-                // color: Colors.black,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                ),
+            content: Container(
+              // height: 70,
+              // color: Colors.black,
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
               ),
-            ]),
+            ),
           );
         });
 

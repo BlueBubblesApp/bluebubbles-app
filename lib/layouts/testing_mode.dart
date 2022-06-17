@@ -23,7 +23,7 @@ class TestingMode extends GetView<TestingModeController> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: Theme.of(context).backgroundColor,
+        color: context.theme.colorScheme.background,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -32,7 +32,7 @@ class TestingMode extends GetView<TestingModeController> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Testing Mode",
-                  style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
+                  style: context.theme.textTheme.titleLarge,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -41,16 +41,16 @@ class TestingMode extends GetView<TestingModeController> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Use the button below to send a test notification.",
-                  style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
+                  style: context.theme.textTheme.bodyLarge,
                   textAlign: TextAlign.center,
                 ),
               ),
               Container(height: 20.0),
               ClipOval(
                 child: Material(
-                  color: Theme.of(context).primaryColor, // button color
+                  color: context.theme.colorScheme.primary, // button color
                   child: InkWell(
-                    child: SizedBox(width: 60, height: 60, child: Icon(Icons.notification_add, color: Colors.white)),
+                    child: SizedBox(width: 60, height: 60, child: Icon(Icons.notification_add, color: context.theme.colorScheme.onPrimary)),
                     onTap: () async {
                       ByteData file = await loadAsset("assets/images/person64.png");
                       Uint8List defaultAvatar = file.buffer.asUint8List();
