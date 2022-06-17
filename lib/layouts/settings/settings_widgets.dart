@@ -260,7 +260,7 @@ class SettingsTile extends StatelessWidget {
             subtitle: subtitle != null
                 ? Text(
                     subtitle!,
-                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface, height: isThreeLine ? 1.5 : 1),
+                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: isThreeLine ? 1.5 : 1),
                     maxLines: isThreeLine ? 2 : 1,
                     overflow: TextOverflow.ellipsis,
                   )
@@ -290,7 +290,7 @@ class SettingsSubtitle extends StatelessWidget {
       child: ListTile(
         title: subtitle != null ? Text(
           subtitle!,
-          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface),
+          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
           maxLines: unlimitedSpace ? 100 : 2,
           overflow: TextOverflow.ellipsis,
         ) : null,
@@ -420,7 +420,7 @@ class SettingsSwitch extends StatelessWidget {
           subtitle: subtitle != null
               ? Text(
                   subtitle!,
-                  style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface, height: isThreeLine ? 1.5 : 1),
+                  style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: isThreeLine ? 1.5 : 1),
                   maxLines: isThreeLine ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
                 )
@@ -489,7 +489,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
         ),
       );
     }
-    Color surfaceColor = context.theme.colorScheme.surface;
+    Color surfaceColor = context.theme.colorScheme.properSurface;
     if (SettingsManager().settings.skin.value == Skins.Material
         && surfaceColor.computeDifference(context.theme.colorScheme.background) < 15) {
       surfaceColor = context.theme.colorScheme.surfaceVariant;
@@ -518,7 +518,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                               padding: EdgeInsets.only(top: 3.0),
                               child: Text(
                                 subtitle ?? "",
-                                style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface),
+                                style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
                               ),
                             ),
                           )

@@ -1,5 +1,6 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -36,7 +37,7 @@ class NotificationPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onSurface, fontWeight: FontWeight.w300);
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
     final materialSubtitle = context.theme
         .textTheme
         .labelLarge
@@ -44,14 +45,11 @@ class NotificationPanel extends StatelessWidget {
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
         || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
         || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
-    // make sure the tile color is at least different from the header color on Samsung and iOS
-    if (tileColor == headerColor) {
-      tileColor = context.theme.colorScheme.surfaceVariant;
-    }
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
     // reverse material color mapping to be more accurate
     if (SettingsManager().settings.skin.value == Skins.Material) {
       final temp = headerColor;
@@ -292,7 +290,7 @@ class NotificationPanel extends StatelessWidget {
                                       context: context,
                                       builder: (context) => AlertDialog(
                                         title: Text("Text detection", style: context.theme.textTheme.titleLarge),
-                                        backgroundColor: context.theme.colorScheme.surface,
+                                        backgroundColor: context.theme.colorScheme.properSurface,
                                         content: Column(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
@@ -599,7 +597,7 @@ class ChatListState extends State<ChatList> {
                             chat: ChatBloc().chats[index],
                             inSelectMode: true,
                             subtitle: Text(getSubtitle(ChatBloc().chats[index]),
-                                style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface),),
+                                style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
                             onSelect: (_) async {
                               final chat = ChatBloc().chats[index];
                               await showDialog(
@@ -615,7 +613,7 @@ class ChatListState extends State<ChatList> {
                                           style: context.theme.textTheme.bodyLarge),
                                       subtitle: Text(
                                           "Completely ${chat.muteType == "mute" ? "unmute" : "mute"} this chat",
-                                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface),),
+                                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
                                       onTap: () async {
                                         Get.back();
                                         chat.toggleMute(chat.muteType != "mute");
@@ -628,7 +626,7 @@ class ChatListState extends State<ChatList> {
                                     ListTile(
                                       title: Text("Mute Individuals", style: context.theme.textTheme.bodyLarge),
                                       subtitle: Text("Mute certain individuals in this chat",
-                                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface),),
+                                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
                                       onTap: () async {
                                         Get.back();
                                         List<String?> names = chat.participants
@@ -639,7 +637,7 @@ class ChatListState extends State<ChatList> {
                                           context: context,
                                           builder: (context) => AlertDialog(
                                             title: Text("Mute Individuals", style: context.theme.textTheme.titleLarge),
-                                            backgroundColor: context.theme.colorScheme.surface,
+                                            backgroundColor: context.theme.colorScheme.properSurface,
                                             content: SingleChildScrollView(
                                               child: Container(
                                                 width: double.maxFinite,
@@ -719,7 +717,7 @@ class ChatListState extends State<ChatList> {
                                           chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs)
                                               ? ""
                                               : "Mute this chat temporarily",
-                                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface),),
+                                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
                                       onTap: () async {
                                         Get.back();
                                         if (shouldMuteDateTime(chat.muteArgs)) {
@@ -753,7 +751,7 @@ class ChatListState extends State<ChatList> {
                                       title: Text("Text Detection", style: context.theme.textTheme.bodyLarge),
                                       subtitle: Text(
                                           "Completely mute this chat, except when a message contains certain text",
-                                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface),),
+                                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
                                       onTap: () async {
                                         Get.back();
                                         final TextEditingController controller = TextEditingController();
@@ -764,7 +762,7 @@ class ChatListState extends State<ChatList> {
                                             context: context,
                                             builder: (context) => AlertDialog(
                                               title: Text("Text detection", style: context.theme.textTheme.titleLarge),
-                                              backgroundColor: context.theme.colorScheme.surface,
+                                              backgroundColor: context.theme.colorScheme.properSurface,
                                               content: Column(
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: [
@@ -814,7 +812,7 @@ class ChatListState extends State<ChatList> {
                                       title: Text("Reset chat-specific settings",
                                           style: context.theme.textTheme.bodyLarge),
                                       subtitle: Text("Delete your custom settings",
-                                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface),),
+                                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
                                       onTap: () async {
                                         Get.back();
                                         chat.toggleMute(false);
@@ -826,7 +824,7 @@ class ChatListState extends State<ChatList> {
                                       },
                                     ),
                                   ]),
-                                  backgroundColor: context.theme.colorScheme.surface,
+                                  backgroundColor: context.theme.colorScheme.properSurface,
                                 )
                               );
                             },

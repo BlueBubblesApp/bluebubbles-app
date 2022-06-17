@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
@@ -167,7 +168,7 @@ class AttachmentHelper {
                   style: context.theme.textTheme.titleLarge,
                 ),
                 content: Text("This file already exists.\nAre you sure you want to overwrite it?", style: context.theme.textTheme.bodyLarge),
-                backgroundColor: context.theme.colorScheme.surface,
+                backgroundColor: context.theme.colorScheme.properSurface,
                 actions: <Widget>[
                   TextButton(
                     child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),

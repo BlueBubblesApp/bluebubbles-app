@@ -94,7 +94,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(25),
-                          color: context.theme.colorScheme.surface,
+                          color: context.theme.colorScheme.properSurface,
                         ),
                         child: Column(
                           children: [
@@ -102,7 +102,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                               padding: const EdgeInsets.all(8.0),
                               child: Text(
                                 "Sync Options",
-                                style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.onSurface),
+                                style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -110,7 +110,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                               padding: const EdgeInsets.all(8.0),
                               child: Text(
                                 "Number of Messages to Sync Per Chat: $numberOfMessages",
-                                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurface).copyWith(height: 1.5),
+                                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface).copyWith(height: 1.5),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -138,7 +138,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                                 children: [
                                   Text(
                                     "Skip empty chats",
-                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurface).copyWith(height: 1.5),
+                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface).copyWith(height: 1.5),
                                     textAlign: TextAlign.center,
                                   ),
                                   Switch(
@@ -169,7 +169,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                                   children: [
                                     Text(
                                       "Save sync log to downloads",
-                                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurface).copyWith(height: 1.5),
+                                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface).copyWith(height: 1.5),
                                       textAlign: TextAlign.center,
                                     ),
                                     Switch(

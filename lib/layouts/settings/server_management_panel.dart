@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -114,7 +115,7 @@ class ServerManagementPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onSurface, fontWeight: FontWeight.w300);
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
     final materialSubtitle = context.theme
         .textTheme
         .labelLarge
@@ -122,14 +123,11 @@ class ServerManagementPanel extends StatelessWidget {
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
         || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
         || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
-    // make sure the tile color is at least different from the header color on Samsung and iOS
-    if (tileColor == headerColor) {
-      tileColor = context.theme.colorScheme.surfaceVariant;
-    }
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
     // reverse material color mapping to be more accurate
     if (SettingsManager().settings.skin.value == Skins.Material) {
       final temp = headerColor;
@@ -223,7 +221,7 @@ class ServerManagementPanel extends StatelessWidget {
                       showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            backgroundColor: context.theme.colorScheme.surface,
+                            backgroundColor: context.theme.colorScheme.properSurface,
                             content: Padding(
                               padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
                               child: SelectableText.rich(
@@ -276,7 +274,7 @@ class ServerManagementPanel extends StatelessWidget {
                       showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            backgroundColor: context.theme.colorScheme.surface,
+                            backgroundColor: context.theme.colorScheme.properSurface,
                             content: Container(
                               height: 320,
                               width: 320,
@@ -285,8 +283,8 @@ class ServerManagementPanel extends StatelessWidget {
                                 version: QrVersions.auto,
                                 size: 320,
                                 gapless: true,
-                                backgroundColor: context.theme.colorScheme.surface,
-                                foregroundColor: context.theme.colorScheme.onSurface,
+                                backgroundColor: context.theme.colorScheme.properSurface,
+                                foregroundColor: context.theme.colorScheme.properOnSurface,
                               ),
                             ),
                             title: Text("QR Code", style: context.theme.textTheme.titleLarge),
@@ -772,7 +770,7 @@ class ServerManagementPanel extends StatelessWidget {
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            backgroundColor: context.theme.colorScheme.surface,
+                            backgroundColor: context.theme.colorScheme.properSurface,
                             title: Text("Update Check", style: context.theme.textTheme.titleLarge),
                             content: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -948,7 +946,7 @@ class _SyncDialogState extends State<SyncDialog> {
     }
 
     return AlertDialog(
-      backgroundColor: context.theme.colorScheme.surface,
+      backgroundColor: context.theme.colorScheme.properSurface,
       title: Text(title, style: context.theme.textTheme.titleLarge),
       content: content,
       actions: actions,

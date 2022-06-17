@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
@@ -113,7 +114,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
         ) : SizedBox.shrink());
 
     final iosSubtitle =
-        context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onSurface, fontWeight: FontWeight.w300);
+        context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
     final materialSubtitle = context.theme
         .textTheme
         .labelLarge
@@ -121,14 +122,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
         || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
         || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
-    // make sure the tile color is at least different from the header color on Samsung and iOS
-    if (tileColor == headerColor) {
-      tileColor = context.theme.colorScheme.surfaceVariant;
-    }
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
     // reverse material color mapping to be more accurate
     if (SettingsManager().settings.skin.value == Skins.Material) {
       final temp = headerColor;
@@ -563,7 +561,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                  backgroundColor: context.theme.colorScheme.surface,
+                                  backgroundColor: context.theme.colorScheme.properSurface,
                                   title: Text("Uploading contacts...", style: context.theme.textTheme.titleLarge),
                                   content: Column(
                                       mainAxisAlignment: MainAxisAlignment.center,
@@ -662,7 +660,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                     "If you just need to free up some storage, you can remove all downloaded attachments with the button below.",
                                     style: context.theme.textTheme.bodyLarge,
                                   ),
-                                  backgroundColor: context.theme.colorScheme.surface,
+                                  backgroundColor: context.theme.colorScheme.properSurface,
                                   actions: <Widget>[
                                     if (!kIsWeb)
                                       TextButton(
@@ -747,14 +745,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
         || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
         || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
-    // make sure the tile color is at least different from the header color on Samsung and iOS
-    if (tileColor == headerColor) {
-      tileColor = context.theme.colorScheme.surfaceVariant;
-    }
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
     // reverse material color mapping to be more accurate
     if (SettingsManager().settings.skin.value == Skins.Material) {
       final temp = headerColor;
@@ -808,7 +803,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: context.theme.colorScheme.surface,
+        backgroundColor: context.theme.colorScheme.properSurface,
         title: Text("Backup and Restore", style: context.theme.textTheme.titleLarge),
         content: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -832,7 +827,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     ),
                     primary: context.theme.colorScheme.primary,
                     onPrimary: context.theme.colorScheme.onPrimary,
-                    onSurface: context.theme.colorScheme.onSurface,
+                    onSurface: context.theme.colorScheme.properOnSurface,
                     textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onPrimary),
                   ),
                   onPressed: () async {
@@ -868,10 +863,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                         side: BorderSide(color: context.theme.colorScheme.primary)),
-                    primary: context.theme.colorScheme.surface,
+                    primary: context.theme.colorScheme.properSurface,
                     onPrimary: context.theme.colorScheme.onPrimary,
-                    onSurface: context.theme.colorScheme.onSurface,
-                    textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onSurface),
+                    onSurface: context.theme.colorScheme.properOnSurface,
+                    textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                   ),
                   onPressed: () async {
                     var response = await api.getSettings();
@@ -883,7 +878,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           context: context,
                           builder: (context) => AlertDialog(
                             title: Text("Settings Backups", style: context.theme.textTheme.titleLarge),
-                            backgroundColor: context.theme.colorScheme.surface,
+                            backgroundColor: context.theme.colorScheme.properSurface,
                             content: Container(
                               constraints: BoxConstraints(
                                 maxHeight: 300,
@@ -989,7 +984,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         ),
                         primary: context.theme.colorScheme.primary,
                         onPrimary: context.theme.colorScheme.onPrimary,
-                        onSurface: context.theme.colorScheme.onSurface,
+                        onSurface: context.theme.colorScheme.properOnSurface,
                         textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onPrimary),
                       ),
                       onPressed: () async {
@@ -1034,10 +1029,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                             side: BorderSide(color: context.theme.colorScheme.primary)),
-                        primary: context.theme.colorScheme.surface,
+                        primary: context.theme.colorScheme.properSurface,
                         onPrimary: context.theme.colorScheme.onPrimary,
-                        onSurface: context.theme.colorScheme.onSurface,
-                        textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onSurface),
+                        onSurface: context.theme.colorScheme.properOnSurface,
+                        textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                       ),
                       onPressed: () async {
                         var response = await api.getTheme();
@@ -1049,7 +1044,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               context: context,
                               builder: (context) => AlertDialog(
                                 title: Text("Theme Backups", style: context.theme.textTheme.titleLarge),
-                                backgroundColor: context.theme.colorScheme.surface,
+                                backgroundColor: context.theme.colorScheme.properSurface,
                                 content: Container(
                                   constraints: BoxConstraints(
                                     maxHeight: 300,
@@ -1133,7 +1128,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     ),
                     primary: context.theme.colorScheme.primary,
                     onPrimary: context.theme.colorScheme.onPrimary,
-                    onSurface: context.theme.colorScheme.onSurface,
+                    onSurface: context.theme.colorScheme.properOnSurface,
                     textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onPrimary),
                   ),
                   onPressed: () async {
@@ -1196,10 +1191,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                         side: BorderSide(color: context.theme.colorScheme.primary)),
-                    primary: context.theme.colorScheme.surface,
+                    primary: context.theme.colorScheme.properSurface,
                     onPrimary: context.theme.colorScheme.onPrimary,
-                    onSurface: context.theme.colorScheme.onSurface,
-                    textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onSurface),
+                    onSurface: context.theme.colorScheme.properOnSurface,
+                    textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                   ),
                   onPressed: () async {
                     final res = await FilePicker.platform
@@ -1238,7 +1233,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       ),
                       primary: context.theme.colorScheme.primary,
                       onPrimary: context.theme.colorScheme.onPrimary,
-                      onSurface: context.theme.colorScheme.onSurface,
+                      onSurface: context.theme.colorScheme.properOnSurface,
                       textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onPrimary),
                     ),
                     onPressed: () async {
@@ -1305,10 +1300,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                           side: BorderSide(color: context.theme.colorScheme.primary)),
-                      primary: context.theme.colorScheme.surface,
+                      primary: context.theme.colorScheme.properSurface,
                       onPrimary: context.theme.colorScheme.onPrimary,
-                      onSurface: context.theme.colorScheme.onSurface,
-                      textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onSurface),
+                      onSurface: context.theme.colorScheme.properOnSurface,
+                      textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                     ),
                     onPressed: () async {
                       final res = await FilePicker.platform

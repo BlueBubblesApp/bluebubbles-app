@@ -28,7 +28,7 @@ class AboutPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onSurface, fontWeight: FontWeight.w300);
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
     final materialSubtitle = context.theme
         .textTheme
         .labelLarge
@@ -36,14 +36,11 @@ class AboutPanel extends StatelessWidget {
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
         || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
         || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
-    // make sure the tile color is at least different from the header color on Samsung and iOS
-    if (tileColor == headerColor) {
-      tileColor = context.theme.colorScheme.surfaceVariant;
-    }
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
     // reverse material color mapping to be more accurate
     if (SettingsManager().settings.skin.value == Skins.Material) {
       final temp = headerColor;
@@ -229,7 +226,7 @@ class AboutPanel extends StatelessWidget {
                               style: context.theme.textTheme.titleLarge,
                               textAlign: TextAlign.center,
                             ),
-                            backgroundColor: context.theme.colorScheme.surface,
+                            backgroundColor: context.theme.colorScheme.properSurface,
                             content: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -309,7 +306,7 @@ class AboutPanel extends StatelessWidget {
                                 return AlertDialog(
                                   title: Text('Keyboard Shortcuts', style: context.theme.textTheme.titleLarge),
                                   scrollable: true,
-                                  backgroundColor: context.theme.colorScheme.surface,
+                                  backgroundColor: context.theme.colorScheme.properSurface,
                                   content: Container(
                                     height: MediaQuery.of(context).size.height / 2,
                                     child: SingleChildScrollView(
@@ -482,7 +479,7 @@ class AboutPanel extends StatelessWidget {
                                       ),
                                     ),
                                     scrollable: true,
-                                    backgroundColor: context.theme.colorScheme.surface,
+                                    backgroundColor: context.theme.colorScheme.properSurface,
                                     content: ListBody(
                                       children: <Widget>[
                                         Row(

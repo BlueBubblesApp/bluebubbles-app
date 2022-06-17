@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -62,14 +63,11 @@ class _AvatarCropState extends State<AvatarCrop> {
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
         || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
         || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
-    // make sure the tile color is at least different from the header color on Samsung and iOS
-    if (tileColor == headerColor) {
-      tileColor = context.theme.colorScheme.surfaceVariant;
-    }
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
     // reverse material color mapping to be more accurate
     if (SettingsManager().settings.skin.value == Skins.Material) {
       final temp = headerColor;
@@ -119,7 +117,7 @@ class _AvatarCropState extends State<AvatarCrop> {
                               padding: const EdgeInsets.only(top: 15.0),
                               child: buildProgressIndicator(context),
                             ),
-                            backgroundColor: context.theme.colorScheme.surface,
+                            backgroundColor: context.theme.colorScheme.properSurface,
                           ),
                           barrierDismissible: false,
                         );
@@ -186,7 +184,7 @@ class _AvatarCropState extends State<AvatarCrop> {
                             padding: const EdgeInsets.only(top: 15.0),
                             child: buildProgressIndicator(context),
                           ),
-                          backgroundColor: context.theme.colorScheme.surface,
+                          backgroundColor: context.theme.colorScheme.properSurface,
                         ),
                         barrierDismissible: false,
                       );

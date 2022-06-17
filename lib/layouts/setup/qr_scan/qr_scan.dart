@@ -76,7 +76,7 @@ class _QRScanState extends State<QRScan> {
               "Error",
               style: context.theme.textTheme.titleLarge,
             ),
-            backgroundColor: context.theme.colorScheme.surface,
+            backgroundColor: context.theme.colorScheme.properSurface,
             content: Padding(
               padding: const EdgeInsets.all(8.0),
               child: SingleChildScrollView(

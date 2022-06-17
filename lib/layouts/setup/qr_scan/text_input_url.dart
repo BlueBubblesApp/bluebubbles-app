@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -82,7 +83,7 @@ class _TextInputURLState extends State<TextInputURL> {
           "Enter Server Details",
           style: context.theme.textTheme.titleLarge,
         ),
-        backgroundColor: context.theme.colorScheme.surface,
+        backgroundColor: context.theme.colorScheme.properSurface,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

@@ -2,6 +2,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -71,7 +72,7 @@ class ThemePanel extends StatelessWidget {
     /// for some reason we need a [GetBuilder] here otherwise the theme switching refuses to work right
     return GetBuilder<ThemePanelController>(builder: (_) {
       final iosSubtitle =
-      context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onSurface, fontWeight: FontWeight.w300);
+      context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
       final materialSubtitle = context.theme
           .textTheme
           .labelLarge
@@ -79,10 +80,10 @@ class ThemePanel extends StatelessWidget {
       // Samsung theme should always use the background color as the "header" color
       Color headerColor = ThemeManager().inDarkMode(context)
           || SettingsManager().settings.skin.value == Skins.Samsung
-          ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+          ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
       Color tileColor = ThemeManager().inDarkMode(context)
           || SettingsManager().settings.skin.value == Skins.Samsung
-          ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
+          ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
       // make sure the tile color is at least different from the header color on Samsung and iOS
       if (tileColor == headerColor) {
         tileColor = context.theme.colorScheme.surfaceVariant;
@@ -573,7 +574,7 @@ class ThemePanel extends StatelessWidget {
                               showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                  backgroundColor: context.theme.colorScheme.surface,
+                                  backgroundColor: context.theme.colorScheme.properSurface,
                                   title: Text("Downloading font file...", style: context.theme.textTheme.titleLarge),
                                   content: Column(
                                       mainAxisAlignment: MainAxisAlignment.center,
@@ -688,7 +689,7 @@ class ThemePanel extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Monet Theming Info", style: context.theme.textTheme.titleLarge),
-        backgroundColor: context.theme.colorScheme.surface,
+        backgroundColor: context.theme.colorScheme.properSurface,
         content: Text(
             "Harmonize - Overwrites primary color, and blends background & accent color with the current theme colors\r\n"
                 "Full - Overwrites primary, background, and accent colors, along with other minor colors.\r\n",

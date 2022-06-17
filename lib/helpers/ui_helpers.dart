@@ -1,6 +1,7 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -63,7 +64,7 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
   // If the image doesn't have a valid size, show the loader with static height/width
   if (!attachment.hasValidSize) {
     return Container(
-        width: placeholderWidth, height: placeholderHeight, color: context.theme.colorScheme.surface, child: child);
+        width: placeholderWidth, height: placeholderHeight, color: context.theme.colorScheme.properSurface, child: child);
   }
 
   // If we have a valid size, we want to calculate the aspect ratio so the image doesn't "jitter" when loading
@@ -78,14 +79,14 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
       constraints: BoxConstraints(maxHeight: height, maxWidth: width),
       child: AspectRatio(
           aspectRatio: ratio,
-          child: Container(width: width, height: height, color: context.theme.colorScheme.surface, child: child)));
+          child: Container(width: width, height: height, color: context.theme.colorScheme.properSurface, child: child)));
 }
 
 Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textTheme) async {
   bool ios = SettingsManager().settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   await showMenu(
-    color: context.theme.colorScheme.surface,
+    color: context.theme.colorScheme.properSurface,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(ios ? 10 : 0)),
     context: context,
     position: RelativeRect.fromLTRB(
@@ -115,12 +116,12 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                       chat.isPinned!
                           ? (ios ? CupertinoIcons.pin_slash : Icons.star_outline)
                           : (ios ? CupertinoIcons.pin : Icons.star),
-                      color: context.theme.colorScheme.onSurface,
+                      color: context.theme.colorScheme.properOnSurface,
                     ),
                   ),
                   Text(
                     chat.isPinned! ? "Unpin" : "Pin",
-                    style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurface),
+                    style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                   ),
                 ],
               ),
@@ -147,10 +148,10 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                       chat.muteType == "mute"
                           ? (ios ? CupertinoIcons.bell : Icons.notifications_active)
                           : (ios ? CupertinoIcons.bell_slash : Icons.notifications_off),
-                      color: context.theme.colorScheme.onSurface,
+                      color: context.theme.colorScheme.properOnSurface,
                     ),
                   ),
-                  Text(chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurface)),
+                  Text(chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
                 ],
               ),
             ),
@@ -175,10 +176,10 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                     chat.hasUnreadMessage!
                         ? (ios ? CupertinoIcons.person_crop_circle_badge_xmark : Icons.mark_chat_unread)
                         : (ios ? CupertinoIcons.person_crop_circle_badge_checkmark : Icons.mark_chat_read),
-                    color: context.theme.colorScheme.onSurface,
+                    color: context.theme.colorScheme.properOnSurface,
                   ),
                 ),
-                Text(chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurface)),
+                Text(chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread', style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
               ],
             ),
           ),
@@ -208,12 +209,12 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                       chat.isArchived!
                           ? (ios ? CupertinoIcons.tray_arrow_up : Icons.unarchive)
                           : (ios ? CupertinoIcons.tray_arrow_down : Icons.archive),
-                      color: context.theme.colorScheme.onSurface,
+                      color: context.theme.colorScheme.properOnSurface,
                     ),
                   ),
                   Text(
                     chat.isArchived! ? 'Unarchive' : 'Archive',
-                    style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurface),
+                    style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                   ),
                 ],
               ),
@@ -239,12 +240,12 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                     padding: EdgeInsets.only(right: 10),
                     child: Icon(
                       Icons.delete_forever,
-                      color: context.theme.colorScheme.onSurface,
+                      color: context.theme.colorScheme.properOnSurface,
                     ),
                   ),
                   Text(
                     'Delete',
-                    style: textTheme.bodyLarge!.copyWith(context.theme.colorScheme.onSurface),
+                    style: textTheme.bodyLarge!.copyWith(context.theme.colorScheme.properOnSurface),
                   ),
                 ],
               ),

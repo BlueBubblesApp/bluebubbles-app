@@ -129,7 +129,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(25),
-                                color: context.theme.colorScheme.surface
+                                color: context.theme.colorScheme.properSurface
                               ),
                               padding: EdgeInsets.all(10),
                               child: ListView.builder(
@@ -139,7 +139,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                                   return Text(
                                     log.item2,
                                     style: TextStyle(
-                                      color: log.item1 == LogLevel.INFO ? context.theme.colorScheme.onSurface : context.theme.colorScheme.error,
+                                      color: log.item1 == LogLevel.INFO ? context.theme.colorScheme.properOnSurface : context.theme.colorScheme.error,
                                       fontSize: 10,
                                     ),
                                   );

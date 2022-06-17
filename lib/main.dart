@@ -7,6 +7,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -748,7 +749,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 }
                 Navigator.of(context).pop();
               },
-              backgroundColor: context.theme.colorScheme.surface,
+              backgroundColor: context.theme.colorScheme.properSurface,
             );
           }
         });
