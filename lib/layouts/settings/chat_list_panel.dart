@@ -882,10 +882,10 @@ class ChatListPanel extends StatelessWidget {
                               saveSettings();
                             },
                             initialVal: SettingsManager().settings.cameraFAB.value,
-                            title: SettingsManager().settings.skin.value == Skins.Material
+                            title: SettingsManager().settings.skin.value != Skins.iOS
                                 ? "Long Press for Camera"
                                 : "Add Camera Button",
-                            subtitle: SettingsManager().settings.skin.value == Skins.Material
+                            subtitle: SettingsManager().settings.skin.value != Skins.iOS
                                 ? "Long press the start chat button to easily send a picture to a chat"
                                 : "Adds a dedicated camera button near the new chat creator button to easily send pictures",
                             backgroundColor: tileColor,

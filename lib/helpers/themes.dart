@@ -83,22 +83,26 @@ void loadTheme(BuildContext? context, {ThemeStruct? lightOverride, ThemeStruct? 
 Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
   if (SettingsManager().settings.monetTheming.value == Monet.harmonize && monetPalette != null) {
     light = light.copyWith(
-        primaryColor: Color(monetPalette!.primary.get(50)),
-        backgroundColor: light.backgroundColor == Colors.white
-            ? Color(monetPalette!.neutral.get(99))
-            : light.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(50))),
         colorScheme: light.colorScheme.copyWith(
-          secondary: light.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(50))),
+          primary: Color(monetPalette!.primary.get(40)),
+          onPrimary: Color(monetPalette!.primary.get(100)),
+          primaryContainer: Color(monetPalette!.primary.get(90)),
+          onPrimaryContainer: Color(monetPalette!.primary.get(10)),
+          background: light.colorScheme.background.harmonizeWith(Color(monetPalette!.primary.get(40))),
+          secondary: light.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(40))),
         ),
         useMaterial3: SettingsManager().useMaterial3,
         typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
         splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
     dark = dark.copyWith(
-        primaryColor: Color(monetPalette!.primary.get(50)),
-        backgroundColor: dark.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(60))),
         colorScheme: dark.colorScheme.copyWith(
-          secondary: dark.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(60))),
+          primary: Color(monetPalette!.primary.get(80)),
+          onPrimary: Color(monetPalette!.primary.get(20)),
+          primaryContainer: Color(monetPalette!.primary.get(30)),
+          onPrimaryContainer: Color(monetPalette!.primary.get(90)),
+          background: dark.colorScheme.background.harmonizeWith(Color(monetPalette!.primary.get(80))),
+          secondary: dark.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(80))),
         ),
         useMaterial3: SettingsManager().useMaterial3,
         typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
@@ -106,8 +110,6 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
     );
   } else if (SettingsManager().isFullMonet && monetPalette != null) {
     light = light.copyWith(
-      primaryColor: Color(monetPalette!.primary.get(40)),
-      backgroundColor: Color(monetPalette!.neutral.get(99)),
       colorScheme: light.colorScheme.copyWith(
         primary: Color(monetPalette!.primary.get(40)),
         onPrimary: Color(monetPalette!.primary.get(100)),
@@ -142,8 +144,6 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
       splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
     dark = dark.copyWith(
-      primaryColor: Color(monetPalette!.primary.get(50)),
-      backgroundColor: Color(monetPalette!.neutral.get(10)),
       colorScheme: dark.colorScheme.copyWith(
         primary: Color(monetPalette!.primary.get(80)),
         onPrimary: Color(monetPalette!.primary.get(20)),
