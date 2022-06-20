@@ -304,14 +304,14 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
 }
 
 /// Async method to get chats from objectbox
-class BulkSaveNewChats extends AsyncTask<List<dynamic>, List<Chat>> {
+class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
   final List<dynamic> params;
 
-  BulkSaveNewChats(this.params);
+  BulkSyncChats(this.params);
 
   @override
   AsyncTask<List<dynamic>, List<Chat>> instantiate(List<dynamic> parameters, [Map<String, SharedData>? sharedData]) {
-    return BulkSaveNewChats(parameters);
+    return BulkSyncChats(parameters);
   }
 
   @override
@@ -404,6 +404,91 @@ class BulkSaveNewChats extends AsyncTask<List<dynamic>, List<Chat>> {
       // 8. Save & return updated chats
       chatBox.putMany(chats);
       return chats;
+    });
+  }
+}
+
+class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
+  final List<dynamic> params;
+
+  BulkSyncMessages(this.params);
+
+  @override
+  AsyncTask<List<dynamic>, List<Message>> instantiate(List<dynamic> parameters, [Map<String, SharedData>? sharedData]) {
+    return BulkSyncMessages(parameters);
+  }
+
+  @override
+  List<dynamic> parameters() {
+    return params;
+  }
+
+  @override
+  FutureOr<List<Message>> run() {
+    return store.runInTransaction(TxMode.write, () {
+      // Assumptions:
+      // - The provided chat exists and has an ID
+      //
+      // 0. Gather handles from chat and cache them
+      // 1. Split input messages into pre-existing and non-existing buckets
+      // 2. Insert all non-existing messages
+      // 3. For all existing messages, see if the incoming message is newer
+      //    Examples: has error, has created/delivered/read/datePlayed date, etc.
+      // 4. Drop all "old" messages
+      // 5. Update all "new" messages
+      // 1. For each message, match the handles & replace
+
+      // Progress state variables
+      int currentStep = 0;
+      int totalSteps = 5;
+
+      // Input variables
+      Chat inputChat = params[0];
+      List<Message> inputMessages = params[1];
+      Function(int progress, int total)? cb;
+      if (params.length > 2) {
+        cb = params[1];
+      }
+
+      // Processing Code
+      // 0: Gather handles from chat and cache them
+      // They should already exist because this function makes that assumption. #logic
+      Map<String, Handle> handlesCache = {};
+      for (var participant in inputChat.participants) {
+        String addr = participant.address;
+        if (handlesCache.containsKey(addr)) continue;
+        handlesCache[addr] = participant;
+      }
+
+      // 1. For each message, match the handles & replace the old reference
+      for (Message message in inputMessages) {
+        if (message.handle == null) continue;
+        if (!handlesCache.containsKey(message.handle!.address)) continue;
+        message.handle = handlesCache[message.handle!.address];
+      }
+
+      // 1. Split input messages into pre-existing and non-existing buckets
+      List<String> inputMessageGuids = inputMessages.map((e) => e.guid!).toList();
+      QueryBuilder<Message> messageQuery = messageBox.query(Message_.guid.oneOf(inputMessageGuids));
+      List<String> existingMessageGuids = messageQuery.build().find().map((e) => e.guid!).toList();
+      List<Message> existingMessages = [];
+      List<Message> newMessages = [];
+      for (Message message in inputMessages) {
+        if (existingMessageGuids.contains(message.guid!)) {
+          existingMessages.add(message);
+        } else {
+          newMessages.add(message);
+        }
+      }
+
+      // 2. Insert all non-existing messages
+      if (newMessages.isNotEmpty) {
+        messageBox.putMany(newMessages);
+      }
+
+      // 3. For all existing messages, see if the incoming message is newer
+      //    Examples: has error, has created/delivered/read/datePlayed date, etc.
+
     });
   }
 }
@@ -917,11 +1002,11 @@ class Chat {
 
       // We want to determine all the participants that exist in the response that are not already in our locally saved chat (AKA all the new participants)
       List<Handle> newParticipants =
-      chat.participants.where((a) => (participants.where((b) => b.address == a.address).toList().isEmpty)).toList();
+          chat.participants.where((a) => (participants.where((b) => b.address == a.address).toList().isEmpty)).toList();
 
       // We want to determine all the participants that exist in the locally saved chat that are not in the response (AKA all the removed participants)
       List<Handle> removedParticipants =
-      participants.where((a) => (chat.participants.where((b) => b.address == a.address).toList().isEmpty)).toList();
+          participants.where((a) => (chat.participants.where((b) => b.address == a.address).toList().isEmpty)).toList();
 
       // Add all participants that are missing from our local db
       for (Handle newParticipant in newParticipants) {
@@ -1150,11 +1235,18 @@ class Chat {
     return (await createAsyncTask<List<Chat>>(task)) ?? [];
   }
 
-  static Future<List<Chat>> bulkSaveNewChats(List<Chat> chats) async {
+  static Future<List<Chat>> bulkSyncChats(List<Chat> chats) async {
     if (kIsWeb) throw Exception("Web does not support saving chats!");
 
-    final task = BulkSaveNewChats([chats]);
+    final task = BulkSyncChats([chats]);
     return (await createAsyncTask<List<Chat>>(task)) ?? [];
+  }
+
+  static Future<List<Message>> bulkSyncMessages(Chat chat, List<Message> messages, Function(int progress, int total) cb) async {
+    if (kIsWeb) throw Exception("Web does not support saving messages!");
+
+    final task = BulkSyncMessages([chat, messages, cb]);
+    return (await createAsyncTask<List<Message>>(task)) ?? [];
   }
 
   bool isGroup() {
@@ -1201,10 +1293,12 @@ class Chat {
     if (a.isPinned! && !b.isPinned!) return -1;
 
     // Compare the last message dates
-    if ((a.latestMessageDate ?? a.latestMessageGetter?.dateCreated) == null && (b.latestMessageDate ?? b.latestMessageGetter?.dateCreated) == null) return 0;
+    if ((a.latestMessageDate ?? a.latestMessageGetter?.dateCreated) == null &&
+        (b.latestMessageDate ?? b.latestMessageGetter?.dateCreated) == null) return 0;
     if ((a.latestMessageDate ?? a.latestMessageGetter?.dateCreated) == null) return 1;
     if ((b.latestMessageDate ?? b.latestMessageGetter?.dateCreated) == null) return -1;
-    return -(a.latestMessageDate ?? a.latestMessageGetter?.dateCreated)!.compareTo((b.latestMessageDate ?? b.latestMessageGetter?.dateCreated)!);
+    return -(a.latestMessageDate ?? a.latestMessageGetter?.dateCreated)!
+        .compareTo((b.latestMessageDate ?? b.latestMessageGetter?.dateCreated)!);
   }
 
   static void flush() {

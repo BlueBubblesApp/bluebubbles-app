@@ -6,23 +6,24 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/sync/sync_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+
+import '../../repository/models/io/chat.dart';
 
 class IncrementalSyncManager extends SyncManager {
   final tag = 'IncrementalSyncManager';
 
   int startTimestamp;
 
-  late int endTimestamp;
+  int? endTimestamp;
 
   int messageCount;
 
   int chatsSynced = 0;
 
   int messagesSynced = 0;
-
-  int? processId;
 
   String? chatGuid;
 
@@ -33,10 +34,14 @@ class IncrementalSyncManager extends SyncManager {
   int? syncStart;
 
   IncrementalSyncManager(this.startTimestamp,
-      {int? endTimestamp, this.messageCount = 25, this.chatGuid, this.saveDate = true, this.onComplete, bool saveLogs = false})
-      : super("Incremental", saveLogs: saveLogs) {
-    this.endTimestamp = endTimestamp ?? DateTime.now().toUtc().millisecondsSinceEpoch;
-  }
+      {
+        this.endTimestamp,
+        this.messageCount = 25,
+        this.chatGuid,
+        this.saveDate = true,
+        this.onComplete,
+        bool saveLogs = false
+      }) : super("Incremental", saveLogs: saveLogs);
 
   @override
   Future<void> start() async {
@@ -48,55 +53,27 @@ class IncrementalSyncManager extends SyncManager {
 
     super.start();
 
-    // Setup the socket process and error handler
-    processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
-
     // Store the time we started syncing
     RxInt lastSync = SettingsManager().settings.lastIncrementalSync;
-    syncStart = DateTime.now().millisecondsSinceEpoch;
+    syncStart = endTimestamp ?? DateTime.now().millisecondsSinceEpoch;
     addToOutput("Starting incremental sync for messages since: ${lastSync.value}");
 
-    // only get up to 1000 messages (arbitrary limit)
-    int batches = 10;
-    for (int i = 0; i < batches; i++) {
-      // Build request params. We want all details on the messages
-      Map<String, dynamic> params = {};
-      if (chatGuid != null) {
-        params["chatGuid"] = chatGuid;
-      }
+    // 0: Hit API endpoint to check for updated messages
+    // 1: If no new updated messages, complete the sync
+    // 2: If there are new messages, fetch them by page
+    // 3: Enumerate the chats into cache
+    // 4: Sync the chats
+    // 5: Merge synced chats back into cache
+    // 6: For each chat, bulk sync the messages
 
-      params["withBlurhash"] = false; // Maybe we want it?
-      params["limit"] = 100;
-      params["offset"] = i * batches;
-      params["after"] = lastSync.value; // Get everything since the last sync
-      params["withChats"] = true; // We want the chats too so we can save them correctly
-      params["withChatParticipants"] = true; // We want participants on web only
-      params["withAttachments"] = true; // We want the attachment data
-      params["withHandle"] = true; // We want to know who sent it
-      params["sort"] = "DESC"; // Sort my DESC so we receive the newest messages first
-
-      List<dynamic> messages = await MessageManager().getMessages(
-          withChats: true,
-          withAttachments: true,
-          withHandles: true,
-          withChatParticipants: true,
-          after: lastSync.value,
-          chatGuid: chatGuid,
-          offset: i * batches,
-      );
-      if (messages.isEmpty) {
-        addToOutput("No more new messages found during incremental sync");
-        break;
-      } else {
-        addToOutput("Incremental sync found ${messages.length} messages. Syncing...");
-      }
-
-      if (messages.isNotEmpty) {
-        await MessageHelper.bulkAddMessages(null, messages, onProgress: (progress, total) {
-          setProgress(progress, total);
-        }, notifyForNewMessage: !kIsWeb);
-      }
-    }
+    // 0: Hit API endpoint to check for updated messages
+    int pages = 0;
+    int batchSize = 0;
+    dio.Response<dynamic> uMessageCountRes = await api.messageCount(
+      after: DateTime.fromMillisecondsSinceEpoch(lastSync.value),
+      before: DateTime.fromMillisecondsSinceEpoch(syncStart!)
+    );
+    uMessageCountRes.
 
     // End the sync
     await complete();
@@ -119,11 +96,6 @@ class IncrementalSyncManager extends SyncManager {
 
     if (SettingsManager().settings.showIncrementalSync.value) {
       showSnackbar('Success', '🔄 Incremental sync complete 🔄');
-    }
-
-    if (processId != null) {
-      SocketManager().finishSocketProcess(processId);
-      processId = null;
     }
 
     if (onComplete != null) {
