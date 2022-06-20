@@ -44,14 +44,12 @@ class NotificationPanel extends StatelessWidget {
         ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
         ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
         ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
     
     // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material) {
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
       final temp = headerColor;
       headerColor = tileColor;
       tileColor = temp;
@@ -62,7 +60,7 @@ class NotificationPanel extends StatelessWidget {
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.colorScheme.brightness,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: GetBuilder<NotificationPanelController>(
         init: NotificationPanelController(),

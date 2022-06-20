@@ -134,14 +134,12 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
     editable = !currentTheme.isPreset && SettingsManager().settings.monetTheming.value == Monet.none;
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
         ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
         ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
     
     // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material) {
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
       final temp = headerColor;
       headerColor = tileColor;
       tileColor = temp;
@@ -155,8 +153,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
             title: "Selected Theme",
             initial: currentTheme,
             options: allThemes,
-            backgroundColor: headerColor,
-            secondaryColor: tileColor,
+            backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
+            secondaryColor: SettingsManager().settings.skin.value == Skins.Material ? headerColor : tileColor,
             textProcessing: (struct) => struct.name.toUpperCase(),
             useCupertino: false,
             onChanged: (value) async {

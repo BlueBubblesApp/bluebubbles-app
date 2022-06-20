@@ -79,17 +79,12 @@ class ThemePanel extends StatelessWidget {
           ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
       // Samsung theme should always use the background color as the "header" color
       Color headerColor = ThemeManager().inDarkMode(context)
-          || SettingsManager().settings.skin.value == Skins.Samsung
           ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
       Color tileColor = ThemeManager().inDarkMode(context)
-          || SettingsManager().settings.skin.value == Skins.Samsung
           ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-      // make sure the tile color is at least different from the header color on Samsung and iOS
-      if (tileColor == headerColor) {
-        tileColor = context.theme.colorScheme.surfaceVariant;
-      }
+
       // reverse material color mapping to be more accurate
-      if (SettingsManager().settings.skin.value == Skins.Material) {
+      if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
         final temp = headerColor;
         headerColor = tileColor;
         tileColor = temp;

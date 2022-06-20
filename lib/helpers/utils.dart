@@ -773,6 +773,10 @@ extension ConditionlAdd on RxMap {
   }
 }
 
+extension OppositeBrightness on Brightness {
+  Brightness get opposite => this == Brightness.light ? Brightness.dark : Brightness.light;
+}
+
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;
 
 Future<Uint8List> avatarAsBytes({
