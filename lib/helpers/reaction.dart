@@ -127,16 +127,16 @@ class Reaction {
     messages.add(message);
   }
 
-  Widget? getSmallWidget(BuildContext context, {Message? message, bool bigPin = false, bool isReactionPicker = true, bool isSelected = false}) {
+  Widget? getSmallWidget(BuildContext context, {Message? message, bool bigPin = false, bool isReactionPicker = false, bool isSelected = false}) {
     if (messages.isEmpty && message == null) return null;
     if (messages.isEmpty && message != null) messages = [message];
 
     List<Widget> reactionList = [];
 
     for (int i = 0; i < messages.length; i++) {
-      Color iconColor = Colors.white;
-      if (!messages[i].isFromMe! && context.theme.colorScheme.secondary.computeLuminance() >= 0.179) {
-        iconColor = Colors.black.withAlpha(95);
+      Color iconColor = isSelected ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onPrimary;
+      if (!messages[i].isFromMe!) {
+        iconColor = context.theme.colorScheme.onSecondary;
       }
 
       reactionList.add(
@@ -194,7 +194,9 @@ class Reaction {
                 margin: EdgeInsets.only(right: bigPin ? 10 : 0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100),
-                  color: isReactionPicker ? (isSelected ? context.theme.colorScheme.background : context.theme.colorScheme.primary) : messages[i].isFromMe! ? context.theme.colorScheme.primary : context.theme.colorScheme.secondary,
+                  color: isReactionPicker
+                      ? (isSelected ? context.theme.colorScheme.background : context.theme.colorScheme.primary)
+                      : messages[i].isFromMe! ? context.theme.colorScheme.primary : context.theme.colorScheme.secondary,
                   boxShadow: isReactionPicker
                       ? null
                       : [

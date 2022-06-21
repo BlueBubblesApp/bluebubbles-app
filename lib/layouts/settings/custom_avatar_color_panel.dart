@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
@@ -61,17 +62,12 @@ class CustomAvatarColorPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
-    // make sure the tile color is at least different from the header color on Samsung and iOS
-    if (tileColor == headerColor) {
-      tileColor = context.theme.colorScheme.surfaceVariant;
-    }
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
     // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material) {
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
       final temp = headerColor;
       headerColor = tileColor;
       tileColor = temp;

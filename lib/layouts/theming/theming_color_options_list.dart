@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -13,6 +14,8 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
@@ -47,7 +50,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: context.theme.colorScheme.surface,
+          backgroundColor: context.theme.colorScheme.properSurface,
           actions: [
             TextButton(
               child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
@@ -79,19 +82,47 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
               },
             ),
           ],
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              labelText: "Theme Name",
-              enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: context.theme.colorScheme.outline,
-                  )),
-              focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: context.theme.colorScheme.primary,
-                  )),
-            ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 15.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(
+                      SettingsManager().settings.skin.value == Skins.iOS
+                          ? CupertinoIcons.info
+                          : Icons.info_outline,
+                      size: 20,
+                      color: context.theme.colorScheme.primary,
+                    ),
+                    SizedBox(width: 20),
+                    Expanded(
+                        child: Text(
+                          "Your new theme will copy the colors currently displayed in the advanced theming menu",
+                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                        )
+                    ),
+                  ],
+                ),
+              ),
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  labelText: "Theme Name",
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: context.theme.colorScheme.outline,
+                      )),
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: context.theme.colorScheme.primary,
+                      )),
+                ),
+              ),
+            ],
           ),
           title: Text("Create a New Theme", style: context.theme.textTheme.titleLarge),
         )
@@ -104,17 +135,12 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
     editable = !currentTheme.isPreset && SettingsManager().settings.monetTheming.value == Monet.none;
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
-    // make sure the tile color is at least different from the header color on Samsung and iOS
-    if (tileColor == headerColor) {
-      tileColor = context.theme.colorScheme.surfaceVariant;
-    }
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
     // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material) {
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
       final temp = headerColor;
       headerColor = tileColor;
       tileColor = temp;
@@ -128,10 +154,80 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
             title: "Selected Theme",
             initial: currentTheme,
             options: allThemes,
-            backgroundColor: headerColor,
-            secondaryColor: tileColor,
+            backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
+            secondaryColor: SettingsManager().settings.skin.value == Skins.Material ? headerColor : tileColor,
             textProcessing: (struct) => struct.name.toUpperCase(),
             useCupertino: false,
+            materialCustomWidgets: (struct) => Row(
+              children: [
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Container(
+                            height: 12,
+                            width: 12,
+                            decoration: BoxDecoration(
+                              color: struct.data.colorScheme.primary,
+                              borderRadius: BorderRadius.all(Radius.circular(4)),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Container(
+                            height: 12,
+                            width: 12,
+                            decoration: BoxDecoration(
+                              color: struct.data.colorScheme.secondary,
+                              borderRadius: BorderRadius.all(Radius.circular(4)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Container(
+                            height: 12,
+                            width: 12,
+                            decoration: BoxDecoration(
+                              color: struct.data.colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.all(Radius.circular(4)),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Container(
+                            height: 12,
+                            width: 12,
+                            decoration: BoxDecoration(
+                              color: struct.data.colorScheme.tertiary,
+                              borderRadius: BorderRadius.all(Radius.circular(4)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Text(
+                    struct.name,
+                    style: context.theme.textTheme.bodyLarge,
+                  ),
+                ),
+              ],
+            ),
             onChanged: (value) async {
               if (value == null) return;
               value.save();
@@ -214,6 +310,32 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
             subtitle: "Tap to edit the base color, and long press to edit the color for elements displayed on top of the base color",
           )
         ),
+        if (SettingsManager().settings.monetTheming.value != Monet.none)
+          SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(
+                      SettingsManager().settings.skin.value == Skins.iOS
+                          ? CupertinoIcons.info
+                          : Icons.info_outline,
+                      size: 20,
+                      color: context.theme.colorScheme.primary,
+                    ),
+                    SizedBox(width: 20),
+                    Expanded(
+                      child: Text(
+                          "You have Material You theming enabled, so some or all of these colors may be generated by Monet. Disable Material You to view the original theme colors.",
+                        style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                      )
+                    ),
+                  ],
+                ),
+              )
+          ),
         SliverGrid(
           delegate: SliverChildBuilderDelegate(
             (context, index) {

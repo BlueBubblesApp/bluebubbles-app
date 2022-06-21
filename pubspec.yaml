@@ -138,6 +138,7 @@ dependencies:
   material_color_utilities: ^0.1.5
   dart_vlc: ^0.2.1
   geolocator: ^8.2.1
+  flex_color_scheme: ^5.0.1
 
 dependency_overrides:
   rxdart: ^0.27.3

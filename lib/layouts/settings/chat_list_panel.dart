@@ -17,30 +17,25 @@ class ChatListPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onSurface, fontWeight: FontWeight.w300);
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
     final materialSubtitle = context.theme
         .textTheme
         .labelLarge
         ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
-    // make sure the tile color is at least different from the header color on Samsung and iOS
-    if (tileColor == headerColor) {
-      tileColor = context.theme.colorScheme.surfaceVariant;
-    }
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
     // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material) {
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
       final temp = headerColor;
       headerColor = tileColor;
       tileColor = temp;
     }
-    final inactiveCheckColor = context.theme.colorScheme.surface.computeDifference(tileColor) < 15
-        ? context.theme.colorScheme.onSurface.withOpacity(0.6) : context.theme.colorScheme.surface;
+    final inactiveCheckColor = context.theme.colorScheme.properSurface.computeDifference(tileColor) < 15
+        ? context.theme.colorScheme.properOnSurface.withOpacity(0.6) : context.theme.colorScheme.properSurface;
 
     return SettingsScaffold(
         title: "Chat List",
@@ -887,10 +882,10 @@ class ChatListPanel extends StatelessWidget {
                               saveSettings();
                             },
                             initialVal: SettingsManager().settings.cameraFAB.value,
-                            title: SettingsManager().settings.skin.value == Skins.Material
+                            title: SettingsManager().settings.skin.value != Skins.iOS
                                 ? "Long Press for Camera"
                                 : "Add Camera Button",
-                            subtitle: SettingsManager().settings.skin.value == Skins.Material
+                            subtitle: SettingsManager().settings.skin.value != Skins.iOS
                                 ? "Long press the start chat button to easily send a picture to a chat"
                                 : "Adds a dedicated camera button near the new chat creator button to easily send pictures",
                             backgroundColor: tileColor,

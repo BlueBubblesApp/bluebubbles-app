@@ -25,6 +25,12 @@ class HexColor extends Color {
   int get hashCode => value.hashCode;
 }
 
+extension ColorSchemeHelpers on ColorScheme {
+  Color get properSurface => surface.computeDifference(background) < 20 ? surfaceVariant : surface;
+
+  Color get properOnSurface => surface.computeDifference(background) < 20 ? onSurfaceVariant : onSurface;
+}
+
 extension ColorHelpers on Color {
   Color darkenPercent([double percent = 10]) {
     assert(1 <= percent && percent <= 100);

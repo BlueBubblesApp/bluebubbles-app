@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -40,17 +42,12 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
-    // make sure the tile color is at least different from the header color on Samsung and iOS
-    if (tileColor == headerColor) {
-      tileColor = context.theme.colorScheme.surfaceVariant;
-    }
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
     // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material) {
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
       final temp = headerColor;
       headerColor = tileColor;
       tileColor = temp;
@@ -61,7 +58,7 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.colorScheme.brightness,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
         backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
@@ -85,8 +82,8 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
           ),
         ),
         body: TabBarView(
-          physics: ThemeSwitcher.getScrollPhysics(),
           controller: controller,
+          physics: NeverScrollableScrollPhysics(),
           children: <Widget>[
             ThemingColorOptionsList(
               isDarkMode: false,

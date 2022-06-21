@@ -38,6 +38,7 @@ public class ShareShortcutManager {
                 .setIntent(staticLauncherShortcutIntent)
                 .setCategories(contactCategories)
                 .setLongLived(true)
+                .setIsConversation()
                 .setPerson(new Person.Builder()
                         .setName(contact.name)
                         .build());

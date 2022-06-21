@@ -7,6 +7,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -256,9 +257,6 @@ Future<Null> initApp(bool isBubble) async {
         if (themeBox.isEmpty()) {
           prefs.setString("selected-dark", "OLED Dark");
           prefs.setString("selected-light", "Bright White");
-          for (ThemeStruct theme in Themes.defaultThemes) {
-            theme.save(updateIfNotAbsent: false);
-          }
         }
       }
 
@@ -551,7 +549,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
                                     padding: EdgeInsets.symmetric(horizontal: 20.0),
                                     child: Text(
                                       "BlueBubbles is currently locked. Please unlock to access your messages.",
-                                      style: context.theme.textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
+                                      style: context.theme.textTheme.titleLarge,
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
@@ -748,7 +746,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 }
                 Navigator.of(context).pop();
               },
-              backgroundColor: context.theme.colorScheme.surface,
+              backgroundColor: context.theme.colorScheme.properSurface,
             );
           }
         });

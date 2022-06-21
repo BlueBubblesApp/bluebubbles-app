@@ -6,6 +6,8 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
 
@@ -14,8 +16,22 @@ class Themes {
     ThemeStruct(name: "OLED Dark", themeData: oledDarkTheme),
     ThemeStruct(name: "Bright White", themeData: whiteLightTheme),
     ThemeStruct(name: "Nord Theme", themeData: nordDarkTheme),
-    ThemeStruct(name: "Music Theme (Light)", themeData: whiteLightTheme, gradientBg: true),
-    ThemeStruct(name: "Music Theme (Dark)", themeData: oledDarkTheme, gradientBg: true),
+    ThemeStruct(name: "Music Theme ☀", themeData: whiteLightTheme, gradientBg: true),
+    ThemeStruct(name: "Music Theme 🌙", themeData: oledDarkTheme, gradientBg: true),
+    ...FlexScheme.values
+        .where((e) => e != FlexScheme.custom)
+        .map((e) => [
+          ThemeStruct(
+              name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} ☀",
+              themeData: FlexThemeData.light(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40)
+                  .copyWith(textTheme: Typography.englishLike2021.merge(Typography.blackMountainView), splashFactory: InkRipple.splashFactory),
+          ),
+          ThemeStruct(
+              name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} 🌙",
+              themeData: FlexThemeData.dark(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40)
+                  .copyWith(textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView), splashFactory: InkRipple.splashFactory),
+          ),
+    ]).flattened,
   ];
 }
 
@@ -23,20 +39,18 @@ bool isEqual(ThemeData one, ThemeData two) {
   return one.colorScheme.secondary == two.colorScheme.secondary && one.backgroundColor == two.backgroundColor;
 }
 
-ThemeData oledDarkTheme = ThemeData(
-  splashFactory: InkRipple.splashFactory,
-  textTheme: Typography.englishLike2021.merge(Typography.whiteRedmond),
+ThemeData oledDarkTheme = FlexColorScheme(
+  textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
   colorScheme: ColorScheme.fromSeed(
     seedColor: Colors.blue,
     background: Colors.black,
     error: Colors.red,
     brightness: Brightness.dark,
   ),
-);
+).toTheme.copyWith(splashFactory: InkRipple.splashFactory);
 
-ThemeData nordDarkTheme = ThemeData(
-  splashFactory: InkRipple.splashFactory,
-  textTheme: Typography.englishLike2021.merge(Typography.whiteRedmond),
+ThemeData nordDarkTheme = FlexColorScheme(
+  textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: createMaterialColor(HexColor("5E81AC")),
     accentColor: HexColor("88C0D0"),
@@ -48,18 +62,17 @@ ThemeData nordDarkTheme = ThemeData(
     primaryContainer: HexColor("49688e"),
     outline: Colors.grey,
   ),
-);
+).toTheme.copyWith(splashFactory: InkRipple.splashFactory,);
 
-ThemeData whiteLightTheme = ThemeData(
-  splashFactory: InkRipple.splashFactory,
-  textTheme: Typography.englishLike2021.merge(Typography.blackRedmond),
+ThemeData whiteLightTheme = FlexColorScheme(
+  textTheme: Typography.englishLike2021.merge(Typography.blackMountainView),
   colorScheme: ColorScheme.fromSeed(
     seedColor: Colors.blue,
     background: Colors.white,
     error: Colors.red,
     brightness: Brightness.light,
   ),
-);
+).toTheme.copyWith(splashFactory: InkRipple.splashFactory);
 
 void loadTheme(BuildContext? context, {ThemeStruct? lightOverride, ThemeStruct? darkOverride}) {
   if (context == null) return;
@@ -81,22 +94,26 @@ void loadTheme(BuildContext? context, {ThemeStruct? lightOverride, ThemeStruct? 
 Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
   if (SettingsManager().settings.monetTheming.value == Monet.harmonize && monetPalette != null) {
     light = light.copyWith(
-        primaryColor: Color(monetPalette!.primary.get(50)),
-        backgroundColor: light.backgroundColor == Colors.white
-            ? Color(monetPalette!.neutral.get(99))
-            : light.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(50))),
         colorScheme: light.colorScheme.copyWith(
-          secondary: light.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(50))),
+          primary: Color(monetPalette!.primary.get(40)),
+          onPrimary: Color(monetPalette!.primary.get(100)),
+          primaryContainer: Color(monetPalette!.primary.get(90)),
+          onPrimaryContainer: Color(monetPalette!.primary.get(10)),
+          background: light.colorScheme.background.harmonizeWith(Color(monetPalette!.primary.get(40))),
+          secondary: light.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(40))),
         ),
         useMaterial3: SettingsManager().useMaterial3,
         typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
         splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
     dark = dark.copyWith(
-        primaryColor: Color(monetPalette!.primary.get(50)),
-        backgroundColor: dark.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(60))),
         colorScheme: dark.colorScheme.copyWith(
-          secondary: dark.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(60))),
+          primary: Color(monetPalette!.primary.get(80)),
+          onPrimary: Color(monetPalette!.primary.get(20)),
+          primaryContainer: Color(monetPalette!.primary.get(30)),
+          onPrimaryContainer: Color(monetPalette!.primary.get(90)),
+          background: dark.colorScheme.background.harmonizeWith(Color(monetPalette!.primary.get(80))),
+          secondary: dark.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(80))),
         ),
         useMaterial3: SettingsManager().useMaterial3,
         typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
@@ -104,8 +121,6 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
     );
   } else if (SettingsManager().isFullMonet && monetPalette != null) {
     light = light.copyWith(
-      primaryColor: Color(monetPalette!.primary.get(40)),
-      backgroundColor: Color(monetPalette!.neutral.get(99)),
       colorScheme: light.colorScheme.copyWith(
         primary: Color(monetPalette!.primary.get(40)),
         onPrimary: Color(monetPalette!.primary.get(100)),
@@ -140,8 +155,6 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
       splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
     dark = dark.copyWith(
-      primaryColor: Color(monetPalette!.primary.get(50)),
-      backgroundColor: Color(monetPalette!.neutral.get(10)),
       colorScheme: dark.colorScheme.copyWith(
         primary: Color(monetPalette!.primary.get(80)),
         onPrimary: Color(monetPalette!.primary.get(20)),
@@ -222,28 +235,5 @@ extension SettingsThemeData on ThemeData {
   }
   bool get isMonoColorPanel {
     return SettingsManager().settings.skin.value == Skins.iOS && isOled;
-  }
-  Color get tileColor {
-    if (SettingsManager().isFullMonet) {
-      return colorScheme.surfaceVariant;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && (backgroundColor == Colors.black || isEqual(this, nordDarkTheme))) {
-      return headerColor;
-    }
-    if ((colorScheme.secondary.computeLuminance() < backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(this, whiteLightTheme))) {
-      return backgroundColor;
-    } else {
-      return colorScheme.secondary;
-    }
-
-  }
-  Color get headerColor {
-    if ((colorScheme.secondary.computeLuminance() < backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(this, whiteLightTheme))) {
-      return colorScheme.secondary;
-    } else {
-      return backgroundColor;
-    }
   }
 }

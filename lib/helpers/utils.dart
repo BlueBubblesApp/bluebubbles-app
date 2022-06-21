@@ -238,8 +238,8 @@ void showSnackbar(String title, String message,
     {int animationMs = 250, int durationMs = 1500, Function(GetBar)? onTap, TextButton? button}) {
   Get.snackbar(title, message,
       snackPosition: SnackPosition.BOTTOM,
-      colorText: Get.textTheme.bodyMedium!.color,
-      backgroundColor: Get.theme.colorScheme.secondary,
+      colorText: Get.theme.colorScheme.onInverseSurface,
+      backgroundColor: Get.theme.colorScheme.inverseSurface,
       margin: EdgeInsets.only(bottom: 10),
       maxWidth: Get.width - 20,
       isDismissible: false,
@@ -771,6 +771,10 @@ extension ConditionlAdd on RxMap {
     this.value[key] = value;
     if (shouldRefresh) refresh();
   }
+}
+
+extension OppositeBrightness on Brightness {
+  Brightness get opposite => this == Brightness.light ? Brightness.dark : Brightness.light;
 }
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;

@@ -118,9 +118,6 @@ callbackHandler() async {
       if (themeBox.isEmpty()) {
         prefs.setString("selected-dark", "OLED Dark");
         prefs.setString("selected-light", "Bright White");
-        for (ThemeStruct theme in Themes.defaultThemes) {
-          theme.save(updateIfNotAbsent: false);
-        }
       }
     }
 

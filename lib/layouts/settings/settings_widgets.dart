@@ -54,7 +54,7 @@ class SettingsScaffold extends StatelessWidget {
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.colorScheme.brightness,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
         backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
@@ -260,7 +260,7 @@ class SettingsTile extends StatelessWidget {
             subtitle: subtitle != null
                 ? Text(
                     subtitle!,
-                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface, height: isThreeLine ? 1.5 : 1),
+                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: isThreeLine ? 1.5 : 1),
                     maxLines: isThreeLine ? 2 : 1,
                     overflow: TextOverflow.ellipsis,
                   )
@@ -290,7 +290,7 @@ class SettingsSubtitle extends StatelessWidget {
       child: ListTile(
         title: subtitle != null ? Text(
           subtitle!,
-          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface),
+          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
           maxLines: unlimitedSpace ? 100 : 2,
           overflow: TextOverflow.ellipsis,
         ) : null,
@@ -406,6 +406,8 @@ class SettingsSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final thumbColor = context.theme.colorScheme.surface.computeDifference(backgroundColor) < 15
+        ? context.theme.colorScheme.onSurface.withOpacity(0.6) : context.theme.colorScheme.surface;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -420,7 +422,7 @@ class SettingsSwitch extends StatelessWidget {
           subtitle: subtitle != null
               ? Text(
                   subtitle!,
-                  style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface, height: isThreeLine ? 1.5 : 1),
+                  style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: isThreeLine ? 1.5 : 1),
                   maxLines: isThreeLine ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
                 )
@@ -428,10 +430,13 @@ class SettingsSwitch extends StatelessWidget {
           value: initialVal,
           activeColor: context.theme.colorScheme.primary,
           activeTrackColor: context.theme.colorScheme.primaryContainer,
+          // make sure the track color does not blend in with the background color of the tiles
           inactiveTrackColor: context.theme.colorScheme.surfaceVariant.computeDifference(backgroundColor) < 15
-              ? context.theme.colorScheme.surface.withOpacity(0.6) : context.theme.colorScheme.surfaceVariant,
-          inactiveThumbColor: context.theme.colorScheme.surface.computeDifference(backgroundColor) < 15
-              ? context.theme.colorScheme.onSurface.withOpacity(0.6) : context.theme.colorScheme.surface,
+              ? context.theme.colorScheme.surface.computeDifference(backgroundColor) < 15
+              ? thumbColor.darkenPercent(20)
+              : context.theme.colorScheme.surface.withOpacity(0.6)
+              : context.theme.colorScheme.surfaceVariant,
+          inactiveThumbColor: thumbColor,
           onChanged: onChanged,
           isThreeLine: isThreeLine,
         ),
@@ -446,6 +451,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     required this.onChanged,
     required this.options,
     this.cupertinoCustomWidgets,
+    this.materialCustomWidgets,
     required this.initial,
     this.textProcessing,
     this.onMaterialTap,
@@ -460,6 +466,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
   final void Function(T?) onChanged;
   final List<T> options;
   final Iterable<Widget>? cupertinoCustomWidgets;
+  final Widget? Function(T)? materialCustomWidgets;
   final T initial;
   final String Function(T)? textProcessing;
   final void Function()? onMaterialTap;
@@ -489,7 +496,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
         ),
       );
     }
-    Color surfaceColor = context.theme.colorScheme.surface;
+    Color surfaceColor = context.theme.colorScheme.properSurface;
     if (SettingsManager().settings.skin.value == Skins.Material
         && surfaceColor.computeDifference(context.theme.colorScheme.background) < 15) {
       surfaceColor = context.theme.colorScheme.surfaceVariant;
@@ -518,7 +525,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                               padding: EdgeInsets.only(top: 3.0),
                               child: Text(
                                 subtitle ?? "",
-                                style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface),
+                                style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
                               ),
                             ),
                           )
@@ -544,7 +551,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                     items: options.map<DropdownMenuItem<T>>((e) {
                       return DropdownMenuItem(
                         value: e,
-                        child: Text(
+                        child: materialCustomWidgets?.call(e) ?? Text(
                           capitalize ? textProcessing!(e).capitalize! : textProcessing!(e),
                           style: context.theme.textTheme.bodyLarge,
                         ),

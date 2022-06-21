@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -178,21 +179,18 @@ class ActionHandler {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: Theme.of(context).colorScheme.secondary,
+            backgroundColor: context.theme.colorScheme.properSurface,
             title: Text(
               "Creating a new chat...",
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: context.theme.textTheme.titleLarge,
             ),
-            content:
-            Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-              Container(
-                // height: 70,
-                // color: Colors.black,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                ),
+            content: Container(
+              // height: 70,
+              // color: Colors.black,
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
               ),
-            ]),
+            ),
           );
         });
 

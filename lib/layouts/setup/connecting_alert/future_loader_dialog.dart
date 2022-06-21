@@ -1,4 +1,5 @@
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -57,7 +58,7 @@ class _FutureLoaderDialogState extends State<FutureLoaderDialog> {
                   "Connecting...",
                   style: context.theme.textTheme.titleLarge,
                 ),
-                backgroundColor: context.theme.colorScheme.surface,
+                backgroundColor: context.theme.colorScheme.properSurface,
                 content: LinearProgressIndicator(
                   backgroundColor: context.theme.colorScheme.outline,
                   valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
@@ -75,7 +76,7 @@ class _FutureLoaderDialogState extends State<FutureLoaderDialog> {
                 "Success!",
                 style: context.theme.textTheme.titleLarge,
               ),
-              backgroundColor: context.theme.colorScheme.surface,
+              backgroundColor: context.theme.colorScheme.properSurface,
               content: Text(
                 "Connected!",
                 style: context.theme.textTheme.bodyLarge,

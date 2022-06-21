@@ -1,8 +1,10 @@
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +33,9 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
         child: Material(
           color: widget.tuple.item1.value,
           child: Container(
-            decoration: widget.tuple.item1.value.computeDifference(context.theme.colorScheme.background) < 15 ? BoxDecoration(
+            decoration: widget.tuple.item1.value.computeDifference(ThemeManager().inDarkMode(context)
+                || SettingsManager().settings.skin.value == Skins.Samsung
+                ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface) < 15 ? BoxDecoration(
               border: Border.all(width: 0.5, color: context.theme.colorScheme.outline),
               borderRadius: BorderRadius.circular(20)
             ) : null,

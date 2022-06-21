@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -25,24 +26,19 @@ class DesktopPanel extends StatelessWidget {
     final RxnBool useCustomPath = RxnBool(prefs.getBool("use-custom-path"));
     final RxnString customPath = RxnString(prefs.getString("custom-path"));
     final iosSubtitle =
-    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onSurface, fontWeight: FontWeight.w300);
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
     final materialSubtitle = context.theme
         .textTheme
         .labelLarge
         ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.background : context.theme.colorScheme.surface;
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
-        || SettingsManager().settings.skin.value == Skins.Samsung
-        ? context.theme.colorScheme.surface : context.theme.colorScheme.background;
-    // make sure the tile color is at least different from the header color on Samsung and iOS
-    if (tileColor == headerColor) {
-      tileColor = context.theme.colorScheme.surfaceVariant;
-    }
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
     // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material) {
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
       final temp = headerColor;
       headerColor = tileColor;
       tileColor = temp;
@@ -771,7 +767,7 @@ class DesktopPanel extends StatelessWidget {
                                 ),
                                 content: Text(
                                     "All of your data and settings will be deleted, and you will have to set the app up again from scratch.", style: context.theme.textTheme.bodyLarge),
-                                backgroundColor: context.theme.colorScheme.surface,
+                                backgroundColor: context.theme.colorScheme.properSurface,
                                 actions: <Widget>[
                                   TextButton(
                                     child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
@@ -833,7 +829,7 @@ class DesktopPanel extends StatelessWidget {
                                       ),
                                       content: Text(
                                           "The database will now be stored at $path\n\nAll of your data and settings will be deleted, and you will have to set the app up again from scratch.", style: context.theme.textTheme.bodyLarge,),
-                                      backgroundColor: context.theme.colorScheme.surface,
+                                      backgroundColor: context.theme.colorScheme.properSurface,
                                       actions: <Widget>[
                                         TextButton(
                                           child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
