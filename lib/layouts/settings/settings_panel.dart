@@ -686,6 +686,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         FCMData.deleteFcmData();
                                         prefs.setString("selected-dark", "OLED Dark");
                                         prefs.setString("selected-light", "Bright White");
+                                        themeBox.putMany(Themes.defaultThemes);
+                                        loadTheme(context);
                                         Get.offAll(() => WillPopScope(
                                           onWillPop: () async => false,
                                           child: TitleBarWrapper(child: SetupView()),

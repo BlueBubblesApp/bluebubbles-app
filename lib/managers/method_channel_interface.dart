@@ -312,8 +312,8 @@ class MethodChannelInterface {
           previousDarkBg = darkBg;
           isRunning = true;
 
-          var darkTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme (Dark)");
-          var lightTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme (Light)");
+          var darkTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme 🌙");
+          var lightTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme ☀");
           darkTheme.data = darkTheme.data.copyWith(
             colorScheme: darkTheme.data.colorScheme.copyWith(
               primary: primary,

@@ -257,6 +257,7 @@ Future<Null> initApp(bool isBubble) async {
         if (themeBox.isEmpty()) {
           prefs.setString("selected-dark", "OLED Dark");
           prefs.setString("selected-light", "Bright White");
+          themeBox.putMany(Themes.defaultThemes);
         }
       }
 

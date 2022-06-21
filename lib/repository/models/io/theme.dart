@@ -45,7 +45,6 @@ class ThemeStruct {
       Themes.defaultThemes.map((e) => e.name).contains(name);
 
   ThemeStruct save({bool updateIfNotAbsent = true}) {
-    if (isPreset) return this;
     store.runInTransaction(TxMode.write, () {
       ThemeStruct? existing = ThemeStruct.findOne(name);
       if (existing != null) {
@@ -71,8 +70,6 @@ class ThemeStruct {
 
   static ThemeStruct getLightTheme() {
     final name = prefs.getString("selected-light");
-    final defaultTheme = Themes.defaultThemes.firstWhereOrNull((e) => e.name == name);
-    if (defaultTheme != null) return defaultTheme;
     final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
     query.limit = 1;
     final result = query.findFirst();
@@ -84,8 +81,6 @@ class ThemeStruct {
 
   static ThemeStruct getDarkTheme() {
     final name = prefs.getString("selected-dark");
-    final defaultTheme = Themes.defaultThemes.firstWhereOrNull((e) => e.name == name);
-    if (defaultTheme != null) return defaultTheme;
     final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
     query.limit = 1;
     final result = query.findFirst();
@@ -97,8 +92,6 @@ class ThemeStruct {
 
   static ThemeStruct? findOne(String name) {
     if (kIsWeb) return null;
-    final defaultTheme = Themes.defaultThemes.firstWhereOrNull((e) => e.name == name);
-    if (defaultTheme != null) return defaultTheme;
     return store.runInTransaction(TxMode.read, () {
       final query = themeBox.query(ThemeStruct_.name.equals(name)).build();
       query.limit = 1;
@@ -110,9 +103,10 @@ class ThemeStruct {
 
   static List<ThemeStruct> getThemes() {
     if (kIsWeb) return Themes.defaultThemes;
-    final themes = Themes.defaultThemes..addAll(themeBox.getAll());
-    final names = themes.map((e) => e.name).toSet();
-    themes.retainWhere((element) => names.remove(element.name));
+    List<ThemeStruct> themes = themeBox.getAll();
+    // sometimes the theme box is empty, this ensures it is never empty when queried
+    if (themes.isEmpty) themeBox.putMany(Themes.defaultThemes);
+    themes = themeBox.getAll();
     return themes;
   }
 

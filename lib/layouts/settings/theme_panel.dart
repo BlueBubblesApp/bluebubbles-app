@@ -286,8 +286,8 @@ class ThemePanel extends StatelessWidget {
                           onChanged: (val) {
                             // disable colors from music
                             final currentTheme = ThemeStruct.getLightTheme();
-                            if (currentTheme.name == "Music Theme (Light)" ||
-                                currentTheme.name == "Music Theme (Dark)") {
+                            if (currentTheme.name == "Music Theme ☀" ||
+                                currentTheme.name == "Music Theme 🌙") {
                               SettingsManager().settings.colorsFromMedia.value = false;
                               SettingsManager().saveSettings(SettingsManager().settings);
                               ThemeStruct previousDark = revertToPreviousDarkTheme();
@@ -354,9 +354,9 @@ class ThemePanel extends StatelessWidget {
                                 prefs.setString("previous-dark", currentDark.name);
                                 SettingsManager().saveSelectedTheme(context,
                                     selectedLightTheme:
-                                    allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
+                                    allThemes.firstWhere((element) => element.name == "Music Theme ☀"),
                                     selectedDarkTheme:
-                                    allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
+                                    allThemes.firstWhere((element) => element.name == "Music Theme 🌙"));
                                 controller._settingsCopy.colorsFromMedia.value = val;
                                 saveSettings();
                               } catch (e) {
