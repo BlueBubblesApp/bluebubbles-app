@@ -3,12 +3,12 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
 
 class Themes {
@@ -16,8 +16,22 @@ class Themes {
     ThemeStruct(name: "OLED Dark", themeData: oledDarkTheme),
     ThemeStruct(name: "Bright White", themeData: whiteLightTheme),
     ThemeStruct(name: "Nord Theme", themeData: nordDarkTheme),
-    ThemeStruct(name: "Music Theme (Light)", themeData: whiteLightTheme, gradientBg: true),
-    ThemeStruct(name: "Music Theme (Dark)", themeData: oledDarkTheme, gradientBg: true),
+    ThemeStruct(name: "Music Theme ☀", themeData: whiteLightTheme, gradientBg: true),
+    ThemeStruct(name: "Music Theme 🌙", themeData: oledDarkTheme, gradientBg: true),
+    ...FlexScheme.values
+        .where((e) => e != FlexScheme.custom)
+        .map((e) => [
+          ThemeStruct(
+              name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} ☀",
+              themeData: FlexThemeData.light(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40)
+                  .copyWith(textTheme: Typography.englishLike2021.merge(Typography.blackMountainView), splashFactory: InkRipple.splashFactory),
+          ),
+          ThemeStruct(
+              name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} 🌙",
+              themeData: FlexThemeData.dark(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40)
+                  .copyWith(textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView), splashFactory: InkRipple.splashFactory),
+          ),
+    ]).flattened,
   ];
 }
 
@@ -25,8 +39,7 @@ bool isEqual(ThemeData one, ThemeData two) {
   return one.colorScheme.secondary == two.colorScheme.secondary && one.backgroundColor == two.backgroundColor;
 }
 
-ThemeData oledDarkTheme = ThemeData(
-  splashFactory: InkRipple.splashFactory,
+ThemeData oledDarkTheme = FlexColorScheme(
   textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
   colorScheme: ColorScheme.fromSeed(
     seedColor: Colors.blue,
@@ -34,10 +47,9 @@ ThemeData oledDarkTheme = ThemeData(
     error: Colors.red,
     brightness: Brightness.dark,
   ),
-);
+).toTheme.copyWith(splashFactory: InkRipple.splashFactory);
 
-ThemeData nordDarkTheme = ThemeData(
-  splashFactory: InkRipple.splashFactory,
+ThemeData nordDarkTheme = FlexColorScheme(
   textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: createMaterialColor(HexColor("5E81AC")),
@@ -50,10 +62,9 @@ ThemeData nordDarkTheme = ThemeData(
     primaryContainer: HexColor("49688e"),
     outline: Colors.grey,
   ),
-);
+).toTheme.copyWith(splashFactory: InkRipple.splashFactory,);
 
-ThemeData whiteLightTheme = ThemeData(
-  splashFactory: InkRipple.splashFactory,
+ThemeData whiteLightTheme = FlexColorScheme(
   textTheme: Typography.englishLike2021.merge(Typography.blackMountainView),
   colorScheme: ColorScheme.fromSeed(
     seedColor: Colors.blue,
@@ -61,7 +72,7 @@ ThemeData whiteLightTheme = ThemeData(
     error: Colors.red,
     brightness: Brightness.light,
   ),
-);
+).toTheme.copyWith(splashFactory: InkRipple.splashFactory);
 
 void loadTheme(BuildContext? context, {ThemeStruct? lightOverride, ThemeStruct? darkOverride}) {
   if (context == null) return;

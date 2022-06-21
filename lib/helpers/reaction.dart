@@ -134,7 +134,7 @@ class Reaction {
     List<Widget> reactionList = [];
 
     for (int i = 0; i < messages.length; i++) {
-      Color iconColor = context.theme.colorScheme.onPrimary;
+      Color iconColor = isSelected ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onPrimary;
       if (!messages[i].isFromMe!) {
         iconColor = context.theme.colorScheme.onSecondary;
       }

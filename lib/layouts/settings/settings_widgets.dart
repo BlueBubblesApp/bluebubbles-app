@@ -451,6 +451,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     required this.onChanged,
     required this.options,
     this.cupertinoCustomWidgets,
+    this.materialCustomWidgets,
     required this.initial,
     this.textProcessing,
     this.onMaterialTap,
@@ -465,6 +466,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
   final void Function(T?) onChanged;
   final List<T> options;
   final Iterable<Widget>? cupertinoCustomWidgets;
+  final Widget? Function(T)? materialCustomWidgets;
   final T initial;
   final String Function(T)? textProcessing;
   final void Function()? onMaterialTap;
@@ -549,7 +551,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                     items: options.map<DropdownMenuItem<T>>((e) {
                       return DropdownMenuItem(
                         value: e,
-                        child: Text(
+                        child: materialCustomWidgets?.call(e) ?? Text(
                           capitalize ? textProcessing!(e).capitalize! : textProcessing!(e),
                           style: context.theme.textTheme.bodyLarge,
                         ),

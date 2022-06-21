@@ -4,6 +4,8 @@ import 'dart:core';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
+import 'package:collection/collection.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -40,13 +42,10 @@ class ThemeStruct {
   }) : data = themeData ?? whiteLightTheme;
 
   bool get isPreset =>
-      name == "OLED Dark" ||
-          name == "Bright White" ||
-          name == "Nord Theme" ||
-          name == "Music Theme (Light)" ||
-          name == "Music Theme (Dark)";
+      Themes.defaultThemes.map((e) => e.name).contains(name);
 
   ThemeStruct save({bool updateIfNotAbsent = true}) {
+    if (isPreset) return this;
     store.runInTransaction(TxMode.write, () {
       ThemeStruct? existing = ThemeStruct.findOne(name);
       if (existing != null) {
@@ -72,6 +71,8 @@ class ThemeStruct {
 
   static ThemeStruct getLightTheme() {
     final name = prefs.getString("selected-light");
+    final defaultTheme = Themes.defaultThemes.firstWhereOrNull((e) => e.name == name);
+    if (defaultTheme != null) return defaultTheme;
     final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
     query.limit = 1;
     final result = query.findFirst();
@@ -83,6 +84,8 @@ class ThemeStruct {
 
   static ThemeStruct getDarkTheme() {
     final name = prefs.getString("selected-dark");
+    final defaultTheme = Themes.defaultThemes.firstWhereOrNull((e) => e.name == name);
+    if (defaultTheme != null) return defaultTheme;
     final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
     query.limit = 1;
     final result = query.findFirst();
@@ -94,6 +97,8 @@ class ThemeStruct {
 
   static ThemeStruct? findOne(String name) {
     if (kIsWeb) return null;
+    final defaultTheme = Themes.defaultThemes.firstWhereOrNull((e) => e.name == name);
+    if (defaultTheme != null) return defaultTheme;
     return store.runInTransaction(TxMode.read, () {
       final query = themeBox.query(ThemeStruct_.name.equals(name)).build();
       query.limit = 1;
@@ -105,7 +110,10 @@ class ThemeStruct {
 
   static List<ThemeStruct> getThemes() {
     if (kIsWeb) return Themes.defaultThemes;
-    return themeBox.getAll().isEmpty ? Themes.defaultThemes : themeBox.getAll();
+    final themes = Themes.defaultThemes..addAll(themeBox.getAll());
+    final names = themes.map((e) => e.name).toSet();
+    themes.retainWhere((element) => names.remove(element.name));
+    return themes;
   }
 
   Map<String, dynamic> toMap() => {
@@ -187,7 +195,7 @@ class ThemeStruct {
         id: json["ROWID"],
         name: json["name"],
         gradientBg: json["gradientBg"] == 1,
-        themeData: ThemeData(
+        themeData: FlexColorScheme(
           textTheme: TextTheme(
             headlineMedium: TextStyle(
               color: Color(map["textTheme"]["headlineMedium"]["color"]),
@@ -252,8 +260,7 @@ class ThemeStruct {
           ),
           useMaterial3: map["useMaterial3"],
           typography: map["typography"] == 1 ? Typography.material2021() : Typography.material2018(),
-          splashFactory: map["splashFactory"] == 1 ? InkSparkle.splashFactory : InkRipple.splashFactory,
-        )
+        ).toTheme.copyWith(splashFactory: map["splashFactory"] == 1 ? InkSparkle.splashFactory : InkRipple.splashFactory)
     );
   }
 

@@ -14,6 +14,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -157,6 +158,76 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
             secondaryColor: SettingsManager().settings.skin.value == Skins.Material ? headerColor : tileColor,
             textProcessing: (struct) => struct.name.toUpperCase(),
             useCupertino: false,
+            materialCustomWidgets: (struct) => Row(
+              children: [
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Container(
+                            height: 12,
+                            width: 12,
+                            decoration: BoxDecoration(
+                              color: struct.data.colorScheme.primary,
+                              borderRadius: BorderRadius.all(Radius.circular(4)),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Container(
+                            height: 12,
+                            width: 12,
+                            decoration: BoxDecoration(
+                              color: struct.data.colorScheme.secondary,
+                              borderRadius: BorderRadius.all(Radius.circular(4)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Container(
+                            height: 12,
+                            width: 12,
+                            decoration: BoxDecoration(
+                              color: struct.data.colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.all(Radius.circular(4)),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Container(
+                            height: 12,
+                            width: 12,
+                            decoration: BoxDecoration(
+                              color: struct.data.colorScheme.tertiary,
+                              borderRadius: BorderRadius.all(Radius.circular(4)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Text(
+                    struct.name,
+                    style: context.theme.textTheme.bodyLarge,
+                  ),
+                ),
+              ],
+            ),
             onChanged: (value) async {
               if (value == null) return;
               value.save();

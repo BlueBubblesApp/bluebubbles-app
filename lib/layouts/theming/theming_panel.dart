@@ -82,8 +82,8 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
           ),
         ),
         body: TabBarView(
-          physics: ThemeSwitcher.getScrollPhysics(),
           controller: controller,
+          physics: NeverScrollableScrollPhysics(),
           children: <Widget>[
             ThemingColorOptionsList(
               isDarkMode: false,
