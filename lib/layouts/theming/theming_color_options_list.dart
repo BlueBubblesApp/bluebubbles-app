@@ -232,7 +232,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
               if (value == null) return;
               value.save();
 
-              if (value.name == "Music Theme (Light)" || value.name == "Music Theme (Dark)") {
+              if (value.name == "Music Theme ☀" || value.name == "Music Theme 🌙") {
                 // disable monet theming if music theme enabled
                 SettingsManager().settings.monetTheming.value = Monet.none;
                 SettingsManager().saveSettings(SettingsManager().settings);
@@ -251,7 +251,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                 SettingsManager().saveSettings(SettingsManager().settings);
               }
 
-              if (value.name == "Music Theme (Light)" || value.name == "Music Theme (Dark)") {
+              if (value.name == "Music Theme ☀" || value.name == "Music Theme 🌙") {
                 var allThemes = ThemeStruct.getThemes();
                 var currentLight = ThemeStruct.getLightTheme();
                 var currentDark = ThemeStruct.getDarkTheme();
@@ -259,11 +259,11 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                 prefs.setString("previous-dark", currentDark.name);
                 SettingsManager().saveSelectedTheme(context,
                     selectedLightTheme:
-                    allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
+                    allThemes.firstWhere((element) => element.name == "Music Theme ☀"),
                     selectedDarkTheme:
-                    allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
-              } else if (currentTheme.name == "Music Theme (Light)" ||
-                  currentTheme.name == "Music Theme (Dark)") {
+                    allThemes.firstWhere((element) => element.name == "Music Theme 🌙"));
+              } else if (currentTheme.name == "Music Theme ☀" ||
+                  currentTheme.name == "Music Theme 🌙") {
                 if (!widget.isDarkMode) {
                   ThemeStruct previousDark = revertToPreviousDarkTheme();
                   SettingsManager().saveSelectedTheme(context,
@@ -286,25 +286,24 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
             },
           ),
         ),
-        if (!currentTheme.isPreset)
-          SliverToBoxAdapter(
-              child: SettingsSwitch(
-            onChanged: (bool val) async {
-              currentTheme.gradientBg = val;
-              currentTheme.save();
-              if (widget.isDarkMode) {
-                SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
-              } else {
-                SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
-              }
-            },
-            initialVal: currentTheme.gradientBg,
-            title: "Gradient Message View Background",
-            backgroundColor: tileColor,
-            subtitle:
-                "Make the background of the messages view an animated gradient based on the background and primary colors",
-            isThreeLine: true,
-          )),
+        SliverToBoxAdapter(
+            child: SettingsSwitch(
+          onChanged: (bool val) async {
+            currentTheme.gradientBg = val;
+            currentTheme.save();
+            if (widget.isDarkMode) {
+              SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
+            } else {
+              SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
+            }
+          },
+          initialVal: currentTheme.gradientBg,
+          title: "Gradient Message View Background",
+          backgroundColor: tileColor,
+          subtitle:
+              "Make the background of the messages view an animated gradient based on the background and primary colors",
+          isThreeLine: true,
+        )),
         SliverToBoxAdapter(
           child: SettingsSubtitle(
             subtitle: "Tap to edit the base color, and long press to edit the color for elements displayed on top of the base color",
