@@ -126,7 +126,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style =
-        context.textTheme.labelLarge!.apply(fontSizeFactor: 0.85, color: shouldHighlight.value ? Colors.white : null);
+      context.theme.textTheme.bodyMedium!.apply(color: shouldHighlight.value ? Colors.white : context.theme.colorScheme.outline);
     if (widget.chat.title == null) widget.chat.getTitle();
     if (widget.chat.title == null || kIsWeb || kIsDesktop) widget.chat.getTitle();
     String title = widget.chat.title ?? "Fake Person";
@@ -203,12 +203,12 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
               ),
               decoration: BoxDecoration(
                 color: shouldPartialHighlight.value
-                    ? context.theme.primaryColor.withAlpha(100)
+                    ? context.theme.colorScheme.primary.withAlpha(100)
                     : shouldHighlight.value
-                        ? context.theme.primaryColor
+                        ? context.theme.colorScheme.primary
                         : hoverHighlight.value
                             ? context.theme.colorScheme.secondary.withAlpha(200)
-                            : context.theme.backgroundColor,
+                            : null,
                 borderRadius: BorderRadius.circular(
                     shouldPartialHighlight.value || shouldHighlight.value || hoverHighlight.value ? 8 : 0),
               ),
@@ -224,15 +224,6 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                       double spaceBetween = (colCount - 1) * 30;
                       double maxWidth = ((availableWidth - spaceBetween) / colCount).floorToDouble();
 
-                      Color alphaWithoutAlpha = Color.fromARGB(
-                        255,
-                        (context.theme.primaryColor.red * 0.8).toInt() +
-                            (context.theme.backgroundColor.red * 0.2).toInt(),
-                        (context.theme.primaryColor.green * 0.8).toInt() +
-                            (context.theme.backgroundColor.green * 0.2).toInt(),
-                        (context.theme.primaryColor.blue * 0.8).toInt() +
-                            (context.theme.backgroundColor.blue * 0.2).toInt(),
-                      );
                       MessageMarkers? markers = ChatManager().getChatController(widget.chat)?.messageMarkers;
                       return ConstrainedBox(
                         constraints: BoxConstraints(
@@ -261,7 +252,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                           height: maxWidth * 0.2,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(maxWidth * 0.1),
-                                            color: alphaWithoutAlpha,
+                                            color: context.theme.colorScheme.primary,
                                           ),
                                           margin: EdgeInsets.only(right: 3),
                                         ),
@@ -279,14 +270,16 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                               decoration: BoxDecoration(
                                                 borderRadius: BorderRadius.circular(maxWidth * 0.1),
                                                 color: (widget.chat.hasUnreadMessage ?? false)
-                                                    ? alphaWithoutAlpha
-                                                    : context.textTheme.labelLarge!.color,
+                                                    ? context.theme.colorScheme.primaryContainer
+                                                    : context.theme.colorScheme.tertiaryContainer,
                                               ),
                                             ),
                                             Icon(
                                               CupertinoIcons.bell_slash_fill,
                                               size: maxWidth * 0.14,
-                                              color: Colors.white,
+                                              color: (widget.chat.hasUnreadMessage ?? false)
+                                                  ? context.theme.colorScheme.onPrimaryContainer
+                                                  : context.theme.colorScheme.onTertiaryContainer,
                                             ),
                                           ],
                                         ),
@@ -298,7 +291,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                     top: maxWidth * 0.075,
                                   ),
                                   child: ConstrainedBox(
-                                    constraints: BoxConstraints(minHeight: context.textTheme.labelLarge!.fontSize! * 2),
+                                    constraints: BoxConstraints(minHeight: context.textTheme.bodyMedium!.fontSize! * 2),
                                     child: buildSubtitle(),
                                   ),
                                 ),
@@ -343,11 +336,11 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                             width: maxWidth * 0.27,
                                             height: maxWidth * 0.27,
                                             decoration: BoxDecoration(
-                                              border: Border.all(color: Theme.of(context).backgroundColor, width: 1),
+                                              border: Border.all(color: context.theme.colorScheme.background, width: 1),
                                               borderRadius: BorderRadius.circular(30),
                                               color: (widget.chat.hasUnreadMessage ?? false)
-                                                  ? alphaWithoutAlpha
-                                                  : context.textTheme.labelLarge!.color,
+                                                  ? context.theme.colorScheme.primaryContainer
+                                                  : context.theme.colorScheme.tertiaryContainer,
                                             ),
                                           ),
                                           Transform.rotate(
@@ -375,7 +368,9 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                                           Indicator.READ
                                                       ? CupertinoIcons.location_north
                                                       : CupertinoIcons.location_fill,
-                                              color: Colors.white,
+                                              color: (widget.chat.hasUnreadMessage ?? false)
+                                                  ? context.theme.colorScheme.onPrimaryContainer
+                                                  : context.theme.colorScheme.onTertiaryContainer,
                                               size: maxWidth * 0.14,
                                             ),
                                           ),

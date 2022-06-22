@@ -85,16 +85,13 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-            ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-        Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(primaryColor: widget.chat.isTextForwarding ? Colors.green : Theme.of(context).primaryColor),
+        data: context.theme.copyWith(colorScheme: context.theme.colorScheme.copyWith(primaryContainer: widget.chat.isTextForwarding ? Colors.green : context.theme.colorScheme.primaryContainer)),
         child: TitleBarWrapper(
           child: Scaffold(
             backgroundColor: Colors.transparent,
@@ -109,7 +106,7 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                       child: Container(
-                        color: oledDarkTheme.colorScheme.secondary.withOpacity(0.3),
+                        color: context.theme.colorScheme.properSurface.withOpacity(0.3),
                       ),
                     ),
                   ),
@@ -144,9 +141,7 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
                               },
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).backgroundColor.computeLuminance() > 0.5
-                                      ? Theme.of(context).colorScheme.secondary.lightenPercent(50)
-                                      : Theme.of(context).colorScheme.secondary.darkenPercent(50),
+                                  color: context.theme.colorScheme.properSurface,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 width: min(context.width - 50, 500),
@@ -219,13 +214,13 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               widget.chat.isPinned! ? "Unpin" : "Pin",
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
             ),
             trailing: Icon(
               widget.chat.isPinned!
                   ? (ios ? cupertino.CupertinoIcons.pin_slash : Icons.star_outline)
                   : (ios ? cupertino.CupertinoIcons.pin : Icons.star),
-              color: Theme.of(context).textTheme.bodyMedium!.color,
+              color: context.theme.colorScheme.properOnSurface
             ),
           ),
         ),
@@ -242,13 +237,13 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
             ),
             trailing: Icon(
               widget.chat.muteType == "mute"
                   ? (ios ? cupertino.CupertinoIcons.bell : Icons.notifications_active)
                   : (ios ? cupertino.CupertinoIcons.bell_slash : Icons.notifications_off),
-              color: Theme.of(context).textTheme.bodyMedium!.color,
+              color: context.theme.colorScheme.properOnSurface
             ),
           ),
         ),
@@ -265,13 +260,13 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
             ),
             trailing: Icon(
               widget.chat.hasUnreadMessage!
                   ? (ios ? cupertino.CupertinoIcons.person_crop_circle_badge_xmark : Icons.mark_chat_unread)
                   : (ios ? cupertino.CupertinoIcons.person_crop_circle_badge_checkmark : Icons.mark_chat_read),
-              color: Theme.of(context).textTheme.bodyMedium!.color,
+              color: context.theme.colorScheme.properOnSurface
             ),
           ),
         ),
@@ -292,13 +287,13 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               widget.chat.isArchived! ? 'Unarchive' : 'Archive',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
             ),
             trailing: Icon(
               widget.chat.isArchived!
                   ? (ios ? cupertino.CupertinoIcons.tray_arrow_up : Icons.unarchive)
                   : (ios ? cupertino.CupertinoIcons.tray_arrow_down : Icons.archive),
-              color: Theme.of(context).textTheme.bodyMedium!.color,
+              color: context.theme.colorScheme.properOnSurface
             ),
           ),
         ),
@@ -316,11 +311,11 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               'Delete',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
             ),
             trailing: Icon(
               cupertino.CupertinoIcons.trash,
-              color: Theme.of(context).textTheme.bodyMedium!.color,
+              color: context.theme.colorScheme.properOnSurface
             ),
           ),
         ),
@@ -332,7 +327,7 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
-          color: Theme.of(context).colorScheme.secondary.withAlpha(150),
+          color: context.theme.colorScheme.properSurface.withAlpha(150),
           width: maxMenuWidth,
           child: Column(
             mainAxisSize: MainAxisSize.min,

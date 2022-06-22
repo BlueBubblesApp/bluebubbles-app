@@ -34,7 +34,7 @@ class PinnedTileTextBubble extends StatelessWidget {
       return Container();
     }
 
-    TextStyle style = Get.textTheme.labelLarge!.apply(fontSizeFactor: 0.85);
+    TextStyle style = context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onPrimaryContainer);
 
     if (hide && !generate) style = style.apply(color: Colors.transparent);
 
@@ -87,7 +87,7 @@ class PinnedTileTextBubble extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10.0),
-                      color: context.theme.colorScheme.secondary.withOpacity(0.8),
+                      color: context.theme.colorScheme.primaryContainer.withOpacity(0.8),
                     ),
                     child: Text(
                       messageText,
@@ -117,7 +117,7 @@ class TailPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()..color = Get.theme.colorScheme.secondary.withOpacity(0.8);
+    Paint paint = Paint()..color = Get.theme.colorScheme.primaryContainer.withOpacity(0.8);
     Path path = Path();
 
     if (leftSide) {

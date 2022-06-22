@@ -63,6 +63,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   RxBool shouldPartialHighlight = false.obs;
   RxBool hoverHighlight = false.obs;
 
+  Offset? longPressPosition;
+
   bool get selected {
     if (widget.selected.isEmpty) return false;
     return widget.selected.where((element) => widget.chat.guid == element.guid).isNotEmpty;
@@ -127,7 +129,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     }
   }
 
-  void onTapUp(details) {
+  void onTapUp() {
     if (widget.inSelectMode && widget.onSelect != null) {
       onSelect();
     } else {
@@ -141,10 +143,6 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         (route) => route.isFirst,
       );
     }
-  }
-
-  void onTapUpBypass() {
-    onTapUp(TapUpDetails(kind: PointerDeviceKind.touch));
   }
 
   Widget buildSlider(Widget child) {
@@ -246,16 +244,17 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       final hideInfo = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
       final generateNames =
           SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
-      TextStyle style = Theme.of(context).textTheme.bodyMedium!.copyWith(
+      TextStyle style = (SettingsManager().settings.skin.value == Skins.Material ? context.theme.textTheme.bodyMedium : context.theme.textTheme.bodyLarge)!.copyWith(
           fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
               (widget.chat.hasUnreadMessage ?? false)
               ? FontWeight.bold
               : shouldHighlight.value
               ? FontWeight.w600
-              : null,
+              : SettingsManager().settings.skin.value == Skins.iOS
+              ? FontWeight.w600 : null,
           color: shouldHighlight.value
               ? SettingsManager().settings.skin.value == Skins.iOS
-              ? Colors.white
+              ? context.theme.colorScheme.onBackground
               : null
               : null)
           .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0);
@@ -288,7 +287,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         final generateContent = SettingsManager().settings.redactedMode.value &&
             SettingsManager().settings.generateFakeMessageContent.value;
 
-        TextStyle style = Theme.of(context).textTheme.labelLarge!.copyWith(
+        TextStyle style = context.theme.textTheme.bodySmall!.copyWith(
               fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
                   (widget.chat.hasUnreadMessage ?? false)
                   ? FontWeight.w600
@@ -297,10 +296,11 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                   (widget.chat.hasUnreadMessage ?? false)
                   ? Theme.of(context).textTheme.bodyMedium!.color : shouldHighlight.value
                   ? SettingsManager().settings.skin.value == Skins.iOS
-                      ? Colors.white.withOpacity(0.75)
+                      ? context.theme.colorScheme.outline
                       : null
-                  : context.textTheme.labelLarge!.color!.withOpacity(0.85),
-            ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 0.95 : 1.0);
+                  : context.theme.colorScheme.outline,
+              height: 1.5
+            ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.05 : 1.0);
 
         if (generateContent) {
           latestText = widget.chat.fakeLatestMessageText ?? "";
@@ -308,17 +308,14 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           style = style.copyWith(color: Colors.transparent);
         }
 
-        return Padding(
-          padding: const EdgeInsets.only(top: 4.0),
-          child: RichText(
-            text: TextSpan(
-                children: MessageHelper.buildEmojiText(
-              latestText,
-              style,
-            )),
-            overflow: TextOverflow.ellipsis,
-            maxLines: SettingsManager().settings.skin.value == Skins.Material ? 3 : 2,
-          ),
+        return RichText(
+          text: TextSpan(
+              children: MessageHelper.buildEmojiText(
+            latestText,
+            style,
+          )),
+          overflow: TextOverflow.ellipsis,
+          maxLines: SettingsManager().settings.skin.value == Skins.Material ? 3 : 2,
         );
       },
     );
@@ -344,19 +341,19 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                         chat: widget.chat,
                         size: 40,
                         editable: false,
-                        onTap: onTapUpBypass,
+                        onTap: onTapUp,
                       )
                     : Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(30),
-                          color: Theme.of(context).primaryColor,
+                          color: context.theme.colorScheme.primary,
                         ),
                         width: 40,
                         height: 40,
                         child: Center(
                           child: Icon(
                             Icons.check,
-                            color: Theme.of(context).textTheme.bodyMedium!.color,
+                            color: context.theme.colorScheme.onPrimary,
                             size: 20,
                           ),
                         ),
@@ -385,13 +382,19 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     return Obx(() => !SettingsManager().settings.statusIndicatorsOnChats.value || kIsWeb || markers == null
         ? Text(buildDate(widget.chat.latestMessageDate ?? widget.chat.latestMessageGetter?.dateCreated),
             textAlign: TextAlign.right,
-            style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                  color: shouldHighlight.value
+            style: context.theme.textTheme.bodySmall!.copyWith(
+                  color: SettingsManager().settings.skin.value == Skins.Material &&
+                      (widget.chat.hasUnreadMessage ?? false)
+                      ? Theme.of(context).textTheme.bodyMedium!.color : shouldHighlight.value
                       ? SettingsManager().settings.skin.value == Skins.iOS
-                          ? Colors.white.withOpacity(0.75)
+                          ? context.theme.colorScheme.outline
                           : null
-                      : context.textTheme.labelLarge!.color!.withOpacity(0.85),
-                ),
+                      : context.theme.colorScheme.outline,
+                  fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
+                      (widget.chat.hasUnreadMessage ?? false)
+                      ? FontWeight.w600
+                      : shouldHighlight.value ? FontWeight.w500 : null,
+                ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1 : 1.1),
             overflow: TextOverflow.clip)
         : ConstrainedBox(
             constraints: BoxConstraints(maxWidth: 100.0),
@@ -410,15 +413,21 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                                   ? "Sent\n${buildDate(message?.dateCreated)}"
                                   : buildDate(message?.dateCreated))),
                   textAlign: TextAlign.right,
-                  style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                  style: context.theme.textTheme.bodySmall!.copyWith(
                         color: (message?.error ?? 0) > 0
                             ? Colors.red
-                            : shouldHighlight.value
+                            : SettingsManager().settings.skin.value == Skins.Material &&
+                            (widget.chat.hasUnreadMessage ?? false)
+                            ? Theme.of(context).textTheme.bodyMedium!.color : shouldHighlight.value
                                 ? SettingsManager().settings.skin.value == Skins.iOS
-                                    ? Colors.white.withOpacity(0.75)
+                                    ? context.theme.colorScheme.outline
                                     : null
-                                : context.textTheme.labelLarge!.color!.withOpacity(0.85),
-                      ),
+                                : context.theme.colorScheme.outline,
+                        fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
+                            (widget.chat.hasUnreadMessage ?? false)
+                            ? FontWeight.w600
+                            : shouldHighlight.value ? FontWeight.w500 : null,
+                      ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1 : 1.1),
                   overflow: TextOverflow.clip);
             }),
           ));
@@ -481,21 +490,18 @@ class _Cupertino extends StatelessWidget {
             duration: Duration(milliseconds: 100),
             decoration: BoxDecoration(
               color: parent.shouldPartialHighlight.value
-                  ? context.theme.primaryColor.withAlpha(100)
+                  ? context.theme.colorScheme.primary.withAlpha(100)
                   : parent.shouldHighlight.value
-                      ? context.theme.primaryColor
+                      ? context.theme.colorScheme.primary
                       : parent.hoverHighlight.value
                           ? context.theme.colorScheme.secondary.withAlpha(200)
-                          : context.theme.backgroundColor,
+                          : null,
               borderRadius: BorderRadius.circular(
                   parent.shouldHighlight.value || parent.shouldPartialHighlight.value || parent.hoverHighlight.value
                       ? 8
                       : 0),
             ),
             child: GestureDetector(
-              onTapUp: (details) {
-                parent.onTapUp(details);
-              },
               onSecondaryTapUp: (details) async {
                 if (kIsWeb) {
                   (await html.document.onContextMenu.first).preventDefault();
@@ -510,111 +516,104 @@ class _Cupertino extends StatelessWidget {
                 );
                 parent.shouldPartialHighlight.value = false;
               },
-              onLongPressStart: (details) async {
-                await peekChat(context, parent.widget.chat, details.globalPosition);
-              },
-              child: Stack(
-                alignment: Alignment.centerLeft,
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20.0),
-                    child: Obx(
-                      () => Container(
-                        decoration: BoxDecoration(
-                          border: (!SettingsManager().settings.hideDividers.value)
-                              ? Border(
-                                  bottom: BorderSide(
-                                    color: Theme.of(context).dividerColor,
-                                    width: 0.5,
-                                  ),
-                                )
-                              : null,
-                        ),
-                        child: ListTile(
-                          mouseCursor: MouseCursor.defer,
-                          enableFeedback: true,
-                          dense: SettingsManager().settings.denseChatTiles.value,
-                          contentPadding: EdgeInsets.only(left: 0),
-                          minVerticalPadding: 10,
-                          title: parent.buildTitle(),
-                          subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
-                          leading: parent.buildLeading(),
-                          trailing: Container(
-                            padding: EdgeInsets.only(right: 8),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: <Widget>[
-                                  Container(
-                                    padding: EdgeInsets.only(right: 3),
-                                    child: parent._buildDate(),
-                                  ),
-                                  Icon(
-                                    SettingsManager().settings.skin.value == Skins.iOS
-                                        ? CupertinoIcons.forward
-                                        : Icons.arrow_forward,
-                                    color: parent.shouldHighlight.value
-                                        ? Colors.white
-                                        : context.textTheme.labelLarge!.color!,
-                                    size: 15,
-                                  ),
-                                ],
+              child: InkWell(
+                onTap: () {
+                  parent.onTapUp();
+                },
+                onLongPress: () async {
+                  await peekChat(context, parent.widget.chat, parent.longPressPosition ?? Offset.zero);
+                },
+                child: Listener(
+                  onPointerDown: (event) {
+                    parent.longPressPosition = event.position;
+                  },
+                  child: Stack(
+                    alignment: Alignment.centerLeft,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.only(left: 20.0),
+                        child: Obx(
+                          () => Container(
+                            decoration: BoxDecoration(
+                              border: (!SettingsManager().settings.hideDividers.value)
+                                  ? Border(
+                                      bottom: BorderSide(
+                                        color: context.theme.colorScheme.background.lightenOrDarken(15),
+                                        width: 0.5,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            child: ListTile(
+                              mouseCursor: MouseCursor.defer,
+                              enableFeedback: true,
+                              dense: SettingsManager().settings.denseChatTiles.value,
+                              contentPadding: EdgeInsets.only(left: 0),
+                              minVerticalPadding: 10,
+                              title: parent.buildTitle(),
+                              subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
+                              leading: parent.buildLeading(),
+                              trailing: Container(
+                                padding: EdgeInsets.only(right: 8, top: 10),
+                                height: double.infinity,
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Container(
+                                      padding: EdgeInsets.only(right: 7),
+                                      child: parent._buildDate(),
+                                    ),
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          SettingsManager().settings.skin.value == Skins.iOS
+                                              ? CupertinoIcons.forward
+                                              : Icons.arrow_forward,
+                                          color: parent.shouldHighlight.value
+                                              ? Colors.white
+                                              : context.theme.colorScheme.outline,
+                                          size: 15,
+                                        ),
+                                        parent.widget.chat.muteType == "mute"
+                                            ? Padding(
+                                              padding: const EdgeInsets.only(top: 5.0),
+                                              child: Icon(
+                                                CupertinoIcons.bell_slash_fill,
+                                                color: parent.shouldHighlight.value
+                                                    ? Colors.white
+                                                    : context.theme.colorScheme.outline,
+                                                size: 12,
+                                              )
+                                            )
+                                            : Container()
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 6.0),
-                    child: Container(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Stack(
-                            alignment: AlignmentDirectional.centerStart,
-                            children: [
-                              (parent.widget.chat.muteType != "mute" && parent.widget.chat.hasUnreadMessage!)
-                                  ? Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(35),
-                                        color: Theme.of(context).primaryColor.withOpacity(0.8),
-                                      ),
-                                      width: 10,
-                                      height: 10,
-                                    )
-                                  : Container(),
-                              parent.widget.chat.isPinned!
-                                  ? Icon(
-                                      CupertinoIcons.pin,
-                                      size: 10,
-                                      color: Colors
-                                          .yellow[AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? 100 : 700],
-                                    )
-                                  : Container(),
-                            ],
-                          ),
-                          parent.widget.chat.muteType == "mute"
-                              ? SvgPicture.asset(
-                                  "assets/icon/moon.svg",
-                                  color: parent.shouldHighlight.value
-                                      ? Colors.white
-                                      : parentProps.chat.hasUnreadMessage!
-                                          ? Theme.of(context).primaryColor.withOpacity(0.8)
-                                          : Theme.of(context).textTheme.labelLarge!.color,
-                                  width: 10,
-                                  height: 10,
-                                )
-                              : Container()
-                        ],
+                      Padding(
+                        padding: const EdgeInsets.only(left: 5.0),
+                        child: (parent.widget.chat.muteType != "mute" && parent.widget.chat.hasUnreadMessage!)
+                            ? Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(35),
+                                  color: context.theme.colorScheme.primary,
+                                ),
+                                width: 10,
+                                height: 10,
+                              )
+                            : Container(),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -631,24 +630,19 @@ class _Material extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        5,
-        3,
-        0,
-        3,
-      ),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (event) => parent.hoverHighlight.value = true,
-        onExit: (event) => parent.hoverHighlight.value = false,
-        child: Obx(
-          () {
-            bool shouldPartialHighlight = parent.shouldPartialHighlight.value;
-            bool shouldHighlight = parent.shouldHighlight.value;
-            bool hoverHighlight = parent.hoverHighlight.value;
-            return Material(
-              color: Colors.transparent,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (event) => parent.hoverHighlight.value = true,
+      onExit: (event) => parent.hoverHighlight.value = false,
+      child: Obx(
+        () {
+          bool shouldPartialHighlight = parent.shouldPartialHighlight.value;
+          bool shouldHighlight = parent.shouldHighlight.value;
+          bool hoverHighlight = parent.hoverHighlight.value;
+          return Material(
+            color: Colors.transparent,
+            child: Padding(
+              padding: EdgeInsets.only(left: 10),
               child: AnimatedContainer(
                 clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(
@@ -657,14 +651,14 @@ class _Material extends StatelessWidget {
                     bottomLeft: Radius.circular(20),
                   ),
                   color: parent.selected
-                      ? context.theme.backgroundColor.lightenOrDarken(20)
+                      ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
                       : shouldPartialHighlight
                           ? context.theme.primaryColor.withAlpha(100)
                           : shouldHighlight
                               ? context.theme.colorScheme.secondary
                               : hoverHighlight
                                   ? context.theme.colorScheme.secondary.withAlpha(200)
-                                  : context.theme.backgroundColor,
+                                  : null,
                 ),
                 duration: Duration(milliseconds: 100),
                 child: GestureDetector(
@@ -684,6 +678,10 @@ class _Material extends StatelessWidget {
                   },
                   child: InkWell(
                     mouseCursor: MouseCursor.defer,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      bottomLeft: Radius.circular(20),
+                    ),
                     onTap: () {
                       if (parent.selected) {
                         parent.onSelect();
@@ -699,75 +697,75 @@ class _Material extends StatelessWidget {
                       parent.onSelect();
                     },
                     child: Obx(
-                      () => Padding(
-                        padding: EdgeInsets.only(left: kIsDesktop ? 5 : 0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: (!SettingsManager().settings.hideDividers.value)
-                                ? Border(
-                                    top: BorderSide(
-                                      color: Theme.of(context).dividerColor,
-                                      width: 0.5,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          child: ListTile(
-                            mouseCursor: MouseCursor.defer,
-                            dense: SettingsManager().settings.denseChatTiles.value,
-                            title: parent.buildTitle(),
-                            subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
-                            minVerticalPadding: 10,
-                            leading: Stack(
-                              alignment: Alignment.topRight,
-                              children: [
-                                parent.buildLeading(),
-                                if (parent.widget.chat.muteType != "mute")
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      color: parent.widget.chat.hasUnreadMessage!
-                                          ? Theme.of(context).primaryColor
-                                          : Colors.transparent,
-                                    ),
+                      () => Container(
+                        decoration: BoxDecoration(
+                          border: (!SettingsManager().settings.hideDividers.value)
+                              ? Border(
+                                  top: BorderSide(
+                                    color: context.theme.colorScheme.background.lightenOrDarken(15),
+                                    width: 0.5,
                                   ),
-                              ],
-                            ),
-                            trailing: Container(
-                              padding: EdgeInsets.only(right: 3),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    Container(
-                                      padding: EdgeInsets.only(right: 2, left: 2),
-                                      child: parent._buildDate(),
-                                    ),
-                                    SizedBox(height: 5),
-                                    Row(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        if (parent.widget.chat.isPinned!)
-                                          Icon(Icons.push_pin,
-                                              size: 15, color: Theme.of(context).textTheme.labelLarge!.color),
-                                        SizedBox(width: 5),
-                                        if (parent.widget.chat.muteType == "mute")
-                                          Icon(
-                                            Icons.notifications_off,
-                                            color: parent.widget.chat.hasUnreadMessage!
-                                                ? Theme.of(context).primaryColor.withOpacity(0.8)
-                                                : Theme.of(context).textTheme.labelLarge!.color,
-                                            size: 15,
+                                )
+                              : null,
+                        ),
+                        child: ListTile(
+                          mouseCursor: MouseCursor.defer,
+                          dense: SettingsManager().settings.denseChatTiles.value,
+                          title: parent.buildTitle(),
+                          subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
+                          minVerticalPadding: 10,
+                          contentPadding: EdgeInsets.only(left: 6, right: 16),
+                          leading: parent.buildLeading(),
+                          trailing: Container(
+                            padding: EdgeInsets.only(right: 3),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.only(right: 2, left: 2),
+                                        child: parent._buildDate(),
+                                      ),
+                                      if (parent.widget.chat.muteType != "mute" && parent.widget.chat.hasUnreadMessage!)
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 8.0),
+                                          child: Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(20),
+                                              color: context.theme.colorScheme.primary
+                                            ),
                                           ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                        ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 5),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      if (parent.widget.chat.isPinned!)
+                                        Icon(Icons.push_pin_outlined,
+                                            size: 15, color: context.theme.colorScheme.outline),
+                                      SizedBox(width: 5),
+                                      if (parent.widget.chat.muteType == "mute")
+                                        Icon(
+                                          Icons.notifications_off_outlined,
+                                          color: parent.widget.chat.hasUnreadMessage!
+                                              ? context.theme.colorScheme.primary
+                                              : context.theme.colorScheme.outline,
+                                          size: 15,
+                                        ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -777,9 +775,9 @@ class _Material extends StatelessWidget {
                   ),
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -814,7 +812,7 @@ class _Samsung extends StatelessWidget {
                     ? context.theme.backgroundColor.lightenOrDarken(10)
                     : hoverHighlight
                     ? context.theme.backgroundColor.withAlpha(100)
-                    : Colors.transparent,),
+                    : null),
               child: GestureDetector(
                 onSecondaryTapUp: (details) async {
                   if (kIsWeb) {
@@ -852,7 +850,7 @@ class _Samsung extends StatelessWidget {
                         border: (!SettingsManager().settings.hideDividers.value)
                             ? Border(
                                 top: BorderSide(
-                                  color: Color(0xff2F2F2F),
+                                  color: context.theme.colorScheme.background.lightenOrDarken(15),
                                   width: 0.5,
                                 ),
                               )
@@ -875,7 +873,7 @@ class _Samsung extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(30),
                                   color: parent.widget.chat.hasUnreadMessage!
-                                      ? Theme.of(context).primaryColor
+                                      ? context.theme.colorScheme.primary
                                       : Colors.transparent,
                                 ),
                               ),
@@ -893,7 +891,7 @@ class _Samsung extends StatelessWidget {
                                 if (parent.widget.chat.muteType == "mute")
                                   Icon(
                                     Icons.notifications_off,
-                                    color: Theme.of(context).textTheme.labelLarge!.color,
+                                    color: context.theme.colorScheme.onBackground,
                                     size: 15,
                                   ),
                                 Container(
