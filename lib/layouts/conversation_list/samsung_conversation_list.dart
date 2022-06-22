@@ -1,5 +1,6 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -17,6 +18,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -246,20 +248,18 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-            ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness:
-            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Obx(() => buildForDevice()),
     );
   }
 
   Widget _extendedTitle(Animation<double> animation) {
+    bool showArchived = widget.parent.widget.showArchivedChats;
+    bool showUnknown = widget.parent.widget.showUnknownSenders;
     return FadeTransition(
       opacity: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
         parent: animation,
@@ -270,15 +270,17 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
         return Text(
             selected.isNotEmpty
                 ? "${selected.length} selected"
-                : unreads > 0
+                : showArchived ? "Archived" : showUnknown ? "Unknown Senders" : unreads > 0
                     ? "$unreads unread message${unreads > 1 ? "s" : ""}"
                     : "Messages",
-            textScaleFactor: 2.5);
+            style: context.theme.textTheme.displayMedium!.copyWith(color: context.theme.colorScheme.onBackground));
       })),
     );
   }
 
   Widget _collapsedTitle(Animation<double> animation) {
+    bool showArchived = widget.parent.widget.showArchivedChats;
+    bool showUnknown = widget.parent.widget.showUnknownSenders;
     return FadeTransition(
       opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
         parent: animation,
@@ -287,7 +289,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
       child: Align(
         alignment: Alignment.bottomLeft,
         child: Container(
-          padding: EdgeInsets.only(left: 16),
+          padding: EdgeInsets.only(left: showArchived || showUnknown ? 60 : 16),
           height: 50,
           child: Align(
             alignment: Alignment.centerLeft,
@@ -313,106 +315,110 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
     return Align(
       alignment: Alignment.bottomRight,
       child: Container(
-        padding: EdgeInsets.only(right: 0),
         height: 50,
         child: Align(
-          alignment: Alignment.centerRight,
+          alignment: Alignment.center,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              (!showArchived && !showUnknown)
-                  ? GestureDetector(
-                      onTap: () async {
-                        CustomNavigator.pushLeft(
-                          context,
-                          SearchView(),
-                        );
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (showArchived || showUnknown)
+                    IconButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
                       },
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Icon(
-                          Icons.search,
-                          color: context.textTheme.bodyMedium!.color,
-                        ),
-                      ),
-                    )
-                  : Container(),
-              (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
-                  ? GestureDetector(
-                      onTap: () {
+                      padding: EdgeInsets.zero,
+                      icon: buildBackButton(context)
+                    ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  (!showArchived && !showUnknown)
+                      ? IconButton(
+                    onPressed: () async {
+                      CustomNavigator.pushLeft(
+                        context,
+                        SearchView(),
+                      );
+                    },
+                    icon: Icon(
+                      Icons.search,
+                      color: context.theme.colorScheme.properOnSurface,
+                    ),
+                  ) : SizedBox.shrink(),
+                  (SettingsManager().settings.moveChatCreatorToHeader.value &&
+                      !showArchived &&
+                      !showUnknown)
+                      ? GestureDetector(
+                    onLongPress: SettingsManager().settings.cameraFAB.value ? () async {
+                      bool camera = await Permission.camera.isGranted;
+                      if (!camera) {
+                        bool granted = (await Permission.camera.request()) ==
+                            PermissionStatus.granted;
+                        if (!granted) {
+                          showSnackbar("Error", "Camera was denied");
+                          return;
+                        }
+                      }
+
+                      String appDocPath = SettingsManager().appDocDir.path;
+                      String ext = ".png";
+                      File file =
+                      File("$appDocPath/attachments/${randomString(16)}$ext");
+                      await file.create(recursive: true);
+
+                      // Take the picture after opening the camera
+                      await MethodChannelInterface().invokeMethod(
+                          "open-camera", {"path": file.path, "type": "camera"});
+
+                      // If we don't get data back, return outta here
+                      if (!file.existsSync()) return;
+                      if (file.statSync().size == 0) {
+                        file.deleteSync();
+                        return;
+                      }
+
+                      widget.parent.openNewChatCreator(existing: [
+                        PlatformFile(
+                          name: file.path.split("/").last,
+                          path: file.path,
+                          bytes: file.readAsBytesSync(),
+                          size: file.lengthSync(),
+                        )
+                      ]);
+                    } : null,
+                    child: IconButton(
+                      onPressed: () {
                         EventDispatcher().emit("update-highlight", null);
                         CustomNavigator.pushAndRemoveUntil(
                           context,
                           ConversationView(
                             isCreator: true,
                           ),
-                          (route) => route.isFirst,
+                              (route) => route.isFirst,
                         );
                       },
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Icon(
-                          Icons.create,
-                          color: context.textTheme.bodyMedium!.color,
-                        ),
+                      icon: Icon(
+                        Icons.create_outlined,
+                        color: context.theme.colorScheme.properOnSurface,
                       ),
-                    )
-                  : Container(),
-              (SettingsManager().settings.moveChatCreatorToHeader.value &&
-                      SettingsManager().settings.cameraFAB.value &&
-                      !showArchived &&
-                      !showUnknown)
-                  ? GestureDetector(
-                      onTap: () async {
-                        bool camera = await Permission.camera.isGranted;
-                        if (!camera) {
-                          bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
-                          if (!granted) {
-                            showSnackbar("Error", "Camera was denied");
-                            return;
-                          }
-                        }
-
-                        String appDocPath = SettingsManager().appDocDir.path;
-                        String ext = ".png";
-                        File file = File("$appDocPath/attachments/${randomString(16)}$ext");
-                        await file.create(recursive: true);
-
-                        // Take the picture after opening the camera
-                        await MethodChannelInterface()
-                            .invokeMethod("open-camera", {"path": file.path, "type": "camera"});
-
-                        // If we don't get data back, return outta here
-                        if (!file.existsSync()) return;
-                        if (file.statSync().size == 0) {
-                          file.deleteSync();
-                          return;
-                        }
-
-                        widget.parent.openNewChatCreator(existing: [
-                          PlatformFile(
-                            name: file.path.split("/").last,
-                            path: file.path,
-                            bytes: file.readAsBytesSync(),
-                            size: file.lengthSync(),
-                          )
-                        ]);
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Icon(
-                          Icons.photo_camera,
-                          color: context.textTheme.bodyMedium!.color,
-                        ),
-                      ),
-                    )
-                  : Container(),
-              Padding(
-                padding: EdgeInsets.only(right: 8.0),
-                child: Container(
-                  width: 40,
-                  child: widget.parent.buildSettingsButton(),
-                ),
+                    ),
+                  )
+                      : Container(),
+                  Padding(
+                    padding: EdgeInsets.only(right: 8.0),
+                    child: Container(
+                      width: 40,
+                      child: widget.parent.buildSettingsButton(),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -433,6 +439,10 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
   Widget buildChatList() {
     bool showArchived = widget.parent.widget.showArchivedChats;
     bool showUnknown = widget.parent.widget.showUnknownSenders;
+    Color headerColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
     return WillPopScope(
       onWillPop: () async {
         if (selected.isNotEmpty) {
@@ -443,7 +453,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
         return true;
       },
       child: Scaffold(
-        backgroundColor: context.theme.backgroundColor,
+        backgroundColor: headerColor,
         body: SafeArea(
           child: NotificationListener<ScrollEndNotification>(
             onNotification: (_) {
@@ -468,11 +478,13 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                   controller: scrollController,
                   slivers: [
                     SliverAppBar(
-                      backgroundColor: context.theme.backgroundColor,
+                      backgroundColor: headerColor,
                       pinned: true,
                       stretch: true,
                       expandedHeight: context.height / 3,
                       elevation: 0,
+                      scrolledUnderElevation: 0,
+                      automaticallyImplyLeading: false,
                       flexibleSpace: LayoutBuilder(
                         builder: (context, constraints) {
                           final expandRatio = _calculateExpandRatio(constraints, context);
@@ -496,7 +508,11 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                           child: Obx(
                             () {
                               return Container(
-                                color: Theme.of(context).backgroundColor,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(25),
+                                  color: tileColor,
+                                ),
+                                clipBehavior: Clip.antiAlias,
                                 child: ListView.builder(
                                   shrinkWrap: true,
                                   physics: NeverScrollableScrollPhysics(),
@@ -563,7 +579,11 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                                   );
                                 }
                                 return Container(
-                                  color: Theme.of(context).backgroundColor,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(25),
+                                    color: tileColor,
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
                                   child: ListView.builder(
                                     shrinkWrap: true,
                                     physics: NeverScrollableScrollPhysics(),
@@ -603,62 +623,57 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
               : Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    if (([0, selected.length]).contains(selected.where((element) => element.hasUnreadMessage!).length))
-                      GestureDetector(
-                        onTap: () {
+                    if (([0, selected.length])
+                        .contains(selected.where((element) => element.hasUnreadMessage!).length))
+                      IconButton(
+                        onPressed: () {
                           for (Chat element in selected) {
                             element.toggleHasUnread(!element.hasUnreadMessage!);
                           }
-
                           selected = [];
                           if (mounted) setState(() {});
                         },
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Icon(
-                            selected[0].hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
-                            color: context.textTheme.bodyMedium!.color,
-                          ),
+                        icon: Icon(
+                          selected[0].hasUnreadMessage!
+                              ? Icons.mark_chat_read_outlined
+                              : Icons.mark_chat_unread_outlined,
+                          color: context.theme.colorScheme.primary,
                         ),
                       ),
-                    if (([0, selected.length]).contains(selected.where((element) => element.muteType == "mute").length))
-                      GestureDetector(
-                        onTap: () {
+                    if (([0, selected.length])
+                        .contains(selected.where((element) => element.muteType == "mute").length))
+                      IconButton(
+                        onPressed: () {
                           for (Chat element in selected) {
                             element.toggleMute(element.muteType != "mute");
                           }
-
                           selected = [];
                           if (mounted) setState(() {});
                         },
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Icon(
-                            selected[0].muteType == "mute" ? Icons.notifications_active : Icons.notifications_off,
-                            color: context.textTheme.bodyMedium!.color,
-                          ),
+                        icon: Icon(
+                          selected[0].muteType == "mute"
+                              ? Icons.notifications_active_outlined
+                              : Icons.notifications_off_outlined,
+                          color: context.theme.colorScheme.primary,
                         ),
                       ),
-                    if (([0, selected.length]).contains(selected.where((element) => element.isPinned!).length))
-                      GestureDetector(
-                        onTap: () {
+                    if (([0, selected.length])
+                        .contains(selected.where((element) => element.isPinned!).length))
+                      IconButton(
+                        onPressed: () {
                           for (Chat element in selected) {
                             element.togglePin(!element.isPinned!);
                           }
-
                           selected = [];
                           if (mounted) setState(() {});
                         },
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Icon(
-                            selected[0].isPinned! ? Icons.star_outline : Icons.star,
-                            color: context.textTheme.bodyMedium!.color,
-                          ),
+                        icon: Icon(
+                          selected[0].isPinned! ? Icons.push_pin_outlined : Icons.push_pin,
+                          color: context.theme.colorScheme.primary,
                         ),
                       ),
-                    GestureDetector(
-                      onTap: () {
+                    IconButton(
+                      onPressed: () {
                         for (Chat element in selected) {
                           if (element.isArchived!) {
                             ChatBloc().unArchiveChat(element);
@@ -669,33 +684,25 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                         selected = [];
                         if (mounted) setState(() {});
                       },
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Icon(
-                          showArchived ? Icons.unarchive : Icons.archive,
-                          color: context.textTheme.bodyMedium!.color,
-                        ),
+                      icon: Icon(
+                        showArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
+                        color: context.theme.colorScheme.primary,
                       ),
                     ),
-                    if (selected[0].isArchived!)
-                      GestureDetector(
-                        onTap: () {
-                          for (Chat element in selected) {
-                            ChatBloc().deleteChat(element);
-                            Chat.deleteChat(element);
-                          }
-
-                          selected = [];
-                          if (mounted) setState(() {});
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Icon(
-                            Icons.delete_forever,
-                            color: context.textTheme.bodyMedium!.color,
-                          ),
-                        ),
+                    IconButton(
+                      onPressed: () {
+                        for (Chat element in selected) {
+                          ChatBloc().deleteChat(element);
+                          Chat.deleteChat(element);
+                        }
+                        selected = [];
+                        if (mounted) setState(() {});
+                      },
+                      icon: Icon(
+                        Icons.delete_outlined,
+                        color: context.theme.colorScheme.primary,
                       ),
+                    ),
                   ],
                 ),
         ),
@@ -767,7 +774,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                     body: Center(
                       child: Container(
                           child: Text("Select a chat from the list",
-                              style: Theme.of(Get.context!).textTheme.labelLarge!.copyWith(fontSize: 18))),
+                              style: context.theme.textTheme.bodyLarge)),
                     ),
                   ))
             ],

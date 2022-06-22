@@ -7,8 +7,8 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:collection/collection.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -134,7 +134,8 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
   Widget build(BuildContext context) {
     super.build(context);
     String? initials = ContactManager().getContactInitials(widget.handle);
-
+    Color tileColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
     return GestureDetector(
       onTap: onAvatarTap,
       child: Container(
@@ -143,7 +144,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
         height: (widget.size ?? 40) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
         padding: EdgeInsets.all(widget.borderThickness),
         decoration: BoxDecoration(
-          color: SettingsManager().settings.skin.value == Skins.Samsung ? context.theme.colorScheme.secondary : context.theme.backgroundColor, // border color
+          color: SettingsManager().settings.skin.value == Skins.Samsung ? tileColor : context.theme.colorScheme.background, // border color
           shape: BoxShape.circle,
         ),
         child: Obx(() {
@@ -210,6 +211,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                     key: Key("$keyPrefix-avatar-text"),
                     style: TextStyle(
                       fontSize: widget.fontSize ?? 18,
+                      color: Colors.white,
                     ),
                     textAlign: TextAlign.center,
                   ),

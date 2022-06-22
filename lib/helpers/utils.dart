@@ -272,7 +272,13 @@ String buildDate(DateTime? dateTime) {
   } else if (dateTime.isYesterday()) {
     date = "Yesterday";
   } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
-    date = intl.DateFormat("EEEE").format(dateTime);
+    date = intl.DateFormat(SettingsManager().settings.skin.value != Skins.iOS ? "EEE" : "EEEE").format(dateTime);
+  } else if (SettingsManager().settings.skin.value == Skins.Material && DateTime.now().difference(dateTime.toLocal()).inDays <= 365) {
+    date = intl.DateFormat.MMMd().format(dateTime);
+  } else if (SettingsManager().settings.skin.value == Skins.Samsung && DateTime.now().year == dateTime.toLocal().year) {
+    date = intl.DateFormat.MMMd().format(dateTime);
+  } else if (SettingsManager().settings.skin.value == Skins.Samsung && DateTime.now().year != dateTime.toLocal().year) {
+    date = intl.DateFormat.yMMMd().format(dateTime);
   } else {
     date = intl.DateFormat.yMd().format(dateTime);
   }
