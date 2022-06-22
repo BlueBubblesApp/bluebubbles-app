@@ -53,3 +53,8 @@ pubspeck.lock
 *.env
 .vscode/launch.json
 /lib/repository/models/html/giphy.dart
+
+# Flatpak
+flatpak/.flatpak-builder
+flatpak/build
+flatpak/bluebubbles-linux-portable.tar.gz
