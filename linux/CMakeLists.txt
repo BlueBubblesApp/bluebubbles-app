@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(runner LANGUAGES CXX)
 
-set(BINARY_NAME "bluebubbles_app")
-set(APPLICATION_ID "com.bluebubbles.bluebubbles_app")
+set(BINARY_NAME "bluebubbles")
+set(APPLICATION_ID "app.bluebubbles.BlueBubbles")
 
 cmake_policy(SET CMP0063 NEW)
 
