@@ -11,15 +11,15 @@ finish-args:
   - --device=dri
   - --socket=pulseaudio
   - --socket=session-bus
+  - --socket=system-bus
   - --share=network
-  - --filesystem=home
+  - --filesystem=xdg-data:xdg-downloads
 modules:
   - name: bluebubbles
     buildsystem: simple
     only-arches:
       - x86_64
     build-commands:
-      - 'ldd --version'
       - 'mkdir -p bluebubbles'
       - 'tar -xf bluebubbles-linux-portable.tar.gz -C bluebubbles'
       - 'cp -r bluebubbles /app/'
@@ -36,8 +36,14 @@ modules:
       - 'mv libobjectbox.so/libobjectbox.so /app/lib/'
       - 'mkdir -p /app/share/metainfo'
       - 'cp -r com.bluebubbles.app.metainfo.xml /app/share/metainfo/'
+      - 'mkdir -p /app/share/icons/hicolor/64x64/apps'
+      - 'cp -r 64x64.png /app/share/icons/hicolor/64x64/apps/com.bluebubbles.app.png'
+      - 'mkdir -p /app/share/icons/hicolor/128x128/apps'
+      - 'cp -r 128x128.png /app/share/icons/hicolor/128x128/apps/com.bluebubbles.app.png'
+      - 'mkdir -p /app/share/icons/hicolor/256x256/apps'
+      - 'cp -r 256x256.png /app/share/icons/hicolor/256x256/apps/com.bluebubbles.app.png'
       - 'mkdir -p /app/share/icons/hicolor/512x512/apps'
-      - 'cp -r com.bluebubbles.app.png /app/share/icons/hicolor/512x512/apps/com.bluebubbles.app.png'
+      - 'cp -r 512x512.png /app/share/icons/hicolor/512x512/apps/com.bluebubbles.app.png'
       - 'mkdir -p /app/share/applications'
       - 'cp -r com.bluebubbles.app.desktop /app/share/applications/'
       - 'mkdir -p /app/share/appdata'
@@ -48,7 +54,13 @@ modules:
       - type: file
         path: com.bluebubbles.app.metainfo.xml
       - type: file
-        path: com.bluebubbles.app.png
+        path: icons/64x64.png
+      - type: file
+        path: icons/128x128.png
+      - type: file
+        path: icons/256x256.png
+      - type: file
+        path: icons/512x512.png
       - type: file
         path: com.bluebubbles.app.desktop
       - type: file
