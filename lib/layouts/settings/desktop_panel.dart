@@ -2,10 +2,12 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/main.dart';
@@ -16,6 +18,7 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:window_manager/window_manager.dart';
@@ -35,6 +38,8 @@ class DesktopPanel extends StatelessWidget {
     Color tileColor = context.theme.tileColor;
 
     RxList showButtons = RxList.generate(ReactionTypes.toList().length + 1, (index) => false);
+
+    final allowedEffects = WindowEffects.effects;
 
     return SettingsScaffold(
       title: "Desktop Settings",
@@ -154,6 +159,49 @@ class DesktopPanel extends StatelessWidget {
                       )
                   ],
                 ),
+              ),
+              SettingsHeader(
+                headerColor: headerColor,
+                tileColor: tileColor,
+                iosSubtitle: iosSubtitle,
+                materialSubtitle: materialSubtitle,
+                text: "Window Effects",
+              ),
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: tileColor,
+                        ),
+                        padding: EdgeInsets.only(left: 15),
+                        child: Text("Select Effect"),
+                      );
+                    }
+                    return SizedBox.shrink();
+                  }),
+                  Obx(
+                    () => SettingsOptions<WindowEffect>(
+                      initial: SettingsManager().settings.windowEffect.value,
+                      options: allowedEffects,
+                      textProcessing: (WindowEffect effect) => effect.toString().substring("WindowEffect.".length),
+                      onChanged: (WindowEffect? effect) async {
+                        effect ??= WindowEffect.disabled;
+                        SettingsManager().settings.windowEffect.value = effect;
+                        // await WindowEffects.setEffect(color: context.theme.backgroundColor);
+                      },
+                      title: "Effect",
+                      backgroundColor: tileColor,
+                      secondaryColor: headerColor,
+                      capitalize: true,
+                    ),
+                  ),
+                  Obx(() {
+                    return SettingsTile(title: "Description", subtitle: WindowEffects.descriptions[SettingsManager().settings.windowEffect.value]);
+                  }),
+                ],
               ),
               if (Platform.isWindows)
                 SettingsHeader(

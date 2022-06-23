@@ -445,6 +445,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     this.capitalize = true,
     this.backgroundColor,
     this.secondaryColor,
+    this.cursor = SystemMouseCursors.click,
   }) : super(key: key);
   final String title;
   final void Function(T?) onChanged;
@@ -457,6 +458,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
   final bool capitalize;
   final Color? backgroundColor;
   final Color? secondaryColor;
+  final MouseCursor cursor;
 
   @override
   Widget build(BuildContext context) {
@@ -468,14 +470,18 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 13),
         height: 50,
         width: context.width,
-        child: CupertinoSlidingSegmentedControl<T>(
-          children: map,
-          groupValue: initial,
-          thumbColor: secondaryColor != null && secondaryColor == backgroundColor
-              ? secondaryColor!.lightenOrDarken(20)
-              : secondaryColor ?? Colors.white,
-          backgroundColor: backgroundColor ?? CupertinoColors.tertiarySystemFill,
-          onValueChanged: onChanged,
+        child: MouseRegion(
+          cursor: cursor,
+          hitTestBehavior: HitTestBehavior.deferToChild,
+          child: CupertinoSlidingSegmentedControl<T>(
+            children: map,
+            groupValue: initial,
+            thumbColor: secondaryColor != null && secondaryColor == backgroundColor
+                ? secondaryColor!.lightenOrDarken(20)
+                : secondaryColor ?? Colors.white,
+            backgroundColor: backgroundColor ?? CupertinoColors.tertiarySystemFill,
+            onValueChanged: onChanged,
+          ),
         ),
       );
     }
@@ -586,14 +592,18 @@ class SettingsSlider extends StatelessWidget {
         leading: leading,
         trailing: Text(value),
         title: SettingsManager().settings.skin.value == Skins.iOS
-            ? CupertinoSlider(
-                activeColor: Theme.of(context).primaryColor,
-                value: startingVal,
-                onChanged: update,
-                onChangeEnd: onChangeEnd,
-                divisions: divisions,
-                min: min,
-                max: max,
+            ? MouseRegion(
+                cursor: SystemMouseCursors.click,
+                hitTestBehavior: HitTestBehavior.deferToChild,
+                child: CupertinoSlider(
+                  activeColor: Theme.of(context).primaryColor,
+                  value: startingVal,
+                  onChanged: update,
+                  onChangeEnd: onChangeEnd,
+                  divisions: divisions,
+                  min: min,
+                  max: max,
+                ),
               )
             : Slider(
                 activeColor: Theme.of(context).primaryColor,

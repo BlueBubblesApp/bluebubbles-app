@@ -5,7 +5,9 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 import 'package:sqflite/sqflite.dart';
@@ -125,6 +127,7 @@ class Settings {
   final RxBool launchAtStartup = false.obs;
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
+  final Rx<WindowEffect> windowEffect = WindowEffect.disabled.obs;
 
   // Scrolling
   final RxBool betterScrolling = false.obs;
@@ -336,6 +339,8 @@ class Settings {
         settings.betterScrolling.value = entry.value;
       } else if (entry.name == "betterScrollingMultiplier") {
         settings.betterScrollingMultiplier.value = entry.value;
+      } else if (entry.name == "windowEffect") {
+        settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == entry.value) ?? WindowEffect.disabled;
       }
     }
     settings.save();
@@ -493,6 +498,7 @@ class Settings {
       'pinColumnsLandscape': pinColumnsLandscape.value,
       'maxAvatarsInGroupWidget': maxAvatarsInGroupWidget.value,
       'useCustomTitleBar': useCustomTitleBar.value,
+      'windowEffect': windowEffect.value.name,
     };
     if (includeAll) {
       map.addAll({
@@ -610,6 +616,7 @@ class Settings {
     SettingsManager().settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     SettingsManager().settings.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
     SettingsManager().settings.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
+    SettingsManager().settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
     SettingsManager().settings.save();
   }
 
@@ -723,6 +730,7 @@ class Settings {
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     s.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
     s.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
+    s.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
     return s;
   }
 }
