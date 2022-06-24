@@ -299,10 +299,10 @@ class ContactManager {
                 if (match) {
                   break;
                 }
-                String? formatA = await getFormattedAddress(a);
+                String? formatA = a.contains("@") ? a.toLowerCase() : await getFormattedAddress(a);
                 if (formatA == null || formatA.isEmpty) continue;
                 for (String _a in _addresses) {
-                  String? _formatA = await getFormattedAddress(_a);
+                  String? _formatA = _a.contains("@") ? _a.toLowerCase() : await getFormattedAddress(_a);
                   if (formatA == _formatA) {
                     match = true;
                     break;

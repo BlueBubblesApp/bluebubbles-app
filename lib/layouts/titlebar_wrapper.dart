@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:get/get_utils/src/extensions/context_extensions.dart';
+import 'package:window_manager/window_manager.dart';
 
 class TitleBarWrapper extends StatelessWidget {
   TitleBarWrapper({Key? key, required this.child, this.hideInSplitView = false}) : super(key: key);
@@ -68,7 +69,7 @@ class WindowButtons extends StatelessWidget {
       children: [
         MinimizeWindowButton(
           colors: buttonColors,
-          onPressed: () => SettingsManager().settings.minimizeToTray.value ? appWindow.hide() : appWindow.minimize(),
+          onPressed: () async => SettingsManager().settings.minimizeToTray.value ? await WindowManager.instance.hide() : await WindowManager.instance.minimize(),
           animate: true,
         ),
         MaximizeWindowButton(
@@ -77,7 +78,7 @@ class WindowButtons extends StatelessWidget {
         ),
         CloseWindowButton(
           colors: closeButtonColors,
-          onPressed: () => SettingsManager().settings.closeToTray.value ? appWindow.hide() : appWindow.close(),
+          onPressed: () async => SettingsManager().settings.closeToTray.value ? await WindowManager.instance.hide() : await WindowManager.instance.close(),
           animate: true,
         ),
       ],

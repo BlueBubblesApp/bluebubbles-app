@@ -26,6 +26,7 @@ import photo_manager
 import printing
 import quick_notify
 import record_macos
+import screen_retriever
 import share_plus_macos
 import shared_preferences_macos
 import sqflite
@@ -56,6 +57,7 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   PrintingPlugin.register(with: registry.registrar(forPlugin: "PrintingPlugin"))
   QuickNotifyPlugin.register(with: registry.registrar(forPlugin: "QuickNotifyPlugin"))
   RecordMacosPlugin.register(with: registry.registrar(forPlugin: "RecordMacosPlugin"))
+  ScreenRetrieverPlugin.register(with: registry.registrar(forPlugin: "ScreenRetrieverPlugin"))
   SharePlusMacosPlugin.register(with: registry.registrar(forPlugin: "SharePlusMacosPlugin"))
   SharedPreferencesPlugin.register(with: registry.registrar(forPlugin: "SharedPreferencesPlugin"))
   SqflitePlugin.register(with: registry.registrar(forPlugin: "SqflitePlugin"))
