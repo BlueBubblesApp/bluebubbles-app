@@ -246,6 +246,9 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         style: context.theme.textTheme.titleLarge,
                       ),
                     ),
+                    systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
+                        ? SystemUiOverlayStyle.light
+                        : SystemUiOverlayStyle.dark,
                   ),
                 ),
               ),
@@ -700,7 +703,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                     ),
                   SliverToBoxAdapter(
                     child: SettingsSection(
-                      backgroundColor: tileColor,
+                      backgroundColor: tileColor.computeDifference(context.theme.colorScheme.background) < 20 ? tileColor.lightenPercent(40) : tileColor,
                       children: [
                         if (!kIsWeb)
                           SettingsTile(
