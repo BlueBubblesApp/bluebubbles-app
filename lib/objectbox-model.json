@@ -270,7 +270,7 @@
     },
     {
       "id": "7:1716592500251888002",
-      "lastPropertyId": "7:549408491521049277",
+      "lastPropertyId": "8:9192015144235467286",
       "name": "Handle",
       "properties": [
         {
@@ -309,6 +309,11 @@
         {
           "id": "7:549408491521049277",
           "name": "uncanonicalizedId",
+          "type": 9
+        },
+        {
+          "id": "8:9192015144235467286",
+          "name": "defaultEmail",
           "type": 9
         }
       ],
