@@ -14,6 +14,7 @@ class Handle {
   @Unique()
   String address;
   String? country;
+  String? defaultEmail;
   String? defaultPhone;
   String? uncanonicalizedId;
 
@@ -27,6 +28,7 @@ class Handle {
     this.address = "",
     this.country,
     String? handleColor,
+    this.defaultEmail,
     this.defaultPhone,
     this.uncanonicalizedId,
   }) {
@@ -105,6 +107,12 @@ class Handle {
 
   Handle updateDefaultPhone(String newPhone) {
     defaultPhone = newPhone;
+    save();
+    return this;
+  }
+
+  Handle updateDefaultEmail(String newEmail) {
+    defaultEmail = newEmail;
     save();
     return this;
   }

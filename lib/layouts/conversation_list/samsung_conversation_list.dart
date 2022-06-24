@@ -273,7 +273,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                 : showArchived ? "Archived" : showUnknown ? "Unknown Senders" : unreads > 0
                     ? "$unreads unread message${unreads > 1 ? "s" : ""}"
                     : "Messages",
-            style: context.theme.textTheme.displayMedium!.copyWith(color: context.theme.colorScheme.onBackground));
+            style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onBackground));
       })),
     );
   }

@@ -600,6 +600,7 @@ class ActionHandler {
 
         if (handle != null) {
           message.handle?.color = handle.color;
+          message.handle?.defaultEmail = handle.defaultEmail;
           message.handle?.defaultPhone = handle.defaultPhone;
         }
 

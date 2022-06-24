@@ -115,60 +115,56 @@ class ContactSelectorOption extends StatelessWidget {
       );
     }
 
-    return Container(
-      color: SettingsManager().settings.skin.value == Skins.Samsung ? Theme.of(context).colorScheme.secondary : null,
-      child: ListTile(
-        key: Key("chat-${item.displayName}"),
-        onTap: () => onSelected(item),
-        title: Text(
-          title,
-          style: Theme.of(context).textTheme.bodyMedium,
-          overflow: TextOverflow.ellipsis,
-        ),
-        tileColor: SettingsManager().settings.skin.value == Skins.Samsung ? null : Theme.of(context).backgroundColor,
-        subtitle: subtitle,
-        leading: !item.isChat
-            ? ContactAvatarWidget(
-                key: Key("${item.address}-contact-selector-option"),
-                handle: Handle(address: item.address!),
-                borderThickness: 0.1,
-                editable: false,
-              )
-            : ContactAvatarGroupWidget(
-                chat: item.chat!,
-                editable: false,
-              ),
-        trailing: item.isChat
-            ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (shouldShowChatType)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 5.0),
-                    child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(20)),
-                          border: Border.all(
-                              color: item.chat!.isIMessage ? Theme.of(context).primaryColor : Colors.green
-                          ),
-                        ),
-                        child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 3, horizontal: 7),
-                            child: Text(
-                                item.chat!.isIMessage ? "iMessage" : "SMS",
-                                style: TextStyle(color: item.chat!.isIMessage ? Theme.of(context).primaryColor : Colors.green)
-                            )
-                        )
-                    ),
-                  ),
-                Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
-                    color: shouldShowChatType && !item.chat!.isIMessage ? Colors.green : Theme.of(context).primaryColor,
-                  ),
-              ],
-            )
-            : null,
+    return ListTile(
+      key: Key("chat-${item.displayName}"),
+      onTap: () => onSelected(item),
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.bodyMedium,
+        overflow: TextOverflow.ellipsis,
       ),
+      subtitle: subtitle,
+      leading: !item.isChat
+          ? ContactAvatarWidget(
+              key: Key("${item.address}-contact-selector-option"),
+              handle: Handle(address: item.address!),
+              borderThickness: 0.1,
+              editable: false,
+            )
+          : ContactAvatarGroupWidget(
+              chat: item.chat!,
+              editable: false,
+            ),
+      trailing: item.isChat
+          ? Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (shouldShowChatType)
+                Padding(
+                  padding: const EdgeInsets.only(right: 5.0),
+                  child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
+                        border: Border.all(
+                            color: item.chat!.isIMessage ? Theme.of(context).primaryColor : Colors.green
+                        ),
+                      ),
+                      child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 3, horizontal: 7),
+                          child: Text(
+                              item.chat!.isIMessage ? "iMessage" : "SMS",
+                              style: TextStyle(color: item.chat!.isIMessage ? Theme.of(context).primaryColor : Colors.green)
+                          )
+                      )
+                  ),
+                ),
+              Icon(
+                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
+                  color: shouldShowChatType && !item.chat!.isIMessage ? Colors.green : Theme.of(context).primaryColor,
+                ),
+            ],
+          )
+          : null,
     );
   }
 }

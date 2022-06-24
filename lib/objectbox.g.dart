@@ -290,7 +290,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(7, 1716592500251888002),
       name: 'Handle',
-      lastPropertyId: const IdUid(7, 549408491521049277),
+      lastPropertyId: const IdUid(8, 9192015144235467286),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -327,6 +327,11 @@ final _entities = <ModelEntity>[
         ModelProperty(
             id: const IdUid(7, 549408491521049277),
             name: 'uncanonicalizedId',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(8, 9192015144235467286),
+            name: 'defaultEmail',
             type: 9,
             flags: 0)
       ],
@@ -1006,7 +1011,10 @@ ModelDefinition getObjectBoxModel() {
           final uncanonicalizedIdOffset = object.uncanonicalizedId == null
               ? null
               : fbb.writeString(object.uncanonicalizedId!);
-          fbb.startTable(8);
+          final defaultEmailOffset = object.defaultEmail == null
+              ? null
+              : fbb.writeString(object.defaultEmail!);
+          fbb.startTable(9);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, addressOffset);
@@ -1014,6 +1022,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(4, colorOffset);
           fbb.addOffset(5, defaultPhoneOffset);
           fbb.addOffset(6, uncanonicalizedIdOffset);
+          fbb.addOffset(7, defaultEmailOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1030,6 +1039,8 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGet(buffer, rootOffset, 8, ''),
               country: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 10),
+              defaultEmail: const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 18),
               defaultPhone: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 14),
               uncanonicalizedId: const fb.StringReader(asciiOptimization: true)
@@ -1506,6 +1517,10 @@ class Handle_ {
   /// see [Handle.uncanonicalizedId]
   static final uncanonicalizedId =
       QueryStringProperty<Handle>(_entities[3].properties[6]);
+
+  /// see [Handle.defaultEmail]
+  static final defaultEmail =
+      QueryStringProperty<Handle>(_entities[3].properties[7]);
 }
 
 /// [Message] entity fields to define ObjectBox queries.
