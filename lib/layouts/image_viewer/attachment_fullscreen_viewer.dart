@@ -112,6 +112,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
 
   @override
   void dispose() {
+    controller?.dispose();
     newMessageEventStream?.cancel();
     super.dispose();
   }
