@@ -191,7 +191,7 @@ class ContactTile extends StatelessWidget {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              backgroundColor: context.theme.colorScheme.surface,
+              backgroundColor: context.theme.colorScheme.properSurface,
               title:
               Text("Select Address", style: context.theme.textTheme.titleLarge),
               content: ObxValue<Rx<bool>>(

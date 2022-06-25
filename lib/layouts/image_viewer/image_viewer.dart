@@ -111,25 +111,26 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 5.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(ContactManager().getContactTitle(widget.attachment.message.target?.handle), style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white)),
-                        if (widget.attachment.message.target?.dateCreated != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2.0),
-                            child: Text(SettingsManager().settings.skin.value == Skins.Samsung ? intl.DateFormat.jm().add_MMMd().format(widget.attachment.message.target!.dateCreated!) : intl.DateFormat('EEE').add_jm().format(widget.attachment.message.target!.dateCreated!),
-                                style: context.theme.textTheme.bodyLarge!.copyWith(color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.grey : Colors.white)),
-                          ),
-                      ],
-                    ),
-                  )
+                  if (widget.showInteractions)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 5.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(ContactManager().getContactTitle(widget.attachment.message.target?.handle), style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white)),
+                          if (widget.attachment.message.target?.dateCreated != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2.0),
+                              child: Text(SettingsManager().settings.skin.value == Skins.Samsung ? intl.DateFormat.jm().add_MMMd().format(widget.attachment.message.target!.dateCreated!) : intl.DateFormat('EEE').add_jm().format(widget.attachment.message.target!.dateCreated!),
+                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.grey : Colors.white)),
+                            ),
+                        ],
+                      ),
+                    )
                 ],
               ),
-              Row(
+              !widget.showInteractions ? SizedBox.shrink() : Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Padding(
@@ -183,7 +184,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       child: Scaffold(
         backgroundColor: Colors.black,
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-        floatingActionButton: showOverlay && SettingsManager().settings.skin.value == Skins.Material ? Row(
+        floatingActionButton: widget.showInteractions && showOverlay && SettingsManager().settings.skin.value == Skins.Material ? Row(
           children: [
             FloatingActionButton(
               backgroundColor: context.theme.colorScheme.secondary,
@@ -215,7 +216,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
               ),
           ],
         ) : null,
-        bottomNavigationBar: SettingsManager().settings.skin.value == Skins.Material
+        bottomNavigationBar: !widget.showInteractions || SettingsManager().settings.skin.value == Skins.Material
             || (SettingsManager().settings.skin.value == Skins.Samsung && !showOverlay) ? null : Theme(
           data: context.theme.copyWith(navigationBarTheme: context.theme.navigationBarTheme.copyWith(
               indicatorColor: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,

@@ -57,7 +57,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
   @override
   void initState() {
     super.initState();
-    if (kIsWeb) {
+    if (kIsWeb || !widget.showInteractions) {
       currentIndex = 0;
       controller = PageController(initialPage: 0);
     } else {
@@ -148,7 +148,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                 },
               ),
               leadingWidth: 75,
-              title: Text(kIsWeb ? "Media" : "${currentIndex + 1} of ${widget.currentChat?.chatAttachments.length}", style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+              title: Text(kIsWeb || !widget.showInteractions ? "Media" : "${currentIndex + 1} of ${widget.currentChat?.chatAttachments.length}", style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
               centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
               iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
               backgroundColor: context.theme.colorScheme.properSurface,

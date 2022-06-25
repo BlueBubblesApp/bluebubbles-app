@@ -109,7 +109,7 @@ class _VideoViewerState extends State<VideoViewer> {
           ),
         ]
       ),
-      additionalOptions: (context) => SettingsManager().settings.skin.value == Skins.iOS ? [] : [
+      additionalOptions: (context) => SettingsManager().settings.skin.value == Skins.iOS || !widget.showInteractions ? [] : [
         OptionItem(
           onTap: () async {
             showMetadataDialog();
@@ -207,7 +207,7 @@ class _VideoViewerState extends State<VideoViewer> {
       child: Scaffold(
         backgroundColor: Colors.black,
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-        bottomNavigationBar: SettingsManager().settings.skin.value != Skins.iOS ? null : Theme(
+        bottomNavigationBar: SettingsManager().settings.skin.value != Skins.iOS || !widget.showInteractions ? null : Theme(
           data: context.theme.copyWith(navigationBarTheme: context.theme.navigationBarTheme.copyWith(
             indicatorColor: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
           )),
