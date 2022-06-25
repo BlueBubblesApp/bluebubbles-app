@@ -443,12 +443,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.secondary,
-          title: Text("Send it?", style: Theme.of(context).textTheme.headlineMedium),
+          backgroundColor: context.theme.colorScheme.properSurface,
+          title: Text("Send it?", style: context.theme.textTheme.titleLarge),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Review your audio snippet before sending it", style: Theme.of(context).textTheme.labelLarge),
+              Text("Review your audio snippet before sending it", style: context.theme.textTheme.bodyLarge),
               Container(height: 10.0),
               AudioPlayerWidget(
                 key: Key("AudioMessage-${file.size}"),
@@ -459,7 +459,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           ),
           actions: <Widget>[
             TextButton(
-                child: Text("Discard", style: Theme.of(context).textTheme.labelLarge),
+                child: Text("Discard", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                 onPressed: () {
                   // Dispose of the audio controller
                   if (!kIsWeb) disposeAudioFile(originalContext, file);
@@ -469,9 +469,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 }),
             TextButton(
               child: Text(
-                "Send",
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+                "Send", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
               onPressed: () async {
                 ChatController? thisChat = ChatController.of(originalContext);
                 if (thisChat == null) {
@@ -508,38 +506,38 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       return;
     }
     if (kIsWeb) {
-      Get.defaultDialog(
-        title: "What would you like to do?",
-        titleStyle: Theme.of(context).textTheme.headlineMedium,
-        confirm: Container(height: 0, width: 0),
-        cancel: Container(height: 0, width: 0),
-        content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-          ListTile(
-            title: Text("Upload file", style: Theme.of(context).textTheme.bodyMedium),
-            onTap: () async {
-              final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
-              if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("What would you like to do?", style: context.theme.textTheme.titleLarge),
+          content: Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: <Widget>[
+            ListTile(
+              title: Text("Upload file", style: Theme.of(context).textTheme.bodyLarge),
+              onTap: () async {
+                final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
+                if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-              for (pf.PlatformFile e in res.files) {
-                addAttachment(PlatformFile(
-                  path: null,
-                  name: e.name,
-                  size: e.size,
-                  bytes: e.bytes,
-                ));
-              }
-              Get.back();
-            },
-          ),
-          ListTile(
-            title: Text("Send location", style: Theme.of(context).textTheme.bodyMedium),
-            onTap: () async {
-              Share.location(ChatController.forGuid(widget.chatGuid)!.chat);
-              Get.back();
-            },
-          ),
-        ]),
-        backgroundColor: Theme.of(context).backgroundColor,
+                for (pf.PlatformFile e in res.files) {
+                  addAttachment(PlatformFile(
+                    path: null,
+                    name: e.name,
+                    size: e.size,
+                    bytes: e.bytes,
+                  ));
+                }
+                Get.back();
+              },
+            ),
+            ListTile(
+              title: Text("Send location", style: Theme.of(context).textTheme.bodyLarge),
+              onTap: () async {
+                Share.location(ChatController.forGuid(widget.chatGuid)!.chat);
+                Get.back();
+              },
+            ),
+          ]),
+          backgroundColor: context.theme.colorScheme.properSurface,
+        )
       );
       return;
     }
@@ -654,10 +652,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           child: Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(20),
-                              color: context.theme.colorScheme.secondary,
+                              color: context.theme.colorScheme.properSurface,
                               boxShadow: [
                                 BoxShadow(
-                                  color: context.theme.backgroundColor,
+                                  color: context.theme.colorScheme.shadow,
                                   offset: Offset(0, 0),
                                   blurRadius: 20,
                                   blurStyle: BlurStyle.outer,
@@ -682,8 +680,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     child: Obx(
                                       () => ListTile(
                                         dense: true,
-                                        selectedTileColor: context.theme.colorScheme.secondary.lightenOrDarken(20),
-                                        tileColor: context.theme.colorScheme.secondary,
+                                        selectedTileColor: context.theme.colorScheme.properSurface.lightenOrDarken(20),
                                         selected: emojiSelectedIndex.value == index,
                                         title: Row(
                                           children: <Widget>[
@@ -733,7 +730,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         margin: EdgeInsets.only(
             left: 5.0, right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
         decoration: BoxDecoration(
-          color: SettingsManager().settings.skin.value == Skins.Samsung ? null : Theme.of(context).primaryColor,
+          color: SettingsManager().settings.skin.value == Skins.Samsung ? null : context.theme.colorScheme.primary,
           borderRadius: BorderRadius.circular(fileDragged ? 5 : 40),
         ),
         child: Stack(
@@ -771,8 +768,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     ? Icons.add
                                     : Icons.share,
                             color: SettingsManager().settings.skin.value == Skins.Samsung
-                                ? context.theme.textTheme.bodyMedium!.color
-                                : Colors.white,
+                                ? context.theme.colorScheme.onBackground
+                                : context.theme.colorScheme.onPrimary,
                             size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                           ),
                   ),
@@ -796,17 +793,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         child: Material(
           color: SettingsManager().settings.skin.value == Skins.Samsung
               ? Colors.transparent
-              : Theme.of(context).primaryColor,
+              : context.theme.colorScheme.primary,
           child: Theme(
-            data: Theme.of(context).copyWith(
+            data: context.theme.copyWith(
               bottomSheetTheme: BottomSheetThemeData(
-                backgroundColor: Theme.of(context).backgroundColor,
-                modalBackgroundColor: Theme.of(context).backgroundColor,
+                backgroundColor: context.theme.colorScheme.properSurface,
+                modalBackgroundColor: context.theme.colorScheme.properSurface,
               ),
-              brightness:
-                  Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.light : Brightness.dark,
-              canvasColor: Theme.of(context).backgroundColor,
-              iconTheme: IconThemeData(color: Colors.black45),
+              brightness: context.theme.colorScheme.brightness,
+              canvasColor: context.theme.colorScheme.properSurface,
+              iconTheme: IconThemeData(color: context.theme.colorScheme.properOnSurface),
             ),
             child: Builder(builder: (context) {
               return InkWell(
@@ -842,8 +838,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   child: Icon(
                     Icons.gif,
                     color: SettingsManager().settings.skin.value == Skins.Samsung
-                        ? context.theme.textTheme.bodyMedium!.color
-                        : Colors.white,
+                        ? context.theme.colorScheme.onBackground
+                        : context.theme.colorScheme.onPrimary,
                     size: 26,
                   ),
                 ),
@@ -866,39 +862,25 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         child: Material(
           color: SettingsManager().settings.skin.value == Skins.Samsung
               ? Colors.transparent
-              : Theme.of(context).primaryColor,
-          child: Theme(
-            data: Theme.of(context).copyWith(
-              bottomSheetTheme: BottomSheetThemeData(
-                backgroundColor: Theme.of(context).backgroundColor,
-                modalBackgroundColor: Theme.of(context).backgroundColor,
+              : context.theme.colorScheme.primary,
+          child: InkWell(
+            onTap: () async {
+              await Share.location(ChatController.forGuid(widget.chatGuid)!.chat);
+            },
+            child: Padding(
+              padding: EdgeInsets.only(
+                  top: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 0,
+                  right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1,
+                  left: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 2),
+              child: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined,
+                color: SettingsManager().settings.skin.value == Skins.Samsung
+                    ? context.theme.colorScheme.onBackground
+                    : context.theme.colorScheme.onPrimary,
+                size: 20,
               ),
-              brightness:
-              Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.light : Brightness.dark,
-              canvasColor: Theme.of(context).backgroundColor,
-              iconTheme: IconThemeData(color: Colors.black45),
             ),
-            child: Builder(builder: (context) {
-              return InkWell(
-                onTap: () async {
-                  await Share.locationDesktop(ChatController.forGuid(widget.chatGuid)!.chat);
-                },
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    top: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 0,
-                      right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1,
-                      left: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 2),
-                  child: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined,
-                    color: SettingsManager().settings.skin.value == Skins.Samsung
-                        ? context.theme.textTheme.bodyMedium!.color
-                        : Colors.white,
-                    size: 20,
-                  ),
-                ),
-              );
-            }),
-          ),
+          )
         ),
       ),
     );
@@ -983,7 +965,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 linuxData = event.data as RawKeyEventDataLinux;
               } else if (event.data is RawKeyEventDataWeb) {
                 webData = event.data as RawKeyEventDataWeb;
-                print(webData.code);
               } else if (event.data is RawKeyEventDataAndroid) {
                 androidData = event.data as RawKeyEventDataAndroid;
               }
@@ -1132,13 +1113,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             iOSSkin: Obx(
               () => Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).backgroundColor,
                   border: Border.fromBorderSide((SettingsManager().settings.enablePrivateAPI.value &&
                               SettingsManager().settings.privateSubjectLine.value &&
                               (chat?.isIMessage ?? true)) ||
                           replyToMessage.value != null
                       ? BorderSide(
-                          color: Theme.of(context).dividerColor,
+                          color: context.theme.colorScheme.properSurface,
                           width: 1.5,
                         )
                       : BorderSide.none),
@@ -1153,7 +1133,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         duration: Duration(milliseconds: 150),
                         width: double.infinity,
                         height: reply == null ? 0 : 40,
-                        color: Theme.of(context).dividerColor,
+                        color: context.theme.colorScheme.properSurface,
                         child: reply != null
                             ? Row(
                                 children: [
@@ -1162,7 +1142,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     padding: EdgeInsets.symmetric(horizontal: 8),
                                     icon: Icon(
                                       CupertinoIcons.xmark_circle,
-                                      color: Theme.of(context).textTheme.labelLarge!.color,
+                                      color: context.theme.colorScheme.properOnSurface,
                                       size: 17,
                                     ),
                                     onPressed: () {
@@ -1185,19 +1165,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                                           ?.displayName ??
                                                       reply.handle?.address ??
                                                       "You",
-                                          style: Theme.of(context).textTheme.labelLarge!.copyWith(
+                                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                                               fontWeight: FontWeight.bold,
-                                              color: hideContactInfo ? Colors.transparent : null),
+                                              color: hideContactInfo ? Colors.transparent : context.theme.colorScheme.properOnSurface),
                                         ),
                                         TextSpan(
                                           text:
                                               " - ${generateContent ? faker.lorem.words(MessageHelper.getNotificationText(reply).split(" ").length).join(" ") : MessageHelper.getNotificationText(reply)}",
-                                          style: Theme.of(context).textTheme.labelLarge!.copyWith(
+                                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                                               fontStyle: FontStyle.italic,
-                                              color: hideContent ? Colors.transparent : null),
+                                              color: hideContent ? Colors.transparent : context.theme.colorScheme.properOnSurface),
                                         ),
                                       ]),
-                                      style: Theme.of(context).textTheme.labelLarge,
+                                      style: Theme.of(context).textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -1215,7 +1195,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                             ? TextInputAction.next
                             : TextInputAction.newline,
-                        cursorColor: Theme.of(context).primaryColor,
+                        cursorColor: context.theme.colorScheme.primary,
                         onLongPressStart: () {
                           Feedback.forLongPress(context);
                         },
@@ -1230,22 +1210,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         autocorrect: true,
                         controller: subjectController,
                         scrollPhysics: CustomBouncingScrollPhysics(),
-                        style: Theme.of(context).textTheme.bodyMedium!.apply(
-                              color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                                      Brightness.light
-                                  ? Colors.black
-                                  : Colors.white,
-                              fontSizeDelta: -0.25,
-                            ),
+                        style: context.theme.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
                         keyboardType: TextInputType.multiline,
                         maxLines: 14,
                         minLines: 1,
                         placeholder: "Subject",
                         padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                        placeholderStyle: Theme.of(context).textTheme.labelLarge!.copyWith(fontWeight: FontWeight.bold),
+                        placeholderStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.bold),
                         autofocus: false,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).backgroundColor,
                           borderRadius: BorderRadius.circular(20),
                         ),
                       ),
@@ -1257,7 +1230,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           thickness: 1.5,
                           indent: 10,
                           endIndent: 10,
-                          color: Theme.of(context).dividerColor),
+                          color: context.theme.colorScheme.properSurface),
                     Stack(
                       alignment: Alignment.centerRight,
                       children: [
@@ -1267,7 +1240,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                               ? TextInputAction.send
                               : TextInputAction.newline,
-                          cursorColor: Theme.of(context).primaryColor,
+                          cursorColor: context.theme.colorScheme.primary,
                           onLongPressStart: () {
                             Feedback.forLongPress(context);
                           },
@@ -1286,13 +1259,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           autocorrect: true,
                           controller: controller,
                           scrollPhysics: CustomBouncingScrollPhysics(),
-                          style: Theme.of(context).textTheme.bodyMedium!.apply(
-                                color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                                        Brightness.light
-                                    ? Colors.black
-                                    : Colors.white,
-                                fontSizeDelta: -0.25,
-                              ),
+                          style: context.theme.textTheme.bodyMedium,
                           keyboardType: TextInputType.multiline,
                           maxLines: 14,
                           minLines: 1,
@@ -1302,11 +1269,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                   ? "Text Forwarding"
                                   : "iMessage",
                           padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                          placeholderStyle: Theme.of(context).textTheme.labelLarge,
+                          placeholderStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
                           autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
                               !widget.isCreator!,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).backgroundColor,
                             border: Border.fromBorderSide(
                               (SettingsManager().settings.enablePrivateAPI.value &&
                                           SettingsManager().settings.privateSubjectLine.value &&
@@ -1314,7 +1280,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       replyToMessage.value != null
                                   ? BorderSide.none
                                   : BorderSide(
-                                      color: Theme.of(context).dividerColor,
+                                      color: context.theme.colorScheme.properSurface,
                                       width: 1.5,
                                     ),
                             ),
@@ -1332,18 +1298,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               () => Container(
                 decoration: BoxDecoration(
                   border: Border.fromBorderSide(
-                    (SettingsManager().settings.enablePrivateAPI.value &&
-                                SettingsManager().settings.privateSubjectLine.value &&
-                                (chat?.isIMessage ?? true)) ||
-                            replyToMessage.value != null
-                        ? BorderSide(
-                            color: Theme.of(context).dividerColor,
-                            width: 1.5,
-                            style: BorderStyle.solid,
-                          )
-                        : BorderSide.none,
+                    BorderSide.none,
                   ),
                   borderRadius: BorderRadius.circular(20),
+                  color: context.theme.colorScheme.properSurface,
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Column(
@@ -1354,7 +1312,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           duration: Duration(milliseconds: 150),
                           width: double.infinity,
                           height: reply == null ? 0 : 40,
-                          color: Theme.of(context).dividerColor,
+                          color: context.theme.colorScheme.properSurface,
                           child: reply != null
                               ? Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
@@ -1364,7 +1322,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       padding: EdgeInsets.symmetric(horizontal: 8),
                                       icon: Icon(
                                         CupertinoIcons.xmark_circle,
-                                        color: Theme.of(context).textTheme.labelLarge!.color,
+                                        color: context.theme.colorScheme.properOnSurface,
                                         size: 17,
                                       ),
                                       onPressed: () {
@@ -1382,16 +1340,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                                   "You",
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .labelLarge!
-                                                  .copyWith(fontWeight: FontWeight.bold)),
+                                                  .bodyMedium!
+                                                  .copyWith(fontWeight: FontWeight.bold, color: context.theme.colorScheme.properOnSurface)),
                                           TextSpan(
                                               text: " - ${MessageHelper.getNotificationText(reply)}",
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .labelLarge!
-                                                  .copyWith(fontStyle: FontStyle.italic)),
+                                                  .bodyMedium!
+                                                  .copyWith(fontStyle: FontStyle.italic, color: context.theme.colorScheme.properOnSurface)),
                                         ]),
-                                        style: Theme.of(context).textTheme.labelLarge,
+                                        style: Theme.of(context).textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -1400,6 +1358,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 )
                               : Container());
                     }),
+                    Obx(() => replyToMessage.value != null ? Divider(
+                      height: 1.5,
+                          thickness: 1.5,
+                          indent: 10,
+                          endIndent: 10,
+                          color: context.theme.colorScheme.outline) : SizedBox.shrink()),
                     if (SettingsManager().settings.enablePrivateAPI.value &&
                         SettingsManager().settings.privateSubjectLine.value &&
                         (chat?.isIMessage ?? true))
@@ -1413,17 +1377,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             ? TextInputAction.next
                             : TextInputAction.newline,
                         autofocus: false,
-                        cursorColor: Theme.of(context).primaryColor,
+                        cursorColor: context.theme.colorScheme.primary,
                         onSubmitted: (String value) {
                           focusNode!.requestFocus();
                         },
-                        style: Theme.of(context).textTheme.bodyMedium!.apply(
-                              color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                                      Brightness.light
-                                  ? Colors.black
-                                  : Colors.white,
-                              fontSizeDelta: -0.25,
-                            ),
+                        style: context.theme.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
                           isDense: true,
                           enabledBorder:
@@ -1433,13 +1391,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           focusedBorder:
                               OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
                           hintText: "Subject",
-                          hintStyle: Theme.of(context).textTheme.labelLarge!.copyWith(fontWeight: FontWeight.bold),
+                          hintStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.bold),
                           contentPadding: EdgeInsets.only(
                             left: 10,
                             top: 15,
                             right: 10,
                             bottom: 10,
                           ),
+                          fillColor: context.theme.colorScheme.properSurface,
                         ),
                         keyboardType: TextInputType.multiline,
                         maxLines: 14,
@@ -1453,7 +1412,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           thickness: 1.5,
                           indent: 10,
                           endIndent: 10,
-                          color: Theme.of(context).dividerColor),
+                          color: context.theme.colorScheme.outline),
                     TextField(
                       enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                       controller: controller,
@@ -1465,60 +1424,27 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           : TextInputAction.newline,
                       autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
                           !widget.isCreator!,
-                      cursorColor: Theme.of(context).primaryColor,
+                      cursorColor: context.theme.colorScheme.primary,
                       key: _searchFormKey,
                       onSubmitted: (String value) {
                         focusNode!.requestFocus();
                         if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         sendMessage();
                       },
-                      style: Theme.of(context).textTheme.bodyMedium!.apply(
-                            color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                                    Brightness.light
-                                ? Colors.black
-                                : Colors.white,
-                            fontSizeDelta: -0.25,
-                          ),
+                      style: context.theme.textTheme.bodyMedium,
                       onContentCommitted: onContentCommit,
                       decoration: InputDecoration(
                         isDense: true,
                         enabledBorder: OutlineInputBorder(
-                          borderSide: (SettingsManager().settings.enablePrivateAPI.value &&
-                                      SettingsManager().settings.privateSubjectLine.value &&
-                                      (chat?.isIMessage ?? true)) ||
-                                  replyToMessage.value != null
-                              ? BorderSide.none
-                              : BorderSide(
-                                  color: Theme.of(context).dividerColor,
-                                  width: 1.5,
-                                  style: BorderStyle.solid,
-                                ),
+                          borderSide: BorderSide.none,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         disabledBorder: OutlineInputBorder(
-                          borderSide: (SettingsManager().settings.enablePrivateAPI.value &&
-                                      SettingsManager().settings.privateSubjectLine.value &&
-                                      (chat?.isIMessage ?? true)) ||
-                                  replyToMessage.value != null
-                              ? BorderSide.none
-                              : BorderSide(
-                                  color: Theme.of(context).dividerColor,
-                                  width: 1.5,
-                                  style: BorderStyle.solid,
-                                ),
+                          borderSide: BorderSide.none,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: (SettingsManager().settings.enablePrivateAPI.value &&
-                                      SettingsManager().settings.privateSubjectLine.value &&
-                                      (chat?.isIMessage ?? true)) ||
-                                  replyToMessage.value != null
-                              ? BorderSide.none
-                              : BorderSide(
-                                  color: Theme.of(context).dividerColor,
-                                  width: 1.5,
-                                  style: BorderStyle.solid,
-                                ),
+                          borderSide: BorderSide.none,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
@@ -1526,241 +1452,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             : chat?.isTextForwarding ?? false
                                 ? "Text Forwarding"
                                 : "iMessage",
-                        hintStyle: Theme.of(context).textTheme.labelLarge,
+                        hintStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
                         contentPadding: EdgeInsets.only(
                           left: 10,
                           top: 15,
                           right: 10,
                           bottom: 10,
                         ),
-                      ),
-                      keyboardType: TextInputType.multiline,
-                      maxLines: 14,
-                      minLines: 1,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            samsungSkin: Obx(
-              () => Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).dividerColor.withOpacity(1),
-                  border: Border.fromBorderSide((SettingsManager().settings.enablePrivateAPI.value &&
-                              SettingsManager().settings.privateSubjectLine.value &&
-                              (chat?.isIMessage ?? true)) ||
-                          replyToMessage.value != null
-                      ? BorderSide(
-                          color: Theme.of(context).dividerColor,
-                          width: 1.5,
-                          style: BorderStyle.solid,
-                        )
-                      : BorderSide.none),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  children: [
-                    Obx(
-                      () {
-                        Message? reply = replyToMessage.value;
-                        return AnimatedContainer(
-                          duration: Duration(milliseconds: 150),
-                          width: double.infinity,
-                          height: reply == null ? 0 : 40,
-                          color: Theme.of(context).dividerColor,
-                          child: reply != null
-                              ? Row(
-                                  children: [
-                                    IconButton(
-                                      constraints: BoxConstraints(maxWidth: 30),
-                                      padding: EdgeInsets.symmetric(horizontal: 8),
-                                      icon: Icon(
-                                        CupertinoIcons.xmark_circle,
-                                        color: Theme.of(context).textTheme.labelLarge!.color,
-                                        size: 17,
-                                      ),
-                                      onPressed: () {
-                                        replyToMessage.value = null;
-                                      },
-                                      iconSize: 17,
-                                    ),
-                                    Expanded(
-                                      child: Text.rich(
-                                        TextSpan(children: [
-                                          TextSpan(text: "Replying to "),
-                                          TextSpan(
-                                              text: ContactManager().getContact(reply.handle?.address)?.displayName ??
-                                                  reply.handle?.address ??
-                                                  "You",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .labelLarge!
-                                                  .copyWith(fontWeight: FontWeight.bold)),
-                                          TextSpan(
-                                              text: " - ${MessageHelper.getNotificationText(reply)}",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .labelLarge!
-                                                  .copyWith(fontStyle: FontStyle.italic)),
-                                        ]),
-                                        style: Theme.of(context).textTheme.labelLarge,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : Container(),
-                        );
-                      },
-                    ),
-                    if (SettingsManager().settings.enablePrivateAPI.value &&
-                        SettingsManager().settings.privateSubjectLine.value &&
-                        (chat?.isIMessage ?? true))
-                      TextField(
-                        enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
-                        controller: subjectController,
-                        focusNode: subjectFocusNode,
-                        textCapitalization: TextCapitalization.sentences,
-                        autocorrect: true,
-                        textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
-                            ? TextInputAction.next
-                            : TextInputAction.newline,
-                        autofocus: false,
-                        cursorColor: Theme.of(context).primaryColor,
-                        onSubmitted: (String value) {
-                          focusNode!.requestFocus();
-                        },
-                        style: Theme.of(context).textTheme.bodyMedium!.apply(
-                              color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                                      Brightness.light
-                                  ? Colors.black
-                                  : Colors.white,
-                              fontSizeDelta: -0.25,
-                            ),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).dividerColor,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          disabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).dividerColor,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).dividerColor,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          hintText: "Subject",
-                          hintStyle: Theme.of(context).textTheme.labelLarge!.copyWith(fontWeight: FontWeight.bold),
-                          contentPadding: EdgeInsets.only(
-                            left: 10,
-                            top: 15,
-                            right: 10,
-                            bottom: 10,
-                          ),
-                          filled: true,
-                          fillColor: context.theme.dividerColor,
-                        ),
-                        keyboardType: TextInputType.multiline,
-                        maxLines: 14,
-                        minLines: 1,
-                      ),
-                    if (SettingsManager().settings.enablePrivateAPI.value &&
-                        SettingsManager().settings.privateSubjectLine.value &&
-                        (chat?.isIMessage ?? true))
-                      Divider(
-                          height: 1.5,
-                          thickness: 1.5,
-                          indent: 10,
-                          endIndent: 10,
-                          color: Theme.of(context).dividerColor),
-                    TextField(
-                      enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
-                      controller: controller,
-                      focusNode: focusNode,
-                      textCapitalization: TextCapitalization.sentences,
-                      autocorrect: true,
-                      textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
-                          ? TextInputAction.send
-                          : TextInputAction.newline,
-                      autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
-                          !widget.isCreator!,
-                      cursorColor: Theme.of(context).primaryColor,
-                      key: _searchFormKey,
-                      onSubmitted: (String value) {
-                        focusNode!.requestFocus();
-                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
-                        sendMessage();
-                      },
-                      style: Theme.of(context).textTheme.bodyMedium!.apply(
-                            color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                                    Brightness.light
-                                ? Colors.black
-                                : Colors.white,
-                            fontSizeDelta: -0.25,
-                          ),
-                      onContentCommitted: onContentCommit,
-                      decoration: InputDecoration(
-                        isDense: true,
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: (SettingsManager().settings.enablePrivateAPI.value &&
-                                  SettingsManager().settings.privateSubjectLine.value &&
-                                  (chat?.isIMessage ?? true))
-                              ? BorderSide.none
-                              : BorderSide(
-                                  color: Theme.of(context).dividerColor,
-                                  width: 1.5,
-                                  style: BorderStyle.solid,
-                                ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        disabledBorder: OutlineInputBorder(
-                          borderSide: (SettingsManager().settings.enablePrivateAPI.value &&
-                                  SettingsManager().settings.privateSubjectLine.value &&
-                                  (chat?.isIMessage ?? true))
-                              ? BorderSide.none
-                              : BorderSide(
-                                  color: Theme.of(context).dividerColor,
-                                  width: 1.5,
-                                  style: BorderStyle.solid,
-                                ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: (SettingsManager().settings.enablePrivateAPI.value &&
-                                  SettingsManager().settings.privateSubjectLine.value &&
-                                  (chat?.isIMessage ?? true))
-                              ? BorderSide.none
-                              : BorderSide(
-                                  color: Theme.of(context).dividerColor,
-                                  width: 1.5,
-                                  style: BorderStyle.solid,
-                                ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
-                            ? placeholder.value
-                            : chat?.isTextForwarding ?? false
-                                ? "Text Forwarding"
-                                : "iMessage",
-                        hintStyle: Theme.of(context).textTheme.labelLarge,
-                        contentPadding: EdgeInsets.only(
-                          left: 10,
-                          top: 15,
-                          right: 10,
-                          bottom: 10,
-                        ),
-                        filled: true,
-                        fillColor: context.theme.dividerColor,
+                        fillColor: context.theme.colorScheme.properSurface,
                       ),
                       keyboardType: TextInputType.multiline,
                       maxLines: 14,
@@ -1927,7 +1626,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             padding: EdgeInsets.only(
                               right: 0,
                             ),
-                            primary: Theme.of(context).primaryColor,
+                            primary: context.theme.colorScheme.primary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(40),
                             ),
@@ -1953,7 +1652,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                   duration: Duration(milliseconds: 150),
                                   child: Icon(
                                     CupertinoIcons.waveform,
-                                    color: (isRecording.value) ? Colors.red : Colors.white,
+                                    color: (isRecording.value) ? Colors.red : context.theme.colorScheme.onPrimary,
                                     size: 22,
                                   ),
                                 )),
@@ -1965,7 +1664,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                   duration: Duration(milliseconds: 150),
                                   child: Icon(
                                     CupertinoIcons.arrow_up,
-                                    color: Colors.white,
+                                    color: context.theme.colorScheme.onPrimary,
                                     size: 20,
                                   ),
                                 )),
@@ -1974,7 +1673,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               duration: Duration(milliseconds: 50),
                               child: Icon(
                                 CupertinoIcons.xmark_circle,
-                                color: Colors.red,
+                                color: context.theme.colorScheme.error,
                                 size: 20,
                               ),
                             ),
@@ -2001,7 +1700,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       child: Material(
                         color: SettingsManager().settings.skin.value == Skins.Samsung
                             ? Colors.transparent
-                            : Theme.of(context).primaryColor,
+                            : context.theme.colorScheme.primary,
                         child: GestureDetector(
                           onSecondaryTapUp: (_) async {
                             if (kIsWeb) {
@@ -2045,8 +1744,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                         color: (isRecording.value)
                                             ? Colors.red
                                             : SettingsManager().settings.skin.value == Skins.Samsung
-                                                ? context.theme.textTheme.bodyMedium!.color
-                                                : Colors.white,
+                                                ? context.theme.colorScheme.onBackground
+                                                : context.theme.colorScheme.onPrimary,
                                         size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                                       ),
                                     )),
@@ -2059,8 +1758,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       child: Icon(
                                         Icons.send,
                                         color: SettingsManager().settings.skin.value == Skins.Samsung
-                                            ? context.theme.textTheme.bodyMedium!.color
-                                            : Colors.white,
+                                            ? context.theme.colorScheme.onBackground
+                                            : context.theme.colorScheme.onPrimary,
                                         size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                                       ),
                                     )),
@@ -2069,7 +1768,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                   duration: Duration(milliseconds: 50),
                                   child: Icon(
                                     Icons.cancel_outlined,
-                                    color: Colors.red,
+                                    color: context.theme.colorScheme.error,
                                     size: 20,
                                   ),
                                 ),

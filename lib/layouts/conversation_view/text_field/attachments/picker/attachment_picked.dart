@@ -2,12 +2,14 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:universal_io/io.dart';
@@ -91,7 +93,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
                         return Container(
                           width: 150,
                           height: 150,
-                          color: Theme.of(context).colorScheme.secondary,
+                          color: context.theme.colorScheme.properSurface,
                         );
                       } else {
                         return child;
@@ -102,12 +104,12 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
                   Container(
                     width: 150,
                     height: 150,
-                    color: Theme.of(context).colorScheme.secondary,
+                    color: context.theme.colorScheme.properSurface,
                   ),
                 if (hideAttachments)
                   Positioned.fill(
                     child: Container(
-                      color: Theme.of(context).colorScheme.secondary,
+                      color: context.theme.colorScheme.properSurface,
                     ),
                   ),
                 if (hideAttachments && !hideAttachmentTypes)
@@ -128,9 +130,19 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
               borderRadius: BorderRadius.circular(20),
               child: Container(
                 child: Center(
-                  child: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.check_mark_circled_solid : Icons.check_circle,
-                    color: Colors.white,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: context.theme.colorScheme.primary
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.check_mark : Icons.check,
+                        color: context.theme.colorScheme.onPrimary,
+                        size: 18,
+                      ),
+                    ),
                   ),
                 ),
                 color: Colors.white.withAlpha(50),

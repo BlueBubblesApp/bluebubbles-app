@@ -47,7 +47,16 @@ ThemeData oledDarkTheme = FlexColorScheme(
     error: Colors.red,
     brightness: Brightness.dark,
   ),
-).toTheme.copyWith(splashFactory: InkRipple.splashFactory);
+).toTheme.copyWith(splashFactory: InkRipple.splashFactory, extensions: [
+  BubbleColors(
+    iMessageBubbleColor: HexColor("1982FC"),
+    oniMessageBubbleColor: Colors.white,
+    smsBubbleColor: HexColor("43CC47"),
+    onSmsBubbleColor: Colors.white,
+    receivedBubbleColor: HexColor("323332"),
+    onReceivedBubbleColor: Colors.white,
+  ),
+]);
 
 ThemeData nordDarkTheme = FlexColorScheme(
   textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
@@ -62,7 +71,7 @@ ThemeData nordDarkTheme = FlexColorScheme(
     primaryContainer: HexColor("49688e"),
     outline: Colors.grey,
   ),
-).toTheme.copyWith(splashFactory: InkRipple.splashFactory,);
+).toTheme.copyWith(splashFactory: InkRipple.splashFactory);
 
 ThemeData whiteLightTheme = FlexColorScheme(
   textTheme: Typography.englishLike2021.merge(Typography.blackMountainView),
@@ -72,7 +81,16 @@ ThemeData whiteLightTheme = FlexColorScheme(
     error: Colors.red,
     brightness: Brightness.light,
   ),
-).toTheme.copyWith(splashFactory: InkRipple.splashFactory);
+).toTheme.copyWith(splashFactory: InkRipple.splashFactory, extensions: [
+  BubbleColors(
+      iMessageBubbleColor: HexColor("1982FC"),
+      oniMessageBubbleColor: Colors.white,
+      smsBubbleColor: HexColor("43CC47"),
+      onSmsBubbleColor: Colors.white,
+      receivedBubbleColor: HexColor("e9e9e8"),
+      onReceivedBubbleColor: Colors.black,
+  ),
+]);
 
 void loadTheme(BuildContext? context, {ThemeStruct? lightOverride, ThemeStruct? darkOverride}) {
   if (context == null) return;
@@ -235,5 +253,51 @@ extension SettingsThemeData on ThemeData {
   }
   bool get isMonoColorPanel {
     return SettingsManager().settings.skin.value == Skins.iOS && isOled;
+  }
+}
+
+@immutable
+class BubbleColors extends ThemeExtension<BubbleColors> {
+  const BubbleColors({
+    required this.iMessageBubbleColor,
+    required this.oniMessageBubbleColor,
+    required this.smsBubbleColor,
+    required this.onSmsBubbleColor,
+    required this.receivedBubbleColor,
+    required this.onReceivedBubbleColor,
+  });
+
+  final Color? iMessageBubbleColor;
+  final Color? oniMessageBubbleColor;
+  final Color? smsBubbleColor;
+  final Color? onSmsBubbleColor;
+  final Color? receivedBubbleColor;
+  final Color? onReceivedBubbleColor;
+
+  @override
+  BubbleColors copyWith({Color? iMessageBubbleColor, Color? oniMessageBubbleColor, Color? smsBubbleColor, Color? onSmsBubbleColor, Color? receivedBubbleColor, Color? onReceivedBubbleColor}) {
+    return BubbleColors(
+      iMessageBubbleColor: iMessageBubbleColor ?? this.iMessageBubbleColor,
+      oniMessageBubbleColor: oniMessageBubbleColor ?? this.oniMessageBubbleColor,
+      smsBubbleColor: smsBubbleColor ?? this.smsBubbleColor,
+      onSmsBubbleColor: onSmsBubbleColor ?? this.onSmsBubbleColor,
+      receivedBubbleColor: receivedBubbleColor ?? this.receivedBubbleColor,
+      onReceivedBubbleColor: onReceivedBubbleColor ?? this.onReceivedBubbleColor,
+    );
+  }
+
+  @override
+  BubbleColors lerp(ThemeExtension<BubbleColors>? other, double t) {
+    if (other is! BubbleColors) {
+      return this;
+    }
+    return BubbleColors(
+      iMessageBubbleColor: Color.lerp(iMessageBubbleColor, other.iMessageBubbleColor, t),
+      oniMessageBubbleColor: Color.lerp(oniMessageBubbleColor, other.oniMessageBubbleColor, t),
+      smsBubbleColor: Color.lerp(smsBubbleColor, other.smsBubbleColor, t),
+      onSmsBubbleColor: Color.lerp(onSmsBubbleColor, other.onSmsBubbleColor, t),
+      receivedBubbleColor: Color.lerp(receivedBubbleColor, other.receivedBubbleColor, t),
+      onReceivedBubbleColor: Color.lerp(onReceivedBubbleColor, other.onReceivedBubbleColor, t),
+    );
   }
 }

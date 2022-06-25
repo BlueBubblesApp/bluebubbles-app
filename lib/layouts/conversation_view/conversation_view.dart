@@ -11,6 +11,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
@@ -683,65 +684,75 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       ),
       child: Theme(
-        data: Theme.of(context)
-            .copyWith(primaryColor: chat?.isTextForwarding ?? false ? Colors.green : Theme.of(context).primaryColor),
-        child: Builder(
-          builder: (context) {
-            return WillPopScope(
-              onWillPop: () async {
-                if (LifeCycleManager().isBubble) {
-                  ChatManager().setActiveChat(null);
-                  SystemNavigator.pop();
-                }
-                return !LifeCycleManager().isBubble;
-              },
-              child: Obx(
-                () {
-                  chat?.getTitle();
-                  return Scaffold(
-                    backgroundColor: Theme.of(context).backgroundColor,
-                    extendBodyBehindAppBar: !isCreator!,
-                    appBar: (!isCreator! || false.obs.value) // Necessary
-                        ? buildConversationViewHeader(context) as PreferredSizeWidget?
-                        : buildChatSelectorHeader() as PreferredSizeWidget?,
-                    body: Obx(() => adjustBackground.value
-                        ? MirrorAnimation<MultiTweenValues<String>>(
-                            tween: ConversationViewMixin.gradientTween.value,
-                            curve: Curves.fastOutSlowIn,
-                            duration: Duration(seconds: 3),
-                            builder: (context, child, anim) {
-                              return Container(
-                                decoration:
-                                    (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
-                                        ? BoxDecoration(
-                                            gradient: LinearGradient(
-                                                begin: Alignment.topRight,
-                                                end: Alignment.bottomLeft,
-                                                stops: [
-                                                anim.get("color1"),
-                                                anim.get("color2")
-                                              ],
-                                                colors: [
-                                                AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
-                                                    ? Theme.of(context).primaryColor.lightenPercent(20)
-                                                    : Theme.of(context).primaryColor.darkenPercent(20),
-                                                Theme.of(context).backgroundColor
-                                              ]))
-                                        : null,
-                                child: child,
-                              );
-                            },
-                            child: child,
-                          )
-                        : child),
-                    floatingActionButton: AnimatedOpacity(
-                        duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
-                  );
-                },
-              ),
-            );
-          },
+        data: context.theme.copyWith(
+            // in case some components still use legacy theming
+            primaryColor: SettingsManager().settings.monetTheming.value != Monet.none ? null : (chat?.isIMessage ?? true)
+                ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.iMessageBubbleColor
+                : (context.theme.extensions[BubbleColors] as BubbleColors?)?.smsBubbleColor,
+            colorScheme: context.theme.colorScheme.copyWith(
+              primary: SettingsManager().settings.monetTheming.value != Monet.none ? null : (chat?.isIMessage ?? true)
+                  ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.iMessageBubbleColor
+                  : (context.theme.extensions[BubbleColors] as BubbleColors?)?.smsBubbleColor,
+              onPrimary: SettingsManager().settings.monetTheming.value != Monet.none ? null : (chat?.isIMessage ?? true)
+                  ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.oniMessageBubbleColor
+                  : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onSmsBubbleColor,
+              surface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+              onSurface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+            ),
         ),
+        child: WillPopScope(
+          onWillPop: () async {
+            if (LifeCycleManager().isBubble) {
+              ChatManager().setActiveChat(null);
+              SystemNavigator.pop();
+            }
+            return !LifeCycleManager().isBubble;
+          },
+          child: Obx(
+                () {
+              chat?.getTitle();
+              return Scaffold(
+                backgroundColor: Theme.of(context).backgroundColor,
+                extendBodyBehindAppBar: !isCreator!,
+                appBar: (!isCreator! || false.obs.value) // Necessary
+                    ? buildConversationViewHeader(context) as PreferredSizeWidget?
+                    : buildChatSelectorHeader() as PreferredSizeWidget?,
+                body: Obx(() => adjustBackground.value
+                    ? MirrorAnimation<MultiTweenValues<String>>(
+                  tween: ConversationViewMixin.gradientTween.value,
+                  curve: Curves.fastOutSlowIn,
+                  duration: Duration(seconds: 3),
+                  builder: (context, child, anim) {
+                    return Container(
+                      decoration:
+                      (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
+                          ? BoxDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment.topRight,
+                              end: Alignment.bottomLeft,
+                              stops: [
+                                anim.get("color1"),
+                                anim.get("color2")
+                              ],
+                              colors: [
+                                AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
+                                    ? Theme.of(context).primaryColor.lightenPercent(20)
+                                    : Theme.of(context).primaryColor.darkenPercent(20),
+                                Theme.of(context).backgroundColor
+                              ]))
+                          : null,
+                      child: child,
+                    );
+                  },
+                  child: child,
+                )
+                    : child),
+                floatingActionButton: AnimatedOpacity(
+                    duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
+              );
+            },
+          ),
+        )
       ),
     );
   }
