@@ -272,7 +272,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildCupertinoTrailing() {
-    Color? fontColor = Theme.of(context).textTheme.headlineMedium!.color;
+    Color? fontColor = context.theme.colorScheme.onBackground;
     bool manualMark =
         SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateManualMarkAsRead.value;
     bool showManual = !SettingsManager().settings.privateMarkChatAsRead.value && !(widget.chat?.isGroup() ?? false);
@@ -284,7 +284,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 ? Theme(
                     data: ThemeData(
                       cupertinoOverrideTheme: cupertino.CupertinoThemeData(
-                        brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
+                        brightness: context.theme.colorScheme.brightness,
                       ),
                     ),
                     child: cupertino.CupertinoActivityIndicator(
@@ -296,7 +296,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     width: 24,
                     child: Center(
                         child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                            backgroundColor: context.theme.colorScheme.properSurface,
+                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                            strokeWidth: 2,
                     )))),
       if (showManual && manualMark && !markingAsRead)
         Padding(
@@ -306,7 +308,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               (markedAsRead)
                   ? cupertino.CupertinoIcons.check_mark_circled
                   : cupertino.CupertinoIcons.check_mark_circled_solid,
-              color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
+              color: (markedAsRead) ? HexColor('43CC47').withAlpha(200) : fontColor,
             ),
             onTap: markChatAsRead,
           ),
@@ -330,9 +332,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildConversationViewHeader(BuildContext context) {
-    Color backgroundColor = Theme.of(context).backgroundColor;
-    Color? fontColor = Theme.of(context).textTheme.headlineMedium!.color;
-    Color? fontColor2 = Theme.of(context).textTheme.labelLarge!.color;
+    Color? fontColor = context.theme.colorScheme.onBackground;
+    Color? fontColor2 = context.theme.colorScheme.outline;
     String? title = chat!.title;
 
     final hideTitle = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
@@ -350,9 +351,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         SettingsManager().settings.skin.value == Skins.Samsung) {
       return AppBar(
         toolbarHeight: kIsDesktop ? 70 : null,
-        systemOverlayStyle: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.dark
-            ? SystemUiOverlayStyle.light
-            : SystemUiOverlayStyle.dark,
+        systemOverlayStyle:
+          context.theme.colorScheme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
         title: Padding(
           padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
           child: GestureDetector(
@@ -373,7 +373,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               children: [
                 Text(
                   title!,
-                  style: Theme.of(context).textTheme.headlineMedium!.apply(color: fontColor),
+                  style: context.theme.textTheme.titleLarge!.apply(color: fontColor),
                 ),
                 if (SettingsManager().settings.skin.value == Skins.Samsung &&
                     (chat!.isGroup() || (!title.isPhoneNumber && !title.isEmail)))
@@ -383,7 +383,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                         : chat!.isGroup()
                             ? "${chat!.participants.length} recipients"
                             : chat!.participants[0].address,
-                    style: Theme.of(context).textTheme.labelLarge!.apply(color: fontColor2),
+                    style: context.theme.textTheme.labelLarge!.apply(color: fontColor2),
                   ),
               ],
             ),
@@ -391,7 +391,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
         bottom: PreferredSize(
           child: Container(
-            color: Theme.of(context).dividerColor,
+            color: context.theme.colorScheme.properSurface,
             height: 0.5,
           ),
           preferredSize: Size.fromHeight(0.5),
@@ -408,9 +408,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           }),
         ),
         automaticallyImplyLeading: false,
-        backgroundColor: backgroundColor,
-        actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-        iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+        backgroundColor: context.theme.colorScheme.background,
+        actionsIconTheme: IconThemeData(color: context.theme.colorScheme.primary),
+        iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
         actions: [
           Padding(
             padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
@@ -433,7 +433,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)),
+                          backgroundColor: context.theme.colorScheme.properSurface,
+                          valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary)),
                     )));
               } else {
                 return SizedBox.shrink();
@@ -457,7 +458,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                           : SettingsManager().settings.skin.value == Skins.iOS
                               ? cupertino.CupertinoIcons.check_mark_circled
                               : Icons.check_circle_outline,
-                      color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
+                      color: (markedAsRead) ? HexColor('43CC47').withAlpha(200) : fontColor,
                     ),
                     onTap: markChatAsRead,
                   ),
@@ -624,11 +625,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
         RichText(
           text: TextSpan(
-            style: Theme.of(context).textTheme.titleMedium,
             children: [
               TextSpan(
                 text: " >",
-                style: Theme.of(context).textTheme.labelLarge,
+                style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
               ),
             ],
           ),
@@ -639,9 +639,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     return PreferredSize(
       preferredSize: Size.fromHeight(context.orientation == Orientation.landscape && context.isPhone ? 55 : 75),
       child: CupertinoNavigationBar(
-          backgroundColor: Theme.of(context).colorScheme.secondary.withAlpha(125),
+          backgroundColor: context.theme.colorScheme.properSurface.withAlpha(125),
           border: Border(
-            bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),
+            bottom: BorderSide(color: context.theme.colorScheme.properSurface, width: 1.5),
           ),
           leading: GestureDetector(
               onTap: () {
@@ -673,12 +673,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                           width: 25.0,
                           height: 20.0,
                           decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor,
+                              color: context.theme.colorScheme.primary,
                               shape: BoxShape.rectangle,
                               borderRadius: BorderRadius.circular(10)),
                           child: Center(
                               child: Text(ChatBloc().unreads.value.toString(),
-                                  textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
+                                  textAlign: TextAlign.center, style: TextStyle(color: context.theme.colorScheme.onPrimary, fontSize: 12.0))),
                         ),
                     ],
                   ),
@@ -1003,7 +1003,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 // height: 70,
                 // color: Colors.black,
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                 ),
               ),
           );

@@ -703,7 +703,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                     ),
                   SliverToBoxAdapter(
                     child: SettingsSection(
-                      backgroundColor: tileColor.computeDifference(context.theme.colorScheme.background) < 20 ? tileColor.lightenPercent(40) : tileColor,
+                      backgroundColor: SettingsManager().settings.skin.value != Skins.Material && tileColor.computeDifference(context.theme.colorScheme.background) < 20 ? tileColor.lightenPercent(40) : tileColor,
                       children: [
                         if (!kIsWeb)
                           SettingsTile(
