@@ -205,20 +205,20 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         if (event.type == MessageBlocEventType.insert && mounted && event.outGoing) {
           final constraints = BoxConstraints(
             maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
-            minHeight: Theme.of(context).textTheme.bodySmall!.fontSize!,
-            maxHeight: Theme.of(context).textTheme.bodySmall!.fontSize!,
+            minHeight: Theme.of(context).textTheme.bodyMedium!.fontSize!,
+            maxHeight: Theme.of(context).textTheme.bodyMedium!.fontSize!,
           );
           final renderParagraph = RichText(
             text: TextSpan(
               text: event.message!.text,
-              style: Theme.of(context).textTheme.bodySmall!.apply(color: Colors.white),
+              style: Theme.of(context).textTheme.bodyMedium!.apply(color: Colors.white),
             ),
             maxLines: 1,
           ).createRenderObject(context);
           final renderParagraph2 = RichText(
             text: TextSpan(
               text: event.message!.subject ?? "",
-              style: Theme.of(context).textTheme.bodySmall!.apply(color: Colors.white),
+              style: Theme.of(context).textTheme.bodyMedium!.apply(color: Colors.white),
             ),
             maxLines: 1,
           ).createRenderObject(context);
@@ -415,9 +415,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           onPressed: currentChat!.scrollToBottom,
           child: Icon(
             Icons.arrow_downward,
-            color: Theme.of(context).textTheme.bodyMedium!.color,
+            color: context.theme.colorScheme.onSecondary,
           ),
-          backgroundColor: Theme.of(context).colorScheme.secondary,
+          backgroundColor: context.theme.colorScheme.secondary,
         ),
       );
     } else if (currentChat != null &&
@@ -435,7 +435,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 child: Container(
                   height: 35,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.7),
+                    color: context.theme.colorScheme.secondary.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 10),
@@ -445,7 +445,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       child: Text(
                         "\u{2193} Scroll to bottom \u{2193}",
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSecondary),
                       ),
                     ),
                   ),
@@ -527,7 +527,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
                               "Loading existing chats...",
-                              style: Theme.of(context).textTheme.labelLarge,
+                              style: context.theme.textTheme.labelLarge,
                             ),
                           ),
                           buildProgressIndicator(context, size: 15),
@@ -557,7 +557,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                         padding: const EdgeInsets.all(8.0),
                                         child: Text(
                                           "Loading chat...",
-                                          style: Theme.of(context).textTheme.labelLarge,
+                                          style: context.theme.textTheme.labelLarge,
                                         ),
                                       ),
                                       buildProgressIndicator(context, size: 15),
@@ -675,27 +675,18 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-            ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Theme(
         data: context.theme.copyWith(
             // in case some components still use legacy theming
-            primaryColor: SettingsManager().settings.monetTheming.value != Monet.none ? null : (chat?.isIMessage ?? true)
-                ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.iMessageBubbleColor
-                : (context.theme.extensions[BubbleColors] as BubbleColors?)?.smsBubbleColor,
+            primaryColor: context.theme.colorScheme.bubble(context, chat?.isIMessage ?? true),
             colorScheme: context.theme.colorScheme.copyWith(
-              primary: SettingsManager().settings.monetTheming.value != Monet.none ? null : (chat?.isIMessage ?? true)
-                  ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.iMessageBubbleColor
-                  : (context.theme.extensions[BubbleColors] as BubbleColors?)?.smsBubbleColor,
-              onPrimary: SettingsManager().settings.monetTheming.value != Monet.none ? null : (chat?.isIMessage ?? true)
-                  ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.oniMessageBubbleColor
-                  : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onSmsBubbleColor,
+              primary: context.theme.colorScheme.bubble(context, chat?.isIMessage ?? true),
+              onPrimary: context.theme.colorScheme.onBubble(context, chat?.isIMessage ?? true),
               surface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
               onSurface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
             ),
@@ -712,7 +703,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 () {
               chat?.getTitle();
               return Scaffold(
-                backgroundColor: Theme.of(context).backgroundColor,
+                backgroundColor: context.theme.colorScheme.background,
                 extendBodyBehindAppBar: !isCreator!,
                 appBar: (!isCreator! || false.obs.value) // Necessary
                     ? buildConversationViewHeader(context) as PreferredSizeWidget?
@@ -735,10 +726,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                 anim.get("color2")
                               ],
                               colors: [
-                                AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
-                                    ? Theme.of(context).primaryColor.lightenPercent(20)
-                                    : Theme.of(context).primaryColor.darkenPercent(20),
-                                Theme.of(context).backgroundColor
+                                context.theme.colorScheme.bubble(context, chat?.isIMessage ?? true).withOpacity(0.5),
+                                context.theme.colorScheme.background,
                               ]))
                           : null,
                       child: child,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -993,21 +994,18 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: Theme.of(context).colorScheme.secondary,
+            backgroundColor: context.theme.colorScheme.properSurface,
             title: Text(
               "Creating a new chat...",
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: context.theme.textTheme.titleLarge,
             ),
-            content:
-                Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-              Container(
+            content: Container(
                 // height: 70,
                 // color: Colors.black,
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                 ),
               ),
-            ]),
           );
         });
 
@@ -1042,18 +1040,22 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
+                backgroundColor: context.theme.colorScheme.properSurface,
                 title: Text(
                   "Could not create",
+                  style: context.theme.textTheme.titleLarge,
                 ),
                 content: Text(
                   error is Response
                       ? "Reason: (${error.data["error"]["type"]}) -> ${error.data["error"]["message"]}"
                       : error.toString(),
+                  style: context.theme.textTheme.bodyLarge,
                 ),
                 actions: [
                   TextButton(
                     child: Text(
-                      "Ok",
+                      "OK",
+                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
                     ),
                     onPressed: () {
                       Navigator.of(context).pop();
@@ -1138,69 +1140,63 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
       );
 
-  Widget buildChatSelectorHeader() => AppBar(
-        toolbarHeight: kIsDesktop ? 30 : 0,
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-        leading: null,
-        automaticallyImplyLeading: false,
-        bottom: cupertino.CupertinoNavigationBar(
-          backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
-          middle: Container(
-            child: Text(
-              widget.customHeading ?? "New Message",
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+  Widget buildChatSelectorHeader() => PreferredSize(
+    preferredSize: Size(CustomNavigator.width(context), 50),
+    child: ClipRRect(
+      child: BackdropFilter(
+        child: AppBar(
+          systemOverlayStyle:
+            context.theme.colorScheme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+          toolbarHeight: 50,
+          elevation: 0,
+          scrolledUnderElevation: 3,
+          surfaceTintColor: context.theme.colorScheme.primary,
+          leading: buildBackButton(context),
+          backgroundColor: context.theme.colorScheme.properSurface.withOpacity(0.5),
+          title: Text(
+            widget.customHeading ?? "New Message",
+            style: context.theme.textTheme.titleLarge,
           ),
-          leading: buildBackButton(context, iconSize: 20),
-          trailing: shouldShowAlert
-              ? IconButton(
-                  icon: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS
-                        ? cupertino.CupertinoIcons.exclamationmark_circle
-                        : Icons.error_outline,
-                    size: 20,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                  padding: EdgeInsets.zero,
-                  iconSize: 20,
-                  constraints: BoxConstraints(maxWidth: 20, maxHeight: 20),
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                            backgroundColor: Theme.of(context).colorScheme.secondary,
-                            title: Text("Group Chat Creation",
-                                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color)),
-                            content: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Support for creating group chats currently does not work on MacOS 11 (Big Sur) and up due to limitations imposed by Apple. We hope to soon implement this feature with the Private API.',
-                                  style: context.theme.textTheme.labelLarge,
-                                ),
-                              ],
-                            ),
-                            actions: <Widget>[
-                              TextButton(
-                                  child: Text("OK",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge!
-                                          .apply(color: Theme.of(context).primaryColor)),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  }),
-                            ]);
-                      },
-                    );
+          centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
+          actions: [
+            if (shouldShowAlert)
+             IconButton(
+              icon: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.exclamationmark_circle
+                    : Icons.error_outline,
+                size: 20,
+                color: context.theme.colorScheme.primary,
+              ),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                        backgroundColor: context.theme.colorScheme.properSurface,
+                        title: Text("Group Chat Creation",
+                            style: context.theme.textTheme.titleLarge),
+                        content: Text(
+                          'Support for creating group chats currently does not work on MacOS 11 (Big Sur) and up due to limitations imposed by Apple. We hope to soon implement this feature with the Private API.',
+                          style: context.theme.textTheme.bodyLarge,
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                              child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              }),
+                        ]);
                   },
-                )
-              : null,
+                );
+              },
+            ),
+          ],
         ),
-      );
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+      ),
+    ),
+  );
 }
 
 class UniqueContact {

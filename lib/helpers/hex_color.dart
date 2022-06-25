@@ -1,6 +1,10 @@
 import 'dart:math';
 
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class HexColor extends Color {
   HexColor(final String hexColor) : super(_getColorFromHex(hexColor));
@@ -29,6 +33,26 @@ extension ColorSchemeHelpers on ColorScheme {
   Color get properSurface => surface.computeDifference(background) < 20 ? surfaceVariant : surface;
 
   Color get properOnSurface => surface.computeDifference(background) < 20 ? onSurfaceVariant : onSurface;
+
+  Color get iMessageBubble => HSLColor.fromColor(primary).colorfulness < HSLColor.fromColor(primaryContainer).colorfulness ? primary : primaryContainer;
+
+  Color get oniMessageBubble => iMessageBubble == primary ? onPrimary : onPrimaryContainer;
+
+  Color get smsBubble => HSLColor.fromColor(primary).colorfulness > HSLColor.fromColor(primaryContainer).colorfulness ? primary : primaryContainer;
+
+  Color get onSmsBubble => iMessageBubble == primary ? onPrimary : onPrimaryContainer;
+
+  Color bubble(BuildContext context, bool iMessage) => SettingsManager().settings.monetTheming.value != Monet.none
+      ? (iMessage ? iMessageBubble : smsBubble)
+      : iMessage
+      ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.iMessageBubbleColor ?? iMessageBubble
+      : (context.theme.extensions[BubbleColors] as BubbleColors?)?.smsBubbleColor ?? smsBubble;
+
+  Color onBubble(BuildContext context, bool iMessage) => SettingsManager().settings.monetTheming.value != Monet.none
+      ? (iMessage ? oniMessageBubble : onSmsBubble)
+      : iMessage
+      ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.oniMessageBubbleColor ?? oniMessageBubble
+      : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onSmsBubbleColor ?? onSmsBubble;
 }
 
 extension ColorHelpers on Color {
@@ -94,6 +118,17 @@ extension ColorHelpers on Color {
     final b2 = other.blue;
     final d = sqrt((r2-r1)^2+(g2-g1)^2+(b2-b1)^2);
     return d / sqrt((255)^2+(255)^2+(255)^2) * 100;
+  }
+}
+
+extension HSLHelpers on HSLColor {
+
+  /// Get "colorfulness" of a color based on saturation and brightness. Lower
+  /// is more "colorful".
+  double get colorfulness {
+    final sat = saturation - 1;
+    final bright = lightness - 0.5;
+    return sqrt(sat * sat + bright * bright);
   }
 }
 
