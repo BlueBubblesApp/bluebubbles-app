@@ -15,6 +15,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   permission_handler_windows
   printing
   quick_notify
+  screen_retriever
   secure_application
   system_tray
   url_launcher_windows

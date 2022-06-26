@@ -33,9 +33,9 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
+import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
-import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_dart/firebase_dart.dart';
@@ -61,6 +61,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:secure_application/secure_application.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:system_tray/system_tray.dart';
@@ -126,8 +127,8 @@ class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-    // If there is a bad certificate callback, override it if the host is part of
-    // your server URL
+      // If there is a bad certificate callback, override it if the host is part of
+      // your server URL
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         String serverUrl = sanitizeServerAddress() ?? "";
         return serverUrl.contains(host);
@@ -182,7 +183,7 @@ Future<Null> initApp(bool isBubble) async {
     // Migrate to new appdata location if this function returns the new place and we still have the old place
     if (basename(dirname(appData.absolute.path)) == "com.bluebubbles.app") {
       Directory oldAppData =
-      Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app"));
+          Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app"));
       if (oldAppData.existsSync()) {
         Logger.info("Copying appData to new directory");
         copyDirectory(oldAppData, appData);
@@ -196,8 +197,8 @@ Future<Null> initApp(bool isBubble) async {
     prefs = await SharedPreferences.getInstance();
     if (!kIsWeb) {
       Directory documentsDirectory =
-      //ignore: unnecessary_cast, we need this as a workaround
-      (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+          //ignore: unnecessary_cast, we need this as a workaround
+          (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
       Directory objectBoxDirectory = Directory(join(documentsDirectory.path, 'objectbox'));
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
@@ -339,7 +340,7 @@ Future<Null> initApp(bool isBubble) async {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
       final InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid);
+          InitializationSettings(android: initializationSettingsAndroid);
       await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
       tz.initializeTimeZones();
       // it doesn't matter if this errors
@@ -355,31 +356,39 @@ Future<Null> initApp(bool isBubble) async {
       await WindowManager.instance.setTitle('BlueBubbles');
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
-        appWindow.minSize = Size(300, 300);
+        await WindowManager.instance.setMinimumSize(Size(300, 300));
+        Display primary = await ScreenRetriever.instance.getPrimaryDisplay();
+        Size size = primary.size;
+        Rect bounds = Rect.fromLTWH(0, 0, size.width, size.height);
 
         double? width = prefs.getDouble("window-width");
         double? height = prefs.getDouble("window-height");
         if (width != null && height != null) {
-          await WindowManager.instance.setSize(Size(width, height));
+          if ((width == width.clamp(300, bounds.width)) && (height == height.clamp(300, bounds.height))) {
+            await WindowManager.instance.setSize(Size(width, height));
+          }
         }
-
-        appWindow.alignment = Alignment.center;
 
         double? posX = prefs.getDouble("window-x");
         double? posY = prefs.getDouble("window-y");
-        if (posX != null && posY != null) {
-          appWindow.position = Offset(posX, posY);
+        if (posX != null && posY != null && width != null && height != null) {
+          if ((posX == posX.clamp(bounds.left, bounds.right - width)) &&
+              (posY == posY.clamp(bounds.top, bounds.bottom - height))) {
+            await WindowManager.instance.setPosition(Offset(posX, posY));
+          }
+        } else {
+          await WindowManager.instance.setAlignment(Alignment.center);
         }
 
-        appWindow.title = 'BlueBubbles';
-        appWindow.show();
+        await WindowManager.instance.setTitle('BlueBubbles');
+        await WindowManager.instance.show();
       });
     }
     if (!kIsWeb) {
       try {
         DynamicCachedFonts.loadCachedFont(
-            "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
-            fontFamily: "Apple Color Emoji")
+                "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
+                fontFamily: "Apple Color Emoji")
             .then((_) {
           fontExistsOnDisk.value = true;
         });
@@ -462,7 +471,6 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return AdaptiveTheme(
-
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
       light: lightTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.colorScheme.primary)),
@@ -471,63 +479,59 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
       initial: AdaptiveThemeMode.system,
-      builder: (theme, darkTheme) =>
-          GetMaterialApp(
+      builder: (theme, darkTheme) => GetMaterialApp(
+        /// Hide the debug banner in debug mode
+        debugShowCheckedModeBanner: false,
 
-            /// Hide the debug banner in debug mode
-            debugShowCheckedModeBanner: false,
+        title: 'BlueBubbles',
 
-            title: 'BlueBubbles',
+        /// Set the light theme from the [AdaptiveTheme]
+        theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
 
-            /// Set the light theme from the [AdaptiveTheme]
-            theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
+        /// Set the dark theme from the [AdaptiveTheme]
+        darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
 
-            /// Set the dark theme from the [AdaptiveTheme]
-            darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
+        /// [NavigatorManager] is set as the navigator key so that we can control navigation from anywhere
+        navigatorKey: NavigatorManager().navigatorKey,
 
-            /// [NavigatorManager] is set as the navigator key so that we can control navigation from anywhere
-            navigatorKey: NavigatorManager().navigatorKey,
+        /// [Home] is the starting widget for the app
+        home: Home(),
 
-            /// [Home] is the starting widget for the app
-            home: Home(),
-
-            shortcuts: {
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
-              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
-              if (kIsDesktop)
-                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): const OpenSearchIntent(),
-              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
-              if (kIsDesktop) LogicalKeySet(
-                  LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
-              if (kIsDesktop)
-                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR):
+        shortcuts: {
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
+          LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): const OpenSearchIntent(),
+          LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
+          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR):
                 const StartIncrementalSyncIntent(),
-              if (kIsDesktop)
-                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation):
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation):
               const HeartRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at):
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at):
               const LikeRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign):
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign):
               const DislikeRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar):
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar):
               const LaughRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent):
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent):
               const EmphasizeRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret):
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret):
               const QuestionRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowDown): const OpenNextChatIntent(),
-              if (kIsDesktop) LogicalKeySet(
-                  LogicalKeyboardKey.control, LogicalKeyboardKey.tab): const OpenNextChatIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowUp): const OpenPreviousChatIntent(),
-              if (kIsDesktop)
-                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab):
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowDown): const OpenNextChatIntent(),
+          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.tab): const OpenNextChatIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowUp): const OpenPreviousChatIntent(),
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab):
                 const OpenPreviousChatIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
-              LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
-            },
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
+          LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
+        },
 
             builder: (context, child) =>
                 SecureApplication(
@@ -586,12 +590,12 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
                   }),
                 ),
 
-            defaultTransition: Transition.cupertino,
+        defaultTransition: Transition.cupertino,
 
-            getPages: [
-              GetPage(page: () => TestingMode(), name: "/testing-mode", binding: TestingModeBinding()),
-            ],
-          ),
+        getPages: [
+          GetPage(page: () => TestingMode(), name: "/testing-mode", binding: TestingModeBinding()),
+        ],
+      ),
     );
   }
 }
@@ -632,7 +636,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           if (temp.existsSync()) temp.deleteSync(recursive: true);
         });
       }
-      initSystemTray();
+      Future.delayed(Duration.zero, () async => await initSystemTray());
     }
 
     // we want to refresh the page rather than loading a new instance of [Home]
@@ -766,17 +770,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             if (value.isEmpty) return;
 
             // If we don't have storage permission, we can't do anything
-            if (!await Permission.storage
-                .request()
-                .isGranted) return;
+            if (!await Permission.storage.request().isGranted) return;
 
             // Add the attached files to a list
             List<PlatformFile> attachments = [];
             for (SharedMediaFile element in value) {
               attachments.add(PlatformFile(
-                name: element.path
-                    .split("/")
-                    .last,
+                name: element.path.split("/").last,
                 path: element.path,
                 size: 0,
               ));
@@ -791,7 +791,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 existingAttachments: attachments,
                 isCreator: true,
               ),
-                  (route) => route.isFirst,
+              (route) => route.isFirst,
             );
           });
 
@@ -807,7 +807,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 existingText: text,
                 isCreator: true,
               ),
-                  (route) => route.isFirst,
+              (route) => route.isFirst,
             );
           });
         }
@@ -871,12 +871,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void didChangePlatformBrightness() {
     super.didChangePlatformBrightness();
-    if (AdaptiveTheme
-        .maybeOf(context)
-        ?.mode == AdaptiveThemeMode.system) {
-      if (AdaptiveTheme
-          .maybeOf(context)
-          ?.brightness == Brightness.light) {
+    if (AdaptiveTheme.maybeOf(context)?.mode == AdaptiveThemeMode.system) {
+      if (AdaptiveTheme.maybeOf(context)?.brightness == Brightness.light) {
         AdaptiveTheme.maybeOf(context)?.setLight();
       } else {
         AdaptiveTheme.maybeOf(context)?.setDark();
@@ -972,22 +968,22 @@ Future<void> initSystemTray() async {
     [
       MenuItem(
         label: 'Open App',
-        onClicked: () {
+        onClicked: () async {
           LifeCycleManager().opened(null);
-          appWindow.show();
+          await WindowManager.instance.show();
         },
       ),
       MenuItem(
         label: 'Hide App',
-        onClicked: () {
+        onClicked: () async {
           LifeCycleManager().close();
-          appWindow.hide();
+          await WindowManager.instance.hide();
         },
       ),
       MenuItem(
         label: 'Close App',
-        onClicked: () {
-          appWindow.close();
+        onClicked: () async {
+          await WindowManager.instance.close();
         },
       ),
     ],
@@ -997,7 +993,7 @@ Future<void> initSystemTray() async {
   systemTray.registerSystemTrayEventHandler((eventName) async {
     switch (eventName) {
       case 'leftMouseUp':
-        appWindow.show();
+        await WindowManager.instance.show();
         break;
       case "rightMouseUp":
         await systemTray.popUpContextMenu();
@@ -1006,8 +1002,7 @@ Future<void> initSystemTray() async {
   });
 }
 
-void copyDirectory(Directory source, Directory destination) =>
-    source.listSync(recursive: false).forEach((element) {
+void copyDirectory(Directory source, Directory destination) => source.listSync(recursive: false).forEach((element) {
       if (element is Directory) {
         Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
         newDirectory.createSync();
