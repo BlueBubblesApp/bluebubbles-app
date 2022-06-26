@@ -61,8 +61,8 @@ class SentMessageHelper {
     if (effect.isBubble) assert(updateController != null);
     Color bubbleColor;
     bubbleColor = message == null || message.guid!.startsWith("temp")
-        ? Theme.of(context).primaryColor.darkenAmount(0.2)
-        : Theme.of(context).primaryColor;
+        ? context.theme.primaryColor.darkenAmount(0.2)
+        : context.theme.primaryColor;
 
     final bool hideEmoji = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
     final bool generateContent =
@@ -114,19 +114,19 @@ class SentMessageHelper {
                       child: Container(
                           width: 70,
                           height: 70,
-                          color: Theme.of(context).colorScheme.secondary,
+                          color: context.theme.colorScheme.properSurface,
                           child: Center(
                             child: Text(
                               "emoji",
                               textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium,
+                              style: context.theme.textTheme.bodyMedium,
                             ),
                           )),
                     )
                   : RichText(
                       text: TextSpan(
                           children: MessageHelper.buildEmojiText(
-                              message!.text!, Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 4)))),
+                              message!.text!, context.theme.textTheme.bodyMedium!.apply(fontSizeFactor: 4)))),
             ),
           );
         })
@@ -235,22 +235,22 @@ class SentMessageHelper {
                                             if (!isNullOrEmpty(message!.subject)!)
                                               TextSpan(
                                                 text: "$subject\n",
-                                                style: Theme.of(context).textTheme.bodySmall!.apply(
+                                                style: context.theme.textTheme.bodyMedium!.apply(
                                                     fontWeightDelta: 2,
-                                                    color: hideContent ? Colors.transparent : Colors.white),
+                                                    color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
                                               ),
                                             TextSpan(
                                               text: text,
-                                              style: Theme.of(context)
+                                              style: context.theme
                                                   .textTheme
-                                                  .bodySmall!
-                                                  .apply(color: hideContent ? Colors.transparent : Colors.white),
+                                                  .bodyMedium!
+                                                  .apply(color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
                                             ),
                                           ],
-                                          style: Theme.of(context)
+                                          style: context.theme
                                               .textTheme
-                                              .bodySmall!
-                                              .apply(color: hideContent ? Colors.transparent : Colors.white),
+                                              .bodyMedium!
+                                              .apply(color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
                                         ),
                                       ),
                                     ),
@@ -261,22 +261,22 @@ class SentMessageHelper {
                                             if (!isNullOrEmpty(message.subject)!)
                                               TextSpan(
                                                 text: "$subject\n",
-                                                style: Theme.of(context).textTheme.bodySmall!.apply(
+                                                style: context.theme.textTheme.bodyMedium!.apply(
                                                     fontWeightDelta: 2,
                                                     fontSizeFactor: value,
-                                                    color: hideContent ? Colors.transparent : Colors.white),
+                                                    color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
                                               ),
                                             TextSpan(
                                               text: text,
-                                              style: Theme.of(context).textTheme.bodySmall!.apply(
+                                              style: context.theme.textTheme.bodyMedium!.apply(
                                                   fontSizeFactor: value,
-                                                  color: hideContent ? Colors.transparent : Colors.white),
+                                                  color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
                                             ),
                                           ],
-                                          style: Theme.of(context)
+                                          style: context.theme
                                               .textTheme
-                                              .bodySmall!
-                                              .apply(color: hideContent ? Colors.transparent : Colors.white),
+                                              .bodyMedium!
+                                              .apply(color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
                                         ),
                                       ),
                                     if (effect == MessageEffect.invisibleInk &&
@@ -291,7 +291,7 @@ class SentMessageHelper {
                                             speedOfParticles: 0.25,
                                             height: bubbleSize.height - 20,
                                             width: bubbleSize.width - 25,
-                                            particleColor: Colors.white.withAlpha(150),
+                                            particleColor: context.theme.colorScheme.onPrimary.withAlpha(150),
                                             maxParticleSize: (bubbleSize.height / 75).clamp(0.5, 1),
                                             isRandSize: true,
                                             isRandomColor: false,
@@ -307,17 +307,16 @@ class SentMessageHelper {
                           future: msgSpanFuture,
                           initialData: MessageWidgetMixin.buildMessageSpans(context, message),
                           builder: (context, snapshot) {
-                            return (kIsDesktop || kIsWeb) &&
-                                ((ModalRoute.of(context)?.settings.arguments as Map?)?['hideTail'] ?? false)
+                            return ((ModalRoute.of(context)?.settings.arguments as Map?)?['hideTail'] ?? false)
                                 ? Theme(
                                     data: context.theme.copyWith(
                                         textSelectionTheme: TextSelectionThemeData(
-                                            selectionColor: context.theme.colorScheme.secondary.withAlpha(150))),
+                                            selectionColor: context.theme.colorScheme.properSurface.withAlpha(150))),
                                     child: SelectableText.rich(
                                       TextSpan(
                                         children:
                                             snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
-                                        style: Theme.of(context).textTheme.bodySmall!.apply(color: Colors.white),
+                                        style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.colorScheme.onPrimary),
                                       ),
                                       cursorWidth: 0,
                                       selectionControls: CupertinoTextSelectionControls(),
@@ -329,7 +328,7 @@ class SentMessageHelper {
                                       text: TextSpan(
                                         children:
                                             snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
-                                        style: Theme.of(context).textTheme.bodySmall!.apply(color: Colors.white),
+                                        style: context.theme.textTheme.bodyMedium!.apply(color: context.theme.colorScheme.onPrimary),
                                       ),
                                     ),
                                   );
@@ -486,12 +485,13 @@ class SentMessageHelper {
                   context: context,
                   builder: (BuildContext context) {
                     return AlertDialog(
-                      title: Text("Message failed to send", style: TextStyle(color: Colors.black)),
-                      content: Text("Error ($errorCode): $errorText"),
+                      backgroundColor: context.theme.colorScheme.properSurface,
+                      title: Text("Message failed to send", style: context.theme.textTheme.titleLarge),
+                      content: Text("Error ($errorCode): $errorText", style: context.theme.textTheme.bodyLarge),
                       actions: <Widget>[
                         if (chat != null)
                           TextButton(
-                            child: Text("Retry"),
+                            child: Text("Retry", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                             onPressed: () async {
                               // Remove the OG alert dialog
                               Navigator.of(context).pop();
@@ -503,7 +503,7 @@ class SentMessageHelper {
                           ),
                         if (chat != null)
                           TextButton(
-                            child: Text("Remove"),
+                            child: Text("Remove", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                             onPressed: () async {
                               Navigator.of(context).pop();
                               // Delete the message from the DB
@@ -523,7 +523,7 @@ class SentMessageHelper {
                             },
                           ),
                         TextButton(
-                          child: Text("Cancel"),
+                          child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                           onPressed: () {
                             Navigator.of(context).pop();
                             NotificationManager().clearFailedToSend();
@@ -538,7 +538,7 @@ class SentMessageHelper {
                   SettingsManager().settings.skin.value == Skins.iOS
                       ? CupertinoIcons.exclamationmark_circle
                       : Icons.error_outline,
-                  color: Colors.red),
+                  color: context.theme.colorScheme.error),
             );
           }
         ),
@@ -650,23 +650,6 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
     }*/
   }
 
-  List<Color> getBubbleColors(Message message) {
-    List<Color> bubbleColors = message.isFromMe ?? false
-        ? [Theme.of(context).primaryColor, Theme.of(context).primaryColor]
-        : [Theme.of(context).colorScheme.secondary, Theme.of(context).colorScheme.secondary];
-    if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
-      if (message.handle?.color == null) {
-        bubbleColors = toColorGradient(message.handle?.address);
-      } else {
-        bubbleColors = [
-          HexColor(message.handle!.color!),
-          HexColor(message.handle!.color!).lightenAmount(0.02),
-        ];
-      }
-    }
-    return bubbleColors;
-  }
-
   @override
   Widget build(BuildContext context) {
     if (Skin.of(context) != null) {
@@ -726,7 +709,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                             if (skin.value == Skins.iOS)
                               MessageTail(
                                 isFromMe: false,
-                                color: getBubbleColors(msg)[0],
+                                color: context.theme.colorScheme.primary,
                                 isReply: true,
                               ),
                             Container(
@@ -742,7 +725,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                                 horizontal: 14,
                               ),
                               decoration: BoxDecoration(
-                                border: Border.all(color: getBubbleColors(msg)[0]),
+                                border: Border.all(color: context.theme.colorScheme.primary),
                                 borderRadius: skin.value == Skins.iOS
                                     ? BorderRadius.only(
                                         bottomLeft: Radius.circular(17),
@@ -768,7 +751,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                               ),
                               child: FutureBuilder<List<InlineSpan>>(
                                   future: MessageWidgetMixin.buildMessageSpansAsync(context, msg,
-                                      colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30)),
+                                      colorOverride: context.theme.colorScheme.primary.lightenOrDarken(30)),
                                   builder: (context, snapshot) {
                                     if (snapshot.data != null) {
                                       return RichText(
@@ -780,7 +763,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                                     return RichText(
                                       text: TextSpan(
                                         children: MessageWidgetMixin.buildMessageSpans(context, msg,
-                                            colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30)),
+                                            colorOverride: context.theme.colorScheme.primary.lightenOrDarken(30)),
                                       ),
                                     );
                                   }),
@@ -989,13 +972,13 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                 ? Padding(
                     padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
                     child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                      Icon(Icons.refresh, size: 10, color: Theme.of(context).primaryColor),
+                      Icon(Icons.refresh, size: 10, color: context.theme.primaryColor),
                       Text(
                         " sent with $effect",
-                        style: Theme.of(context)
+                        style: context.theme
                             .textTheme
-                            .labelMedium!
-                            .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                            .labelSmall!
+                            .copyWith(fontWeight: FontWeight.bold, color: context.theme.primaryColor),
                       ),
                     ]),
                   )
@@ -1003,10 +986,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                     padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
                     child: Text(
                       "↺ sent with $effect",
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelMedium!
-                          .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                      style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
                     ),
                   ),
           ),
@@ -1022,10 +1002,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                 padding: const EdgeInsets.only(left: 8.0, right: 18.0, top: 2, bottom: 4),
                 child: Text(
                   "${list.length} repl${list.length > 1 ? "ies" : "y"}",
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelMedium!
-                      .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                  style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
                 ),
               ),
             );

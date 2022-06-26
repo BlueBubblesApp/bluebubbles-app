@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:emojis/emojis.dart';
 import 'package:flutter/foundation.dart';
@@ -136,7 +137,7 @@ class Reaction {
     for (int i = 0; i < messages.length; i++) {
       Color iconColor = isSelected ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onPrimary;
       if (!messages[i].isFromMe!) {
-        iconColor = context.theme.colorScheme.onSecondary;
+        iconColor = context.theme.colorScheme.properOnSurface;
       }
 
       reactionList.add(
@@ -159,7 +160,7 @@ class Reaction {
                     width: 5.5,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(100),
-                      color: context.theme.colorScheme.secondary,
+                      color: context.theme.colorScheme.properSurface,
                       boxShadow: [
                         BoxShadow(
                           blurRadius: 1.0,
@@ -178,7 +179,7 @@ class Reaction {
                     width: 10,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(100),
-                      color: context.theme.colorScheme.secondary,
+                      color: context.theme.colorScheme.properSurface,
                       boxShadow: [
                         BoxShadow(
                           blurRadius: 1.0,
@@ -196,7 +197,7 @@ class Reaction {
                   borderRadius: BorderRadius.circular(100),
                   color: isReactionPicker
                       ? (isSelected ? context.theme.colorScheme.background : context.theme.colorScheme.primary)
-                      : messages[i].isFromMe! ? context.theme.colorScheme.primary : context.theme.colorScheme.secondary,
+                      : messages[i].isFromMe! ? context.theme.colorScheme.primary : context.theme.colorScheme.properSurface,
                   boxShadow: isReactionPicker
                       ? null
                       : [
@@ -237,10 +238,10 @@ class Reaction {
     );
   }
 
-  static Widget getReactionIcon(String? reactionType, Color iconColor) {
+  static Widget getReactionIcon(String? reactionType, Color iconColor, {bool usePink = true}) {
     return SvgPicture.asset(
       'assets/reactions/$reactionType-black.svg',
-      color: reactionType == "love" ? Colors.pink : iconColor,
+      color: reactionType == "love" && usePink ? Colors.pink : iconColor,
     );
   }
 }

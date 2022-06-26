@@ -1,7 +1,10 @@
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
@@ -13,6 +16,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:get/get.dart';
 import 'package:universal_html/html.dart' as html;
 
 class MessagePopupHolder extends StatefulWidget {
@@ -93,14 +97,26 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         pageBuilder: (context, animation, secondaryAnimation) {
           return FadeTransition(
             opacity: animation,
-            child: MessageDetailsPopup(
-              currentChat: currentChat,
-              child: widget.popupChild,
-              childOffsetY: childOffsetY,
-              childSize: childSize,
-              message: widget.message,
-              newerMessage: widget.newerMessage,
-              messageBloc: widget.messageBloc,
+            child: Theme(
+              data: context.theme.copyWith(
+                // in case some components still use legacy theming
+                primaryColor: context.theme.colorScheme.bubble(context, true),
+                colorScheme: context.theme.colorScheme.copyWith(
+                  primary: context.theme.colorScheme.bubble(context, true),
+                  onPrimary: context.theme.colorScheme.onBubble(context, true),
+                  surface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                  onSurface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+                ),
+              ),
+              child: MessageDetailsPopup(
+                currentChat: currentChat,
+                child: widget.popupChild,
+                childOffsetY: childOffsetY,
+                childSize: childSize,
+                message: widget.message,
+                newerMessage: widget.newerMessage,
+                messageBloc: widget.messageBloc,
+              ),
             ),
           );
         },

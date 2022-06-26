@@ -2,12 +2,14 @@ import 'dart:convert';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:maps_launcher/maps_launcher.dart';
 import 'package:universal_io/io.dart';
@@ -67,7 +69,7 @@ class _LocationWidgetState extends State<LocationWidget> {
           onTap: openMaps,
           child: Container(
               height: 240,
-              color: Theme.of(context).colorScheme.secondary,
+              color: context.theme.colorScheme.properSurface,
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -106,14 +108,14 @@ class _LocationWidgetState extends State<LocationWidget> {
                           onTap: openMaps,
                           child: Padding(
                               padding: EdgeInsets.only(top: 10, bottom: 10),
-                              child: Text("Open in Maps", style: Theme.of(context).textTheme.bodyMedium)))
+                              child: Text("Open in Maps", style: context.theme.textTheme.bodyMedium)))
                   ])));
     } else {
       return Container(
         padding: EdgeInsets.all(10),
         child: Text(
           "Could not load location",
-          style: Theme.of(context).textTheme.bodyMedium,
+          style: context.theme.textTheme.bodyMedium,
         ),
       );
     }

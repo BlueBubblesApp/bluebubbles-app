@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 enum ItemTypes {
   participantAdded,
@@ -101,7 +102,7 @@ class GroupEvent extends StatelessWidget {
               children: [
                 Text(
                   text,
-                  style: Theme.of(context).textTheme.labelMedium,
+                  style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 2,
                   textAlign: TextAlign.center,
