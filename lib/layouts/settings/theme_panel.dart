@@ -316,26 +316,6 @@ class ThemePanel extends StatelessWidget {
                           child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
-                    SettingsSwitch(
-                      initialVal: controller._settingsCopy.material3.value,
-                      onChanged: (bool val) {
-                        controller._settingsCopy.material3.value = val;
-                        saveSettings();
-                        loadTheme(context);
-                      },
-                      backgroundColor: tileColor,
-                      title: "Material 3",
-                      subtitle:
-                      "Use Material 3 UI design and Android 12's stretchy overscroll indicator",
-                      isThreeLine: true,
-                    ),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                      ),
-                    ),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(
                             () => SettingsSwitch(
