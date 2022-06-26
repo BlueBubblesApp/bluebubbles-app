@@ -287,10 +287,6 @@ class ThemeStruct {
       "onPrimaryContainer": finalData.colorScheme.onPrimaryContainer,
       "secondary": finalData.colorScheme.secondary,
       "onSecondary": finalData.colorScheme.onSecondary,
-      "secondaryContainer": finalData.colorScheme.secondaryContainer,
-      "onSecondaryContainer": finalData.colorScheme.onSecondaryContainer,
-      "tertiary": finalData.colorScheme.tertiary,
-      "onTertiary": finalData.colorScheme.onTertiary,
       "tertiaryContainer": finalData.colorScheme.tertiaryContainer,
       "onTertiaryContainer": finalData.colorScheme.onTertiaryContainer,
       "error": finalData.colorScheme.error,
@@ -308,8 +304,6 @@ class ThemeStruct {
       // the following get their own customization card, rather than
       // being paired like the above
       "outline": finalData.colorScheme.outline,
-      "shadow": finalData.colorScheme.shadow,
-      "inversePrimary": finalData.colorScheme.inversePrimary,
     }; 
   }
 
