@@ -52,7 +52,7 @@ class _RequestContactsState extends State<RequestContacts> {
                             child: Container(
                               width: context.width * 2 / 3,
                               child: Text("Contacts Permission",
-                                  style: context.theme.textTheme.displaySmall!.apply(
+                                  style: context.theme.textTheme.displayMedium!.apply(
                                         fontWeightDelta: 2,
                                       ).copyWith(height: 1.35, color: context.theme.colorScheme.onBackground)),
                             ),

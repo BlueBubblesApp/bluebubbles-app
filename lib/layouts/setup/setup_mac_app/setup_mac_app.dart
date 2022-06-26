@@ -41,7 +41,7 @@ class SetupMacApp extends StatelessWidget {
                             child: Container(
                               width: context.width * 2 / 3,
                               child: Text("Setup Check",
-                                  style: context.theme.textTheme.displaySmall!.apply(
+                                  style: context.theme.textTheme.displayMedium!.apply(
                                     fontWeightDelta: 2,
                                   ).copyWith(height: 1.35, color: context.theme.colorScheme.onBackground)),
                             ),
