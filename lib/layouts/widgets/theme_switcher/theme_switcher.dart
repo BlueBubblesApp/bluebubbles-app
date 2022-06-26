@@ -2,7 +2,6 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_page_transition.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
