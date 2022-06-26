@@ -88,7 +88,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     super.initState();
     currentChat = widget.currentChat;
 
-    topMinimum = (widget.message.hasReactions ? CupertinoNavigationBar().preferredSize.height + 170 : 110);
+    topMinimum = (widget.message.hasReactions ? 250 : 110);
     messageTopOffset = max(topMinimum, min(widget.childOffsetY, Get.height - widget.childSize!.height - 200));
 
     dmChat = ChatBloc().chats.firstWhereOrNull(

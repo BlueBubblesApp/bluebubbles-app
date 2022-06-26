@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -13,6 +14,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -189,12 +191,25 @@ class AboutPanel extends StatelessWidget {
                                 ),
                               ),
                               backgroundColor: context.theme.colorScheme.background,
-                              appBar: CupertinoNavigationBar(
+                              appBar: AppBar(
+                                toolbarHeight: 50,
+                                elevation: 0,
+                                scrolledUnderElevation: 3,
+                                surfaceTintColor: context.theme.colorScheme.primary,
+                                leading: buildBackButton(context),
                                 backgroundColor: headerColor,
-                                middle: Text(
-                                  "Changelog",
-                                  style: context.theme.textTheme.titleLarge,
+                                iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
+                                centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
+                                title: Padding(
+                                  padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+                                  child: Text(
+                                    "Changelog",
+                                    style: context.theme.textTheme.titleLarge,
+                                  ),
                                 ),
+                                systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
+                                    ? SystemUiOverlayStyle.light
+                                    : SystemUiOverlayStyle.dark,
                               ),
                             ),
                           ),
