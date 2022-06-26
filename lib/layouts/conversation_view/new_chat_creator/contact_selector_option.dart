@@ -1,4 +1,3 @@
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -59,10 +58,11 @@ class ContactSelectorOption extends StatelessWidget {
   }
 
   Widget getTextWidget(BuildContext context, String? text) {
-    return TextOneLine(
+    return Text(
       text!,
       style: context.theme.textTheme.bodySmall,
       overflow: TextOverflow.ellipsis,
+      maxLines: 1,
     );
   }
 
@@ -121,7 +121,7 @@ class ContactSelectorOption extends StatelessWidget {
       onTap: () => onSelected(item),
       title: Text(
         title,
-        style: context.theme.textTheme.bodyMedium,
+        style: context.theme.textTheme.bodyLarge,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: subtitle,
