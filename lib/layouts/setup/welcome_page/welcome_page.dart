@@ -1,6 +1,8 @@
 import 'dart:math';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -100,109 +102,121 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                       children: <Widget>[
                         Column(
                           children: [
-                            FadeTransition(
-                              opacity: opacityTitle,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(25),
-                                  color: context.theme.colorScheme.surfaceVariant,
+                            Theme(
+                              data: context.theme.copyWith(
+                                // in case some components still use legacy theming
+                                primaryColor: context.theme.colorScheme.bubble(context, true),
+                                colorScheme: context.theme.colorScheme.copyWith(
+                                  primary: context.theme.colorScheme.bubble(context, true),
+                                  onPrimary: context.theme.colorScheme.onBubble(context, true),
+                                  surface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                                  onSurface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
                                 ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                  child: Stack(
-                                    alignment: Alignment.topCenter,
-                                    children: [
-                                      ConfettiWidget(
-                                        confettiController: confettiController,
-                                        blastDirection: pi / 2,
-                                        blastDirectionality: BlastDirectionality.explosive,
-                                        emissionFrequency: 0.35,
-                                        canvas: Size(context.width - 16, height + 50),
-                                      ),
-                                      Column(
-                                          key: key,
-                                          children: [
-                                            AbsorbPointer(
-                                              absorbing: true,
-                                              child: MessageWidget(
-                                                newerMessage: null,
-                                                olderMessage: null,
-                                                isFirstSentMessage: false,
-                                                showHandle: true,
-                                                showHero: false,
-                                                showReplies: false,
-                                                autoplayEffect: false,
-                                                message: Message(
-                                                  guid: "redacted-mode-demo",
-                                                  dateDelivered2: DateTime.now().toLocal(),
-                                                  dateCreated: DateTime.now().toLocal(),
-                                                  isFromMe: false,
-                                                  hasReactions: true,
-                                                  hasAttachments: true,
-                                                  text: "                                ",
-                                                  handle: Handle(
-                                                    id: Random.secure().nextInt(10000),
-                                                    address: "",
-                                                  ),
-                                                  associatedMessages: [
-                                                    Message(
-                                                      dateCreated: DateTime.now().toLocal(),
-                                                      guid: "redacted-mode-demo",
-                                                      text: "Jane Doe liked a message you sent",
-                                                      associatedMessageType: "like",
-                                                      isFromMe: false,
-                                                    ),
-                                                  ],
-                                                  attachments: [
-                                                    Attachment(
-                                                      guid: "redacted-mode-demo-attachment",
-                                                      originalROWID: Random.secure().nextInt(10000),
-                                                      transferName: "assets/images/transparent.png",
-                                                      mimeType: "image/png",
-                                                      width: 100,
-                                                      height: 100,
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                            GestureDetector(
-                                              onTap: () {
-                                                setState(() {
-                                                  height = (key.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 250;
-                                                });
-                                                confettiController.play();
-                                              },
-                                              child: AbsorbPointer(
+                              ),
+                              child: FadeTransition(
+                                opacity: opacityTitle,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(25),
+                                    color: context.theme.colorScheme.properSurface,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                    child: Stack(
+                                      alignment: Alignment.topCenter,
+                                      children: [
+                                        ConfettiWidget(
+                                          confettiController: confettiController,
+                                          blastDirection: pi / 2,
+                                          blastDirectionality: BlastDirectionality.explosive,
+                                          emissionFrequency: 0.35,
+                                          canvas: Size(context.width - 16, height + 50),
+                                        ),
+                                        Column(
+                                            key: key,
+                                            children: [
+                                              AbsorbPointer(
                                                 absorbing: true,
                                                 child: MessageWidget(
                                                   newerMessage: null,
                                                   olderMessage: null,
                                                   isFirstSentMessage: false,
-                                                  showHandle: false,
+                                                  showHandle: true,
                                                   showHero: false,
                                                   showReplies: false,
                                                   autoplayEffect: false,
                                                   message: Message(
-                                                    guid: "redacted-mode-demo-2",
+                                                    guid: "redacted-mode-demo",
                                                     dateDelivered2: DateTime.now().toLocal(),
                                                     dateCreated: DateTime.now().toLocal(),
-                                                    isFromMe: true,
-                                                    hasReactions: false,
-                                                    hasAttachments: false,
-                                                    text: "                  ",
-                                                    expressiveSendStyleId: "com.apple.messages.effect.CKConfettiEffect",
+                                                    isFromMe: false,
+                                                    hasReactions: true,
+                                                    hasAttachments: true,
+                                                    text: "                                ",
                                                     handle: Handle(
                                                       id: Random.secure().nextInt(10000),
                                                       address: "",
                                                     ),
+                                                    associatedMessages: [
+                                                      Message(
+                                                        dateCreated: DateTime.now().toLocal(),
+                                                        guid: "redacted-mode-demo",
+                                                        text: "Jane Doe liked a message you sent",
+                                                        associatedMessageType: "like",
+                                                        isFromMe: false,
+                                                      ),
+                                                    ],
+                                                    attachments: [
+                                                      Attachment(
+                                                        guid: "redacted-mode-demo-attachment",
+                                                        originalROWID: Random.secure().nextInt(10000),
+                                                        transferName: "assets/images/transparent.png",
+                                                        mimeType: "image/png",
+                                                        width: 100,
+                                                        height: 100,
+                                                      )
+                                                    ],
                                                   ),
                                                 ),
                                               ),
-                                            )
-                                          ]
-                                      ),
-                                    ],
+                                              GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    height = (key.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 250;
+                                                  });
+                                                  confettiController.play();
+                                                },
+                                                child: AbsorbPointer(
+                                                  absorbing: true,
+                                                  child: MessageWidget(
+                                                    newerMessage: null,
+                                                    olderMessage: null,
+                                                    isFirstSentMessage: false,
+                                                    showHandle: false,
+                                                    showHero: false,
+                                                    showReplies: false,
+                                                    autoplayEffect: false,
+                                                    message: Message(
+                                                      guid: "redacted-mode-demo-2",
+                                                      dateDelivered2: DateTime.now().toLocal(),
+                                                      dateCreated: DateTime.now().toLocal(),
+                                                      isFromMe: true,
+                                                      hasReactions: false,
+                                                      hasAttachments: false,
+                                                      text: "                  ",
+                                                      expressiveSendStyleId: "com.apple.messages.effect.CKConfettiEffect",
+                                                      handle: Handle(
+                                                        id: Random.secure().nextInt(10000),
+                                                        address: "",
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            ]
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -218,7 +232,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                                     width: context.width * 2 / 3,
                                     child: Text(
                                         "Welcome to BlueBubbles",
-                                        style: context.theme.textTheme.displaySmall!.apply(
+                                        style: context.theme.textTheme.displayMedium!.apply(
                                           fontWeightDelta: 2,
                                         ).copyWith(height: 1.35, color: context.theme.colorScheme.onBackground)
                                     ),

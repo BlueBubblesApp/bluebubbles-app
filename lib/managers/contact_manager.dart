@@ -12,11 +12,9 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:supercharged/supercharged.dart';
 import 'package:version/version.dart';
 
 class ContactManager {

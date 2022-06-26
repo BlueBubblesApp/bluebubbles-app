@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -48,7 +49,7 @@ class _MediaFileState extends State<MediaFile> {
             if (data.item2) {
               return Text(
                 "Unable to send",
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: context.theme.textTheme.bodyLarge,
               );
             }
 
@@ -56,8 +57,8 @@ class _MediaFileState extends State<MediaFile> {
                 height: 40,
                 width: 40,
                 child: CircleProgressBar(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.grey,
+                    backgroundColor: context.theme.colorScheme.outline,
+                    foregroundColor: context.theme.colorScheme.properOnSurface,
                     value: data.item1?.toDouble() ?? 0));
           }),
         ],
@@ -83,7 +84,7 @@ class _MediaFileState extends State<MediaFile> {
         if (hideAttachments)
           Positioned.fill(
             child: Container(
-              color: Theme.of(context).colorScheme.secondary,
+              color: context.theme.colorScheme.properSurface,
             ),
           ),
         if (hideAttachments && !hideAttachmentTypes)
@@ -93,6 +94,7 @@ class _MediaFileState extends State<MediaFile> {
               child: Text(
                 widget.attachment.mimeType!,
                 textAlign: TextAlign.center,
+                style: context.theme.textTheme.bodyLarge,
               ),
             ),
           ),

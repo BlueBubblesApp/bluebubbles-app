@@ -4,6 +4,7 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class MessageTimeStamp extends StatelessWidget {
   const MessageTimeStamp({Key? key, required this.message, this.singleLine = false, this.useYesterday = false, this.shownByTap = false})
@@ -36,7 +37,7 @@ class MessageTimeStamp extends StatelessWidget {
                 : (singleLine)
                     ? 100
                     : 70,
-            height: (!message.dateCreated!.isToday() && !singleLine) ? 24 : 12,
+            height: (!message.dateCreated!.isToday() && !singleLine) ? 30 : 15,
             child: Stack(
               alignment: message.isFromMe! ? Alignment.bottomRight : Alignment.bottomLeft,
               children: [
@@ -50,7 +51,7 @@ class MessageTimeStamp extends StatelessWidget {
                     textAlign: (message.isFromMe! && SettingsManager().settings.skin.value == Skins.Samsung)
                         ? TextAlign.right
                         : TextAlign.left,
-                    style: Theme.of(context).textTheme.labelLarge!.apply(fontSizeFactor: 0.8),
+                    style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
                     overflow: TextOverflow.visible,
                     maxLines: 2,
                   ),

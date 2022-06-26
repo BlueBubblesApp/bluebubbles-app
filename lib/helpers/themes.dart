@@ -24,12 +24,12 @@ class Themes {
           ThemeStruct(
               name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} ☀",
               themeData: FlexThemeData.light(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40)
-                  .copyWith(textTheme: Typography.englishLike2021.merge(Typography.blackMountainView), splashFactory: InkRipple.splashFactory),
+                  .copyWith(textTheme: Typography.englishLike2021.merge(Typography.blackMountainView), splashFactory: InkSparkle.splashFactory, useMaterial3: true),
           ),
           ThemeStruct(
               name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} 🌙",
               themeData: FlexThemeData.dark(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40)
-                  .copyWith(textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView), splashFactory: InkRipple.splashFactory),
+                  .copyWith(textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView), splashFactory: InkSparkle.splashFactory, useMaterial3: true),
           ),
     ]).flattened,
   ];
@@ -47,7 +47,8 @@ ThemeData oledDarkTheme = FlexColorScheme(
     error: Colors.red,
     brightness: Brightness.dark,
   ),
-).toTheme.copyWith(splashFactory: InkRipple.splashFactory, extensions: [
+  useMaterial3: true,
+).toTheme.copyWith(splashFactory: InkSparkle.splashFactory, extensions: [
   BubbleColors(
     iMessageBubbleColor: HexColor("1982FC"),
     oniMessageBubbleColor: Colors.white,
@@ -71,7 +72,8 @@ ThemeData nordDarkTheme = FlexColorScheme(
     primaryContainer: HexColor("49688e"),
     outline: Colors.grey,
   ),
-).toTheme.copyWith(splashFactory: InkRipple.splashFactory);
+  useMaterial3: true,
+).toTheme.copyWith(splashFactory: InkSparkle.splashFactory);
 
 ThemeData whiteLightTheme = FlexColorScheme(
   textTheme: Typography.englishLike2021.merge(Typography.blackMountainView),
@@ -81,7 +83,8 @@ ThemeData whiteLightTheme = FlexColorScheme(
     error: Colors.red,
     brightness: Brightness.light,
   ),
-).toTheme.copyWith(splashFactory: InkRipple.splashFactory, extensions: [
+  useMaterial3: true,
+).toTheme.copyWith(splashFactory: InkSparkle.splashFactory, extensions: [
   BubbleColors(
       iMessageBubbleColor: HexColor("1982FC"),
       oniMessageBubbleColor: Colors.white,
@@ -120,9 +123,6 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
           background: light.colorScheme.background.harmonizeWith(Color(monetPalette!.primary.get(40))),
           secondary: light.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(40))),
         ),
-        useMaterial3: SettingsManager().useMaterial3,
-        typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
-        splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
     dark = dark.copyWith(
         colorScheme: dark.colorScheme.copyWith(
@@ -133,9 +133,6 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
           background: dark.colorScheme.background.harmonizeWith(Color(monetPalette!.primary.get(80))),
           secondary: dark.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(80))),
         ),
-        useMaterial3: SettingsManager().useMaterial3,
-        typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
-        splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
   } else if (SettingsManager().isFullMonet && monetPalette != null) {
     light = light.copyWith(
@@ -168,9 +165,6 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
         onInverseSurface: Color(monetPalette!.neutral.get(95)),
         inversePrimary: Color(monetPalette!.primary.get(80)),
       ),
-      useMaterial3: SettingsManager().useMaterial3,
-      typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
-      splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
     dark = dark.copyWith(
       colorScheme: dark.colorScheme.copyWith(
@@ -202,20 +196,6 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
         onInverseSurface: Color(monetPalette!.neutral.get(20)),
         inversePrimary: Color(monetPalette!.primary.get(40)),
       ),
-      useMaterial3: SettingsManager().useMaterial3,
-      typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
-      splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
-    );
-  } else {
-    light = light.copyWith(
-      useMaterial3: SettingsManager().useMaterial3,
-      typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
-      splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
-    );
-    dark = dark.copyWith(
-      useMaterial3: SettingsManager().useMaterial3,
-      typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
-      splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
   }
   return Tuple2(light, dark);

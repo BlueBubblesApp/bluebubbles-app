@@ -122,13 +122,15 @@ class _CupertinoEdgeShadowDecoration extends Decoration {
       _CupertinoEdgeShadowDecoration? b,
       double t,
       ) {
-    assert(t != null);
-    if (a == null && b == null)
+    if (a == null && b == null) {
       return null;
-    if (a == null)
+    }
+    if (a == null) {
       return b!._colors == null ? b : _CupertinoEdgeShadowDecoration._(b._colors!.map<Color>((Color color) => Color.lerp(null, color, t)!).toList());
-    if (b == null)
+    }
+    if (b == null) {
       return a._colors == null ? a : _CupertinoEdgeShadowDecoration._(a._colors!.map<Color>((Color color) => Color.lerp(null, color, 1.0 - t)!).toList());
+    }
     assert(b._colors != null || a._colors != null);
     // If it ever becomes necessary, we could allow decorations with different
     // length' here, similarly to how it is handled in [LinearGradient.lerp].
@@ -143,15 +145,17 @@ class _CupertinoEdgeShadowDecoration extends Decoration {
 
   @override
   _CupertinoEdgeShadowDecoration lerpFrom(Decoration? a, double t) {
-    if (a is _CupertinoEdgeShadowDecoration)
+    if (a is _CupertinoEdgeShadowDecoration) {
       return _CupertinoEdgeShadowDecoration.lerp(a, this, t)!;
+    }
     return _CupertinoEdgeShadowDecoration.lerp(null, this, t)!;
   }
 
   @override
   _CupertinoEdgeShadowDecoration lerpTo(Decoration? b, double t) {
-    if (b is _CupertinoEdgeShadowDecoration)
+    if (b is _CupertinoEdgeShadowDecoration) {
       return _CupertinoEdgeShadowDecoration.lerp(this, b, t)!;
+    }
     return _CupertinoEdgeShadowDecoration.lerp(this, null, t)!;
   }
 
@@ -162,8 +166,9 @@ class _CupertinoEdgeShadowDecoration extends Decoration {
 
   @override
   bool operator ==(Object other) {
-    if (other.runtimeType != runtimeType)
+    if (other.runtimeType != runtimeType) {
       return false;
+    }
     return other is _CupertinoEdgeShadowDecoration
         && other._colors == _colors;
   }
@@ -183,8 +188,7 @@ class _CupertinoEdgeShadowPainter extends BoxPainter {
   _CupertinoEdgeShadowPainter(
       this._decoration,
       VoidCallback? onChange,
-      ) : assert(_decoration != null),
-        assert(_decoration._colors == null || _decoration._colors!.length > 1),
+      ) : assert(_decoration._colors == null || _decoration._colors!.length > 1),
         super(onChange);
 
   final _CupertinoEdgeShadowDecoration _decoration;

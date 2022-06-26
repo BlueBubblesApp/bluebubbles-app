@@ -6,9 +6,10 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
-import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -25,11 +26,13 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
   int index = ThemeManager().inDarkMode(Get.context!) ? 1 : 0;
   StreamController streamController = StreamController.broadcast();
   late final TabController controller;
+  late final List<ThemeObject> oldThemes;
 
   @override
   void initState() {
     super.initState();
     controller = TabController(length: 2, vsync: this, initialIndex: index);
+    oldThemes = ThemeObject.getThemes().where((e) => !e.isPreset).toList();
   }
 
   @override
@@ -79,6 +82,113 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
               "Advanced Theming",
               style: context.theme.textTheme.titleLarge,
             ),
+            actions: [
+              if (oldThemes.isNotEmpty)
+                TextButton(
+                  child: Text("View Old", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                  onPressed: () {
+                    showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text("Old Themes", style: context.theme.textTheme.titleLarge),
+                          backgroundColor: context.theme.colorScheme.properSurface,
+                          content: SingleChildScrollView(
+                            child: Container(
+                              width: double.maxFinite,
+                              child: StatefulBuilder(builder: (context, setState) {
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child:
+                                      Text("Tap an old theme to view its colors"),
+                                    ),
+                                    ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        maxHeight: context.mediaQuery.size.height * 0.4,
+                                      ),
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount: oldThemes.length,
+                                        itemBuilder: (context, index) {
+                                          return ListTile(
+                                            title: Text(
+                                              oldThemes[index].name ?? "Unknown Theme",
+                                              style: context.theme.textTheme.bodyLarge),
+                                            onTap: () {
+                                              showDialog(
+                                                  context: context,
+                                                  builder: (context) => AlertDialog(
+                                                    title: Text("${oldThemes[index].name ?? "Unknown Theme"} Colors", style: context.theme.textTheme.titleLarge),
+                                                    backgroundColor: context.theme.colorScheme.properSurface,
+                                                    content: SingleChildScrollView(
+                                                      child: Container(
+                                                        width: double.maxFinite,
+                                                        child: StatefulBuilder(builder: (context, setState) {
+                                                          return ConstrainedBox(
+                                                            constraints: BoxConstraints(
+                                                              maxHeight: context.mediaQuery.size.height * 0.4,
+                                                            ),
+                                                            child: ListView.builder(
+                                                              shrinkWrap: true,
+                                                              itemCount: 4,
+                                                              itemBuilder: (context, index2) {
+                                                                return ListTile(
+                                                                  title: Text(
+                                                                    ThemeColors.Colors.reversed.toList()[index2],
+                                                                    style: context.theme.textTheme.bodyLarge),
+                                                                  subtitle: Text(
+                                                                    oldThemes[index].entries.firstWhere((element) => element.name == ThemeColors.Colors.reversed.toList()[index2]).color!.hex
+                                                                  ),
+                                                                  leading: Container(
+                                                                    decoration: BoxDecoration(
+                                                                      shape: BoxShape.circle,
+                                                                      color: oldThemes[index].entries.firstWhere((element) => element.name == ThemeColors.Colors.reversed.toList()[index2]).color!
+                                                                    ),
+                                                                    height: 30,
+                                                                    width: 30,
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                          );
+                                                        }),
+                                                      ),
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                          child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                                          onPressed: () {
+                                                            Navigator.of(context).pop();
+                                                          }
+                                                      ),
+                                                    ],
+                                                  )
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }),
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                                child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                }
+                            ),
+                          ],
+                        )
+                    );
+                  },
+                ),
+            ]
           ),
         ),
         body: TabBarView(

@@ -99,6 +99,8 @@ late final Box<Handle> handleBox;
 late final Box<Message> messageBox;
 late final Box<ScheduledMessage> scheduledBox;
 late final Box<ThemeStruct> themeBox;
+late final Box<ThemeEntry> themeEntryBox;
+late final Box<ThemeObject> themeObjectBox;
 final RxBool fontExistsOnDisk = false.obs;
 final RxBool downloadingFont = false.obs;
 final RxnDouble progress = RxnDouble();
@@ -254,6 +256,8 @@ Future<Null> initApp(bool isBubble) async {
         messageBox = store.box<Message>();
         scheduledBox = store.box<ScheduledMessage>();
         themeBox = store.box<ThemeStruct>();
+        themeEntryBox = store.box<ThemeEntry>();
+        themeObjectBox = store.box<ThemeObject>();
         if (themeBox.isEmpty()) {
           prefs.setString("selected-dark", "OLED Dark");
           prefs.setString("selected-light", "Bright White");

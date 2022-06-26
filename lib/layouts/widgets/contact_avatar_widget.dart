@@ -203,6 +203,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                     SettingsManager().settings.skin.value == Skins.iOS
                         ? CupertinoIcons.person_fill
                         : Icons.person,
+                    color: Colors.white,
                     key: Key("$keyPrefix-avatar-icon"),
                     size: ((widget.size ?? 40) / 2) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
                   )

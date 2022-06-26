@@ -206,6 +206,4 @@ class SettingsManager {
   }
 
   bool get isFullMonet => SettingsManager().settings.monetTheming.value == Monet.full;
-
-  bool get useMaterial3 => SettingsManager().settings.material3.value;
 }

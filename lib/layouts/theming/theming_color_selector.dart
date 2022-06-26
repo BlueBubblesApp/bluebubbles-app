@@ -78,6 +78,34 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                   showSnackbar('Customization', "Please click the edit button to start customizing!");
                 }
               } : null,
+              onDoubleTap: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text(
+                        "Info - ${widget.tuple.item1.key} ${widget.tuple.item2 != null ? "/ ${widget.tuple.item2!.key}" : ""}",
+                        style: context.theme.textTheme.titleLarge,
+                      ),
+                      backgroundColor: context.theme.colorScheme.properSurface,
+                      content: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                            "${ThemeStruct.colorDescriptions[widget.tuple.item1.key]}${widget.tuple.item2 != null ? "\n\n${ThemeStruct.colorDescriptions[widget.tuple.item2!.key]}" : ""}",
+                            style: context.theme.textTheme.bodyLarge),
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
               child: Container(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,

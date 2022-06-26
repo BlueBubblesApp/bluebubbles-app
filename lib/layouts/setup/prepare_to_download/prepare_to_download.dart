@@ -55,7 +55,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                                 width: context.width * 2 / 3,
                                 child: Text(
                                     "Sync Messages",
-                                    style: context.theme.textTheme.displaySmall!.apply(
+                                    style: context.theme.textTheme.displayMedium!.apply(
                                       fontWeightDelta: 2,
                                     ).copyWith(height: 1.35, color: context.theme.colorScheme.onBackground),
                                 ),

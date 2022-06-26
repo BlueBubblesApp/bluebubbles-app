@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/widgets.dart';
 
 /// Draws a circular animated progress bar.

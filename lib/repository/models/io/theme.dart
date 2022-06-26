@@ -116,15 +116,15 @@ class ThemeStruct {
     "gradientBg": gradientBg ? 1 : 0,
     "data": {
       "textTheme": {
-        "headlineMedium": {
-          "color": data.textTheme.headlineMedium!.color!.value,
-          "fontWeight": data.textTheme.headlineMedium!.fontWeight!.index,
-          "fontSize": data.textTheme.headlineMedium!.fontSize,
+        "titleLarge": {
+          "color": data.textTheme.titleLarge!.color!.value,
+          "fontWeight": data.textTheme.titleLarge!.fontWeight!.index,
+          "fontSize": data.textTheme.titleLarge!.fontSize,
         },
-        "titleMedium": {
-          "color": data.textTheme.titleMedium!.color!.value,
-          "fontWeight": data.textTheme.titleMedium!.fontWeight!.index,
-          "fontSize": data.textTheme.titleMedium!.fontSize,
+        "bodyLarge": {
+          "color": data.textTheme.bodyLarge!.color!.value,
+          "fontWeight": data.textTheme.bodyLarge!.fontWeight!.index,
+          "fontSize": data.textTheme.bodyLarge!.fontSize,
         },
         "bodyMedium": {
           "color": data.textTheme.bodyMedium!.color!.value,
@@ -141,10 +141,10 @@ class ThemeStruct {
           "fontWeight": data.textTheme.labelLarge!.fontWeight!.index,
           "fontSize": data.textTheme.labelLarge!.fontSize,
         },
-        "labelMedium": {
-          "color": data.textTheme.labelMedium!.color!.value,
-          "fontWeight": data.textTheme.labelMedium!.fontWeight!.index,
-          "fontSize": data.textTheme.labelMedium!.fontSize,
+        "labelSmall": {
+          "color": data.textTheme.labelSmall!.color!.value,
+          "fontWeight": data.textTheme.labelSmall!.fontWeight!.index,
+          "fontSize": data.textTheme.labelSmall!.fontSize,
         }
       },
       "colorScheme": {
@@ -177,49 +177,50 @@ class ThemeStruct {
         "inversePrimary": data.colorScheme.inversePrimary.value,
         "brightness": data.colorScheme.brightness.index,
       },
-      "useMaterial3": data.useMaterial3,
-      "typography": data.useMaterial3 ? 1 : 0,
-      "splashFactory": data.useMaterial3 ? 1 : 0,
     },
   };
 
   factory ThemeStruct.fromMap(Map<String, dynamic> json) {
     final map = json["data"];
+    final brightness = Brightness.values[map["colorScheme"]["brightness"]];
+    final typography = brightness == Brightness.light 
+        ? Typography.englishLike2021.merge(Typography.blackMountainView) 
+        : Typography.englishLike2021.merge(Typography.whiteMountainView);
     return ThemeStruct(
         id: json["ROWID"],
         name: json["name"],
         gradientBg: json["gradientBg"] == 1,
         themeData: FlexColorScheme(
-          textTheme: TextTheme(
-            headlineMedium: TextStyle(
-              color: Color(map["textTheme"]["headlineMedium"]["color"]),
-              fontWeight: FontWeight.values[map["textTheme"]["headlineMedium"]["fontWeight"]],
-              fontSize: map["textTheme"]["headlineMedium"]["fontSize"],
+          textTheme: typography.copyWith(
+            titleLarge: typography.titleLarge!.copyWith(
+              color: Color(map["textTheme"]["titleLarge"]["color"]),
+              fontWeight: FontWeight.values[map["textTheme"]["titleLarge"]["fontWeight"]],
+              fontSize: map["textTheme"]["titleLarge"]["fontSize"],
             ),
-            titleMedium: TextStyle(
-              color: Color(map["textTheme"]["titleMedium"]["color"]),
-              fontWeight: FontWeight.values[map["textTheme"]["titleMedium"]["fontWeight"]],
-              fontSize: map["textTheme"]["titleMedium"]["fontSize"],
+            bodyLarge: typography.bodyLarge!.copyWith(
+              color: Color(map["textTheme"]["bodyLarge"]["color"]),
+              fontWeight: FontWeight.values[map["textTheme"]["bodyLarge"]["fontWeight"]],
+              fontSize: map["textTheme"]["bodyLarge"]["fontSize"],
             ),
-            bodyMedium: TextStyle(
+            bodyMedium: typography.bodyMedium!.copyWith(
               color: Color(map["textTheme"]["bodyMedium"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
               fontSize: map["textTheme"]["bodyMedium"]["fontSize"],
             ),
-            bodySmall: TextStyle(
+            bodySmall: typography.bodySmall!.copyWith(
               color: Color(map["textTheme"]["bodySmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodySmall"]["fontWeight"]],
               fontSize: map["textTheme"]["bodySmall"]["fontSize"],
             ),
-            labelLarge: TextStyle(
+            labelLarge: typography.labelLarge!.copyWith(
               color: Color(map["textTheme"]["labelLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["labelLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["labelLarge"]["fontSize"],
             ),
-            labelMedium: TextStyle(
-              color: Color(map["textTheme"]["labelMedium"]["color"]),
-              fontWeight: FontWeight.values[map["textTheme"]["labelMedium"]["fontWeight"]],
-              fontSize: map["textTheme"]["labelMedium"]["fontSize"],
+            labelSmall: typography.labelSmall!.copyWith(
+              color: Color(map["textTheme"]["labelSmall"]["color"]),
+              fontWeight: FontWeight.values[map["textTheme"]["labelSmall"]["fontWeight"]],
+              fontSize: map["textTheme"]["labelSmall"]["fontSize"],
             ),
           ),
           colorScheme: ColorScheme(
@@ -250,11 +251,10 @@ class ThemeStruct {
             inverseSurface: Color(map["colorScheme"]["inverseSurface"]),
             onInverseSurface: Color(map["colorScheme"]["onInverseSurface"]),
             inversePrimary: Color(map["colorScheme"]["inversePrimary"]),
-            brightness: Brightness.values[map["colorScheme"]["brightness"]],
+            brightness: brightness,
           ),
-          useMaterial3: map["useMaterial3"],
-          typography: map["typography"] == 1 ? Typography.material2021() : Typography.material2018(),
-        ).toTheme.copyWith(splashFactory: map["splashFactory"] == 1 ? InkSparkle.splashFactory : InkRipple.splashFactory, extensions: [
+          useMaterial3: true,
+        ).toTheme.copyWith(splashFactory: InkSparkle.splashFactory, extensions: [
           if (json["name"] == "OLED Dark" || json["name"] == "Bright White")
             BubbleColors(
               iMessageBubbleColor: HexColor("1982FC"),
@@ -287,10 +287,6 @@ class ThemeStruct {
       "onPrimaryContainer": finalData.colorScheme.onPrimaryContainer,
       "secondary": finalData.colorScheme.secondary,
       "onSecondary": finalData.colorScheme.onSecondary,
-      "secondaryContainer": finalData.colorScheme.secondaryContainer,
-      "onSecondaryContainer": finalData.colorScheme.onSecondaryContainer,
-      "tertiary": finalData.colorScheme.tertiary,
-      "onTertiary": finalData.colorScheme.onTertiary,
       "tertiaryContainer": finalData.colorScheme.tertiaryContainer,
       "onTertiaryContainer": finalData.colorScheme.onTertiaryContainer,
       "error": finalData.colorScheme.error,
@@ -308,10 +304,55 @@ class ThemeStruct {
       // the following get their own customization card, rather than
       // being paired like the above
       "outline": finalData.colorScheme.outline,
-      "shadow": finalData.colorScheme.shadow,
-      "inversePrimary": finalData.colorScheme.inversePrimary,
     }; 
   }
+
+  /// Returns descriptions for each used color item
+  static Map<String, String> get colorDescriptions => {
+    "primary": "primary is used everywhere as the main colored element. You will see this on buttons, sliders, chips, switches, etc.",
+    "onPrimary": "onPrimary is used for any text or icon that is on top of a primary colored element.\n\nNote: iMessage bubble colors are decided between primary / primaryContainer, whichever is more 'colorful' based on saturation and luminance. SMS bubble colors are the opposite.",
+    "primaryContainer": "primaryContainer is used as a fill color for containers, buttons, and switches.",
+    "onPrimaryContainer": "onPrimaryContainer is used for any text or icon that is on top of a primaryContainer colored elemnent.\n\nNote: iMessage bubble colors are decided between primary / primaryContainer, whichever is more 'colorful' based on saturation and luminance. SMS bubble colors are the opposite.",
+    "secondary": "secondary is used everywhere as an accent element. Find this on buttons that we want to draw your attention to.",
+    "onSecondary": "onSecondary is used for any text or icon that is on top of a secondary colored element.",
+    "tertiaryContainer": "tertiaryContainer is used on pinned chats to depict mute / unmute status.",
+    "onTertiaryContainer": "onTertiaryContainer is used for any text or icon that is on top of a tertiaryContainer colored element.",
+    "error": "error is used for any element that indicates an error, for example the error icon next to a failed message.",
+    "onError": "onError is used for any text or icon that is on top of an error colored element.",
+    "errorContainer": "errorContainer is used on desktop as the hover color for the X button.",
+    "onErrorContainer": "onErrorContainer is used on desktop as the icon color for the X button.",
+    "background": "background is the main background color of the app.",
+    "onBackground": "onBackground is used for any text or icon that is on top of a background colored element.",
+    "surface": "surface is an alternate background color of the app.",
+    "onSurface": "onSurface is used for any text or icon that is on top of a surface colored element.\n\nNote: We use an algorithm internally to determine whether surface or surfaceVariant will be more visible on the background color.",
+    "surfaceVariant": "surfaceVariant is an alternate background color of the app. It is also used as the divider color between tiles in settings.",
+    "onSurfaceVariant": "onSurfaceVariant is used for any text or icon that is on top of a surfaceVariant colored element.\n\nNote: We use an algorithm internally to determine whether surface or surfaceVariant will be more visible on the background color.",
+    "inverseSurface": "inverseSurface is an attention-grabbing background color. We use this on snackbars / toast messages.",
+    "onInverseSurface": "onInverseSurface is used for any text or icon that is on top of an inverseSurface colored element.",
+    // the following get their own customization card, rather than
+    // being paired like the above
+    "outline": "outline is used for most outlined elements, as well as most small label-style text.",
+  };
+
+  /// Returns the current text sizes for a theme
+  Map<String, double> get textSizes => {
+    "titleLarge": data.textTheme.titleLarge!.fontSize!,
+    "bodyLarge": data.textTheme.bodyLarge!.fontSize!,
+    "bodyMedium": data.textTheme.bodyMedium!.fontSize!,
+    "bodySmall": data.textTheme.bodySmall!.fontSize!,
+    "labelLarge": data.textTheme.labelLarge!.fontSize!,
+    "labelSmall": data.textTheme.labelSmall!.fontSize!,
+  };
+
+  /// Returns the default text sizes
+  static Map<String, double> get defaultTextSizes => {
+    "titleLarge": 22,
+    "bodyLarge": 16,
+    "bodyMedium": 14,
+    "bodySmall": 12,
+    "labelLarge": 14,
+    "labelSmall": 11,
+  };
 
   @override
   bool operator ==(Object other) =>

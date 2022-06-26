@@ -401,7 +401,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
               },
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
+              padding: const EdgeInsets.only(bottom: 1.5, left: 13.0, right: 13.0),
               child: RichText(
                 text: TextSpan(
                   children: MessageHelper.buildEmojiText(
