@@ -885,26 +885,18 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-          ? Colors.transparent
-          : context.theme.colorScheme.background, // navigation bar color
-      systemNavigationBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5
-            ? Brightness.dark : Brightness.light,
+      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+      systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
       statusBarColor: Colors.transparent, // status bar color
-      statusBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5
-          ? Brightness.dark : Brightness.light,
+      statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-            ? Colors.transparent
-            : context.theme.colorScheme.background, // navigation bar color
-        systemNavigationBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5
-            ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5
-            ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Actions(
         actions: {
