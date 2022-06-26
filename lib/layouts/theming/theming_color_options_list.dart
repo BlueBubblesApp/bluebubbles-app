@@ -145,7 +145,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
       headerColor = tileColor;
       tileColor = temp;
     }
-    final length = currentTheme.colors(widget.isDarkMode, returnMaterialYou: false).keys.where((e) => e != "outline" && e != "shadow" && e != "inversePrimary").length ~/ 2 + 3;
+    final length = currentTheme.colors(widget.isDarkMode, returnMaterialYou: false).keys.where((e) => e != "outline").length ~/ 2 + 1;
     return CustomScrollView(
       physics: ThemeSwitcher.getScrollPhysics(),
       slivers: <Widget>[
@@ -306,7 +306,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
         )),
         SliverToBoxAdapter(
           child: SettingsSubtitle(
-            subtitle: "Tap to edit the base color, and long press to edit the color for elements displayed on top of the base color",
+            subtitle: "Tap to edit the base color\nLong press to edit the color for elements displayed on top of the base color\nDouble tap to learn how the colors are used",
+            unlimitedSpace: true,
           )
         ),
         if (SettingsManager().settings.monetTheming.value != Monet.none)
@@ -335,14 +336,20 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                 ),
               )
           ),
+        SliverPadding(
+          padding: EdgeInsets.only(top: 20, bottom: 10, left: 15),
+          sliver: SliverToBoxAdapter(
+            child: Text("COLORS", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+          ),
+        ),
         SliverGrid(
           delegate: SliverChildBuilderDelegate(
             (context, index) {
               return ThemingColorSelector(
                 currentTheme: currentTheme,
-                tuple: Tuple2(currentTheme.colors(widget.isDarkMode).entries.toList()[index < length - 3
+                tuple: Tuple2(currentTheme.colors(widget.isDarkMode).entries.toList()[index < length - 1
                     ? index * 2 : currentTheme.colors(widget.isDarkMode).entries.length - (length - index)],
-                    index < length - 3 ? currentTheme.colors(widget.isDarkMode).entries.toList()[index * 2 + 1] : null),
+                    index < length - 1 ? currentTheme.colors(widget.isDarkMode).entries.toList()[index * 2 + 1] : null),
                 editable: editable,
               );
             },
@@ -350,6 +357,46 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
           ),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: kIsDesktop ? (CustomNavigator.width(context) / 150).floor() : 2,
+          ),
+        ),
+        SliverPadding(
+          padding: EdgeInsets.only(top: 20, bottom: 10, left: 15),
+          sliver: SliverToBoxAdapter(
+            child: Text("FONT SIZE SCALING", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+          ),
+        ),
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+                (context, index) {
+              return SettingsSlider(
+                leading: Text(currentTheme.textSizes.keys.toList()[index]),
+                startingVal: currentTheme.textSizes.values.toList()[index] / ThemeStruct.defaultTextSizes.values.toList()[index],
+                update: (double val) {
+                  final map = currentTheme.toMap();
+                  map["data"]["textTheme"][currentTheme.textSizes.keys.toList()[index]]['fontSize'] = ThemeStruct.defaultTextSizes.values.toList()[index] * val;
+                  currentTheme.data = ThemeStruct.fromMap(map).data;
+                  setState(() {});
+                },
+                onChangeEnd: (double val) {
+                  final map = currentTheme.toMap();
+                  map["data"]["textTheme"][currentTheme.textSizes.keys.toList()[index]]['fontSize'] = ThemeStruct.defaultTextSizes.values.toList()[index] * val;
+                  currentTheme.data = ThemeStruct.fromMap(map).data;
+                  currentTheme.save();
+                  if (currentTheme.name == prefs.getString("selected-dark")) {
+                    SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
+                  } else if (currentTheme.name == prefs.getString("selected-light")) {
+                    SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
+                  }
+                },
+                backgroundColor: tileColor,
+                min: 0.5,
+                max: 3,
+                divisions: 10,
+                text: '',
+                formatValue: ((double val) => val.toStringAsFixed(2)),
+              );
+            },
+            childCount: currentTheme.textSizes.length,
           ),
         ),
         if (!currentTheme.isPreset)

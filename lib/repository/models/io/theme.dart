@@ -307,6 +307,53 @@ class ThemeStruct {
     }; 
   }
 
+  /// Returns descriptions for each used color item
+  static Map<String, String> get colorDescriptions => {
+    "primary": "primary is used everywhere as the main colored element. You will see this on buttons, sliders, chips, switches, etc.",
+    "onPrimary": "onPrimary is used for any text or icon that is on top of a primary colored element.\n\nNote: iMessage bubble colors are decided between primary / primaryContainer, whichever is more 'colorful' based on saturation and luminance. SMS bubble colors are the opposite.",
+    "primaryContainer": "primaryContainer is used as a fill color for containers, buttons, and switches.",
+    "onPrimaryContainer": "onPrimaryContainer is used for any text or icon that is on top of a primaryContainer colored elemnent.\n\nNote: iMessage bubble colors are decided between primary / primaryContainer, whichever is more 'colorful' based on saturation and luminance. SMS bubble colors are the opposite.",
+    "secondary": "secondary is used everywhere as an accent element. Find this on buttons that we want to draw your attention to.",
+    "onSecondary": "onSecondary is used for any text or icon that is on top of a secondary colored element.",
+    "tertiaryContainer": "tertiaryContainer is used on pinned chats to depict mute / unmute status.",
+    "onTertiaryContainer": "onTertiaryContainer is used for any text or icon that is on top of a tertiaryContainer colored element.",
+    "error": "error is used for any element that indicates an error, for example the error icon next to a failed message.",
+    "onError": "onError is used for any text or icon that is on top of an error colored element.",
+    "errorContainer": "errorContainer is used on desktop as the hover color for the X button.",
+    "onErrorContainer": "onErrorContainer is used on desktop as the icon color for the X button.",
+    "background": "background is the main background color of the app.",
+    "onBackground": "onBackground is used for any text or icon that is on top of a background colored element.",
+    "surface": "surface is an alternate background color of the app.",
+    "onSurface": "onSurface is used for any text or icon that is on top of a surface colored element.\n\nNote: We use an algorithm internally to determine whether surface or surfaceVariant will be more visible on the background color.",
+    "surfaceVariant": "surfaceVariant is an alternate background color of the app. It is also used as the divider color between tiles in settings.",
+    "onSurfaceVariant": "onSurfaceVariant is used for any text or icon that is on top of a surfaceVariant colored element.\n\nNote: We use an algorithm internally to determine whether surface or surfaceVariant will be more visible on the background color.",
+    "inverseSurface": "inverseSurface is an attention-grabbing background color. We use this on snackbars / toast messages.",
+    "onInverseSurface": "onInverseSurface is used for any text or icon that is on top of an inverseSurface colored element.",
+    // the following get their own customization card, rather than
+    // being paired like the above
+    "outline": "outline is used for most outlined elements, as well as most small label-style text.",
+  };
+
+  /// Returns the current text sizes for a theme
+  Map<String, double> get textSizes => {
+    "titleLarge": data.textTheme.titleLarge!.fontSize!,
+    "bodyLarge": data.textTheme.bodyLarge!.fontSize!,
+    "bodyMedium": data.textTheme.bodyMedium!.fontSize!,
+    "bodySmall": data.textTheme.bodySmall!.fontSize!,
+    "labelLarge": data.textTheme.labelLarge!.fontSize!,
+    "labelSmall": data.textTheme.labelSmall!.fontSize!,
+  };
+
+  /// Returns the default text sizes
+  static Map<String, double> get defaultTextSizes => {
+    "titleLarge": 22,
+    "bodyLarge": 16,
+    "bodyMedium": 14,
+    "bodySmall": 12,
+    "labelLarge": 14,
+    "labelSmall": 11,
+  };
+
   @override
   bool operator ==(Object other) =>
       other is ThemeStruct && name == other.name;
