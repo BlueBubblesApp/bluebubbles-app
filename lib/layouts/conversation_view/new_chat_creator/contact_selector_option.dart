@@ -1,5 +1,6 @@
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
@@ -60,7 +61,7 @@ class ContactSelectorOption extends StatelessWidget {
   Widget getTextWidget(BuildContext context, String? text) {
     return TextOneLine(
       text!,
-      style: Theme.of(context).textTheme.labelLarge,
+      style: context.theme.textTheme.bodySmall,
       overflow: TextOverflow.ellipsis,
     );
   }
@@ -120,7 +121,7 @@ class ContactSelectorOption extends StatelessWidget {
       onTap: () => onSelected(item),
       title: Text(
         title,
-        style: Theme.of(context).textTheme.bodyMedium,
+        style: context.theme.textTheme.bodyMedium,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: subtitle,
@@ -146,21 +147,21 @@ class ContactSelectorOption extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.all(Radius.circular(20)),
                         border: Border.all(
-                            color: item.chat!.isIMessage ? Theme.of(context).primaryColor : Colors.green
+                            color: context.theme.colorScheme.bubble(context, item.chat?.isIMessage ?? true),
                         ),
                       ),
                       child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 3, horizontal: 7),
                           child: Text(
                               item.chat!.isIMessage ? "iMessage" : "SMS",
-                              style: TextStyle(color: item.chat!.isIMessage ? Theme.of(context).primaryColor : Colors.green)
+                              style: TextStyle(color: context.theme.colorScheme.bubble(context, item.chat?.isIMessage ?? true))
                           )
                       )
                   ),
                 ),
               Icon(
                   SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
-                  color: shouldShowChatType && !item.chat!.isIMessage ? Colors.green : Theme.of(context).primaryColor,
+                  color: shouldShowChatType ? context.theme.colorScheme.bubble(context, item.chat?.isIMessage ?? true) : context.theme.colorScheme.primary,
                 ),
             ],
           )

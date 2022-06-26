@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -384,7 +385,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
           border: Border.all(
             width: 2,
             style: BorderStyle.solid,
-            color: Theme.of(context).colorScheme.secondary,
+            color: context.theme.colorScheme.properSurface,
           ),
           borderRadius: BorderRadius.circular(19),
         ),
@@ -405,7 +406,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                 text: TextSpan(
                   children: MessageHelper.buildEmojiText(
                     text,
-                    Theme.of(context).textTheme.bodyMedium!,
+                    context.theme.textTheme.bodyMedium!,
                   ),
                 ),
               ),
@@ -467,19 +468,19 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                             return SliverToBoxAdapter(
                               child: Padding(
                                 padding: EdgeInsets.only(
-                                    top: SettingsManager().settings.skin.value != Skins.iOS ? 8.0 : 0.0),
+                                    top: SettingsManager().settings.skin.value != Skins.iOS ? 8.0 : 0.0, right: 5),
                                 child: AnimatedSize(
                                   duration: Duration(milliseconds: 400),
                                   child: internalSmartReplies.isEmpty && replies.isNotEmpty
                                       ? Container(
-                                          height: Theme.of(context).textTheme.bodyMedium!.fontSize! + 35,
+                                          height: context.theme.textTheme.bodyMedium!.fontSize! + 35,
                                           child: ListView(
                                               reverse: true,
                                               scrollDirection: Axis.horizontal,
                                               children: replies.map((e) => _buildReply(e).value).toList()))
                                       : internalSmartReplies.isNotEmpty
                                           ? Container(
-                                              height: Theme.of(context).textTheme.bodyMedium!.fontSize! + 35,
+                                              height: context.theme.textTheme.bodyMedium!.fontSize! + 35,
                                               child: ListView(
                                                   reverse: true,
                                                   scrollDirection: Axis.horizontal,
@@ -612,7 +613,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
           Positioned.fill(
             child: IgnorePointer(
               child: Obx(() => Container(
-                    color: dragging.value ? Colors.blue.withAlpha(50) : Colors.transparent,
+                    color: dragging.value ? context.theme.colorScheme.bubble(context, widget.chat!.isIMessage).withAlpha(50) : Colors.transparent,
                   )),
             ),
           ),

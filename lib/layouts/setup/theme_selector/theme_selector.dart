@@ -8,6 +8,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
@@ -174,10 +175,10 @@ class ThemeSelector extends StatelessWidget {
       builder: (_) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
-            systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
-            systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+            systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
             statusBarColor: Colors.transparent, // status bar color
-            statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
           ),
           child: Scaffold(
             backgroundColor: Theme.of(context).colorScheme.secondary,

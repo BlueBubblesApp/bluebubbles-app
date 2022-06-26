@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -25,13 +26,10 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-            ? Colors.transparent
-            : context.theme.colorScheme.background, // navigation bar color
-        systemNavigationBarIconBrightness:
-        context.theme.colorScheme.background.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
         backgroundColor: context.theme.colorScheme.background,

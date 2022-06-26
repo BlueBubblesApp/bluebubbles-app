@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
@@ -101,7 +102,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         if (hideAttachments)
           Positioned.fill(
             child: Container(
-              color: Theme.of(context).colorScheme.secondary,
+              color: context.theme.colorScheme.properSurface,
             ),
           ),
         if (hideAttachments && !hideAttachmentTypes)
@@ -134,14 +135,14 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         return Container(
           height: 100,
           width: 100,
-          color: Theme.of(context).colorScheme.secondary,
+          color: context.theme.colorScheme.properSurface,
           padding: EdgeInsets.only(top: 20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 AttachmentHelper.getIcon(mimeType),
-                color: Theme.of(context).textTheme.bodyMedium!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
               Align(
                 alignment: Alignment.bottomCenter,
@@ -149,7 +150,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                   padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
                   child: Text(
                     name,
-                    style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeDelta: -2),
+                    style: context.theme.textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
@@ -187,13 +188,13 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(80),
-                    color: Colors.black,
+                    color: context.theme.colorScheme.properSurface.withOpacity(0.7),
                   ),
                   width: 25,
                   height: 25,
                   child: Icon(
                     SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
-                    color: Colors.white,
+                    color: context.theme.colorScheme.onBackground,
                     size: 15,
                   ),
                 ),

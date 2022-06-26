@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:core';
 
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
-import 'package:collection/collection.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +29,7 @@ class ThemeStruct {
   set dbThemeData(String str) {
     final map = jsonDecode(str);
     data = ThemeStruct.fromMap({
-      "name": "temp",
+      "name": name,
       "data": map
     }).data;
   }
@@ -254,7 +254,17 @@ class ThemeStruct {
           ),
           useMaterial3: map["useMaterial3"],
           typography: map["typography"] == 1 ? Typography.material2021() : Typography.material2018(),
-        ).toTheme.copyWith(splashFactory: map["splashFactory"] == 1 ? InkSparkle.splashFactory : InkRipple.splashFactory)
+        ).toTheme.copyWith(splashFactory: map["splashFactory"] == 1 ? InkSparkle.splashFactory : InkRipple.splashFactory, extensions: [
+          if (json["name"] == "OLED Dark" || json["name"] == "Bright White")
+            BubbleColors(
+              iMessageBubbleColor: HexColor("1982FC"),
+              oniMessageBubbleColor: Colors.white,
+              smsBubbleColor: HexColor("43CC47"),
+              onSmsBubbleColor: Colors.white,
+              receivedBubbleColor: HexColor(json["name"] == "OLED Dark" ? "323332" : "e9e9e8"),
+              onReceivedBubbleColor: json["name"] == "OLED Dark" ? Colors.white : Colors.black,
+            ),
+        ])
     );
   }
 

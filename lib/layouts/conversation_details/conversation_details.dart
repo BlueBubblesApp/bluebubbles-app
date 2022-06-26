@@ -246,6 +246,9 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         style: context.theme.textTheme.titleLarge,
                       ),
                     ),
+                    systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
+                        ? SystemUiOverlayStyle.light
+                        : SystemUiOverlayStyle.dark,
                   ),
                 ),
               ),
@@ -700,7 +703,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                     ),
                   SliverToBoxAdapter(
                     child: SettingsSection(
-                      backgroundColor: tileColor,
+                      backgroundColor: SettingsManager().settings.skin.value != Skins.Material && tileColor.computeDifference(context.theme.colorScheme.background) < 20 ? tileColor.lightenPercent(40) : tileColor,
                       children: [
                         if (!kIsWeb)
                           SettingsTile(
@@ -1257,7 +1260,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              backgroundColor: context.theme.colorScheme.surface,
+              backgroundColor: context.theme.colorScheme.properSurface,
               title:
               Text("Select Address", style: context.theme.textTheme.titleLarge),
               content: ObxValue<Rx<bool>>(

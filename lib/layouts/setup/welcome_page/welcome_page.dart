@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -78,9 +79,9 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
-        systemNavigationBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.colorScheme.background.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
         backgroundColor: context.theme.colorScheme.background,

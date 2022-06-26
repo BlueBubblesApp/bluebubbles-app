@@ -7,11 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ThemeSwitcher extends StatefulWidget {
-  ThemeSwitcher({Key? key, required this.iOSSkin, required this.materialSkin, required this.samsungSkin})
+  ThemeSwitcher({Key? key, required this.iOSSkin, required this.materialSkin, this.samsungSkin})
       : super(key: key);
   final Widget iOSSkin;
   final Widget materialSkin;
-  final Widget samsungSkin;
+  final Widget? samsungSkin;
 
   static PageRoute buildPageRoute({required Widget Function(BuildContext context) builder}) {
     switch (SettingsManager().settings.skin.value) {
@@ -73,7 +73,7 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
         case Skins.Material:
           return widget.materialSkin;
         case Skins.Samsung:
-          return widget.samsungSkin;
+          return widget.samsungSkin ?? widget.materialSkin;
         default:
           return widget.iOSSkin;
       }
