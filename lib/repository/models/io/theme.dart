@@ -70,35 +70,36 @@ class ThemeStruct {
 
   static ThemeStruct getLightTheme() {
     final name = prefs.getString("selected-light");
-    final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
+    /*final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
     query.limit = 1;
     final result = query.findFirst();
     if (result == null) {
       return Themes.defaultThemes[1];
-    }
-    return result;
+    }*/
+    return Themes.defaultThemes[1];
   }
 
   static ThemeStruct getDarkTheme() {
     final name = prefs.getString("selected-dark");
-    final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
+    /*final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
     query.limit = 1;
     final result = query.findFirst();
     if (result == null) {
       return Themes.defaultThemes[0];
-    }
-    return result;
+    }*/
+    return Themes.defaultThemes[1];
   }
 
   static ThemeStruct? findOne(String name) {
     if (kIsWeb) return null;
-    return store.runInTransaction(TxMode.read, () {
+    /*return store.runInTransaction(TxMode.read, () {
       final query = themeBox.query(ThemeStruct_.name.equals(name)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
       return result;
-    });
+    });*/
+    return Themes.defaultThemes[1];
   }
 
   static List<ThemeStruct> getThemes() {

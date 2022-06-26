@@ -20,6 +20,8 @@ import 'repository/models/io/handle.dart';
 import 'repository/models/io/message.dart';
 import 'repository/models/io/scheduled.dart';
 import 'repository/models/io/theme.dart';
+import 'repository/models/io/theme_entry.dart';
+import 'repository/models/io/theme_object.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
 
@@ -338,6 +340,57 @@ final _entities = <ModelEntity>[
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
   ModelEntity(
+      id: const IdUid(10, 7380334062783734091),
+      name: 'ThemeEntry',
+      lastPropertyId: const IdUid(8, 4809686302323910258),
+      flags: 0,
+      properties: <ModelProperty>[
+        ModelProperty(
+            id: const IdUid(1, 3364349183457626105),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        ModelProperty(
+            id: const IdUid(2, 378260260370164099),
+            name: 'themeId',
+            type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(3, 1711484628702995090),
+            name: 'name',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(4, 5820153989252425651),
+            name: 'isFont',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(5, 357044983311472123),
+            name: 'fontSize',
+            type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(6, 205399809771216750),
+            name: 'dbColor',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(7, 2424613981822393823),
+            name: 'fontWeight',
+            type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(8, 4809686302323910258),
+            name: 'themeObjectId',
+            type: 11,
+            flags: 520,
+            indexId: const IdUid(10, 9160679880876705382),
+            relationTarget: 'ThemeObject')
+      ],
+      relations: <ModelRelation>[],
+      backlinks: <ModelBacklink>[]),
+  ModelEntity(
       id: const IdUid(13, 4148278195232901830),
       name: 'Message',
       lastPropertyId: const IdUid(39, 1372898255926257108),
@@ -582,29 +635,79 @@ final _entities = <ModelEntity>[
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
   ModelEntity(
-      id: const IdUid(16, 267956646000472468),
-      name: 'ThemeStruct',
-      lastPropertyId: const IdUid(4, 4859237351962712065),
+      id: const IdUid(15, 7753273527865539946),
+      name: 'ThemeObject',
+      lastPropertyId: const IdUid(7, 7718171125722310355),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
-            id: const IdUid(1, 5909901726622509878),
+            id: const IdUid(1, 7682268131019867778),
             name: 'id',
             type: 6,
             flags: 1),
         ModelProperty(
-            id: const IdUid(2, 5010755830985206485),
+            id: const IdUid(2, 3805851416487185429),
             name: 'name',
             type: 9,
             flags: 2080,
-            indexId: const IdUid(11, 5709129094922914969)),
+            indexId: const IdUid(7, 6926665461572101158)),
         ModelProperty(
-            id: const IdUid(3, 5796329722656038305),
+            id: const IdUid(3, 621312794123477095),
+            name: 'selectedLightTheme',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(4, 2380808371075786065),
+            name: 'selectedDarkTheme',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(5, 7474338997382293502),
             name: 'gradientBg',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(4, 4859237351962712065),
+            id: const IdUid(6, 7459499326275659791),
+            name: 'previousLightTheme',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(7, 7718171125722310355),
+            name: 'previousDarkTheme',
+            type: 1,
+            flags: 0)
+      ],
+      relations: <ModelRelation>[],
+      backlinks: <ModelBacklink>[
+        ModelBacklink(
+            name: 'themeEntries',
+            srcEntity: 'ThemeEntry',
+            srcField: 'themeObject')
+      ]),
+  ModelEntity(
+      id: const IdUid(16, 1815690088052698449),
+      name: 'ThemeStruct',
+      lastPropertyId: const IdUid(4, 1129102363347301238),
+      flags: 0,
+      properties: <ModelProperty>[
+        ModelProperty(
+            id: const IdUid(1, 7043518911115753096),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        ModelProperty(
+            id: const IdUid(2, 6644283342768530799),
+            name: 'name',
+            type: 9,
+            flags: 2080,
+            indexId: const IdUid(11, 8452066780532720626)),
+        ModelProperty(
+            id: const IdUid(3, 8412087896868925153),
+            name: 'gradientBg',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(4, 1129102363347301238),
             name: 'dbThemeData',
             type: 9,
             flags: 0)
@@ -633,8 +736,8 @@ Future<Store> openStore(
 ModelDefinition getObjectBoxModel() {
   final model = ModelInfo(
       entities: _entities,
-      lastEntityId: const IdUid(16, 267956646000472468),
-      lastIndexId: const IdUid(11, 5709129094922914969),
+      lastEntityId: const IdUid(16, 1815690088052698449),
+      lastIndexId: const IdUid(11, 8452066780532720626),
       lastRelationId: const IdUid(1, 7492985733214117623),
       lastSequenceId: const IdUid(0, 0),
       retiredEntityUids: const [
@@ -644,9 +747,7 @@ ModelDefinition getObjectBoxModel() {
         1619417403499629985,
         4450451951397945314,
         1700370751061310153,
-        3483028772414651169,
-        7380334062783734091,
-        7753273527865539946
+        3483028772414651169
       ],
       retiredIndexUids: const [],
       retiredPropertyUids: const [
@@ -710,22 +811,7 @@ ModelDefinition getObjectBoxModel() {
         5203631054946486128,
         2649653758394363860,
         1439376349402210172,
-        8308083337629235136,
-        3364349183457626105,
-        378260260370164099,
-        1711484628702995090,
-        5820153989252425651,
-        357044983311472123,
-        205399809771216750,
-        2424613981822393823,
-        4809686302323910258,
-        7682268131019867778,
-        3805851416487185429,
-        621312794123477095,
-        2380808371075786065,
-        7474338997382293502,
-        7459499326275659791,
-        7718171125722310355
+        8308083337629235136
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -1050,8 +1136,57 @@ ModelDefinition getObjectBoxModel() {
 
           return object;
         }),
-    Message: EntityDefinition<Message>(
+    ThemeEntry: EntityDefinition<ThemeEntry>(
         model: _entities[4],
+        toOneRelations: (ThemeEntry object) => [object.themeObject],
+        toManyRelations: (ThemeEntry object) => {},
+        getId: (ThemeEntry object) => object.id,
+        setId: (ThemeEntry object, int id) {
+          object.id = id;
+        },
+        objectToFB: (ThemeEntry object, fb.Builder fbb) {
+          final nameOffset =
+              object.name == null ? null : fbb.writeString(object.name!);
+          final dbColorOffset =
+              object.dbColor == null ? null : fbb.writeString(object.dbColor!);
+          fbb.startTable(9);
+          fbb.addInt64(0, object.id ?? 0);
+          fbb.addInt64(1, object.themeId);
+          fbb.addOffset(2, nameOffset);
+          fbb.addBool(3, object.isFont);
+          fbb.addInt64(4, object.fontSize);
+          fbb.addOffset(5, dbColorOffset);
+          fbb.addInt64(6, object.fontWeight);
+          fbb.addInt64(7, object.themeObject.targetId);
+          fbb.finish(fbb.endTable());
+          return object.id ?? 0;
+        },
+        objectFromFB: (Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+
+          final object = ThemeEntry(
+              id: const fb.Int64Reader()
+                  .vTableGetNullable(buffer, rootOffset, 4),
+              themeId: const fb.Int64Reader()
+                  .vTableGetNullable(buffer, rootOffset, 6),
+              name: const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 8),
+              isFont: const fb.BoolReader()
+                  .vTableGetNullable(buffer, rootOffset, 10),
+              fontSize: const fb.Int64Reader()
+                  .vTableGetNullable(buffer, rootOffset, 12),
+              fontWeight: const fb.Int64Reader()
+                  .vTableGetNullable(buffer, rootOffset, 16))
+            ..dbColor = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 14);
+          object.themeObject.targetId =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 18, 0);
+          object.themeObject.attach(store);
+          return object;
+        }),
+    Message: EntityDefinition<Message>(
+        model: _entities[5],
         toOneRelations: (Message object) => [object.chat],
         toManyRelations: (Message object) => {
               RelInfo<Attachment>.toOneBacklink(17, object.id!,
@@ -1224,7 +1359,7 @@ ModelDefinition getObjectBoxModel() {
           return object;
         }),
     ScheduledMessage: EntityDefinition<ScheduledMessage>(
-        model: _entities[5],
+        model: _entities[6],
         toOneRelations: (ScheduledMessage object) => [],
         toManyRelations: (ScheduledMessage object) => {},
         getId: (ScheduledMessage object) => object.id,
@@ -1264,8 +1399,61 @@ ModelDefinition getObjectBoxModel() {
 
           return object;
         }),
+    ThemeObject: EntityDefinition<ThemeObject>(
+        model: _entities[7],
+        toOneRelations: (ThemeObject object) => [],
+        toManyRelations: (ThemeObject object) => {
+              RelInfo<ThemeEntry>.toOneBacklink(8, object.id!,
+                      (ThemeEntry srcObject) => srcObject.themeObject):
+                  object.themeEntries
+            },
+        getId: (ThemeObject object) => object.id,
+        setId: (ThemeObject object, int id) {
+          object.id = id;
+        },
+        objectToFB: (ThemeObject object, fb.Builder fbb) {
+          final nameOffset =
+              object.name == null ? null : fbb.writeString(object.name!);
+          fbb.startTable(8);
+          fbb.addInt64(0, object.id ?? 0);
+          fbb.addOffset(1, nameOffset);
+          fbb.addBool(2, object.selectedLightTheme);
+          fbb.addBool(3, object.selectedDarkTheme);
+          fbb.addBool(4, object.gradientBg);
+          fbb.addBool(5, object.previousLightTheme);
+          fbb.addBool(6, object.previousDarkTheme);
+          fbb.finish(fbb.endTable());
+          return object.id ?? 0;
+        },
+        objectFromFB: (Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+
+          final object = ThemeObject(
+              id: const fb.Int64Reader()
+                  .vTableGetNullable(buffer, rootOffset, 4),
+              name: const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 6),
+              selectedLightTheme:
+                  const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false),
+              selectedDarkTheme: const fb.BoolReader()
+                  .vTableGet(buffer, rootOffset, 10, false),
+              gradientBg: const fb.BoolReader()
+                  .vTableGet(buffer, rootOffset, 12, false),
+              previousLightTheme: const fb.BoolReader()
+                  .vTableGet(buffer, rootOffset, 14, false),
+              previousDarkTheme: const fb.BoolReader()
+                  .vTableGet(buffer, rootOffset, 16, false));
+          InternalToManyAccess.setRelInfo(
+              object.themeEntries,
+              store,
+              RelInfo<ThemeEntry>.toOneBacklink(8, object.id!,
+                  (ThemeEntry srcObject) => srcObject.themeObject),
+              store.box<ThemeObject>());
+          return object;
+        }),
     ThemeStruct: EntityDefinition<ThemeStruct>(
-        model: _entities[6],
+        model: _entities[8],
         toOneRelations: (ThemeStruct object) => [],
         toManyRelations: (ThemeStruct object) => {},
         getId: (ThemeStruct object) => object.id,
@@ -1523,200 +1711,266 @@ class Handle_ {
       QueryStringProperty<Handle>(_entities[3].properties[7]);
 }
 
+/// [ThemeEntry] entity fields to define ObjectBox queries.
+class ThemeEntry_ {
+  /// see [ThemeEntry.id]
+  static final id =
+      QueryIntegerProperty<ThemeEntry>(_entities[4].properties[0]);
+
+  /// see [ThemeEntry.themeId]
+  static final themeId =
+      QueryIntegerProperty<ThemeEntry>(_entities[4].properties[1]);
+
+  /// see [ThemeEntry.name]
+  static final name =
+      QueryStringProperty<ThemeEntry>(_entities[4].properties[2]);
+
+  /// see [ThemeEntry.isFont]
+  static final isFont =
+      QueryBooleanProperty<ThemeEntry>(_entities[4].properties[3]);
+
+  /// see [ThemeEntry.fontSize]
+  static final fontSize =
+      QueryIntegerProperty<ThemeEntry>(_entities[4].properties[4]);
+
+  /// see [ThemeEntry.dbColor]
+  static final dbColor =
+      QueryStringProperty<ThemeEntry>(_entities[4].properties[5]);
+
+  /// see [ThemeEntry.fontWeight]
+  static final fontWeight =
+      QueryIntegerProperty<ThemeEntry>(_entities[4].properties[6]);
+
+  /// see [ThemeEntry.themeObject]
+  static final themeObject =
+      QueryRelationToOne<ThemeEntry, ThemeObject>(_entities[4].properties[7]);
+}
+
 /// [Message] entity fields to define ObjectBox queries.
 class Message_ {
   /// see [Message.id]
-  static final id = QueryIntegerProperty<Message>(_entities[4].properties[0]);
+  static final id = QueryIntegerProperty<Message>(_entities[5].properties[0]);
 
   /// see [Message.originalROWID]
   static final originalROWID =
-      QueryIntegerProperty<Message>(_entities[4].properties[1]);
+      QueryIntegerProperty<Message>(_entities[5].properties[1]);
 
   /// see [Message.guid]
-  static final guid = QueryStringProperty<Message>(_entities[4].properties[2]);
+  static final guid = QueryStringProperty<Message>(_entities[5].properties[2]);
 
   /// see [Message.handleId]
   static final handleId =
-      QueryIntegerProperty<Message>(_entities[4].properties[3]);
+      QueryIntegerProperty<Message>(_entities[5].properties[3]);
 
   /// see [Message.otherHandle]
   static final otherHandle =
-      QueryIntegerProperty<Message>(_entities[4].properties[4]);
+      QueryIntegerProperty<Message>(_entities[5].properties[4]);
 
   /// see [Message.text]
-  static final text = QueryStringProperty<Message>(_entities[4].properties[5]);
+  static final text = QueryStringProperty<Message>(_entities[5].properties[5]);
 
   /// see [Message.subject]
   static final subject =
-      QueryStringProperty<Message>(_entities[4].properties[6]);
+      QueryStringProperty<Message>(_entities[5].properties[6]);
 
   /// see [Message.country]
   static final country =
-      QueryStringProperty<Message>(_entities[4].properties[7]);
+      QueryStringProperty<Message>(_entities[5].properties[7]);
 
   /// see [Message.dateCreated]
   static final dateCreated =
-      QueryIntegerProperty<Message>(_entities[4].properties[8]);
+      QueryIntegerProperty<Message>(_entities[5].properties[8]);
 
   /// see [Message.dateRead]
   static final dateRead =
-      QueryIntegerProperty<Message>(_entities[4].properties[9]);
+      QueryIntegerProperty<Message>(_entities[5].properties[9]);
 
   /// see [Message.dateDelivered]
   static final dateDelivered =
-      QueryIntegerProperty<Message>(_entities[4].properties[10]);
+      QueryIntegerProperty<Message>(_entities[5].properties[10]);
 
   /// see [Message.isFromMe]
   static final isFromMe =
-      QueryBooleanProperty<Message>(_entities[4].properties[11]);
+      QueryBooleanProperty<Message>(_entities[5].properties[11]);
 
   /// see [Message.isDelayed]
   static final isDelayed =
-      QueryBooleanProperty<Message>(_entities[4].properties[12]);
+      QueryBooleanProperty<Message>(_entities[5].properties[12]);
 
   /// see [Message.isAutoReply]
   static final isAutoReply =
-      QueryBooleanProperty<Message>(_entities[4].properties[13]);
+      QueryBooleanProperty<Message>(_entities[5].properties[13]);
 
   /// see [Message.isSystemMessage]
   static final isSystemMessage =
-      QueryBooleanProperty<Message>(_entities[4].properties[14]);
+      QueryBooleanProperty<Message>(_entities[5].properties[14]);
 
   /// see [Message.isServiceMessage]
   static final isServiceMessage =
-      QueryBooleanProperty<Message>(_entities[4].properties[15]);
+      QueryBooleanProperty<Message>(_entities[5].properties[15]);
 
   /// see [Message.isForward]
   static final isForward =
-      QueryBooleanProperty<Message>(_entities[4].properties[16]);
+      QueryBooleanProperty<Message>(_entities[5].properties[16]);
 
   /// see [Message.isArchived]
   static final isArchived =
-      QueryBooleanProperty<Message>(_entities[4].properties[17]);
+      QueryBooleanProperty<Message>(_entities[5].properties[17]);
 
   /// see [Message.hasDdResults]
   static final hasDdResults =
-      QueryBooleanProperty<Message>(_entities[4].properties[18]);
+      QueryBooleanProperty<Message>(_entities[5].properties[18]);
 
   /// see [Message.cacheRoomnames]
   static final cacheRoomnames =
-      QueryStringProperty<Message>(_entities[4].properties[19]);
+      QueryStringProperty<Message>(_entities[5].properties[19]);
 
   /// see [Message.isAudioMessage]
   static final isAudioMessage =
-      QueryBooleanProperty<Message>(_entities[4].properties[20]);
+      QueryBooleanProperty<Message>(_entities[5].properties[20]);
 
   /// see [Message.datePlayed]
   static final datePlayed =
-      QueryIntegerProperty<Message>(_entities[4].properties[21]);
+      QueryIntegerProperty<Message>(_entities[5].properties[21]);
 
   /// see [Message.itemType]
   static final itemType =
-      QueryIntegerProperty<Message>(_entities[4].properties[22]);
+      QueryIntegerProperty<Message>(_entities[5].properties[22]);
 
   /// see [Message.groupTitle]
   static final groupTitle =
-      QueryStringProperty<Message>(_entities[4].properties[23]);
+      QueryStringProperty<Message>(_entities[5].properties[23]);
 
   /// see [Message.groupActionType]
   static final groupActionType =
-      QueryIntegerProperty<Message>(_entities[4].properties[24]);
+      QueryIntegerProperty<Message>(_entities[5].properties[24]);
 
   /// see [Message.isExpired]
   static final isExpired =
-      QueryBooleanProperty<Message>(_entities[4].properties[25]);
+      QueryBooleanProperty<Message>(_entities[5].properties[25]);
 
   /// see [Message.balloonBundleId]
   static final balloonBundleId =
-      QueryStringProperty<Message>(_entities[4].properties[26]);
+      QueryStringProperty<Message>(_entities[5].properties[26]);
 
   /// see [Message.associatedMessageGuid]
   static final associatedMessageGuid =
-      QueryStringProperty<Message>(_entities[4].properties[27]);
+      QueryStringProperty<Message>(_entities[5].properties[27]);
 
   /// see [Message.associatedMessageType]
   static final associatedMessageType =
-      QueryStringProperty<Message>(_entities[4].properties[28]);
+      QueryStringProperty<Message>(_entities[5].properties[28]);
 
   /// see [Message.expressiveSendStyleId]
   static final expressiveSendStyleId =
-      QueryStringProperty<Message>(_entities[4].properties[29]);
+      QueryStringProperty<Message>(_entities[5].properties[29]);
 
   /// see [Message.timeExpressiveSendStyleId]
   static final timeExpressiveSendStyleId =
-      QueryIntegerProperty<Message>(_entities[4].properties[30]);
+      QueryIntegerProperty<Message>(_entities[5].properties[30]);
 
   /// see [Message.hasAttachments]
   static final hasAttachments =
-      QueryBooleanProperty<Message>(_entities[4].properties[31]);
+      QueryBooleanProperty<Message>(_entities[5].properties[31]);
 
   /// see [Message.hasReactions]
   static final hasReactions =
-      QueryBooleanProperty<Message>(_entities[4].properties[32]);
+      QueryBooleanProperty<Message>(_entities[5].properties[32]);
 
   /// see [Message.dateDeleted]
   static final dateDeleted =
-      QueryIntegerProperty<Message>(_entities[4].properties[33]);
+      QueryIntegerProperty<Message>(_entities[5].properties[33]);
 
   /// see [Message.threadOriginatorGuid]
   static final threadOriginatorGuid =
-      QueryStringProperty<Message>(_entities[4].properties[34]);
+      QueryStringProperty<Message>(_entities[5].properties[34]);
 
   /// see [Message.threadOriginatorPart]
   static final threadOriginatorPart =
-      QueryStringProperty<Message>(_entities[4].properties[35]);
+      QueryStringProperty<Message>(_entities[5].properties[35]);
 
   /// see [Message.bigEmoji]
   static final bigEmoji =
-      QueryBooleanProperty<Message>(_entities[4].properties[36]);
+      QueryBooleanProperty<Message>(_entities[5].properties[36]);
 
   /// see [Message.error]
   static final error =
-      QueryIntegerProperty<Message>(_entities[4].properties[37]);
+      QueryIntegerProperty<Message>(_entities[5].properties[37]);
 
   /// see [Message.chat]
   static final chat =
-      QueryRelationToOne<Message, Chat>(_entities[4].properties[38]);
+      QueryRelationToOne<Message, Chat>(_entities[5].properties[38]);
 }
 
 /// [ScheduledMessage] entity fields to define ObjectBox queries.
 class ScheduledMessage_ {
   /// see [ScheduledMessage.id]
   static final id =
-      QueryIntegerProperty<ScheduledMessage>(_entities[5].properties[0]);
+      QueryIntegerProperty<ScheduledMessage>(_entities[6].properties[0]);
 
   /// see [ScheduledMessage.chatGuid]
   static final chatGuid =
-      QueryStringProperty<ScheduledMessage>(_entities[5].properties[1]);
+      QueryStringProperty<ScheduledMessage>(_entities[6].properties[1]);
 
   /// see [ScheduledMessage.message]
   static final message =
-      QueryStringProperty<ScheduledMessage>(_entities[5].properties[2]);
+      QueryStringProperty<ScheduledMessage>(_entities[6].properties[2]);
 
   /// see [ScheduledMessage.epochTime]
   static final epochTime =
-      QueryIntegerProperty<ScheduledMessage>(_entities[5].properties[3]);
+      QueryIntegerProperty<ScheduledMessage>(_entities[6].properties[3]);
 
   /// see [ScheduledMessage.completed]
   static final completed =
-      QueryBooleanProperty<ScheduledMessage>(_entities[5].properties[4]);
+      QueryBooleanProperty<ScheduledMessage>(_entities[6].properties[4]);
+}
+
+/// [ThemeObject] entity fields to define ObjectBox queries.
+class ThemeObject_ {
+  /// see [ThemeObject.id]
+  static final id =
+      QueryIntegerProperty<ThemeObject>(_entities[7].properties[0]);
+
+  /// see [ThemeObject.name]
+  static final name =
+      QueryStringProperty<ThemeObject>(_entities[7].properties[1]);
+
+  /// see [ThemeObject.selectedLightTheme]
+  static final selectedLightTheme =
+      QueryBooleanProperty<ThemeObject>(_entities[7].properties[2]);
+
+  /// see [ThemeObject.selectedDarkTheme]
+  static final selectedDarkTheme =
+      QueryBooleanProperty<ThemeObject>(_entities[7].properties[3]);
+
+  /// see [ThemeObject.gradientBg]
+  static final gradientBg =
+      QueryBooleanProperty<ThemeObject>(_entities[7].properties[4]);
+
+  /// see [ThemeObject.previousLightTheme]
+  static final previousLightTheme =
+      QueryBooleanProperty<ThemeObject>(_entities[7].properties[5]);
+
+  /// see [ThemeObject.previousDarkTheme]
+  static final previousDarkTheme =
+      QueryBooleanProperty<ThemeObject>(_entities[7].properties[6]);
 }
 
 /// [ThemeStruct] entity fields to define ObjectBox queries.
 class ThemeStruct_ {
   /// see [ThemeStruct.id]
   static final id =
-      QueryIntegerProperty<ThemeStruct>(_entities[6].properties[0]);
+      QueryIntegerProperty<ThemeStruct>(_entities[8].properties[0]);
 
   /// see [ThemeStruct.name]
   static final name =
-      QueryStringProperty<ThemeStruct>(_entities[6].properties[1]);
+      QueryStringProperty<ThemeStruct>(_entities[8].properties[1]);
 
   /// see [ThemeStruct.gradientBg]
   static final gradientBg =
-      QueryBooleanProperty<ThemeStruct>(_entities[6].properties[2]);
+      QueryBooleanProperty<ThemeStruct>(_entities[8].properties[2]);
 
   /// see [ThemeStruct.dbThemeData]
   static final dbThemeData =
-      QueryStringProperty<ThemeStruct>(_entities[6].properties[3]);
+      QueryStringProperty<ThemeStruct>(_entities[8].properties[3]);
 }
