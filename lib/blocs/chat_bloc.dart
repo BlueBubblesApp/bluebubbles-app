@@ -127,6 +127,13 @@ class ChatBloc {
     }
   }
 
+  Future<void> updateChatPositions(List<Chat> chats) async {
+    for (var chat in chats) {
+      await updateChatPosition(chat);
+    }
+    return await updateChatPosition([chat]);
+  }
+
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
   Future<void> updateChatPosition(Chat chat) async {
     if (isNullOrEmpty(_chats)!) {
