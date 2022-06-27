@@ -1,9 +1,11 @@
-import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/sync/incremental_sync_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:bluebubbles/repository/tasks/sync_tasks.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
@@ -94,15 +96,20 @@ class ConversationListState extends State<ConversationList> {
   }
 
   void openNewChatCreator({List<PlatformFile>? existing}) async {
-    EventDispatcher().emit("update-highlight", null);
-    CustomNavigator.pushAndRemoveUntil(
-      context,
-      ConversationView(
-        isCreator: true,
-        existingAttachments: existing ?? [],
-      ),
-      (route) => route.isFirst,
-    );
+    // EventDispatcher().emit("update-highlight", null);
+    // CustomNavigator.pushAndRemoveUntil(
+    //   context,
+    //   ConversationView(
+    //     isCreator: true,
+    //     existingAttachments: existing ?? [],
+    //   ),
+    //   (route) => route.isFirst,
+    // );
+
+    int syncStart = SettingsManager().settings.lastIncrementalSync.value - 432000000;
+    print(DateTime.fromMillisecondsSinceEpoch(syncStart));
+    var incrementalSyncManager = IncrementalSyncManager(syncStart, saveDate: false);
+    await incrementalSyncManager.start();
   }
 
   void openCamera() async {

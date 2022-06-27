@@ -988,7 +988,10 @@ class Message {
     return size;
   }
 
-  static void merge(Message existing, Message newMessage) {
+  static Message merge(Message existing, Message newMessage) {
+    existing.id ??= newMessage.id;
+    existing.guid ??= newMessage.guid;
+  
     // Update date created
     if ((existing.dateCreated == null && newMessage.dateCreated != null) ||
         (existing.dateCreated != null &&
@@ -1042,14 +1045,7 @@ class Message {
     }
 
     // Update metadata
-    if (existing.metadata == null && newMessage.metadata != null) {
-      existing.metadata = newMessage.metadata;
-    } else if (existing.metadata != null && newMessage.metadata != null) {
-      for (var i in newMessage.metadata!.entries) {
-        if (existing.metadata!.containsKey(i.key)) continue;
-        existing.metadata![i.key] = i.value;
-      }
-    }
+    existing.metadata = mergeTopLevelDicts(existing.metadata, newMessage.metadata);
 
     // Update original ROWID
     if (existing.originalROWID == null && newMessage.originalROWID != null) {
@@ -1080,6 +1076,8 @@ class Message {
     if (existing.dbAttachments.isEmpty && newMessage.dbAttachments.isNotEmpty) {
       existing.dbAttachments.addAll(newMessage.dbAttachments);
     }
+
+    return existing;
   }
 
   /// Checks if Message [b] is newer than Message [a], based on date
