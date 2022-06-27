@@ -1,4 +1,5 @@
 import 'package:async_task/async_task_extension.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -9,7 +10,6 @@ import 'package:dio/dio.dart' as dio;
 import 'package:get/get.dart';
 
 import '../../repository/models/models.dart';
-
 
 class IncrementalSyncManager extends SyncManager {
   final tag = 'IncrementalSyncManager';
@@ -30,20 +30,25 @@ class IncrementalSyncManager extends SyncManager {
 
   bool saveDate;
 
+  bool updateChatList;
+
+  bool notifyForNewMessages;
+
   Function? onComplete;
 
   int get syncStart => endTimestamp ?? DateTime.now().millisecondsSinceEpoch;
 
   IncrementalSyncManager(this.startTimestamp,
-      {
-        this.endTimestamp,
-        this.batchSize = 1000,
-        this.maxMessages = 10000,
-        this.chatGuid,
-        this.saveDate = true,
-        this.onComplete,
-        bool saveLogs = false
-      }) : super("Incremental", saveLogs: saveLogs);
+      {this.endTimestamp,
+      this.batchSize = 1000,
+      this.maxMessages = 10000,
+      this.chatGuid,
+      this.updateChatList = true,
+      this.saveDate = true,
+      this.notifyForNewMessages = false,
+      this.onComplete,
+      bool saveLogs = false})
+      : super("Incremental", saveLogs: saveLogs);
 
   @override
   Future<void> start() async {
@@ -72,7 +77,7 @@ class IncrementalSyncManager extends SyncManager {
     // the messages have a null text, we can still account for them when we fetch.
     int serverVersion = await SettingsManager().getServerVersionCode();
     // TODO: Fix to < when done testing
-    bool isBugged = serverVersion <= 142;  // Server: v1.2.0
+    bool isBugged = serverVersion <= 142; // Server: v1.2.0
     print(serverVersion);
 
     // 0: Hit API endpoint to check for updated messages
@@ -109,12 +114,7 @@ class IncrementalSyncManager extends SyncManager {
     for (var i = 0; i < pages; i++) {
       addToOutput('Fetching page ${i + 1} of $pages...');
       dio.Response<dynamic> messages = await api.messages(
-        after: startTimestamp,
-        before: syncStart,
-        offset: i * batchSize,
-        limit: batchSize,
-        withQuery: ["chats"]
-      );
+          after: startTimestamp, before: syncStart, offset: i * batchSize, limit: batchSize, withQuery: ["chats"]);
 
       int messageCount = messages.data['data'].length;
       addToOutput('Page ${i + 1} returned $messageCount message(s)...', level: LogLevel.DEBUG);
@@ -143,7 +143,7 @@ class IncrementalSyncManager extends SyncManager {
       List<Chat> theChats = await Chat.bulkSyncChats(chatCache.values.toList());
 
       print('chats: ${theChats.length}');
-      
+
       // 5: Merge synced chats back into cache
       for (var chat in theChats) {
         if (!chatCache.containsKey(chat.guid)) continue;
@@ -173,7 +173,7 @@ class IncrementalSyncManager extends SyncManager {
     // If we've synced chats, we should also update the latest message
     if (syncedChats.isNotEmpty) {
       List<Chat> updatedChats = await Chat.syncLatestMessages(syncedChats.values.toList());
-
+      await ChatBloc().updateChatPositions(updatedChats);
     }
 
     // End the sync
@@ -253,7 +253,7 @@ class IncrementalSyncManager extends SyncManager {
   //     List<Chat> syncedChats = await Chat.bulkSyncChats(chatCache.values.toList());
   //     print("Chats: ${syncedChats.length}");
   //     print(messagesToSync);
-      
+
   //     // 5: Merge synced chats back into cache
   //     for (var chat in syncedChats) {
   //       if (!chatCache.containsKey(chat.guid)) continue;

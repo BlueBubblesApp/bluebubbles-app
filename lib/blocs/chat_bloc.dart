@@ -40,6 +40,7 @@ class ChatBloc {
 
   Completer<void>? chatRequest;
   int lastFetch = 0;
+  List<String> currentShareTargets = [];
 
   static final ChatBloc _chatBloc = ChatBloc._internal();
 
@@ -127,15 +128,53 @@ class ChatBloc {
     }
   }
 
-  Future<void> updateChatPositions(List<Chat> chats) async {
+  Future<void> updateChatPositions(List<Chat> chats, {reloadShareTargets = true}) async {
+    // Insert each new/updated chat
     for (var chat in chats) {
-      await updateChatPosition(chat);
+      await _updateChatPosition(chat);
     }
-    return await updateChatPosition([chat]);
+
+    // Make sure that all the chats have participants
+    for (int i = 0; i < _chats.length; i++) {
+      if (isNullOrEmpty(_chats[i].participants)!) {
+        _chats[i].getParticipants();
+      }
+    }
+
+    // Sort the chats so they are in the correct order
+    _chats.sort(Chat.sort);
+
+    // Make sure that the top most chats show in the share targets.
+    // Top 5 is fairly arbitrary, but it's above how many (max) will
+    // show in the share targets.
+    if (reloadShareTargets) {
+      for (int i = 0; i < 5; i++) {
+        if (i > _chats.length) break;
+        updateShareTarget(_chats[0]);
+      }
+    }
+  }
+
+  void reloadShareTargets() {
+    for (int i = 0; i < 5; i++) {
+      if (i > _chats.length) break;
+      if (currentShareTargets.contains(_chats[i].guid)) continue;
+      currentShareTargets.add(_chats[i].guid);
+
+      if (currentShareTargets.length > 5) {
+        currentShareTargets = currentShareTargets.sublist(1).take(5).toList();
+      }
+
+      updateShareTarget(_chats[0]);
+    }
+  }
+
+  Future<void> updateChatPosition(Chat chat) async {
+    await updateChatPositions([chat]);
   }
 
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
-  Future<void> updateChatPosition(Chat chat) async {
+  Future<void> _updateChatPosition(Chat chat) async {
     if (isNullOrEmpty(_chats)!) {
       await refreshChats();
       if (isNullOrEmpty(_chats)!) return;
@@ -183,15 +222,6 @@ class ChatBloc {
     } else {
       _chats[currentIndex] = chat;
     }
-
-    for (int i = 0; i < _chats.length; i++) {
-      if (isNullOrEmpty(_chats[i].participants)!) {
-        _chats[i].getParticipants();
-      }
-    }
-
-    await updateShareTarget(chat);
-    _chats.sort(Chat.sort);
   }
 
   Future<void> markAllAsRead() async {
@@ -303,9 +333,11 @@ class ChatBloc {
   }
 
   Future<void> getChatBatches({int batchSize = 15, bool headless = false}) async {
-    int count = Chat.count() ?? (await api.chatCount().catchError((err) {
-      chatRequest!.completeError(err.toString());
-    })).data['data']['total'];
+    int count = Chat.count() ??
+        (await api.chatCount().catchError((err) {
+          chatRequest!.completeError(err.toString());
+        }))
+            .data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
     } else {
