@@ -8,6 +8,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
@@ -1210,13 +1211,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         autocorrect: true,
                         controller: subjectController,
                         scrollPhysics: CustomBouncingScrollPhysics(),
-                        style: context.theme.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
+                        style: context.theme.extension<BubbleText>()!.bubbleText.copyWith(fontWeight: FontWeight.bold),
                         keyboardType: TextInputType.multiline,
                         maxLines: 14,
                         minLines: 1,
                         placeholder: "Subject",
                         padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                        placeholderStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.bold),
+                        placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.bold),
                         autofocus: false,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
@@ -1259,7 +1260,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           autocorrect: true,
                           controller: controller,
                           scrollPhysics: CustomBouncingScrollPhysics(),
-                          style: context.theme.textTheme.bodyMedium,
+                          style: context.theme.extension<BubbleText>()!.bubbleText,
                           keyboardType: TextInputType.multiline,
                           maxLines: 14,
                           minLines: 1,
@@ -1269,7 +1270,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                   ? "Text Forwarding"
                                   : "iMessage",
                           padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                          placeholderStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
+                          placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
                           autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
                               !widget.isCreator!,
                           decoration: BoxDecoration(
@@ -1381,7 +1382,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         onSubmitted: (String value) {
                           focusNode!.requestFocus();
                         },
-                        style: context.theme.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
+                        style: context.theme.extension<BubbleText>()!.bubbleText.copyWith(fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
                           isDense: true,
                           enabledBorder:
@@ -1391,7 +1392,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           focusedBorder:
                               OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
                           hintText: "Subject",
-                          hintStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.bold),
+                          hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.bold),
                           contentPadding: EdgeInsets.only(
                             left: 10,
                             top: 15,
@@ -1431,7 +1432,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         sendMessage();
                       },
-                      style: context.theme.textTheme.bodyMedium,
+                      style: context.theme.extension<BubbleText>()!.bubbleText,
                       onContentCommitted: onContentCommit,
                       decoration: InputDecoration(
                         isDense: true,
@@ -1452,7 +1453,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             : chat?.isTextForwarding ?? false
                                 ? "Text Forwarding"
                                 : "iMessage",
-                        hintStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
+                        hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
                         contentPadding: EdgeInsets.only(
                           left: 10,
                           top: 15,

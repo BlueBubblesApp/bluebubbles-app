@@ -242,15 +242,11 @@ class SentMessageHelper {
                                               ),
                                             TextSpan(
                                               text: text,
-                                              style: context.theme
-                                                  .textTheme
-                                                  .bodyMedium!
+                                              style: context.theme.extension<BubbleText>()!.bubbleText
                                                   .apply(color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
                                             ),
                                           ],
-                                          style: context.theme
-                                              .textTheme
-                                              .bodyMedium!
+                                          style: context.theme.extension<BubbleText>()!.bubbleText
                                               .apply(color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
                                         ),
                                       ),
@@ -274,9 +270,7 @@ class SentMessageHelper {
                                                   color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
                                             ),
                                           ],
-                                          style: context.theme
-                                              .textTheme
-                                              .bodyMedium!
+                                          style: context.theme.extension<BubbleText>()!.bubbleText
                                               .apply(color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
                                         ),
                                       ),

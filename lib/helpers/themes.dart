@@ -31,6 +31,7 @@ class Themes {
                     BubbleText(
                       bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
                         fontSize: 15,
+                        height: Typography.englishLike2021.bodyMedium!.height! * 0.85,
                       ),
                     ),
                   ]
@@ -47,6 +48,7 @@ class Themes {
                     BubbleText(
                       bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
                         fontSize: 15,
+                        height: Typography.englishLike2021.bodyMedium!.height! * 0.85,
                       ),
                     ),
                   ]
@@ -81,6 +83,7 @@ ThemeData oledDarkTheme = FlexColorScheme(
   BubbleText(
     bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
       fontSize: 15,
+      height: Typography.englishLike2021.bodyMedium!.height! * 0.85,
     ),
   ),
 ]);
@@ -103,6 +106,7 @@ ThemeData nordDarkTheme = FlexColorScheme(
   BubbleText(
     bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
       fontSize: 15,
+      height: Typography.englishLike2021.bodyMedium!.height! * 0.85,
     ),
   ),
 ]);
@@ -128,6 +132,7 @@ ThemeData whiteLightTheme = FlexColorScheme(
   BubbleText(
     bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
       fontSize: 15,
+      height: Typography.englishLike2021.bodyMedium!.height! * 0.85,
     ),
   ),
 ]);

@@ -217,7 +217,7 @@ class ThemeStruct {
               color: Color(map["textTheme"]["bodySmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodySmall"]["fontWeight"]],
               fontSize: map["textTheme"]["bodySmall"]["fontSize"],
-              letterSpacing: typography.bodySmall!.letterSpacing! * 0.75,
+              letterSpacing: typography.bodySmall!.letterSpacing! * 0.5,
             ),
             labelLarge: typography.labelLarge!.copyWith(
               color: Color(map["textTheme"]["labelLarge"]["color"]),
@@ -279,6 +279,7 @@ class ThemeStruct {
               fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
               fontSize: map["textTheme"]["bubbleText"]?["fontSize"] ?? 15,
               letterSpacing: typography.bodyMedium!.letterSpacing! * 0.75,
+              height: typography.bodyMedium!.height! * 0.85,
             ),
           ),
         ])
