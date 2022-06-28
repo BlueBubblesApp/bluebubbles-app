@@ -59,13 +59,13 @@ class RegularFileOpener extends StatelessWidget {
                       backgroundColor: context.theme.colorScheme.properSurface,
                       actions: <Widget>[
                         TextButton(
-                          child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                          child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
                         ),
                         TextButton(
-                          child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                          child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                           onPressed: () async {
                             File(file.path!).copy(savePath);
                             Navigator.of(context).pop();
