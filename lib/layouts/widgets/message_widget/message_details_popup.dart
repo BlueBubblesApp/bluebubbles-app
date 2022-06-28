@@ -332,7 +332,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                                 padding: const EdgeInsets.all(6),
                                 child: Reaction.getReactionIcon(e, currentlySelectedReaction == e
                                     ? context.theme.colorScheme.onPrimary
-                                    : context.theme.colorScheme.outline, usePink: false),
+                                    : context.theme.colorScheme.outline, usePink: currentlySelectedReaction == e),
                               ),
                             ),
                           ),
