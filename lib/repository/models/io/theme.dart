@@ -196,31 +196,37 @@ class ThemeStruct {
               color: Color(map["textTheme"]["titleLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["titleLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["titleLarge"]["fontSize"],
+              letterSpacing: typography.titleLarge!.letterSpacing! * 0.75,
             ),
             bodyLarge: typography.bodyLarge!.copyWith(
               color: Color(map["textTheme"]["bodyLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["bodyLarge"]["fontSize"],
+              letterSpacing: typography.bodyLarge!.letterSpacing! * 0.75,
             ),
             bodyMedium: typography.bodyMedium!.copyWith(
               color: Color(map["textTheme"]["bodyMedium"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
               fontSize: map["textTheme"]["bodyMedium"]["fontSize"],
+              letterSpacing: typography.bodyMedium!.letterSpacing! * 0.75,
             ),
             bodySmall: typography.bodySmall!.copyWith(
               color: Color(map["textTheme"]["bodySmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodySmall"]["fontWeight"]],
               fontSize: map["textTheme"]["bodySmall"]["fontSize"],
+              letterSpacing: typography.bodySmall!.letterSpacing! * 0.75,
             ),
             labelLarge: typography.labelLarge!.copyWith(
               color: Color(map["textTheme"]["labelLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["labelLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["labelLarge"]["fontSize"],
+              letterSpacing: typography.labelLarge!.letterSpacing! * 0.75,
             ),
             labelSmall: typography.labelSmall!.copyWith(
               color: Color(map["textTheme"]["labelSmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["labelSmall"]["fontWeight"]],
               fontSize: map["textTheme"]["labelSmall"]["fontSize"],
+              letterSpacing: typography.labelSmall!.letterSpacing! * 0.75,
             ),
           ),
           colorScheme: ColorScheme(
