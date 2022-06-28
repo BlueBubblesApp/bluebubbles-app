@@ -319,15 +319,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       items.add(Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12)));
     }
 
-    if (items.length <= 1) {
-      items.add(Container(width: 40));
-    }
-
-    return Stack(
-      alignment: (!SettingsManager().settings.showConnectionIndicator.value || !manualMark)
-          ? AlignmentDirectional.center
-          : AlignmentDirectional.topEnd,
-      children: items,
+    return Padding(
+      padding: const EdgeInsets.only(right: 30.0, top: 45),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: items,
+      ),
     );
   }
 
@@ -633,72 +631,91 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     return PreferredSize(
       preferredSize: Size.fromHeight(context.orientation == Orientation.landscape && context.isPhone ? 55 : 75),
-      child: CupertinoNavigationBar(
-          backgroundColor: context.theme.colorScheme.properSurface.withAlpha(125),
-          border: Border(
-            bottom: BorderSide(color: context.theme.colorScheme.properSurface, width: 1.5),
-          ),
-          leading: GestureDetector(
-              onTap: () {
-                if (LifeCycleManager().isBubble) {
-                  SystemNavigator.pop();
-                  return;
-                }
-                EventDispatcher().emit("update-highlight", null);
-                Navigator.of(context).pop();
-              },
-              behavior: HitTestBehavior.translucent,
-              child: Obx(
-                () => Container(
-                  width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
-                  child: Row(
-                    mainAxisSize: cupertino.MainAxisSize.min,
-                    mainAxisAlignment: cupertino.MainAxisAlignment.start,
-                    children: [
-                      buildBackButton(context, callback: () {
+      child: ClipPath(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            decoration: BoxDecoration(
+              color: context.theme.colorScheme.properSurface.withOpacity(0.3),
+              border: Border(
+                bottom: BorderSide(color: context.theme.colorScheme.properSurface, width: 1.5),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 15.0, top: 45),
+                    child: GestureDetector(
+                      onTap: () {
                         if (LifeCycleManager().isBubble) {
                           SystemNavigator.pop();
-                          return false;
+                          return;
                         }
                         EventDispatcher().emit("update-highlight", null);
-                        return true;
-                      }),
-                      if (ChatBloc().unreads.value > 0)
-                        Container(
-                          width: 25.0,
-                          height: 20.0,
-                          decoration: BoxDecoration(
-                              color: context.theme.colorScheme.primary,
-                              shape: BoxShape.rectangle,
-                              borderRadius: BorderRadius.circular(10)),
-                          child: Center(
-                              child: Text(ChatBloc().unreads.value.toString(),
-                                  textAlign: TextAlign.center, style: TextStyle(color: context.theme.colorScheme.onPrimary, fontSize: 12.0))),
-                        ),
-                    ],
+                        Navigator.of(context).pop();
+                      },
+                      behavior: HitTestBehavior.translucent,
+                      child: Obx(() => Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          buildBackButton(context, callback: () {
+                            if (LifeCycleManager().isBubble) {
+                              SystemNavigator.pop();
+                              return false;
+                            }
+                            EventDispatcher().emit("update-highlight", null);
+                            return true;
+                          }),
+                          if (ChatBloc().unreads.value > 0)
+                            Container(
+                              width: 25.0,
+                              height: 20.0,
+                              decoration: BoxDecoration(
+                                  color: context.theme.colorScheme.primary,
+                                  shape: BoxShape.rectangle,
+                                  borderRadius: BorderRadius.circular(10)),
+                              child: Center(
+                                  child: Text(ChatBloc().unreads.value.toString(),
+                                      textAlign: TextAlign.center, style: TextStyle(color: context.theme.colorScheme.onPrimary, fontSize: 12.0))),
+                            ),
+                        ],
+                      ),
+                      )),
                   ),
                 ),
-              )),
-          middle: cupertino.Padding(
-            padding: EdgeInsets.only(right: newMessages.isNotEmpty ? 10 : 0),
-            child: GestureDetector(
-              onTap: openDetails,
-              child: Builder(builder: (context) {
-                if (context.orientation == Orientation.landscape && context.isPhone) {
-                  return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: children);
-                }
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: children,
-                );
-              }),
-            ),
+                Container(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 5),
+                    child: GestureDetector(
+                      onTap: openDetails,
+                      child: Builder(builder: (context) {
+                        if (context.orientation == Orientation.landscape && context.isPhone) {
+                          return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: children);
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: children,
+                        );
+                      }),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Obx(() => buildCupertinoTrailing()),
+                )
+              ],
+            )
           ),
-          trailing: Obx(
-              () => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing()))),
+        ),
+      ),
     );
   }
 
