@@ -16,7 +16,6 @@ import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_s
 import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
@@ -30,7 +29,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart' as cupertino;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -283,11 +282,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             child: SettingsManager().settings.skin.value == Skins.iOS
                 ? Theme(
                     data: ThemeData(
-                      cupertinoOverrideTheme: cupertino.CupertinoThemeData(
+                      cupertinoOverrideTheme: CupertinoThemeData(
                         brightness: context.theme.colorScheme.brightness,
                       ),
                     ),
-                    child: cupertino.CupertinoActivityIndicator(
+                    child: CupertinoActivityIndicator(
                       radius: 12,
                     ),
                   )
@@ -306,8 +305,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           child: GestureDetector(
             child: Icon(
               (markedAsRead)
-                  ? cupertino.CupertinoIcons.check_mark_circled
-                  : cupertino.CupertinoIcons.check_mark_circled_solid,
+                  ? CupertinoIcons.check_mark_circled
+                  : CupertinoIcons.check_mark_circled_solid,
               color: (markedAsRead) ? HexColor('43CC47').withAlpha(200) : fontColor,
             ),
             onTap: markChatAsRead,
@@ -319,15 +318,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       items.add(Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12)));
     }
 
-    if (items.length <= 1) {
-      items.add(Container(width: 40));
-    }
-
-    return Stack(
-      alignment: (!SettingsManager().settings.showConnectionIndicator.value || !manualMark)
-          ? AlignmentDirectional.center
-          : AlignmentDirectional.topEnd,
-      children: items,
+    return Padding(
+      padding: const EdgeInsets.only(right: 30.0, top: 45),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: items,
+      ),
     );
   }
 
@@ -453,10 +450,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     child: Icon(
                       (markedAsRead)
                           ? SettingsManager().settings.skin.value == Skins.iOS
-                              ? cupertino.CupertinoIcons.check_mark_circled_solid
+                              ? CupertinoIcons.check_mark_circled_solid
                               : Icons.check_circle
                           : SettingsManager().settings.skin.value == Skins.iOS
-                              ? cupertino.CupertinoIcons.check_mark_circled
+                              ? CupertinoIcons.check_mark_circled
                               : Icons.check_circle_outline,
                       color: (markedAsRead) ? HexColor('43CC47').withAlpha(200) : fontColor,
                     ),
@@ -498,7 +495,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               child: GestureDetector(
                 child: Icon(
                   SettingsManager().settings.skin.value == Skins.iOS
-                      ? cupertino.CupertinoIcons.ellipsis
+                      ? CupertinoIcons.ellipsis
                       : Icons.more_vert,
                   color: fontColor,
                 ),
@@ -540,7 +537,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                         child: Row(
     //                           mainAxisSize: MainAxisSize.min,
     //                           mainAxisAlignment: MainAxisAlignment.start,
-    //                           crossAxisAlignment: Cupertino.CrossAxisAlignment.center,
+    //                           crossAxisAlignment: CrossAxisAlignment.center,
     //                           children: [
     //                             buildBackButton(context),
     //                             if (newMessages.length > 0)
@@ -563,7 +560,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                         onTap: openDetails,
     //                         child: Column(
     //                           crossAxisAlignment: CrossAxisAlignment.center,
-    //                           mainAxisAlignment: Cupertino.MainAxisAlignment.center,
+    //                           mainAxisAlignment: MainAxisAlignment.center,
     //                           children: [
     //                             RowSuper(
     //                               children: avatars,
@@ -573,7 +570,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                             Container(height: 5.0),
     //                             RichText(
     //                               maxLines: 1,
-    //                               overflow: Cupertino.TextOverflow.ellipsis,
+    //                               overflow: TextOverflow.ellipsis,
     //                               textAlign: TextAlign.center,
     //                               text: TextSpan(
     //                                 style: Theme.of(context).textTheme.titleMedium,
@@ -610,7 +607,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           ),
           child: RichText(
             maxLines: 1,
-            overflow: cupertino.TextOverflow.ellipsis,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             text: TextSpan(
               style: Theme.of(context).textTheme.titleMedium,
@@ -624,7 +621,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           ),
         ),
         Icon(
-          cupertino.CupertinoIcons.chevron_right,
+          CupertinoIcons.chevron_right,
           size: context.theme.textTheme.bodyMedium!.fontSize!,
           color: context.theme.colorScheme.outline,
         ),
@@ -633,72 +630,91 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     return PreferredSize(
       preferredSize: Size.fromHeight(context.orientation == Orientation.landscape && context.isPhone ? 55 : 75),
-      child: CupertinoNavigationBar(
-          backgroundColor: context.theme.colorScheme.properSurface.withAlpha(125),
-          border: Border(
-            bottom: BorderSide(color: context.theme.colorScheme.properSurface, width: 1.5),
-          ),
-          leading: GestureDetector(
-              onTap: () {
-                if (LifeCycleManager().isBubble) {
-                  SystemNavigator.pop();
-                  return;
-                }
-                EventDispatcher().emit("update-highlight", null);
-                Navigator.of(context).pop();
-              },
-              behavior: HitTestBehavior.translucent,
-              child: Obx(
-                () => Container(
-                  width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
-                  child: Row(
-                    mainAxisSize: cupertino.MainAxisSize.min,
-                    mainAxisAlignment: cupertino.MainAxisAlignment.start,
-                    children: [
-                      buildBackButton(context, callback: () {
+      child: ClipPath(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            decoration: BoxDecoration(
+              color: context.theme.colorScheme.properSurface.withOpacity(0.3),
+              border: Border(
+                bottom: BorderSide(color: context.theme.colorScheme.properSurface, width: 1.5),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 15.0, top: 45),
+                    child: GestureDetector(
+                      onTap: () {
                         if (LifeCycleManager().isBubble) {
                           SystemNavigator.pop();
-                          return false;
+                          return;
                         }
                         EventDispatcher().emit("update-highlight", null);
-                        return true;
-                      }),
-                      if (ChatBloc().unreads.value > 0)
-                        Container(
-                          width: 25.0,
-                          height: 20.0,
-                          decoration: BoxDecoration(
-                              color: context.theme.colorScheme.primary,
-                              shape: BoxShape.rectangle,
-                              borderRadius: BorderRadius.circular(10)),
-                          child: Center(
-                              child: Text(ChatBloc().unreads.value.toString(),
-                                  textAlign: TextAlign.center, style: TextStyle(color: context.theme.colorScheme.onPrimary, fontSize: 12.0))),
-                        ),
-                    ],
+                        Navigator.of(context).pop();
+                      },
+                      behavior: HitTestBehavior.translucent,
+                      child: Obx(() => Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          buildBackButton(context, callback: () {
+                            if (LifeCycleManager().isBubble) {
+                              SystemNavigator.pop();
+                              return false;
+                            }
+                            EventDispatcher().emit("update-highlight", null);
+                            return true;
+                          }),
+                          if (ChatBloc().unreads.value > 0)
+                            Container(
+                              width: 25.0,
+                              height: 20.0,
+                              decoration: BoxDecoration(
+                                  color: context.theme.colorScheme.primary,
+                                  shape: BoxShape.rectangle,
+                                  borderRadius: BorderRadius.circular(10)),
+                              child: Center(
+                                  child: Text(ChatBloc().unreads.value.toString(),
+                                      textAlign: TextAlign.center, style: TextStyle(color: context.theme.colorScheme.onPrimary, fontSize: 12.0))),
+                            ),
+                        ],
+                      ),
+                      )),
                   ),
                 ),
-              )),
-          middle: cupertino.Padding(
-            padding: EdgeInsets.only(right: newMessages.isNotEmpty ? 10 : 0),
-            child: GestureDetector(
-              onTap: openDetails,
-              child: Builder(builder: (context) {
-                if (context.orientation == Orientation.landscape && context.isPhone) {
-                  return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: children);
-                }
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: children,
-                );
-              }),
-            ),
+                Container(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 5),
+                    child: GestureDetector(
+                      onTap: openDetails,
+                      child: Builder(builder: (context) {
+                        if (context.orientation == Orientation.landscape && context.isPhone) {
+                          return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: children);
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: children,
+                        );
+                      }),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Obx(() => buildCupertinoTrailing()),
+                )
+              ],
+            )
           ),
-          trailing: Obx(
-              () => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing()))),
+        ),
+      ),
     );
   }
 
@@ -1159,7 +1175,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
              IconButton(
               icon: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.exclamationmark_circle
+                    ? CupertinoIcons.exclamationmark_circle
                     : Icons.error_outline,
                 size: 20,
                 color: context.theme.colorScheme.primary,

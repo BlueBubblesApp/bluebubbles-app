@@ -11,7 +11,6 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -825,7 +824,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
   if (distance <= -30.0 && distance > -60) distance = -30.0;
   if (distance <= -60.0) distance = -35.0;
 
-  return CupertinoNavigationBar(
+  return SizedBox.shrink();/*CupertinoNavigationBar(
       backgroundColor: theme.colorScheme.secondary.withAlpha(125),
       border: Border(
         bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
@@ -918,5 +917,5 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
           ),
         ],
       ),
-      trailing: Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0))));
+      trailing: Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0))));*/
 }
