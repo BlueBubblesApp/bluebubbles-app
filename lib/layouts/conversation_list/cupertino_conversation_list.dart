@@ -360,7 +360,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                   return Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 10),
                                     child: Wrap(
-                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      crossAxisAlignment: WrapCrossAlignment.start,
                                       alignment: _pageCount > 1 ? WrapAlignment.start : WrapAlignment.center,
                                       children: List.generate(
                                         index < _filledPageCount
