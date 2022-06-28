@@ -248,7 +248,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               : shouldHighlight.value
               ? FontWeight.w600
               : SettingsManager().settings.skin.value == Skins.iOS
-              ? FontWeight.w600 : null,
+              ? FontWeight.w500 : null,
           color: shouldHighlight.value
               ? SettingsManager().settings.skin.value == Skins.iOS
               ? context.theme.colorScheme.onBackground
