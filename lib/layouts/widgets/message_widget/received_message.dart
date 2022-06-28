@@ -8,6 +8,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
@@ -243,14 +244,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                       child: Text(
                         "emoji",
                         textAlign: TextAlign.center,
-                        style: context.theme.textTheme.bodyMedium,
+                        style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText,
                       ),
                     )),
               )
             : RichText(
                 text: TextSpan(
                     children: MessageHelper.buildEmojiText(
-                        message.text!, context.theme.textTheme.bodyMedium!.apply(fontSizeFactor: 4)))),
+                        message.text!, (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(fontSizeFactor: 4)))),
       );
     } else {
       child = Stack(
@@ -338,7 +339,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                             : null,
                                         fakeSubject: widget.fakeSubject,
                                         fakeText: widget.fakeText),
-                                    style: context.theme.textTheme.bodyMedium,
+                                    style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText,
                                   ),
                                 ),
                               ),
@@ -351,7 +352,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                             : null,
                                         fakeSubject: widget.fakeSubject,
                                         fakeText: widget.fakeText),
-                                    style: context.theme.textTheme.bodyMedium!.apply(fontSizeFactor: value),
+                                    style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(fontSizeFactor: value),
                                   ),
                                 ),
                               if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop)
@@ -407,10 +408,11 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                         fakeSubject: widget.fakeSubject,
                                         fakeText: widget.fakeText,
                                       ),
-                                  style: context.theme.textTheme.bodyMedium,
+                                  style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText,
                                 ),
                                 cursorWidth: 0,
                                 selectionControls: CupertinoTextSelectionControls(),
+                                style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(color: context.theme.colorScheme.onPrimary),
                               ),
                             )
                           : Padding(
@@ -427,7 +429,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                         fakeSubject: widget.fakeSubject,
                                         fakeText: widget.fakeText,
                                       ),
-                                  style: context.theme.textTheme.bodyMedium,
+                                  style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText,
                                 ),
                               ),
                             );

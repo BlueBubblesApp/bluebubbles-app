@@ -1811,6 +1811,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.4.3"
+  reorderables:
+    dependency: "direct main"
+    description:
+      name: reorderables
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.5.0"
   rxdart:
     dependency: "direct overridden"
     description:
@@ -1818,6 +1825,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.27.3"
+  screen_retriever:
+    dependency: "direct main"
+    description:
+      name: screen_retriever
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.2"
   secure_application:
     dependency: "direct main"
     description:
@@ -2137,7 +2151,7 @@ packages:
       path: "."
       ref: "576d7cc17fbab10bcdb40468a0db012d2365462e"
       resolved-ref: "576d7cc17fbab10bcdb40468a0db012d2365462e"
-      url: "https://github.com/antler119/system_tray.git"
+      url: "https://github.com/BlueBubblesApp/system_tray.git"
     source: git
     version: "0.1.0"
   term_glyph:
@@ -2456,7 +2470,7 @@ packages:
       name: window_manager
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.3"
+    version: "0.2.5"
   wkt_parser:
     dependency: transitive
     description:

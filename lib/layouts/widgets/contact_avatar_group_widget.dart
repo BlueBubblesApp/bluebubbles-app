@@ -92,7 +92,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                         height: avatarSize,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(avatarSize / 2),
-                          color: context.theme.colorScheme.properSurface.withOpacity(0.6),
+                          color: context.theme.colorScheme.properSurface,
                         ),
                       ),
                       ...List.generate(
@@ -124,6 +124,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(size),
                                       color: context.theme.colorScheme.properSurface.withOpacity(0.8),
+                                      border: Border.all(color: context.theme.colorScheme.background, width: avatarSize * 0.01)
                                     ),
                                     child: Icon(
                                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.group_solid : Icons.people,

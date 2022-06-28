@@ -272,11 +272,11 @@ class ConversationListState extends State<ConversationList> {
                     height: 30,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(40),
-                      color: context.theme.colorScheme.secondary,
+                      color: context.theme.colorScheme.properSurface,
                     ),
                     child: Icon(
                       Icons.more_horiz,
-                      color: context.theme.colorScheme.onSecondary,
+                      color: context.theme.colorScheme.properOnSurface,
                       size: 20,
                     ),
                   ),

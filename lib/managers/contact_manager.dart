@@ -286,24 +286,29 @@ class ContactManager {
             final emails = (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
             final phones = (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList();
             for (Contact contact in contacts) {
-              bool updateAvatar = !contact.hasAvatar && (contact.id == (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString());
+              bool match = contact.id == (map['id'] ?? (phones.isNotEmpty ? phones : emails)).toString();
+
+              // Ensure contact first name matches to avoid issues with shared numbers (landlines)
+              if (!match && map['firstName'] != null && !contact.displayName.startsWith(map['firstName'])) continue;
+
               List<String> addresses = [...contact.phones, ...contact.emails];
               List<String> _addresses = [...phones, ...emails];
               for (String a in addresses) {
-                if (updateAvatar) {
+                if (match) {
                   break;
                 }
-                String? formatA = await getFormattedAddress(a);
+                String? formatA = a.contains("@") ? a.toLowerCase() : await getFormattedAddress(a);
                 if (formatA == null || formatA.isEmpty) continue;
                 for (String _a in _addresses) {
-                  String? _formatA = await getFormattedAddress(_a);
+                  String? _formatA = _a.contains("@") ? _a.toLowerCase() : await getFormattedAddress(_a);
                   if (formatA == _formatA) {
-                    updateAvatar = true;
+                    match = true;
                     break;
                   }
                 }
               }
-              if (updateAvatar) {
+
+              if (match && !contact.hasAvatar) {
                 contact.avatar.value = base64Decode(map['avatar'].toString());
                 contact.avatarHiRes.value = base64Decode(map['avatar'].toString());
               }

@@ -145,6 +145,9 @@ class ThemeStruct {
           "color": data.textTheme.labelSmall!.color!.value,
           "fontWeight": data.textTheme.labelSmall!.fontWeight!.index,
           "fontSize": data.textTheme.labelSmall!.fontSize,
+        },
+        "bubbleText": {
+          "fontSize": (data.extensions[BubbleText] as BubbleText).bubbleText.fontSize,
         }
       },
       "colorScheme": {
@@ -196,31 +199,37 @@ class ThemeStruct {
               color: Color(map["textTheme"]["titleLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["titleLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["titleLarge"]["fontSize"],
+              letterSpacing: typography.titleLarge!.letterSpacing! * 0.75,
             ),
             bodyLarge: typography.bodyLarge!.copyWith(
               color: Color(map["textTheme"]["bodyLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["bodyLarge"]["fontSize"],
+              letterSpacing: typography.bodyLarge!.letterSpacing! * 0.75,
             ),
             bodyMedium: typography.bodyMedium!.copyWith(
               color: Color(map["textTheme"]["bodyMedium"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
               fontSize: map["textTheme"]["bodyMedium"]["fontSize"],
+              letterSpacing: typography.bodyMedium!.letterSpacing! * 0.75,
             ),
             bodySmall: typography.bodySmall!.copyWith(
               color: Color(map["textTheme"]["bodySmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodySmall"]["fontWeight"]],
               fontSize: map["textTheme"]["bodySmall"]["fontSize"],
+              letterSpacing: typography.bodySmall!.letterSpacing! * 0.75,
             ),
             labelLarge: typography.labelLarge!.copyWith(
               color: Color(map["textTheme"]["labelLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["labelLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["labelLarge"]["fontSize"],
+              letterSpacing: typography.labelLarge!.letterSpacing! * 0.75,
             ),
             labelSmall: typography.labelSmall!.copyWith(
               color: Color(map["textTheme"]["labelSmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["labelSmall"]["fontWeight"]],
               fontSize: map["textTheme"]["labelSmall"]["fontSize"],
+              letterSpacing: typography.labelSmall!.letterSpacing! * 0.75,
             ),
           ),
           colorScheme: ColorScheme(
@@ -264,6 +273,14 @@ class ThemeStruct {
               receivedBubbleColor: HexColor(json["name"] == "OLED Dark" ? "323332" : "e9e9e8"),
               onReceivedBubbleColor: json["name"] == "OLED Dark" ? Colors.white : Colors.black,
             ),
+          BubbleText(
+            bubbleText: typography.bodyMedium!.copyWith(
+              color: Color(map["textTheme"]["bodyMedium"]["color"]),
+              fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
+              fontSize: map["textTheme"]["bubbleText"]?["fontSize"] ?? 15,
+              letterSpacing: typography.bodyMedium!.letterSpacing! * 0.75,
+            ),
+          ),
         ])
     );
   }
@@ -342,6 +359,7 @@ class ThemeStruct {
     "bodySmall": data.textTheme.bodySmall!.fontSize!,
     "labelLarge": data.textTheme.labelLarge!.fontSize!,
     "labelSmall": data.textTheme.labelSmall!.fontSize!,
+    "bubbleText": (data.extensions[BubbleText] as BubbleText).bubbleText.fontSize!,
   };
 
   /// Returns the default text sizes
@@ -352,6 +370,7 @@ class ThemeStruct {
     "bodySmall": 12,
     "labelLarge": 14,
     "labelSmall": 11,
+    "bubbleText": 15,
   };
 
   @override

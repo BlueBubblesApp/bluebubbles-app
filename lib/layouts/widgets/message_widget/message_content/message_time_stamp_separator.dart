@@ -52,7 +52,7 @@ class MessageTimeStampSeparator extends StatelessWidget {
                   if (timeStamp["date"] != null)
                     TextSpan(
                       text: "${timeStamp["date"]}, ",
-                      style: context.theme.textTheme.labelSmall!.apply(fontWeightDelta: 10, color: context.theme.colorScheme.outline),
+                      style: context.theme.textTheme.labelSmall!.copyWith(fontWeight: FontWeight.bold, color: context.theme.colorScheme.outline),
                     ),
                   TextSpan(text: "${timeStamp["time"]}")
                 ],
