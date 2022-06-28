@@ -92,7 +92,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                         height: avatarSize,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(avatarSize / 2),
-                          color: context.theme.colorScheme.properSurface.withOpacity(0.6),
+                          color: context.theme.colorScheme.properSurface,
                         ),
                       ),
                       ...List.generate(
