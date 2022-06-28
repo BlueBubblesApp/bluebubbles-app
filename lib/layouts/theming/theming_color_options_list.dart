@@ -152,12 +152,17 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
           child: SettingsOptions<ThemeStruct>(
             title: "Selected Theme",
             initial: currentTheme,
-            options: allThemes,
+            options: allThemes
+                .where((a) => !a.name.contains("🌙") && !a.name.contains("☀")).toList()
+              ..add(ThemeStruct(name: "Divider1"))
+              ..addAll(allThemes.where((a) => widget.isDarkMode ? a.name.contains("🌙") : a.name.contains("☀")))
+              ..add(ThemeStruct(name: "Divider2"))
+              ..addAll(allThemes.where((a) => !widget.isDarkMode ? a.name.contains("🌙") : a.name.contains("☀"))),
             backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
             secondaryColor: SettingsManager().settings.skin.value == Skins.Material ? headerColor : tileColor,
             textProcessing: (struct) => struct.name.toUpperCase(),
             useCupertino: false,
-            materialCustomWidgets: (struct) => Row(
+            materialCustomWidgets: (struct) => struct.name.contains("Divider") ? Divider(color: context.theme.colorScheme.outline, thickness: 2, height: 2) : Row(
               children: [
                 Column(
                   mainAxisSize: MainAxisSize.min,
@@ -228,7 +233,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
               ],
             ),
             onChanged: (value) async {
-              if (value == null) return;
+              if (value == null || value.name.contains("Divider")) return;
               value.save();
 
               if (value.name == "Music Theme ☀" || value.name == "Music Theme 🌙") {
