@@ -200,13 +200,13 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                 children: [
                                   ClipOval(
                                     child: Material(
-                                      color: context.theme.colorScheme.secondary, // button color
+                                      color: context.theme.colorScheme.properSurface, // button color
                                       child: InkWell(
                                         child: SizedBox(
                                             width: 30,
                                             height: 30,
                                             child:
-                                            Icon(CupertinoIcons.search, color: context.theme.colorScheme.onSecondary, size: 20)),
+                                            Icon(CupertinoIcons.search, color: context.theme.colorScheme.properOnSurface, size: 20)),
                                         onTap: () async {
                                           CustomNavigator.pushLeft(context, SearchView());
                                         },
@@ -217,12 +217,12 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                   if (SettingsManager().settings.moveChatCreatorToHeader.value)
                                     ClipOval(
                                       child: Material(
-                                        color: context.theme.colorScheme.secondary, // button color
+                                        color: context.theme.colorScheme.properSurface, // button color
                                         child: InkWell(
                                           child: SizedBox(
                                             width: 30,
                                             height: 30,
-                                            child: Icon(CupertinoIcons.pencil, color: context.theme.colorScheme.onSecondary, size: 20),
+                                            child: Icon(CupertinoIcons.pencil, color: context.theme.colorScheme.properOnSurface, size: 20),
                                           ),
                                           onTap: widget.parent.openNewChatCreator,
                                         ),
@@ -235,12 +235,12 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                       SettingsManager().settings.cameraFAB.value)
                                     ClipOval(
                                       child: Material(
-                                        color: context.theme.colorScheme.secondary, // button color
+                                        color: context.theme.colorScheme.properSurface, // button color
                                         child: InkWell(
                                           child: SizedBox(
                                             width: 30,
                                             height: 30,
-                                            child: Icon(CupertinoIcons.camera, color: context.theme.colorScheme.onSecondary, size: 20),
+                                            child: Icon(CupertinoIcons.camera, color: context.theme.colorScheme.properOnSurface, size: 20),
                                           ),
                                           onTap: () async {
                                             bool camera = await Permission.camera.isGranted;
