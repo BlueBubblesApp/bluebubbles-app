@@ -12,6 +12,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
@@ -46,6 +47,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide MenuItem;
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
@@ -156,7 +158,7 @@ Future<Null> initApp(bool isBubble) async {
 
   if (kIsDesktop) {
     await WindowManager.instance.ensureInitialized();
-    DartVLC.initialize(useFlutterNativeView: true);
+    await DartVLC.initialize();
   }
 
   HttpOverrides.global = MyHttpOverrides();
@@ -355,6 +357,8 @@ Future<Null> initApp(bool isBubble) async {
     }
     if (kIsDesktop) {
       await WindowManager.instance.setTitle('BlueBubbles');
+      await Window.initialize();
+      await Window.hideWindowControls();
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
         await WindowManager.instance.setMinimumSize(Size(300, 300));
@@ -891,6 +895,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       statusBarColor: Colors.transparent, // status bar color
       statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
     ));
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      // await WindowEffects.setEffect(color: context.theme.backgroundColor);
+    });
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(

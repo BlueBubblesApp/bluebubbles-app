@@ -461,6 +461,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     this.backgroundColor,
     this.secondaryColor,
     this.useCupertino = true,
+    this.cursor = SystemMouseCursors.click,
   }) : super(key: key);
   final String title;
   final void Function(T?) onChanged;
@@ -475,6 +476,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
   final Color? backgroundColor;
   final Color? secondaryColor;
   final bool useCupertino;
+  final MouseCursor cursor;
 
   @override
   Widget build(BuildContext context) {
@@ -486,7 +488,10 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 13),
         height: 50,
         width: context.width,
-        child: CupertinoSlidingSegmentedControl<T>(
+          child: MouseRegion(
+            cursor: cursor,
+            hitTestBehavior: HitTestBehavior.deferToChild,
+            child: CupertinoSlidingSegmentedControl<T>(
           children: map,
           groupValue: initial,
           thumbColor: context.theme.colorScheme.primary,
@@ -494,6 +499,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
           onValueChanged: onChanged,
           padding: EdgeInsets.zero,
         ),
+          ),
       );
     }
     Color surfaceColor = context.theme.colorScheme.properSurface;
@@ -607,7 +613,10 @@ class SettingsSlider extends StatelessWidget {
       leading: leading,
       trailing: Text(value, style: context.theme.textTheme.bodyLarge),
       title: SettingsManager().settings.skin.value == Skins.iOS
-          ? CupertinoSlider(
+          ? MouseRegion(
+          cursor: SystemMouseCursors.click,
+          hitTestBehavior: HitTestBehavior.deferToChild,
+          child: CupertinoSlider(
               activeColor: context.theme.colorScheme.primary.withOpacity(0.6),
               thumbColor: context.theme.colorScheme.primary,
               value: startingVal,
@@ -616,7 +625,7 @@ class SettingsSlider extends StatelessWidget {
               divisions: divisions,
               min: min,
               max: max,
-            )
+            ),)
           : Slider(
               activeColor: context.theme.colorScheme.primary.withOpacity(0.6),
               thumbColor: context.theme.colorScheme.primary,
