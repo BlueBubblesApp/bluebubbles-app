@@ -460,7 +460,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           ),
           actions: <Widget>[
             TextButton(
-                child: Text("Discard", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                child: Text("Discard", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                 onPressed: () {
                   // Dispose of the audio controller
                   if (!kIsWeb) disposeAudioFile(originalContext, file);
@@ -470,7 +470,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 }),
             TextButton(
               child: Text(
-                "Send", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                "Send", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
               onPressed: () async {
                 ChatController? thisChat = ChatController.of(originalContext);
                 if (thisChat == null) {
