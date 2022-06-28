@@ -500,9 +500,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                  SettingsManager().settings.skin.value == Skins.iOS
-                                      ? CupertinoIcons.ellipsis
-                                      : Icons.more_horiz,
+                                  Icons.more_horiz,
                                   color: context.theme.colorScheme.primary,
                                   size: 20),
                             ),
@@ -537,7 +535,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                              CupertinoIcons.plus,
+                              Icons.add,
                               color: context.theme.colorScheme.primary,
                               size: 20),
                         ),
@@ -697,10 +695,9 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         },
                       ),
                     ),
-                  if (SettingsManager().settings.enablePrivateAPI.value && chat.isIMessage)
-                    SliverPadding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                    ),
+                  SliverPadding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                  ),
                   SliverToBoxAdapter(
                     child: SettingsSection(
                       backgroundColor: SettingsManager().settings.skin.value != Skins.Material && tileColor.computeDifference(context.theme.colorScheme.background) < 20 ? tileColor.lightenPercent(40) : tileColor,
