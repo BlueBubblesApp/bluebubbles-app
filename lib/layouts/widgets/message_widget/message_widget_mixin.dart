@@ -63,9 +63,7 @@ abstract class MessageWidgetMixin {
         if (!isNullOrEmpty(colors)!) {
           bool dark = colors![0].computeLuminance() < 0.179;
           if (!dark) {
-            textStyle = context.theme
-                .textTheme
-                .bodyMedium!
+            textStyle = context.theme.extension<BubbleText>()!.bubbleText
                 .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
           } else {
             textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText;
@@ -199,9 +197,7 @@ abstract class MessageWidgetMixin {
         if (!isNullOrEmpty(colors)!) {
           bool dark = colors![0].computeLuminance() < 0.179;
           if (!dark) {
-            textStyle = context.theme
-                .textTheme
-                .bodyMedium!
+            textStyle = context.theme.extension<BubbleText>()!.bubbleText
                 .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
           } else {
             textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText;

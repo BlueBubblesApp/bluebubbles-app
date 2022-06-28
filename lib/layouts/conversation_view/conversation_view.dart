@@ -204,20 +204,20 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         if (event.type == MessageBlocEventType.insert && mounted && event.outGoing) {
           final constraints = BoxConstraints(
             maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
-            minHeight: Theme.of(context).textTheme.bodyMedium!.fontSize!,
-            maxHeight: Theme.of(context).textTheme.bodyMedium!.fontSize!,
+            minHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
+            maxHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
           );
           final renderParagraph = RichText(
             text: TextSpan(
               text: event.message!.text,
-              style: Theme.of(context).textTheme.bodyMedium!.apply(color: Colors.white),
+              style: context.theme.extension<BubbleText>()!.bubbleText,
             ),
             maxLines: 1,
           ).createRenderObject(context);
           final renderParagraph2 = RichText(
             text: TextSpan(
               text: event.message!.subject ?? "",
-              style: Theme.of(context).textTheme.bodyMedium!.apply(color: Colors.white),
+              style: context.theme.extension<BubbleText>()!.bubbleText,
             ),
             maxLines: 1,
           ).createRenderObject(context);

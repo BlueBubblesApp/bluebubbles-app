@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
@@ -406,7 +407,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                 text: TextSpan(
                   children: MessageHelper.buildEmojiText(
                     text,
-                    context.theme.textTheme.bodyMedium!,
+                    context.theme.extension<BubbleText>()!.bubbleText,
                   ),
                 ),
               ),
@@ -473,14 +474,14 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                                   duration: Duration(milliseconds: 400),
                                   child: internalSmartReplies.isEmpty && replies.isNotEmpty
                                       ? Container(
-                                          height: context.theme.textTheme.bodyMedium!.fontSize! + 35,
+                                          height: context.theme.extension<BubbleText>()!.bubbleText.fontSize! + 35,
                                           child: ListView(
                                               reverse: true,
                                               scrollDirection: Axis.horizontal,
                                               children: replies.map((e) => _buildReply(e).value).toList()))
                                       : internalSmartReplies.isNotEmpty
                                           ? Container(
-                                              height: context.theme.textTheme.bodyMedium!.fontSize! + 35,
+                                              height: context.theme.extension<BubbleText>()!.bubbleText.fontSize! + 35,
                                               child: ListView(
                                                   reverse: true,
                                                   scrollDirection: Axis.horizontal,
