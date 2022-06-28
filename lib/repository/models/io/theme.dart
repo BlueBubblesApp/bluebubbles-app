@@ -217,7 +217,7 @@ class ThemeStruct {
               color: Color(map["textTheme"]["bodySmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodySmall"]["fontWeight"]],
               fontSize: map["textTheme"]["bodySmall"]["fontSize"],
-              letterSpacing: typography.bodySmall!.letterSpacing! * 0.75,
+              letterSpacing: typography.bodySmall!.letterSpacing! * 0.5,
             ),
             labelLarge: typography.labelLarge!.copyWith(
               color: Color(map["textTheme"]["labelLarge"]["color"]),
