@@ -177,13 +177,14 @@ Future<Null> initApp(bool isBubble) async {
   };
   dynamic exception;
   StackTrace? stacktrace;
-  if (Platform.isWindows && !kIsWeb) {
+  if ((Platform.isLinux || Platform.isWindows) && !kIsWeb) {
     //ignore: unnecessary_cast, we need this as a workaround
     Directory appData = (await getApplicationSupportDirectory()) as Directory;
+
     // Migrate to new appdata location if this function returns the new place and we still have the old place
-    if (basename(dirname(appData.absolute.path)) == "com.bluebubbles.app") {
+    if (basename(appData.absolute.path) == "bluebubbles") {
       Directory oldAppData =
-          Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app"));
+      Platform.isWindows ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app")) : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
       if (oldAppData.existsSync()) {
         Logger.info("Copying appData to new directory");
         copyDirectory(oldAppData, appData);
