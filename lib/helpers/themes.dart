@@ -23,13 +23,34 @@ class Themes {
         .map((e) => [
           ThemeStruct(
               name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} ☀",
-              themeData: FlexThemeData.light(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40)
-                  .copyWith(textTheme: Typography.englishLike2021.merge(Typography.blackMountainView), splashFactory: InkSparkle.splashFactory, useMaterial3: true),
+              themeData: FlexThemeData.light(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40).copyWith(
+                  textTheme: Typography.englishLike2021.merge(Typography.blackMountainView),
+                  splashFactory: InkSparkle.splashFactory,
+                  useMaterial3: true,
+                  extensions: [
+                    BubbleText(
+                      bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
+                        fontSize: 15,
+                      ),
+                    ),
+                  ]
+              ),
           ),
           ThemeStruct(
               name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} 🌙",
               themeData: FlexThemeData.dark(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40)
-                  .copyWith(textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView), splashFactory: InkSparkle.splashFactory, useMaterial3: true),
+                  .copyWith(
+                  textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
+                  splashFactory: InkSparkle.splashFactory,
+                  useMaterial3: true,
+                  extensions: [
+                    BubbleText(
+                      bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
+                        fontSize: 15,
+                      ),
+                    ),
+                  ]
+              ),
           ),
     ]).flattened,
   ];
@@ -57,6 +78,11 @@ ThemeData oledDarkTheme = FlexColorScheme(
     receivedBubbleColor: HexColor("323332"),
     onReceivedBubbleColor: Colors.white,
   ),
+  BubbleText(
+    bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
+      fontSize: 15,
+    ),
+  ),
 ]);
 
 ThemeData nordDarkTheme = FlexColorScheme(
@@ -73,7 +99,13 @@ ThemeData nordDarkTheme = FlexColorScheme(
     outline: Colors.grey,
   ),
   useMaterial3: true,
-).toTheme.copyWith(splashFactory: InkSparkle.splashFactory);
+).toTheme.copyWith(splashFactory: InkSparkle.splashFactory, extensions: [
+  BubbleText(
+    bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
+      fontSize: 15,
+    ),
+  ),
+]);
 
 ThemeData whiteLightTheme = FlexColorScheme(
   textTheme: Typography.englishLike2021.merge(Typography.blackMountainView),
@@ -92,6 +124,11 @@ ThemeData whiteLightTheme = FlexColorScheme(
       onSmsBubbleColor: Colors.white,
       receivedBubbleColor: HexColor("e9e9e8"),
       onReceivedBubbleColor: Colors.black,
+  ),
+  BubbleText(
+    bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
+      fontSize: 15,
+    ),
   ),
 ]);
 
@@ -278,6 +315,32 @@ class BubbleColors extends ThemeExtension<BubbleColors> {
       onSmsBubbleColor: Color.lerp(onSmsBubbleColor, other.onSmsBubbleColor, t),
       receivedBubbleColor: Color.lerp(receivedBubbleColor, other.receivedBubbleColor, t),
       onReceivedBubbleColor: Color.lerp(onReceivedBubbleColor, other.onReceivedBubbleColor, t),
+    );
+  }
+}
+
+@immutable
+class BubbleText extends ThemeExtension<BubbleText> {
+  const BubbleText({
+    required this.bubbleText,
+  });
+
+  final TextStyle bubbleText;
+
+  @override
+  BubbleText copyWith({TextStyle? bubbleText}) {
+    return BubbleText(
+      bubbleText: bubbleText ?? this.bubbleText,
+    );
+  }
+
+  @override
+  BubbleText lerp(ThemeExtension<BubbleText>? other, double t) {
+    if (other is! BubbleText) {
+      return this;
+    }
+    return BubbleText(
+      bubbleText: TextStyle.lerp(bubbleText, other.bubbleText, t)!,
     );
   }
 }

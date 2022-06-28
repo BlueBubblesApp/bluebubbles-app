@@ -145,6 +145,9 @@ class ThemeStruct {
           "color": data.textTheme.labelSmall!.color!.value,
           "fontWeight": data.textTheme.labelSmall!.fontWeight!.index,
           "fontSize": data.textTheme.labelSmall!.fontSize,
+        },
+        "bubbleText": {
+          "fontSize": (data.extensions[BubbleText] as BubbleText).bubbleText.fontSize,
         }
       },
       "colorScheme": {
@@ -270,6 +273,14 @@ class ThemeStruct {
               receivedBubbleColor: HexColor(json["name"] == "OLED Dark" ? "323332" : "e9e9e8"),
               onReceivedBubbleColor: json["name"] == "OLED Dark" ? Colors.white : Colors.black,
             ),
+          BubbleText(
+            bubbleText: typography.bodyMedium!.copyWith(
+              color: Color(map["textTheme"]["bodyMedium"]["color"]),
+              fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
+              fontSize: map["textTheme"]["bubbleText"]?["fontSize"] ?? 15,
+              letterSpacing: typography.bodyMedium!.letterSpacing! * 0.75,
+            ),
+          ),
         ])
     );
   }
@@ -348,6 +359,7 @@ class ThemeStruct {
     "bodySmall": data.textTheme.bodySmall!.fontSize!,
     "labelLarge": data.textTheme.labelLarge!.fontSize!,
     "labelSmall": data.textTheme.labelSmall!.fontSize!,
+    "bubbleText": (data.extensions[BubbleText] as BubbleText).bubbleText.fontSize!,
   };
 
   /// Returns the default text sizes
@@ -358,6 +370,7 @@ class ThemeStruct {
     "bodySmall": 12,
     "labelLarge": 14,
     "labelSmall": 11,
+    "bubbleText": 15,
   };
 
   @override
