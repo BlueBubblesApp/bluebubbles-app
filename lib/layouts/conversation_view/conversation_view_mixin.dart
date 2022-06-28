@@ -16,7 +16,6 @@ import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_s
 import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
@@ -30,7 +29,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart' as cupertino;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -283,11 +282,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             child: SettingsManager().settings.skin.value == Skins.iOS
                 ? Theme(
                     data: ThemeData(
-                      cupertinoOverrideTheme: cupertino.CupertinoThemeData(
+                      cupertinoOverrideTheme: CupertinoThemeData(
                         brightness: context.theme.colorScheme.brightness,
                       ),
                     ),
-                    child: cupertino.CupertinoActivityIndicator(
+                    child: CupertinoActivityIndicator(
                       radius: 12,
                     ),
                   )
@@ -306,8 +305,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           child: GestureDetector(
             child: Icon(
               (markedAsRead)
-                  ? cupertino.CupertinoIcons.check_mark_circled
-                  : cupertino.CupertinoIcons.check_mark_circled_solid,
+                  ? CupertinoIcons.check_mark_circled
+                  : CupertinoIcons.check_mark_circled_solid,
               color: (markedAsRead) ? HexColor('43CC47').withAlpha(200) : fontColor,
             ),
             onTap: markChatAsRead,
@@ -451,10 +450,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     child: Icon(
                       (markedAsRead)
                           ? SettingsManager().settings.skin.value == Skins.iOS
-                              ? cupertino.CupertinoIcons.check_mark_circled_solid
+                              ? CupertinoIcons.check_mark_circled_solid
                               : Icons.check_circle
                           : SettingsManager().settings.skin.value == Skins.iOS
-                              ? cupertino.CupertinoIcons.check_mark_circled
+                              ? CupertinoIcons.check_mark_circled
                               : Icons.check_circle_outline,
                       color: (markedAsRead) ? HexColor('43CC47').withAlpha(200) : fontColor,
                     ),
@@ -496,7 +495,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               child: GestureDetector(
                 child: Icon(
                   SettingsManager().settings.skin.value == Skins.iOS
-                      ? cupertino.CupertinoIcons.ellipsis
+                      ? CupertinoIcons.ellipsis
                       : Icons.more_vert,
                   color: fontColor,
                 ),
@@ -538,7 +537,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                         child: Row(
     //                           mainAxisSize: MainAxisSize.min,
     //                           mainAxisAlignment: MainAxisAlignment.start,
-    //                           crossAxisAlignment: Cupertino.CrossAxisAlignment.center,
+    //                           crossAxisAlignment: CrossAxisAlignment.center,
     //                           children: [
     //                             buildBackButton(context),
     //                             if (newMessages.length > 0)
@@ -561,7 +560,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                         onTap: openDetails,
     //                         child: Column(
     //                           crossAxisAlignment: CrossAxisAlignment.center,
-    //                           mainAxisAlignment: Cupertino.MainAxisAlignment.center,
+    //                           mainAxisAlignment: MainAxisAlignment.center,
     //                           children: [
     //                             RowSuper(
     //                               children: avatars,
@@ -571,7 +570,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                             Container(height: 5.0),
     //                             RichText(
     //                               maxLines: 1,
-    //                               overflow: Cupertino.TextOverflow.ellipsis,
+    //                               overflow: TextOverflow.ellipsis,
     //                               textAlign: TextAlign.center,
     //                               text: TextSpan(
     //                                 style: Theme.of(context).textTheme.titleMedium,
@@ -608,7 +607,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           ),
           child: RichText(
             maxLines: 1,
-            overflow: cupertino.TextOverflow.ellipsis,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             text: TextSpan(
               style: Theme.of(context).textTheme.titleMedium,
@@ -622,7 +621,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           ),
         ),
         Icon(
-          cupertino.CupertinoIcons.chevron_right,
+          CupertinoIcons.chevron_right,
           size: context.theme.textTheme.bodyMedium!.fontSize!,
           color: context.theme.colorScheme.outline,
         ),
@@ -1176,7 +1175,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
              IconButton(
               icon: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.exclamationmark_circle
+                    ? CupertinoIcons.exclamationmark_circle
                     : Icons.error_outline,
                 size: 20,
                 color: context.theme.colorScheme.primary,
