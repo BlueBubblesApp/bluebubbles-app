@@ -603,7 +603,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         onTap: openDetails,
       ),
       if (!kIsDesktop) SizedBox(height: 5.0, width: 5.0),
-      Row(mainAxisSize: MainAxisSize.min, children: [
+      Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
         Container(
           constraints: BoxConstraints(
             maxWidth: CustomNavigator.width(context) / 2 - 55,
@@ -623,15 +623,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             ),
           ),
         ),
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: " >",
-                style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
-              ),
-            ],
-          ),
+        Icon(
+          cupertino.CupertinoIcons.chevron_right,
+          size: context.theme.textTheme.bodyMedium!.fontSize!,
+          color: context.theme.colorScheme.outline,
         ),
       ]),
     ];
