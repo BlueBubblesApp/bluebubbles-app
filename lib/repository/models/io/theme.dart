@@ -279,6 +279,7 @@ class ThemeStruct {
               fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
               fontSize: map["textTheme"]["bubbleText"]?["fontSize"] ?? 15,
               letterSpacing: typography.bodyMedium!.letterSpacing! * 0.75,
+              height: typography.bodyMedium!.height! * 0.85,
             ),
           ),
         ])
