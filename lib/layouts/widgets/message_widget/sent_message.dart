@@ -487,7 +487,7 @@ class SentMessageHelper {
                       actions: <Widget>[
                         if (chat != null)
                           TextButton(
-                            child: Text("Retry", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                            child: Text("Retry", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                             onPressed: () async {
                               // Remove the OG alert dialog
                               Navigator.of(context).pop();
@@ -499,7 +499,7 @@ class SentMessageHelper {
                           ),
                         if (chat != null)
                           TextButton(
-                            child: Text("Remove", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                            child: Text("Remove", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                             onPressed: () async {
                               Navigator.of(context).pop();
                               // Delete the message from the DB
@@ -519,7 +519,7 @@ class SentMessageHelper {
                             },
                           ),
                         TextButton(
-                          child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                          child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                           onPressed: () {
                             Navigator.of(context).pop();
                             NotificationManager().clearFailedToSend();

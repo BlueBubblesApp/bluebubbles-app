@@ -1051,7 +1051,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   TextButton(
                     child: Text(
                       "OK",
-                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
+                      style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
                     ),
                     onPressed: () {
                       Navigator.of(context).pop();

@@ -585,7 +585,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                             borderRadius: BorderRadius.circular(20),
                             child: LinearProgressIndicator(
                               backgroundColor: context.theme.colorScheme.outline,
-                              valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                              valueColor: AlwaysStoppedAnimation<Color>(Get.context!.theme.colorScheme.primary),
                               value: progress.value,
                               minHeight: 5,
                             ),
@@ -605,7 +605,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                     Obx(() => downloadingAttachments.value
                         ? Container(height: 0, width: 0)
                         : TextButton(
-                      child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                      child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                       onPressed: () async {
                         if (Get.isSnackbarOpen ?? false) {
                           Get.close(1);
@@ -888,34 +888,34 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                         alignment: WrapAlignment.center,
                         children: [
                           TextButton(
-                            child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                            child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
-                            child: Text("1 Hour", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                            child: Text("1 Hour", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                             onPressed: () {
                               finalDate = DateTime.now().toLocal().add(Duration(hours: 1));
                               Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
-                            child: Text("1 Day", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                            child: Text("1 Day", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                             onPressed: () {
                               finalDate = DateTime.now().toLocal().add(Duration(days: 1));
                               Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
-                            child: Text("1 Week", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                            child: Text("1 Week", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                             onPressed: () {
                               finalDate = DateTime.now().toLocal().add(Duration(days: 7));
                               Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
-                            child: Text("Custom", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                            child: Text("Custom", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                             onPressed: () async {
                               final messageDate = await showDatePicker(
                                   context: context,
