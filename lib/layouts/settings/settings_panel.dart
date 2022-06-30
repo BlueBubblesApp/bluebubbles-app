@@ -704,7 +704,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             materialIcon: Icons.storage,
                           ),
                           title: kIsWeb ? "Logout" : "Reset",
-                          subtitle: kIsWeb ? "" : "Resets the app to default settings",
+                          subtitle: kIsWeb ? null : "Resets the app to default settings",
                         ),
                         Container(
                           color: tileColor,

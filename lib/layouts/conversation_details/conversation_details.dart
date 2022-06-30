@@ -370,40 +370,41 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       child: Padding(
                         padding: const EdgeInsets.only(left: 10.0, right: 10, top: 20),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
                           children: [
-                            InkWell(
-                              onTap: () {
-                                final contact = ContactManager().getContact(chat.participants.first.address);
-                                onPressContact(contact, chat.participants.first);
-                              },
-                              onLongPress: () {
-                                final contact = ContactManager().getContact(chat.participants.first.address);
-                                onPressContact(contact, chat.participants.first, isLongPressed: true);
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  color: context.theme.colorScheme.properSurface,
-                                ),
-                                width: context.width / 3 - 15,
-                                height: 60,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                        SettingsManager().settings.skin.value == Skins.iOS
-                                            ? CupertinoIcons.phone
-                                            : Icons.call,
-                                        color: context.theme.colorScheme.primary,
-                                        size: 20),
-                                    SizedBox(height: 7.5),
-                                    Text("Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
-                                  ],
+                            if (!kIsWeb && !kIsDesktop)
+                              InkWell(
+                                onTap: () {
+                                  final contact = ContactManager().getContact(chat.participants.first.address);
+                                  onPressContact(contact, chat.participants.first);
+                                },
+                                onLongPress: () {
+                                  final contact = ContactManager().getContact(chat.participants.first.address);
+                                  onPressContact(contact, chat.participants.first, isLongPressed: true);
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    color: context.theme.colorScheme.properSurface,
+                                  ),
+                                  width: context.width / 3 - 15,
+                                  height: 60,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                          SettingsManager().settings.skin.value == Skins.iOS
+                                              ? CupertinoIcons.phone
+                                              : Icons.call,
+                                          color: context.theme.colorScheme.primary,
+                                          size: 20),
+                                      SizedBox(height: 7.5),
+                                      Text("Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
                             InkWell(
                               onTap: () {
                                 final contact = ContactManager().getContact(chat.participants.first.address);
@@ -418,7 +419,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                   borderRadius: BorderRadius.circular(15),
                                   color: context.theme.colorScheme.properSurface,
                                 ),
-                                width: context.width / 3 - 15,
+                                width: CustomNavigator.width(context) / 3 - 15,
                                 height: 60,
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -434,38 +435,39 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                 ),
                               ),
                             ),
-                            InkWell(
-                              onTap: () async {
-                                final contact = ContactManager().getContact(chat.participants.first.address);
-                                final handle = chat.participants.first;
-                                if (contact == null) {
-                                  await MethodChannelInterface().invokeMethod("open-contact-form",
-                                      {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
-                                } else {
-                                  await MethodChannelInterface().invokeMethod("view-contact-form", {'id': contact.id});
-                                }
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  color: context.theme.colorScheme.properSurface,
+                            if (!kIsWeb && !kIsDesktop)
+                              InkWell(
+                                onTap: () async {
+                                  final contact = ContactManager().getContact(chat.participants.first.address);
+                                  final handle = chat.participants.first;
+                                  if (contact == null) {
+                                    await MethodChannelInterface().invokeMethod("open-contact-form",
+                                        {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+                                  } else {
+                                    await MethodChannelInterface().invokeMethod("view-contact-form", {'id': contact.id});
+                                  }
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    color: context.theme.colorScheme.properSurface,
+                                  ),
+                                  width: context.width / 3 - 15,
+                                  height: 60,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
+                                          color: context.theme.colorScheme.primary,
+                                          size: 20),
+                                      SizedBox(height: 7.5),
+                                      Text("Info", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
+                                    ],
+                                  ),
                                 ),
-                                width: context.width / 3 - 15,
-                                height: 60,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
-                                        color: context.theme.colorScheme.primary,
-                                        size: 20),
-                                    SizedBox(height: 7.5),
-                                    Text("Info", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
-                                  ],
-                                ),
-                              ),
-                            )
+                              )
                           ],
                         ),
                       ),
@@ -1130,30 +1132,32 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       ],
                     ),
                   ),
-                  SliverPadding(
-                    padding: EdgeInsets.only(top: 20, bottom: 10, left: 15),
-                    sliver: SliverToBoxAdapter(
-                      child: Text("MEDIA", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+                  if (!kIsWeb)
+                    SliverPadding(
+                      padding: EdgeInsets.only(top: 20, bottom: 10, left: 15),
+                      sliver: SliverToBoxAdapter(
+                        child: Text("MEDIA", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+                      ),
                     ),
-                  ),
-                  SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: max(2, CustomNavigator.width(context) ~/ 200),
+                  if (!kIsWeb)
+                    SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: max(2, CustomNavigator.width(context) ~/ 200),
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, int index) {
+                          return Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: context.theme.colorScheme.background, width: 10),
+                            ),
+                            child: AttachmentDetailsCard(
+                              attachment: attachmentsForChat[index],
+                            ),
+                          );
+                        },
+                        childCount: attachmentsForChat.length,
+                      ),
                     ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, int index) {
-                        return Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: context.theme.colorScheme.background, width: 10),
-                          ),
-                          child: AttachmentDetailsCard(
-                            attachment: attachmentsForChat[index],
-                          ),
-                        );
-                      },
-                      childCount: attachmentsForChat.length,
-                    ),
-                  ),
                   SliverToBoxAdapter(child: Container(height: 50))
                 ],
               ),
