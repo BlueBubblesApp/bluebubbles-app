@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -39,6 +40,11 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
   void dispose() {
     streamController.close();
     super.dispose();
+  }
+
+  void clearOld() {
+    oldThemes.clear();
+    setState(() {});
   }
 
   @override
@@ -134,12 +140,13 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
                                                               shrinkWrap: true,
                                                               itemCount: 4,
                                                               itemBuilder: (context, index2) {
+                                                                final hex = oldThemes[index].entries.firstWhere((element) => element.name == ThemeColors.Colors.reversed.toList()[index2]).color!.hex;
                                                                 return ListTile(
                                                                   title: Text(
                                                                     ThemeColors.Colors.reversed.toList()[index2],
                                                                     style: context.theme.textTheme.bodyLarge),
                                                                   subtitle: Text(
-                                                                    oldThemes[index].entries.firstWhere((element) => element.name == ThemeColors.Colors.reversed.toList()[index2]).color!.hex
+                                                                    hex,
                                                                   ),
                                                                   leading: Container(
                                                                     decoration: BoxDecoration(
@@ -149,6 +156,10 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
                                                                     height: 30,
                                                                     width: 30,
                                                                   ),
+                                                                  onTap: () {
+                                                                    Clipboard.setData(ClipboardData(text: hex));
+                                                                    showSnackbar('Copied', 'Hex code copied to clipboard');
+                                                                  }
                                                                 );
                                                               },
                                                             ),
@@ -177,6 +188,15 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
                             ),
                           ),
                           actions: [
+                            TextButton(
+                                child: Text("Delete Old", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                onPressed: () {
+                                  themeObjectBox.removeAll();
+                                  themeEntryBox.removeAll();
+                                  clearOld();
+                                  Navigator.of(context).pop();
+                                }
+                            ),
                             TextButton(
                                 child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                 onPressed: () {
