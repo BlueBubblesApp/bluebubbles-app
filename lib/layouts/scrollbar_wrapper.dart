@@ -25,9 +25,9 @@ class ScrollbarWrapper extends StatelessWidget {
           enableMMBScrolling: true,
           mmbScrollConfig: MMBScrollConfig(
             customScrollCursor: DefaultCustomScrollCursor(
-              cursorColor: context.textTheme.subtitle1!.color!,
+              cursorColor: context.textTheme.labelLarge!.color!,
               backgroundColor: Colors.white,
-              borderColor: context.textTheme.headline1!.color!,
+              borderColor: context.textTheme.headlineMedium!.color!,
             ),
           ),
           enableCustomMouseWheelScrolling: SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb),

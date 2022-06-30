@@ -19,6 +19,7 @@ import 'repository/models/io/fcm_data.dart';
 import 'repository/models/io/handle.dart';
 import 'repository/models/io/message.dart';
 import 'repository/models/io/scheduled.dart';
+import 'repository/models/io/theme.dart';
 import 'repository/models/io/theme_entry.dart';
 import 'repository/models/io/theme_object.dart';
 
@@ -291,7 +292,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(7, 1716592500251888002),
       name: 'Handle',
-      lastPropertyId: const IdUid(7, 549408491521049277),
+      lastPropertyId: const IdUid(8, 9192015144235467286),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -328,6 +329,11 @@ final _entities = <ModelEntity>[
         ModelProperty(
             id: const IdUid(7, 549408491521049277),
             name: 'uncanonicalizedId',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(8, 9192015144235467286),
+            name: 'defaultEmail',
             type: 9,
             flags: 0)
       ],
@@ -677,7 +683,37 @@ final _entities = <ModelEntity>[
             name: 'themeEntries',
             srcEntity: 'ThemeEntry',
             srcField: 'themeObject')
-      ])
+      ]),
+  ModelEntity(
+      id: const IdUid(16, 1815690088052698449),
+      name: 'ThemeStruct',
+      lastPropertyId: const IdUid(4, 1129102363347301238),
+      flags: 0,
+      properties: <ModelProperty>[
+        ModelProperty(
+            id: const IdUid(1, 7043518911115753096),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        ModelProperty(
+            id: const IdUid(2, 6644283342768530799),
+            name: 'name',
+            type: 9,
+            flags: 2080,
+            indexId: const IdUid(11, 8452066780532720626)),
+        ModelProperty(
+            id: const IdUid(3, 8412087896868925153),
+            name: 'gradientBg',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(4, 1129102363347301238),
+            name: 'dbThemeData',
+            type: 9,
+            flags: 0)
+      ],
+      relations: <ModelRelation>[],
+      backlinks: <ModelBacklink>[])
 ];
 
 /// Open an ObjectBox store with the model declared in this file.
@@ -700,8 +736,8 @@ Future<Store> openStore(
 ModelDefinition getObjectBoxModel() {
   final model = ModelInfo(
       entities: _entities,
-      lastEntityId: const IdUid(15, 7753273527865539946),
-      lastIndexId: const IdUid(10, 9160679880876705382),
+      lastEntityId: const IdUid(16, 1815690088052698449),
+      lastIndexId: const IdUid(11, 8452066780532720626),
       lastRelationId: const IdUid(1, 7492985733214117623),
       lastSequenceId: const IdUid(0, 0),
       retiredEntityUids: const [
@@ -1061,7 +1097,10 @@ ModelDefinition getObjectBoxModel() {
           final uncanonicalizedIdOffset = object.uncanonicalizedId == null
               ? null
               : fbb.writeString(object.uncanonicalizedId!);
-          fbb.startTable(8);
+          final defaultEmailOffset = object.defaultEmail == null
+              ? null
+              : fbb.writeString(object.defaultEmail!);
+          fbb.startTable(9);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, addressOffset);
@@ -1069,6 +1108,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(4, colorOffset);
           fbb.addOffset(5, defaultPhoneOffset);
           fbb.addOffset(6, uncanonicalizedIdOffset);
+          fbb.addOffset(7, defaultEmailOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1085,6 +1125,8 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGet(buffer, rootOffset, 8, ''),
               country: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 10),
+              defaultEmail: const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 18),
               defaultPhone: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 14),
               uncanonicalizedId: const fb.StringReader(asciiOptimization: true)
@@ -1409,6 +1451,41 @@ ModelDefinition getObjectBoxModel() {
                   (ThemeEntry srcObject) => srcObject.themeObject),
               store.box<ThemeObject>());
           return object;
+        }),
+    ThemeStruct: EntityDefinition<ThemeStruct>(
+        model: _entities[8],
+        toOneRelations: (ThemeStruct object) => [],
+        toManyRelations: (ThemeStruct object) => {},
+        getId: (ThemeStruct object) => object.id,
+        setId: (ThemeStruct object, int id) {
+          object.id = id;
+        },
+        objectToFB: (ThemeStruct object, fb.Builder fbb) {
+          final nameOffset = fbb.writeString(object.name);
+          final dbThemeDataOffset = fbb.writeString(object.dbThemeData);
+          fbb.startTable(5);
+          fbb.addInt64(0, object.id ?? 0);
+          fbb.addOffset(1, nameOffset);
+          fbb.addBool(2, object.gradientBg);
+          fbb.addOffset(3, dbThemeDataOffset);
+          fbb.finish(fbb.endTable());
+          return object.id ?? 0;
+        },
+        objectFromFB: (Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+
+          final object = ThemeStruct(
+              id: const fb.Int64Reader()
+                  .vTableGetNullable(buffer, rootOffset, 4),
+              name: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 6, ''),
+              gradientBg:
+                  const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false))
+            ..dbThemeData = const fb.StringReader(asciiOptimization: true)
+                .vTableGet(buffer, rootOffset, 10, '');
+
+          return object;
         })
   };
 
@@ -1628,6 +1705,10 @@ class Handle_ {
   /// see [Handle.uncanonicalizedId]
   static final uncanonicalizedId =
       QueryStringProperty<Handle>(_entities[3].properties[6]);
+
+  /// see [Handle.defaultEmail]
+  static final defaultEmail =
+      QueryStringProperty<Handle>(_entities[3].properties[7]);
 }
 
 /// [ThemeEntry] entity fields to define ObjectBox queries.
@@ -1873,4 +1954,23 @@ class ThemeObject_ {
   /// see [ThemeObject.previousDarkTheme]
   static final previousDarkTheme =
       QueryBooleanProperty<ThemeObject>(_entities[7].properties[6]);
+}
+
+/// [ThemeStruct] entity fields to define ObjectBox queries.
+class ThemeStruct_ {
+  /// see [ThemeStruct.id]
+  static final id =
+      QueryIntegerProperty<ThemeStruct>(_entities[8].properties[0]);
+
+  /// see [ThemeStruct.name]
+  static final name =
+      QueryStringProperty<ThemeStruct>(_entities[8].properties[1]);
+
+  /// see [ThemeStruct.gradientBg]
+  static final gradientBg =
+      QueryBooleanProperty<ThemeStruct>(_entities[8].properties[2]);
+
+  /// see [ThemeStruct.dbThemeData]
+  static final dbThemeData =
+      QueryStringProperty<ThemeStruct>(_entities[8].properties[3]);
 }

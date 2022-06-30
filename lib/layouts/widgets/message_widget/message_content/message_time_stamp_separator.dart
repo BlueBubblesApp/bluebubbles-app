@@ -3,6 +3,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class MessageTimeStampSeparator extends StatelessWidget {
   const MessageTimeStampSeparator({
@@ -46,12 +47,12 @@ class MessageTimeStampSeparator extends StatelessWidget {
             padding: const EdgeInsets.all(14.0),
             child: RichText(
               text: TextSpan(
-                style: Theme.of(context).textTheme.subtitle2,
+                style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
                 children: [
                   if (timeStamp["date"] != null)
                     TextSpan(
-                      text: "${timeStamp["date"]}, ",
-                      style: Theme.of(context).textTheme.subtitle2!.apply(fontWeightDelta: 10),
+                      text: "${timeStamp["date"]} ",
+                      style: context.theme.textTheme.labelSmall!.copyWith(fontWeight: FontWeight.w600, color: context.theme.colorScheme.outline),
                     ),
                   TextSpan(text: "${timeStamp["time"]}")
                 ],

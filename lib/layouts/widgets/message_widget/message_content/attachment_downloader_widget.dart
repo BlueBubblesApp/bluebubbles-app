@@ -3,6 +3,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class AttachmentDownloaderWidget extends StatelessWidget {
   AttachmentDownloaderWidget({
@@ -30,13 +31,15 @@ class AttachmentDownloaderWidget extends StatelessWidget {
             children: <Widget>[
               Text(
                 attachment.getFriendlySize(),
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyMedium,
               ),
+              SizedBox(height: 5),
               Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.cloud_download, size: 28.0),
+              SizedBox(height: 5),
               (attachment.mimeType != null)
                   ? Text(
                       attachment.mimeType!,
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: context.theme.textTheme.bodyLarge,
                     )
                   : Container()
             ],

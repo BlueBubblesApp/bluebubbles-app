@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -91,7 +92,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                         height: avatarSize,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(avatarSize / 2),
-                          color: context.theme.colorScheme.secondary.withOpacity(0.6),
+                          color: context.theme.colorScheme.properSurface,
                         ),
                       ),
                       ...List.generate(
@@ -122,12 +123,13 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                                     height: size,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(size),
-                                      color: context.theme.colorScheme.secondary.withOpacity(0.8),
+                                      color: context.theme.colorScheme.properSurface.withOpacity(0.8),
+                                      border: Border.all(color: context.theme.colorScheme.background, width: avatarSize * 0.01)
                                     ),
                                     child: Icon(
                                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.group_solid : Icons.people,
                                       size: size * 0.65,
-                                      color: context.textTheme.subtitle1!.color!.withOpacity(0.8),
+                                      color: context.theme.colorScheme.properOnSurface.withOpacity(0.8),
                                     ),
                                   ),
                                 ),

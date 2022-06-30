@@ -1,10 +1,12 @@
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 Map<String, IconData> iconMap = {
   'com.apple.Handwriting.HandwritingProvider': SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.square_pencil : Icons.brush,
@@ -75,7 +77,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
             ),
             child: Container(
               width: 200,
-              color: Theme.of(context).colorScheme.secondary,
+              color: context.theme.colorScheme.properSurface,
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
                 child: Column(
@@ -85,14 +87,14 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
                         textAlign: TextAlign.center,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.headline1),
+                        style: context.theme.textTheme.titleLarge),
                     Text("Interactive Message",
-                        textAlign: TextAlign.center, maxLines: 1, style: Theme.of(context).textTheme.subtitle1),
+                        textAlign: TextAlign.center, maxLines: 1, style: context.theme.textTheme.bodyMedium),
                     Container(height: 10.0),
-                    Icon(bundleIcon, color: Theme.of(context).textTheme.bodyText1!.color, size: 48),
+                    Icon(bundleIcon, color: context.theme.colorScheme.properOnSurface, size: 48),
                     Container(height: 10.0),
                     Text("(Cannot open on Android)",
-                        textAlign: TextAlign.center, maxLines: 1, style: Theme.of(context).textTheme.subtitle2),
+                        textAlign: TextAlign.center, maxLines: 1, style: context.theme.textTheme.bodyMedium),
                   ],
                 ),
               ),

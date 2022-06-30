@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 enum ItemTypes {
   participantAdded,
@@ -27,63 +28,63 @@ class GroupEvent extends StatelessWidget {
     //   extras.addAll([
     //     Text(
     //       "ACTUAL TEXT: '${widget.message.fullText}'",
-    //       style: Theme.of(context).textTheme.subtitle2.apply(color: Colors.red),
+    //       style: Theme.of(context).textTheme.labelMedium.apply(color: Colors.red),
     //       overflow: TextOverflow.ellipsis,
     //       maxLines: 2,
     //       textAlign: TextAlign.center,
     //     ),
     //     Text(
     //       "IS EMPTY: ${isEmptyString(widget.message.fullText)}",
-    //       style: Theme.of(context).textTheme.subtitle2.apply(color: Colors.red),
+    //       style: Theme.of(context).textTheme.labelMedium.apply(color: Colors.red),
     //       overflow: TextOverflow.ellipsis,
     //       maxLines: 2,
     //       textAlign: TextAlign.center,
     //     ),
     //     Text(
     //       "IS EMPTY (WITH STRIP): ${isEmptyString(widget.message.fullText, stripWhitespace: true)}",
-    //       style: Theme.of(context).textTheme.subtitle2.apply(color: Colors.red),
+    //       style: Theme.of(context).textTheme.labelMedium.apply(color: Colors.red),
     //       overflow: TextOverflow.ellipsis,
     //       maxLines: 2,
     //       textAlign: TextAlign.center,
     //     ),
     //     Text(
     //       "BALLOON BUNDLE ID: ${widget.message.balloonBundleId ?? "NULL"}",
-    //       style: Theme.of(context).textTheme.subtitle2.apply(color: Colors.red),
+    //       style: Theme.of(context).textTheme.labelMedium.apply(color: Colors.red),
     //       overflow: TextOverflow.ellipsis,
     //       maxLines: 2,
     //       textAlign: TextAlign.center,
     //     ),
     //     Text(
     //       "HAS ATTACHMENTS: ${widget.message.hasAttachments}",
-    //       style: Theme.of(context).textTheme.subtitle2.apply(color: Colors.red),
+    //       style: Theme.of(context).textTheme.labelMedium.apply(color: Colors.red),
     //       overflow: TextOverflow.ellipsis,
     //       maxLines: 2,
     //       textAlign: TextAlign.center,
     //     ),
     //     Text(
     //       "ATTACHMENTS LENGTH: ${widget.message.attachments.length}",
-    //       style: Theme.of(context).textTheme.subtitle2.apply(color: Colors.red),
+    //       style: Theme.of(context).textTheme.labelMedium.apply(color: Colors.red),
     //       overflow: TextOverflow.ellipsis,
     //       maxLines: 2,
     //       textAlign: TextAlign.center,
     //     ),
     //     Text(
     //       "HAS DD RESULTS: ${widget.message.hasDdResults}",
-    //       style: Theme.of(context).textTheme.subtitle2.apply(color: Colors.red),
+    //       style: Theme.of(context).textTheme.labelMedium.apply(color: Colors.red),
     //       overflow: TextOverflow.ellipsis,
     //       maxLines: 2,
     //       textAlign: TextAlign.center,
     //     ),
     //     Text(
     //       "METADATA: ${widget.message.metadata.toString()}",
-    //       style: Theme.of(context).textTheme.subtitle2.apply(color: Colors.red),
+    //       style: Theme.of(context).textTheme.labelMedium.apply(color: Colors.red),
     //       overflow: TextOverflow.ellipsis,
     //       maxLines: 2,
     //       textAlign: TextAlign.center,
     //     ),
     //     Text(
     //       "SUBJECT: ${widget.message.subject}",
-    //       style: Theme.of(context).textTheme.subtitle2.apply(color: Colors.red),
+    //       style: Theme.of(context).textTheme.labelMedium.apply(color: Colors.red),
     //       overflow: TextOverflow.ellipsis,
     //       maxLines: 2,
     //       textAlign: TextAlign.center,
@@ -101,7 +102,7 @@ class GroupEvent extends StatelessWidget {
               children: [
                 Text(
                   text,
-                  style: Theme.of(context).textTheme.subtitle2,
+                  style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 2,
                   textAlign: TextAlign.center,

@@ -238,8 +238,8 @@ void showSnackbar(String title, String message,
     {int animationMs = 250, int durationMs = 1500, Function(GetBar)? onTap, TextButton? button}) {
   Get.snackbar(title, message,
       snackPosition: SnackPosition.BOTTOM,
-      colorText: Get.textTheme.bodyText1!.color,
-      backgroundColor: Get.theme.colorScheme.secondary,
+      colorText: Get.theme.colorScheme.onInverseSurface,
+      backgroundColor: Get.theme.colorScheme.inverseSurface,
       margin: EdgeInsets.only(bottom: 10),
       maxWidth: Get.width - 20,
       isDismissible: false,
@@ -272,7 +272,13 @@ String buildDate(DateTime? dateTime) {
   } else if (dateTime.isYesterday()) {
     date = "Yesterday";
   } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
-    date = intl.DateFormat("EEEE").format(dateTime);
+    date = intl.DateFormat(SettingsManager().settings.skin.value != Skins.iOS ? "EEE" : "EEEE").format(dateTime);
+  } else if (SettingsManager().settings.skin.value == Skins.Material && DateTime.now().difference(dateTime.toLocal()).inDays <= 365) {
+    date = intl.DateFormat.MMMd().format(dateTime);
+  } else if (SettingsManager().settings.skin.value == Skins.Samsung && DateTime.now().year == dateTime.toLocal().year) {
+    date = intl.DateFormat.MMMd().format(dateTime);
+  } else if (SettingsManager().settings.skin.value == Skins.Samsung && DateTime.now().year != dateTime.toLocal().year) {
+    date = intl.DateFormat.yMMMd().format(dateTime);
   } else {
     date = intl.DateFormat.yMd().format(dateTime);
   }
@@ -773,6 +779,10 @@ extension ConditionlAdd on RxMap {
   }
 }
 
+extension OppositeBrightness on Brightness {
+  Brightness get opposite => this == Brightness.light ? Brightness.dark : Brightness.light;
+}
+
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;
 
 Future<Uint8List> avatarAsBytes({
@@ -858,7 +868,7 @@ Future<void> paintGroupAvatar({
             style: TextStyle(
                 fontSize: adjustedWidth * 0.3,
                 fontFamily: icon.fontFamily,
-                color: Get.context?.textTheme.subtitle1!.color!.withOpacity(0.8)))
+                color: Get.context?.textTheme.labelLarge!.color!.withOpacity(0.8)))
         ..layout()
         ..paint(canvas, Offset(left + realSize * 0.25, top + realSize * 0.25));
     } else {

@@ -23,6 +23,7 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -311,19 +312,21 @@ class MethodChannelInterface {
           previousDarkBg = darkBg;
           isRunning = true;
 
-          var darkTheme = ThemeObject.getThemes().firstWhere((e) => e.name == "Music Theme (Dark)");
-          var lightTheme = ThemeObject.getThemes().firstWhere((e) => e.name == "Music Theme (Light)");
-          darkTheme.fetchData();
-          var darkPrimaryEntry = darkTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
-          var darkBgEntry = darkTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
-          darkPrimaryEntry.color = primary;
-          darkBgEntry.color = darkBg;
-          lightTheme.fetchData();
-          var lightPrimaryEntry = lightTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
-          var lightBgEntry = lightTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
-          lightPrimaryEntry.color = primary;
-          lightBgEntry.color = lightBg;
-          if (ThemeObject.inDarkMode(Get.context!)) {
+          var darkTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme 🌙");
+          var lightTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme ☀");
+          darkTheme.data = darkTheme.data.copyWith(
+            colorScheme: darkTheme.data.colorScheme.copyWith(
+              primary: primary,
+              background: darkBg,
+            )
+          );
+          lightTheme.data = darkTheme.data.copyWith(
+              colorScheme: darkTheme.data.colorScheme.copyWith(
+                primary: primary,
+                background: lightBg,
+              )
+          );
+          if (ThemeManager().inDarkMode(Get.context!)) {
             if (primaryPercent != 0.5 && darkBgPercent != 0.5) {
               double difference = min((primaryPercent / (primaryPercent + darkBgPercent)), 1 - (primaryPercent / (primaryPercent + darkBgPercent)));
               Tween color1 = Tween<double>(begin: 0, end: difference);

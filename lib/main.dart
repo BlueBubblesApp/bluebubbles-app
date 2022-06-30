@@ -7,6 +7,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -98,6 +99,7 @@ late final Box<FCMData> fcmDataBox;
 late final Box<Handle> handleBox;
 late final Box<Message> messageBox;
 late final Box<ScheduledMessage> scheduledBox;
+late final Box<ThemeStruct> themeBox;
 late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
 final RxBool fontExistsOnDisk = false.obs;
@@ -200,7 +202,7 @@ Future<Null> initApp(bool isBubble) async {
       Directory objectBoxDirectory = Directory(join(documentsDirectory.path, 'objectbox'));
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
-      Future<void> initStore({bool saveThemes = false}) async {
+      Future<void> initStore() async {
         bool? useCustomPath = prefs.getBool("use-custom-path");
         String? customStorePath = prefs.getString("custom-path");
         if (!kIsDesktop) {
@@ -254,14 +256,13 @@ Future<Null> initApp(bool isBubble) async {
         handleBox = store.box<Handle>();
         messageBox = store.box<Message>();
         scheduledBox = store.box<ScheduledMessage>();
+        themeBox = store.box<ThemeStruct>();
         themeEntryBox = store.box<ThemeEntry>();
         themeObjectBox = store.box<ThemeObject>();
-        if (saveThemes && themeObjectBox.isEmpty()) {
-          for (ThemeObject theme in Themes.themes) {
-            if (theme.name == "OLED Dark") theme.selectedDarkTheme = true;
-            if (theme.name == "Bright White") theme.selectedLightTheme = true;
-            theme.save(updateIfNotAbsent: false);
-          }
+        if (themeBox.isEmpty()) {
+          prefs.setString("selected-dark", "OLED Dark");
+          prefs.setString("selected-light", "Bright White");
+          themeBox.putMany(Themes.defaultThemes);
         }
       }
 
@@ -283,7 +284,7 @@ Future<Null> initApp(bool isBubble) async {
           s.stop();
           print("Migrated in ${s.elapsedMilliseconds} ms");
         } else {
-          await initStore(saveThemes: true);
+          await initStore();
         }
       }
     }
@@ -409,8 +410,12 @@ Future<Null> initApp(bool isBubble) async {
   monetPalette = await DynamicColorPlugin.getCorePalette();
 
   if (exception == null) {
-    ThemeData light = ThemeObject.getLightTheme().themeData;
-    ThemeData dark = ThemeObject.getDarkTheme().themeData;
+    ThemeData light = ThemeStruct
+        .getLightTheme()
+        .data;
+    ThemeData dark = ThemeStruct
+        .getDarkTheme()
+        .data;
 
     final tuple = applyMonet(light, dark);
     light = tuple.item1;
@@ -468,8 +473,8 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
     return AdaptiveTheme(
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
-      light: lightTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.primaryColor)),
-      dark: darkTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: darkTheme.primaryColor)),
+      light: lightTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.colorScheme.primary)),
+      dark: darkTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: darkTheme.colorScheme.primary)),
 
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
@@ -528,59 +533,62 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
           LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
         },
 
-        builder: (context, child) => SecureApplication(
-          child: Builder(builder: (context) {
-            if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
-              if (SettingsManager().settings.shouldSecure.value) {
-                SecureApplicationProvider.of(context, listen: false)!.lock();
-                if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
-                  SecureApplicationProvider.of(context, listen: false)!.secure();
-                }
-              }
-            }
-            return SecureGate(
-              blurr: 0,
-              opacity: 1.0,
-              lockedBuilder: (context, controller) => Container(
-                color: Theme.of(context).backgroundColor,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Text(
-                          "BlueBubbles is currently locked. Please unlock to access your messages.",
-                          style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      Container(height: 20.0),
-                      ClipOval(
-                        child: Material(
-                          color: Theme.of(context).primaryColor, // button color
-                          child: InkWell(
-                            child: SizedBox(width: 60, height: 60, child: Icon(Icons.lock_open, color: Colors.white)),
-                            onTap: () async {
-                              var localAuth = LocalAuthentication();
-                              bool didAuthenticate = await localAuth.authenticate(
-                                  localizedReason: 'Please authenticate to unlock BlueBubbles',
-                                  options: AuthenticationOptions(stickyAuth: true));
-                              if (didAuthenticate) {
-                                controller!.authSuccess(unlock: true);
-                              }
-                            },
+            builder: (context, child) =>
+                SecureApplication(
+                  child: Builder(builder: (context) {
+                    if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
+                      if (SettingsManager().settings.shouldSecure.value) {
+                        SecureApplicationProvider.of(context, listen: false)!.lock();
+                        if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                          SecureApplicationProvider.of(context, listen: false)!.secure();
+                        }
+                      }
+                    }
+                    return SecureGate(
+                      blurr: 0,
+                      opacity: 1.0,
+                      lockedBuilder: (context, controller) =>
+                          Container(
+                            color: context.theme.colorScheme.background,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 20.0),
+                                    child: Text(
+                                      "BlueBubbles is currently locked. Please unlock to access your messages.",
+                                      style: context.theme.textTheme.titleLarge,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  Container(height: 20.0),
+                                  ClipOval(
+                                    child: Material(
+                                      color: context.theme.colorScheme.primary, // button color
+                                      child: InkWell(
+                                        child: SizedBox(
+                                            width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
+                                        onTap: () async {
+                                          var localAuth = LocalAuthentication();
+                                          bool didAuthenticate = await localAuth.authenticate(
+                                              localizedReason: 'Please authenticate to unlock BlueBubbles',
+                                              options: AuthenticationOptions(stickyAuth: true));
+                                          if (didAuthenticate) {
+                                            controller!.authSuccess(unlock: true);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
+                      child: child ?? Container(),
+                    );
+                  }),
                 ),
-              ),
-              child: child ?? Container(),
-            );
-          }),
-        ),
 
         defaultTransition: Transition.cupertino,
 
@@ -724,28 +732,30 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             if (!available || prefs.getString("update-check") == metadata['version']) return;
             Get.defaultDialog(
               title: "Server Update Check",
-              titleStyle: Theme.of(context).textTheme.headline1,
+              titleStyle: context.theme.textTheme.headlineMedium,
               textConfirm: "OK",
               cancel: Container(height: 0, width: 0),
-              content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-                SizedBox(
-                  height: 15.0,
-                ),
-                Text("Updates available:", style: context.theme.textTheme.bodyText1),
-                SizedBox(
-                  height: 15.0,
-                ),
-                if (metadata.isNotEmpty)
-                  Text(
-                      "Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
-              ]),
+              content: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    SizedBox(
+                      height: 15.0,
+                    ),
+                    Text("Updates available:", style: context.theme.textTheme.bodyMedium),
+                    SizedBox(
+                      height: 15.0,
+                    ),
+                    if (metadata.isNotEmpty)
+                      Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
+                  ]
+              ),
               onConfirm: () {
                 if (metadata['version'] != null) {
                   prefs.setString("update-check", metadata['version']);
                 }
                 Navigator.of(context).pop();
               },
-              backgroundColor: Theme.of(context).backgroundColor,
+              backgroundColor: context.theme.colorScheme.properSurface,
             );
           }
         });
@@ -875,26 +885,18 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-          ? Colors.transparent
-          : Theme.of(context).backgroundColor, // navigation bar color
-      systemNavigationBarIconBrightness:
-          Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+      systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
       statusBarColor: Colors.transparent, // status bar color
-      statusBarIconBrightness:
-          context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+      statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-            ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness:
-            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Actions(
         actions: {
@@ -907,7 +909,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           GoBackIntent: GoBackAction(context),
         },
         child: Scaffold(
-          backgroundColor: context.theme.backgroundColor,
+          backgroundColor: context.theme.colorScheme.background,
           body: Builder(
             builder: (BuildContext context) {
               if (SettingsManager().settings.finishedSetup.value) {

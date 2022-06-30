@@ -3,11 +3,11 @@ import 'dart:math';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/pinned_order_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,13 +17,25 @@ class ChatListPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context)
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
+    final materialSubtitle = context.theme
         .textTheme
-        .subtitle1
-        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+        .labelLarge
+        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
+    final inactiveCheckColor = context.theme.colorScheme.properSurface.computeDifference(tileColor) < 15
+        ? context.theme.colorScheme.properOnSurface.withOpacity(0.6) : context.theme.colorScheme.properSurface;
 
     return SettingsScaffold(
         title: "Chat List",
@@ -52,8 +64,8 @@ class ChatListPanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     Obx(() => SettingsSwitch(
@@ -66,12 +78,13 @@ class ChatListPanel extends StatelessWidget {
                           subtitle:
                               "Enables a small indicator at the top left to show when the app is syncing messages",
                           backgroundColor: tileColor,
+                          isThreeLine: true,
                         )),
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     Obx(() => SettingsSwitch(
@@ -83,12 +96,13 @@ class ChatListPanel extends StatelessWidget {
                           title: "Colorblind Mode",
                           subtitle: "Replaces the colored connection indicator with icons to aid accessibility",
                           backgroundColor: tileColor,
+                          isThreeLine: true,
                         )),
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     Obx(() => SettingsSwitch(
@@ -100,6 +114,7 @@ class ChatListPanel extends StatelessWidget {
                       title: "Message Status Indicators",
                       subtitle: "Adds status indicators to the chat list for the sent / delivered / read status of your most recent message",
                       backgroundColor: tileColor,
+                      isThreeLine: true,
                     )),
                   ],
                 ),
@@ -122,12 +137,13 @@ class ChatListPanel extends StatelessWidget {
                           subtitle:
                               "Filters the chat list based on parameters set in iMessage (usually this removes old, inactive chats)",
                           backgroundColor: tileColor,
+                          isThreeLine: true,
                         )),
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     Obx(() => SettingsSwitch(
@@ -140,6 +156,7 @@ class ChatListPanel extends StatelessWidget {
                           subtitle:
                               "Turn off notifications for senders who aren't in your contacts and sort them into a separate chat list",
                           backgroundColor: tileColor,
+                          isThreeLine: true,
                         )),
                   ],
                 ),
@@ -165,8 +182,8 @@ class ChatListPanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     Obx(() => SettingsSwitch(
@@ -178,14 +195,15 @@ class ChatListPanel extends StatelessWidget {
                           title: "Dense Conversation Tiles",
                           backgroundColor: tileColor,
                           subtitle: "Compresses chat tile size on the conversation list page",
+                          isThreeLine: true,
                         )),
                     Obx(() {
                       if (SettingsManager().settings.skin.value == Skins.iOS) {
                         return Container(
                           color: tileColor,
                           child: Padding(
-                            padding: const EdgeInsets.only(left: 65.0),
-                            child: SettingsDivider(color: headerColor),
+                            padding: const EdgeInsets.only(left: 15.0),
+                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                           ),
                         );
                       } else {
@@ -208,6 +226,13 @@ class ChatListPanel extends StatelessWidget {
                         return SizedBox.shrink();
                       }
                     }),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
                     if (!kIsDesktop && !kIsWeb)
                       Obx(() {
                         if (SettingsManager().settings.skin.value == Skins.iOS) {
@@ -215,6 +240,7 @@ class ChatListPanel extends StatelessWidget {
                             title: "Max Pin Rows",
                             subtitle:
                                 "The maximum row count of pins displayed${kIsDesktop ? "" : " when using the app in the portrait orientation"}",
+                            isThreeLine: true,
                             backgroundColor: tileColor,
                           );
                         } else {
@@ -354,7 +380,7 @@ class ChatListPanel extends StatelessWidget {
                                                         padding: EdgeInsets.only(left: 2, top: 3),
                                                         child: Text(
                                                           "Messages",
-                                                          style: context.textTheme.subtitle1!.copyWith(fontSize: 4),
+                                                          style: context.textTheme.labelLarge!.copyWith(fontSize: 4),
                                                           textAlign: TextAlign.left,
                                                         )),
                                                     Obx(
@@ -460,8 +486,8 @@ class ChatListPanel extends StatelessWidget {
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     if (!kIsWeb)
@@ -477,7 +503,7 @@ class ChatListPanel extends StatelessWidget {
                         },
                         trailing: Icon(
                           SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-                          color: Colors.grey,
+                          color: context.theme.colorScheme.outline,
                         ),
                       ),
                   ],
@@ -520,7 +546,7 @@ class ChatListPanel extends StatelessWidget {
                         if (SettingsManager().settings.skin.value == Skins.iOS) {
                           return Container(
                             color: tileColor,
-                            constraints: BoxConstraints(maxWidth: CustomNavigator.width(context)),
+                            constraints: BoxConstraints(maxWidth: CustomNavigator.width(context) - 20),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 15.0),
                               child: Row(
@@ -528,13 +554,13 @@ class ChatListPanel extends StatelessWidget {
                                   Column(children: [
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                      child: Text("Swipe Right"),
+                                      child: Text("Right", style: context.theme.textTheme.bodyLarge),
                                     ),
                                     Opacity(
                                       opacity: SettingsManager().settings.iosShowPin.value ? 1 : 0.7,
                                       child: Container(
                                         height: 60,
-                                        width: CustomNavigator.width(context) / 5 - 8,
+                                        width: CustomNavigator.width(context) / 5 - 12,
                                         color: Colors.yellow[800],
                                         child: IconButton(
                                           icon: Icon(CupertinoIcons.pin, color: Colors.white),
@@ -550,12 +576,12 @@ class ChatListPanel extends StatelessWidget {
                                         child: Container(
                                           decoration: BoxDecoration(
                                               color: SettingsManager().settings.iosShowPin.value
-                                                  ? Theme.of(context).primaryColor
+                                                  ? context.theme.colorScheme.primary
                                                   : tileColor,
                                               border: Border.all(
                                                   color: SettingsManager().settings.iosShowPin.value
-                                                      ? Theme.of(context).primaryColor
-                                                      : CupertinoColors.systemGrey,
+                                                      ? context.theme.colorScheme.primary
+                                                      : inactiveCheckColor,
                                                   style: BorderStyle.solid,
                                                   width: 1),
                                               borderRadius: BorderRadius.all(Radius.circular(25))),
@@ -564,8 +590,8 @@ class ChatListPanel extends StatelessWidget {
                                             child: Icon(CupertinoIcons.check_mark,
                                                 size: 18,
                                                 color: SettingsManager().settings.iosShowPin.value
-                                                    ? CupertinoColors.white
-                                                    : CupertinoColors.systemGrey),
+                                                    ? context.theme.colorScheme.onPrimary
+                                                    : inactiveCheckColor),
                                           ),
                                         ),
                                         onPressed: () {
@@ -578,7 +604,7 @@ class ChatListPanel extends StatelessWidget {
                                   Column(children: [
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                      child: Text("Swipe Left"),
+                                      child: Text("Left", style: context.theme.textTheme.bodyLarge),
                                     ),
                                     Row(children: [
                                       Column(
@@ -588,7 +614,7 @@ class ChatListPanel extends StatelessWidget {
                                             child: Container(
                                               height: 60,
                                               color: Colors.purple[700],
-                                              width: CustomNavigator.width(context) / 5 - 8,
+                                              width: CustomNavigator.width(context) / 5 - 12,
                                               child: IconButton(
                                                 icon: Icon(CupertinoIcons.bell_slash, color: Colors.white),
                                                 onPressed: () async {
@@ -603,12 +629,12 @@ class ChatListPanel extends StatelessWidget {
                                               child: Container(
                                                 decoration: BoxDecoration(
                                                     color: SettingsManager().settings.iosShowAlert.value
-                                                        ? Theme.of(context).primaryColor
+                                                        ? context.theme.colorScheme.primary
                                                         : tileColor,
                                                     border: Border.all(
                                                         color: SettingsManager().settings.iosShowAlert.value
-                                                            ? Theme.of(context).primaryColor
-                                                            : CupertinoColors.systemGrey,
+                                                            ? context.theme.colorScheme.primary
+                                                            : inactiveCheckColor,
                                                         style: BorderStyle.solid,
                                                         width: 1),
                                                     borderRadius: BorderRadius.all(Radius.circular(25))),
@@ -617,8 +643,8 @@ class ChatListPanel extends StatelessWidget {
                                                   child: Icon(CupertinoIcons.check_mark,
                                                       size: 18,
                                                       color: SettingsManager().settings.iosShowAlert.value
-                                                          ? CupertinoColors.white
-                                                          : CupertinoColors.systemGrey),
+                                                          ? context.theme.colorScheme.onPrimary
+                                                          : inactiveCheckColor),
                                                 ),
                                               ),
                                               onPressed: () {
@@ -635,7 +661,7 @@ class ChatListPanel extends StatelessWidget {
                                             child: Container(
                                               height: 60,
                                               color: Colors.red,
-                                              width: CustomNavigator.width(context) / 5 - 8,
+                                              width: CustomNavigator.width(context) / 5 - 12,
                                               child: IconButton(
                                                 icon: Icon(CupertinoIcons.trash, color: Colors.white),
                                                 onPressed: () async {
@@ -650,12 +676,12 @@ class ChatListPanel extends StatelessWidget {
                                               child: Container(
                                                 decoration: BoxDecoration(
                                                     color: SettingsManager().settings.iosShowDelete.value
-                                                        ? Theme.of(context).primaryColor
+                                                        ? context.theme.colorScheme.primary
                                                         : tileColor,
                                                     border: Border.all(
                                                         color: SettingsManager().settings.iosShowDelete.value
-                                                            ? Theme.of(context).primaryColor
-                                                            : CupertinoColors.systemGrey,
+                                                            ? context.theme.colorScheme.primary
+                                                            : inactiveCheckColor,
                                                         style: BorderStyle.solid,
                                                         width: 1),
                                                     borderRadius: BorderRadius.all(Radius.circular(25))),
@@ -664,8 +690,8 @@ class ChatListPanel extends StatelessWidget {
                                                   child: Icon(CupertinoIcons.check_mark,
                                                       size: 18,
                                                       color: SettingsManager().settings.iosShowDelete.value
-                                                          ? CupertinoColors.white
-                                                          : CupertinoColors.systemGrey),
+                                                          ? context.theme.colorScheme.onPrimary
+                                                          : inactiveCheckColor),
                                                 ),
                                               ),
                                               onPressed: () {
@@ -682,7 +708,7 @@ class ChatListPanel extends StatelessWidget {
                                             child: Container(
                                               height: 60,
                                               color: Colors.blue,
-                                              width: CustomNavigator.width(context) / 5 - 8,
+                                              width: CustomNavigator.width(context) / 5 - 12,
                                               child: IconButton(
                                                 icon: Icon(CupertinoIcons.person_crop_circle_badge_exclam,
                                                     color: Colors.white),
@@ -699,12 +725,12 @@ class ChatListPanel extends StatelessWidget {
                                               child: Container(
                                                 decoration: BoxDecoration(
                                                     color: SettingsManager().settings.iosShowMarkRead.value
-                                                        ? Theme.of(context).primaryColor
+                                                        ? context.theme.colorScheme.primary
                                                         : tileColor,
                                                     border: Border.all(
                                                         color: SettingsManager().settings.iosShowMarkRead.value
-                                                            ? Theme.of(context).primaryColor
-                                                            : CupertinoColors.systemGrey,
+                                                            ? context.theme.colorScheme.primary
+                                                            : inactiveCheckColor,
                                                         style: BorderStyle.solid,
                                                         width: 1),
                                                     borderRadius: BorderRadius.all(Radius.circular(25))),
@@ -713,8 +739,8 @@ class ChatListPanel extends StatelessWidget {
                                                   child: Icon(CupertinoIcons.check_mark,
                                                       size: 18,
                                                       color: SettingsManager().settings.iosShowMarkRead.value
-                                                          ? CupertinoColors.white
-                                                          : CupertinoColors.systemGrey),
+                                                          ? context.theme.colorScheme.onPrimary
+                                                          : inactiveCheckColor),
                                                 ),
                                               ),
                                               onPressed: () {
@@ -731,7 +757,7 @@ class ChatListPanel extends StatelessWidget {
                                             child: Container(
                                               height: 60,
                                               color: Colors.red,
-                                              width: CustomNavigator.width(context) / 5 - 8,
+                                              width: CustomNavigator.width(context) / 5 - 12,
                                               child: IconButton(
                                                 icon: Icon(CupertinoIcons.tray_arrow_down, color: Colors.white),
                                                 onPressed: () {
@@ -746,12 +772,12 @@ class ChatListPanel extends StatelessWidget {
                                               child: Container(
                                                 decoration: BoxDecoration(
                                                     color: SettingsManager().settings.iosShowArchive.value
-                                                        ? Theme.of(context).primaryColor
+                                                        ? context.theme.colorScheme.primary
                                                         : tileColor,
                                                     border: Border.all(
                                                         color: SettingsManager().settings.iosShowArchive.value
-                                                            ? Theme.of(context).primaryColor
-                                                            : CupertinoColors.systemGrey,
+                                                            ? context.theme.colorScheme.primary
+                                                            : inactiveCheckColor,
                                                         style: BorderStyle.solid,
                                                         width: 1),
                                                     borderRadius: BorderRadius.all(Radius.circular(25))),
@@ -760,8 +786,8 @@ class ChatListPanel extends StatelessWidget {
                                                   child: Icon(CupertinoIcons.check_mark,
                                                       size: 18,
                                                       color: SettingsManager().settings.iosShowArchive.value
-                                                          ? CupertinoColors.white
-                                                          : CupertinoColors.systemGrey),
+                                                          ? context.theme.colorScheme.onPrimary
+                                                          : inactiveCheckColor),
                                                 ),
                                               ),
                                               onPressed: () {
@@ -839,13 +865,14 @@ class ChatListPanel extends StatelessWidget {
                           title: "Move Chat Creator Button to Header",
                           subtitle: "Replaces the floating button at the bottom to a fixed button at the top",
                           backgroundColor: tileColor,
+                          isThreeLine: true,
                         )),
                     if (!kIsWeb && !kIsDesktop)
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop)
@@ -855,13 +882,14 @@ class ChatListPanel extends StatelessWidget {
                               saveSettings();
                             },
                             initialVal: SettingsManager().settings.cameraFAB.value,
-                            title: SettingsManager().settings.skin.value == Skins.Material
+                            title: SettingsManager().settings.skin.value != Skins.iOS
                                 ? "Long Press for Camera"
                                 : "Add Camera Button",
-                            subtitle: SettingsManager().settings.skin.value == Skins.Material
+                            subtitle: SettingsManager().settings.skin.value != Skins.iOS
                                 ? "Long press the start chat button to easily send a picture to a chat"
                                 : "Adds a dedicated camera button near the new chat creator button to easily send pictures",
                             backgroundColor: tileColor,
+                            isThreeLine: true,
                           )),
                   ],
                 ),

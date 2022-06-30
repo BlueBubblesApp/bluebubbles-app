@@ -1,11 +1,9 @@
 import 'dart:core';
 
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/models/html/theme_entry.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 class ThemeObject {
   int? id;
@@ -29,29 +27,6 @@ class ThemeObject {
     this.data,
   });
 
-  factory ThemeObject.fromData(ThemeData data, String name, {bool gradientBg = false}) {
-    ThemeObject object = ThemeObject(
-      data: data.copyWith(),
-      name: name,
-      gradientBg: gradientBg,
-    );
-    object.entries = object.toEntries();
-
-    return object;
-  }
-
-  factory ThemeObject.fromMap(Map<String, dynamic> json) {
-    return ThemeObject(
-      id: json["ROWID"],
-      name: json["name"],
-      selectedLightTheme: json["selectedLightTheme"] == 1,
-      selectedDarkTheme: json["selectedDarkTheme"] == 1,
-      gradientBg: json["gradientBg"] == 1,
-      previousLightTheme: json["previousLightTheme"] == 1,
-      previousDarkTheme: json["previousDarkTheme"] == 1,
-    );
-  }
-
   bool get isPreset =>
       name == "OLED Dark" ||
       name == "Bright White" ||
@@ -72,56 +47,9 @@ class ThemeObject {
         ThemeEntry(name: ThemeColors.PrimaryColor, color: data!.primaryColor, isFont: false),
       ];
 
-  ThemeObject save({bool updateIfNotAbsent = true}) {
-    if (entries.isEmpty) {
-      entries = toEntries();
-    }
-    return this;
-  }
-
-  void delete() {
-    return;
-  }
-
-  static ThemeObject getLightTheme({bool fetchData = true}) {
-    List<ThemeObject> res = ThemeObject.getThemes();
-    List<ThemeObject> themes = res.where((element) => element.selectedLightTheme).toList();
-    if (themes.isEmpty) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-      return Themes.themes[1];
-    }
-    ThemeObject theme = themes.first;
-    if (fetchData) {
-      theme.fetchData();
-    }
-    return theme;
-  }
-
-  static ThemeObject getDarkTheme({bool fetchData = true}) {
-    List<ThemeObject> res = ThemeObject.getThemes();
-    List<ThemeObject> themes = res.where((element) => element.selectedDarkTheme).toList();
-    if (themes.isEmpty) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-      return Themes.themes[0];
-    }
-    ThemeObject theme = themes.first;
-    if (fetchData) {
-      theme.fetchData();
-    }
-    return theme;
-  }
-
-  static void setSelectedTheme({int? light, int? dark}) {
-    return;
-  }
-
-  static ThemeObject? findOne(String name) {
-    return null;
-  }
-
   static List<ThemeObject> getThemes() {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    return Themes.themes;
+    return <ThemeObject>[];
   }
 
   List<ThemeEntry> fetchData() {
@@ -138,16 +66,6 @@ class ThemeObject {
     }
     return entries;
   }
-
-  Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "name": name,
-        "selectedLightTheme": selectedLightTheme ? 1 : 0,
-        "selectedDarkTheme": selectedDarkTheme ? 1 : 0,
-        "gradientBg": gradientBg ? 1 : 0,
-        "previousLightTheme": previousLightTheme ? 1 : 0,
-        "previousDarkTheme": previousDarkTheme ? 1 : 0,
-      };
 
   ThemeData get themeData {
     assert(entries.length == ThemeColors.Colors.length);
@@ -192,12 +110,6 @@ class ThemeObject {
         dividerColor: data[ThemeColors.DividerColor]!.style,
         backgroundColor: data[ThemeColors.BackgroundColor]!.style,
         primaryColor: data[ThemeColors.PrimaryColor]!.style);
-  }
-
-  static bool inDarkMode(BuildContext context) {
-    return (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ||
-        (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.system &&
-            SchedulerBinding.instance.window.platformBrightness == Brightness.dark));
   }
 
   @override

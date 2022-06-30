@@ -2,7 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -49,7 +49,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
     super.initState();
     widget.parent.scrollController.addListener(() {
       if (widget.parent.scrollController.hasClients && widget.parent.scrollController.offset > (125 - kToolbarHeight)) {
-        headerColor.value = Get.context!.theme.colorScheme.secondary.withOpacity(0.5);
+        headerColor.value = Get.theme.colorScheme.properSurface.withOpacity(0.5);
       } else {
         headerColor.value = Colors.transparent;
       }
@@ -83,14 +83,10 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-            ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness:
-            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Obx(() => buildForDevice(context)),
     );
@@ -99,7 +95,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
   Widget buildChatList(BuildContext context, bool showAltLayout) {
     bool showArchived = widget.parent.widget.showArchivedChats;
     bool showUnknown = widget.parent.widget.showUnknownSenders;
-    Brightness brightness = ThemeData.estimateBrightnessForColor(context.theme.backgroundColor);
+    Brightness brightness = context.theme.colorScheme.brightness;
     return Obx(
       () => Scaffold(
         appBar: kIsWeb || kIsDesktop
@@ -118,44 +114,51 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                       filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                       child: Obx(
                         () => AnimatedCrossFade(
-                          crossFadeState: headerColor.value == Colors.transparent
+                          crossFadeState: headerColor.value == Colors.transparent || (showArchived || showUnknown)
                               ? CrossFadeState.showFirst
                               : CrossFadeState.showSecond,
                           duration: Duration(milliseconds: 250),
                           secondChild: AppBar(
-                            iconTheme: IconThemeData(color: context.theme.primaryColor),
+                            iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
                             elevation: 0,
                             backgroundColor: headerColor.value,
                             centerTitle: true,
                             systemOverlayStyle:
                                 brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-                            title: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: <Widget>[
-                                Text(
-                                  showArchived
-                                      ? "Archive"
-                                      : showUnknown
-                                          ? "Unknown Senders"
-                                          : "Messages",
-                                  style: context.textTheme.bodyText1,
-                                ),
-                              ],
+                            title: Text(
+                              showArchived
+                                  ? "Archive"
+                                  : showUnknown
+                                      ? "Unknown Senders"
+                                      : "Messages",
+                              style: context.textTheme.titleMedium!.copyWith(color: context.theme.colorScheme.properOnSurface),
                             ),
                           ),
-                          firstChild: AppBar(
+                          firstChild: !showArchived && !showUnknown ? AppBar(
                             leading: Container(),
                             elevation: 0,
                             systemOverlayStyle:
                                 brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-                            backgroundColor: context.theme.backgroundColor,
+                            backgroundColor: context.theme.colorScheme.background,
+                          ) : AppBar(
+                            leading: buildBackButton(context),
+                            elevation: 0,
+                            systemOverlayStyle:
+                            brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+                            backgroundColor: context.theme.colorScheme.background,
+                            centerTitle: true,
+                            title: Text(
+                                showArchived
+                                    ? "Archive"
+                                    : "Unknown Senders",
+                                style: context.theme.textTheme.titleLarge),
                           ),
                         ),
                       )),
                 ),
               ),
-        backgroundColor: context.theme.backgroundColor,
-        extendBodyBehindAppBar: true,
+        backgroundColor: context.theme.colorScheme.background,
+        extendBodyBehindAppBar: !showArchived && !showUnknown,
         body: ScrollbarWrapper(
           showScrollbar: true,
           controller: widget.parent.scrollController,
@@ -166,37 +169,23 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                   ? NeverScrollableScrollPhysics()
                   : ThemeManager().scrollPhysics,
               slivers: <Widget>[
-                SliverAppBar(
-                  leading: ((SettingsManager().settings.skin.value == Skins.iOS && (showArchived || showUnknown)) ||
-                          (SettingsManager().settings.skin.value == Skins.Material ||
-                                  SettingsManager().settings.skin.value == Skins.Samsung) &&
-                              !showArchived &&
-                              !showUnknown)
-                      ? buildBackButton(context)
-                      : Container(),
-                  stretch: true,
-                  expandedHeight: (!showArchived && !showUnknown) ? 80 : 50,
-                  backgroundColor: Colors.transparent,
-                  pinned: false,
-                  flexibleSpace: FlexibleSpaceBar(
-                    stretchModes: <StretchMode>[StretchMode.zoomBackground],
-                    background: Stack(
-                      fit: StackFit.expand,
-                    ),
+                if (!showArchived && !showUnknown)
+                  SliverAppBar(
+                    leading: null,
+                    backgroundColor: Colors.transparent,
+                    pinned: false,
                     centerTitle: true,
+                    automaticallyImplyLeading: false,
                     title: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
                       children: <Widget>[
-                        if (!kIsWeb && !kIsDesktop) Container(height: 20),
                         Container(
-                          margin: EdgeInsets.only(right: 10),
+                          margin: EdgeInsets.only(left: 10, right: 10),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: <Widget>[
-                              Container(width: (!showArchived && !showUnknown) ? 20 : 50),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   widget.parent.getHeaderTextWidget(),
@@ -204,109 +193,103 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                   widget.parent.getSyncIndicatorWidget(),
                                 ],
                               ),
-                              Spacer(
-                                flex: 25,
-                              ),
-                              if (!showArchived && !showUnknown)
-                                ClipOval(
-                                  child: Material(
-                                    color: context.theme.colorScheme.secondary, // button color
-                                    child: InkWell(
-                                      child: SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child:
-                                              Icon(CupertinoIcons.search, color: context.theme.primaryColor, size: 12)),
-                                      onTap: () async {
-                                        CustomNavigator.pushLeft(context, SearchView());
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              if (!showArchived && !showUnknown) Container(width: 10.0),
-                              if (SettingsManager().settings.moveChatCreatorToHeader.value &&
-                                  !showArchived &&
-                                  !showUnknown)
-                                ClipOval(
-                                  child: Material(
-                                    color: context.theme.colorScheme.secondary, // button color
-                                    child: InkWell(
-                                      child: SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: Icon(CupertinoIcons.pencil, color: context.theme.primaryColor, size: 12),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  ClipOval(
+                                    child: Material(
+                                      color: context.theme.colorScheme.properSurface, // button color
+                                      child: InkWell(
+                                        child: SizedBox(
+                                            width: 30,
+                                            height: 30,
+                                            child:
+                                            Icon(CupertinoIcons.search, color: context.theme.colorScheme.properOnSurface, size: 20)),
+                                        onTap: () async {
+                                          CustomNavigator.pushLeft(context, SearchView());
+                                        },
                                       ),
-                                      onTap: widget.parent.openNewChatCreator,
                                     ),
                                   ),
-                                ),
-                              if (SettingsManager().settings.moveChatCreatorToHeader.value &&
-                                  SettingsManager().settings.cameraFAB.value)
-                                Container(width: 10.0),
-                              if (SettingsManager().settings.moveChatCreatorToHeader.value &&
-                                  SettingsManager().settings.cameraFAB.value &&
-                                  !showArchived &&
-                                  !showUnknown)
-                                ClipOval(
-                                  child: Material(
-                                    color: context.theme.colorScheme.secondary, // button color
-                                    child: InkWell(
-                                      child: SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: Icon(CupertinoIcons.camera, color: context.theme.primaryColor, size: 12),
+                                  Container(width: 10.0),
+                                  if (SettingsManager().settings.moveChatCreatorToHeader.value)
+                                    ClipOval(
+                                      child: Material(
+                                        color: context.theme.colorScheme.properSurface, // button color
+                                        child: InkWell(
+                                          child: SizedBox(
+                                            width: 30,
+                                            height: 30,
+                                            child: Icon(CupertinoIcons.pencil, color: context.theme.colorScheme.properOnSurface, size: 20),
+                                          ),
+                                          onTap: widget.parent.openNewChatCreator,
+                                        ),
                                       ),
-                                      onTap: () async {
-                                        bool camera = await Permission.camera.isGranted;
-                                        if (!camera) {
-                                          bool granted =
-                                              (await Permission.camera.request()) == PermissionStatus.granted;
-                                          if (!granted) {
-                                            showSnackbar("Error", "Camera was denied");
-                                            return;
-                                          }
-                                        }
-
-                                        String appDocPath = SettingsManager().appDocDir.path;
-                                        String ext = ".png";
-                                        File file = File("$appDocPath/attachments/${randomString(16)}$ext");
-                                        await file.create(recursive: true);
-
-                                        // Take the picture after opening the camera
-                                        await MethodChannelInterface()
-                                            .invokeMethod("open-camera", {"path": file.path, "type": "camera"});
-
-                                        // If we don't get data back, return outta here
-                                        if (!file.existsSync()) return;
-                                        if (file.statSync().size == 0) {
-                                          file.deleteSync();
-                                          return;
-                                        }
-
-                                        widget.parent.openNewChatCreator(existing: [
-                                          PlatformFile(
-                                            name: file.path.split("/").last,
-                                            path: file.path,
-                                            bytes: file.readAsBytesSync(),
-                                            size: file.lengthSync(),
-                                          )
-                                        ]);
-                                      },
                                     ),
-                                  ),
-                                ),
-                              if (SettingsManager().settings.moveChatCreatorToHeader.value) Container(width: 10.0),
-                              widget.parent.buildSettingsButton(),
-                              Spacer(
-                                flex: 3,
-                              ),
+                                  if (SettingsManager().settings.moveChatCreatorToHeader.value &&
+                                      SettingsManager().settings.cameraFAB.value)
+                                    Container(width: 10.0),
+                                  if (SettingsManager().settings.moveChatCreatorToHeader.value &&
+                                      SettingsManager().settings.cameraFAB.value)
+                                    ClipOval(
+                                      child: Material(
+                                        color: context.theme.colorScheme.properSurface, // button color
+                                        child: InkWell(
+                                          child: SizedBox(
+                                            width: 30,
+                                            height: 30,
+                                            child: Icon(CupertinoIcons.camera, color: context.theme.colorScheme.properOnSurface, size: 20),
+                                          ),
+                                          onTap: () async {
+                                            bool camera = await Permission.camera.isGranted;
+                                            if (!camera) {
+                                              bool granted =
+                                                  (await Permission.camera.request()) == PermissionStatus.granted;
+                                              if (!granted) {
+                                                showSnackbar("Error", "Camera was denied");
+                                                return;
+                                              }
+                                            }
+
+                                            String appDocPath = SettingsManager().appDocDir.path;
+                                            String ext = ".png";
+                                            File file = File("$appDocPath/attachments/${randomString(16)}$ext");
+                                            await file.create(recursive: true);
+
+                                            // Take the picture after opening the camera
+                                            await MethodChannelInterface()
+                                                .invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+
+                                            // If we don't get data back, return outta here
+                                            if (!file.existsSync()) return;
+                                            if (file.statSync().size == 0) {
+                                              file.deleteSync();
+                                              return;
+                                            }
+
+                                            widget.parent.openNewChatCreator(existing: [
+                                              PlatformFile(
+                                                name: file.path.split("/").last,
+                                                path: file.path,
+                                                bytes: file.readAsBytesSync(),
+                                                size: file.lengthSync(),
+                                              )
+                                            ]);
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  if (SettingsManager().settings.moveChatCreatorToHeader.value) Container(width: 10.0),
+                                  widget.parent.buildSettingsButton(),
+                                ],
+                              )
                             ],
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                ),
+                    )),
                 // SliverToBoxAdapter(
                 //   child: Container(
                 //     padding: EdgeInsets.symmetric(horizontal: 30, vertical: 5),
@@ -354,8 +337,8 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
                   return SliverPadding(
                     padding: EdgeInsets.only(
-                      top: 0,
-                      bottom: 10,
+                      top: 10,
+                      bottom: 0,
                     ),
                     sliver: SliverToBoxAdapter(
                       child: LayoutBuilder(
@@ -377,7 +360,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                   return Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 10),
                                     child: Wrap(
-                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      crossAxisAlignment: WrapCrossAlignment.start,
                                       alignment: _pageCount > 1 ? WrapAlignment.start : WrapAlignment.center,
                                       children: List.generate(
                                         index < _filledPageCount
@@ -421,7 +404,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                     spacing: 5.0,
                                     radius: 5.0,
                                     scale: 1.5,
-                                    activeDotColor: context.theme.primaryColor,
+                                    activeDotColor: context.theme.colorScheme.secondary,
                                   ),
                                 ),
                             ],
@@ -443,7 +426,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Text(
                                   "Loading chats...",
-                                  style: Theme.of(context).textTheme.subtitle1,
+                                  style: context.textTheme.labelLarge,
                                 ),
                               ),
                               buildProgressIndicator(context, size: 15),
@@ -453,18 +436,22 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                       ),
                     );
                   }
-                  if (ChatBloc().loadedChatBatch.value && !ChatBloc().hasChats.value) {
+                  if (ChatBloc().loadedChatBatch.value && ChatBloc()
+                      .chats
+                      .archivedHelper(showArchived)
+                      .unknownSendersHelper(showUnknown)
+                      .bigPinHelper(false).isEmpty) {
                     return SliverToBoxAdapter(
                       child: Center(
                         child: Container(
                           padding: EdgeInsets.only(top: 50.0),
                           child: Text(
                             showArchived
-                                ? "You have no archived chats :("
+                                ? "You have no archived chats"
                                 : showUnknown
                                     ? "You have no messages from unknown senders :)"
                                     : "You have no chats :(",
-                            style: Theme.of(context).textTheme.subtitle1,
+                            style: context.theme.textTheme.labelLarge,
                           ),
                         ),
                       ),
@@ -566,12 +553,12 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                 CupertinoPage(
                   name: "initial",
                   child: Scaffold(
-                    backgroundColor: context.theme.backgroundColor,
+                    backgroundColor: context.theme.colorScheme.background,
                     extendBodyBehindAppBar: true,
                     body: Center(
                       child: Container(
                           child: Text("Select a chat from the list",
-                              style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))),
+                              style: context.theme.textTheme.bodyLarge)),
                     ),
                   ),
                 ),

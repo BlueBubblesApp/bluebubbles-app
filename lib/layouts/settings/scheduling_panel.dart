@@ -49,10 +49,10 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                 "Chat",
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               Text(msg.message!,
-                  maxLines: 4, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.subtitle1)
+                  maxLines: 4, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelLarge)
             ],
           ),
         ),
@@ -100,7 +100,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                 backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                 title: Text(
                   "Message Scheduling",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Theme.of(context).textTheme.headlineMedium,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -120,7 +120,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                   <Widget>[
                     Padding(
                         padding: EdgeInsets.fromLTRB(25.0, 25.0, 25.0, 0.0),
-                        child: Text("Upcoming Messages", style: Theme.of(context).textTheme.headline1)),
+                        child: Text("Upcoming Messages", style: Theme.of(context).textTheme.headlineMedium)),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
                       child: (upcoming.isNotEmpty)
@@ -142,11 +142,11 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                                   ),
                                   children: _buildRows(upcoming)))
                           : Text("No upcoming messages to send",
-                              textAlign: TextAlign.left, style: Theme.of(context).textTheme.subtitle1),
+                              textAlign: TextAlign.left, style: Theme.of(context).textTheme.labelLarge),
                     ),
                     Padding(
                         padding: EdgeInsets.fromLTRB(25.0, 25.0, 25.0, 0.0),
-                        child: Text("Past Messages", style: Theme.of(context).textTheme.headline1)),
+                        child: Text("Past Messages", style: Theme.of(context).textTheme.headlineMedium)),
                     Padding(
                         padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
                         child: (old.isNotEmpty)
@@ -168,7 +168,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                                     ),
                                     children: _buildRows(old)))
                             : Text("No scheduled messages have been sent",
-                                textAlign: TextAlign.left, style: Theme.of(context).textTheme.subtitle1)),
+                                textAlign: TextAlign.left, style: Theme.of(context).textTheme.labelLarge)),
                   ],
                 ),
               ),

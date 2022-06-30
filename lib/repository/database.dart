@@ -169,8 +169,7 @@ class DBProvider {
     handleBox.removeAll();
     messageBox.removeAll();
     scheduledBox.removeAll();
-    themeEntryBox.removeAll();
-    themeObjectBox.removeAll();
+    themeBox.removeAll();
   }
 
   Future<void> migrateToObjectBox(Database db, Future<void> Function()? initStore) async {
@@ -191,8 +190,7 @@ class DBProvider {
       handleBox.removeAll();
       messageBox.removeAll();
       scheduledBox.removeAll();
-      themeEntryBox.removeAll();
-      themeObjectBox.removeAll();
+      themeBox.removeAll();
       // The general premise of the migration is to transfer every single bit
       // of data from SQLite into ObjectBox. The most important thing to keep
       // track of are the IDs, since we have numerous queries that relate IDs
@@ -381,71 +379,71 @@ class DBProvider {
         attachmentBox.removeMany(toDelete3);
         Logger.info("Inserted attachment-message joins into ObjectBox", tag: "OB Migration");
         amJoins.clear();
-        Logger.info("Migrating theme objects...", tag: "OB Migration");
-        final themeObjects = tableData[7].map((e) => ThemeObject.fromMap(e)).toList();
-        final themeObjectIdsMigrationMap = <String, Map<String, int>>{};
-        for (ThemeObject element in themeObjects) {
-          themeObjectIdsMigrationMap[element.name!] = {
-            "old": element.id!
-          };
-          element.id = null;
-        }
-        Logger.info("Created theme object ID migration map, length ${themeObjectIdsMigrationMap.length}", tag: "OB Migration");
-        themeObjectBox.putMany(themeObjects);
-        Logger.info("Inserted theme objects into ObjectBox", tag: "OB Migration");
-        final newThemeObjects = themeObjectBox.getAll();
-        Logger.info("Fetched ObjectBox theme objects, length ${newThemeObjects.length}", tag: "OB Migration");
-        for (ThemeObject element in newThemeObjects) {
-          themeObjectIdsMigrationMap[element.name]!['new'] = element.id!;
-        }
-        Logger.info("Added new IDs to theme object ID migration map", tag: "OB Migration");
-        themeObjects.clear();
-        newThemeObjects.clear();
-        Logger.info("Migrating theme entries...", tag: "OB Migration");
-        final themeEntries = tableData[8].map((e) => ThemeEntry.fromMap(e)).toList();
-        final themeEntryIdsMigrationMap = <String, Map<String, int>>{};
-        for (ThemeEntry element in themeEntries) {
-          // we will always have a new and an old form of ID, so these should never error
-          final newThemeId = themeObjectIdsMigrationMap.values.firstWhere((e) => e['old'] == element.themeId)['new'];
-          element.themeId = newThemeId!;
-          themeEntryIdsMigrationMap["${element.name}-${element.themeId!}"] = {
-            "old": element.id!
-          };
-          element.id = null;
-        }
-        Logger.info("Created theme entry ID migration map, length ${themeEntryIdsMigrationMap.length}", tag: "OB Migration");
-        themeEntryBox.putMany(themeEntries);
-        Logger.info("Inserted theme entries into ObjectBox", tag: "OB Migration");
-        final newThemeEntries = themeEntryBox.getAll();
-        Logger.info("Fetched ObjectBox theme entries, length ${newThemeEntries.length}", tag: "OB Migration");
-        for (ThemeEntry element in newThemeEntries) {
-          themeEntryIdsMigrationMap["${element.name}-${element.themeId!}"]!['new'] = element.id!;
-        }
-        Logger.info("Added new IDs to theme entry ID", tag: "OB Migration");
-        themeEntries.clear();
-        newThemeEntries.clear();
-        Logger.info("Migrating theme-value joins...", tag: "OB Migration");
-        List<ThemeValueJoin> tvJoins = tableData[9].map((e) => ThemeValueJoin.fromMap(e)).toList();
-        for (ThemeValueJoin tvj in tvJoins) {
-          // we will always have a new and an old form of ID, so these should never error
-          final newThemeId = themeObjectIdsMigrationMap.values.firstWhere((e) => e['old'] == tvj.themeId)['new'];
-          final newThemeValueId = themeEntryIdsMigrationMap.values.firstWhere((e) => e['old'] == tvj.themeValueId)['new'];
-          tvj.themeId = newThemeId!;
-          tvj.themeValueId = newThemeValueId!;
-        }
-        Logger.info("Replaced old theme object & theme entry IDs with new ObjectBox IDs", tag: "OB Migration");
-        final themeValues2 = themeEntryBox.getAll();
-        for (int i = 0; i < themeValues2.length; i++) {
-          // this migration must happen cleanly, we cannot ignore any null errors
-          // the theme values must all associate with a theme object, otherwise
-          // there will be errors when trying to load the theme
-          final themeId = tvJoins.firstWhere((e) => e.themeValueId == themeValues2[i].id).themeId;
-          final themeObject = themeObjectBox.get(themeId);
-          themeValues2[i].themeObject.target = themeObject;
-        }
-        themeEntryBox.putMany(themeValues2);
-        Logger.info("Inserted theme-value joins into ObjectBox", tag: "OB Migration");
-        tvJoins.clear();
+        // Logger.info("Migrating theme objects...", tag: "OB Migration");
+        // final themeObjects = tableData[7].map((e) => ThemeObject.fromMap(e)).toList();
+        // final themeObjectIdsMigrationMap = <String, Map<String, int>>{};
+        // for (ThemeObject element in themeObjects) {
+        //   themeObjectIdsMigrationMap[element.name!] = {
+        //     "old": element.id!
+        //   };
+        //   element.id = null;
+        // }
+        // Logger.info("Created theme object ID migration map, length ${themeObjectIdsMigrationMap.length}", tag: "OB Migration");
+        // themeObjectBox.putMany(themeObjects);
+        // Logger.info("Inserted theme objects into ObjectBox", tag: "OB Migration");
+        // final newThemeObjects = themeObjectBox.getAll();
+        // Logger.info("Fetched ObjectBox theme objects, length ${newThemeObjects.length}", tag: "OB Migration");
+        // for (ThemeObject element in newThemeObjects) {
+        //   themeObjectIdsMigrationMap[element.name]!['new'] = element.id!;
+        // }
+        // Logger.info("Added new IDs to theme object ID migration map", tag: "OB Migration");
+        // themeObjects.clear();
+        // newThemeObjects.clear();
+        // Logger.info("Migrating theme entries...", tag: "OB Migration");
+        // final themeEntries = tableData[8].map((e) => ThemeEntry.fromMap(e)).toList();
+        // final themeEntryIdsMigrationMap = <String, Map<String, int>>{};
+        // for (ThemeEntry element in themeEntries) {
+        //   // we will always have a new and an old form of ID, so these should never error
+        //   final newThemeId = themeObjectIdsMigrationMap.values.firstWhere((e) => e['old'] == element.themeId)['new'];
+        //   element.themeId = newThemeId!;
+        //   themeEntryIdsMigrationMap["${element.name}-${element.themeId!}"] = {
+        //     "old": element.id!
+        //   };
+        //   element.id = null;
+        // }
+        // Logger.info("Created theme entry ID migration map, length ${themeEntryIdsMigrationMap.length}", tag: "OB Migration");
+        // themeEntryBox.putMany(themeEntries);
+        // Logger.info("Inserted theme entries into ObjectBox", tag: "OB Migration");
+        // final newThemeEntries = themeEntryBox.getAll();
+        // Logger.info("Fetched ObjectBox theme entries, length ${newThemeEntries.length}", tag: "OB Migration");
+        // for (ThemeEntry element in newThemeEntries) {
+        //   themeEntryIdsMigrationMap["${element.name}-${element.themeId!}"]!['new'] = element.id!;
+        // }
+        // Logger.info("Added new IDs to theme entry ID", tag: "OB Migration");
+        // themeEntries.clear();
+        // newThemeEntries.clear();
+        // Logger.info("Migrating theme-value joins...", tag: "OB Migration");
+        // List<ThemeValueJoin> tvJoins = tableData[9].map((e) => ThemeValueJoin.fromMap(e)).toList();
+        // for (ThemeValueJoin tvj in tvJoins) {
+        //   // we will always have a new and an old form of ID, so these should never error
+        //   final newThemeId = themeObjectIdsMigrationMap.values.firstWhere((e) => e['old'] == tvj.themeId)['new'];
+        //   final newThemeValueId = themeEntryIdsMigrationMap.values.firstWhere((e) => e['old'] == tvj.themeValueId)['new'];
+        //   tvj.themeId = newThemeId!;
+        //   tvj.themeValueId = newThemeValueId!;
+        // }
+        // Logger.info("Replaced old theme object & theme entry IDs with new ObjectBox IDs", tag: "OB Migration");
+        // final themeValues2 = themeEntryBox.getAll();
+        // for (int i = 0; i < themeValues2.length; i++) {
+        //   // this migration must happen cleanly, we cannot ignore any null errors
+        //   // the theme values must all associate with a theme object, otherwise
+        //   // there will be errors when trying to load the theme
+        //   final themeId = tvJoins.firstWhere((e) => e.themeValueId == themeValues2[i].id).themeId;
+        //   final themeObject = themeObjectBox.get(themeId);
+        //   themeValues2[i].themeObject.target = themeObject;
+        // }
+        // themeEntryBox.putMany(themeValues2);
+        // Logger.info("Inserted theme-value joins into ObjectBox", tag: "OB Migration");
+        // tvJoins.clear();
       });
       Logger.info("Migrating FCM data...", tag: "OB Migration");
       List<ConfigEntry> entries = [];

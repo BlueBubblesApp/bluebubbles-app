@@ -54,17 +54,17 @@ class WindowButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     WindowButtonColors buttonColors = WindowButtonColors(
-        iconNormal: context.theme.primaryColor,
-        mouseOver: context.theme.primaryColor,
-        mouseDown: context.theme.primaryColorDark,
-        iconMouseOver: context.theme.colorScheme.secondary,
-        iconMouseDown: context.theme.primaryColorLight);
+        iconNormal: context.theme.colorScheme.primary,
+        mouseOver: context.theme.colorScheme.primary,
+        mouseDown: context.theme.colorScheme.primaryContainer,
+        iconMouseOver: context.theme.colorScheme.onPrimary,
+        iconMouseDown: context.theme.colorScheme.onPrimaryContainer);
 
     WindowButtonColors closeButtonColors = WindowButtonColors(
-        mouseOver: Color(0xFFD32F2F),
-        mouseDown: Color(0xFFB71C1C),
-        iconNormal: context.theme.primaryColor,
-        iconMouseOver: Colors.white);
+        mouseOver: context.theme.colorScheme.errorContainer,
+        mouseDown: context.theme.colorScheme.onError,
+        iconNormal: context.theme.colorScheme.primary,
+        iconMouseOver: context.theme.colorScheme.onErrorContainer);
     return Row(
       children: [
         MinimizeWindowButton(

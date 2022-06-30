@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -67,15 +68,15 @@ class _VideoViewerState extends State<VideoViewer> {
       allowFullScreen: false,
       allowMuting: false,
       materialProgressColors: ChewieProgressColors(
-          playedColor: Theme.of(context).primaryColor,
-          handleColor: Theme.of(context).primaryColor,
-          bufferedColor: Theme.of(context).backgroundColor,
-          backgroundColor: Theme.of(context).disabledColor),
+          playedColor: Theme.of(context).colorScheme.primary,
+          handleColor: Theme.of(context).colorScheme.primary,
+          bufferedColor: Theme.of(context).colorScheme.primaryContainer,
+          backgroundColor: Theme.of(context).colorScheme.properSurface),
       cupertinoProgressColors: ChewieProgressColors(
-          playedColor: Theme.of(context).primaryColor,
-          handleColor: Theme.of(context).primaryColor,
-          bufferedColor: Theme.of(context).backgroundColor,
-          backgroundColor: Theme.of(context).disabledColor),
+          playedColor: Theme.of(context).colorScheme.primary,
+          handleColor: Theme.of(context).colorScheme.primary,
+          bufferedColor: Theme.of(context).colorScheme.primaryContainer,
+          backgroundColor: Theme.of(context).colorScheme.properSurface),
       customControls: SettingsManager().settings.skin.value == Skins.iOS ? null : Stack(
         children: [
           Positioned.fill(child: MaterialControls()),
@@ -108,70 +109,10 @@ class _VideoViewerState extends State<VideoViewer> {
           ),
         ]
       ),
-      additionalOptions: (context) => SettingsManager().settings.skin.value == Skins.iOS ? [] : [
+      additionalOptions: (context) => SettingsManager().settings.skin.value == Skins.iOS || !widget.showInteractions ? [] : [
         OptionItem(
           onTap: () async {
-            List<Widget> metaWidgets = [];
-            final metadataMap = <String, dynamic>{
-              'filename': widget.attachment.transferName,
-              'mime': widget.attachment.mimeType,
-            }..addAll(widget.attachment.metadata ?? {});
-            for (var entry in metadataMap.entries.where((element) => element.value != null)) {
-              metaWidgets.add(RichText(
-                  text: TextSpan(children: [
-                    TextSpan(
-                        text: "${entry.key}: ",
-                        style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
-                    TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
-                  ])));
-            }
-
-            if (metaWidgets.isEmpty) {
-              metaWidgets.add(Text(
-                "No metadata available",
-                style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
-                textAlign: TextAlign.center,
-              ));
-            }
-
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text(
-                  "Metadata",
-                  style: Theme.of(context).textTheme.headline1,
-                  textAlign: TextAlign.center,
-                ),
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-                content: SizedBox(
-                  width: CustomNavigator.width(context) * 3 / 5,
-                  height: context.height * 1 / 4,
-                  child: Container(
-                    padding: EdgeInsets.all(10.0),
-                    decoration: BoxDecoration(
-                        color: Theme.of(context).backgroundColor,
-                        borderRadius: BorderRadius.all(Radius.circular(10))),
-                    child: ListView(
-                      physics: AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics(),
-                      ),
-                      children: metaWidgets,
-                    ),
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    child: Text(
-                      "Close",
-                      style: Theme.of(context).textTheme.bodyText1!.copyWith(
-                        color: Theme.of(context).primaryColor,
-                      ),
-                    ),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-            );
+            showMetadataDialog();
           },
           iconData: Icons.info,
           title: 'Metadata',
@@ -179,46 +120,7 @@ class _VideoViewerState extends State<VideoViewer> {
         OptionItem(
           onTap: () async {
             Navigator.pop(context);
-            isReloading.value = true;
-            ChatManager().activeChat?.clearImageData(widget.attachment);
-
-            showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
-            AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
-              controller.dispose();
-              chewieController?.dispose();
-              if (kIsWeb || widget.file.path == null) {
-                final blob = html.Blob([widget.file.bytes]);
-                final url = html.Url.createObjectUrlFromBlob(blob);
-                controller = VideoPlayerController.network(url);
-              } else {
-                dynamic file = File(widget.file.path!);
-                controller = VideoPlayerController.file(file);
-              }
-              await controller.initialize();
-              isReloading.value = false;
-              controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
-              chewieController = ChewieController(
-                videoPlayerController: controller,
-                aspectRatio: controller.value.aspectRatio,
-                allowFullScreen: false,
-                allowMuting: false,
-                materialProgressColors: ChewieProgressColors(
-                    playedColor: Theme.of(context).primaryColor,
-                    handleColor: Theme.of(context).primaryColor,
-                    bufferedColor: Theme.of(context).backgroundColor,
-                    backgroundColor: Theme.of(context).disabledColor),
-                cupertinoProgressColors: ChewieProgressColors(
-                    playedColor: Theme.of(context).primaryColor,
-                    handleColor: Theme.of(context).primaryColor,
-                    bufferedColor: Theme.of(context).backgroundColor,
-                    backgroundColor: Theme.of(context).disabledColor),
-              );
-              createListener(controller);
-              showPlayPauseOverlay = !controller.value.isPlaying;
-            }, onError: () {
-              Navigator.pop(context);
-            });
-            if (mounted) setState(() {});
+            refreshAttachment();
           },
           iconData: Icons.refresh,
           title: 'Redownload attachment',
@@ -295,222 +197,90 @@ class _VideoViewerState extends State<VideoViewer> {
 
   @override
   Widget build(BuildContext context) {
-    Widget overlay = AnimatedOpacity(
-      opacity: showPlayPauseOverlay ? 1.0 : 0.0,
-      duration: Duration(milliseconds: 125),
-      child: Container(
-          height: 150.0,
-          width: CustomNavigator.width(context),
-          color: Colors.black.withOpacity(0.65),
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Padding(
-              padding: EdgeInsets.only(top: 40.0, left: 5),
-              child: CupertinoButton(
-                padding: EdgeInsets.symmetric(horizontal: 5),
-                onPressed: () async {
-                  Navigator.pop(context);
-                },
-                child: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.back : Icons.arrow_back,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(top: 40.0),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    onPressed: () async {
-                      List<Widget> metaWidgets = [];
-                      final metadataMap = <String, dynamic>{
-                        'filename': widget.attachment.transferName,
-                        'mime': widget.attachment.mimeType,
-                      }..addAll(widget.attachment.metadata ?? {});
-                      for (var entry in metadataMap.entries.where((element) => element.value != null)) {
-                        metaWidgets.add(RichText(
-                            text: TextSpan(children: [
-                          TextSpan(
-                              text: "${entry.key}: ",
-                              style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
-                          TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
-                        ])));
-                      }
-
-                      if (metaWidgets.isEmpty) {
-                        metaWidgets.add(Text(
-                          "No metadata available",
-                          style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
-                          textAlign: TextAlign.center,
-                        ));
-                      }
-
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text(
-                            "Metadata",
-                            style: Theme.of(context).textTheme.headline1,
-                            textAlign: TextAlign.center,
-                          ),
-                          backgroundColor: Theme.of(context).colorScheme.secondary,
-                          content: SizedBox(
-                            width: CustomNavigator.width(context) * 3 / 5,
-                            height: context.height * 1 / 4,
-                            child: Container(
-                              padding: EdgeInsets.all(10.0),
-                              decoration: BoxDecoration(
-                                  color: Theme.of(context).backgroundColor,
-                                  borderRadius: BorderRadius.all(Radius.circular(10))),
-                              child: ListView(
-                                physics: AlwaysScrollableScrollPhysics(
-                                  parent: BouncingScrollPhysics(),
-                                ),
-                                children: metaWidgets,
-                              ),
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              child: Text(
-                                "Close",
-                                style: Theme.of(context).textTheme.bodyText1!.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                              ),
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(top: 40.0),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    onPressed: () async {
-                      isReloading.value = true;
-                      ChatManager().activeChat?.clearImageData(widget.attachment);
-
-                      showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
-                      AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
-                        controller.dispose();
-                        chewieController?.dispose();
-                        if (kIsWeb || widget.file.path == null) {
-                          final blob = html.Blob([widget.file.bytes]);
-                          final url = html.Url.createObjectUrlFromBlob(blob);
-                          controller = VideoPlayerController.network(url);
-                        } else {
-                          dynamic file = File(widget.file.path!);
-                          controller = VideoPlayerController.file(file);
-                        }
-                        await controller.initialize();
-                        isReloading.value = false;
-                        controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
-                        chewieController = ChewieController(
-                          videoPlayerController: controller,
-                          aspectRatio: controller.value.aspectRatio,
-                          allowFullScreen: false,
-                          allowMuting: false,
-                          materialProgressColors: ChewieProgressColors(
-                              playedColor: Theme.of(context).primaryColor,
-                              handleColor: Theme.of(context).primaryColor,
-                              bufferedColor: Theme.of(context).backgroundColor,
-                              backgroundColor: Theme.of(context).disabledColor),
-                          cupertinoProgressColors: ChewieProgressColors(
-                              playedColor: Theme.of(context).primaryColor,
-                              handleColor: Theme.of(context).primaryColor,
-                              bufferedColor: Theme.of(context).backgroundColor,
-                              backgroundColor: Theme.of(context).disabledColor),
-                        );
-                        createListener(controller);
-                        showPlayPauseOverlay = !controller.value.isPlaying;
-                      }, onError: () {
-                        Navigator.pop(context);
-                      });
-                      if (mounted) setState(() {});
-                    },
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(top: 40.0),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    onPressed: () async {
-                      await AttachmentHelper.saveToGallery(widget.file);
-                    },
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS
-                          ? CupertinoIcons.cloud_download
-                          : Icons.file_download,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                if (!kIsWeb && !kIsDesktop)
-                  Padding(
-                    padding: EdgeInsets.only(top: 40.0),
-                    child: CupertinoButton(
-                      padding: EdgeInsets.symmetric(horizontal: 5),
-                      onPressed: () async {
-                        if (widget.file.path == null) return;
-                        Share.file(
-                          "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                          widget.file.path!,
-                        );
-                      },
-                      child: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 40.0),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    onPressed: () async {
-                      controller.setVolume(controller.value.volume != 0.0 ? 0.0 : 1.0);
-                    },
-                    child: Icon(
-                      controller.value.volume == 0.0
-                          ? SettingsManager().settings.skin.value == Skins.iOS
-                              ? CupertinoIcons.volume_mute
-                              : Icons.volume_mute
-                          : SettingsManager().settings.skin.value == Skins.iOS
-                              ? CupertinoIcons.volume_up
-                              : Icons.volume_up,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ])),
-    );
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: Brightness.light,
+        statusBarIconBrightness: SettingsManager().settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: Colors.black,
+        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+        bottomNavigationBar: SettingsManager().settings.skin.value != Skins.iOS || !widget.showInteractions ? null : Theme(
+          data: context.theme.copyWith(navigationBarTheme: context.theme.navigationBarTheme.copyWith(
+            indicatorColor: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
+          )),
+          child: NavigationBar(
+            selectedIndex: 0,
+            backgroundColor: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+            height: 60,
+            destinations: [
+              NavigationDestination(
+                  icon: Icon(
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
+                    color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
+                  ),
+                  label: 'Download'
+              ),
+              if (!kIsDesktop && !kIsWeb)
+                NavigationDestination(
+                    icon: Icon(
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
+                      color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
+                    ),
+                    label: 'Share'
+                ),
+              NavigationDestination(
+                  icon: Icon(
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
+                    color: context.theme.colorScheme.primary,
+                  ),
+                  label: 'Metadata'
+              ),
+              NavigationDestination(
+                  icon: Icon(
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
+                    color: context.theme.colorScheme.primary,
+                  ),
+                  label: 'Refresh'
+              ),
+              NavigationDestination(
+                  icon: Icon(
+                    controller.value.volume == 0.0
+                        ? SettingsManager().settings.skin.value == Skins.iOS
+                        ? CupertinoIcons.volume_mute
+                        : Icons.volume_mute
+                        : SettingsManager().settings.skin.value == Skins.iOS
+                        ? CupertinoIcons.volume_up
+                        : Icons.volume_up,
+                    color: context.theme.colorScheme.primary,
+                  ),
+                  label: 'Mute'
+              ),
+            ],
+            onDestinationSelected: (value) async {
+              if ((kIsDesktop || kIsWeb) && value > 0) value += 1;
+              if (value == 0) {
+                await AttachmentHelper.saveToGallery(widget.file);
+              } else if (value == 1) {
+                if (widget.file.path == null) return;
+                Share.file(
+                  "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
+                  widget.file.path!,
+                );
+              } else if (value == 2) {
+                showMetadataDialog();
+              } else if (value == 3) {
+                refreshAttachment();
+              } else if (value == 4) {
+                controller.setVolume(controller.value.volume != 0.0 ? 0.0 : 1.0);
+                setState(() {});
+              }
+            },
+          ),
+        ),
         body: Listener(
             onPointerUp: (_) async {
               if (SettingsManager().settings.skin.value == Skins.iOS) {
@@ -528,14 +298,14 @@ class _VideoViewerState extends State<VideoViewer> {
                     return SafeArea(
                       child: Center(
                         child: Theme(
-                          data: Theme.of(context).copyWith(
+                          data: context.theme.copyWith(
                               platform: SettingsManager().settings.skin.value == Skins.iOS
                                   ? TargetPlatform.iOS
                                   : TargetPlatform.android,
-                              dialogBackgroundColor: Theme.of(context).colorScheme.secondary,
-                              iconTheme: Theme.of(context)
+                              dialogBackgroundColor: context.theme.colorScheme.properSurface,
+                              iconTheme: context.theme
                                   .iconTheme
-                                  .copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
+                                  .copyWith(color: context.theme.textTheme.bodyMedium?.color)),
                           child: Chewie(
                                   controller: chewieController!,
                                 ),
@@ -545,18 +315,12 @@ class _VideoViewerState extends State<VideoViewer> {
                   } else {
                     return Center(
                       child: CircularProgressIndicator(
-                        backgroundColor: Theme.of(context).colorScheme.secondary,
-                        valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+                        backgroundColor: context.theme.colorScheme.properSurface,
+                        valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                       ),
                     );
                   }
                 }),
-                if (widget.showInteractions && SettingsManager().settings.skin.value == Skins.iOS)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    child: AbsorbPointer(absorbing: !showPlayPauseOverlay, child: overlay),
-                  ),
               ],
             )),
       ),
@@ -570,5 +334,108 @@ class _VideoViewerState extends State<VideoViewer> {
         showPlayPauseOverlay = false;
       });
     });
+  }
+
+  void showMetadataDialog() {
+    List<Widget> metaWidgets = [];
+    final metadataMap = <String, dynamic>{
+      'filename': widget.attachment.transferName,
+      'mime': widget.attachment.mimeType,
+    }..addAll(widget.attachment.metadata ?? {});
+    for (var entry in metadataMap.entries.where((element) => element.value != null)) {
+      metaWidgets.add(RichText(
+          text: TextSpan(children: [
+            TextSpan(
+                text: "${entry.key}: ",
+                style: Theme.of(context).textTheme.bodyLarge!.apply(fontWeightDelta: 2)),
+            TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyLarge)
+          ])));
+    }
+
+    if (metaWidgets.isEmpty) {
+      metaWidgets.add(Text(
+        "No metadata available",
+        style: context.theme.textTheme.bodyLarge,
+        textAlign: TextAlign.center,
+      ));
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          "Metadata",
+          style: context.theme.textTheme.titleLarge,
+        ),
+        backgroundColor: context.theme.colorScheme.properSurface,
+        content: SizedBox(
+          width: CustomNavigator.width(context) * 3 / 5,
+          height: context.height * 1 / 4,
+          child: Container(
+            padding: EdgeInsets.all(10.0),
+            decoration: BoxDecoration(
+                color: context.theme.backgroundColor,
+                borderRadius: BorderRadius.all(Radius.circular(10))),
+            child: ListView(
+              physics: AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              children: metaWidgets,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: Text(
+                "Close",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void refreshAttachment() {
+    isReloading.value = true;
+    ChatManager().activeChat?.clearImageData(widget.attachment);
+
+    showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
+    AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
+      controller.dispose();
+      chewieController?.dispose();
+      if (kIsWeb || widget.file.path == null) {
+        final blob = html.Blob([widget.file.bytes]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        controller = VideoPlayerController.network(url);
+      } else {
+        dynamic file = File(widget.file.path!);
+        controller = VideoPlayerController.file(file);
+      }
+      await controller.initialize();
+      isReloading.value = false;
+      controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
+      chewieController = ChewieController(
+        videoPlayerController: controller,
+        aspectRatio: controller.value.aspectRatio,
+        allowFullScreen: false,
+        allowMuting: false,
+        materialProgressColors: ChewieProgressColors(
+            playedColor: Theme.of(context).colorScheme.primary,
+            handleColor: Theme.of(context).colorScheme.primary,
+            bufferedColor: Theme.of(context).colorScheme.primaryContainer,
+            backgroundColor: Theme.of(context).colorScheme.properSurface),
+        cupertinoProgressColors: ChewieProgressColors(
+            playedColor: Theme.of(context).colorScheme.primary,
+            handleColor: Theme.of(context).colorScheme.primary,
+            bufferedColor: Theme.of(context).colorScheme.primaryContainer,
+            backgroundColor: Theme.of(context).colorScheme.properSurface),
+      );
+      createListener(controller);
+      showPlayPauseOverlay = !controller.value.isPlaying;
+    }, onError: () {
+      Navigator.pop(context);
+    });
+    if (mounted) setState(() {});
   }
 }

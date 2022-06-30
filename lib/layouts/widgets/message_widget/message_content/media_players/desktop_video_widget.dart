@@ -281,7 +281,7 @@ class DesktopVideoWidget extends StatelessWidget {
               alignment: Alignment.topCenter,
               children: [
                 Container(
-                  color: context.theme.colorScheme.secondary,
+                  color: context.theme.colorScheme.properSurface,
                   child: null,
                 ),
               ],

@@ -64,7 +64,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
               borderRadius: BorderRadius.all(Radius.circular(5.0)),
               child: Container(
                 padding: EdgeInsets.all(5.0),
-                color: Theme.of(context).primaryColor,
+                color: context.theme.colorScheme.primary,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -75,7 +75,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                             : hideInfo
                                 ? "          "
                                 : contact.displayName!.trim(),
-                        style: Theme.of(context).textTheme.bodyText1),
+                        style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onPrimary)),
                     SizedBox(
                       width: 5.0,
                     ),
@@ -98,7 +98,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
       ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 255.0),
         child: ContactSelectorCustomCupertinoTextfield(
-          cursorColor: Theme.of(context).primaryColor,
+          cursorColor: context.theme.colorScheme.primary,
           focusNode: inputFieldNode,
           onSubmitted: (String done) async {
             FocusScope.of(context).requestFocus(inputFieldNode);
@@ -125,17 +125,15 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           maxLines: 1,
           autocorrect: false,
           placeholder: "  Type a name...",
-          placeholderStyle: Theme.of(context).textTheme.subtitle1!,
+          placeholderStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
-          style: Theme.of(context).textTheme.bodyText1!.apply(
-                color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
-                    ? Colors.black
-                    : Colors.white,
-                fontSizeDelta: -0.25,
-              ),
+          style: context.theme.textTheme.bodyMedium!,
           decoration: BoxDecoration(
-            color: Theme.of(context).backgroundColor,
+            border: Border.fromBorderSide(
+              BorderSide.none
+            ),
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
       ),
@@ -151,7 +149,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             padding: const EdgeInsets.only(right: 12),
             child: Text(
               "To: ",
-              style: Theme.of(context).textTheme.subtitle1,
+              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
             ),
           ),
           Flexible(
@@ -166,19 +164,6 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
               ),
             ),
           ),
-          // Padding(
-          //   padding: EdgeInsets.only(left: 12, right: 10.0),
-          //   child: FlatButton(
-          //     color: Theme.of(context).colorScheme.secondary,
-          //     onPressed: () async {
-          //       // widget.onCreate();
-          //     },
-          //     child: Text(
-          //       ChatSelector.of(context).widget.isCreator ? "Create" : "Add",
-          //       style: Theme.of(context).textTheme.bodyText1,
-          //     ),
-          //   ),
-          // )
         ],
       ),
     );

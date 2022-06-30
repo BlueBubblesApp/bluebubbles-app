@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/future_loader_dialog.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -67,43 +68,43 @@ class _QRScanState extends State<QRScan> {
         result = jsonDecode(result);
       }
     } catch (e) {
-      Get.defaultDialog(
-          title: "Error",
-          titleStyle: Theme.of(context).textTheme.headline1,
-          backgroundColor: Theme.of(context).backgroundColor.lightenPercent(),
-          buttonColor: Theme.of(context).primaryColor,
-          content: Container(
-            constraints: BoxConstraints(
-              maxHeight: 300,
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(
+              "Error",
+              style: context.theme.textTheme.titleLarge,
             ),
-            child: Center(
-              child: Container(
-                width: 300,
-                height: 200,
-                constraints: BoxConstraints(
-                  maxHeight: Get.height - 300,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SingleChildScrollView(
-                      child: Text(
-                          e.toString().contains("ROWID")
-                              ? "iMessage is not configured on the macOS server, please sign in with an Apple ID and try again."
-                              : e.toString(),
-                          textAlign: TextAlign.center)),
-                ),
+            backgroundColor: context.theme.colorScheme.properSurface,
+            content: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SingleChildScrollView(
+                  physics: ThemeSwitcher.getScrollPhysics(),
+                  child: Text(
+                      e.toString().contains("ROWID")
+                          ? "iMessage is not configured on the macOS server, please sign in with an Apple ID and try again."
+                          : e.toString(),
+                      style: context.theme.textTheme.bodyLarge)),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text("Copy", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Clipboard.setData(ClipboardData(text: e.toString()));
+                },
               ),
-            ),
-          ),
-          textConfirm: "OK",
-          textCancel: "COPY",
-          cancelTextColor: Theme.of(context).primaryColor,
-          onConfirm: () async {
-            Navigator.of(context).pop();
-          },
-          onCancel: () {
-            Clipboard.setData(ClipboardData(text: e.toString()));
-          });
+              TextButton(
+                child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
       return;
     }
 
@@ -127,17 +128,13 @@ class _QRScanState extends State<QRScan> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-            ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness:
-            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: context.theme.colorScheme.background,
         body: LayoutBuilder(builder: (context, size) {
           return SingleChildScrollView(
             child: ConstrainedBox(
@@ -162,14 +159,9 @@ class _QRScanState extends State<QRScan> {
                                     child: Container(
                                       width: context.width * 2 / 3,
                                       child: Text("Server Connection",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1!
-                                              .apply(
-                                                fontSizeFactor: 2.5,
-                                                fontWeightDelta: 2,
-                                              )
-                                              .copyWith(height: 1.5)),
+                                          style: context.theme.textTheme.displayMedium!.apply(
+                                            fontWeightDelta: 2,
+                                          ).copyWith(height: 1.35, color: context.theme.colorScheme.onBackground)),
                                     ),
                                   ),
                                 ),
@@ -181,14 +173,10 @@ class _QRScanState extends State<QRScan> {
                                         kIsWeb || kIsDesktop
                                             ? "Enter your server URL and password to access your messages."
                                             : "We've created a QR code on your server that you can scan with your phone for easy setup.\n\nAlternatively, you can manually input your URL and password.",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyText1!
-                                            .apply(
-                                              fontSizeFactor: 1.1,
-                                              color: Colors.grey,
-                                            )
-                                            .copyWith(height: 2)),
+                                        style: context.theme.textTheme.bodyLarge!.apply(
+                                          fontSizeDelta: 1.5,
+                                          color: context.theme.colorScheme.outline,
+                                        ).copyWith(height: 2)),
                                   ),
                                 ),
                               ],
@@ -202,14 +190,10 @@ class _QRScanState extends State<QRScan> {
                             child: Align(
                               alignment: Alignment.center,
                               child: Text(error,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1!
-                                      .apply(
-                                        fontSizeFactor: 1.1,
-                                        color: Colors.red,
-                                      )
-                                      .copyWith(height: 2)),
+                                  style: context.theme.textTheme.bodyLarge!.apply(
+                                    fontSizeDelta: 1.5,
+                                    color: context.theme.colorScheme.error,
+                                  ).copyWith(height: 2)),
                             ),
                           ),
                         if (error.isNotEmpty) SizedBox(height: 20),
@@ -257,10 +241,7 @@ class _QRScanState extends State<QRScan> {
                                     Padding(
                                       padding: const EdgeInsets.only(right: 0.0, left: 5.0),
                                       child: Text("Scan QR Code",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1!
-                                              .apply(fontSizeFactor: 1.1, color: Colors.white)),
+                                          style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                                     ),
                                   ],
                                 ),
@@ -285,8 +266,8 @@ class _QRScanState extends State<QRScan> {
                                   borderRadius: BorderRadius.circular(20.0),
                                 ),
                               ),
-                              backgroundColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
-                              shadowColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
+                              backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                              shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
                               maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
                               minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
                             ),
@@ -299,10 +280,10 @@ class _QRScanState extends State<QRScan> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(CupertinoIcons.text_cursor,
-                                    color: Theme.of(context).textTheme.bodyText1!.color, size: 20),
+                                    color: context.theme.colorScheme.onBackground, size: 20),
                                 SizedBox(width: 10),
                                 Text("Manual entry",
-                                    style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)),
+                                    style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
                               ],
                             ),
                           ),
@@ -312,9 +293,9 @@ class _QRScanState extends State<QRScan> {
                           child: !showManualEntry
                               ? SizedBox.shrink()
                               : Theme(
-                                  data: Theme.of(context).copyWith(
-                                      inputDecorationTheme: const InputDecorationTheme(
-                                    labelStyle: TextStyle(color: Colors.grey),
+                                  data: context.theme.copyWith(
+                                      inputDecorationTheme: InputDecorationTheme(
+                                    labelStyle: TextStyle(color: context.theme.colorScheme.outline),
                                   )),
                                   child: Column(
                                     children: [
@@ -322,17 +303,17 @@ class _QRScanState extends State<QRScan> {
                                       Container(
                                         width: context.width * 2 / 3,
                                         child: TextField(
-                                          cursorColor: Theme.of(context).primaryColor,
+                                          cursorColor: context.theme.colorScheme.primary,
                                           autocorrect: false,
                                           autofocus: true,
                                           controller: urlController,
                                           textInputAction: TextInputAction.next,
                                           decoration: InputDecoration(
                                             enabledBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Colors.grey),
+                                                borderSide: BorderSide(color: context.theme.colorScheme.outline),
                                                 borderRadius: BorderRadius.circular(20)),
                                             focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                                                borderSide: BorderSide(color: context.theme.colorScheme.primary),
                                                 borderRadius: BorderRadius.circular(20)),
                                             labelText: "URL",
                                           ),
@@ -345,7 +326,7 @@ class _QRScanState extends State<QRScan> {
                                           alignment: Alignment.centerRight,
                                           children: [
                                             TextField(
-                                              cursorColor: Theme.of(context).primaryColor,
+                                              cursorColor: context.theme.colorScheme.primary,
                                               autocorrect: false,
                                               autofocus: false,
                                               controller: passwordController,
@@ -360,10 +341,10 @@ class _QRScanState extends State<QRScan> {
                                               },
                                               decoration: InputDecoration(
                                                 enabledBorder: OutlineInputBorder(
-                                                    borderSide: BorderSide(color: Colors.grey),
+                                                    borderSide: BorderSide(color: context.theme.colorScheme.outline),
                                                     borderRadius: BorderRadius.circular(20)),
                                                 focusedBorder: OutlineInputBorder(
-                                                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                                                    borderSide: BorderSide(color: context.theme.colorScheme.primary),
                                                     borderRadius: BorderRadius.circular(20)),
                                                 labelText: "Password",
                                                 contentPadding: EdgeInsets.fromLTRB(12, 24, 40, 16),
@@ -372,7 +353,7 @@ class _QRScanState extends State<QRScan> {
                                             ),
                                             IconButton(
                                               icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility),
-                                              color: Colors.grey,
+                                              color: context.theme.colorScheme.outline,
                                               onPressed: () {
                                                 setState(() {
                                                   obscureText = !obscureText;
@@ -404,9 +385,9 @@ class _QRScanState extends State<QRScan> {
                                                   ),
                                                 ),
                                                 backgroundColor:
-                                                    MaterialStateProperty.all(Theme.of(context).backgroundColor),
+                                                    MaterialStateProperty.all(context.theme.colorScheme.background),
                                                 shadowColor:
-                                                    MaterialStateProperty.all(Theme.of(context).backgroundColor),
+                                                    MaterialStateProperty.all(context.theme.colorScheme.background),
                                                 maximumSize: MaterialStateProperty.all(Size(200, 36)),
                                                 minimumSize: MaterialStateProperty.all(Size(30, 30)),
                                               ),
@@ -418,15 +399,10 @@ class _QRScanState extends State<QRScan> {
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Icon(Icons.close, color: Theme.of(context)
-                                                          .textTheme
-                                                          .bodyText1!.color, size: 20),
+                                                  Icon(Icons.close, color: context.theme.colorScheme.onBackground, size: 20),
                                                   SizedBox(width: 10),
                                                   Text("Cancel",
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .bodyText1!
-                                                          .apply(fontSizeFactor: 1.1)),
+                                                      style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
                                                 ],
                                               ),
                                             ),
@@ -464,10 +440,7 @@ class _QRScanState extends State<QRScan> {
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
                                                   Text("Connect",
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .bodyText1!
-                                                          .apply(fontSizeFactor: 1.1, color: Colors.white)),
+                                                      style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                                                   SizedBox(width: 10),
                                                   Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                                                 ],

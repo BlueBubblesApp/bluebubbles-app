@@ -1,7 +1,8 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -14,13 +15,23 @@ class AttachmentPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context)
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
+    final materialSubtitle = context.theme
         .textTheme
-        .subtitle1
-        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+        .labelLarge
+        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
 
     return SettingsScaffold(
         title: "Attachments & Media",
@@ -46,12 +57,13 @@ class AttachmentPanel extends StatelessWidget {
                           subtitle:
                               "Automatically downloads new attachments from the server and caches them internally",
                           backgroundColor: tileColor,
+                          isThreeLine: true,
                         )),
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                     Obx(() => SettingsSwitch(
@@ -67,8 +79,8 @@ class AttachmentPanel extends StatelessWidget {
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop)
@@ -81,13 +93,14 @@ class AttachmentPanel extends StatelessWidget {
                             title: "Auto-save Attachments",
                             subtitle: "Automatically saves all attachments to gallery or downloads folder",
                             backgroundColor: tileColor,
+                            isThreeLine: true,
                           )),
                     if (!kIsWeb && !kIsDesktop)
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop)
@@ -100,6 +113,7 @@ class AttachmentPanel extends StatelessWidget {
                             title: "Ask Where to Save Attachments",
                             subtitle: "Ask where to save attachments when manually downloading",
                             backgroundColor: tileColor,
+                            isThreeLine: true,
                           )),
                   ],
                 ),
@@ -126,8 +140,8 @@ class AttachmentPanel extends StatelessWidget {
                       Container(
                         color: tileColor,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       ),
                       Obx(() => SettingsSwitch(
@@ -150,14 +164,6 @@ class AttachmentPanel extends StatelessWidget {
                       text: "Attachment Preview Quality"),
                 if (!kIsWeb)
                   SettingsSection(backgroundColor: tileColor, children: [
-                    if (!kIsWeb)
-                      Container(
-                          color: tileColor,
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                            child: Text(
-                                "Controls the resolution of attachment previews in the message screen. A higher value will make attachments show in better quality at the cost of longer load times."),
-                          )),
                     if (!kIsWeb)
                       Obx(() => SettingsSlider(
                           text: "Attachment Preview Quality",
@@ -206,6 +212,11 @@ class AttachmentPanel extends StatelessWidget {
                           min: 10,
                           max: 100,
                           divisions: 18)),
+                    if (!kIsWeb)
+                      SettingsSubtitle(
+                        subtitle: "Controls the resolution of attachment previews in the message screen. A higher value will make attachments show in better quality at the cost of longer load times.",
+                        unlimitedSpace: true,
+                      ),
                   ]),
                 if (!kIsWeb)
                   SettingsHeader(
