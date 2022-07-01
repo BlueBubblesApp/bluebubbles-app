@@ -227,7 +227,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
   /// the input [lastMessage] object.
   /// 
   /// Returns a boolean determining if we've updated the latest message
-  bool tryUpdateLastMessage(Chat chat, Message? lastMessage) {
+  bool tryUpdateLastMessage(Chat chat, Message? lastMessage, bool toggleUnread) {
     // If we don't even have a last message, return false
     if (lastMessage == null || lastMessage.dateCreated == null) return false;
 
@@ -240,7 +240,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
 
     // If the dates are equal, check the text to see if we should update it.
     // AKA, check if the text matches
-    int currentMs = chat.latestMessageDate!.millisecondsSinceEpoch;
+    int currentMs = chat.latestMessageDate?.millisecondsSinceEpoch ?? 0;
     int lastMs = lastMessage.dateCreated!.millisecondsSinceEpoch;
     if (currentMs <= lastMs) {
       didUpdate = true;
@@ -265,6 +265,11 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
       chat.latestMessageDate = lastMessage.dateCreated;
       chat.latestMessageText = newMsgText ?? MessageHelper.getNotificationText(lastMessage);
       chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText!).split(" ").length).join(" ");
+      
+      // Mark the chat as unread if we updated the last message & it's not from us
+      if (toggleUnread && !(lastMessage.isFromMe ?? false)) {
+        chat.toggleHasUnread(true);
+      }
     }
 
     return didUpdate;
@@ -275,6 +280,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
     return store.runInTransaction(TxMode.write, () {
       // Input variables
       List<Chat> inputChats = params[0];
+      bool toggleUnread = params[1];
       List<String> inputGuids = inputChats.map((e) => e.guid).toList();
 
       // Get the latest versions of the chats
@@ -292,7 +298,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
         Chat current = existingChats.firstWhere((element) => element.id == i);
 
         // Try and update the last message info
-        bool didUpdate = tryUpdateLastMessage(current, latestMessage);
+        bool didUpdate = tryUpdateLastMessage(current, latestMessage, toggleUnread);
         if (didUpdate) {
           // Add to a list to be updated in the DB
           updatedChats.add(current);

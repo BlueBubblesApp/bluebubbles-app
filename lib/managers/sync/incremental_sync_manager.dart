@@ -77,7 +77,7 @@ class IncrementalSyncManager extends SyncManager {
     // the messages have a null text, we can still account for them when we fetch.
     int serverVersion = await SettingsManager().getServerVersionCode();
     // TODO: Fix to < when done testing
-    bool isBugged = serverVersion <= 142; // Server: v1.2.0
+    bool isBugged = serverVersion < 142; // Server: v1.2.0
     print(serverVersion);
 
     // 0: Hit API endpoint to check for updated messages
@@ -114,7 +114,7 @@ class IncrementalSyncManager extends SyncManager {
     for (var i = 0; i < pages; i++) {
       addToOutput('Fetching page ${i + 1} of $pages...');
       dio.Response<dynamic> messages = await api.messages(
-          after: startTimestamp, before: syncStart, offset: i * batchSize, limit: batchSize, withQuery: ["chats"]);
+          after: startTimestamp, before: syncStart, offset: i * batchSize, limit: batchSize, withQuery: ["chats", "attachments"]);
 
       int messageCount = messages.data['data'].length;
       addToOutput('Page ${i + 1} returned $messageCount message(s)...', level: LogLevel.DEBUG);
@@ -125,6 +125,7 @@ class IncrementalSyncManager extends SyncManager {
       // 3: Enumerate the chats into cache
       Map<String, Chat> chatCache = {};
       Map<String, List<Message>> messagesToSync = {};
+      bool shouldStop = false;
       for (var msgData in messages.data['data'] as List<dynamic>) {
         for (var chat in msgData['chats']) {
           if (!chatCache.containsKey(chat['guid'])) {
@@ -132,17 +133,27 @@ class IncrementalSyncManager extends SyncManager {
           }
 
           if (!messagesToSync.containsKey(chat['guid'])) {
-            messagesToSync[chat['guid']] = [Message.fromMap(msgData)];
-          } else {
-            messagesToSync[chat['guid']]!.add(Message.fromMap(msgData));
+            messagesToSync[chat['guid']] = [];
+          }
+
+          Message msg = Message.fromMap(msgData);
+
+          // If the message is out of our date range, skip it,
+          // then break out of the loop after syncing
+          var date = msg.dateCreated!.millisecondsSinceEpoch;
+          bool skip = date > syncStart || date < startTimestamp;
+          if (!shouldStop && skip) {
+            shouldStop = true;
+          }
+
+          if (!skip) {
+            messagesToSync[chat['guid']]!.add(msg);
           }
         }
       }
 
       // 4: Sync the chats
       List<Chat> theChats = await Chat.bulkSyncChats(chatCache.values.toList());
-
-      print('chats: ${theChats.length}');
 
       // 5: Merge synced chats back into cache
       for (var chat in theChats) {
@@ -156,127 +167,25 @@ class IncrementalSyncManager extends SyncManager {
       // 6: For each chat, bulk sync the messages
       for (var item in messagesToSync.entries) {
         Chat? theChat = chatCache[item.key];
-        if (theChat == null) continue;
+        if (theChat == null || item.value.isEmpty) continue;
 
         List<Message> s = await Chat.bulkSyncMessages(theChat, item.value);
         syncedMessages += s.length;
         setProgress(syncedMessages, count);
       }
 
-      print('messages: $syncedMessages');
-
-      // If the count of the results is less than the batch size, it means
-      // we reached the end of the data (otherwise, it would return the batch size)
-      if (messageCount < batchSize) break;
+      if (shouldStop) break;
     }
 
     // If we've synced chats, we should also update the latest message
     if (syncedChats.isNotEmpty) {
-      List<Chat> updatedChats = await Chat.syncLatestMessages(syncedChats.values.toList());
+      List<Chat> updatedChats = await Chat.syncLatestMessages(syncedChats.values.toList(), true);
       await ChatBloc().updateChatPositions(updatedChats);
     }
 
     // End the sync
     await complete();
   }
-
-  // @override
-  // Future<void> start() async {
-  //   if (completer != null && !completer!.isCompleted) {
-  //     return completer!.future;
-  //   } else {
-  //     completer = Completer<void>();
-  //   }
-
-  //   super.start();
-
-  //   // Store the time we started syncing
-  //   RxInt lastSync = SettingsManager().settings.lastIncrementalSync;
-  //   syncStart = endTimestamp ?? DateTime.now().millisecondsSinceEpoch;
-  //   addToOutput("Starting incremental sync for messages since: ${lastSync.value} - $syncStart");
-
-  //   // 0: Hit API endpoint to check for updated messages
-  //   // 1: If no new updated messages, complete the sync
-  //   // 2: If there are new messages, fetch them by page
-  //   // 3: Enumerate the chats into cache
-  //   // 4: Sync the chats
-  //   // 5: Merge synced chats back into cache
-  //   // 6: For each chat, bulk sync the messages
-
-  //   // 0: Hit API endpoint to check for updated messages
-  //   dio.Response<dynamic> uMessageCountRes = await api.messageCount(
-  //     after: DateTime.fromMillisecondsSinceEpoch(lastSync.value),
-  //     before: DateTime.fromMillisecondsSinceEpoch(syncStart!),
-  //   );
-
-  //   // 1: If no new updated messages, complete the sync
-  //   int count = uMessageCountRes.data['data']['total'];
-  //   addToOutput('Found $count updated message(s) to sync...');
-  //   if (count == 0) {
-  //     return await complete();
-  //   }
-
-  //   // 2: If there are new messages, fetch them by page
-  //   int pages = (count / batchSize).ceil();
-  //   setProgress(0, count);
-
-  //   int syncedMessages = 0;
-  //   for (var i = 0; i < pages; i++) {
-  //     dio.Response<dynamic> messages = await api.messages(
-  //       after: lastSync.value,
-  //       before: syncStart!,
-  //       offset: i * batchSize,
-  //       limit: batchSize,
-  //       withQuery: ["chats"]
-  //     );
-
-  //     print("Messages: ${messages.data['data'].length}");
-
-  //     // 3: Enumerate the chats into cache
-  //     Map<String, Chat> chatCache = {};
-  //     Map<String, List<Message>> messagesToSync = {};
-  //     for (var msgData in messages.data['data'] as List<dynamic>) {
-  //       for (var chat in msgData['chats']) {
-  //         if (!chatCache.containsKey(chat['guid'])) {
-  //           chatCache[chat['guid']] = Chat.fromMap(chat);
-  //         }
-
-  //         if (!messagesToSync.containsKey(chat['guid'])) {
-  //           messagesToSync[chat['guid']] = [Message.fromMap(msgData)];
-  //         } else {
-  //           messagesToSync[chat['guid']]!.add(Message.fromMap(msgData));
-  //         }
-  //       }
-  //     }
-
-  //     // 4: Sync the chats
-  //     List<Chat> syncedChats = await Chat.bulkSyncChats(chatCache.values.toList());
-  //     print("Chats: ${syncedChats.length}");
-  //     print(messagesToSync);
-
-  //     // 5: Merge synced chats back into cache
-  //     for (var chat in syncedChats) {
-  //       if (!chatCache.containsKey(chat.guid)) continue;
-  //       chatCache[chat.guid] = chat;
-  //     }
-
-  //     // 6: For each chat, bulk sync the messages
-  //     for (var item in messagesToSync.entries) {
-  //       Chat? theChat = chatCache[item.key];
-  //       if (theChat == null) continue;
-
-  //       List<Message> s = await Chat.bulkSyncMessages(theChat, item.value);
-  //       print("RET: ${s.length}");
-  //       syncedMessages += s.length;
-  //       setProgress(syncedMessages, count);
-  //     }
-  //   }
-
-  //   print("$syncedMessages / $count");
-
-  //   // End the sync
-  //   await complete();
-  // }
 
   @override
   Future<void> complete() async {
@@ -285,7 +194,7 @@ class IncrementalSyncManager extends SyncManager {
       addToOutput("Saving last sync date: $syncStart");
 
       Settings _settingsCopy = SettingsManager().settings;
-      _settingsCopy.lastIncrementalSync.value = syncStart!;
+      _settingsCopy.lastIncrementalSync.value = syncStart;
       await SettingsManager().saveSettings(_settingsCopy);
     }
 

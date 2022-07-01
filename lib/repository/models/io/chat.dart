@@ -1047,10 +1047,10 @@ class Chat {
     return (await createAsyncTask<List<Chat>>(task)) ?? [];
   }
 
-  static Future<List<Chat>> syncLatestMessages(List<Chat> chats) async {
+  static Future<List<Chat>> syncLatestMessages(List<Chat> chats, bool toggleUnread) async {
     if (kIsWeb) throw Exception("Use socket to sync the last message on Web!");
 
-    final task = SyncLastMessages([chats]);
+    final task = SyncLastMessages([chats, toggleUnread]);
     return (await createAsyncTask<List<Chat>>(task)) ?? [];
   }
 

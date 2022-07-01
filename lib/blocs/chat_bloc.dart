@@ -148,16 +148,13 @@ class ChatBloc {
     // Top 5 is fairly arbitrary, but it's above how many (max) will
     // show in the share targets.
     if (reloadShareTargets) {
-      for (int i = 0; i < 5; i++) {
-        if (i > _chats.length) break;
-        updateShareTarget(_chats[0]);
-      }
+      ChatBloc().reloadShareTargets();
     }
   }
 
   void reloadShareTargets() {
     for (int i = 0; i < 5; i++) {
-      if (i > _chats.length) break;
+      if (i >= _chats.length) break;
       if (currentShareTargets.contains(_chats[i].guid)) continue;
       currentShareTargets.add(_chats[i].guid);
 
@@ -165,7 +162,7 @@ class ChatBloc {
         currentShareTargets = currentShareTargets.sublist(1).take(5).toList();
       }
 
-      updateShareTarget(_chats[0]);
+      updateShareTarget(_chats[i]);
     }
   }
 
