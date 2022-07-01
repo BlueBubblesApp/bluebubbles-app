@@ -1,15 +1,12 @@
 import 'dart:core';
 
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/theme_entry.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
@@ -42,29 +39,6 @@ class ThemeObject {
     this.data,
   });
 
-  factory ThemeObject.fromData(ThemeData data, String name, {bool gradientBg = false}) {
-    ThemeObject object = ThemeObject(
-      data: data.copyWith(),
-      name: name,
-      gradientBg: gradientBg,
-    );
-    object.entries = object.toEntries();
-
-    return object;
-  }
-
-  factory ThemeObject.fromMap(Map<String, dynamic> json) {
-    return ThemeObject(
-      id: json["ROWID"],
-      name: json["name"],
-      selectedLightTheme: json["selectedLightTheme"] == 1,
-      selectedDarkTheme: json["selectedDarkTheme"] == 1,
-      gradientBg: json["gradientBg"] == 1,
-      previousLightTheme: json["previousLightTheme"] == 1,
-      previousDarkTheme: json["previousDarkTheme"] == 1,
-    );
-  }
-
   bool get isPreset =>
       name == "OLED Dark" ||
       name == "Bright White" ||
@@ -85,112 +59,9 @@ class ThemeObject {
         ThemeEntry(name: ThemeColors.PrimaryColor, color: data!.primaryColor, isFont: false),
       ];
 
-  ThemeObject save({bool updateIfNotAbsent = true}) {
-    store.runInTransaction(TxMode.write, () {
-      if (data == null) {
-        fetchData();
-      }
-      if (entries.isEmpty) {
-        entries = toEntries();
-      }
-      ThemeObject? existing = ThemeObject.findOne(name!);
-      if (existing != null) {
-        id = existing.id;
-      }
-      try {
-        if (id != null && existing != null && updateIfNotAbsent) {
-          id = themeObjectBox.put(this);
-        } else if (id == null || existing == null) {
-          id = themeObjectBox.put(this);
-        }
-      } on UniqueViolationException catch (_) {}
-
-      if (isPreset && !name!.contains("Music")) return this;
-      for (ThemeEntry entry in entries) {
-        entry.save(this);
-      }
-    });
-    return this;
-  }
-
-  void delete() {
-    if (kIsWeb || isPreset || id == null) return;
-    store.runInTransaction(TxMode.write, () {
-      fetchData();
-      themeEntryBox.removeMany(entries.map((e) => e.id!).toList());
-      themeObjectBox.remove(id!);
-    });
-  }
-
-  static ThemeObject getLightTheme({bool fetchData = true}) {
-    final query = themeObjectBox.query(ThemeObject_.selectedLightTheme.equals(true)).build();
-    query.limit = 1;
-    final result = query.find().firstOrNull;
-    if (result == null) {
-      return Themes.themes[1];
-    }
-    if (fetchData) {
-      result.fetchData();
-    }
-    return result;
-  }
-
-  static ThemeObject getDarkTheme({bool fetchData = true}) {
-    final query = themeObjectBox.query(ThemeObject_.selectedDarkTheme.equals(true)).build();
-    query.limit = 1;
-    final result = query.find().firstOrNull;
-    if (result == null) {
-      return Themes.themes[0];
-    }
-    if (fetchData) {
-      result.fetchData();
-    }
-    return result;
-  }
-
-  static void setSelectedTheme({int? light, int? dark}) {
-    if (light != null) {
-      store.runInTransaction(TxMode.write, () {
-        final query = themeObjectBox.query(ThemeObject_.selectedLightTheme.equals(true)).build();
-        final result = query.findFirst();
-        query.close();
-        result?.selectedLightTheme = false;
-        result?.save();
-        final lightTheme = themeObjectBox.get(light);
-        lightTheme!.selectedLightTheme = true;
-        lightTheme.save();
-      });
-    }
-    if (dark != null) {
-      store.runInTransaction(TxMode.write, () {
-        final query = themeObjectBox.query(ThemeObject_.selectedDarkTheme.equals(true)).build();
-        final result = query.findFirst();
-        query.close();
-        result?.selectedDarkTheme = false;
-        result?.save();
-        final darkTheme = themeObjectBox.get(dark);
-        darkTheme!.selectedDarkTheme = true;
-        darkTheme.save();
-      });
-    }
-  }
-
-  static ThemeObject? findOne(String name) {
-    if (kIsWeb) return null;
-    return store.runInTransaction(TxMode.read, () {
-      final query = themeObjectBox.query(ThemeObject_.name.equals(name)).build();
-      query.limit = 1;
-      final result = query.findFirst();
-      result?.fetchData();
-      query.close();
-      return result;
-    });
-  }
-
   static List<ThemeObject> getThemes() {
-    if (kIsWeb) return Themes.themes;
     final results = themeObjectBox.getAll();
-    final list = Themes.themes;
+    final list = <ThemeObject>[];
     if (results.isNotEmpty) {
       final existing = list.map((e) => e.name);
       list.addAll(results.where((element) => !existing.contains(element.name)).map((e) => e..fetchData()));
@@ -228,16 +99,6 @@ class ThemeObject {
     }
     return entries;
   }
-
-  Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "name": name,
-        "selectedLightTheme": selectedLightTheme ? 1 : 0,
-        "selectedDarkTheme": selectedDarkTheme ? 1 : 0,
-        "gradientBg": gradientBg ? 1 : 0,
-        "previousLightTheme": previousLightTheme ? 1 : 0,
-        "previousDarkTheme": previousDarkTheme ? 1 : 0,
-      };
 
   ThemeData get themeData {
     assert(entries.length == ThemeColors.Colors.length);
@@ -282,12 +143,6 @@ class ThemeObject {
         dividerColor: data[ThemeColors.DividerColor]!.style,
         backgroundColor: data[ThemeColors.BackgroundColor]!.style,
         primaryColor: data[ThemeColors.PrimaryColor]!.style);
-  }
-
-  static bool inDarkMode(BuildContext context) {
-    return (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ||
-        (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.system &&
-            SchedulerBinding.instance.window.platformBrightness == Brightness.dark));
   }
 
   @override

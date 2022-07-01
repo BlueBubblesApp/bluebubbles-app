@@ -270,7 +270,7 @@
     },
     {
       "id": "7:1716592500251888002",
-      "lastPropertyId": "7:549408491521049277",
+      "lastPropertyId": "8:9192015144235467286",
       "name": "Handle",
       "properties": [
         {
@@ -309,6 +309,11 @@
         {
           "id": "7:549408491521049277",
           "name": "uncanonicalizedId",
+          "type": 9
+        },
+        {
+          "id": "8:9192015144235467286",
+          "name": "defaultEmail",
           "type": 9
         }
       ],
@@ -654,10 +659,41 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "16:1815690088052698449",
+      "lastPropertyId": "4:1129102363347301238",
+      "name": "ThemeStruct",
+      "properties": [
+        {
+          "id": "1:7043518911115753096",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6644283342768530799",
+          "name": "name",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "11:8452066780532720626"
+        },
+        {
+          "id": "3:8412087896868925153",
+          "name": "gradientBg",
+          "type": 1
+        },
+        {
+          "id": "4:1129102363347301238",
+          "name": "dbThemeData",
+          "type": 9
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "15:7753273527865539946",
-  "lastIndexId": "10:9160679880876705382",
+  "lastEntityId": "16:1815690088052698449",
+  "lastIndexId": "11:8452066780532720626",
   "lastRelationId": "1:7492985733214117623",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

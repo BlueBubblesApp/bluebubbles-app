@@ -76,7 +76,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       Container(
                         margin: EdgeInsets.only(left: widget.bigPin ? 18 : 2),
                         decoration: BoxDecoration(
-                          color: context.theme.colorScheme.secondary,
+                          color: context.theme.colorScheme.properSurface,
                           borderRadius: BorderRadius.circular(40),
                         ),
                         width: 10,
@@ -86,7 +86,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       Container(
                         margin: EdgeInsets.only(left: 9, bottom: 10),
                         decoration: BoxDecoration(
-                          color: context.theme.colorScheme.secondary,
+                          color: context.theme.colorScheme.properSurface,
                           borderRadius: BorderRadius.circular(40),
                         ),
                         width: 15,
@@ -107,7 +107,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        color: context.theme.colorScheme.secondary,
+                        color: context.theme.colorScheme.properSurface,
                       ),
                       child: Stack(
                         alignment: Alignment.center,
@@ -137,7 +137,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
         builder: (context, child) {
           return Container(
             decoration: BoxDecoration(
-              color: context.theme.colorScheme.secondary.lightenOrDarken(
+              color: context.theme.colorScheme.properSurface.lightenOrDarken(
                   (math.sin(animation.value + (index) * math.pi / 4).abs() * 20).clamp(1, 20).toDouble()),
               borderRadius: BorderRadius.circular(30),
             ),

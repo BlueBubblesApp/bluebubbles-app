@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -49,10 +50,14 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
           return false;
         },
         child: AlertDialog(
-          title: Text("Connecting..."),
+          title: Text(
+            "Connecting...",
+            style: context.theme.textTheme.titleLarge,
+          ),
+          backgroundColor: context.theme.colorScheme.properSurface,
           content: LinearProgressIndicator(
-            backgroundColor: Colors.grey,
-            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+            backgroundColor: context.theme.colorScheme.outline,
+            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
           ),
         ),
       );

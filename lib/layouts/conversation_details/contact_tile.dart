@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
@@ -75,7 +76,7 @@ class ContactTile extends StatelessWidget {
                 text: TextSpan(
                     children: MessageHelper.buildEmojiText(
                         getContactName(context, contact?.displayName ?? "", handle.address, currentChat: chat),
-                        Theme.of(context).textTheme.bodyText1!)),
+                        context.theme.textTheme.bodyLarge!)),
               )
             : FutureBuilder<String>(
                 future: formatPhoneNumber(handle),
@@ -83,19 +84,19 @@ class ContactTile extends StatelessWidget {
                   if (!snapshot.hasData) {
                     return Text(
                       handle.address,
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: context.theme.textTheme.bodyLarge,
                     );
                   }
 
                   return RichText(
                       text: TextSpan(
                           children: MessageHelper.buildEmojiText(
-                              snapshot.data ?? "Unknown contact details", Theme.of(context).textTheme.bodyText1!)));
+                              snapshot.data ?? "Unknown contact details", Theme.of(context).textTheme.bodyLarge!)));
                 }),
         subtitle: (contact == null || hideInfo || generateName)
             ? Text(
                 generateName ? ContactManager().getContact(handle.address)?.fakeAddress ?? "" : "",
-                style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -0.5),
+                style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
               )
             : FutureBuilder<String>(
                 future: formatPhoneNumber(handle),
@@ -103,13 +104,13 @@ class ContactTile extends StatelessWidget {
                   if (!snapshot.hasData) {
                     return Text(
                       handle.address,
-                      style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -0.5),
+                      style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
                     );
                   }
 
                   return Text(
                     snapshot.data ?? "Unknown contact details",
-                    style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -0.5),
+                    style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
                   );
                 }),
         leading: ContactAvatarWidget(
@@ -124,20 +125,19 @@ class ContactTile extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
-                    if (isEmail)
+                    if ((contact == null && isEmail) || (contact?.emails.length ?? 0) > 0)
                       ButtonTheme(
                         minWidth: 1,
                         child: TextButton(
                           style: TextButton.styleFrom(
                             shape: CircleBorder(),
-                            backgroundColor: Theme.of(context).colorScheme.secondary,
+                            backgroundColor: context.theme.colorScheme.secondary,
                           ),
-                          onPressed: () {
-                            startEmail(handle.address);
-                          },
+                          onLongPress: () => onPressContact(context, isLongPressed: true),
+                          onPressed: () => onPressContact(context),
                           child: Icon(
                               SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email,
-                              color: Theme.of(context).primaryColor,
+                              color: context.theme.colorScheme.onSecondary,
                               size: 20),
                         ),
                       ),
@@ -147,15 +147,15 @@ class ContactTile extends StatelessWidget {
                             child: TextButton(
                               style: TextButton.styleFrom(
                                 shape: CircleBorder(),
-                                backgroundColor: Theme.of(context).colorScheme.secondary,
+                                backgroundColor: context.theme.colorScheme.secondary,
                               ),
-                              onLongPress: () => onPressContactTrailing(context, longPressed: true),
-                              onPressed: () => onPressContactTrailing(context),
+                              onLongPress: () => onPressContact(context, isLongPressed: true),
+                              onPressed: () => onPressContact(context),
                               child: Icon(
                                   SettingsManager().settings.skin.value == Skins.iOS
                                       ? CupertinoIcons.phone
                                       : Icons.call,
-                                  color: Theme.of(context).primaryColor,
+                                  color: context.theme.colorScheme.onSecondary,
                                   size: 20),
                             ),
                           )
@@ -167,73 +167,88 @@ class ContactTile extends StatelessWidget {
     );
   }
 
-  void onPressContactTrailing(BuildContext context, {bool longPressed = false}) {
+  void onPressContact(BuildContext context, {bool isEmail = false, bool isLongPressed = false}) async {
+    void performAction(String address) async {
+      if (isEmail) {
+        launchUrl(Uri(scheme: "mailto", path: address));
+      } else if (await Permission.phone.request().isGranted) {
+        launchUrl(Uri(scheme: "tel", path: address));
+      }
+    }
+
     if (contact == null) {
-      makeCall(handle.address);
+      performAction(handle.address);
     } else {
-      List<String> phones = getUniqueNumbers(contact!.phones);
-      if (phones.length == 1) {
-        makeCall(contact!.phones.first);
-      } else if (handle.defaultPhone != null && !longPressed) {
-        makeCall(handle.defaultPhone!);
+      List<String> items = isEmail ? getUniqueEmails(contact!.emails) : getUniqueNumbers(contact!.phones);
+      if (items.length == 1) {
+        performAction(items.first);
+      } else if (!isEmail && handle.defaultPhone != null && !isLongPressed) {
+        performAction(handle.defaultPhone!);
+      } else if (isEmail && handle.defaultEmail != null && !isLongPressed) {
+        performAction(handle.defaultEmail!);
       } else {
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              backgroundColor: Theme.of(context).colorScheme.secondary,
+              backgroundColor: context.theme.colorScheme.properSurface,
               title:
-                  Text("Select a Phone Number", style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+              Text("Select Address", style: context.theme.textTheme.titleLarge),
               content: ObxValue<Rx<bool>>(
-                  (data) => Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          for (int i = 0; i < phones.length; i++)
-                            TextButton(
-                              child: Text(phones[i],
-                                  style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color),
-                                  textAlign: TextAlign.start),
-                              onPressed: () {
-                                if (data.value) {
-                                  handle.defaultPhone = phones[i];
-                                  handle.updateDefaultPhone(phones[i]);
-                                }
-                                makeCall(phones[i]);
-                                Navigator.of(context).pop();
+                      (data) => Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (int i = 0; i < items.length; i++)
+                        TextButton(
+                          child: Text(items[i],
+                              style: context.theme.textTheme.bodyLarge,
+                              textAlign: TextAlign.start),
+                          onPressed: () {
+                            if (data.value) {
+                              if (isEmail) {
+                                handle.defaultEmail = items[i];
+                                handle.updateDefaultEmail(items[i]);
+                              } else {
+                                handle.defaultPhone = items[i];
+                                handle.updateDefaultPhone(items[i]);
+                              }
+                            }
+                            performAction(items[i]);
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      Row(
+                        children: <Widget>[
+                          SizedBox(
+                            height: 48.0,
+                            width: 24.0,
+                            child: Checkbox(
+                              value: data.value,
+                              activeColor: context.theme.colorScheme.primary,
+                              onChanged: (bool? value) {
+                                data.value = value!;
                               },
                             ),
-                          Row(
-                            children: <Widget>[
-                              SizedBox(
-                                height: 48.0,
-                                width: 24.0,
-                                child: Checkbox(
-                                  value: data.value,
-                                  activeColor: Theme.of(context).primaryColor,
-                                  onChanged: (bool? value) {
-                                    data.value = value!;
-                                  },
-                                ),
-                              ),
-                              ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                      primary: Colors.transparent, padding: EdgeInsets.only(left: 5), elevation: 0.0),
-                                  onPressed: () {
-                                    data = data.toggle();
-                                  },
-                                  child: Text(
-                                    "Remember my selection",
-                                  )),
-                            ],
                           ),
-                          Text(
-                            "Long press the call button to reset your default selection",
-                            style: Theme.of(context).textTheme.subtitle1,
-                          )
+                          ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  primary: Colors.transparent, padding: EdgeInsets.only(left: 5), elevation: 0.0),
+                              onPressed: () {
+                                data = data.toggle();
+                              },
+                              child: Text(
+                                "Remember my selection", style: context.theme.textTheme.bodyMedium
+                              )),
                         ],
                       ),
+                      Text(
+                        "Long press the ${isEmail ? "email" : "call"} button to reset your default selection",
+                        style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                      )
+                    ],
+                  ),
                   false.obs),
             );
           },

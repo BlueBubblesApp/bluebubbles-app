@@ -8,6 +8,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
@@ -158,16 +159,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   }
 
   List<Color> getBubbleColors(Message message) {
-    List<Color> bubbleColors = message.isFromMe ?? false
-        ? [Theme.of(context).primaryColor, Theme.of(context).primaryColor]
-        : [Theme.of(context).colorScheme.secondary, Theme.of(context).colorScheme.secondary];
+    List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
     if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
       if (message.handle?.color == null) {
         bubbleColors = toColorGradient(message.handle?.address);
       } else {
         bubbleColors = [
           HexColor(message.handle!.color!),
-          HexColor(message.handle!.color!).lightenAmount(0.02),
+          HexColor(message.handle!.color!).lightenAmount(0.075),
         ];
       }
     }
@@ -240,19 +239,19 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 child: Container(
                     width: 70,
                     height: 70,
-                    color: Theme.of(context).colorScheme.secondary,
+                    color: context.theme.colorScheme.properSurface,
                     child: Center(
                       child: Text(
                         "emoji",
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText,
                       ),
                     )),
               )
             : RichText(
                 text: TextSpan(
                     children: MessageHelper.buildEmojiText(
-                        message.text!, Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 4)))),
+                        message.text!, (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(fontSizeFactor: 4)))),
       );
     } else {
       child = Stack(
@@ -340,7 +339,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                             : null,
                                         fakeSubject: widget.fakeSubject,
                                         fakeText: widget.fakeText),
-                                    style: Theme.of(context).textTheme.bodyText2,
+                                    style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText,
                                   ),
                                 ),
                               ),
@@ -353,7 +352,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                             : null,
                                         fakeSubject: widget.fakeSubject,
                                         fakeText: widget.fakeText),
-                                    style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: value),
+                                    style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(fontSizeFactor: value),
                                   ),
                                 ),
                               if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop)
@@ -391,7 +390,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                         fakeSubject: widget.fakeSubject,
                         fakeText: widget.fakeText),
                     builder: (context, snapshot) {
-                      return (kIsDesktop || kIsWeb) && !widget.message.hasAttachments &&
+                      return !widget.message.hasAttachments &&
                               ((ModalRoute.of(context)?.settings.arguments as Map?)?['hideTail'] ?? false)
                           ? Theme(
                               data: context.theme.copyWith(
@@ -409,10 +408,11 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                         fakeSubject: widget.fakeSubject,
                                         fakeText: widget.fakeText,
                                       ),
-                                  style: Theme.of(context).textTheme.bodyText2,
+                                  style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText,
                                 ),
                                 cursorWidth: 0,
                                 selectionControls: CupertinoTextSelectionControls(),
+                                style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(color: context.theme.colorScheme.onPrimary),
                               ),
                             )
                           : Padding(
@@ -429,7 +429,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                         fakeSubject: widget.fakeSubject,
                                         fakeText: widget.fakeText,
                                       ),
-                                  style: Theme.of(context).textTheme.bodyText2,
+                                  style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText,
                                 ),
                               ),
                             );
@@ -574,7 +574,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().isNotEmpty ? 0.0 : 3.0),
           child: Text(
             getContactName(context, contactTitle, widget.message.handle?.address),
-            style: Theme.of(context).textTheme.subtitle1,
+            style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -736,7 +736,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().isNotEmpty ? 0.0 : 3.0),
           child: Text(
             getContactName(context, contactTitle, widget.message.handle?.address),
-            style: Theme.of(context).textTheme.subtitle1,
+            style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -984,13 +984,13 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               ? Padding(
                                   padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
                                   child: Row(children: [
-                                    Icon(Icons.refresh, size: 10, color: Theme.of(context).primaryColor),
+                                    Icon(Icons.refresh, size: 10, color: context.theme.primaryColor),
                                     Text(
                                       " sent with $effect",
-                                      style: Theme.of(context)
+                                      style: context.theme
                                           .textTheme
-                                          .subtitle2!
-                                          .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                                          .labelSmall!
+                                          .copyWith(fontWeight: FontWeight.bold, color: context.theme.primaryColor),
                                     ),
                                   ]),
                                 )
@@ -998,10 +998,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                   padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
                                   child: Text(
                                     "↺ sent with $effect",
-                                    style: Theme.of(context)
+                                    style: context.theme
                                         .textTheme
-                                        .subtitle2!
-                                        .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                                        .labelSmall!
+                                        .copyWith(fontWeight: FontWeight.bold, color: context.theme.primaryColor),
                                   ),
                                 ),
                         ),
@@ -1018,10 +1018,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
                               child: Text(
                                 "${list.length} repl${list.length > 1 ? "ies" : "y"}",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .subtitle2!
-                                    .copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                                style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
                               ),
                             ),
                           );

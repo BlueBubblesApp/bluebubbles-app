@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
@@ -87,13 +88,16 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
         children: <Widget>[
           Text(
             widget.attachment.getFriendlySize(),
-            style: Theme.of(context).textTheme.bodyText1,
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
-          Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.cloud_download, size: 28.0),
+          SizedBox(height: 5),
+          Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.cloud_download, size: 28.0, color: context.theme.colorScheme.properOnSurface,),
+          SizedBox(height: 5),
           (widget.attachment.mimeType != null && attachmentFile.path != null)
               ? Text(
                   basename(attachmentFile.path!),
-                  style: Theme.of(context).textTheme.bodyText1,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  textAlign: TextAlign.center,
                 )
               : Container()
         ],
@@ -116,22 +120,34 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
     final bool hideAttachmentTypes =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
     if (hideAttachments && !hideAttachmentTypes) {
-      return Container(
-        alignment: Alignment.center,
-        color: Theme.of(context).colorScheme.secondary,
-        child: Text(
-          widget.attachment.mimeType ?? "Unknown",
-          textAlign: TextAlign.center,
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          alignment: Alignment.center,
+          color: context.theme.colorScheme.properSurface,
+          child: Text(
+            widget.attachment.mimeType ?? "Unknown",
+            textAlign: TextAlign.center,
+          ),
         ),
       );
     }
     if (hideAttachments) {
-      return Container(
-        color: Theme.of(context).colorScheme.secondary,
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          color: context.theme.colorScheme.properSurface,
+        ),
       );
     }
     if (kIsWeb) {
-      return buildPreview(context);
+      return ClipRRect(
+          borderRadius: BorderRadius.circular(15),
+          clipBehavior: Clip.antiAlias,
+          child: buildPreview(context)
+      );
     }
     File file = File(
       "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
@@ -140,8 +156,12 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
       return Stack(
         alignment: Alignment.center,
         children: <Widget>[
-          Container(
-            color: Theme.of(context).colorScheme.secondary,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            clipBehavior: Clip.antiAlias,
+            child: Container(
+              color: context.theme.colorScheme.properSurface,
+            ),
           ),
           Center(
             child: !Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)
@@ -168,8 +188,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
                             height: 40,
                             width: 40,
                             child: CircleProgressBar(
-                                foregroundColor: Colors.white,
-                                backgroundColor: Colors.grey,
+                                foregroundColor: context.theme.colorScheme.primary,
+                                backgroundColor: context.theme.colorScheme.outline,
                                 value: controller.progress.value?.toDouble() ?? 0));
                       });
                     }),
@@ -224,9 +244,24 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
         }
       }
 
-      return Stack(
-        children: <Widget>[
-          SizedBox(
+      return Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(15),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            ChatController? currentChat = ChatManager().activeChat;
+            Navigator.of(Get.context!).push(
+              ThemeSwitcher.buildPageRoute(
+                builder: (context) => AttachmentFullscreenViewer(
+                  currentChat: currentChat,
+                  attachment: widget.attachment,
+                  showInteractions: true,
+                ),
+              ),
+            );
+          },
+          child: SizedBox(
             child: Hero(
                 tag: widget.attachment.guid!,
                 child: (previewImage != null)
@@ -240,47 +275,17 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
             width: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
             height: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
           ),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                ChatController? currentChat = ChatManager().activeChat;
-                Navigator.of(Get.context!).push(
-                  ThemeSwitcher.buildPageRoute(
-                    builder: (context) => AttachmentFullscreenViewer(
-                      currentChat: currentChat,
-                      attachment: widget.attachment,
-                      showInteractions: true,
-                    ),
-                  ),
-                );
-              },
-            ),
-          )
-        ],
+        ),
       );
     } else if (!kIsDesktop && (widget.attachment.mimeType?.startsWith("video/") ?? false)) {
       getVideoPreview(file);
 
       return Stack(
         children: <Widget>[
-          SizedBox(
-            child: Hero(
-              tag: widget.attachment.guid!,
-              child: previewImage != null
-                  ? Image.memory(
-                      previewImage!,
-                      fit: BoxFit.cover,
-                      filterQuality: FilterQuality.low,
-                      alignment: Alignment.center,
-                    )
-                  : Container(),
-            ),
-            width: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
-            height: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
-          ),
           Material(
             color: Colors.transparent,
+            borderRadius: BorderRadius.circular(15),
+            clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: () {
                 Navigator.of(Get.context!).push(
@@ -292,6 +297,21 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
                   ),
                 );
               },
+              child: SizedBox(
+                child: Hero(
+                  tag: widget.attachment.guid!,
+                  child: previewImage != null
+                      ? Image.memory(
+                          previewImage!,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.low,
+                          alignment: Alignment.center,
+                        )
+                      : Container(),
+                ),
+                width: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
+                height: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
+              ),
             ),
           ),
           Align(
@@ -304,12 +324,16 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
         ],
       );
     } else {
-      return Container(
-        color: Theme.of(context).colorScheme.secondary,
-        child: Center(
-          child: RegularFileOpener(
-            file: file,
-            attachment: widget.attachment,
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          color: context.theme.colorScheme.properSurface,
+          child: Center(
+            child: RegularFileOpener(
+              file: file,
+              attachment: widget.attachment,
+            ),
           ),
         ),
       );

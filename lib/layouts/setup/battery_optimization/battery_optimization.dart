@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/stateful_wrapper.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:disable_battery_optimization/disable_battery_optimization.dart';
@@ -27,16 +28,13 @@ class BatteryOptimizationPage extends StatelessWidget {
         },
         child: AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
-            systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-                ? Colors.transparent
-                : Theme.of(context).backgroundColor, // navigation bar color
-            systemNavigationBarIconBrightness:
-                Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+            systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
             statusBarColor: Colors.transparent, // status bar color
-            statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
           ),
           child: Scaffold(
-            backgroundColor: Theme.of(context).backgroundColor,
+            backgroundColor: context.theme.colorScheme.background,
             body: LayoutBuilder(builder: (context, size) {
               return SingleChildScrollView(
                 child: ConstrainedBox(
@@ -57,14 +55,9 @@ class BatteryOptimizationPage extends StatelessWidget {
                                 child: Container(
                                   width: context.width * 2 / 3,
                                   child: Text("Battery Optimization",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1!
-                                          .apply(
-                                            fontSizeFactor: 2.5,
-                                            fontWeightDelta: 2,
-                                          )
-                                          .copyWith(height: 1.5)),
+                                      style: context.theme.textTheme.displayMedium!.apply(
+                                        fontWeightDelta: 2,
+                                      ).copyWith(height: 1.35, color: context.theme.colorScheme.onBackground)),
                                 ),
                               ),
                             ),
@@ -74,14 +67,10 @@ class BatteryOptimizationPage extends StatelessWidget {
                                 alignment: Alignment.centerLeft,
                                 child: Text(
                                     "We recommend disabling battery optimization for BlueBubbles to ensure you receive all your notifications.",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyText1!
-                                        .apply(
-                                          fontSizeFactor: 1.1,
-                                          color: Colors.grey,
-                                        )
-                                        .copyWith(height: 2)),
+                                    style: context.theme.textTheme.bodyLarge!.apply(
+                                      fontSizeDelta: 1.5,
+                                      color: context.theme.colorScheme.outline,
+                                    ).copyWith(height: 2)),
                               ),
                             ),
                             FutureBuilder<bool?>(
@@ -95,14 +84,10 @@ class BatteryOptimizationPage extends StatelessWidget {
                                     child: Align(
                                       alignment: Alignment.centerLeft,
                                       child: Text("Battery Optimization: ${disabled ? "Disabled" : "Enabled"}",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1!
-                                              .apply(
-                                                fontSizeFactor: 1.1,
-                                                color: disabled ? Colors.green : Colors.red,
-                                              )
-                                              .copyWith(height: 2)),
+                                          style: context.theme.textTheme.bodyLarge!.apply(
+                                            fontSizeDelta: 1.5,
+                                            color: disabled ? Colors.green : context.theme.colorScheme.error,
+                                          ).copyWith(height: 2)),
                                     ),
                                   );
                                 } else {
@@ -153,10 +138,7 @@ class BatteryOptimizationPage extends StatelessWidget {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Text("Go to settings",
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyText1!
-                                                        .apply(fontSizeFactor: 1.1, color: Colors.white)),
+                                                    style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                                                 SizedBox(width: 10),
                                                 Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                                               ],
@@ -208,7 +190,7 @@ class BatteryOptimizationPage extends StatelessWidget {
                             //               Text("Go to settings",
                             //                   style: Theme.of(context)
                             //                       .textTheme
-                            //                       .bodyText1!
+                            //                       .bodyMedium!
                             //                       .apply(fontSizeFactor: 1.1, color: Colors.white)),
                             //               SizedBox(width: 10),
                             //               Icon(Icons.arrow_forward, color: Colors.white, size: 20),
@@ -241,8 +223,8 @@ class BatteryOptimizationPage extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(20.0),
                                     ),
                                   ),
-                                  backgroundColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
-                                  shadowColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
+                                  backgroundColor: MaterialStateProperty.all(context.theme.colorScheme.background),
+                                  shadowColor: MaterialStateProperty.all(context.theme.colorScheme.background),
                                   maximumSize: MaterialStateProperty.all(Size(200, 36)),
                                   minimumSize: MaterialStateProperty.all(Size(30, 30)),
                                 ),
@@ -256,10 +238,10 @@ class BatteryOptimizationPage extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(Icons.arrow_back,
-                                        color: Theme.of(context).textTheme.bodyText1!.color, size: 20),
+                                        color: context.theme.colorScheme.onBackground, size: 20),
                                     SizedBox(width: 10),
                                     Text("Back",
-                                        style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)),
+                                        style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: context.theme.colorScheme.onBackground)),
                                   ],
                                 ),
                               ),
@@ -295,10 +277,7 @@ class BatteryOptimizationPage extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text("Next",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyText1!
-                                            .apply(fontSizeFactor: 1.1, color: Colors.white)),
+                                        style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                                     SizedBox(width: 10),
                                     Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                                   ],

@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
@@ -12,6 +13,7 @@ import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -112,10 +114,24 @@ class ServerManagementPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+    final iosSubtitle =
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
+    final materialSubtitle = context.theme
+        .textTheme
+        .labelLarge
+        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
 
     return SettingsScaffold(
       title: "Connection & Server Management",
@@ -191,8 +207,6 @@ class ServerManagementPanel extends StatelessWidget {
                         )
                     );
                   }),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty
-                      ? SettingsDivider(thickness: 0.3) : SizedBox.shrink()),
                   Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ? SettingsTile(
                     title: "Show Stats",
                     subtitle: "Show iMessage statistics",
@@ -205,21 +219,22 @@ class ServerManagementPanel extends StatelessWidget {
                       showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            backgroundColor: context.theme.backgroundColor,
+                            backgroundColor: context.theme.colorScheme.properSurface,
                             content: Padding(
                               padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
                               child: SelectableText.rich(
                                 TextSpan(
                                     children: controller.stats.entries.map((e) => TextSpan(text: "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}")).toList()
                                 ),
+                                style: context.theme.textTheme.bodyLarge,
                               ),
                             ),
-                            title: Text("Stats"),
+                            title: Text("Stats", style: context.theme.textTheme.titleLarge),
                             actions: <Widget>[
                               TextButton(
-                                child: Text("Dismiss"),
+                                child: Text("Dismiss", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                 onPressed: () {
-                                  Get.back();
+                                  Navigator.of(context).pop();
                                 },
                               ),
                             ],
@@ -231,7 +246,7 @@ class ServerManagementPanel extends StatelessWidget {
                     color: tileColor,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ) : SizedBox.shrink()),
                   SettingsTile(
@@ -257,6 +272,7 @@ class ServerManagementPanel extends StatelessWidget {
                       showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
+                            backgroundColor: context.theme.colorScheme.properSurface,
                             content: Container(
                               height: 320,
                               width: 320,
@@ -265,14 +281,16 @@ class ServerManagementPanel extends StatelessWidget {
                                 version: QrVersions.auto,
                                 size: 320,
                                 gapless: true,
+                                backgroundColor: context.theme.colorScheme.properSurface,
+                                foregroundColor: context.theme.colorScheme.properOnSurface,
                               ),
                             ),
-                            title: Text("QR Code"),
+                            title: Text("QR Code", style: context.theme.textTheme.titleLarge),
                             actions: <Widget>[
                               TextButton(
-                                child: Text("Dismiss"),
+                                child: Text("Dismiss", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                 onPressed: () {
-                                  Get.back();
+                                  Navigator.of(context).pop();
                                 },
                               ),
                             ],
@@ -378,7 +396,7 @@ class ServerManagementPanel extends StatelessWidget {
                     color: tileColor,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ) : SizedBox.shrink()),*/
                   SettingsTile(
@@ -459,7 +477,7 @@ class ServerManagementPanel extends StatelessWidget {
                       color: tileColor,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                   if (!kIsWeb)
@@ -556,7 +574,7 @@ class ServerManagementPanel extends StatelessWidget {
                     color: tileColor,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
                   Obx(() => SettingsTile(
@@ -588,7 +606,7 @@ class ServerManagementPanel extends StatelessWidget {
                         });
                       },
                       trailing: Obx(() => (!controller.isRestartingMessages.value)
-                          ? Icon(Icons.refresh, color: Colors.grey)
+                          ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
                           : Container(
                           constraints: BoxConstraints(
                             maxHeight: 20,
@@ -596,7 +614,7 @@ class ServerManagementPanel extends StatelessWidget {
                           ),
                           child: CircularProgressIndicator(
                             strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                           ))))),
                   Obx(() {
                     if (SettingsManager().settings.enablePrivateAPI.value) {
@@ -604,7 +622,7 @@ class ServerManagementPanel extends StatelessWidget {
                         color: tileColor,
                         child: Padding(
                           padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       );
                     } else {
@@ -643,7 +661,7 @@ class ServerManagementPanel extends StatelessWidget {
                             });
                           },
                           trailing: (!controller.isRestartingPrivateAPI.value)
-                              ? Icon(Icons.refresh, color: Colors.grey)
+                              ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
                               : Container(
                               constraints: BoxConstraints(
                                 maxHeight: 20,
@@ -651,7 +669,7 @@ class ServerManagementPanel extends StatelessWidget {
                               ),
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
-                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                               )));
                     } else {
                       return SizedBox.shrink();
@@ -661,7 +679,7 @@ class ServerManagementPanel extends StatelessWidget {
                     color: tileColor,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
                   Obx(() => SettingsTile(
@@ -716,7 +734,7 @@ class ServerManagementPanel extends StatelessWidget {
                         });
                       },
                       trailing: (!controller.isRestarting.value)
-                          ? Icon(Icons.refresh, color: Colors.grey)
+                          ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
                           : Container(
                           constraints: BoxConstraints(
                             maxHeight: 20,
@@ -724,14 +742,14 @@ class ServerManagementPanel extends StatelessWidget {
                           ),
                           child: CircularProgressIndicator(
                             strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                           )))),
 
                   Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? Container(
                     color: tileColor,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ) : SizedBox.shrink()),
                   Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? SettingsTile(
@@ -747,26 +765,33 @@ class ServerManagementPanel extends StatelessWidget {
                       if (response.statusCode == 200) {
                         bool available = response.data['data']['available'] ?? false;
                         Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
-                        Get.defaultDialog(
-                          title: "Update Check",
-                          titleStyle: Theme.of(context).textTheme.headline1,
-                          confirm: Container(height: 0, width: 0),
-                          cancel: Container(height: 0, width: 0),
-                          content: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                SizedBox(
-                                  height: 15.0,
-                                ),
-                                Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyText1),
-                                SizedBox(
-                                  height: 15.0,
-                                ),
-                                if (metadata.isNotEmpty)
-                                  Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
-                              ]
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: context.theme.colorScheme.properSurface,
+                            title: Text("Update Check", style: context.theme.textTheme.titleLarge),
+                            content: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  SizedBox(
+                                    height: 15.0,
+                                  ),
+                                  Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyLarge),
+                                  SizedBox(
+                                    height: 15.0,
+                                  ),
+                                  if (metadata.isNotEmpty)
+                                    Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}", style: context.theme.textTheme.bodyLarge)
+                                ]
+                            ),
+                            actions: [
+                              TextButton(
+                                  child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                  onPressed: () => Navigator.of(context).pop()
+                              ),
+                            ]
                           ),
-                          backgroundColor: Theme.of(context).backgroundColor,
                         );
                       } else {
                         showSnackbar("Error", "Failed to check for updates!");
@@ -849,8 +874,8 @@ class _SyncDialogState extends State<SyncDialog> {
         child: Center(
           child: LinearProgressIndicator(
             value: progress,
-            backgroundColor: Colors.white,
-            valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+            backgroundColor: context.theme.colorScheme.outline,
+            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
           ),
         ),
       );
@@ -862,10 +887,7 @@ class _SyncDialogState extends State<SyncDialog> {
           Navigator.of(context).pop();
         },
         child: Text(
-          "Ok",
-          style: Theme.of(context).textTheme.bodyText1!.apply(
-                color: Theme.of(context).primaryColor,
-              ),
+          "OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary),
         ),
       )
     ];
@@ -879,7 +901,7 @@ class _SyncDialogState extends State<SyncDialog> {
             padding: EdgeInsets.symmetric(horizontal: 20.0),
             child: Text(
               "Days: ${lookback?.inDays ?? "1"}",
-              style: Theme.of(context).textTheme.bodyText1,
+              style: context.theme.textTheme.bodyLarge,
               textAlign: TextAlign.center,
             ),
           ),
@@ -915,17 +937,15 @@ class _SyncDialogState extends State<SyncDialog> {
           },
           child: Text(
             "Sync",
-            style: Theme.of(context).textTheme.bodyText1!.apply(
-                  color: Theme.of(context).primaryColor,
-                ),
+            style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary),
           ),
         )
       ];
     }
 
     return AlertDialog(
-      backgroundColor: Theme.of(context).backgroundColor,
-      title: Text(title, style: Theme.of(context).textTheme.headline1),
+      backgroundColor: context.theme.colorScheme.properSurface,
+      title: Text(title, style: context.theme.textTheme.titleLarge),
       content: content,
       actions: actions,
     );

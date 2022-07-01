@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -63,17 +64,13 @@ class _SyncingMessagesState extends State<SyncingMessages> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-            ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness:
-            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: context.theme.colorScheme.background,
         body: Stack(
           alignment: Alignment.topCenter,
           children: [
@@ -93,14 +90,9 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                             child: Container(
                               width: context.width * 2 / 3,
                               child: Text(hasPlayed ? "Sync complete!" : "Syncing...",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1!
-                                      .apply(
-                                        fontSizeFactor: 2.5,
-                                        fontWeightDelta: 2,
-                                      )
-                                      .copyWith(height: 1.5)),
+                                style: context.theme.textTheme.displayMedium!.apply(
+                                  fontWeightDelta: 2,
+                                ).copyWith(height: 1.35, color: context.theme.colorScheme.onBackground)),
                             ),
                           ),
                         ),
@@ -111,7 +103,10 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         children: [
                           Text(
                             "${(progress * 100).round()}%",
-                            style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                            style: context.theme.textTheme.bodyLarge!.apply(
+                              fontSizeDelta: 1.5,
+                              color: context.theme.colorScheme.onBackground,
+                            ).copyWith(height: 2),
                           ),
                           SizedBox(height: 15),
                           Padding(
@@ -120,10 +115,8 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                               borderRadius: BorderRadius.circular(20),
                               child: LinearProgressIndicator(
                                 value: progress == 0 ? null : progress,
-                                backgroundColor: Theme.of(context).backgroundColor.computeLuminance() > 0.5
-                                    ? Colors.grey
-                                    : Colors.white,
-                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                                backgroundColor: context.theme.colorScheme.outline,
+                                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                               ),
                             ),
                           ),
@@ -134,9 +127,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(25),
-                                color: Theme.of(context).backgroundColor.computeLuminance() > 0.5
-                                    ? Theme.of(context).colorScheme.secondary.lightenPercent(50)
-                                    : Theme.of(context).colorScheme.secondary.darkenPercent(50),
+                                color: context.theme.colorScheme.properSurface
                               ),
                               padding: EdgeInsets.all(10),
                               child: ListView.builder(
@@ -146,7 +137,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                                   return Text(
                                     log.item2,
                                     style: TextStyle(
-                                      color: log.item1 == LogLevel.INFO ? Colors.grey : Colors.red,
+                                      color: log.item1 == LogLevel.INFO ? context.theme.colorScheme.properOnSurface : context.theme.colorScheme.error,
                                       fontSize: 10,
                                     ),
                                   );
@@ -212,10 +203,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                                 Padding(
                                   padding: const EdgeInsets.only(right: 0.0, left: 5.0),
                                   child: Text("Finish",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1!
-                                          .apply(fontSizeFactor: 1.2, color: Colors.white)),
+                                      style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)),
                                 ),
                               ],
                             ),

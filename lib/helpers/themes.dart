@@ -6,172 +6,143 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
 
-enum DarkThemes {
-  OLED,
-  Nord,
-}
-
-enum LightThemes {
-  Bright_White,
-}
-
 class Themes {
-  static List<ThemeObject> get themes => [
-        ThemeObject.fromData(oledDarkTheme, "OLED Dark"),
-        ThemeObject.fromData(whiteLightTheme, "Bright White"),
-        ThemeObject.fromData(nordDarkTheme, "Nord Theme"),
-        ThemeObject.fromData(whiteLightTheme, "Music Theme (Light)", gradientBg: true),
-        ThemeObject.fromData(oledDarkTheme, "Music Theme (Dark)", gradientBg: true),
-      ];
+  static List<ThemeStruct> get defaultThemes => [
+    ThemeStruct(name: "OLED Dark", themeData: oledDarkTheme),
+    ThemeStruct(name: "Bright White", themeData: whiteLightTheme),
+    ThemeStruct(name: "Nord Theme", themeData: nordDarkTheme),
+    ThemeStruct(name: "Music Theme ☀", themeData: whiteLightTheme, gradientBg: true),
+    ThemeStruct(name: "Music Theme 🌙", themeData: oledDarkTheme, gradientBg: true),
+    ...FlexScheme.values
+        .where((e) => e != FlexScheme.custom)
+        .map((e) => [
+          ThemeStruct(
+              name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} ☀",
+              themeData: FlexThemeData.light(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40).copyWith(
+                  textTheme: Typography.englishLike2021.merge(Typography.blackMountainView),
+                  splashFactory: InkSparkle.splashFactory,
+                  useMaterial3: true,
+                  extensions: [
+                    BubbleText(
+                      bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
+                        fontSize: 15,
+                        height: Typography.englishLike2021.bodyMedium!.height! * 0.85,
+                      ),
+                    ),
+                  ]
+              ),
+          ),
+          ThemeStruct(
+              name: "${describeEnum(e).split(RegExp(r"(?=[A-Z])")).join(" ").capitalize} 🌙",
+              themeData: FlexThemeData.dark(scheme: e, surfaceMode: FlexSurfaceMode.highSurfaceLowScaffold, blendLevel: 40)
+                  .copyWith(
+                  textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
+                  splashFactory: InkSparkle.splashFactory,
+                  useMaterial3: true,
+                  extensions: [
+                    BubbleText(
+                      bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
+                        fontSize: 15,
+                        height: Typography.englishLike2021.bodyMedium!.height! * 0.85,
+                      ),
+                    ),
+                  ]
+              ),
+          ),
+    ]).flattened,
+  ];
 }
 
 bool isEqual(ThemeData one, ThemeData two) {
   return one.colorScheme.secondary == two.colorScheme.secondary && one.backgroundColor == two.backgroundColor;
 }
 
-ThemeData oledDarkTheme = ThemeData(
-  primarySwatch: Colors.blue,
-  splashFactory: InkRipple.splashFactory,
-  textTheme: TextTheme(
-    headline1: TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.normal,
-      fontSize: 18,
-    ),
-    headline2: TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.normal,
-      fontSize: 14,
-    ),
-    bodyText1: TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.normal,
+ThemeData oledDarkTheme = FlexColorScheme(
+  textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: Colors.blue,
+    background: Colors.black,
+    error: Colors.red,
+    brightness: Brightness.dark,
+  ),
+  useMaterial3: true,
+).toTheme.copyWith(splashFactory: InkSparkle.splashFactory, extensions: [
+  BubbleColors(
+    iMessageBubbleColor: HexColor("1982FC"),
+    oniMessageBubbleColor: Colors.white,
+    smsBubbleColor: HexColor("43CC47"),
+    onSmsBubbleColor: Colors.white,
+    receivedBubbleColor: HexColor("323332"),
+    onReceivedBubbleColor: Colors.white,
+  ),
+  BubbleText(
+    bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
       fontSize: 15,
-    ),
-    bodyText2: TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.normal,
-      fontSize: 15,
-    ),
-    subtitle1: TextStyle(
-      color: HexColor('919191'),
-      fontSize: 14,
-      fontWeight: FontWeight.normal,
-    ),
-    subtitle2: TextStyle(
-      color: HexColor('7d7d7d'),
-      fontSize: 11,
-      fontWeight: FontWeight.normal,
+      height: Typography.englishLike2021.bodyMedium!.height! * 0.85,
     ),
   ),
-  colorScheme: ColorScheme.fromSwatch(
-    primarySwatch: Colors.blue,
-    backgroundColor: Colors.black,
-    accentColor: HexColor('26262a'),
-  ),
-  dividerColor: HexColor('27272a'),
-  backgroundColor: Colors.black,
-  splashColor: Colors.white.withOpacity(0.35),
-);
+]);
 
-ThemeData nordDarkTheme = ThemeData(
-  primarySwatch: Colors.blue,
-  splashFactory: InkRipple.splashFactory,
-  textTheme: TextTheme(
-    headline1: TextStyle(
-      color: HexColor('ECEFF4'),
-      fontWeight: FontWeight.normal,
-      fontSize: 18,
-    ),
-    headline2: TextStyle(
-      color: HexColor('E5E9F0'),
-      fontWeight: FontWeight.normal,
-      fontSize: 14,
-    ),
-    bodyText1: TextStyle(
-      color: HexColor('ECEFF4'),
-      fontWeight: FontWeight.normal,
-      fontSize: 15,
-    ),
-    bodyText2: TextStyle(
-      color: HexColor('E5E9F0'),
-      fontWeight: FontWeight.normal,
-      fontSize: 15,
-    ),
-    subtitle1: TextStyle(
-      color: HexColor('a5a5a5'),
-      fontSize: 14,
-      fontWeight: FontWeight.normal,
-    ),
-    subtitle2: TextStyle(
-      color: HexColor('b9b9b9'),
-      fontSize: 11,
-      fontWeight: FontWeight.normal,
-    ),
-  ),
+ThemeData nordDarkTheme = FlexColorScheme(
+  textTheme: Typography.englishLike2021.merge(Typography.whiteMountainView),
   colorScheme: ColorScheme.fromSwatch(
-    primarySwatch: Colors.blue,
-    backgroundColor: HexColor('2E3440'),
-    accentColor: HexColor('4C566A'),
+    primarySwatch: createMaterialColor(HexColor("5E81AC")),
+    accentColor: HexColor("88C0D0"),
+    backgroundColor: HexColor("3B4252"),
+    cardColor: HexColor("4C566A"),
+    errorColor: Colors.red,
+    brightness: Brightness.dark,
+  ).copyWith(
+    primaryContainer: HexColor("49688e"),
+    outline: Colors.grey,
   ),
-  dividerColor: HexColor('4C566A'),
-  backgroundColor: HexColor('2E3440'),
-  splashColor: Colors.white.withOpacity(0.35),
-);
-
-ThemeData whiteLightTheme = ThemeData(
-  primarySwatch: Colors.blue,
-  splashFactory: InkRipple.splashFactory,
-  textTheme: TextTheme(
-    headline1: TextStyle(
-      color: Colors.black,
-      fontWeight: FontWeight.normal,
-      fontSize: 18,
-    ),
-    headline2: TextStyle(
-      color: Colors.black,
-      fontWeight: FontWeight.normal,
-      fontSize: 14,
-    ),
-    bodyText1: TextStyle(
-      color: Colors.black,
-      fontWeight: FontWeight.normal,
+  useMaterial3: true,
+).toTheme.copyWith(splashFactory: InkSparkle.splashFactory, extensions: [
+  BubbleText(
+    bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
       fontSize: 15,
-    ),
-    bodyText2: TextStyle(
-      color: Colors.black,
-      fontWeight: FontWeight.normal,
-      fontSize: 15,
-    ),
-    subtitle1: TextStyle(
-      color: HexColor('9a9a9f'),
-      fontSize: 14,
-      fontWeight: FontWeight.normal,
-    ),
-    subtitle2: TextStyle(
-      color: HexColor('9a9a9f'),
-      fontSize: 11,
-      fontWeight: FontWeight.normal,
+      height: Typography.englishLike2021.bodyMedium!.height! * 0.85,
     ),
   ),
-  colorScheme: ColorScheme.fromSwatch(
-    primarySwatch: Colors.blue,
-    backgroundColor: Colors.white,
-    accentColor: HexColor('e5e5ea'),
-  ),
-  dividerColor: HexColor('e5e5ea').withOpacity(0.5),
-  backgroundColor: Colors.white,
-);
+]);
 
-void loadTheme(BuildContext? context, {ThemeObject? lightOverride, ThemeObject? darkOverride}) {
+ThemeData whiteLightTheme = FlexColorScheme(
+  textTheme: Typography.englishLike2021.merge(Typography.blackMountainView),
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: Colors.blue,
+    background: Colors.white,
+    error: Colors.red,
+    brightness: Brightness.light,
+  ),
+  useMaterial3: true,
+).toTheme.copyWith(splashFactory: InkSparkle.splashFactory, extensions: [
+  BubbleColors(
+      iMessageBubbleColor: HexColor("1982FC"),
+      oniMessageBubbleColor: Colors.white,
+      smsBubbleColor: HexColor("43CC47"),
+      onSmsBubbleColor: Colors.white,
+      receivedBubbleColor: HexColor("e9e9e8"),
+      onReceivedBubbleColor: Colors.black,
+  ),
+  BubbleText(
+    bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
+      fontSize: 15,
+      height: Typography.englishLike2021.bodyMedium!.height! * 0.85,
+    ),
+  ),
+]);
+
+void loadTheme(BuildContext? context, {ThemeStruct? lightOverride, ThemeStruct? darkOverride}) {
   if (context == null) return;
 
   // Set the theme to match those of the settings
-  ThemeData light = (lightOverride ?? ThemeObject.getLightTheme()).themeData;
-  ThemeData dark = (darkOverride ?? ThemeObject.getDarkTheme()).themeData;
+  ThemeData light = (lightOverride ?? ThemeStruct.getLightTheme()).data;
+  ThemeData dark = (darkOverride ?? ThemeStruct.getDarkTheme()).data;
 
   final tuple = applyMonet(light, dark);
   light = tuple.item1;
@@ -186,31 +157,27 @@ void loadTheme(BuildContext? context, {ThemeObject? lightOverride, ThemeObject? 
 Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
   if (SettingsManager().settings.monetTheming.value == Monet.harmonize && monetPalette != null) {
     light = light.copyWith(
-        primaryColor: Color(monetPalette!.primary.get(50)),
-        backgroundColor: light.backgroundColor == Colors.white
-            ? Color(monetPalette!.neutral.get(99))
-            : light.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(50))),
         colorScheme: light.colorScheme.copyWith(
-          secondary: light.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(50))),
+          primary: Color(monetPalette!.primary.get(40)),
+          onPrimary: Color(monetPalette!.primary.get(100)),
+          primaryContainer: Color(monetPalette!.primary.get(90)),
+          onPrimaryContainer: Color(monetPalette!.primary.get(10)),
+          background: light.colorScheme.background.harmonizeWith(Color(monetPalette!.primary.get(40))),
+          secondary: light.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(40))),
         ),
-        useMaterial3: SettingsManager().useMaterial3,
-        typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
-        splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
     dark = dark.copyWith(
-        primaryColor: Color(monetPalette!.primary.get(50)),
-        backgroundColor: dark.backgroundColor.harmonizeWith(Color(monetPalette!.primary.get(60))),
         colorScheme: dark.colorScheme.copyWith(
-          secondary: dark.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(60))),
+          primary: Color(monetPalette!.primary.get(80)),
+          onPrimary: Color(monetPalette!.primary.get(20)),
+          primaryContainer: Color(monetPalette!.primary.get(30)),
+          onPrimaryContainer: Color(monetPalette!.primary.get(90)),
+          background: dark.colorScheme.background.harmonizeWith(Color(monetPalette!.primary.get(80))),
+          secondary: dark.colorScheme.secondary.harmonizeWith(Color(monetPalette!.primary.get(80))),
         ),
-        useMaterial3: SettingsManager().useMaterial3,
-        typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
-        splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
   } else if (SettingsManager().isFullMonet && monetPalette != null) {
     light = light.copyWith(
-      primaryColor: Color(monetPalette!.primary.get(40)),
-      backgroundColor: Color(monetPalette!.neutral.get(99)),
       colorScheme: light.colorScheme.copyWith(
         primary: Color(monetPalette!.primary.get(40)),
         onPrimary: Color(monetPalette!.primary.get(100)),
@@ -240,13 +207,8 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
         onInverseSurface: Color(monetPalette!.neutral.get(95)),
         inversePrimary: Color(monetPalette!.primary.get(80)),
       ),
-      useMaterial3: SettingsManager().useMaterial3,
-      typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
-      splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
     dark = dark.copyWith(
-      primaryColor: Color(monetPalette!.primary.get(50)),
-      backgroundColor: Color(monetPalette!.neutral.get(10)),
       colorScheme: dark.colorScheme.copyWith(
         primary: Color(monetPalette!.primary.get(80)),
         onPrimary: Color(monetPalette!.primary.get(20)),
@@ -276,49 +238,35 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
         onInverseSurface: Color(monetPalette!.neutral.get(20)),
         inversePrimary: Color(monetPalette!.primary.get(40)),
       ),
-      useMaterial3: SettingsManager().useMaterial3,
-      typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
-      splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
-    );
-  } else {
-    light = light.copyWith(
-      useMaterial3: SettingsManager().useMaterial3,
-      typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
-      splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
-    );
-    dark = dark.copyWith(
-      useMaterial3: SettingsManager().useMaterial3,
-      typography: SettingsManager().useMaterial3 ? Typography.material2021() : null,
-      splashFactory: SettingsManager().useMaterial3 ? InkSparkle.splashFactory : null,
     );
   }
   return Tuple2(light, dark);
 }
 
-ThemeObject revertToPreviousDarkTheme() {
-  List<ThemeObject> allThemes = ThemeObject.getThemes();
-  ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
+ThemeStruct revertToPreviousDarkTheme() {
+  List<ThemeStruct> allThemes = ThemeStruct.getThemes();
+  final darkName = prefs.getString("previous-dark");
+  ThemeStruct? previous = allThemes.firstWhereOrNull((e) => e.name == darkName);
 
-  previous ??= Themes.themes.firstWhereOrNull((element) => element.name == "OLED Dark");
+  previous ??= Themes.defaultThemes.firstWhere((element) => element.name == "OLED Dark");
 
   // Remove the previous flags
-  previous!.previousDarkTheme = false;
+  prefs.remove("previous-dark");
 
-  // Save the theme and set it accordingly
-  return previous.save();
+  return previous;
 }
 
-ThemeObject revertToPreviousLightTheme() {
-  List<ThemeObject> allThemes = ThemeObject.getThemes();
-  ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
+ThemeStruct revertToPreviousLightTheme() {
+  List<ThemeStruct> allThemes = ThemeStruct.getThemes();
+  final lightName = prefs.getString("previous-light");
+  ThemeStruct? previous = allThemes.firstWhereOrNull((e) => e.name == lightName);
 
-  previous ??= Themes.themes.firstWhereOrNull((element) => element.name == "Bright White");
+  previous ??= Themes.defaultThemes.firstWhere((element) => element.name == "Bright White");
 
   // Remove the previous flags
-  previous!.previousDarkTheme = false;
+  prefs.remove("previous-light");
 
-  // Save the theme and set it accordingly
-  return previous.save();
+  return previous;
 }
 
 extension SettingsThemeData on ThemeData {
@@ -328,27 +276,76 @@ extension SettingsThemeData on ThemeData {
   bool get isMonoColorPanel {
     return SettingsManager().settings.skin.value == Skins.iOS && isOled;
   }
-  Color get tileColor {
-    if (SettingsManager().isFullMonet) {
-      return colorScheme.surfaceVariant;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && (backgroundColor == Colors.black || isEqual(this, nordDarkTheme))) {
-      return headerColor;
-    }
-    if ((colorScheme.secondary.computeLuminance() < backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(this, whiteLightTheme))) {
-      return backgroundColor;
-    } else {
-      return colorScheme.secondary;
-    }
+}
 
+@immutable
+class BubbleColors extends ThemeExtension<BubbleColors> {
+  const BubbleColors({
+    required this.iMessageBubbleColor,
+    required this.oniMessageBubbleColor,
+    required this.smsBubbleColor,
+    required this.onSmsBubbleColor,
+    required this.receivedBubbleColor,
+    required this.onReceivedBubbleColor,
+  });
+
+  final Color? iMessageBubbleColor;
+  final Color? oniMessageBubbleColor;
+  final Color? smsBubbleColor;
+  final Color? onSmsBubbleColor;
+  final Color? receivedBubbleColor;
+  final Color? onReceivedBubbleColor;
+
+  @override
+  BubbleColors copyWith({Color? iMessageBubbleColor, Color? oniMessageBubbleColor, Color? smsBubbleColor, Color? onSmsBubbleColor, Color? receivedBubbleColor, Color? onReceivedBubbleColor}) {
+    return BubbleColors(
+      iMessageBubbleColor: iMessageBubbleColor ?? this.iMessageBubbleColor,
+      oniMessageBubbleColor: oniMessageBubbleColor ?? this.oniMessageBubbleColor,
+      smsBubbleColor: smsBubbleColor ?? this.smsBubbleColor,
+      onSmsBubbleColor: onSmsBubbleColor ?? this.onSmsBubbleColor,
+      receivedBubbleColor: receivedBubbleColor ?? this.receivedBubbleColor,
+      onReceivedBubbleColor: onReceivedBubbleColor ?? this.onReceivedBubbleColor,
+    );
   }
-  Color get headerColor {
-    if ((colorScheme.secondary.computeLuminance() < backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(this, whiteLightTheme))) {
-      return colorScheme.secondary;
-    } else {
-      return backgroundColor;
+
+  @override
+  BubbleColors lerp(ThemeExtension<BubbleColors>? other, double t) {
+    if (other is! BubbleColors) {
+      return this;
     }
+    return BubbleColors(
+      iMessageBubbleColor: Color.lerp(iMessageBubbleColor, other.iMessageBubbleColor, t),
+      oniMessageBubbleColor: Color.lerp(oniMessageBubbleColor, other.oniMessageBubbleColor, t),
+      smsBubbleColor: Color.lerp(smsBubbleColor, other.smsBubbleColor, t),
+      onSmsBubbleColor: Color.lerp(onSmsBubbleColor, other.onSmsBubbleColor, t),
+      receivedBubbleColor: Color.lerp(receivedBubbleColor, other.receivedBubbleColor, t),
+      onReceivedBubbleColor: Color.lerp(onReceivedBubbleColor, other.onReceivedBubbleColor, t),
+    );
+  }
+}
+
+@immutable
+class BubbleText extends ThemeExtension<BubbleText> {
+  const BubbleText({
+    required this.bubbleText,
+  });
+
+  final TextStyle bubbleText;
+
+  @override
+  BubbleText copyWith({TextStyle? bubbleText}) {
+    return BubbleText(
+      bubbleText: bubbleText ?? this.bubbleText,
+    );
+  }
+
+  @override
+  BubbleText lerp(ThemeExtension<BubbleText>? other, double t) {
+    if (other is! BubbleText) {
+      return this;
+    }
+    return BubbleText(
+      bubbleText: TextStyle.lerp(bubbleText, other.bubbleText, t)!,
+    );
   }
 }

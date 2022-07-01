@@ -1,22 +1,17 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
-
-class CustomAvatarPanelBinding implements Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<CustomAvatarPanelController>(() => CustomAvatarPanelController());
-  }
-}
 
 class CustomAvatarPanelController extends GetxController {
   late Settings _settingsCopy;
@@ -34,11 +29,22 @@ class CustomAvatarPanelController extends GetxController {
   }
 }
 
-class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
+class CustomAvatarPanel extends StatelessWidget {
+  final controller = Get.put(CustomAvatarPanelController());
   @override
   Widget build(BuildContext context) {
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
 
     return SettingsScaffold(
       title: "Custom Avatars",
@@ -60,7 +66,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
                           "Loading chats...",
-                          style: Theme.of(context).textTheme.subtitle1,
+                          style: context.theme.textTheme.labelLarge,
                         ),
                       ),
                       buildProgressIndicator(context, size: 15),
@@ -77,7 +83,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                   padding: EdgeInsets.only(top: 50.0),
                   child: Text(
                     "You have no chats :(",
-                    style: Theme.of(context).textTheme.subtitle1,
+                    style: context.theme.textTheme.labelLarge,
                   ),
                 ),
               ),
@@ -98,10 +104,9 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                              backgroundColor: Theme.of(context).colorScheme.secondary,
+                              backgroundColor: context.theme.colorScheme.properSurface,
                               title: Text("Custom Avatar",
-                                  style:
-                                  TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                  style: context.theme.textTheme.titleLarge),
                               content: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
@@ -109,25 +114,17 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                 children: [
                                   Text(
                                       "You have already set a custom avatar for this chat. What would you like to do?",
-                                      style: Theme.of(context).textTheme.bodyText1),
+                                      style: context.theme.textTheme.bodyLarge),
                                 ],
                               ),
                               actions: <Widget>[
                                 TextButton(
-                                    child: Text("Cancel",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .subtitle1!
-                                            .apply(color: Theme.of(context).primaryColor)),
+                                    child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                     onPressed: () {
                                       Navigator.of(context).pop();
                                     }),
                                 TextButton(
-                                    child: Text("Reset",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .subtitle1!
-                                            .apply(color: Theme.of(context).primaryColor)),
+                                    child: Text("Reset", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                     onPressed: () {
                                       File file = File(ChatBloc().chats[index].customAvatarPath!);
                                       file.delete();
@@ -136,11 +133,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                       Get.back();
                                     }),
                                 TextButton(
-                                    child: Text("Set New",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .subtitle1!
-                                            .apply(color: Theme.of(context).primaryColor)),
+                                    child: Text("Set New", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                     onPressed: () {
                                       Navigator.of(context).pop();
                                       CustomNavigator.pushSettings(

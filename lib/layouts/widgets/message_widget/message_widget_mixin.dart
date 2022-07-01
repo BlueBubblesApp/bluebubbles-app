@@ -1,5 +1,7 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -55,43 +57,36 @@ abstract class MessageWidgetMixin {
             SettingsManager().settings.hideMessageContent.value &&
             !generateContent);
 
-    TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
+    TextStyle? textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText;
     if (!message!.isFromMe!) {
       if (SettingsManager().settings.colorfulBubbles.value) {
         if (!isNullOrEmpty(colors)!) {
           bool dark = colors![0].computeLuminance() < 0.179;
           if (!dark) {
-            textStyle = Theme.of(context)
-                .textTheme
-                .bodyText2!
+            textStyle = context.theme.extension<BubbleText>()!.bubbleText
                 .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
           } else {
-            textStyle = Theme.of(context).textTheme.bodyText2;
-            if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
+            textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText;
+            if (hideContent) textStyle = textStyle.apply(color: Colors.transparent);
           }
         } else {
-          textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+          textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
               color: hideContent
                   ? Colors.transparent
                   : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
         }
-      } else if (SettingsManager().isFullMonet) {
-        textStyle = Theme.of(context).textTheme.bodyText2!.apply(
-            color: hideContent
-                ? Colors.transparent
-                : Theme.of(context).colorScheme.onSecondary);
       } else if (hideContent) {
-        textStyle = textStyle!.apply(color: Colors.transparent);
+        textStyle = textStyle.apply(color: Colors.transparent);
+      } else {
+        textStyle = textStyle.apply(color: context.theme.colorScheme.properOnSurface);
       }
     } else {
-      textStyle = textStyle!.apply(
+      textStyle = textStyle.apply(
           color: hideContent
               ? Colors.transparent
-              : Theme.of(context).primaryColor.computeLuminance() > 0.8
-                  ? Colors.black
-                  : Colors.white);
+              : context.theme.colorScheme.onPrimary);
     }
-    if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
+    if (colorOverride != null && !hideContent) textStyle = textStyle.apply(color: colorOverride);
     if ((!isEmptyString(message.text) || !isEmptyString(message.subject))) {
       RegExp exp = RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
@@ -104,8 +99,8 @@ abstract class MessageWidgetMixin {
       }
       if (!isNullOrEmpty(message.subject)!) {
         TextStyle _textStyle = message.isFromMe!
-            ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
-            : textStyle!.apply(fontWeightDelta: 2);
+            ? textStyle.apply(color: context.theme.colorScheme.onPrimary, fontWeightDelta: 2)
+            : textStyle.apply(fontWeightDelta: 2);
         if (hideContent) {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
@@ -121,12 +116,12 @@ abstract class MessageWidgetMixin {
           if (i == 0) {
             textSpans.addAll(MessageHelper.buildEmojiText(
               message.text!.substring(0, linkIndexMatches[i]),
-              textStyle!,
+              textStyle,
             ));
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
             textSpans.addAll(MessageHelper.buildEmojiText(
               message.text!.substring(linkIndexMatches[i - 1], message.text!.length),
-              textStyle!,
+              textStyle,
             ));
           } else if (i - 1 >= 0) {
             String text = message.text!.substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
@@ -143,13 +138,13 @@ abstract class MessageWidgetMixin {
 
                       await launchUrlString(url);
                     },
-                  style: textStyle!.apply(decoration: TextDecoration.underline),
+                  style: textStyle.apply(decoration: TextDecoration.underline),
                 ),
               );
             } else {
               textSpans.addAll(MessageHelper.buildEmojiText(
                 text,
-                textStyle!,
+                textStyle,
               ));
             }
           }
@@ -157,7 +152,7 @@ abstract class MessageWidgetMixin {
       } else {
         textSpans.addAll(MessageHelper.buildEmojiText(
           message.text!,
-          textStyle!,
+          textStyle,
         ));
       }
 
@@ -169,15 +164,15 @@ abstract class MessageWidgetMixin {
             TextSpan(
                 text: "$generatedSubject\n",
                 style: message.isFromMe!
-                    ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
-                    : textStyle!.apply(fontWeightDelta: 2)),
+                    ? textStyle.apply(color: context.theme.colorScheme.onPrimary, fontWeightDelta: 2)
+                    : textStyle.apply(fontWeightDelta: 2)),
           TextSpan(text: generatedText, style: textStyle),
         ];
       }
     } else {
       textSpans.addAll(MessageHelper.buildEmojiText(
         MessageHelper.getNotificationText(message),
-        textStyle!,
+        textStyle,
       ));
     }
 
@@ -195,52 +190,49 @@ abstract class MessageWidgetMixin {
             SettingsManager().settings.hideMessageContent.value &&
             !generateContent);
 
-    TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
+    TextStyle? textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText;
     if (message == null) return [];
     if (!message.isFromMe!) {
       if (SettingsManager().settings.colorfulBubbles.value) {
         if (!isNullOrEmpty(colors)!) {
           bool dark = colors![0].computeLuminance() < 0.179;
           if (!dark) {
-            textStyle = Theme.of(context)
-                .textTheme
-                .bodyText2!
+            textStyle = context.theme.extension<BubbleText>()!.bubbleText
                 .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
           } else {
-            textStyle = Theme.of(context).textTheme.bodyText2;
-            if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
+            textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText;
+            if (hideContent) textStyle = textStyle.apply(color: Colors.transparent);
           }
         } else {
-          textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+          textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
               color: hideContent
                   ? Colors.transparent
                   : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
         }
-      } else if (SettingsManager().isFullMonet) {
-        textStyle = Theme.of(context).textTheme.bodyText2!.apply(
-            color: hideContent
-                ? Colors.transparent
-                : Theme.of(context).colorScheme.onSecondary);
       } else if (hideContent) {
-        textStyle = textStyle!.apply(color: Colors.transparent);
+        textStyle = textStyle.apply(color: Colors.transparent);
+      } else {
+        textStyle = textStyle.apply(color: context.theme.colorScheme.properOnSurface);
       }
     } else {
-      textStyle = textStyle!.apply(
+      textStyle = textStyle.apply(
           color: hideContent
               ? Colors.transparent
-              : Theme.of(context).primaryColor.computeLuminance() > 0.8
-                  ? Colors.black
-                  : Colors.white);
+              : context.theme.colorScheme.onPrimary);
     }
-    if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
+    if (colorOverride != null && !hideContent) textStyle = textStyle.apply(color: colorOverride);
     if ((!isEmptyString(message.text) || !isEmptyString(message.subject))) {
       RegExp exp = RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
       List<Tuple2<String, int>> linkIndexMatches = <Tuple2<String, int>>[];
       if (!kIsWeb && !kIsDesktop) {
         if (ChatManager().activeChat?.mlKitParsedText[message.guid!] == null) {
-          ChatManager().activeChat?.mlKitParsedText[message.guid!] =
-              await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english).annotateText(message.text!);
+          try {
+            ChatManager().activeChat?.mlKitParsedText[message.guid!] =
+                await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english).annotateText(message.text!);
+          } catch (ex) {
+            Logger.warn('Failed to extract entities using mlkit! Error: ${ex.toString()}');
+          }
         }
         final entities = ChatManager().activeChat?.mlKitParsedText[message.guid!] ?? [];
         List<EntityAnnotation> normalizedEntities = [];
@@ -275,8 +267,8 @@ abstract class MessageWidgetMixin {
       }
       if (!isNullOrEmpty(message.subject)!) {
         TextStyle _textStyle = message.isFromMe!
-            ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
-            : textStyle!.apply(fontWeightDelta: 2);
+            ? textStyle.apply(color: context.theme.colorScheme.onPrimary, fontWeightDelta: 2)
+            : textStyle.apply(fontWeightDelta: 2);
         if (hideContent) {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
@@ -292,12 +284,12 @@ abstract class MessageWidgetMixin {
           if (i == 0) {
             textSpans.addAll(MessageHelper.buildEmojiText(
               message.text!.substring(0, linkIndexMatches[i].item2),
-              textStyle!,
+              textStyle,
             ));
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
             textSpans.addAll(MessageHelper.buildEmojiText(
               message.text!.substring(linkIndexMatches[i - 1].item2, message.text!.length),
-              textStyle!,
+              textStyle,
             ));
           } else if (i - 1 >= 0) {
             String type = linkIndexMatches[i].item1;
@@ -323,13 +315,13 @@ abstract class MessageWidgetMixin {
                         await launchUrl(Uri(scheme: "mailto", path: text));
                       }
                     },
-                  style: textStyle!.apply(decoration: TextDecoration.underline),
+                  style: textStyle.apply(decoration: TextDecoration.underline),
                 ),
               );
             } else {
               textSpans.addAll(MessageHelper.buildEmojiText(
                 text,
-                textStyle!,
+                textStyle,
               ));
             }
           }
@@ -337,7 +329,7 @@ abstract class MessageWidgetMixin {
       } else {
         textSpans.addAll(MessageHelper.buildEmojiText(
           message.text!,
-          textStyle!,
+          textStyle,
         ));
       }
 
@@ -349,15 +341,15 @@ abstract class MessageWidgetMixin {
             TextSpan(
                 text: "$generatedSubject\n",
                 style: message.isFromMe!
-                    ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
-                    : textStyle!.apply(fontWeightDelta: 2)),
+                    ? textStyle.apply(color: context.theme.colorScheme.onPrimary, fontWeightDelta: 2)
+                    : textStyle.apply(fontWeightDelta: 2)),
           TextSpan(text: generatedText, style: textStyle),
         ];
       }
     } else {
       textSpans.addAll(MessageHelper.buildEmojiText(
         MessageHelper.getNotificationText(message),
-        textStyle!,
+        textStyle,
       ));
     }
 

@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:get/get_utils/src/extensions/context_extensions.dart';
+import 'package:window_manager/window_manager.dart';
 
 class TitleBarWrapper extends StatelessWidget {
   TitleBarWrapper({Key? key, required this.child, this.hideInSplitView = false}) : super(key: key);
@@ -53,22 +54,22 @@ class WindowButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     WindowButtonColors buttonColors = WindowButtonColors(
-        iconNormal: context.theme.primaryColor,
-        mouseOver: context.theme.primaryColor,
-        mouseDown: context.theme.primaryColorDark,
-        iconMouseOver: context.theme.colorScheme.secondary,
-        iconMouseDown: context.theme.primaryColorLight);
+        iconNormal: context.theme.colorScheme.primary,
+        mouseOver: context.theme.colorScheme.primary,
+        mouseDown: context.theme.colorScheme.primaryContainer,
+        iconMouseOver: context.theme.colorScheme.onPrimary,
+        iconMouseDown: context.theme.colorScheme.onPrimaryContainer);
 
     WindowButtonColors closeButtonColors = WindowButtonColors(
-        mouseOver: Color(0xFFD32F2F),
-        mouseDown: Color(0xFFB71C1C),
-        iconNormal: context.theme.primaryColor,
-        iconMouseOver: Colors.white);
+        mouseOver: context.theme.colorScheme.errorContainer,
+        mouseDown: context.theme.colorScheme.onError,
+        iconNormal: context.theme.colorScheme.primary,
+        iconMouseOver: context.theme.colorScheme.onErrorContainer);
     return Row(
       children: [
         MinimizeWindowButton(
           colors: buttonColors,
-          onPressed: () => SettingsManager().settings.minimizeToTray.value ? appWindow.hide() : appWindow.minimize(),
+          onPressed: () async => SettingsManager().settings.minimizeToTray.value ? await WindowManager.instance.hide() : await WindowManager.instance.minimize(),
           animate: true,
         ),
         MaximizeWindowButton(
@@ -77,7 +78,7 @@ class WindowButtons extends StatelessWidget {
         ),
         CloseWindowButton(
           colors: closeButtonColors,
-          onPressed: () => SettingsManager().settings.closeToTray.value ? appWindow.hide() : appWindow.close(),
+          onPressed: () async => SettingsManager().settings.closeToTray.value ? await WindowManager.instance.hide() : await WindowManager.instance.close(),
           animate: true,
         ),
       ],

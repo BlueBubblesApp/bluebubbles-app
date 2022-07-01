@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -25,13 +26,13 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: context.theme.colorScheme.background,
         body: LayoutBuilder(
           builder: (context, size) {
             return SingleChildScrollView(
@@ -54,10 +55,9 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                                 width: context.width * 2 / 3,
                                 child: Text(
                                     "Sync Messages",
-                                    style: Theme.of(context).textTheme.bodyText1!.apply(
-                                      fontSizeFactor: 2.5,
+                                    style: context.theme.textTheme.displayMedium!.apply(
                                       fontWeightDelta: 2,
-                                    ).copyWith(height: 1.5)
+                                    ).copyWith(height: 1.35, color: context.theme.colorScheme.onBackground),
                                 ),
                               ),
                             ),
@@ -68,10 +68,10 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                   "We will now download the first ${numberOfMessages == 1 ? "message" : "${numberOfMessages.toString().split(".").first} messages"} for each of your chats.\nYou can see more messages by simply scrolling up in the chat.",
-                                  style: Theme.of(context).textTheme.bodyText1!.apply(
-                                    fontSizeFactor: 1.1,
-                                    color: Colors.grey,
-                                  ).copyWith(height: 2)
+                                  style: context.theme.textTheme.bodyLarge!.apply(
+                                    fontSizeDelta: 1.5,
+                                    color: context.theme.colorScheme.outline,
+                                  ).copyWith(height: 2),
                               ),
                             ),
                           ),
@@ -81,9 +81,9 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                   "Note: If the syncing gets stuck, try reducing the number of messages to sync to 1.",
-                                  style: Theme.of(context).textTheme.bodyText1!.apply(
-                                    color: Colors.grey,
-                                  ).copyWith(height: 1.5)
+                                  style: context.theme.textTheme.bodyLarge!.apply(
+                                    color: context.theme.colorScheme.outline,
+                                  ).copyWith(height: 1.5),
                               ),
                             ),
                           ),
@@ -92,9 +92,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(25),
-                          color: Theme.of(context).backgroundColor.computeLuminance() > 0.5
-                              ? Theme.of(context).colorScheme.secondary.lightenPercent(50)
-                              : Theme.of(context).colorScheme.secondary.darkenPercent(50),
+                          color: context.theme.colorScheme.properSurface,
                         ),
                         child: Column(
                           children: [
@@ -102,7 +100,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                               padding: const EdgeInsets.all(8.0),
                               child: Text(
                                 "Sync Options",
-                                style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.25),
+                                style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -110,9 +108,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                               padding: const EdgeInsets.all(8.0),
                               child: Text(
                                 "Number of Messages to Sync Per Chat: $numberOfMessages",
-                                style: Theme.of(context).textTheme.bodyText1!.apply(
-                                  color: Colors.grey,
-                                ).copyWith(height: 1.5),
+                                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface).copyWith(height: 1.5),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -140,17 +136,15 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                                 children: [
                                   Text(
                                     "Skip empty chats",
-                                    style: Theme.of(context).textTheme.bodyText1!.apply(
-                                      color: Colors.grey,
-                                    ).copyWith(height: 1.5),
+                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface).copyWith(height: 1.5),
                                     textAlign: TextAlign.center,
                                   ),
                                   Switch(
                                     value: skipEmptyChats,
-                                    activeColor: Theme.of(context).primaryColor,
-                                    activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                                    inactiveTrackColor: Theme.of(context).primaryColor.withAlpha(75),
-                                    inactiveThumbColor: Theme.of(context).textTheme.bodyText1!.color,
+                                    activeColor: context.theme.colorScheme.primary,
+                                    activeTrackColor: context.theme.colorScheme.primaryContainer,
+                                    inactiveTrackColor: context.theme.colorScheme.onSurfaceVariant,
+                                    inactiveThumbColor: context.theme.colorScheme.onBackground,
                                     onChanged: (bool value) {
                                       if (!mounted) return;
 
@@ -173,17 +167,15 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                                   children: [
                                     Text(
                                       "Save sync log to downloads",
-                                      style: Theme.of(context).textTheme.bodyText1!.apply(
-                                        color: Colors.grey,
-                                      ).copyWith(height: 1.5),
+                                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface).copyWith(height: 1.5),
                                       textAlign: TextAlign.center,
                                     ),
                                     Switch(
                                       value: saveToDownloads,
-                                      activeColor: Theme.of(context).primaryColor,
-                                      activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                                      inactiveTrackColor: Theme.of(context).primaryColor.withAlpha(75),
-                                      inactiveThumbColor: Theme.of(context).textTheme.bodyText1!.color,
+                                      activeColor: context.theme.colorScheme.primary,
+                                      activeTrackColor: context.theme.colorScheme.primaryContainer,
+                                      inactiveTrackColor: context.theme.colorScheme.onSurfaceVariant,
+                                      inactiveThumbColor: context.theme.colorScheme.onBackground,
                                       onChanged: (bool value) {
                                         if (!mounted) return;
 
@@ -243,7 +235,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                               SizedBox(width: 10),
                               Text(
                                   "Start Sync",
-                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)
+                                  style: context.theme.textTheme.bodyLarge!.apply(fontSizeFactor: 1.1, color: Colors.white)
                               ),
                             ],
                           ),

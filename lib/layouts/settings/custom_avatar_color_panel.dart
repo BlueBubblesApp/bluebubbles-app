@@ -1,22 +1,17 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-class CustomAvatarColorPanelBinding implements Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<CustomAvatarColorPanelController>(() => CustomAvatarColorPanelController());
-  }
-}
 
 class CustomAvatarColorPanelController extends GetxController {
   late Settings _settingsCopy;
@@ -60,11 +55,23 @@ class CustomAvatarColorPanelController extends GetxController {
   }
 }
 
-class CustomAvatarColorPanel extends GetView<CustomAvatarColorPanelController> {
+class CustomAvatarColorPanel extends StatelessWidget {
+  final controller = Get.put(CustomAvatarColorPanelController());
+
   @override
   Widget build(BuildContext context) {
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
 
     return SettingsScaffold(
       title: "Custom Avatar Colors",
@@ -83,7 +90,7 @@ class CustomAvatarColorPanel extends GetView<CustomAvatarColorPanelController> {
                     padding: EdgeInsets.all(30),
                     child: Text(
                       "No avatars have been customized! To get started, turn on colorful avatars and tap an avatar in the conversation details page.",
-                      style: Theme.of(context).textTheme.subtitle1?.copyWith(height: 1.5),
+                      style: context.theme.textTheme.bodyLarge,
                       textAlign: TextAlign.center,
                     )),
               for (Widget handleWidget in controller.handleWidgets) handleWidget

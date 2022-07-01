@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -202,8 +203,8 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
                         width: 40,
                         child: CircleProgressBar(
                           value: content.progress.value?.toDouble() ?? 0,
-                          backgroundColor: Colors.grey,
-                          foregroundColor: Colors.white,
+                          backgroundColor: context.theme.colorScheme.outline,
+                          foregroundColor: context.theme.colorScheme.properOnSurface,
                         ),
                       ),
                     ),
@@ -216,7 +217,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
                             alignment: Alignment.center,
                             child: Text(
                               content.attachment.mimeType,
-                              style: Theme.of(context).textTheme.bodyText1,
+                              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -230,9 +231,12 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
         );
       });
     } else {
-      return Text(
-        "Error loading",
-        style: Theme.of(context).textTheme.bodyText1,
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(
+          "Error loading",
+          style: context.theme.textTheme.bodyLarge,
+        ),
       );
       //     return Container();
     }

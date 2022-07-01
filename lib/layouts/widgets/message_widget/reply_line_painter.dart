@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +40,7 @@ class LinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint();
-    paint.color = context.theme.dividerColor;
+    paint.color = context.theme.colorScheme.properSurface;
     paint.style = PaintingStyle.stroke;
     paint.strokeWidth = 3;
 
