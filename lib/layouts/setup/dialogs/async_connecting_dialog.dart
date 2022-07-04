@@ -1,21 +1,22 @@
-import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
+import 'package:bluebubbles/layouts/setup/dialogs/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class FutureLoaderDialog extends StatefulWidget {
-  FutureLoaderDialog({Key? key, required this.onConnect, required this.future, this.showErrorDialog = true})
+class AsyncConnectingDialog extends StatefulWidget {
+  AsyncConnectingDialog({Key? key, required this.onConnect, required this.future, this.showErrorDialog = true})
       : super(key: key);
   final Function(bool, Object?) onConnect;
   final Future<dio.Response> future;
   final bool showErrorDialog;
 
   @override
-  State<FutureLoaderDialog> createState() => _FutureLoaderDialogState();
+  State<AsyncConnectingDialog> createState() => _AsyncConnectingDialogState();
 }
 
-class _FutureLoaderDialogState extends State<FutureLoaderDialog> {
+class _AsyncConnectingDialogState extends OptimizedState<AsyncConnectingDialog> {
   @override
   void initState() {
     super.initState();

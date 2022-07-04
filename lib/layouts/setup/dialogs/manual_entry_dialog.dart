@@ -1,50 +1,72 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
-import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
+import 'package:bluebubbles/layouts/setup/dialogs/connecting_dialog.dart';
+import 'package:bluebubbles/layouts/setup/dialogs/failed_to_scan_dialog.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
 
-class TextInputURL extends StatefulWidget {
-  TextInputURL({Key? key, required this.onConnect, required this.onClose}) : super(key: key);
+class ManualEntryDialog extends StatefulWidget {
+  ManualEntryDialog({Key? key, required this.onConnect, required this.onClose}) : super(key: key);
   final Function() onConnect;
   final Function() onClose;
 
   @override
-  State<TextInputURL> createState() => _TextInputURLState();
+  State<ManualEntryDialog> createState() => _ManualEntryDialogState();
 }
 
-class _TextInputURLState extends State<TextInputURL> {
+class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
   bool connecting = false;
-  late TextEditingController urlController;
-  late TextEditingController passwordController;
+  final TextEditingController urlController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
   String? error;
 
-  @override
-  void initState() {
-    super.initState();
-    urlController = TextEditingController();
-    passwordController = TextEditingController();
-  }
-
   void connect(String url, String password) async {
-    SocketManager().closeSocket(force: true);
-    Settings copy = SettingsManager().settings;
-    String? addr = sanitizeServerAddress(address: url);
-    if (addr == null) {
-      error = "Server address is invalid!";
-      if (mounted) setState(() {});
+    if (kIsWeb && url.startsWith("http://")) {
+      error = "HTTP URLs are not supported on Web! You must use an HTTPS URL.";
+      setState(() {});
+      return;
+    }
+    // Check if the URL is valid
+    bool isValid = url.isURL;
+    if (url.contains(":") && !isValid) {
+      if (":".allMatches(url).length == 2) {
+        final newUrl = url.split(":")[1].split("/").last;
+        isValid = newUrl.isIPv6 || newUrl.isIPv4;
+      } else {
+        final newUrl = url.split(":").first;
+        isValid = newUrl.isIPv6 || newUrl.isIPv4;
+      }
+    }
+    // the getx regex only allows extensions up to 6 characters in length
+    // this is a workaround for that
+    if (!isValid && url.split(".").last.isAlphabetOnly && url.split(".").last.length > 6) {
+      final newUrl = url.split(".").sublist(0, url.split(".").length - 1).join(".");
+      isValid = ("$newUrl.com").isURL;
+    }
+
+    // If the URL is invalid, or the password is invalid, show an error
+    if (!isValid || password.isEmpty) {
+      error = "Please enter a valid URL and password!";
+      setState(() {});
       return;
     }
 
-    copy.serverAddress.value = addr;
-    copy.guidAuthKey.value = password;
-    await SettingsManager().saveSettings(copy);
+    String? addr = sanitizeServerAddress(address: url);
+    if (addr == null) {
+      error = "Server address is invalid!";
+      setState(() {});
+      return;
+    }
+
+    SettingsManager().settings.serverAddress.value = addr;
+    SettingsManager().settings.guidAuthKey.value = password;
+    SettingsManager().settings.save();
     try {
       SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     } catch (e) {
@@ -153,12 +175,12 @@ class _TextInputURLState extends State<TextInputURL> {
         ],
       );
     } else if (error != null) {
-      return FailedToScan(
+      return FailedToScanDialog(
         title: "An error occured while trying to retreive data!",
         exception: error,
       );
     } else {
-      return ConnectingAlert(
+      return ConnectingDialog(
         onConnect: (bool result) {
           if (result) {
             retreiveFCMData();

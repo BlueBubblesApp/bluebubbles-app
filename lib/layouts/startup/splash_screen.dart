@@ -1,5 +1,5 @@
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
-import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
+import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
