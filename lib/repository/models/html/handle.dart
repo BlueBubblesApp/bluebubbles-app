@@ -8,6 +8,7 @@ class Handle {
   String address;
   String? country;
   String? color;
+  String? defaultEmail;
   String? defaultPhone;
   String? uncanonicalizedId;
 
@@ -17,6 +18,7 @@ class Handle {
     this.address = "",
     this.country,
     this.color,
+    this.defaultEmail,
     this.defaultPhone,
     this.uncanonicalizedId,
   });
@@ -28,6 +30,7 @@ class Handle {
       address: json["address"],
       country: json.containsKey("country") ? json["country"] : null,
       color: json.containsKey("color") ? json["color"] : null,
+      defaultEmail: json['defaultEmail'],
       defaultPhone: json['defaultPhone'],
       uncanonicalizedId: json.containsKey("uncanonicalizedId") ? json["uncanonicalizedId"] : null,
     );
@@ -50,6 +53,12 @@ class Handle {
 
   Handle updateDefaultPhone(String newPhone) {
     defaultPhone = newPhone;
+    save();
+    return this;
+  }
+
+  Handle updateDefaultEmail(String newEmail) {
+    defaultEmail = newEmail;
     save();
     return this;
   }
@@ -77,6 +86,7 @@ class Handle {
         "address": address,
         "country": country,
         "color": color,
+        "defaultEmail": defaultEmail,
         "defaultPhone": defaultPhone,
         "uncanonicalizedId": uncanonicalizedId,
       };
