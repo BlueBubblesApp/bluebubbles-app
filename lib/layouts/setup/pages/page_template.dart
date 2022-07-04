@@ -265,7 +265,7 @@ class PageButtons extends StatelessWidget {
                       builder: (context, _, anim) {
                         return Padding(
                           padding: EdgeInsets.only(left: anim),
-                          child: Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                          child: const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                         );
                       },
                     ),

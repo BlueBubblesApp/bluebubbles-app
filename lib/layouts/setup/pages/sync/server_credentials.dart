@@ -19,7 +19,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:simple_animations/stateless_animation/custom_animation.dart';
 
 class ServerCredentials extends StatefulWidget {
   @override
@@ -29,9 +28,7 @@ class ServerCredentials extends StatefulWidget {
 class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
   final TextEditingController urlController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final CustomAnimationControl animController = CustomAnimationControl.mirror;
   final controller = Get.find<SetupViewController>();
-  final Tween<double> tween = Tween<double>(begin: 0, end: 5);
 
   bool showManualEntry = false;
 
@@ -79,15 +76,8 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CustomAnimation<double>(
-                        control: animController,
-                        tween: tween,
-                        duration: Duration(milliseconds: 600),
-                        curve: Curves.easeOut,
-                        builder: (context, _, anim) {
-                          return const Icon(CupertinoIcons.camera, color: Colors.white, size: 20);
-                        },
-                      ),
+                      const Icon(CupertinoIcons.camera, color: Colors.white, size: 20),
+                      const SizedBox(width: 10),
                       Padding(
                         padding: const EdgeInsets.only(right: 0.0, left: 5.0),
                         child: Text("Scan QR Code",

@@ -9,13 +9,13 @@ import 'package:bluebubbles/layouts/setup/pages/setup_checks/mac_setup_check.dar
 import 'package:bluebubbles/layouts/setup/pages/sync/sync_progress.dart';
 import 'package:bluebubbles/layouts/setup/pages/welcome/welcome_page.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SetupViewController extends StatefulController {
   final pageController = PageController(initialPage: 0);
@@ -187,9 +187,9 @@ class SetupPages extends StatelessWidget {
       child: PageView(
         onPageChanged: (page) {
           // skip pages if the things required are already complete
-          if (!kIsWeb && !kIsDesktop && page == 1 && controller.currentPage == 0) {
-            ContactManager().canAccessContacts().then((canAccess) {
-              if (canAccess) {
+          if (!kIsWeb && !kIsDesktop && page == 1 && controller.currentPage == 1) {
+            Permission.contacts.status.then((status) {
+              if (status.isGranted) {
                 controller.pageController.nextPage(
                   duration: Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
@@ -197,7 +197,7 @@ class SetupPages extends StatelessWidget {
               }
             });
           }
-          if (!kIsWeb && !kIsDesktop && page == 2 && controller.currentPage == 1) {
+          if (!kIsWeb && !kIsDesktop && page == 2 && controller.currentPage == 2) {
             DisableBatteryOptimization.isAllBatteryOptimizationDisabled.then((isDisabled) {
               if (isDisabled ?? false) {
                 controller.pageController.nextPage(
