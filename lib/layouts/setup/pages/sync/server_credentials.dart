@@ -463,7 +463,7 @@ class PasswordField extends StatefulWidget {
 }
 
 class _PasswordFieldState extends OptimizedState<PasswordField> {
-  bool obscureText = false;
+  bool obscureText = true;
 
   @override
   Widget build(BuildContext context) {
