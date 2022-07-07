@@ -20,7 +20,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/cupertino_conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/material_conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/samsung_conversation_list.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
+import 'package:bluebubbles/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -165,7 +165,7 @@ class ConversationListState extends State<ConversationList> {
               Navigator.of(context).push(
                 ThemeSwitcher.buildPageRoute(
                   builder: (BuildContext context) {
-                    return SettingsPanel();
+                    return SettingsPage();
                   },
                 ),
               );
