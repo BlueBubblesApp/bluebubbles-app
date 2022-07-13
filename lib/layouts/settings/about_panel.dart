@@ -22,10 +22,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_html/html.dart' as html;
 
 class AboutPanel extends StatelessWidget {
-  // Not sure how to do this other than manually yet
-  final desktopVersion = "1.9.100.0";
-  final desktopPre = false;
-
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
@@ -526,9 +522,12 @@ class AboutPanel extends StatelessWidget {
                                                                   : "N/A"}",
                                                           style: context.theme.textTheme.bodyLarge),
                                                     if (kIsDesktop)
-                                                      Text(
-                                                        "${desktopVersion}_${Platform.operatingSystem.capitalizeFirst!}${desktopPre ? "_Beta" : ""}",
-                                                        style: context.theme.textTheme.bodyLarge,
+                                                      FutureBuilder<PackageInfo>(
+                                                        future: PackageInfo.fromPlatform(),
+                                                        builder: (context, snapshot) => Text(
+                                                          "${snapshot.data?.version}_${Platform.operatingSystem.capitalizeFirst!}",
+                                                          style: context.theme.textTheme.bodyLarge,
+                                                        ),
                                                       ),
                                                   ],
                                                 ),
