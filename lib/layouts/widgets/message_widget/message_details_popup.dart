@@ -433,6 +433,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               EventDispatcher().emit("focus-keyboard", widget.message);
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Reply",
@@ -466,6 +467,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               }
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Download to Device",
@@ -541,6 +543,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text("Copy", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
               trailing: Icon(
@@ -653,6 +656,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               }
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Download Original to Device",
@@ -688,6 +692,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open Direct Message",
@@ -713,6 +718,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               showReplyThread(context, widget.message, widget.messageBloc);
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "View Thread",
@@ -761,6 +767,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Start Conversation",
@@ -808,6 +815,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Forward",
@@ -835,6 +843,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               popDetails();
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Re-download from Server",
@@ -868,6 +877,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               popDetails();
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Share",
@@ -983,6 +993,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             popDetails();
           },
           child: ListTile(
+            mouseCursor: SystemMouseCursors.click,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               "Delete",
@@ -1068,6 +1079,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                           name: 'Popup Menu');
                     },
                     child: ListTile(
+                      mouseCursor: SystemMouseCursors.click,
                       dense: !kIsDesktop && !kIsWeb,
                       title: Text("More...", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
                       trailing: Icon(
