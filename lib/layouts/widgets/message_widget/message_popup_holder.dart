@@ -153,7 +153,8 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       return VerticalSplitView(
           allowResize: false,
           left: GestureDetector(onTap: () => Navigator.pop(Get.context ?? context)),
-          right: popup
+          right: popup,
+        dividerWidth: 0,
       );
     } else {
       return TitleBarWrapper(child: popup);
