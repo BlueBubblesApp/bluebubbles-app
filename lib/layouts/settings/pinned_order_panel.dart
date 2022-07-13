@@ -10,11 +10,18 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
 class PinnedOrderPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) =>
+      _backgroundColor.value = effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background);
+    }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
@@ -22,8 +29,8 @@ class PinnedOrderPanel extends StatelessWidget {
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
-      child: Scaffold(
-        backgroundColor: context.theme.colorScheme.background,
+      child: Obx(() => Scaffold(
+        backgroundColor: _backgroundColor.value,
         appBar: PreferredSize(
           preferredSize: Size(CustomNavigator.width(context), 80),
           child: ClipRRect(
@@ -31,7 +38,7 @@ class PinnedOrderPanel extends StatelessWidget {
               child: AppBar(
                 systemOverlayStyle: ThemeData.estimateBrightnessForColor(context.theme.colorScheme.background) == Brightness.dark
                     ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-                toolbarHeight: 50,
+                toolbarHeight: kIsDesktop ? 80 : 50,
                 elevation: 0,
                 scrolledUnderElevation: 3,
                 surfaceTintColor: context.theme.colorScheme.primary,
@@ -116,7 +123,7 @@ class PinnedOrderPanel extends StatelessWidget {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 }

@@ -37,6 +37,7 @@ import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
+import 'package:collection/collection.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_dart/firebase_dart.dart';
@@ -109,6 +110,7 @@ final RxBool downloadingFont = false.obs;
 final RxnDouble progress = RxnDouble();
 final RxnInt totalSize = RxnInt();
 late final CorePalette? monetPalette;
+Color? windowsAccentColor;
 
 String? _recentIntent;
 
@@ -187,7 +189,7 @@ Future<Null> initApp(bool isBubble) async {
     if (basename(appData.absolute.path) == "bluebubbles") {
       Directory oldAppData =
       Platform.isWindows ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app")) : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
-      if (oldAppData.existsSync()) {
+      if (oldAppData.existsSync() && !appData.existsSync()) {
         Logger.info("Copying appData to new directory");
         copyDirectory(oldAppData, appData);
         Logger.info("Deleting old appData directory");
@@ -388,6 +390,10 @@ Future<Null> initApp(bool isBubble) async {
         await WindowManager.instance.setTitle('BlueBubbles');
         await WindowManager.instance.show();
       });
+
+      if (Platform.isWindows) {
+        windowsAccentColor = await DynamicColorPlugin.getAccentColor();
+      }
     }
     if (!kIsWeb) {
       try {
@@ -422,7 +428,7 @@ Future<Null> initApp(bool isBubble) async {
         .getDarkTheme()
         .data;
 
-    final tuple = applyMonet(light, dark);
+    final tuple = Platform.isWindows ? applyWindowsAccent(light, dark) : applyMonet(light, dark);
     light = tuple.item1;
     dark = tuple.item2;
 
@@ -896,9 +902,38 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
     ));
 
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      // await WindowEffects.setEffect(color: context.theme.backgroundColor);
-    });
+    if (kIsDesktop) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+        await WindowEffects.setEffect(color: context.theme.backgroundColor);
+        EventDispatcher().stream.listen((Map<String, dynamic> event) async {
+          if (!event.containsKey("type")) return;
+
+          if (event["type"] == 'theme-update') {
+            await WindowEffects.setEffect(color: context.theme.backgroundColor);
+          }
+
+          if (event["type"] == 'popup-pushed') {
+            bool popup = event["data"] as bool;
+            if (popup) {
+              SettingsManager().settings.windowEffect.value = WindowEffect.disabled;
+            } else {
+              SettingsManager().settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((effect) => effect.toString() == prefs.getString('window-effect')) ?? WindowEffect.aero;
+            }
+          }
+        });
+      });
+    }
+
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _backgroundColor.value =
+          effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+        }
+      });
+    }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -917,8 +952,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           StartIncrementalSyncIntent: StartIncrementalSyncAction(),
           GoBackIntent: GoBackAction(context),
         },
-        child: Scaffold(
-          backgroundColor: context.theme.colorScheme.background,
+        child: Obx(() => Scaffold(
+          backgroundColor: _backgroundColor.value,
           body: Builder(
             builder: (BuildContext context) {
               if (SettingsManager().settings.finishedSetup.value) {
@@ -953,7 +988,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               }
             },
           ),
-        ),
+        )),
       ),
     );
   }

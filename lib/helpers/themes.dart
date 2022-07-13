@@ -9,7 +9,9 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:material_color_utilities/material_color_utilities.dart';
 import 'package:tuple/tuple.dart';
+import 'package:universal_io/io.dart';
 
 class Themes {
   static List<ThemeStruct> get defaultThemes => [
@@ -144,7 +146,7 @@ void loadTheme(BuildContext? context, {ThemeStruct? lightOverride, ThemeStruct? 
   ThemeData light = (lightOverride ?? ThemeStruct.getLightTheme()).data;
   ThemeData dark = (darkOverride ?? ThemeStruct.getDarkTheme()).data;
 
-  final tuple = applyMonet(light, dark);
+  final tuple = Platform.isWindows ? applyWindowsAccent(light, dark) : applyMonet(light, dark);
   light = tuple.item1;
   dark = tuple.item2;
 
@@ -237,6 +239,39 @@ Tuple2<ThemeData, ThemeData> applyMonet(ThemeData light, ThemeData dark) {
         inverseSurface: Color(monetPalette!.neutral.get(90)),
         onInverseSurface: Color(monetPalette!.neutral.get(20)),
         inversePrimary: Color(monetPalette!.primary.get(40)),
+      ),
+    );
+  }
+  return Tuple2(light, dark);
+}
+
+Tuple2<ThemeData, ThemeData> applyWindowsAccent(ThemeData light, ThemeData dark) {
+  if (windowsAccentColor == null) {
+    return Tuple2(light, dark);
+  }
+
+  Hct color = Hct.fromInt(windowsAccentColor!.value);
+  TonalPalette tonalPalette = TonalPalette.of(color.hue, color.chroma);
+
+  if (SettingsManager().settings.useWindowsAccent.value) {
+    light = light.copyWith(
+      colorScheme: light.colorScheme.copyWith(
+        primary: Color(tonalPalette.get(40)),
+        onPrimary: Color(tonalPalette.get(100)),
+        primaryContainer: Color(tonalPalette.get(90)),
+        onPrimaryContainer: Color(tonalPalette.get(10)),
+        background: light.colorScheme.background.harmonizeWith(Color(tonalPalette.get(40))),
+        secondary: light.colorScheme.secondary.harmonizeWith(Color(tonalPalette.get(40))),
+      ),
+    );
+    dark = dark.copyWith(
+      colorScheme: dark.colorScheme.copyWith(
+        primary: Color(tonalPalette.get(80)),
+        onPrimary: Color(tonalPalette.get(20)),
+        primaryContainer: Color(tonalPalette.get(30)),
+        onPrimaryContainer: Color(tonalPalette.get(90)),
+        background: dark.colorScheme.background.harmonizeWith(Color(tonalPalette.get(80))),
+        secondary: dark.colorScheme.secondary.harmonizeWith(Color(tonalPalette.get(80))),
       ),
     );
   }

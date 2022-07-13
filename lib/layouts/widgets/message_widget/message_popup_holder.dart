@@ -90,6 +90,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       });
     }
 
+    EventDispatcher().emit('popup-pushed', true);
     widget.popupPushed.call(true);
     await Navigator.push(
       Get.context ?? context,
@@ -118,6 +119,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         opaque: false,
       ),
     );
+    EventDispatcher().emit('popup-pushed', false);
     widget.popupPushed.call(false);
     if (keyboardStatus || kIsDesktop || kIsWeb) EventDispatcher().emit('focus-keyboard', null);
     if (mounted) {

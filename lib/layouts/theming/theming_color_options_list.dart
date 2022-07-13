@@ -16,8 +16,10 @@ import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
+import 'package:universal_io/io.dart';
 
 class ThemingColorOptionsList extends StatefulWidget {
   ThemingColorOptionsList({Key? key, required this.isDarkMode, required this.controller}) : super(key: key);
@@ -62,7 +64,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   showSnackbar("Error", "Please use a unique name for your new theme");
                 } else {
                   Navigator.of(_context).pop();
-                  final tuple = applyMonet(currentTheme.data, currentTheme.data);
+                  final tuple = Platform.isWindows ? applyWindowsAccent(currentTheme.data, currentTheme.data) :
+                      applyMonet(currentTheme.data, currentTheme.data);
                   ThemeData finalData = currentTheme.data;
                   if (widget.isDarkMode) {
                     finalData = tuple.item2;
@@ -144,12 +147,23 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
       headerColor = tileColor;
       tileColor = temp;
     }
+
+    final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? headerColor : Colors.transparent).obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _headerColor.value = effect != WindowEffect.disabled ? Colors.transparent : headerColor;
+        }
+      });
+    }
+
     final length = currentTheme.colors(widget.isDarkMode, returnMaterialYou: false).keys.where((e) => e != "outline").length ~/ 2 + 1;
     return CustomScrollView(
       physics: ThemeSwitcher.getScrollPhysics(),
       slivers: <Widget>[
         SliverToBoxAdapter(
-          child: SettingsOptions<ThemeStruct>(
+          child: Obx(() => SettingsOptions<ThemeStruct>(
             title: "Selected Theme",
             initial: currentTheme,
             options: allThemes
@@ -158,8 +172,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
               ..addAll(allThemes.where((a) => widget.isDarkMode ? a.name.contains("🌙") : a.name.contains("☀")))
               ..add(ThemeStruct(name: "Divider2"))
               ..addAll(allThemes.where((a) => !widget.isDarkMode ? a.name.contains("🌙") : a.name.contains("☀"))),
-            backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
-            secondaryColor: SettingsManager().settings.skin.value == Skins.Material ? headerColor : tileColor,
+            backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : _headerColor.value,
+            secondaryColor: SettingsManager().settings.skin.value == Skins.Material ? _headerColor.value : tileColor,
             textProcessing: (struct) => struct.name.toUpperCase(),
             useCupertino: false,
             materialCustomWidgets: (struct) => struct.name.contains("Divider") ? Divider(color: context.theme.colorScheme.outline, thickness: 2, height: 2) : Row(
@@ -288,7 +302,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
 
               EventDispatcher().emit('theme-update', null);
             },
-          ),
+          )),
         ),
         SliverToBoxAdapter(
             child: SettingsSwitch(

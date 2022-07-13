@@ -25,6 +25,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -93,13 +94,37 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
   }
 
   Widget buildChatList(BuildContext context, bool showAltLayout) {
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+        ? context.theme.colorScheme.background
+        : Colors.transparent)
+        .obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _backgroundColor.value =
+          effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+        }
+      });
+    }
     bool showArchived = widget.parent.widget.showArchivedChats;
     bool showUnknown = widget.parent.widget.showUnknownSenders;
     Brightness brightness = context.theme.colorScheme.brightness;
     return Obx(
       () => Scaffold(
         appBar: kIsWeb || kIsDesktop
-            ? null
+            ? (showArchived || showUnknown)
+                ? AppBar(
+                    leading: buildBackButton(context),
+                    elevation: 0,
+                    systemOverlayStyle:
+                        brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+                    backgroundColor: _backgroundColor.value,
+                    centerTitle: true,
+                    title: Text(showArchived ? "Archive" : "Unknown Senders",
+                        style: context.theme.textTheme.titleLarge),
+                  )
+                : null
             : PreferredSize(
                 preferredSize: Size(
                   (showAltLayout) ? CustomNavigator.width(context) * 0.33 : CustomNavigator.width(context),
@@ -123,41 +148,44 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                             elevation: 0,
                             backgroundColor: headerColor.value,
                             centerTitle: true,
-                            systemOverlayStyle:
-                                brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+                            systemOverlayStyle: brightness == Brightness.dark
+                                ? SystemUiOverlayStyle.light
+                                : SystemUiOverlayStyle.dark,
                             title: Text(
                               showArchived
                                   ? "Archive"
                                   : showUnknown
                                       ? "Unknown Senders"
                                       : "Messages",
-                              style: context.textTheme.titleMedium!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                              style: context.textTheme.titleMedium!
+                                  .copyWith(color: context.theme.colorScheme.properOnSurface),
                             ),
                           ),
-                          firstChild: !showArchived && !showUnknown ? AppBar(
-                            leading: Container(),
-                            elevation: 0,
-                            systemOverlayStyle:
-                                brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-                            backgroundColor: context.theme.colorScheme.background,
-                          ) : AppBar(
-                            leading: buildBackButton(context),
-                            elevation: 0,
-                            systemOverlayStyle:
-                            brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-                            backgroundColor: context.theme.colorScheme.background,
-                            centerTitle: true,
-                            title: Text(
-                                showArchived
-                                    ? "Archive"
-                                    : "Unknown Senders",
-                                style: context.theme.textTheme.titleLarge),
-                          ),
+                          firstChild: !showArchived && !showUnknown
+                              ? Obx(() => AppBar(
+                                    leading: Container(),
+                                    elevation: 0,
+                                    systemOverlayStyle: brightness == Brightness.dark
+                                        ? SystemUiOverlayStyle.light
+                                        : SystemUiOverlayStyle.dark,
+                                    backgroundColor: _backgroundColor.value,
+                                  ))
+                              : Obx(() => AppBar(
+                                    leading: buildBackButton(context),
+                                    elevation: 0,
+                                    systemOverlayStyle: brightness == Brightness.dark
+                                        ? SystemUiOverlayStyle.light
+                                        : SystemUiOverlayStyle.dark,
+                                    backgroundColor: _backgroundColor.value,
+                                    centerTitle: true,
+                                    title: Text(showArchived ? "Archive" : "Unknown Senders",
+                                        style: context.theme.textTheme.titleLarge),
+                                  )),
                         ),
                       )),
                 ),
               ),
-        backgroundColor: context.theme.colorScheme.background,
+        backgroundColor: _backgroundColor.value,
         extendBodyBehindAppBar: !showArchived && !showUnknown,
         body: ScrollbarWrapper(
           showScrollbar: true,
@@ -170,16 +198,12 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                   : ThemeManager().scrollPhysics,
               slivers: <Widget>[
                 if (!showArchived && !showUnknown)
-                  SliverAppBar(
-                    leading: null,
-                    backgroundColor: Colors.transparent,
-                    pinned: false,
-                    centerTitle: true,
-                    automaticallyImplyLeading: false,
-                    title: Column(
+                  SliverToBoxAdapter(
+                    child: Column(
                       children: <Widget>[
                         Container(
-                          margin: EdgeInsets.only(left: 10, right: 10),
+                          margin: EdgeInsets.only(
+                              top: (kIsDesktop ? 40 : kToolbarHeight + 30), left: 20, right: 20, bottom: 5),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: <Widget>[
@@ -517,6 +541,20 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
   }
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+            ? context.theme.colorScheme.background
+            : Colors.transparent)
+        .obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _backgroundColor.value =
+              effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+        }
+      });
+    }
+
     return VerticalSplitView(
       initialRatio: 0.4,
       minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
@@ -572,13 +610,14 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
               pages: [
                 CupertinoPage(
                   name: "initial",
-                  child: Scaffold(
-                    backgroundColor: context.theme.colorScheme.background,
-                    extendBodyBehindAppBar: true,
-                    body: Center(
-                      child: Container(
-                          child: Text("Select a chat from the list",
-                              style: context.theme.textTheme.bodyLarge)),
+                  child: Obx(
+                    () => Scaffold(
+                      backgroundColor: _backgroundColor.value,
+                      extendBodyBehindAppBar: true,
+                      body: Center(
+                        child: Container(
+                            child: Text("Select a chat from the list", style: context.theme.textTheme.bodyLarge)),
+                      ),
                     ),
                   ),
                 ),

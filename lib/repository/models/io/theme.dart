@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
+import 'package:universal_io/io.dart';
 
 @Entity()
 class ThemeStruct {
@@ -199,38 +200,32 @@ class ThemeStruct {
               color: Color(map["textTheme"]["titleLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["titleLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["titleLarge"]["fontSize"],
-              letterSpacing: typography.titleLarge!.letterSpacing! * 0,
-            ),
+            ).apply(letterSpacingFactor: 0),
             bodyLarge: typography.bodyLarge!.copyWith(
               color: Color(map["textTheme"]["bodyLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["bodyLarge"]["fontSize"],
-              letterSpacing: typography.bodyLarge!.letterSpacing! * 0,
-            ),
+            ).apply(letterSpacingFactor: 0),
             bodyMedium: typography.bodyMedium!.copyWith(
               color: Color(map["textTheme"]["bodyMedium"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
               fontSize: map["textTheme"]["bodyMedium"]["fontSize"],
-              letterSpacing: typography.bodyMedium!.letterSpacing! * 0,
-            ),
+            ).apply(letterSpacingFactor: 0),
             bodySmall: typography.bodySmall!.copyWith(
               color: Color(map["textTheme"]["bodySmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodySmall"]["fontWeight"]],
               fontSize: map["textTheme"]["bodySmall"]["fontSize"],
-              letterSpacing: typography.bodySmall!.letterSpacing! * 0,
-            ),
+            ).apply(letterSpacingFactor: 0),
             labelLarge: typography.labelLarge!.copyWith(
               color: Color(map["textTheme"]["labelLarge"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["labelLarge"]["fontWeight"]],
               fontSize: map["textTheme"]["labelLarge"]["fontSize"],
-              letterSpacing: typography.labelLarge!.letterSpacing! * 0,
-            ),
+            ).apply(letterSpacingFactor: 0),
             labelSmall: typography.labelSmall!.copyWith(
               color: Color(map["textTheme"]["labelSmall"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["labelSmall"]["fontWeight"]],
               fontSize: map["textTheme"]["labelSmall"]["fontSize"],
-              letterSpacing: typography.labelSmall!.letterSpacing! * 0,
-            ),
+            ).apply(letterSpacingFactor: 0),
           ),
           colorScheme: ColorScheme(
             primary: Color(map["colorScheme"]["primary"]),
@@ -278,9 +273,8 @@ class ThemeStruct {
               color: Color(map["textTheme"]["bodyMedium"]["color"]),
               fontWeight: FontWeight.values[map["textTheme"]["bodyMedium"]["fontWeight"]],
               fontSize: map["textTheme"]["bubbleText"]?["fontSize"] ?? 15,
-              letterSpacing: typography.bodyMedium!.letterSpacing! * 0,
               height: typography.bodyMedium!.height! * 0.85,
-            ),
+            ).apply(letterSpacingFactor: 0),
           ),
         ])
     );
@@ -291,7 +285,7 @@ class ThemeStruct {
   Map<String, Color> colors(bool dark, {bool returnMaterialYou = true}) {
     ThemeData finalData = data;
     if (returnMaterialYou) {
-      final tuple = applyMonet(data, data);
+      final tuple = Platform.isWindows ? applyWindowsAccent(data, data) : applyMonet(data, data);
       if (dark) {
         finalData = tuple.item2;
       } else {

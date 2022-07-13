@@ -36,6 +36,7 @@ import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -286,8 +287,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         } catch (_) {}
       }
 
-      if (chat == null &&
-          (await SettingsManager().isMinBigSur)) {
+      if (chat == null && (await SettingsManager().isMinBigSur)) {
         if (searchQuery.isNotEmpty) {
           selected.add(UniqueContact(address: searchQuery, displayName: searchQuery));
           resetCursor();
@@ -444,7 +444,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       child: Text(
                         "\u{2193} Scroll to bottom \u{2193}",
                         textAlign: TextAlign.center,
-                        style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSecondary),
+                        style:
+                            context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSecondary),
                       ),
                     ),
                   ),
@@ -671,77 +672,94 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             ),
           ],
         ));
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+            ? Colors.transparent
+            : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Theme(
-        data: context.theme.copyWith(
+          data: context.theme.copyWith(
             // in case some components still use legacy theming
             primaryColor: context.theme.colorScheme.bubble(context, chat?.isIMessage ?? true),
             colorScheme: context.theme.colorScheme.copyWith(
               primary: context.theme.colorScheme.bubble(context, chat?.isIMessage ?? true),
               onPrimary: context.theme.colorScheme.onBubble(context, chat?.isIMessage ?? true),
-              surface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-              onSurface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+              surface: SettingsManager().settings.monetTheming.value == Monet.full
+                  ? null
+                  : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+              onSurface: SettingsManager().settings.monetTheming.value == Monet.full
+                  ? null
+                  : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
             ),
-        ),
-        child: WillPopScope(
-          onWillPop: () async {
-            if (LifeCycleManager().isBubble) {
-              ChatManager().setActiveChat(null);
-              SystemNavigator.pop();
-            }
-            return !LifeCycleManager().isBubble;
-          },
-          child: Obx(
-                () {
-              chat?.getTitle();
-              return Scaffold(
-                backgroundColor: context.theme.colorScheme.background,
-                extendBodyBehindAppBar: !isCreator!,
-                appBar: (!isCreator! || false.obs.value) // Necessary
-                    ? buildConversationViewHeader(context) as PreferredSizeWidget?
-                    : buildChatSelectorHeader() as PreferredSizeWidget?,
-                body: Obx(() => adjustBackground.value
-                    ? MirrorAnimation<MultiTweenValues<String>>(
-                  tween: ConversationViewMixin.gradientTween.value,
-                  curve: Curves.fastOutSlowIn,
-                  duration: Duration(seconds: 3),
-                  builder: (context, child, anim) {
-                    return Container(
-                      decoration:
-                      (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
-                          ? BoxDecoration(
-                          gradient: LinearGradient(
-                              begin: Alignment.topRight,
-                              end: Alignment.bottomLeft,
-                              stops: [
-                                anim.get("color1"),
-                                anim.get("color2")
-                              ],
-                              colors: [
-                                context.theme.colorScheme.bubble(context, chat?.isIMessage ?? true).withOpacity(0.5),
-                                context.theme.colorScheme.background,
-                              ]))
-                          : null,
-                      child: child,
-                    );
-                  },
-                  child: child,
-                )
-                    : child),
-                floatingActionButton: AnimatedOpacity(
-                    duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
-              );
-            },
           ),
-        )
-      ),
+          child: WillPopScope(
+            onWillPop: () async {
+              if (LifeCycleManager().isBubble) {
+                ChatManager().setActiveChat(null);
+                SystemNavigator.pop();
+              }
+              return !LifeCycleManager().isBubble;
+            },
+            child: Obx(
+              () {
+                final Rx<Color> _backgroundColor =
+                    (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+                            ? context.theme.colorScheme.background
+                            : Colors.transparent)
+                        .obs;
+
+                if (kIsDesktop) {
+                  SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+                    if (mounted) {
+                      _backgroundColor.value =
+                          effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+                    }
+                  });
+                }
+
+                chat?.getTitle();
+                return Scaffold(
+                  backgroundColor: _backgroundColor.value,
+                  extendBodyBehindAppBar: !isCreator!,
+                  appBar: (!isCreator! || false.obs.value) // Necessary
+                      ? buildConversationViewHeader(context) as PreferredSizeWidget?
+                      : buildChatSelectorHeader() as PreferredSizeWidget?,
+                  body: Obx(() => adjustBackground.value
+                      ? MirrorAnimation<MultiTweenValues<String>>(
+                          tween: ConversationViewMixin.gradientTween.value,
+                          curve: Curves.fastOutSlowIn,
+                          duration: Duration(seconds: 3),
+                          builder: (context, child, anim) {
+                            return Container(
+                              decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
+                                  ? BoxDecoration(
+                                      gradient:
+                                          LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
+                                      anim.get("color1"),
+                                      anim.get("color2")
+                                    ], colors: [
+                                      context.theme.colorScheme
+                                          .bubble(context, chat?.isIMessage ?? true)
+                                          .withOpacity(0.5),
+                                      context.theme.colorScheme.background,
+                                    ]))
+                                  : null,
+                              child: child,
+                            );
+                          },
+                          child: child,
+                        )
+                      : child),
+                  floatingActionButton: AnimatedOpacity(
+                      duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
+                );
+              },
+            ),
+          )),
     );
   }
 }

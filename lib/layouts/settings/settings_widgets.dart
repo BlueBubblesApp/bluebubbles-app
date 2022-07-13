@@ -13,6 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
 class SettingsScaffold extends StatelessWidget {
@@ -39,8 +40,18 @@ class SettingsScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? headerColor : Colors.transparent).obs;
+    final Rx<Color> _tileColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? tileColor : Colors.transparent).obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        _headerColor.value = effect != WindowEffect.disabled ? Colors.transparent : headerColor;
+        _tileColor.value = effect != WindowEffect.disabled ? Colors.transparent : tileColor;
+      });
+    }
+
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (SettingsManager().settings.skin.value != Skins.Samsung) return;
+      if (SettingsManager().settings.skin.value != Skins.Samsung || controller.positions.length != 1) return;
       // this is so settings pages that would normally not scroll can still scroll
       // to make the header large or small
       if (controller.position.viewportDimension < context.height) {
@@ -56,8 +67,8 @@ class SettingsScaffold extends StatelessWidget {
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
-      child: Scaffold(
-        backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
+      child: Obx(() => Scaffold(
+        backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? _tileColor.value : _headerColor.value,
         appBar: SettingsManager().settings.skin.value == Skins.Samsung
             ? null
             : PreferredSize(
@@ -71,7 +82,7 @@ class SettingsScaffold extends StatelessWidget {
                   scrolledUnderElevation: 3,
                   surfaceTintColor: context.theme.colorScheme.primary,
                   leading: buildBackButton(context),
-                  backgroundColor: headerColor,
+                  backgroundColor: _headerColor.value,
                   centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
                   title: Text(
                     title,
@@ -94,7 +105,7 @@ class SettingsScaffold extends StatelessWidget {
             return false;
           },
           child: ScrollbarWrapper(
-            showScrollbar: false,
+            showScrollbar: true,
             controller: controller,
             child: Obx(
               () => CustomScrollView(
@@ -105,8 +116,8 @@ class SettingsScaffold extends StatelessWidget {
                     : ThemeSwitcher.getScrollPhysics(),
                 slivers: <Widget>[
                   if (SettingsManager().settings.skin.value == Skins.Samsung)
-                    SliverAppBar(
-                      backgroundColor: headerColor,
+                    Obx(() => SliverAppBar(
+                      backgroundColor: _headerColor.value,
                       pinned: true,
                       stretch: true,
                       expandedHeight: context.height / 3,
@@ -178,20 +189,20 @@ class SettingsScaffold extends StatelessWidget {
                           );
                         },
                       ),
-                    ),
+                    )),
                   if (SettingsManager().settings.skin.value != Skins.Samsung && initialHeader != null)
                     SliverToBoxAdapter(
-                      child: Container(
+                      child: Obx(() => Container(
                           height: 50,
                           alignment: Alignment.bottomLeft,
-                          color: SettingsManager().settings.skin.value == Skins.iOS ? headerColor : tileColor,
+                          color: SettingsManager().settings.skin.value == Skins.iOS ? _headerColor.value : _tileColor.value,
                           child: Padding(
                             padding: EdgeInsets.only(bottom: 8.0, left: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 15),
                             child: Text(initialHeader!.psCapitalize,
                                 style: SettingsManager().settings.skin.value == Skins.iOS
                                     ? iosSubtitle
                                     : materialSubtitle),
-                          )),
+                          ))),
                     ),
                   ...bodySlivers,
                   SliverList(
@@ -200,10 +211,10 @@ class SettingsScaffold extends StatelessWidget {
                         Obx(() => SettingsManager().settings.skin.value == Skins.Samsung
                             ? Container(height: remainingHeight.value)
                             : SizedBox.shrink()),
-                        Container(
+                        Obx(() => Container(
                           height: 30,
-                          color: SettingsManager().settings.skin.value != Skins.Material ? headerColor : tileColor,
-                        ),
+                          color: SettingsManager().settings.skin.value != Skins.Material ? _headerColor.value : _tileColor.value,
+                        )),
                       ],
                     ),
                   ),
@@ -212,7 +223,7 @@ class SettingsScaffold extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }
@@ -659,17 +670,27 @@ class SettingsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? headerColor : Colors.transparent).obs;
+    final Rx<Color> _tileColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? tileColor : Colors.transparent).obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        _headerColor.value = effect != WindowEffect.disabled ? Colors.transparent : headerColor;
+        _tileColor.value = effect != WindowEffect.disabled ? Colors.transparent : tileColor;
+      });
+    }
+
     if (SettingsManager().settings.skin.value == Skins.Samsung) return SizedBox(height: 15);
     return Column(children: [
-      Container(
+      Obx(() => Container(
           height: SettingsManager().settings.skin.value == Skins.iOS ? 60 : 40,
           alignment: Alignment.bottomLeft,
-          color: SettingsManager().settings.skin.value == Skins.iOS ? headerColor : tileColor,
+          color: SettingsManager().settings.skin.value == Skins.iOS ? _headerColor.value : _tileColor.value,
           child: Padding(
             padding: EdgeInsets.only(bottom: 8.0, left: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 15),
             child: Text(text.psCapitalize,
                 style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-          )),
+          ))),
     ]);
   }
 }
