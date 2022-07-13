@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/foundation.dart';
@@ -41,7 +42,7 @@ class ScrollbarWrapper extends StatelessWidget {
               ? showScrollbar
                   ? RawScrollbar(
                       controller: controller,
-                      thumbColor: context.theme.colorScheme.secondary.withOpacity(0.7),
+                      thumbColor: context.theme.colorScheme.properSurface.withOpacity(0.5),
                       thickness: 10,
                       radius: Radius.circular(5),
                       child: child,
