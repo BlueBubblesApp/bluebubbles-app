@@ -8,9 +8,11 @@ class ReactionsWidget extends StatefulWidget {
     Key? key,
     required this.associatedMessages,
     this.bigPin = false,
+    this.size = 28,
   }) : super(key: key);
   final List<Message> associatedMessages;
   final bool bigPin;
+  final double size;
 
   @override
   State<ReactionsWidget> createState() => _ReactionsWidgetState();
@@ -42,6 +44,7 @@ class _ReactionsWidgetState extends State<ReactionsWidget> {
       Widget? itemWidget = item.getSmallWidget(
         context,
         bigPin: widget.bigPin,
+        size: widget.size,
       );
       if (itemWidget != null) {
         reactionWidgets.add(

@@ -342,74 +342,94 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                     ),
                     sliver: SliverToBoxAdapter(
                       child: LayoutBuilder(
-                        builder: (BuildContext context, BoxConstraints constraints) => ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight:
-                                (constraints.maxWidth) / colCount * usedRowCount * (showAltLayout ? 1.175 : 1.125),
-                          ),
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            alignment: Alignment.bottomCenter,
+                        builder: (BuildContext context, BoxConstraints constraints) {
+                          double availableWidth = constraints.maxWidth - 50;
+                          int colCount = kIsDesktop
+                              ? SettingsManager().settings.pinColumnsLandscape.value
+                              : SettingsManager().settings.pinColumnsPortrait.value;
+                          double spaceBetween = (colCount - 1) * 30;
+                          double maxWidth = ((availableWidth - spaceBetween) / colCount).floorToDouble();
+                          TextStyle style = context.theme.textTheme.bodyMedium!;
+                          double height =
+                              usedRowCount * (maxWidth * 1.15 + 10 + style.height! * style.fontSize! * 2);
+
+                          return Column(
                             children: <Widget>[
-                              PageView.builder(
-                                clipBehavior: Clip.none,
-                                physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                                scrollDirection: Axis.horizontal,
-                                controller: _controller,
-                                itemBuilder: (context, index) {
-                                  return Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 10),
-                                    child: Wrap(
-                                      crossAxisAlignment: WrapCrossAlignment.start,
-                                      alignment: _pageCount > 1 ? WrapAlignment.start : WrapAlignment.center,
-                                      children: List.generate(
-                                        index < _filledPageCount
-                                            ? maxOnPage
-                                            : ChatBloc()
-                                                    .chats
-                                                    .archivedHelper(showArchived)
-                                                    .unknownSendersHelper(showUnknown)
-                                                    .bigPinHelper(true)
-                                                    .length %
-                                                maxOnPage,
-                                        (_index) {
-                                          return PinnedConversationTile(
-                                            key: Key(ChatBloc()
-                                                .chats
-                                                .archivedHelper(showArchived)
-                                                .unknownSendersHelper(showUnknown)
-                                                .bigPinHelper(true)[index * maxOnPage + _index]
-                                                .guid
-                                                .toString()),
-                                            chat: ChatBloc()
-                                                .chats
-                                                .archivedHelper(showArchived)
-                                                .unknownSendersHelper(showUnknown)
-                                                .bigPinHelper(true)[index * maxOnPage + _index],
-                                          );
-                                        },
+                              SizedBox(
+                                height: height,
+                                child: PageView.builder(
+                                  clipBehavior: Clip.none,
+                                  physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                                  scrollDirection: Axis.horizontal,
+                                  controller: _controller,
+                                  itemBuilder: (context, index) {
+                                    return Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 10),
+                                      child: Wrap(
+                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        alignment: _pageCount > 1 ? WrapAlignment.start : WrapAlignment.center,
+                                        children: List.generate(
+                                          index < _filledPageCount
+                                              ? maxOnPage
+                                              : ChatBloc()
+                                                      .chats
+                                                      .archivedHelper(showArchived)
+                                                      .unknownSendersHelper(showUnknown)
+                                                      .bigPinHelper(true)
+                                                      .length %
+                                                  maxOnPage,
+                                          (_index) {
+                                            return PinnedConversationTile(
+                                              key: Key(ChatBloc()
+                                                  .chats
+                                                  .archivedHelper(showArchived)
+                                                  .unknownSendersHelper(showUnknown)
+                                                  .bigPinHelper(true)[index * maxOnPage + _index]
+                                                  .guid
+                                                  .toString()),
+                                              chat: ChatBloc()
+                                                  .chats
+                                                  .archivedHelper(showArchived)
+                                                  .unknownSendersHelper(showUnknown)
+                                                  .bigPinHelper(true)[index * maxOnPage + _index],
+                                            );
+                                          },
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                                itemCount: _pageCount,
+                                    );
+                                  },
+                                  itemCount: _pageCount,
+                                ),
                               ),
                               if (_pageCount > 1)
-                                SmoothPageIndicator(
-                                  controller: _controller,
-                                  count: _pageCount,
-                                  effect: ScaleEffect(
-                                    dotHeight: 5.0,
-                                    dotWidth: 5.0,
-                                    spacing: 5.0,
-                                    radius: 5.0,
-                                    scale: 1.5,
-                                    activeDotColor: context.theme.colorScheme.secondary,
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  hitTestBehavior: HitTestBehavior.deferToChild,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(bottom: 10),
+                                    child: SmoothPageIndicator(
+                                      count: _pageCount,
+                                      controller: _controller,
+                                      onDotClicked: kIsDesktop || kIsWeb
+                                          ? (page) => _controller.animateToPage(
+                                                page,
+                                                curve: Curves.linear,
+                                                duration: Duration(milliseconds: 150),
+                                              )
+                                          : null,
+                                      effect: ColorTransitionEffect(
+                                        activeDotColor: context.theme.colorScheme.primary,
+                                        dotColor: context.theme.colorScheme.outline,
+                                        dotWidth: maxWidth * 0.1,
+                                        dotHeight: maxWidth * 0.1,
+                                        spacing: maxWidth * 0.07,
+                                      ),
+                                    ),
                                   ),
                                 ),
                             ],
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ),
                   );
