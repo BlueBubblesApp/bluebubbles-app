@@ -14,6 +14,7 @@ import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
 class ThemingPanel extends StatefulWidget {
@@ -62,6 +63,16 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
       tileColor = temp;
     }
 
+    final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? headerColor : Colors.transparent).obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _headerColor.value = effect != WindowEffect.disabled ? Colors.transparent : headerColor;
+        }
+      });
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
@@ -69,11 +80,11 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
-      child: Scaffold(
-        backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
+      child: Obx(() => Scaffold(
+        backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : _headerColor.value,
         appBar: PreferredSize(
           preferredSize: Size(CustomNavigator.width(context), 50),
-          child: AppBar(
+          child: Obx(() => AppBar(
             systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
                 ? SystemUiOverlayStyle.light
                 : SystemUiOverlayStyle.dark,
@@ -82,7 +93,7 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
             scrolledUnderElevation: 3,
             surfaceTintColor: context.theme.colorScheme.primary,
             leading: buildBackButton(context),
-            backgroundColor: headerColor,
+            backgroundColor: _headerColor.value,
             centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
             title: Text(
               "Advanced Theming",
@@ -209,7 +220,7 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
                   },
                 ),
             ]
-          ),
+          )),
         ),
         body: TabBarView(
           controller: controller,
@@ -239,9 +250,9 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
             )
           ),
         ),
-        bottomNavigationBar: NavigationBar(
+        bottomNavigationBar: Obx(() => NavigationBar(
           selectedIndex: index,
-          backgroundColor: headerColor,
+          backgroundColor: _headerColor.value,
           destinations: [
             NavigationDestination(
               icon: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.sun_max : Icons.brightness_high),
@@ -260,8 +271,8 @@ class _ThemingPanelState extends State<ThemingPanel> with SingleTickerProviderSt
             });
             controller.animateTo(page);
           },
-        ),
-      ),
+        )),
+      )),
     );
   }
 }

@@ -82,7 +82,7 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
           child: Container(width: width, height: height, color: context.theme.colorScheme.properSurface, child: child)));
 }
 
-Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textTheme) async {
+Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat chat, Offset tapPosition, TextTheme textTheme) async {
   bool ios = SettingsManager().settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   await showMenu(
@@ -101,8 +101,8 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
           padding: EdgeInsets.zero,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () async {
-              await chat.togglePin(!chat.isPinned!);
+            onTap: () {
+              chat.togglePin(!chat.isPinned!);
               if (_this.mounted) _this.setState(() {});
               Navigator.pop(context);
             },
@@ -133,8 +133,8 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
           padding: EdgeInsets.zero,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () async {
-              await chat.toggleMute(chat.muteType != "mute");
+            onTap: () {
+              chat.toggleMute(chat.muteType != "mute");
               if (_this.mounted) _this.setState(() {});
               Navigator.pop(context);
             },
@@ -245,7 +245,7 @@ Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textThe
                   ),
                   Text(
                     'Delete',
-                    style: textTheme.bodyLarge!.copyWith(context.theme.colorScheme.properOnSurface),
+                    style: textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
                   ),
                 ],
               ),

@@ -32,6 +32,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -212,6 +213,20 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
       tileColor = temp;
     }
 
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+            ? context.theme.colorScheme.background
+            : Colors.transparent)
+        .obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _backgroundColor.value =
+              effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+        }
+      });
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
@@ -223,8 +238,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
         data: context.theme
             .copyWith(primaryColor: chat.isTextForwarding ? Colors.green : context.theme.primaryColor),
         child: Builder(builder: (context) {
-          return Scaffold(
-            backgroundColor: context.theme.colorScheme.background,
+          return Obx(() => Scaffold(
+            backgroundColor: _backgroundColor.value,
             appBar: PreferredSize(
               preferredSize: Size(CustomNavigator.width(context), 50),
               child: ClipRRect(
@@ -1162,7 +1177,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                 ],
               ),
             ),
-          );
+          ));
         }),
       ),
     );
@@ -1242,7 +1257,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
       if (isEmail) {
         launchUrl(Uri(scheme: "mailto", path: address));
       } else if (await Permission.phone.request().isGranted) {
-      launchUrl(Uri(scheme: "tel", path: address));
+        launchUrl(Uri(scheme: "tel", path: address));
       }
     }
 

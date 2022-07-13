@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/main.dart';
@@ -16,8 +17,10 @@ import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:collection/collection.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:window_manager/window_manager.dart';
@@ -27,17 +30,21 @@ class DesktopPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final RxnBool useCustomPath = RxnBool(prefs.getBool("use-custom-path"));
     final RxnString customPath = RxnString(prefs.getString("custom-path"));
-    final iosSubtitle =
-    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
-    final materialSubtitle = context.theme
-        .textTheme
-        .labelLarge
+    final iosSubtitle = context.theme.textTheme.labelLarge?.copyWith(
+        color: ThemeManager().inDarkMode(context)
+            ? context.theme.colorScheme.onBackground
+            : context.theme.colorScheme.properOnSurface,
+        fontWeight: FontWeight.w300);
+    final materialSubtitle = context.theme.textTheme.labelLarge
         ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+        ? context.theme.colorScheme.background
+        : context.theme.colorScheme.properSurface;
+
     Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+        ? context.theme.colorScheme.properSurface
+        : context.theme.colorScheme.background;
 
     // reverse material color mapping to be more accurate
     if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
@@ -47,6 +54,8 @@ class DesktopPanel extends StatelessWidget {
     }
 
     RxList showButtons = RxList.generate(ReactionTypes.toList().length + 1, (index) => false);
+
+    final allowedEffects = WindowEffects.effects;
 
     return SettingsScaffold(
       title: "Desktop Settings",
@@ -169,6 +178,69 @@ class DesktopPanel extends StatelessWidget {
               ),
               if (Platform.isWindows)
                 SettingsHeader(
+                  headerColor: headerColor,
+                  tileColor: tileColor,
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Appearance",
+                ),
+              if (Platform.isWindows)
+                SettingsSection(
+                backgroundColor: tileColor,
+                children: [
+                  Obx(() => SettingsSwitch(
+                    initialVal: SettingsManager().settings.useWindowsAccent.value,
+                    backgroundColor: tileColor,
+                    title: "Use Windows Accent Color",
+                    subtitle: "Apply the Windows accent color to your theme",
+                    onChanged: (value) async {
+                      if (value) {
+                        windowsAccentColor = await DynamicColorPlugin.getAccentColor();
+                      }
+                      SettingsManager().settings.useWindowsAccent.value = value;
+                      SettingsManager().saveSettings(SettingsManager().settings);
+                      loadTheme(context);
+                    },
+                  )),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: tileColor,
+                        ),
+                        padding: EdgeInsets.only(top: 5, left: 15),
+                        child: Text("Window Effect"),
+                      );
+                    }
+                    return SizedBox.shrink();
+                  }),
+                  Obx(
+                    () => SettingsOptions<WindowEffect>(
+                      initial: SettingsManager().settings.windowEffect.value,
+                      options: allowedEffects,
+                      textProcessing: (WindowEffect effect) => effect.toString().substring("WindowEffect.".length),
+                      onChanged: (WindowEffect? effect) async {
+                        effect ??= WindowEffect.disabled;
+                        SettingsManager().settings.windowEffect.value = effect;
+                        prefs.setString('window-effect', effect.toString());
+                        await WindowEffects.setEffect(color: context.theme.backgroundColor);
+                      },
+                      title: "Window Effect",
+                      backgroundColor: tileColor,
+                      secondaryColor: headerColor,
+                      capitalize: true,
+                    ),
+                  ),
+                  Obx(() {
+                    return SettingsSubtitle(
+                      subtitle: WindowEffects.descriptions[SettingsManager().settings.windowEffect.value],
+                      unlimitedSpace: true,
+                    );
+                  }),
+                ],
+              ),
+              if (Platform.isWindows)
+                SettingsHeader(
                     headerColor: headerColor,
                     tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
@@ -183,6 +255,7 @@ class DesktopPanel extends StatelessWidget {
                       subtitle:
                           "Click actions to toggle them. Drag actions to move them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
                       backgroundColor: tileColor,
+                      isThreeLine: true,
                     ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,8 +318,8 @@ class DesktopPanel extends StatelessWidget {
                                                   (SettingsManager().settings.selectedActionIndices.length == 5));
 
                                               Color color = selected
-                                                  ? context.theme.primaryColor
-                                                  : context.theme.colorScheme.secondary;
+                                                  ? context.theme.colorScheme.primary
+                                                  : context.theme.colorScheme.properSurface.lightenOrDarken(10);
 
                                               return MouseRegion(
                                                 cursor:
@@ -350,9 +423,9 @@ class DesktopPanel extends StatelessWidget {
                                       width: size,
                                       margin: EdgeInsets.symmetric(vertical: margin / 2, horizontal: margin),
                                       decoration: BoxDecoration(
-                                        color: context.theme.colorScheme.secondary.withOpacity(0.4),
+                                        color: context.theme.colorScheme.primaryContainer.withOpacity(0.4),
                                         borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: context.theme.colorScheme.secondary),
+                                        border: Border.all(color: context.theme.colorScheme.primaryContainer),
                                       ),
                                       child: Stack(
                                         children: <Widget>[
@@ -395,7 +468,7 @@ class DesktopPanel extends StatelessWidget {
                                             left: size * 0.216,
                                             child: Text(
                                               "${(numActions > (showMarkRead ? 1 : 0)) ? "Message" : "All"} notifications will look like this.",
-                                              style: context.textTheme.labelLarge!.copyWith(fontSize: size * 0.036),
+                                              style: context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.036),
                                             ),
                                           ),
                                           Positioned(
@@ -448,9 +521,9 @@ class DesktopPanel extends StatelessWidget {
                                                           decoration: BoxDecoration(
                                                             borderRadius: BorderRadius.circular(5),
                                                             border: Border.all(
-                                                                color: context.textTheme.bodyMedium!.color!
-                                                                    .withOpacity(0.1)),
-                                                            color: context.theme.colorScheme.secondary.withOpacity(0.6),
+                                                                color:
+                                                                    context.theme.colorScheme.outline.withOpacity(0.2)),
+                                                            color: context.theme.colorScheme.primary.withOpacity(0.6),
                                                           ),
                                                           child: Center(
                                                             child: Text(
@@ -494,9 +567,9 @@ class DesktopPanel extends StatelessWidget {
                                       height: size / 3 * (!showMarkRead ? 0.9 : 1.28),
                                       margin: EdgeInsets.symmetric(vertical: margin / 2, horizontal: margin),
                                       decoration: BoxDecoration(
-                                        color: context.theme.colorScheme.secondary.withOpacity(0.4),
+                                        color: context.theme.colorScheme.primaryContainer.withOpacity(0.4),
                                         borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: context.theme.colorScheme.secondary),
+                                        border: Border.all(color: context.theme.colorScheme.primaryContainer),
                                       ),
                                       child: Stack(
                                         children: <Widget>[
@@ -539,7 +612,7 @@ class DesktopPanel extends StatelessWidget {
                                             left: size * 0.216,
                                             child: Text(
                                               "Reaction notifications will look like this.",
-                                              style: context.textTheme.labelLarge!.copyWith(fontSize: size * 0.036),
+                                              style: context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.036),
                                             ),
                                           ),
                                           Positioned(
@@ -570,8 +643,8 @@ class DesktopPanel extends StatelessWidget {
                                                 decoration: BoxDecoration(
                                                   borderRadius: BorderRadius.circular(5),
                                                   border: Border.all(
-                                                      color: context.textTheme.bodyMedium!.color!.withOpacity(0.1)),
-                                                  color: context.theme.colorScheme.secondary.withOpacity(0.6),
+                                                      color: context.theme.colorScheme.outline.withOpacity(0.2)),
+                                                  color: context.theme.colorScheme.primary.withOpacity(0.6),
                                                 ),
                                                 child: Center(
                                                   child: Text(

@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 import 'package:sqflite/sqflite.dart';
@@ -124,6 +127,7 @@ class Settings {
   final RxBool launchAtStartup = false.obs;
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
+  final Rx<WindowEffect> windowEffect = WindowEffect.disabled.obs;
 
   // Scrolling
   final RxBool betterScrolling = false.obs;
@@ -135,6 +139,9 @@ class Settings {
 
   // Linux settings
   final RxBool useCustomTitleBar = RxBool(true);
+
+  // Windows settings
+  final RxBool useWindowsAccent = RxBool(false);
 
   Settings();
 
@@ -304,7 +311,7 @@ class Settings {
       } else if (entry.name == "filterUnknownSenders") {
         settings.filterUnknownSenders.value = entry.value;
       } else if (entry.name == "tabletMode") {
-        settings.tabletMode.value = entry.value;
+        settings.tabletMode.value = kIsDesktop || entry.value;
       } else if (entry.name == "immersiveMode") {
         settings.immersiveMode.value = entry.value;
       } else if (entry.name == "swipeToReply") {
@@ -333,6 +340,10 @@ class Settings {
         settings.betterScrolling.value = entry.value;
       } else if (entry.name == "betterScrollingMultiplier") {
         settings.betterScrollingMultiplier.value = entry.value;
+      } else if (entry.name == "windowEffect") {
+        settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == entry.value) ?? WindowEffect.disabled;
+      } else if (entry.name == "useWindowsAccent") {
+        settings.useWindowsAccent.value = entry.value;
       }
     }
     settings.save();
@@ -489,6 +500,8 @@ class Settings {
       'pinColumnsLandscape': pinColumnsLandscape.value,
       'maxAvatarsInGroupWidget': maxAvatarsInGroupWidget.value,
       'useCustomTitleBar': useCustomTitleBar.value,
+      'windowEffect': windowEffect.value.name,
+      'useWindowsAccent': useWindowsAccent.value,
     };
     if (includeAll) {
       map.addAll({
@@ -547,7 +560,7 @@ class Settings {
     SettingsManager().settings.notificationSound.value = map['notificationSound'] ?? "default";
     SettingsManager().settings.globalTextDetection.value = map['globalTextDetection'] ?? "";
     SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
-    SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
+    SettingsManager().settings.tabletMode.value = kIsDesktop || (map['tabletMode'] ?? true);
     SettingsManager().settings.immersiveMode.value = map['immersiveMode'] ?? false;
     SettingsManager().settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     SettingsManager().settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
@@ -605,6 +618,8 @@ class Settings {
     SettingsManager().settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     SettingsManager().settings.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
     SettingsManager().settings.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
+    SettingsManager().settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
+    SettingsManager().settings.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     SettingsManager().settings.save();
   }
 
@@ -658,7 +673,7 @@ class Settings {
     s.monetTheming.value = map['monetTheming'] != null ? Monet.values[map['monetTheming']] : Monet.none;
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
-    s.tabletMode.value = map['tabletMode'] ?? true;
+    s.tabletMode.value = kIsDesktop || (map['tabletMode'] ?? true);
     s.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     s.immersiveMode.value = map['immersiveMode'] ?? false;
     s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
@@ -717,6 +732,8 @@ class Settings {
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     s.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
     s.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
+    s.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
+    s.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     return s;
   }
 }

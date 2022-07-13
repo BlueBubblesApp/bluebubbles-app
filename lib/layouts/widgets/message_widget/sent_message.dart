@@ -127,7 +127,10 @@ class SentMessageHelper {
                   : RichText(
                       text: TextSpan(
                           children: MessageHelper.buildEmojiText(
-                              message!.text!, (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(fontSizeFactor: 4)))),
+                              message!.text!,
+                              (context.theme.extensions[BubbleText] as BubbleText)
+                                  .bubbleText
+                                  .apply(fontSizeFactor: 4)))),
             ),
           );
         })
@@ -236,18 +239,26 @@ class SentMessageHelper {
                                             if (!isNullOrEmpty(message!.subject)!)
                                               TextSpan(
                                                 text: "$subject\n",
-                                                style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
-                                                    fontWeightDelta: 2,
-                                                    color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
+                                                style: (context.theme.extensions[BubbleText] as BubbleText)
+                                                    .bubbleText
+                                                    .apply(
+                                                        fontWeightDelta: 2,
+                                                        color: hideContent
+                                                            ? Colors.transparent
+                                                            : context.theme.colorScheme.onPrimary),
                                               ),
                                             TextSpan(
                                               text: text,
-                                              style: context.theme.extension<BubbleText>()!.bubbleText
-                                                  .apply(color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
+                                              style: context.theme.extension<BubbleText>()!.bubbleText.apply(
+                                                  color: hideContent
+                                                      ? Colors.transparent
+                                                      : context.theme.colorScheme.onPrimary),
                                             ),
                                           ],
-                                          style: context.theme.extension<BubbleText>()!.bubbleText
-                                              .apply(color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
+                                          style: context.theme.extension<BubbleText>()!.bubbleText.apply(
+                                              color: hideContent
+                                                  ? Colors.transparent
+                                                  : context.theme.colorScheme.onPrimary),
                                         ),
                                       ),
                                     ),
@@ -258,20 +269,30 @@ class SentMessageHelper {
                                             if (!isNullOrEmpty(message.subject)!)
                                               TextSpan(
                                                 text: "$subject\n",
-                                                style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
-                                                    fontWeightDelta: 2,
-                                                    fontSizeFactor: value,
-                                                    color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
+                                                style: (context.theme.extensions[BubbleText] as BubbleText)
+                                                    .bubbleText
+                                                    .apply(
+                                                        fontWeightDelta: 2,
+                                                        fontSizeFactor: value,
+                                                        color: hideContent
+                                                            ? Colors.transparent
+                                                            : context.theme.colorScheme.onPrimary),
                                               ),
                                             TextSpan(
                                               text: text,
-                                              style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
-                                                  fontSizeFactor: value,
-                                                  color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
+                                              style: (context.theme.extensions[BubbleText] as BubbleText)
+                                                  .bubbleText
+                                                  .apply(
+                                                      fontSizeFactor: value,
+                                                      color: hideContent
+                                                          ? Colors.transparent
+                                                          : context.theme.colorScheme.onPrimary),
                                             ),
                                           ],
-                                          style: context.theme.extension<BubbleText>()!.bubbleText
-                                              .apply(color: hideContent ? Colors.transparent : context.theme.colorScheme.onPrimary),
+                                          style: context.theme.extension<BubbleText>()!.bubbleText.apply(
+                                              color: hideContent
+                                                  ? Colors.transparent
+                                                  : context.theme.colorScheme.onPrimary),
                                         ),
                                       ),
                                     if (effect == MessageEffect.invisibleInk &&
@@ -311,11 +332,15 @@ class SentMessageHelper {
                                       TextSpan(
                                         children:
                                             snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
-                                        style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(color: context.theme.colorScheme.onPrimary),
+                                        style: (context.theme.extensions[BubbleText] as BubbleText)
+                                            .bubbleText
+                                            .apply(color: context.theme.colorScheme.onPrimary),
                                       ),
                                       cursorWidth: 0,
                                       selectionControls: CupertinoTextSelectionControls(),
-                                      style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(color: context.theme.colorScheme.onPrimary),
+                                      style: (context.theme.extensions[BubbleText] as BubbleText)
+                                          .bubbleText
+                                          .apply(color: context.theme.colorScheme.onPrimary),
                                     ),
                                   )
                                 : Padding(
@@ -324,7 +349,9 @@ class SentMessageHelper {
                                       text: TextSpan(
                                         children:
                                             snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
-                                        style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(color: context.theme.colorScheme.onPrimary),
+                                        style: (context.theme.extensions[BubbleText] as BubbleText)
+                                            .bubbleText
+                                            .apply(color: context.theme.colorScheme.onPrimary),
                                       ),
                                     ),
                                   );
@@ -470,74 +497,78 @@ class SentMessageHelper {
 
       return Padding(
         padding: EdgeInsets.only(right: rightPadding),
-        child: KeyboardVisibilityBuilder(
-          builder: (context, isVisible) {
-            return GestureDetector(
-              onTap: () {
-                if (!SettingsManager().settings.autoOpenKeyboard.value && !isVisible && !kIsWeb && !kIsDesktop) {
-                  EventDispatcher().emit('unfocus-keyboard', null);
-                }
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      backgroundColor: context.theme.colorScheme.properSurface,
-                      title: Text("Message failed to send", style: context.theme.textTheme.titleLarge),
-                      content: Text("Error ($errorCode): $errorText", style: context.theme.textTheme.bodyLarge),
-                      actions: <Widget>[
-                        if (chat != null)
-                          TextButton(
-                            child: Text("Retry", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                            onPressed: () async {
-                              // Remove the OG alert dialog
-                              Navigator.of(context).pop();
-                              MessageManager().removeMessage(chat, message.guid);
-                              Message.softDelete(message.guid!);
-                              NotificationManager().clearFailedToSend();
-                              ActionHandler.retryMessage(message);
-                            },
-                          ),
-                        if (chat != null)
-                          TextButton(
-                            child: Text("Remove", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                            onPressed: () async {
-                              Navigator.of(context).pop();
-                              // Delete the message from the DB
-                              Message.softDelete(message.guid!);
-
-                              // Remove the message from the Bloc
-                              MessageManager().removeMessage(chat, message.guid);
-                              NotificationManager().clearFailedToSend();
-                              // Get the "new" latest info
-                              List<Message> latest = Chat.getMessages(chat, limit: 1);
-                              chat.latestMessage = latest.first;
-                              chat.latestMessageDate = latest.first.dateCreated;
-                              chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
-
-                              // Update it in the Bloc
-                              await ChatBloc().updateChatPosition(chat);
-                            },
-                          ),
+        child: KeyboardVisibilityBuilder(builder: (context, isVisible) {
+          return GestureDetector(
+            onTap: () {
+              if (!SettingsManager().settings.autoOpenKeyboard.value && !isVisible && !kIsWeb && !kIsDesktop) {
+                EventDispatcher().emit('unfocus-keyboard', null);
+              }
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                    title: Text("Message failed to send", style: context.theme.textTheme.titleLarge),
+                    content: Text("Error ($errorCode): $errorText", style: context.theme.textTheme.bodyLarge),
+                    actions: <Widget>[
+                      if (chat != null)
                         TextButton(
-                          child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                          onPressed: () {
+                          child: Text("Retry",
+                              style: context.theme.textTheme.bodyLarge!
+                                  .copyWith(color: Get.context!.theme.colorScheme.primary)),
+                          onPressed: () async {
+                            // Remove the OG alert dialog
                             Navigator.of(context).pop();
+                            MessageManager().removeMessage(chat, message.guid);
+                            Message.softDelete(message.guid!);
                             NotificationManager().clearFailedToSend();
+                            ActionHandler.retryMessage(message);
                           },
-                        )
-                      ],
-                    );
-                  },
-                );
-              },
-              child: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS
-                      ? CupertinoIcons.exclamationmark_circle
-                      : Icons.error_outline,
-                  color: context.theme.colorScheme.error),
-            );
-          }
-        ),
+                        ),
+                      if (chat != null)
+                        TextButton(
+                          child: Text("Remove",
+                              style: context.theme.textTheme.bodyLarge!
+                                  .copyWith(color: Get.context!.theme.colorScheme.primary)),
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            // Delete the message from the DB
+                            Message.softDelete(message.guid!);
+
+                            // Remove the message from the Bloc
+                            MessageManager().removeMessage(chat, message.guid);
+                            NotificationManager().clearFailedToSend();
+                            // Get the "new" latest info
+                            List<Message> latest = Chat.getMessages(chat, limit: 1);
+                            chat.latestMessage = latest.first;
+                            chat.latestMessageDate = latest.first.dateCreated;
+                            chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
+
+                            // Update it in the Bloc
+                            await ChatBloc().updateChatPosition(chat);
+                          },
+                        ),
+                      TextButton(
+                        child: Text("Cancel",
+                            style: context.theme.textTheme.bodyLarge!
+                                .copyWith(color: Get.context!.theme.colorScheme.primary)),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          NotificationManager().clearFailedToSend();
+                        },
+                      )
+                    ],
+                  );
+                },
+              );
+            },
+            child: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? CupertinoIcons.exclamationmark_circle
+                    : Icons.error_outline,
+                color: context.theme.colorScheme.error),
+          );
+        }),
       );
     }
     return Container();
@@ -832,6 +863,8 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
       }
     }
 
+    List<Widget> messagePopupColumn = List<Widget>.from(messageColumn.slice(1));
+
     // Fourth, let's add any reactions or stickers to the widget
     if (message != null) {
       // only draw the reply line if it will connect up or down
@@ -922,12 +955,38 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                 );
               }),
         );
+        messagePopupColumn.add(
+          MessageWidgetMixin.addStickersToWidget(
+            message: MessageWidgetMixin.addReactionsToWidget(
+                messageWidget: Padding(
+                  padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
+                  child: message,
+                ),
+                reactions: widget.reactionsWidget,
+                message: widget.message),
+            stickers: widget.stickersWidget,
+            isFromMe: widget.message.isFromMe!,
+          ),
+        );
       } else {
         messageColumn.add(
           MessageWidgetMixin.addStickersToWidget(
             message: MessageWidgetMixin.addReactionsToWidget(
                 messageWidget: Padding(
                   key: showReplies ? key : null,
+                  padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
+                  child: message,
+                ),
+                reactions: widget.reactionsWidget,
+                message: widget.message),
+            stickers: widget.stickersWidget,
+            isFromMe: widget.message.isFromMe!,
+          ),
+        );
+        messagePopupColumn.add(
+          MessageWidgetMixin.addStickersToWidget(
+            message: MessageWidgetMixin.addReactionsToWidget(
+                messageWidget: Padding(
                   padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                   child: message,
                 ),
@@ -971,9 +1030,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                       Icon(Icons.refresh, size: 10, color: context.theme.primaryColor),
                       Text(
                         " sent with $effect",
-                        style: context.theme
-                            .textTheme
-                            .labelSmall!
+                        style: context.theme.textTheme.labelSmall!
                             .copyWith(fontWeight: FontWeight.bold, color: context.theme.primaryColor),
                       ),
                     ]),
@@ -982,7 +1039,8 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                     padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
                     child: Text(
                       "↺ sent with $effect",
-                      style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                      style: context.theme.textTheme.labelSmall!
+                          .copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
                     ),
                   ),
           ),
@@ -998,7 +1056,8 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                 padding: const EdgeInsets.only(left: 8.0, right: 18.0, top: 2, bottom: 4),
                 child: Text(
                   "${list.length} repl${list.length > 1 ? "ies" : "y"}",
-                  style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                  style: context.theme.textTheme.labelSmall!
+                      .copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
                 ),
               ),
             );
@@ -1013,13 +1072,21 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
       ],
     ));
 
+    messagePopupColumn.add(Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        DeliveredReceipt(
+          message: widget.message,
+          showDeliveredReceipt: widget.showDeliveredReceipt,
+          shouldAnimate: widget.shouldFadeIn,
+        ),
+      ],
+    ));
+
     // Now, let's create a row that will be the row with the following:
     // -> Contact avatar
     // -> Message
-    List<Widget> msgRow = [];
-
-    // Add the message column to the row
-    msgRow.add(
+    List<Widget> msgRow = [
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(
@@ -1038,7 +1105,28 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
           children: messageColumn,
         ),
       ),
-    );
+    ];
+
+    List<Widget> msgPopupRow = [
+      Padding(
+        // Padding to shift the bubble up a bit, relative to the avatar
+        padding: EdgeInsets.only(
+            top: (skin.value != Skins.iOS && widget.message.isFromMe == widget.olderMessage?.isFromMe)
+                ? (skin.value != Skins.iOS)
+                    ? 0
+                    : 3
+                : (skin.value == Skins.iOS)
+                    ? 0.0
+                    : 10,
+            bottom: (skin.value == Skins.iOS && widget.showTail && !isEmptyString(widget.message.fullText)) ? 5.0 : 0,
+            right: isEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: messagePopupColumn,
+        ),
+      ),
+    ];
 
     // Finally, create a container row so we can have the swipe timestamp
     return Row(
@@ -1068,7 +1156,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: msgRow,
+            children: msgPopupRow,
           ),
         ),
         if (!kIsDesktop && !kIsWeb && skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid)

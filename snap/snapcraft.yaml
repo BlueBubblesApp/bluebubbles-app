@@ -1,6 +1,6 @@
 name: bluebubbles
 title: BlueBubbles
-version: 1.9.4.0
+version: 1.9.100.0
 summary: BlueBubbles client for Linux
 description: BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
 
@@ -29,14 +29,20 @@ parts:
       cp -r $SNAPCRAFT_PART_SRC $SNAPCRAFT_PART_INSTALL/usr/libexec/flutter
       ln -s $SNAPCRAFT_PART_INSTALL/usr/libexec/flutter/bin/flutter $SNAPCRAFT_PART_INSTALL/usr/bin/flutter
     build-packages:
+      - bash
+      - curl
       - clang
       - cmake
       - libgtk-3-dev
       - ninja-build
-      - libindicator3-7
-      - libappindicator3-1
-      - gir1.2-appindicator3-0.1
+      - xz-utils
+      - zip
+    stage-packages:
       - libappindicator3-dev
+      - gir1.2-appindicator3-0.1
+      - libnotify-dev
+      - vlc
+      - libvlc-dev
     override-prime: ''
 
   bluebubbles:

@@ -170,8 +170,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     bool hideReactions =
         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value) || !isSierra;
 
-    double offsetX = widget.message.isFromMe! ? CustomNavigator.width(context) - widget.childSize!.width - 10 : 10;
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
@@ -201,7 +199,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   duration: Duration(milliseconds: 250),
                   curve: Curves.easeOut,
                   top: messageTopOffset,
-                  left: offsetX,
+                  left: widget.message.isFromMe! ? null : 10,
+                  right: widget.message.isFromMe! ? 10 : null,
                   child: Container(
                     width: widget.childSize!.width,
                     height: widget.childSize!.height + 5,
@@ -211,6 +210,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Positioned(
                   top: 40,
                   left: 10,
+                  right: 10,
                   child: AnimatedSize(
                     duration: Duration(milliseconds: 500),
                     curve: Sprung.underDamped,
@@ -223,7 +223,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                               child: Container(
                                 alignment: Alignment.center,
                                 height: 120,
-                                width: CustomNavigator.width(context) - 20,
                                 color: context.theme.colorScheme.properSurface,
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 0),
@@ -266,19 +265,18 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     double narrowWidth = widget.message.isFromMe! || !SettingsManager().settings.alwaysShowAvatars.value ? 330 : 360;
     bool narrowScreen = CustomNavigator.width(context) < narrowWidth;
     double reactionIconSize = 50;
-    double maxMenuWidth = (ReactionTypes.toList().length / (narrowScreen ? 2 : 1) * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize * 2).toDouble();
     if (topMinimum > context.height - 120 - menuHeight) {
       topMinimum = context.height - 120 - menuHeight;
     }
-    bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
-    double leftOffset =
-        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 25 : 20 + (shiftRight ? 35 : 0))
-            .toDouble();
+    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value);
+
+    double offset = 20 + (shiftRight ? 35 : 0);
 
     return Positioned(
       bottom: context.height - messageTopOffset + 10,
-      left: leftOffset,
+      left: widget.message.isFromMe! ? null : offset,
+      right: widget.message.isFromMe! ? offset : null,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(40.0),
         child: BackdropFilter(
@@ -406,7 +404,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   bool get isSent => !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
 
   Widget buildDetailsMenu() {
-    double maxMenuWidth = min(max(CustomNavigator.width(context) * 3 / 5, 200), CustomNavigator.width(context) * 4 / 5);
+    bool showAltLayout =
+        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !LifeCycleManager().isBubble;
+    double maxMenuWidth = min(max(CustomNavigator.width(context) * 3 / 5, 200), CustomNavigator.width(context) * 4 / 5) * (showAltLayout ? 0.5 : 1);
     double maxHeight = context.height - messageTopOffset - widget.childSize!.height;
 
     List<Widget> allActions = [
@@ -1080,14 +1080,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     }
 
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
-    bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
-    double leftOffset =
-        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 15 : 20 + (shiftRight ? 35 : 0))
-            .toDouble();
+    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value);
+
+    double offset = 20 + (shiftRight ? 35 : 0);
     return Positioned(
       top: topOffset > context.height - 100 ? null : topOffset + (widget.message.isFromMe! ? 5 : 10),
       bottom: topOffset > context.height - 100 ? 45 : null,
-      left: leftOffset,
+      left: widget.message.isFromMe! ? null : offset,
+      right: widget.message.isFromMe! ? offset : null,
       child: menu,
     );
   }

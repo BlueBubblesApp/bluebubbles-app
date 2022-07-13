@@ -24,6 +24,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
@@ -239,6 +240,20 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
   }
 
   Widget buildChatList() {
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+        ? context.theme.colorScheme.background
+        : Colors.transparent)
+        .obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _backgroundColor.value =
+              effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+        }
+      });
+    }
+
     bool showArchived = widget.parent.widget.showArchivedChats;
     bool showUnknown = widget.parent.widget.showUnknownSenders;
     return Obx(
@@ -251,19 +266,20 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
           }
           return true;
         },
-        child: Padding(
-          padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+        child: Container(
+          color: _backgroundColor.value,
+          padding: EdgeInsets.only(top: kIsDesktop ? 30 : 0),
           child: Scaffold(
             appBar: PreferredSize(
               preferredSize: Size.fromHeight(60),
               child: Container(
-                color: selected.isEmpty ? Colors.transparent : context.theme.colorScheme.background,
+                color: selected.isEmpty ? Colors.transparent : _backgroundColor.value,
                 child: Stack(
                   children: [
                     Container(
                       height: selected.isEmpty ? 80 : 0,
                       width: context.width,
-                      color: context.theme.colorScheme.background,
+                      color: _backgroundColor.value
                     ),
                     AnimatedSwitcher(
                       duration: Duration(milliseconds: 500),
@@ -529,7 +545,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                 ),
               ),
             ),
-            backgroundColor: context.theme.colorScheme.background,
+            backgroundColor: _backgroundColor.value,
             extendBodyBehindAppBar: true,
             body: Obx(
               () {
@@ -561,7 +577,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                     child: Container(
                       padding: EdgeInsets.only(top: 50.0),
                       child: Text(
-                        "You have no archived chats :(",
+                        "You have no archived chats",
                         style: context.theme.textTheme.labelLarge,
                       ),
                     ),
@@ -829,6 +845,20 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
   }
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+        ? context.theme.colorScheme.background
+        : Colors.transparent)
+        .obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _backgroundColor.value =
+          effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+        }
+      });
+    }
+
     return VerticalSplitView(
       initialRatio: 0.4,
       minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
@@ -884,7 +914,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
               CupertinoPage(
                   name: "initial",
                   child: Scaffold(
-                    backgroundColor: context.theme.backgroundColor,
+                    backgroundColor: _backgroundColor.value,
                     extendBodyBehindAppBar: true,
                     body: Center(
                       child: Container(
