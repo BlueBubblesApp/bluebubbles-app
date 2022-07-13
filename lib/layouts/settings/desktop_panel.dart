@@ -176,31 +176,32 @@ class DesktopPanel extends StatelessWidget {
                   ],
                 ),
               ),
-              SettingsHeader(
-                headerColor: headerColor,
-                tileColor: tileColor,
-                iosSubtitle: iosSubtitle,
-                materialSubtitle: materialSubtitle,
-                text: "Appearance",
-              ),
-              SettingsSection(
+              if (Platform.isWindows)
+                SettingsHeader(
+                  headerColor: headerColor,
+                  tileColor: tileColor,
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Appearance",
+                ),
+              if (Platform.isWindows)
+                SettingsSection(
                 backgroundColor: tileColor,
                 children: [
-                  if (Platform.isWindows)
-                    Obx(() => SettingsSwitch(
-                      initialVal: SettingsManager().settings.useWindowsAccent.value,
-                      backgroundColor: tileColor,
-                      title: "Use Windows Accent Color",
-                      subtitle: "Apply the Windows accent color to your theme",
-                      onChanged: (value) async {
-                        if (value) {
-                          windowsAccentColor = await DynamicColorPlugin.getAccentColor();
-                        }
-                        SettingsManager().settings.useWindowsAccent.value = value;
-                        SettingsManager().saveSettings(SettingsManager().settings);
-                        loadTheme(context);
-                      },
-                    )),
+                  Obx(() => SettingsSwitch(
+                    initialVal: SettingsManager().settings.useWindowsAccent.value,
+                    backgroundColor: tileColor,
+                    title: "Use Windows Accent Color",
+                    subtitle: "Apply the Windows accent color to your theme",
+                    onChanged: (value) async {
+                      if (value) {
+                        windowsAccentColor = await DynamicColorPlugin.getAccentColor();
+                      }
+                      SettingsManager().settings.useWindowsAccent.value = value;
+                      SettingsManager().saveSettings(SettingsManager().settings);
+                      loadTheme(context);
+                    },
+                  )),
                   Obx(() {
                     if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return Container(

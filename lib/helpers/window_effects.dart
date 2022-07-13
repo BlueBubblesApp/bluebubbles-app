@@ -13,8 +13,7 @@ enum EffectDependencies {
 
 class WindowEffects {
 
-  static final _windows = [WindowEffect.tabbed, WindowEffect.mica, WindowEffect.aero, WindowEffect.acrylic, WindowEffect.transparent, WindowEffect.disabled];
-  static final _linux = [WindowEffect.transparent, WindowEffect.disabled];
+  static final effects = [WindowEffect.tabbed, WindowEffect.mica, WindowEffect.aero, WindowEffect.acrylic, WindowEffect.transparent, WindowEffect.disabled];
 
   static final _descriptions = {
     WindowEffect.tabbed: "Tabbed is a Mica-like material that incorporates theme and desktop wallpaper, but is more "
@@ -49,12 +48,6 @@ class WindowEffects {
     WindowEffect.disabled: Tuple2(1, 1),
   };
 
-  static List<WindowEffect> get effects {
-    if (Platform.isWindows) return _windows;
-    if (Platform.isLinux) return _linux;
-    return [];
-  }
-
   static Map<WindowEffect, String> get descriptions {
     return Map.fromEntries(effects.map((effect) => MapEntry(effect, _descriptions[effect] ?? "")));
   }
@@ -81,6 +74,7 @@ class WindowEffects {
   }
 
   static Future<void> setEffect({required Color color}) async {
+    if (!kIsDesktop || !Platform.isWindows) return;
     WindowEffect effect = SettingsManager().settings.windowEffect.value;
 
     Color _color = Colors.transparent;

@@ -360,7 +360,9 @@ Future<Null> initApp(bool isBubble) async {
     if (kIsDesktop) {
       await WindowManager.instance.setTitle('BlueBubbles');
       await Window.initialize();
-      await Window.hideWindowControls();
+      if (Platform.isWindows) {
+        await Window.hideWindowControls();
+      }
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
         await WindowManager.instance.setMinimumSize(Size(300, 300));
@@ -902,7 +904,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
     ));
 
-    if (kIsDesktop) {
+    if (kIsDesktop && Platform.isWindows) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
         await WindowEffects.setEffect(color: context.theme.backgroundColor);
         EventDispatcher().stream.listen((Map<String, dynamic> event) async {
