@@ -210,6 +210,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Positioned(
                   top: 40,
                   left: 10,
+                  right: 10,
                   child: AnimatedSize(
                     duration: Duration(milliseconds: 500),
                     curve: Sprung.underDamped,
@@ -222,7 +223,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                               child: Container(
                                 alignment: Alignment.center,
                                 height: 120,
-                                width: CustomNavigator.width(context) - 20,
                                 color: context.theme.colorScheme.properSurface,
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 0),

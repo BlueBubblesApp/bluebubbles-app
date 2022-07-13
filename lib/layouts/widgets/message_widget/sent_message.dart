@@ -863,7 +863,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
       }
     }
 
-    List<Widget> messagePopupColumn = List<Widget>.from(messageColumn);
+    List<Widget> messagePopupColumn = List<Widget>.from(messageColumn.slice(1));
 
     // Fourth, let's add any reactions or stickers to the widget
     if (message != null) {
@@ -956,79 +956,17 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
               }),
         );
         messagePopupColumn.add(
-          StreamBuilder<dynamic>(
-              stream: ChatController.of(context)?.totalOffsetStream.stream,
-              builder: (context, snapshot) {
-                double? data;
-                if (snapshot.data is double) {
-                  data = snapshot.data;
-                } else if (snapshot.data is Map<String, dynamic>) {
-                  if (snapshot.data["guid"] == widget.message.guid) {
-                    data = snapshot.data["offset"];
-                  } else {
-                    data = snapshot.data["else"];
-                  }
-                }
-                final offset = (-(data ?? 0)).clamp(0, 70).toDouble();
-                final originalWidth = max(
-                    min(CustomNavigator.width(context) - messageSize!.width - 150, CustomNavigator.width(context) / 3),
-                    10);
-                final width = max(
-                    min(CustomNavigator.width(context) - messageSize!.width - 150, CustomNavigator.width(context) / 3) -
-                        offset,
-                    10);
-                return AnimatedContainer(
-                  duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-                  width: CustomNavigator.width(context) - 10 - offset,
-                  padding: EdgeInsets.only(
-                    // add extra padding when showing contact avatars
-                    left: max(
-                        ((ChatManager().activeChat?.chat.isGroup() ?? false) ||
-                                    SettingsManager().settings.alwaysShowAvatars.value
-                                ? 75
-                                : 40) -
-                            (width == 10 ? offset - (originalWidth - width) : 0),
-                        0),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AnimatedContainer(
-                          duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-                          // to make sure the bounds do not overflow, and so we
-                          // dont draw an ugly long line)
-                          width: width.toDouble(),
-                          height: messageSize!.height / 2,
-                          child: CustomPaint(
-                              painter: LinePainter(
-                                  context,
-                                  widget.message,
-                                  widget.olderMessage,
-                                  widget.newerMessage,
-                                  msg,
-                                  threadOriginatorSize!,
-                                  messageSize!,
-                                  widget.olderMessage?.threadOriginatorGuid == widget.message.threadOriginatorGuid &&
-                                      widget.hasTimestampAbove,
-                                  widget.hasTimestampBelow,
-                                  false,
-                                  offset))),
-                      MessageWidgetMixin.addStickersToWidget(
-                        message: MessageWidgetMixin.addReactionsToWidget(
-                            messageWidget: Padding(
-                              padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
-                              child: message,
-                            ),
-                            reactions: widget.reactionsWidget,
-                            message: widget.message),
-                        stickers: widget.stickersWidget,
-                        isFromMe: widget.message.isFromMe!,
-                      ),
-                    ],
-                  ),
-                );
-              }),
+          MessageWidgetMixin.addStickersToWidget(
+            message: MessageWidgetMixin.addReactionsToWidget(
+                messageWidget: Padding(
+                  padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
+                  child: message,
+                ),
+                reactions: widget.reactionsWidget,
+                message: widget.message),
+            stickers: widget.stickersWidget,
+            isFromMe: widget.message.isFromMe!,
+          ),
         );
       } else {
         messageColumn.add(
