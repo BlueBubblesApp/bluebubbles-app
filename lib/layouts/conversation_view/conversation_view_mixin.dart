@@ -604,6 +604,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         Container(
           constraints: BoxConstraints(
             maxWidth: CustomNavigator.width(context) / 2 - 55,
+            maxHeight: 20.5
           ),
           child: RichText(
             maxLines: 1,
