@@ -3,7 +3,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
+import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';

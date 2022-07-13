@@ -7,8 +7,8 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
-import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
-import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
+import 'package:bluebubbles/layouts/setup/pages/sync/qr_code_scanner.dart';
+import 'package:bluebubbles/layouts/setup/dialogs/manual_entry_dialog.dart';
 import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -411,7 +411,7 @@ class ServerManagementPanel extends StatelessWidget {
                     onLongPress: kIsWeb || kIsDesktop ? null : () {
                       showDialog(
                         context: context,
-                        builder: (connectContext) => TextInputURL(
+                        builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
                             Get.back();
                             fcm.registerDevice();
@@ -427,7 +427,7 @@ class ServerManagementPanel extends StatelessWidget {
                     onTap: kIsWeb || kIsDesktop ? () {
                       showDialog(
                         context: context,
-                        builder: (connectContext) => TextInputURL(
+                        builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
                             Get.back();
                             fcm.registerDevice();

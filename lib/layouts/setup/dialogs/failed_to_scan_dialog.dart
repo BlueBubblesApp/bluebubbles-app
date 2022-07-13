@@ -4,11 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-class FailedToScan extends StatelessWidget {
-  const FailedToScan({Key? key, required this.exception, required this.title, this.showCopy = true}) : super(key: key);
+class FailedToScanDialog extends StatelessWidget {
+  const FailedToScanDialog({Key? key, required this.exception, required this.title}) : super(key: key);
   final dynamic exception;
   final String title;
-  final bool showCopy;
 
   @override
   Widget build(BuildContext context) {
@@ -31,14 +30,13 @@ class FailedToScan extends StatelessWidget {
         ),
       ),
       actions: [
-        if (showCopy)
-          TextButton(
-            child: Text("Copy", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-            onPressed: () {
-              Navigator.of(context).pop();
-              Clipboard.setData(ClipboardData(text: error.toString()));
-            },
-          ),
+        TextButton(
+          child: Text("Copy", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+          onPressed: () {
+            Navigator.of(context).pop();
+            Clipboard.setData(ClipboardData(text: error.toString()));
+          },
+        ),
         TextButton(
           child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
           onPressed: () {

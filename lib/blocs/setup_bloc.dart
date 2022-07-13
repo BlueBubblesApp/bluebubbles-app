@@ -30,11 +30,11 @@ class SetupBloc {
   IncrementalSyncManager? incrementalSyncManager;
   RxBool isIncrementalSyncing = false.obs;
 
-  double numberOfMessagesPerPage = 25;
+  int numberOfMessagesPerPage = 25;
   bool skipEmptyChats = true;
   bool saveToDownloads = false;
 
-  Future<void> startFullSync(Settings settings) async {
+  Future<void> startFullSync() async {
     // Set the last sync date (for incremental, even though this isn't incremental)
     // We won't try an incremental sync until the last (full) sync date is set
     Settings _settingsCopy = SettingsManager().settings;

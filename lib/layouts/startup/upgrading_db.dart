@@ -25,15 +25,15 @@ class UpgradingDB extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.max,
               children: [
-                Center(
+                const Center(
                   child: Text(
                     "Upgrading Database...",
                     style: TextStyle(color: Colors.white, fontSize: 30),
                     textAlign: TextAlign.center,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
+                const Padding(
+                  padding: EdgeInsets.only(top: 20.0),
                   child: Center(
                     child: Text("Please wait, this shouldn't take longer than 15 seconds...",
                         style: TextStyle(color: Colors.white, fontSize: 10)),
