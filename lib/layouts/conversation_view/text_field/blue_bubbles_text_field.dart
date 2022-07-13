@@ -765,7 +765,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         : Icon(
                             SettingsManager().settings.skin.value == Skins.iOS
                                 ? CupertinoIcons.share
-                                : SettingsManager().settings.skin.value == Skins.Samsung
+                                : kIsDesktop ? Icons.file_upload : SettingsManager().settings.skin.value == Skins.Samsung
                                     ? Icons.add
                                     : Icons.share,
                             color: SettingsManager().settings.skin.value == Skins.Samsung
