@@ -368,7 +368,7 @@ class ChatListPanel extends StatelessWidget {
                                       children: <Widget>[
                                         Flexible(
                                           child: Container(
-                                            color: context.theme.colorScheme.secondary,
+                                            color: context.theme.colorScheme.primary,
                                             padding: EdgeInsets.symmetric(horizontal: 2),
                                             child: AbsorbPointer(
                                               child: Obx(
@@ -418,7 +418,7 @@ class ChatListPanel extends StatelessWidget {
                                                                               .settings
                                                                               .pinColumnsLandscape
                                                                               .value)),
-                                                                  color: context.theme.colorScheme.secondary
+                                                                  color: context.theme.colorScheme.primary
                                                                       .lightenOrDarken(10)),
                                                             ),
                                                             childCount:
@@ -451,7 +451,7 @@ class ChatListPanel extends StatelessWidget {
                                                                 height: 12,
                                                                 margin: EdgeInsets.symmetric(vertical: 1),
                                                                 decoration: BoxDecoration(
-                                                                    color: context.theme.colorScheme.secondary
+                                                                    color: context.theme.colorScheme.primary
                                                                         .lightenOrDarken(10),
                                                                     borderRadius: BorderRadius.circular(3))),
                                                             itemCount: 8),
@@ -465,11 +465,11 @@ class ChatListPanel extends StatelessWidget {
                                         Container(
                                             width: 1,
                                             height: 108,
-                                            color: context.theme.colorScheme.secondary.oppositeLightenOrDarken(40)),
+                                            color: context.theme.colorScheme.primary.oppositeLightenOrDarken(40)),
                                         Container(
                                             width: CustomNavigator.width(context) / context.width * width - 1,
                                             height: 108,
-                                            color: context.theme.colorScheme.secondary),
+                                            color: context.theme.colorScheme.primary),
                                       ],
                                     ),
                                   );
