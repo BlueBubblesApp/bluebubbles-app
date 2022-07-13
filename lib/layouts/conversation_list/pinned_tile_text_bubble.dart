@@ -21,6 +21,21 @@ class PinnedTileTextBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<Color> getBubbleColors(Message message) {
+      List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
+      if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
+        if (message.handle?.color == null) {
+          bubbleColors = toColorGradient(message.handle?.address);
+        } else {
+          bubbleColors = [
+            HexColor(message.handle!.color!),
+            HexColor(message.handle!.color!).lightenAmount(0.075),
+          ];
+        }
+      }
+      return bubbleColors;
+    }
+
     bool showTail = !chat.isGroup();
     if (!(chat.hasUnreadMessage ?? false)) return Container();
     Message? lastMessage = chat.latestMessageGetter;
@@ -35,9 +50,9 @@ class PinnedTileTextBubble extends StatelessWidget {
       return Container();
     }
 
-    Color background = context.theme.colorScheme.bubble(context, chat.isIMessage).withOpacity(0.6);
+    Color background = SettingsManager().settings.colorfulBubbles.value && lastMessage != null ? getBubbleColors(lastMessage).first.withOpacity(0.7) : context.theme.colorScheme.bubble(context, chat.isIMessage).withOpacity(0.6);
 
-    TextStyle style = context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onBubble(context, chat.isIMessage).withOpacity(0.85));
+    TextStyle style = context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onBubble(context, chat.isIMessage).withOpacity(SettingsManager().settings.colorfulBubbles.value ? 1 : 0.85));
 
     if (hide && !generate) style = style.apply(color: Colors.transparent);
 
