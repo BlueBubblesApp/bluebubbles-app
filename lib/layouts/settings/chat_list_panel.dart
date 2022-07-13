@@ -264,7 +264,6 @@ class ChatListPanel extends StatelessWidget {
                                     saveSettings();
                                   },
                                   startingVal: SettingsManager().settings.pinRowsPortrait.value.toDouble(),
-                                  text: "Maximum Pin Rows",
                                   backgroundColor: tileColor,
                                   formatValue: (val) =>
                                       "${SettingsManager().settings.pinRowsPortrait.value} row${SettingsManager().settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${kIsDesktop

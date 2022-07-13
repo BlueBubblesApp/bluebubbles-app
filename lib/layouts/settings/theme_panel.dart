@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
@@ -20,10 +21,12 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:dio/dio.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:universal_io/io.dart';
@@ -90,6 +93,8 @@ class ThemePanel extends StatelessWidget {
         tileColor = temp;
       }
 
+      final allowedEffects = WindowEffects.effects;
+
       return SettingsScaffold(
         title: "Theming & Styles",
         initialHeader: "Appearance",
@@ -155,7 +160,6 @@ class ThemePanel extends StatelessWidget {
                       child: Text("Avatar Scale Factor", style: context.theme.textTheme.bodyLarge),
                     ),
                     Obx(() => SettingsSlider(
-                        text: "Avatar Scale Factor",
                         startingVal: SettingsManager().settings.avatarScale.value.toDouble(),
                         update: (double val) {
                           SettingsManager().settings.avatarScale.value = val;
@@ -251,6 +255,115 @@ class ThemePanel extends StatelessWidget {
                       ),
                   ],
                 ),
+                if (kIsDesktop && Platform.isWindows)
+                  SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Window Effect",
+                  ),
+                if (kIsDesktop && Platform.isWindows)
+                  SettingsSection(
+                    backgroundColor: tileColor,
+                    children: [
+                      Obx(
+                            () => SettingsOptions<WindowEffect>(
+                          initial: SettingsManager().settings.windowEffect.value,
+                          options: allowedEffects,
+                          textProcessing: (WindowEffect effect) => effect.toString().substring("WindowEffect.".length),
+                          onChanged: (WindowEffect? effect) async {
+                            effect ??= WindowEffect.disabled;
+                            SettingsManager().settings.windowEffect.value = effect;
+                            prefs.setString('window-effect', effect.toString());
+                            await WindowEffects.setEffect(color: context.theme.backgroundColor);
+                            saveSettings();
+                          },
+                          title: "Window Effect",
+                          subtitle: "${WindowEffects.descriptions[SettingsManager().settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}",
+                          backgroundColor: tileColor,
+                          secondaryColor: headerColor,
+                          capitalize: true,
+                        ),
+                      ),
+                      Obx(() {
+                        if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.backgroundColor)) {
+                          return SettingsTile(
+                            backgroundColor: tileColor,
+                            title: "Background Opacity (Light)",
+                            subtitle: "You can set different opacities for your light and dark themes",
+                            trailing: SettingsManager().settings.windowEffectCustomOpacityLight.value != null ? ElevatedButton(
+                              onPressed: () {
+                                SettingsManager().settings.windowEffectCustomOpacityLight.value = null;
+                                saveSettings();
+                                WindowEffects.setEffect(color: context.theme.backgroundColor);
+                              },
+                              child: Text("Reset to Default"),
+                            ) : null,
+                          );
+                        }
+                        return SizedBox.shrink();
+                      }),
+                      Obx(() {
+                        if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.backgroundColor)) {
+                          return SettingsSlider(
+                            startingVal: SettingsManager().settings.windowEffectCustomOpacityLight.value ??
+                                WindowEffects.defaultOpacity(dark: false),
+                            max: 1,
+                            min: 0,
+                            divisions: 100,
+                            update: (value) => SettingsManager().settings.windowEffectCustomOpacityLight.value = value,
+                            onChangeEnd: (value) {
+                              if (value == WindowEffects.defaultOpacity(dark: false)) {
+                                SettingsManager().settings.windowEffectCustomOpacityLight.value = null;
+                              }
+                              saveSettings();
+                              WindowEffects.setEffect(color: context.theme.backgroundColor);
+                            },
+                          );
+                        }
+                        return SizedBox.shrink();
+                      }),
+                      Obx(() {
+                        if (WindowEffects.dependsOnColor() && WindowEffects.isDark(color: context.theme.backgroundColor)) {
+                          return SettingsTile(
+                            backgroundColor: tileColor,
+                            title: "Background Opacity (Dark)",
+                            subtitle: "You can set different opacities for your light and dark themes",
+                            trailing: SettingsManager().settings.windowEffectCustomOpacityDark.value != null ? ElevatedButton(
+                              onPressed: () {
+                                SettingsManager().settings.windowEffectCustomOpacityDark.value = null;
+                                saveSettings();
+                                WindowEffects.setEffect(color: context.theme.backgroundColor);
+                              },
+                              child: Text("Reset to Default"),
+                            ) : null,
+                          );
+                        }
+                        return SizedBox.shrink();
+                      }),
+                      Obx(() {
+                        if (WindowEffects.dependsOnColor() && WindowEffects.isDark(color: context.theme.backgroundColor)) {
+                          return SettingsSlider(
+                            startingVal: SettingsManager().settings.windowEffectCustomOpacityDark.value ??
+                                WindowEffects.defaultOpacity(dark: true),
+                            max: 1,
+                            min: 0,
+                            divisions: 100,
+                            update: (value) => SettingsManager().settings.windowEffectCustomOpacityDark.value = value,
+                            onChangeEnd: (value) {
+                              if (value == WindowEffects.defaultOpacity(dark: true)) {
+                                SettingsManager().settings.windowEffectCustomOpacityDark.value = null;
+                              }
+                              saveSettings();
+                              WindowEffects.setEffect(color: context.theme.backgroundColor);
+                            },
+                          );
+                        }
+                        return SizedBox.shrink();
+                      }),
+                    ]
+                  ),
                 SettingsHeader(
                     headerColor: headerColor,
                     tileColor: tileColor,
@@ -260,6 +373,21 @@ class ThemePanel extends StatelessWidget {
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
+                    if (kIsDesktop && Platform.isWindows)
+                      Obx(() => SettingsSwitch(
+                        initialVal: SettingsManager().settings.useWindowsAccent.value,
+                        backgroundColor: tileColor,
+                        title: "Use Windows Accent Color",
+                        subtitle: "Apply the Windows accent color to your theme",
+                        onChanged: (value) async {
+                          if (value) {
+                            windowsAccentColor = await DynamicColorPlugin.getAccentColor();
+                          }
+                          SettingsManager().settings.useWindowsAccent.value = value;
+                          SettingsManager().saveSettings(SettingsManager().settings);
+                          loadTheme(context);
+                        },
+                      )),
                     if (!kIsWeb && !kIsDesktop && monetPalette != null)
                       Obx(() {
                         if (SettingsManager().settings.skin.value == Skins.iOS) {

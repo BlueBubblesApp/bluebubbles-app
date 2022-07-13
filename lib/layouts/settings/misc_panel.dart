@@ -214,7 +214,6 @@ class MiscPanel extends StatelessWidget {
                   Obx(() {
                     if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return SettingsSlider(
-                          text: "Scroll Speed Multiplier",
                           startingVal: SettingsManager().settings.scrollVelocity.value,
                           update: (double val) {
                             SettingsManager().settings.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
@@ -255,7 +254,6 @@ class MiscPanel extends StatelessWidget {
                   Obx(() {
                     if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
                       return SettingsSlider(
-                          text: "Set send delay",
                           startingVal: SettingsManager().settings.sendDelay.toDouble(),
                           update: (double val) {
                             SettingsManager().settings.sendDelay.value = val.toInt();
@@ -315,7 +313,6 @@ class MiscPanel extends StatelessWidget {
                           divisions: 3,
                           max: 5,
                           min: 3,
-                          text: 'Maximum avatars in a group chat widget',
                           startingVal: SettingsManager().settings.maxAvatarsInGroupWidget.value.toDouble(),
                           update: (double val) {
                             SettingsManager().settings.maxAvatarsInGroupWidget.value = val.toInt();

@@ -55,8 +55,6 @@ class DesktopPanel extends StatelessWidget {
 
     RxList showButtons = RxList.generate(ReactionTypes.toList().length + 1, (index) => false);
 
-    final allowedEffects = WindowEffects.effects;
-
     return SettingsScaffold(
       title: "Desktop Settings",
       initialHeader: "Window Behavior",
@@ -164,7 +162,6 @@ class DesktopPanel extends StatelessWidget {
                         min: 4.0,
                         divisions: 20,
                         startingVal: SettingsManager().settings.betterScrollingMultiplier.value,
-                        text: SettingsManager().settings.betterScrollingMultiplier.value.toString(),
                         update: (double val) {
                           SettingsManager().settings.betterScrollingMultiplier.value = val;
                         },
@@ -175,69 +172,6 @@ class DesktopPanel extends StatelessWidget {
                       )
                   ],
                 ),
-              ),
-              if (Platform.isWindows)
-                SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Appearance",
-                ),
-              if (Platform.isWindows)
-                SettingsSection(
-                backgroundColor: tileColor,
-                children: [
-                  Obx(() => SettingsSwitch(
-                    initialVal: SettingsManager().settings.useWindowsAccent.value,
-                    backgroundColor: tileColor,
-                    title: "Use Windows Accent Color",
-                    subtitle: "Apply the Windows accent color to your theme",
-                    onChanged: (value) async {
-                      if (value) {
-                        windowsAccentColor = await DynamicColorPlugin.getAccentColor();
-                      }
-                      SettingsManager().settings.useWindowsAccent.value = value;
-                      SettingsManager().saveSettings(SettingsManager().settings);
-                      loadTheme(context);
-                    },
-                  )),
-                  Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: tileColor,
-                        ),
-                        padding: EdgeInsets.only(top: 5, left: 15),
-                        child: Text("Window Effect"),
-                      );
-                    }
-                    return SizedBox.shrink();
-                  }),
-                  Obx(
-                    () => SettingsOptions<WindowEffect>(
-                      initial: SettingsManager().settings.windowEffect.value,
-                      options: allowedEffects,
-                      textProcessing: (WindowEffect effect) => effect.toString().substring("WindowEffect.".length),
-                      onChanged: (WindowEffect? effect) async {
-                        effect ??= WindowEffect.disabled;
-                        SettingsManager().settings.windowEffect.value = effect;
-                        prefs.setString('window-effect', effect.toString());
-                        await WindowEffects.setEffect(color: context.theme.backgroundColor);
-                      },
-                      title: "Window Effect",
-                      backgroundColor: tileColor,
-                      secondaryColor: headerColor,
-                      capitalize: true,
-                    ),
-                  ),
-                  Obx(() {
-                    return SettingsSubtitle(
-                      subtitle: WindowEffects.descriptions[SettingsManager().settings.windowEffect.value],
-                      unlimitedSpace: true,
-                    );
-                  }),
-                ],
               ),
               if (Platform.isWindows)
                 SettingsHeader(

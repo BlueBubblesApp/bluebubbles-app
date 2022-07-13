@@ -13,18 +13,28 @@ enum EffectDependencies {
 
 class WindowEffects {
 
-  static final effects = [WindowEffect.tabbed, WindowEffect.mica, WindowEffect.aero, WindowEffect.acrylic, WindowEffect.transparent, WindowEffect.disabled];
+  static final _effects = [WindowEffect.tabbed, WindowEffect.mica, WindowEffect.aero, WindowEffect.acrylic, WindowEffect.transparent, WindowEffect.disabled];
+
+  static final Map<WindowEffect, int> _versions = {
+    WindowEffect.tabbed: 22523,
+    WindowEffect.mica: 22000,
+    WindowEffect.aero: 0,
+    WindowEffect.acrylic: 17134,
+    WindowEffect.transparent: 0,
+    WindowEffect.disabled: 0,
+  };
+
+  static List<WindowEffect> get effects => _effects.where((effect) => parsedWindowsVersion() >= _versions[effect]!).toList();
 
   static final _descriptions = {
     WindowEffect.tabbed: "Tabbed is a Mica-like material that incorporates theme and desktop wallpaper, but is more "
-        "sensitive to desktop wallpaper color. Works only on later Windows 11 versions (builds "
-        "higher than 22523).",
+        "sensitive to desktop wallpaper color. Works only on later Windows 11 versions (build 22523 or higher).",
     WindowEffect.mica: "Mica is an opaque, dynamic material that incorporates theme and desktop wallpaper to paint "
-        "the background of long-lived windows. Works only on Windows 11 or greater.",
+        "the background of long-lived windows. Works only on Windows 11 or greater (build 22000 or higher).",
     WindowEffect.aero: "Aero glass effect. Windows Vista & Windows 7 like glossy blur effect.",
     WindowEffect.acrylic: "Acrylic is a type of brush that creates a translucent texture. You can apply acrylic to "
         "app surfaces to add depth and help establish a visual hierarchy. Works only on Windows 10 version 1803 or "
-        "higher.",
+        "higher (build 17134 or higher).",
     WindowEffect.transparent: "Transparent window background.",
     WindowEffect.disabled: "Default window background.",
   };
@@ -52,21 +62,24 @@ class WindowEffects {
     return Map.fromEntries(effects.map((effect) => MapEntry(effect, _descriptions[effect] ?? "")));
   }
 
-  static double getOpacity({required Color color, double? defaultOpacity}) {
-    if (!kIsDesktop) return defaultOpacity ?? 1;
-
-    WindowEffect effect = SettingsManager().settings.windowEffect.value;
-
-    Tuple2? opacities = _opacities[effect];
-    if (opacities == null) return 1;
-
+  static double getOpacity({required Color color}) {
     bool dark = isDark(color: color);
-    if (dark) return opacities.item1;
-    return opacities.item2;
+    if (dark) return SettingsManager().settings.windowEffectCustomOpacityDark.value ?? defaultOpacity(dark: true);
+    return SettingsManager().settings.windowEffectCustomOpacityLight.value ?? defaultOpacity(dark: false);
   }
 
-  static Color withOpacity({required Color color, double? defaultOpacity}) {
-    return color.withOpacity(getOpacity(color: color, defaultOpacity: defaultOpacity));
+  static double defaultOpacity({required bool dark}) {
+    WindowEffect effect = SettingsManager().settings.windowEffect.value;
+    return dark ? _opacities[effect]!.item1 : _opacities[effect]!.item2;
+  }
+
+  static bool dependsOnColor() {
+    WindowEffect effect = SettingsManager().settings.windowEffect.value;
+    return _dependencies[effect]!.contains(EffectDependencies.color);
+  }
+
+  static Color withOpacity({required Color color}) {
+    return color.withOpacity(getOpacity(color: color));
   }
 
   static bool isDark({required Color color}) {
@@ -76,6 +89,8 @@ class WindowEffects {
   static Future<void> setEffect({required Color color}) async {
     if (!kIsDesktop || !Platform.isWindows) return;
     WindowEffect effect = SettingsManager().settings.windowEffect.value;
+    if (!effects.contains(effect)) SettingsManager().settings.windowEffect.value = WindowEffect.disabled;
+    SettingsManager().saveSettings(SettingsManager().settings);
 
     Color _color = Colors.transparent;
     bool _dark = true;
@@ -87,4 +102,9 @@ class WindowEffects {
     }
     await Window.setEffect(effect: effect, color: _color, dark: _dark);
   }
+}
+
+int parsedWindowsVersion() {
+  String raw = Platform.operatingSystemVersion;
+  return int.tryParse(raw.substring(raw.indexOf("Build") + 6, raw.length - 1)) ?? 0;
 }

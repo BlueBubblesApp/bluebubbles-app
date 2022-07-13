@@ -166,7 +166,6 @@ class AttachmentPanel extends StatelessWidget {
                   SettingsSection(backgroundColor: tileColor, children: [
                     if (!kIsWeb)
                       Obx(() => SettingsSlider(
-                          text: "Attachment Preview Quality",
                           startingVal: SettingsManager().settings.previewCompressionQuality.value.toDouble(),
                           update: (double val) {
                             SettingsManager().settings.previewCompressionQuality.value = val.toInt();

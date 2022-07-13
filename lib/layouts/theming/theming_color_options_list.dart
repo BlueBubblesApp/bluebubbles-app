@@ -410,7 +410,6 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                 min: 0.5,
                 max: 3,
                 divisions: 10,
-                text: '',
                 formatValue: ((double val) => val.toStringAsFixed(2)),
               );
             },
