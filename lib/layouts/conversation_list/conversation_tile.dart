@@ -417,7 +417,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                             (widget.chat.hasUnreadMessage ?? false)
                             ? Theme.of(context).textTheme.bodyMedium!.color : shouldHighlight.value
                                 ? SettingsManager().settings.skin.value == Skins.iOS
-                                    ? context.theme.colorScheme.outline
+                                    ? context.theme.colorScheme.onBubble(context, widget.chat.isIMessage)
                                     : null
                                 : context.theme.colorScheme.outline,
                         fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
