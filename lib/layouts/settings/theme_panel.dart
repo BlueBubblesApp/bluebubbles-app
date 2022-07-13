@@ -176,7 +176,7 @@ class ThemePanel extends StatelessWidget {
                     tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
-                    text: "Skin and Layout"),
+                    text: "Skin${kIsDesktop ? "" : " and Layout"}"),
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
@@ -207,17 +207,18 @@ class ThemePanel extends StatelessWidget {
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
-                    Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        controller._settingsCopy.tabletMode.value = val;
-                        saveSettings();
-                      },
-                      initialVal: controller._settingsCopy.tabletMode.value,
-                      title: "Tablet Mode",
-                      backgroundColor: tileColor,
-                      subtitle: "Enables tablet mode (split view) depending on screen width",
-                      isThreeLine: true,
-                    )),
+                    if (!kIsDesktop)
+                      Obx(() => SettingsSwitch(
+                        onChanged: (bool val) {
+                          controller._settingsCopy.tabletMode.value = val;
+                          saveSettings();
+                        },
+                        initialVal: controller._settingsCopy.tabletMode.value,
+                        title: "Tablet Mode",
+                        backgroundColor: tileColor,
+                        subtitle: "Enables tablet mode (split view) depending on screen width",
+                        isThreeLine: true,
+                      )),
                     if (!kIsWeb && !kIsDesktop)
                       Container(
                         color: tileColor,
