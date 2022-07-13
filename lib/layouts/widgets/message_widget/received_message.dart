@@ -623,6 +623,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       }
     }
 
+    List<Widget> messagePopupColumn = List<Widget>.from(messageColumn);
+
     // Fourth, let's add any reactions or stickers to the widget
     if (message != null) {
       // only show the line if it is going to either connect up or down
@@ -703,6 +705,71 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             },
           ),
         );
+        messagePopupColumn.add(
+          StreamBuilder<dynamic>(
+            stream: ChatController.of(context)?.totalOffsetStream.stream,
+            builder: (context, snapshot) {
+              double? data;
+              if (snapshot.data is double) {
+                data = snapshot.data;
+              } else if (snapshot.data is Map<String, dynamic>) {
+                if (snapshot.data["guid"] == widget.message.guid) {
+                  data = snapshot.data["offset"];
+                } else {
+                  data = snapshot.data["else"];
+                }
+              }
+              final offset = (-(data ?? 0)).clamp(0, 70).toDouble();
+              final originalWidth = max(
+                  min(CustomNavigator.width(context) - messageSize!.width - 125, CustomNavigator.width(context) / 3),
+                  10);
+              final width = max(
+                  min(CustomNavigator.width(context) - messageSize!.width - 125, CustomNavigator.width(context) / 3) -
+                      offset,
+                  10);
+              return AnimatedContainer(
+                duration: Duration(milliseconds: offset == 0 ? 150 : 0),
+                width: CustomNavigator.width(context) - 45 - offset,
+                padding: EdgeInsets.only(right: max(30 - (width == 10 ? offset - (originalWidth - width) : 0), 0)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    MessageWidgetMixin.addStickersToWidget(
+                      message: MessageWidgetMixin.addReactionsToWidget(
+                          messageWidget: SizedBox(child: message!),
+                          reactions: widget.reactionsWidget,
+                          message: widget.message,
+                          shouldShow: widget.message.getRealAttachments().isEmpty),
+                      stickers: widget.stickersWidget,
+                      isFromMe: widget.message.isFromMe!,
+                    ),
+                    AnimatedContainer(
+                        duration: Duration(milliseconds: offset == 0 ? 150 : 0),
+                        // to make sure the bounds do not overflow, and so we
+                        // dont draw an ugly long line)
+                        width: width.toDouble(),
+                        height: messageSize!.height / 2,
+                        child: CustomPaint(
+                            painter: LinePainter(
+                              context,
+                              widget.message,
+                              widget.olderMessage,
+                              widget.newerMessage,
+                              msg,
+                              threadOriginatorSize!,
+                              messageSize!,
+                              widget.olderMessage?.threadOriginatorGuid == widget.message.threadOriginatorGuid &&
+                                  widget.hasTimestampAbove,
+                              widget.hasTimestampBelow,
+                              addedSender,
+                              offset,
+                            ))),
+                  ],
+                ),
+              );
+            },
+          ),);
       } else {
         messageColumn.add(
           MessageWidgetMixin.addStickersToWidget(
@@ -715,20 +782,29 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             isFromMe: widget.message.isFromMe!,
           ),
         );
+        messagePopupColumn.add(MessageWidgetMixin.addStickersToWidget(
+          message: MessageWidgetMixin.addReactionsToWidget(
+              messageWidget: SizedBox(child: message),
+              reactions: widget.reactionsWidget,
+              message: widget.message,
+              shouldShow: widget.message.getRealAttachments().isEmpty),
+          stickers: widget.stickersWidget,
+          isFromMe: widget.message.isFromMe!,
+        ),);
       }
     }
 
     if (widget.showTimeStamp) {
-      messageColumn.add(
-        DeliveredReceipt(
-          message: widget.message,
-          showDeliveredReceipt: widget.showTimeStamp,
-          shouldAnimate: true,
-        ),
+      Widget receipt =
+      DeliveredReceipt(
+        message: widget.message,
+        showDeliveredReceipt: widget.showTimeStamp,
+        shouldAnimate: true,
       );
+      messageColumn.add(receipt);
+      messagePopupColumn.add(receipt);
     }
 
-    List<Widget> messagePopupColumn = List<Widget>.from(messageColumn);
     if (!addedSender && isGroup) {
       messagePopupColumn.insert(
         0,
@@ -959,7 +1035,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (widget.message.expressiveSendStyleId != null)
+                      if (showReplies && widget.message.expressiveSendStyleId != null)
                         GestureDetector(
                           onTap: () {
                             HapticFeedback.mediumImpact();
