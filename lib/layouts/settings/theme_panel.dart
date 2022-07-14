@@ -267,14 +267,21 @@ class ThemePanel extends StatelessWidget {
                   SettingsSection(
                     backgroundColor: tileColor,
                     children: [
-                      Obx(
-                            () => SettingsOptions<WindowEffect>(
+                      Obx(() => SettingsOptions<WindowEffect>(
                           initial: SettingsManager().settings.windowEffect.value,
                           options: allowedEffects,
                           textProcessing: (WindowEffect effect) => effect.toString().substring("WindowEffect.".length),
                           onChanged: (WindowEffect? effect) async {
+                            bool defaultOpacityLight = SettingsManager().settings.windowEffectCustomOpacityLight.value == WindowEffects.defaultOpacity(dark: false);
+                            bool defaultOpacityDark = SettingsManager().settings.windowEffectCustomOpacityDark.value == WindowEffects.defaultOpacity(dark: true);
                             effect ??= WindowEffect.disabled;
                             SettingsManager().settings.windowEffect.value = effect;
+                            if (defaultOpacityLight) {
+                              SettingsManager().settings.windowEffectCustomOpacityLight.value = WindowEffects.defaultOpacity(dark: false);
+                            }
+                            if (defaultOpacityDark) {
+                              SettingsManager().settings.windowEffectCustomOpacityDark.value = WindowEffects.defaultOpacity(dark: true);
+                            }
                             prefs.setString('window-effect', effect.toString());
                             await WindowEffects.setEffect(color: context.theme.backgroundColor);
                             saveSettings();
@@ -286,15 +293,21 @@ class ThemePanel extends StatelessWidget {
                           capitalize: true,
                         ),
                       ),
+                      if (SettingsManager().settings.skin.value == Skins.iOS)
+                        Obx(() => SettingsSubtitle(
+                              unlimitedSpace: true,
+                              subtitle:
+                                  "${WindowEffects.descriptions[SettingsManager().settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}",
+                            )),
                       Obx(() {
                         if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.backgroundColor)) {
                           return SettingsTile(
                             backgroundColor: tileColor,
                             title: "Background Opacity (Light)",
                             subtitle: "You can set different opacities for your light and dark themes",
-                            trailing: SettingsManager().settings.windowEffectCustomOpacityLight.value != null ? ElevatedButton(
+                            trailing: SettingsManager().settings.windowEffectCustomOpacityLight.value != WindowEffects.defaultOpacity(dark: false) ? ElevatedButton(
                               onPressed: () {
-                                SettingsManager().settings.windowEffectCustomOpacityLight.value = null;
+                                SettingsManager().settings.windowEffectCustomOpacityLight.value = WindowEffects.defaultOpacity(dark: false);
                                 saveSettings();
                                 WindowEffects.setEffect(color: context.theme.backgroundColor);
                               },
@@ -307,16 +320,13 @@ class ThemePanel extends StatelessWidget {
                       Obx(() {
                         if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.backgroundColor)) {
                           return SettingsSlider(
-                            startingVal: SettingsManager().settings.windowEffectCustomOpacityLight.value ??
-                                WindowEffects.defaultOpacity(dark: false),
+                            startingVal: SettingsManager().settings.windowEffectCustomOpacityLight.value,
                             max: 1,
                             min: 0,
                             divisions: 100,
                             update: (value) => SettingsManager().settings.windowEffectCustomOpacityLight.value = value,
                             onChangeEnd: (value) {
-                              if (value == WindowEffects.defaultOpacity(dark: false)) {
-                                SettingsManager().settings.windowEffectCustomOpacityLight.value = null;
-                              }
+                              SettingsManager().settings.windowEffectCustomOpacityLight.value = value;
                               saveSettings();
                               WindowEffects.setEffect(color: context.theme.backgroundColor);
                             },
@@ -330,9 +340,9 @@ class ThemePanel extends StatelessWidget {
                             backgroundColor: tileColor,
                             title: "Background Opacity (Dark)",
                             subtitle: "You can set different opacities for your light and dark themes",
-                            trailing: SettingsManager().settings.windowEffectCustomOpacityDark.value != null ? ElevatedButton(
+                            trailing: SettingsManager().settings.windowEffectCustomOpacityDark.value != WindowEffects.defaultOpacity(dark: true) ? ElevatedButton(
                               onPressed: () {
-                                SettingsManager().settings.windowEffectCustomOpacityDark.value = null;
+                                SettingsManager().settings.windowEffectCustomOpacityDark.value = WindowEffects.defaultOpacity(dark: true);
                                 saveSettings();
                                 WindowEffects.setEffect(color: context.theme.backgroundColor);
                               },
@@ -345,16 +355,13 @@ class ThemePanel extends StatelessWidget {
                       Obx(() {
                         if (WindowEffects.dependsOnColor() && WindowEffects.isDark(color: context.theme.backgroundColor)) {
                           return SettingsSlider(
-                            startingVal: SettingsManager().settings.windowEffectCustomOpacityDark.value ??
-                                WindowEffects.defaultOpacity(dark: true),
+                            startingVal: SettingsManager().settings.windowEffectCustomOpacityDark.value,
                             max: 1,
                             min: 0,
                             divisions: 100,
                             update: (value) => SettingsManager().settings.windowEffectCustomOpacityDark.value = value,
                             onChangeEnd: (value) {
-                              if (value == WindowEffects.defaultOpacity(dark: true)) {
-                                SettingsManager().settings.windowEffectCustomOpacityDark.value = null;
-                              }
+                              SettingsManager().settings.windowEffectCustomOpacityDark.value = WindowEffects.defaultOpacity(dark: true);
                               saveSettings();
                               WindowEffects.setEffect(color: context.theme.backgroundColor);
                             },

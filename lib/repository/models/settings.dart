@@ -128,8 +128,8 @@ class Settings {
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
   final Rx<WindowEffect> windowEffect = WindowEffect.disabled.obs;
-  final RxnDouble windowEffectCustomOpacityLight = RxnDouble();
-  final RxnDouble windowEffectCustomOpacityDark = RxnDouble();
+  final RxDouble windowEffectCustomOpacityLight = 0.5.obs;
+  final RxDouble windowEffectCustomOpacityDark = 0.5.obs;
 
   // Scrolling
   final RxBool betterScrolling = false.obs;
@@ -627,8 +627,8 @@ class Settings {
     SettingsManager().settings.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
     SettingsManager().settings.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
     SettingsManager().settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
-    SettingsManager().settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'];
-    SettingsManager().settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'];
+    SettingsManager().settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
+    SettingsManager().settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
     SettingsManager().settings.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     SettingsManager().settings.save();
   }
@@ -743,8 +743,8 @@ class Settings {
     s.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
     s.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
     s.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
-    s.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'];
-    s.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'];
+    s.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
+    s.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
     s.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     return s;
   }
