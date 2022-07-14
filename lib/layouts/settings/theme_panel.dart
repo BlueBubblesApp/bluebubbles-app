@@ -326,7 +326,6 @@ class ThemePanel extends StatelessWidget {
                             divisions: 100,
                             update: (value) => SettingsManager().settings.windowEffectCustomOpacityLight.value = value,
                             onChangeEnd: (value) {
-                              SettingsManager().settings.windowEffectCustomOpacityLight.value = value;
                               saveSettings();
                               WindowEffects.setEffect(color: context.theme.backgroundColor);
                             },
@@ -361,7 +360,6 @@ class ThemePanel extends StatelessWidget {
                             divisions: 100,
                             update: (value) => SettingsManager().settings.windowEffectCustomOpacityDark.value = value,
                             onChangeEnd: (value) {
-                              SettingsManager().settings.windowEffectCustomOpacityDark.value = WindowEffects.defaultOpacity(dark: true);
                               saveSettings();
                               WindowEffects.setEffect(color: context.theme.backgroundColor);
                             },
