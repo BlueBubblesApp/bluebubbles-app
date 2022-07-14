@@ -317,7 +317,6 @@ class ThemePanel extends StatelessWidget {
                               onPressed: () {
                                 SettingsManager().settings.windowEffectCustomOpacityLight.value = WindowEffects.defaultOpacity(dark: false);
                                 saveSettings();
-                                WindowEffects.setEffect(color: context.theme.backgroundColor);
                               },
                               child: Text("Reset to Default"),
                             ) : null,
@@ -335,7 +334,6 @@ class ThemePanel extends StatelessWidget {
                             update: (value) => SettingsManager().settings.windowEffectCustomOpacityLight.value = value,
                             onChangeEnd: (value) {
                               saveSettings();
-                              WindowEffects.setEffect(color: context.theme.backgroundColor);
                             },
                           );
                         }
@@ -349,7 +347,6 @@ class ThemePanel extends StatelessWidget {
                               onPressed: () {
                                 SettingsManager().settings.windowEffectCustomOpacityDark.value = WindowEffects.defaultOpacity(dark: true);
                                 saveSettings();
-                                WindowEffects.setEffect(color: context.theme.backgroundColor);
                               },
                               child: Text("Reset to Default"),
                             ) : null,
@@ -367,7 +364,6 @@ class ThemePanel extends StatelessWidget {
                             update: (value) => SettingsManager().settings.windowEffectCustomOpacityDark.value = value,
                             onChangeEnd: (value) {
                               saveSettings();
-                              WindowEffects.setEffect(color: context.theme.backgroundColor);
                             },
                           );
                         }
