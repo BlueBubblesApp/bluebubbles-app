@@ -1,11 +1,8 @@
 import 'dart:math';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -815,8 +812,6 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
       ),
     );
   }
-
-  TextStyle? titleStyle = theme.textTheme.bodyMedium;
 
   // Calculate separation factor
   // Anything below -60 won't work due to the alignment

@@ -93,6 +93,17 @@ class ThemePanel extends StatelessWidget {
         tileColor = temp;
       }
 
+      // These Rx variables are only needed in widgets not contained in settings_widgets.dart
+      final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? headerColor : Colors.transparent).obs;
+      final Rx<Color> _tileColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? tileColor : Colors.transparent).obs;
+
+      if (kIsDesktop) {
+        SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+          _headerColor.value = effect != WindowEffect.disabled ? Colors.transparent : headerColor;
+          _tileColor.value = effect != WindowEffect.disabled ? Colors.transparent : tileColor;
+        });
+      }
+
       final allowedEffects = WindowEffects.effects;
 
       return SettingsScaffold(
@@ -143,7 +154,6 @@ class ThemePanel extends StatelessWidget {
                             ),
                           );
                         },
-                        backgroundColor: tileColor,
                       ),
                     Container(
                       color: tileColor,
@@ -152,13 +162,13 @@ class ThemePanel extends StatelessWidget {
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
-                    Container(
+                    Obx(() => Container(
                       decoration: BoxDecoration(
-                        color: tileColor,
+                        color: _tileColor.value,
                       ),
                       padding: EdgeInsets.only(left: 15, top: 10),
                       child: Text("Avatar Scale Factor", style: context.theme.textTheme.bodyLarge),
-                    ),
+                    )),
                     Obx(() => SettingsSlider(
                         startingVal: SettingsManager().settings.avatarScale.value.toDouble(),
                         update: (double val) {
@@ -302,7 +312,6 @@ class ThemePanel extends StatelessWidget {
                       Obx(() {
                         if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.backgroundColor)) {
                           return SettingsTile(
-                            backgroundColor: tileColor,
                             title: "Background Opacity (Light)",
                             subtitle: "You can set different opacities for your light and dark themes",
                             trailing: SettingsManager().settings.windowEffectCustomOpacityLight.value != WindowEffects.defaultOpacity(dark: false) ? ElevatedButton(
@@ -336,7 +345,6 @@ class ThemePanel extends StatelessWidget {
                       Obx(() {
                         if (WindowEffects.dependsOnColor() && WindowEffects.isDark(color: context.theme.backgroundColor)) {
                           return SettingsTile(
-                            backgroundColor: tileColor,
                             title: "Background Opacity (Dark)",
                             subtitle: "You can set different opacities for your light and dark themes",
                             trailing: SettingsManager().settings.windowEffectCustomOpacityDark.value != WindowEffects.defaultOpacity(dark: true) ? ElevatedButton(
@@ -397,7 +405,6 @@ class ThemePanel extends StatelessWidget {
                       Obx(() {
                         if (SettingsManager().settings.skin.value == Skins.iOS) {
                           return SettingsTile(
-                            backgroundColor: tileColor,
                             title: "Material You",
                             subtitle:
                             "Use Android 12's Monet engine to provide wallpaper-based coloring to your theme. Tap for more info.",
@@ -555,7 +562,6 @@ class ThemePanel extends StatelessWidget {
                             CustomAvatarColorPanel(),
                           );
                         },
-                        backgroundColor: tileColor,
                         subtitle: "Customize the color for different avatars",
                       ),
                     if (!kIsWeb)
@@ -576,7 +582,6 @@ class ThemePanel extends StatelessWidget {
                             CustomAvatarPanel(),
                           );
                         },
-                        backgroundColor: tileColor,
                         subtitle: "Customize the avatar for different chats",
                       ),
                     if (!kIsWeb)
@@ -621,7 +626,6 @@ class ThemePanel extends StatelessWidget {
                           }
                           controller.gettingIcons.value = false;
                         },
-                        backgroundColor: tileColor,
                         subtitle: "Get iMessage group chat icons from the server",
                       ),
                     if (!kIsWeb)
@@ -758,7 +762,6 @@ class ThemePanel extends StatelessWidget {
                             },
                             title:
                             "Download${downloadingFont.value ? "ing" : ""} iOS Emoji Font${downloadingFont.value ? " (${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)}) (${((progress.value ?? 0) * 100).floor()}%)" : ""}",
-                            backgroundColor: tileColor,
                           );
                         } else {
                           return SizedBox.shrink();
@@ -773,7 +776,6 @@ class ThemePanel extends StatelessWidget {
                               showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
                             },
                             title: "Delete iOS Emoji Font",
-                            backgroundColor: tileColor,
                           );
                         } else {
                           return SizedBox.shrink();

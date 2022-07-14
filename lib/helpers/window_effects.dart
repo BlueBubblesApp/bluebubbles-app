@@ -64,8 +64,8 @@ class WindowEffects {
 
   static double getOpacity({required Color color}) {
     bool dark = isDark(color: color);
-    if (dark) return SettingsManager().settings.windowEffectCustomOpacityDark.value ?? defaultOpacity(dark: true);
-    return SettingsManager().settings.windowEffectCustomOpacityLight.value ?? defaultOpacity(dark: false);
+    if (dark) return SettingsManager().settings.windowEffectCustomOpacityDark.value;
+    return SettingsManager().settings.windowEffectCustomOpacityLight.value;
   }
 
   static double defaultOpacity({required bool dark}) {

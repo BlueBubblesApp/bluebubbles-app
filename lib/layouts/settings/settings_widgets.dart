@@ -3,6 +3,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
@@ -237,7 +238,6 @@ class SettingsTile extends StatelessWidget {
     this.trailing,
     this.leading,
     this.subtitle,
-    this.backgroundColor,
     this.isThreeLine = false,
   }) : super(key: key);
 
@@ -247,7 +247,6 @@ class SettingsTile extends StatelessWidget {
   final String? title;
   final Widget? trailing;
   final Widget? leading;
-  final Color? backgroundColor;
   final bool isThreeLine;
 
   @override
@@ -262,6 +261,7 @@ class SettingsTile extends StatelessWidget {
         child: GestureDetector(
           onSecondaryTapUp: (details) => onLongPress as void Function()?,
           child: ListTile(
+            mouseCursor: (onTap != null || onLongPress != null) ? SystemMouseCursors.click : null,
             leading: leading,
             title: title != null ? Text(
               title!,
@@ -491,11 +491,23 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Rx<Color?> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+        ? backgroundColor
+        : Colors.transparent)
+        .obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        _backgroundColor.value =
+        effect != WindowEffect.disabled ? Colors.transparent : backgroundColor;
+      });
+    }
+
     if (SettingsManager().settings.skin.value == Skins.iOS && useCupertino) {
       final texts = options.map((e) => Text(capitalize ? textProcessing!(e).capitalize! : textProcessing!(e), style: context.theme.textTheme.bodyLarge!.copyWith(color: e == initial ? context.theme.colorScheme.onPrimary : null)));
       final map = Map<T, Widget>.fromIterables(options, cupertinoCustomWidgets ?? texts);
-      return Container(
-        color: backgroundColor,
+      return Obx(() => Container(
+        color: _backgroundColor.value,
         padding: EdgeInsets.symmetric(horizontal: 13),
         height: 50,
         width: context.width,
@@ -506,20 +518,20 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
           children: map,
           groupValue: initial,
           thumbColor: context.theme.colorScheme.primary,
-          backgroundColor: backgroundColor ?? CupertinoColors.tertiarySystemFill,
+          backgroundColor: _backgroundColor.value ?? CupertinoColors.tertiarySystemFill,
           onValueChanged: onChanged,
           padding: EdgeInsets.zero,
         ),
           ),
-      );
+      ));
     }
     Color surfaceColor = context.theme.colorScheme.properSurface;
     if (SettingsManager().settings.skin.value == Skins.Material
         && surfaceColor.computeDifference(context.theme.colorScheme.background) < 15) {
       surfaceColor = context.theme.colorScheme.surfaceVariant;
     }
-    return Container(
-      color: backgroundColor,
+    return Obx(() => Container(
+      color: _backgroundColor.value,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -583,7 +595,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 
@@ -701,6 +713,18 @@ class SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+        ? backgroundColor
+        : Colors.transparent)
+        .obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        _backgroundColor.value =
+        effect != WindowEffect.disabled ? Colors.transparent : backgroundColor;
+      });
+    }
+
     return Padding(
       padding: SettingsManager().settings.skin.value == Skins.iOS ? const EdgeInsets.symmetric(horizontal: 10) : EdgeInsets.zero,
       child: ClipRRect(
@@ -708,11 +732,11 @@ class SettingsSection extends StatelessWidget {
             SettingsManager().settings.skin.value == Skins.Samsung ? BorderRadius.circular(25) :
             SettingsManager().settings.skin.value == Skins.iOS ? BorderRadius.circular(10) : BorderRadius.circular(0),
         clipBehavior: SettingsManager().settings.skin.value != Skins.Material ? Clip.antiAlias : Clip.none,
-        child: Container(
+        child: Obx(() => Container(
           padding: SettingsManager().settings.skin.value == Skins.Samsung ? EdgeInsets.symmetric(vertical: 5) : null,
-          color: backgroundColor,
+          color: _backgroundColor.value,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: children),
-        ),
+        )),
       ),
     );
   }

@@ -205,7 +205,6 @@ class MiscPanel extends StatelessWidget {
                       return SettingsTile(
                         title: "Scroll Speed Multiplier",
                         subtitle: "Controls how fast scrolling occurs",
-                        backgroundColor: tileColor,
                       );
                     } else {
                       return SizedBox.shrink();
@@ -300,7 +299,6 @@ class MiscPanel extends StatelessWidget {
                         title: "Maximum Group Avatar Count",
                         subtitle: "Controls the maximum number of contact avatars in a group chat's widget",
                         isThreeLine: true,
-                        backgroundColor: tileColor,
                       );
                     } else {
                       return SizedBox.shrink();
@@ -337,7 +335,6 @@ class MiscPanel extends StatelessWidget {
                   ),
                   SettingsTile(
                       title: "Refresh contacts",
-                      backgroundColor: tileColor,
                       onTap: () async {
                           refreshingContacts.value = true;
                           await ContactManager().loadContacts(force: true);

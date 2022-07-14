@@ -184,7 +184,6 @@ class DesktopPanel extends StatelessWidget {
                       title: "Actions",
                       subtitle:
                           "Click actions to toggle them. Drag actions to move them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
-                      backgroundColor: tileColor,
                       isThreeLine: true,
                     ),
                     Row(
