@@ -225,7 +225,6 @@ class NotificationPanel extends StatelessWidget {
                                         : uh.Notification.permission == "denied"
                                             ? "Notifications denied, please update your browser settings to re-enable notifications"
                                             : "Click to enable notifications",
-                                    backgroundColor: tileColor,
                                   ),
                                 Container(
                                   color: tileColor,
@@ -333,7 +332,6 @@ class NotificationPanel extends StatelessWidget {
                                       )
                                     );
                                   },
-                                  backgroundColor: tileColor,
                                   subtitle: "Mute all chats except when your choice of text is found in a message",
                                 ),
                               ]),
@@ -463,11 +461,13 @@ class ChatListState extends State<ChatList> {
   @override
   Widget build(BuildContext context) {
     final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? widget.headerColor : Colors.transparent).obs;
+    final Rx<Color> _tileColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? widget.tileColor : Colors.transparent).obs;
 
     if (kIsDesktop) {
       SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
         if (mounted) {
           _headerColor.value = effect != WindowEffect.disabled ? Colors.transparent : widget.headerColor;
+          _tileColor.value = effect != WindowEffect.disabled ? Colors.transparent : widget.tileColor;
         }
       });
     }
@@ -598,7 +598,7 @@ class ChatListState extends State<ChatList> {
                   borderRadius: BorderRadius.circular(25),
                   child: Container(
                     height: context.height - 175,
-                    color: widget.tileColor,
+                    color: _tileColor.value,
                     child: ScrollbarWrapper(
                       controller: _controller,
                       child: ListView.builder(

@@ -205,7 +205,6 @@ class MiscPanel extends StatelessWidget {
                       return SettingsTile(
                         title: "Scroll Speed Multiplier",
                         subtitle: "Controls how fast scrolling occurs",
-                        backgroundColor: tileColor,
                       );
                     } else {
                       return SizedBox.shrink();
@@ -214,7 +213,6 @@ class MiscPanel extends StatelessWidget {
                   Obx(() {
                     if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return SettingsSlider(
-                          text: "Scroll Speed Multiplier",
                           startingVal: SettingsManager().settings.scrollVelocity.value,
                           update: (double val) {
                             SettingsManager().settings.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
@@ -255,7 +253,6 @@ class MiscPanel extends StatelessWidget {
                   Obx(() {
                     if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
                       return SettingsSlider(
-                          text: "Set send delay",
                           startingVal: SettingsManager().settings.sendDelay.toDouble(),
                           update: (double val) {
                             SettingsManager().settings.sendDelay.value = val.toInt();
@@ -302,7 +299,6 @@ class MiscPanel extends StatelessWidget {
                         title: "Maximum Group Avatar Count",
                         subtitle: "Controls the maximum number of contact avatars in a group chat's widget",
                         isThreeLine: true,
-                        backgroundColor: tileColor,
                       );
                     } else {
                       return SizedBox.shrink();
@@ -315,7 +311,6 @@ class MiscPanel extends StatelessWidget {
                           divisions: 3,
                           max: 5,
                           min: 3,
-                          text: 'Maximum avatars in a group chat widget',
                           startingVal: SettingsManager().settings.maxAvatarsInGroupWidget.value.toDouble(),
                           update: (double val) {
                             SettingsManager().settings.maxAvatarsInGroupWidget.value = val.toInt();
@@ -340,7 +335,6 @@ class MiscPanel extends StatelessWidget {
                   ),
                   SettingsTile(
                       title: "Refresh contacts",
-                      backgroundColor: tileColor,
                       onTap: () async {
                           refreshingContacts.value = true;
                           await ContactManager().loadContacts(force: true);

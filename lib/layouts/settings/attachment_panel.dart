@@ -166,7 +166,6 @@ class AttachmentPanel extends StatelessWidget {
                   SettingsSection(backgroundColor: tileColor, children: [
                     if (!kIsWeb)
                       Obx(() => SettingsSlider(
-                          text: "Attachment Preview Quality",
                           startingVal: SettingsManager().settings.previewCompressionQuality.value.toDouble(),
                           update: (double val) {
                             SettingsManager().settings.previewCompressionQuality.value = val.toInt();
@@ -232,7 +231,6 @@ class AttachmentPanel extends StatelessWidget {
                       Obx(() {
                         if (SettingsManager().settings.skin.value == Skins.iOS) {
                           return SettingsTile(
-                            backgroundColor: tileColor,
                             title: kIsDesktop ? "Arrow key direction" : "Swipe direction",
                             subtitle:
                                 "Set the ${kIsDesktop ? "arrow key" : "swipe direction"} to go to previous media items",

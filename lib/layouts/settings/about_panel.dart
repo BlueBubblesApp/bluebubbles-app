@@ -58,7 +58,6 @@ class AboutPanel extends StatelessWidget {
                   backgroundColor: tileColor,
                   children: [
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Support Us",
                       subtitle: kIsDesktop || kIsWeb ? "Left click for PayPal / Venmo\nRight click for Github Sponsors" : "Tap for PayPal / Venmo\nTap and hold for GitHub Sponsors",
                       onTap: () async {
@@ -84,7 +83,6 @@ class AboutPanel extends StatelessWidget {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Website",
                       onTap: () async {
                         await launchUrl(Uri(scheme: "https", host: "bluebubbles.app"));
@@ -102,7 +100,6 @@ class AboutPanel extends StatelessWidget {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Source Code",
                       subtitle: kIsWeb || kIsDesktop ? "Right click to report a bug" : "Tap and hold to report a bug",
                       onTap: () async {
@@ -127,7 +124,6 @@ class AboutPanel extends StatelessWidget {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Join Our Discord",
                       onTap: () async {
                         await launchUrl(Uri(scheme: "https", host: "discord.gg", path: "hbx7EhNFjp"));
@@ -151,7 +147,6 @@ class AboutPanel extends StatelessWidget {
                   backgroundColor: tileColor,
                   children: [
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Changelog",
                       onTap: () async {
                         String changelog =
@@ -223,7 +218,6 @@ class AboutPanel extends StatelessWidget {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Developers",
                       onTap: () {
                         showDialog(
@@ -305,7 +299,6 @@ class AboutPanel extends StatelessWidget {
                       ),
                     if (kIsWeb || kIsDesktop)
                       SettingsTile(
-                        backgroundColor: tileColor,
                         title: "Keyboard Shortcuts",
                         onTap: () {
                           showDialog(
@@ -465,7 +458,6 @@ class AboutPanel extends StatelessWidget {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "About",
                       onTap: () {
                         showDialog<void>(

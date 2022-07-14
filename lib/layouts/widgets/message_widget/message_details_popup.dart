@@ -292,51 +292,58 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.start,
-                  children: ReactionTypes.toList()
-                      .slice(0, narrowScreen ? 3 : null)
-                      .map(
-                        (e) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
-                          child: GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              sendReaction(selfReaction == e ? "-$e" : e);
-                            },
-                            onTapDown: (TapDownDetails details) {
-                              if (currentlySelectedReaction == e) {
-                                currentlySelectedReaction = null;
-                              } else {
-                                currentlySelectedReaction = e;
-                              }
-                              if (mounted) setState(() {});
-                            },
-                            onTapUp: (details) {},
-                            onTapCancel: () {
-                              currentlySelectedReaction = selfReaction;
-                              if (mounted) setState(() {});
-                            },
-                            child: Container(
-                              width: reactionIconSize - 15,
-                              height: reactionIconSize - 15,
-                              decoration: BoxDecoration(
-                                color: currentlySelectedReaction == e
-                                    ? context.theme.colorScheme.primary
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(
-                                  20,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(6),
-                                child: Reaction.getReactionIcon(e, currentlySelectedReaction == e
-                                    ? context.theme.colorScheme.onPrimary
-                                    : context.theme.colorScheme.outline, usePink: currentlySelectedReaction == e),
+                  children: ReactionTypes.toList().slice(0, narrowScreen ? 3 : null).map((e) {
+                    final RxBool hovered = false.obs;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        onEnter: (details) => hovered.value = true,
+                        onExit: (details) => hovered.value = false,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            sendReaction(selfReaction == e ? "-$e" : e);
+                          },
+                          onTapDown: (TapDownDetails details) {
+                            if (currentlySelectedReaction == e) {
+                              currentlySelectedReaction = null;
+                            } else {
+                              currentlySelectedReaction = e;
+                            }
+                            if (mounted) setState(() {});
+                          },
+                          onTapUp: (details) {},
+                          onTapCancel: () {
+                            currentlySelectedReaction = selfReaction;
+                            if (mounted) setState(() {});
+                          },
+                          child: Obx(() => AnimatedContainer(
+                            duration: Duration(milliseconds: 150),
+                            width: reactionIconSize - 15,
+                            height: reactionIconSize - 15,
+                            decoration: BoxDecoration(
+                              color: hovered.value ? context.theme.colorScheme.primary.withOpacity(0.3) : currentlySelectedReaction == e
+                                  ? context.theme.colorScheme.primary
+                                  : context.theme.colorScheme.properSurface.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(
+                                20,
                               ),
                             ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(6),
+                              child: Reaction.getReactionIcon(
+                                  e,
+                                  currentlySelectedReaction == e
+                                      ? context.theme.colorScheme.onPrimary
+                                      : context.theme.colorScheme.outline,
+                                  usePink: currentlySelectedReaction == e),
+                            ),),
                           ),
                         ),
-                      )
-                      .toList(),
+                      ),
+                    );
+                  }).toList(),
                 ),
                 if (narrowScreen)
                   Row(
@@ -358,7 +365,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                                   20,
                                 ),
                               ),
-                              child: GestureDetector(
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                onHover: (event) {},
+                                child: GestureDetector(
                                 onTap: () {
                                   HapticFeedback.lightImpact();
                                   sendReaction(selfReaction == e ? "-$e" : e);
@@ -382,6 +392,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                                       ? context.theme.colorScheme.onPrimary
                                       : context.theme.colorScheme.outline, usePink: false),
                                 ),
+                              ),
                               ),
                             ),
                           ),
@@ -422,6 +433,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               EventDispatcher().emit("focus-keyboard", widget.message);
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Reply",
@@ -455,6 +467,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               }
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Download to Device",
@@ -530,6 +543,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text("Copy", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
               trailing: Icon(
@@ -642,6 +656,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               }
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Download Original to Device",
@@ -677,6 +692,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open Direct Message",
@@ -702,6 +718,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               showReplyThread(context, widget.message, widget.messageBloc);
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "View Thread",
@@ -750,6 +767,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Start Conversation",
@@ -797,6 +815,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Forward",
@@ -824,6 +843,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               popDetails();
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Re-download from Server",
@@ -857,6 +877,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               popDetails();
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Share",
@@ -972,6 +993,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             popDetails();
           },
           child: ListTile(
+            mouseCursor: SystemMouseCursors.click,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               "Delete",
@@ -1057,6 +1079,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                           name: 'Popup Menu');
                     },
                     child: ListTile(
+                      mouseCursor: SystemMouseCursors.click,
                       dense: !kIsDesktop && !kIsWeb,
                       title: Text("More...", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
                       trailing: Icon(

@@ -287,7 +287,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       child: ContactAvatarGroupWidget(
                         chat: chat,
                         size: 100,
-                        onTap: () {},
+                        onTap: chat.isGroup() ? () {} : null,
                       ),
                     ),
                   ),

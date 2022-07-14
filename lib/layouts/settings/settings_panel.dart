@@ -40,6 +40,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -170,7 +171,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         }
 
                         return SettingsTile(
-                          backgroundColor: tileColor,
                           title: "Connection & Server",
                           subtitle: subtitle,
                           onTap: () async {
@@ -238,7 +238,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     backgroundColor: tileColor,
                     children: [
                       SettingsTile(
-                        backgroundColor: tileColor,
                         title: "Appearance Settings",
                         subtitle: "${SettingsManager().settings.skin.value.toString().split(".").last}   |   ${AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst!} Mode",
                         onTap: () {
@@ -266,7 +265,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     backgroundColor: tileColor,
                     children: [
                       SettingsTile(
-                        backgroundColor: tileColor,
                         title: "Media Settings",
                         onTap: () {
                           CustomNavigator.pushAndRemoveSettingsUntil(
@@ -289,7 +287,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         ),
                       ),
                       SettingsTile(
-                        backgroundColor: tileColor,
                         title: "Notification Settings",
                         onTap: () {
                           CustomNavigator.pushAndRemoveSettingsUntil(
@@ -312,7 +309,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         ),
                       ),
                       SettingsTile(
-                        backgroundColor: tileColor,
                         title: "Chat List Settings",
                         onTap: () {
                           CustomNavigator.pushAndRemoveSettingsUntil(
@@ -335,7 +331,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         ),
                       ),
                       SettingsTile(
-                        backgroundColor: tileColor,
                         title: "Conversation Settings",
                         onTap: () {
                           CustomNavigator.pushAndRemoveSettingsUntil(
@@ -359,7 +354,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       ),
                       if (kIsDesktop)
                         SettingsTile(
-                          backgroundColor: tileColor,
                             title: "Desktop Settings",
                           onTap: () {
                             CustomNavigator.pushAndRemoveSettingsUntil(
@@ -383,7 +377,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           ),
                         ),
                       SettingsTile(
-                        backgroundColor: tileColor,
                         title: "Misc and Advanced Settings",
                         onTap: () {
                           CustomNavigator.pushAndRemoveSettingsUntil(
@@ -410,7 +403,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     backgroundColor: tileColor,
                     children: [
                       SettingsTile(
-                        backgroundColor: tileColor,
                         title: "Private API Features",
                         subtitle:
                         "Private API ${SettingsManager().settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}",
@@ -438,7 +430,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         ),
                       ),
                       SettingsTile(
-                        backgroundColor: tileColor,
                         title: "Redacted Mode",
                         subtitle:
                         "Redacted Mode ${SettingsManager().settings.redactedMode.value ? "Enabled" : "Disabled"}",
@@ -494,7 +485,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     backgroundColor: tileColor,
                     children: [
                       SettingsTile(
-                        backgroundColor: tileColor,
                         title: "About & Links",
                         subtitle: "Donate, Rate, Changelog, & More",
                         onTap: () {
@@ -522,7 +512,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       backgroundColor: tileColor,
                       children: [
                         SettingsTile(
-                          backgroundColor: tileColor,
                           onTap: () {
                             showBackupDialog(context);
                           },
@@ -542,7 +531,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         ),
                         if (!kIsWeb && !kIsDesktop)
                           SettingsTile(
-                            backgroundColor: tileColor,
                             onTap: () async {
                               void closeDialog() {
                                 if (Get.isSnackbarOpen ?? false) {
@@ -643,7 +631,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             ),
                           ),
                         SettingsTile(
-                          backgroundColor: tileColor,
                           onTap: () {
                             showDialog(
                               barrierDismissible: false,
@@ -714,7 +701,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           ),
                         ),
                         SettingsTile(
-                          backgroundColor: tileColor,
                           onTap: () async {
                             CustomNavigator.pushAndRemoveSettingsUntil(
                               context,
@@ -751,6 +737,20 @@ class _SettingsPanelState extends State<SettingsPanel> {
       headerColor = tileColor;
       tileColor = temp;
     }
+
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+        ? SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor
+        : Colors.transparent)
+        .obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _backgroundColor.value =
+          effect != WindowEffect.disabled ? Colors.transparent : SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor;
+        }
+      });
+    }
     return VerticalSplitView(
       initialRatio: 0.4,
       minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
@@ -780,13 +780,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
             pages: [
               CupertinoPage(
                   name: "initial",
-                  child: Scaffold(
-                      backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
+                  child: Obx(() => Scaffold(
+                      backgroundColor: _backgroundColor.value,
                       body: Center(
                         child: Container(
                             child: Text("Select a settings page from the list",
                                 style: context.theme.textTheme.bodyLarge)),
-                      ))),
+                      )))),
             ],
           ),
         );

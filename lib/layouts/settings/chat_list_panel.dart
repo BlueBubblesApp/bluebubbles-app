@@ -241,7 +241,6 @@ class ChatListPanel extends StatelessWidget {
                             subtitle:
                                 "The maximum row count of pins displayed${kIsDesktop ? "" : " when using the app in the portrait orientation"}",
                             isThreeLine: true,
-                            backgroundColor: tileColor,
                           );
                         } else {
                           return SizedBox.shrink();
@@ -264,7 +263,6 @@ class ChatListPanel extends StatelessWidget {
                                     saveSettings();
                                   },
                                   startingVal: SettingsManager().settings.pinRowsPortrait.value.toDouble(),
-                                  text: "Maximum Pin Rows",
                                   backgroundColor: tileColor,
                                   formatValue: (val) =>
                                       "${SettingsManager().settings.pinRowsPortrait.value} row${SettingsManager().settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${kIsDesktop
@@ -287,7 +285,6 @@ class ChatListPanel extends StatelessWidget {
                                 "Pinned Chat Configuration (${SettingsManager().settings.pinRowsPortrait.value} row${SettingsManager().settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${SettingsManager().settings.pinColumnsLandscape})",
                             subtitle:
                                 "Pinned chats will overflow onto multiple pages if they do not fit in this configuration. Keep in mind that you cannot access different pages of the pinned chats without a touchscreen or horizontal scrolling capability.",
-                            backgroundColor: tileColor,
                           );
                         } else {
                           return SizedBox.shrink();
@@ -296,187 +293,193 @@ class ChatListPanel extends StatelessWidget {
                     if (kIsDesktop)
                       Obx(() {
                         if (SettingsManager().settings.skin.value == Skins.iOS) {
-                          return Row(
-                            children: <Widget>[
-                              Flexible(
-                                child: Column(
-                                  children: <Widget>[
-                                    Row(
-                                      children: <Widget>[
-                                        Container(
-                                          width: 100,
-                                          margin: EdgeInsets.only(left: 48),
-                                          child: Text("Row Count"),
-                                        ),
-                                        Flexible(
-                                          child: SettingsOptions<int>(
-                                            initial: SettingsManager().settings.pinRowsPortrait.value,
-                                            options: List.generate(4, (index) => index + 1),
-                                            onChanged: (int? val) {
-                                              if (val == null) return;
-                                              SettingsManager().settings.pinRowsPortrait.value = val;
-                                              saveSettings();
-                                            },
-                                            title: "Pin Rows",
-                                            backgroundColor: tileColor,
-                                            secondaryColor: context.theme.colorScheme.secondary,
-                                            textProcessing: (val) => val.toString(),
+                          return Container(
+                            height: 120,
+                            child: Row(
+                              children: <Widget>[
+                                Flexible(
+                                  child: Column(
+                                    children: <Widget>[
+                                      Row(
+                                        children: <Widget>[
+                                          Container(
+                                            width: 100,
+                                            margin: EdgeInsets.only(left: 48),
+                                            child: Text("Row Count"),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      children: <Widget>[
-                                        Container(
-                                          width: 100,
-                                          margin: EdgeInsets.only(left: 48),
-                                          child: Text("Column Count"),
-                                        ),
-                                        Flexible(
-                                          child: SettingsOptions<int>(
-                                            initial: SettingsManager().settings.pinColumnsLandscape.value,
-                                            options: List.generate(5, (index) => index + 2),
-                                            onChanged: (int? val) {
-                                              if (val == null) return;
-                                              SettingsManager().settings.pinColumnsLandscape.value = val;
-                                              saveSettings();
-                                            },
-                                            title: "Pins Per Row",
-                                            backgroundColor: tileColor,
-                                            secondaryColor: context.theme.colorScheme.secondary,
-                                            textProcessing: (val) => val.toString(),
+                                          Flexible(
+                                            child: SettingsOptions<int>(
+                                              initial: SettingsManager().settings.pinRowsPortrait.value,
+                                              options: List.generate(4, (index) => index + 1),
+                                              onChanged: (int? val) {
+                                                if (val == null) return;
+                                                SettingsManager().settings.pinRowsPortrait.value = val;
+                                                saveSettings();
+                                              },
+                                              title: "Pin Rows",
+                                              backgroundColor: tileColor,
+                                              secondaryColor: context.theme.colorScheme.secondary,
+                                              textProcessing: (val) => val.toString(),
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                        ],
+                                      ),
+                                      Row(
+                                        children: <Widget>[
+                                          Container(
+                                            width: 100,
+                                            margin: EdgeInsets.only(left: 48),
+                                            child: Text("Column Count"),
+                                          ),
+                                          Flexible(
+                                            child: SettingsOptions<int>(
+                                              initial: SettingsManager().settings.pinColumnsLandscape.value,
+                                              options: List.generate(5, (index) => index + 2),
+                                              onChanged: (int? val) {
+                                                if (val == null) return;
+                                                SettingsManager().settings.pinColumnsLandscape.value = val;
+                                                saveSettings();
+                                              },
+                                              title: "Pins Per Row",
+                                              backgroundColor: tileColor,
+                                              secondaryColor: context.theme.colorScheme.secondary,
+                                              textProcessing: (val) => val.toString(),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              Obx(() {
-                                CustomNavigator.listener.value;
-                                double width = 108 * context.width / context.height;
-                                if (CustomNavigator.width(context) != context.width) {
-                                  return Container(
-                                    width: width,
-                                    height: 108,
-                                    margin: EdgeInsets.only(left: 24, right: 48),
-                                    clipBehavior: Clip.antiAlias,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(3),
-                                    ),
-                                    child: Row(
-                                      children: <Widget>[
-                                        Flexible(
-                                          child: Container(
-                                            color: context.theme.colorScheme.primary,
-                                            padding: EdgeInsets.symmetric(horizontal: 2),
-                                            child: AbsorbPointer(
-                                              child: Obx(
-                                                () => Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: <Widget>[
-                                                    Container(
-                                                        height: 12,
-                                                        padding: EdgeInsets.only(left: 2, top: 3),
-                                                        child: Text(
-                                                          "Messages",
-                                                          style: context.textTheme.labelLarge!.copyWith(fontSize: 4),
-                                                          textAlign: TextAlign.left,
-                                                        )),
-                                                    Obx(
-                                                      () => Expanded(
-                                                        flex: SettingsManager().settings.pinRowsPortrait.value *
-                                                            (width -
-                                                                CustomNavigator.width(context) /
-                                                                    context.width *
-                                                                    width) ~/
-                                                            SettingsManager().settings.pinColumnsLandscape.value,
-                                                        child: GridView.custom(
-                                                          shrinkWrap: true,
-                                                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                                            crossAxisCount:
-                                                                SettingsManager().settings.pinColumnsLandscape.value,
-                                                          ),
-                                                          physics: NeverScrollableScrollPhysics(),
-                                                          childrenDelegate: SliverChildBuilderDelegate(
-                                                            (context, index) => Container(
-                                                              margin: EdgeInsets.all(2 /
-                                                                  max(
-                                                                      SettingsManager().settings.pinRowsPortrait.value,
-                                                                      SettingsManager()
-                                                                          .settings
-                                                                          .pinColumnsLandscape
-                                                                          .value)),
-                                                              decoration: BoxDecoration(
-                                                                  borderRadius: BorderRadius.circular(50 /
-                                                                      max(
-                                                                          SettingsManager()
-                                                                              .settings
-                                                                              .pinRowsPortrait
-                                                                              .value,
-                                                                          SettingsManager()
-                                                                              .settings
-                                                                              .pinColumnsLandscape
-                                                                              .value)),
-                                                                  color: context.theme.colorScheme.primary
-                                                                      .lightenOrDarken(10)),
+                                Obx(() {
+                                  CustomNavigator.listener.value;
+                                  double width = 108 * context.width / context.height;
+                                  if (CustomNavigator.width(context) != context.width) {
+                                    return Container(
+                                      width: width,
+                                      height: 108,
+                                      margin: EdgeInsets.only(left: 24, right: 48),
+                                      clipBehavior: Clip.antiAlias,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                      child: Row(
+                                        children: <Widget>[
+                                          Flexible(
+                                            child: Container(
+                                              color: context.theme.colorScheme.primary,
+                                              padding: EdgeInsets.symmetric(horizontal: 2),
+                                              child: AbsorbPointer(
+                                                child: Obx(
+                                                  () => Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: <Widget>[
+                                                      Container(
+                                                          height: 12,
+                                                          padding: EdgeInsets.only(left: 2, top: 3),
+                                                          child: Text(
+                                                            "Messages",
+                                                            style: context.textTheme.labelLarge!.copyWith(fontSize: 4),
+                                                            textAlign: TextAlign.left,
+                                                          )),
+                                                      Obx(
+                                                        () => Expanded(
+                                                          flex: SettingsManager().settings.pinRowsPortrait.value *
+                                                              (width -
+                                                                  CustomNavigator.width(context) /
+                                                                      context.width *
+                                                                      width) ~/
+                                                              SettingsManager().settings.pinColumnsLandscape.value,
+                                                          child: GridView.custom(
+                                                            shrinkWrap: true,
+                                                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                                              crossAxisCount:
+                                                                  SettingsManager().settings.pinColumnsLandscape.value,
                                                             ),
-                                                            childCount:
-                                                                SettingsManager().settings.pinColumnsLandscape.value *
-                                                                    SettingsManager().settings.pinRowsPortrait.value,
+                                                            physics: NeverScrollableScrollPhysics(),
+                                                            childrenDelegate: SliverChildBuilderDelegate(
+                                                              (context, index) => Container(
+                                                                margin: EdgeInsets.all(2 /
+                                                                    max(
+                                                                        SettingsManager()
+                                                                            .settings
+                                                                            .pinRowsPortrait
+                                                                            .value,
+                                                                        SettingsManager()
+                                                                            .settings
+                                                                            .pinColumnsLandscape
+                                                                            .value)),
+                                                                decoration: BoxDecoration(
+                                                                    borderRadius: BorderRadius.circular(50 /
+                                                                        max(
+                                                                            SettingsManager()
+                                                                                .settings
+                                                                                .pinRowsPortrait
+                                                                                .value,
+                                                                            SettingsManager()
+                                                                                .settings
+                                                                                .pinColumnsLandscape
+                                                                                .value)),
+                                                                    color: context.theme.colorScheme.primary
+                                                                        .lightenOrDarken(40)),
+                                                              ),
+                                                              childCount:
+                                                                  SettingsManager().settings.pinColumnsLandscape.value *
+                                                                      SettingsManager().settings.pinRowsPortrait.value,
+                                                            ),
                                                           ),
                                                         ),
                                                       ),
-                                                    ),
-                                                    if (SettingsManager().settings.pinRowsPortrait.value *
-                                                            (width -
-                                                                CustomNavigator.width(context) /
-                                                                    context.width *
-                                                                    width) /
-                                                            SettingsManager().settings.pinColumnsLandscape.value <
-                                                        96)
-                                                      Expanded(
-                                                        flex: 96 -
-                                                            SettingsManager().settings.pinRowsPortrait.value *
-                                                                (width -
-                                                                    CustomNavigator.width(context) /
-                                                                        context.width *
-                                                                        width) ~/
-                                                                SettingsManager().settings.pinColumnsLandscape.value,
-                                                        child: ListView.builder(
-                                                            padding: EdgeInsets.only(top: 2),
-                                                            physics: NeverScrollableScrollPhysics(),
-                                                            shrinkWrap: true,
-                                                            itemBuilder: (context, index) => Container(
-                                                                height: 12,
-                                                                margin: EdgeInsets.symmetric(vertical: 1),
-                                                                decoration: BoxDecoration(
-                                                                    color: context.theme.colorScheme.primary
-                                                                        .lightenOrDarken(10),
-                                                                    borderRadius: BorderRadius.circular(3))),
-                                                            itemCount: 8),
-                                                      ),
-                                                  ],
+                                                      if (SettingsManager().settings.pinRowsPortrait.value *
+                                                              (width -
+                                                                  CustomNavigator.width(context) /
+                                                                      context.width *
+                                                                      width) /
+                                                              SettingsManager().settings.pinColumnsLandscape.value <
+                                                          96)
+                                                        Expanded(
+                                                          flex: 96 -
+                                                              SettingsManager().settings.pinRowsPortrait.value *
+                                                                  (width -
+                                                                      CustomNavigator.width(context) /
+                                                                          context.width *
+                                                                          width) ~/
+                                                                  SettingsManager().settings.pinColumnsLandscape.value,
+                                                          child: ListView.builder(
+                                                              padding: EdgeInsets.only(top: 2),
+                                                              physics: NeverScrollableScrollPhysics(),
+                                                              shrinkWrap: true,
+                                                              itemBuilder: (context, index) => Container(
+                                                                  height: 12,
+                                                                  margin: EdgeInsets.symmetric(vertical: 1),
+                                                                  decoration: BoxDecoration(
+                                                                      color: context.theme.colorScheme.primary
+                                                                          .lightenOrDarken(40),
+                                                                      borderRadius: BorderRadius.circular(3))),
+                                                              itemCount: 8),
+                                                        ),
+                                                    ],
+                                                  ),
                                                 ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                        Container(
-                                            width: 1,
-                                            height: 108,
-                                            color: context.theme.colorScheme.primary.oppositeLightenOrDarken(40)),
-                                        Container(
-                                            width: CustomNavigator.width(context) / context.width * width - 1,
-                                            height: 108,
-                                            color: context.theme.colorScheme.primary),
-                                      ],
-                                    ),
-                                  );
-                                }
-                                return SizedBox.shrink();
-                              }),
-                            ],
+                                          Container(
+                                              width: 1,
+                                              height: 108,
+                                              color: context.theme.colorScheme.primary.oppositeLightenOrDarken(40)),
+                                          Container(
+                                              width: CustomNavigator.width(context) / context.width * width - 1,
+                                              height: 108,
+                                              color: context.theme.colorScheme.primary),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                  return SizedBox.shrink();
+                                }),
+                              ],
+                            ),
                           );
                         } else {
                           return SizedBox.shrink();
@@ -494,7 +497,6 @@ class ChatListPanel extends StatelessWidget {
                       SettingsTile(
                         title: "Pinned Order",
                         subtitle: "Set the order for your pinned chats",
-                        backgroundColor: tileColor,
                         onTap: () {
                           CustomNavigator.pushSettings(
                             context,
@@ -538,7 +540,6 @@ class ChatListPanel extends StatelessWidget {
                       }),
                       if (SettingsManager().settings.skin.value == Skins.iOS)
                         SettingsTile(
-                          backgroundColor: tileColor,
                           title: "Customize Swipe Actions",
                           subtitle: "Enable or disable specific swipe actions",
                         ),

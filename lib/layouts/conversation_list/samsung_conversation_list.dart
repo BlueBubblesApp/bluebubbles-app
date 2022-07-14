@@ -490,13 +490,13 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                   controller: scrollController,
                   slivers: [
                     SliverAppBar(
-                      backgroundColor: headerColor,
+                      backgroundColor: _headerColor.value,
+                      shadowColor: Colors.black,
                       pinned: true,
                       stretch: true,
                       expandedHeight: context.height / 3,
                       toolbarHeight: kToolbarHeight + (kIsDesktop ? 20 : 0),
                       elevation: 0,
-                      scrolledUnderElevation: 0,
                       automaticallyImplyLeading: false,
                       flexibleSpace: LayoutBuilder(
                         builder: (context, constraints) {

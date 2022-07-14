@@ -128,6 +128,8 @@ class Settings {
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
   final Rx<WindowEffect> windowEffect = WindowEffect.disabled.obs;
+  final RxDouble windowEffectCustomOpacityLight = 0.5.obs;
+  final RxDouble windowEffectCustomOpacityDark = 0.5.obs;
 
   // Scrolling
   final RxBool betterScrolling = false.obs;
@@ -342,6 +344,10 @@ class Settings {
         settings.betterScrollingMultiplier.value = entry.value;
       } else if (entry.name == "windowEffect") {
         settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == entry.value) ?? WindowEffect.disabled;
+      } else if (entry.name == "windowEffectCustomOpacityLight") {
+        settings.windowEffectCustomOpacityLight.value = entry.value;
+      } else if (entry.name == "windowEffectCustomOpacityDark") {
+        settings.windowEffectCustomOpacityDark.value = entry.value;
       } else if (entry.name == "useWindowsAccent") {
         settings.useWindowsAccent.value = entry.value;
       }
@@ -501,6 +507,8 @@ class Settings {
       'maxAvatarsInGroupWidget': maxAvatarsInGroupWidget.value,
       'useCustomTitleBar': useCustomTitleBar.value,
       'windowEffect': windowEffect.value.name,
+      'windowEffectCustomOpacityLight': windowEffectCustomOpacityLight.value,
+      'windowEffectCustomOpacityDark': windowEffectCustomOpacityDark.value,
       'useWindowsAccent': useWindowsAccent.value,
     };
     if (includeAll) {
@@ -619,6 +627,8 @@ class Settings {
     SettingsManager().settings.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
     SettingsManager().settings.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
     SettingsManager().settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
+    SettingsManager().settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
+    SettingsManager().settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
     SettingsManager().settings.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     SettingsManager().settings.save();
   }
@@ -733,6 +743,8 @@ class Settings {
     s.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
     s.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
     s.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
+    s.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
+    s.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
     s.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     return s;
   }

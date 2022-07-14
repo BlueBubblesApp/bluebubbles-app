@@ -5,9 +5,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/main.dart';
@@ -17,10 +15,8 @@ import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:collection/collection.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:window_manager/window_manager.dart';
@@ -54,8 +50,6 @@ class DesktopPanel extends StatelessWidget {
     }
 
     RxList showButtons = RxList.generate(ReactionTypes.toList().length + 1, (index) => false);
-
-    final allowedEffects = WindowEffects.effects;
 
     return SettingsScaffold(
       title: "Desktop Settings",
@@ -164,7 +158,6 @@ class DesktopPanel extends StatelessWidget {
                         min: 4.0,
                         divisions: 20,
                         startingVal: SettingsManager().settings.betterScrollingMultiplier.value,
-                        text: SettingsManager().settings.betterScrollingMultiplier.value.toString(),
                         update: (double val) {
                           SettingsManager().settings.betterScrollingMultiplier.value = val;
                         },
@@ -175,69 +168,6 @@ class DesktopPanel extends StatelessWidget {
                       )
                   ],
                 ),
-              ),
-              if (Platform.isWindows)
-                SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Appearance",
-                ),
-              if (Platform.isWindows)
-                SettingsSection(
-                backgroundColor: tileColor,
-                children: [
-                  Obx(() => SettingsSwitch(
-                    initialVal: SettingsManager().settings.useWindowsAccent.value,
-                    backgroundColor: tileColor,
-                    title: "Use Windows Accent Color",
-                    subtitle: "Apply the Windows accent color to your theme",
-                    onChanged: (value) async {
-                      if (value) {
-                        windowsAccentColor = await DynamicColorPlugin.getAccentColor();
-                      }
-                      SettingsManager().settings.useWindowsAccent.value = value;
-                      SettingsManager().saveSettings(SettingsManager().settings);
-                      loadTheme(context);
-                    },
-                  )),
-                  Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: tileColor,
-                        ),
-                        padding: EdgeInsets.only(top: 5, left: 15),
-                        child: Text("Window Effect"),
-                      );
-                    }
-                    return SizedBox.shrink();
-                  }),
-                  Obx(
-                    () => SettingsOptions<WindowEffect>(
-                      initial: SettingsManager().settings.windowEffect.value,
-                      options: allowedEffects,
-                      textProcessing: (WindowEffect effect) => effect.toString().substring("WindowEffect.".length),
-                      onChanged: (WindowEffect? effect) async {
-                        effect ??= WindowEffect.disabled;
-                        SettingsManager().settings.windowEffect.value = effect;
-                        prefs.setString('window-effect', effect.toString());
-                        await WindowEffects.setEffect(color: context.theme.backgroundColor);
-                      },
-                      title: "Window Effect",
-                      backgroundColor: tileColor,
-                      secondaryColor: headerColor,
-                      capitalize: true,
-                    ),
-                  ),
-                  Obx(() {
-                    return SettingsSubtitle(
-                      subtitle: WindowEffects.descriptions[SettingsManager().settings.windowEffect.value],
-                      unlimitedSpace: true,
-                    );
-                  }),
-                ],
               ),
               if (Platform.isWindows)
                 SettingsHeader(
@@ -254,7 +184,6 @@ class DesktopPanel extends StatelessWidget {
                       title: "Actions",
                       subtitle:
                           "Click actions to toggle them. Drag actions to move them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
-                      backgroundColor: tileColor,
                       isThreeLine: true,
                     ),
                     Row(
