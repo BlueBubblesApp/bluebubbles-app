@@ -331,6 +331,7 @@ class ThemePanel extends StatelessWidget {
                             max: 1,
                             min: 0,
                             divisions: 100,
+                            formatValue: (value) => value.toStringAsFixed(2),
                             update: (value) => SettingsManager().settings.windowEffectCustomOpacityLight.value = value,
                             onChangeEnd: (value) {
                               saveSettings();
@@ -361,6 +362,7 @@ class ThemePanel extends StatelessWidget {
                             max: 1,
                             min: 0,
                             divisions: 100,
+                            formatValue: (value) => value.toStringAsFixed(2),
                             update: (value) => SettingsManager().settings.windowEffectCustomOpacityDark.value = value,
                             onChangeEnd: (value) {
                               saveSettings();
