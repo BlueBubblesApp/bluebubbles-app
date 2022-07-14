@@ -68,19 +68,11 @@ class WindowEffects {
 
   static double getOpacity({required Color color}) {
     bool dark = isDark(color: color);
-    bool supportsTransparentAcrylic = parsedWindowsVersion() >= 22000;
-    bool addOpacity = SettingsManager().settings.windowEffect.value == WindowEffect.acrylic && !supportsTransparentAcrylic;
-
-    // withOpacity uses withAlpha((255.0 * opacity).round());
-    // so, the minimum nonzero alpha can be made with opacity 1 / 255
-    double _extra = 1 / 255;
 
     if (dark) {
-      double extra = addOpacity && SettingsManager().settings.windowEffectCustomOpacityDark.value == 0 ? _extra : 0;
-      return SettingsManager().settings.windowEffectCustomOpacityDark.value + extra;
+      return SettingsManager().settings.windowEffectCustomOpacityDark.value;
     }
-    double extra = addOpacity && SettingsManager().settings.windowEffectCustomOpacityLight.value == 0 ? _extra : 0;
-    return SettingsManager().settings.windowEffectCustomOpacityLight.value + extra;
+    return SettingsManager().settings.windowEffectCustomOpacityLight.value;
   }
 
   static double defaultOpacity({required bool dark}) {
@@ -107,12 +99,18 @@ class WindowEffects {
     if (!effects.contains(effect)) SettingsManager().settings.windowEffect.value = WindowEffect.disabled;
     SettingsManager().saveSettings(SettingsManager().settings);
 
+    bool supportsTransparentAcrylic = parsedWindowsVersion() >= 22000;
+    bool addOpacity = SettingsManager().settings.windowEffect.value == WindowEffect.acrylic && !supportsTransparentAcrylic;
+
+    // withOpacity uses withAlpha((255.0 * opacity).round());
+    // so, the minimum nonzero alpha can be made with opacity 1 / 255
+    double _extra = 1 / 255;
     bool _dark = true;
 
     if (_dependencies[effect]?.contains(EffectDependencies.brightness) ?? false) {
       _dark = isDark(color: color);
     }
-    await Window.setEffect(effect: effect, color: color.withOpacity(0), dark: _dark);
+    await Window.setEffect(effect: effect, color: color.withOpacity(addOpacity ? _extra : 0), dark: _dark);
   }
 }
 
