@@ -6,14 +6,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:tuple/tuple.dart';
 
-enum EffectDependencies {
-  brightness,
-  color
-}
+enum EffectDependencies { brightness, color }
 
 class WindowEffects {
-
-  static final _effects = [WindowEffect.tabbed, WindowEffect.mica, WindowEffect.aero, WindowEffect.acrylic, WindowEffect.transparent, WindowEffect.disabled];
+  static final _effects = [
+    WindowEffect.tabbed,
+    WindowEffect.mica,
+    WindowEffect.aero,
+    WindowEffect.acrylic,
+    WindowEffect.transparent,
+    WindowEffect.disabled
+  ];
 
   static final Map<WindowEffect, int> _versions = {
     WindowEffect.tabbed: 22523,
@@ -24,7 +27,8 @@ class WindowEffects {
     WindowEffect.disabled: 0,
   };
 
-  static List<WindowEffect> get effects => _effects.where((effect) => parsedWindowsVersion() >= _versions[effect]!).toList();
+  static List<WindowEffect> get effects =>
+      _effects.where((effect) => parsedWindowsVersion() >= _versions[effect]!).toList();
 
   static final _descriptions = {
     WindowEffect.tabbed: "Tabbed is a Mica-like material that incorporates theme and desktop wallpaper, but is more "
@@ -64,8 +68,18 @@ class WindowEffects {
 
   static double getOpacity({required Color color}) {
     bool dark = isDark(color: color);
-    if (dark) return SettingsManager().settings.windowEffectCustomOpacityDark.value;
-    return SettingsManager().settings.windowEffectCustomOpacityLight.value;
+    bool supportsTransparentAcrylic = parsedWindowsVersion() >= 22000;
+    bool addOpacity = SettingsManager().settings.windowEffect.value == WindowEffect.acrylic && !supportsTransparentAcrylic;
+
+    // withOpacity uses withAlpha((255.0 * opacity).round());
+    // so, the minimum nonzero alpha can be made with opacity 1 / 255
+
+    if (dark) {
+      double extra = addOpacity && SettingsManager().settings.windowEffectCustomOpacityDark.value == 0 ? 1 / 255 : 0;
+      return SettingsManager().settings.windowEffectCustomOpacityDark.value + extra;
+    }
+    double extra = addOpacity && SettingsManager().settings.windowEffectCustomOpacityLight.value == 0 ? 1 / 255 : 0;
+    return SettingsManager().settings.windowEffectCustomOpacityLight.value + extra;
   }
 
   static double defaultOpacity({required bool dark}) {
