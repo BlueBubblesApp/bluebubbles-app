@@ -313,7 +313,6 @@ class ThemePanel extends StatelessWidget {
                         if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.backgroundColor)) {
                           return SettingsTile(
                             title: "Background Opacity (Light)",
-                            subtitle: "You can set different opacities for your light and dark themes",
                             trailing: SettingsManager().settings.windowEffectCustomOpacityLight.value != WindowEffects.defaultOpacity(dark: false) ? ElevatedButton(
                               onPressed: () {
                                 SettingsManager().settings.windowEffectCustomOpacityLight.value = WindowEffects.defaultOpacity(dark: false);
@@ -346,7 +345,6 @@ class ThemePanel extends StatelessWidget {
                         if (WindowEffects.dependsOnColor() && WindowEffects.isDark(color: context.theme.backgroundColor)) {
                           return SettingsTile(
                             title: "Background Opacity (Dark)",
-                            subtitle: "You can set different opacities for your light and dark themes",
                             trailing: SettingsManager().settings.windowEffectCustomOpacityDark.value != WindowEffects.defaultOpacity(dark: true) ? ElevatedButton(
                               onPressed: () {
                                 SettingsManager().settings.windowEffectCustomOpacityDark.value = WindowEffects.defaultOpacity(dark: true);
@@ -397,7 +395,7 @@ class ThemePanel extends StatelessWidget {
                             windowsAccentColor = await DynamicColorPlugin.getAccentColor();
                           }
                           SettingsManager().settings.useWindowsAccent.value = value;
-                          SettingsManager().saveSettings(SettingsManager().settings);
+                          saveSettings();
                           loadTheme(context);
                         },
                       )),

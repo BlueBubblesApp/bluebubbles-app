@@ -56,7 +56,7 @@ class WindowEffects {
   static final Map<WindowEffect, Tuple2<double, double>> _opacities = {
     WindowEffect.tabbed: Tuple2(0, 0),
     WindowEffect.mica: Tuple2(0, 0),
-    WindowEffect.aero: Tuple2(0.6, 0.5),
+    WindowEffect.aero: Tuple2(0.6, 0.75),
     WindowEffect.acrylic: Tuple2(0, 0.6),
     WindowEffect.transparent: Tuple2(0.7, 0.7),
     WindowEffect.disabled: Tuple2(1, 1),
@@ -73,12 +73,13 @@ class WindowEffects {
 
     // withOpacity uses withAlpha((255.0 * opacity).round());
     // so, the minimum nonzero alpha can be made with opacity 1 / 255
+    double _extra = 1 / 255;
 
     if (dark) {
-      double extra = addOpacity && SettingsManager().settings.windowEffectCustomOpacityDark.value == 0 ? 1 / 255 : 0;
+      double extra = addOpacity && SettingsManager().settings.windowEffectCustomOpacityDark.value == 0 ? _extra : 0;
       return SettingsManager().settings.windowEffectCustomOpacityDark.value + extra;
     }
-    double extra = addOpacity && SettingsManager().settings.windowEffectCustomOpacityLight.value == 0 ? 1 / 255 : 0;
+    double extra = addOpacity && SettingsManager().settings.windowEffectCustomOpacityLight.value == 0 ? _extra : 0;
     return SettingsManager().settings.windowEffectCustomOpacityLight.value + extra;
   }
 
@@ -106,15 +107,12 @@ class WindowEffects {
     if (!effects.contains(effect)) SettingsManager().settings.windowEffect.value = WindowEffect.disabled;
     SettingsManager().saveSettings(SettingsManager().settings);
 
-    Color _color = Colors.transparent;
     bool _dark = true;
-    if (_dependencies[effect]?.contains(EffectDependencies.color) ?? false) {
-      _color = withOpacity(color: color);
-    }
+
     if (_dependencies[effect]?.contains(EffectDependencies.brightness) ?? false) {
       _dark = isDark(color: color);
     }
-    await Window.setEffect(effect: effect, color: _color, dark: _dark);
+    await Window.setEffect(effect: effect, color: color.withOpacity(0), dark: _dark);
   }
 }
 
