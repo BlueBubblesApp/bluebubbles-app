@@ -548,6 +548,7 @@ class _Cupertino extends StatelessWidget {
                               dense: SettingsManager().settings.denseChatTiles.value,
                               contentPadding: EdgeInsets.only(left: 0),
                               minVerticalPadding: 10,
+                              horizontalTitleGap: 10,
                               title: parent.buildTitle(),
                               subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
                               leading: parent.buildLeading(),
@@ -711,6 +712,7 @@ class _Material extends StatelessWidget {
                           dense: SettingsManager().settings.denseChatTiles.value,
                           title: parent.buildTitle(),
                           subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
+                          horizontalTitleGap: 10,
                           minVerticalPadding: 10,
                           contentPadding: EdgeInsets.only(left: 6, right: 16),
                           leading: parent.buildLeading(),
@@ -859,6 +861,7 @@ class _Samsung extends StatelessWidget {
                         dense: SettingsManager().settings.denseChatTiles.value,
                         title: parent.buildTitle(),
                         subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
+                        horizontalTitleGap: 10,
                         minVerticalPadding: 10,
                         leading: Stack(
                           alignment: Alignment.topRight,
