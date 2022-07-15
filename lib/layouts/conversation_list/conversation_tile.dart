@@ -548,6 +548,7 @@ class _Cupertino extends StatelessWidget {
                               dense: SettingsManager().settings.denseChatTiles.value,
                               contentPadding: EdgeInsets.only(left: 0),
                               minVerticalPadding: 10,
+                              horizontalTitleGap: 10,
                               title: parent.buildTitle(),
                               subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
                               leading: parent.buildLeading(),
