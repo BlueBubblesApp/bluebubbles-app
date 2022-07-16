@@ -109,6 +109,23 @@ class ConversationPanel extends StatelessWidget {
                       backgroundColor: tileColor,
                       isThreeLine: true,
                     )),
+                  if (!kIsWeb && !kIsDesktop && SettingsManager().settings.skin.value == Skins.iOS)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.playSendSound.value = val;
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.playSendSound.value,
+                      title: "Play Send Sound",
+                      backgroundColor: tileColor,
+                    )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
                 ],
               ),
               SettingsHeader(

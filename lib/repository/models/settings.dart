@@ -34,6 +34,7 @@ class Settings {
   final RxBool doubleTapForDetails = false.obs;
   final RxBool denseChatTiles = false.obs;
   final RxBool smartReply = false.obs;
+  final RxBool playSendSound = false.obs;
   final RxBool reducedForehead = false.obs;
   final RxBool preCachePreviewImages = true.obs;
   final RxBool showConnectionIndicator = false.obs;
@@ -196,6 +197,8 @@ class Settings {
         settings.denseChatTiles.value = entry.value;
       } else if (entry.name == "smartReply") {
         settings.smartReply.value = entry.value;
+      } else if (entry.name == "playSendSound") {
+        settings.playSendSound.value = entry.value;
       } else if (entry.name == "reducedForehead") {
         settings.reducedForehead.value = entry.value;
       } else if (entry.name == "preCachePreviewImages") {
@@ -428,6 +431,7 @@ class Settings {
       'doubleTapForDetails': doubleTapForDetails.value,
       'denseChatTiles': denseChatTiles.value,
       'smartReply': smartReply.value,
+      'playSendSound': playSendSound.value,
       'reducedForehead': reducedForehead.value,
       'preCachePreviewImages': preCachePreviewImages.value,
       'showConnectionIndicator': showConnectionIndicator.value,
@@ -542,6 +546,7 @@ class Settings {
     SettingsManager().settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     SettingsManager().settings.denseChatTiles.value = map['denseChatTiles'] ?? false;
     SettingsManager().settings.smartReply.value = map['smartReply'] ?? false;
+    SettingsManager().settings.playSendSound.value = map['playSendSound'] ?? false;
     SettingsManager().settings.reducedForehead.value = map['reducedForehead'] ?? false;
     SettingsManager().settings.preCachePreviewImages.value = map['preCachePreviewImages'] ?? true;
     SettingsManager().settings.showConnectionIndicator.value = map['showConnectionIndicator'] ?? false;
@@ -655,6 +660,7 @@ class Settings {
     s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     s.denseChatTiles.value = map['denseChatTiles'] ?? false;
     s.smartReply.value = map['smartReply'] ?? false;
+    s.playSendSound.value = map['playSendSound'] ?? false;
     s.reducedForehead.value = map['reducedForehead'] ?? false;
     s.preCachePreviewImages.value = map['preCachePreviewImages'] ?? true;
     s.showConnectionIndicator.value = map['showConnectionIndicator'] ?? false;

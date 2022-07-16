@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
-
+import 'package:audioplayers/audioplayers.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -273,7 +273,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   Future<bool> send(
-      List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
+    List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
     bool alreadySent = false;
     if (isCreator!) {
@@ -379,6 +379,17 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         isCreator = false;
         wasCreator = true;
       });
+    }
+
+    // play send sound
+    if (SettingsManager().settings.playSendSound.value && !kIsWeb && !kIsDesktop) {
+      AudioPlayer player = AudioPlayer();
+      if (SettingsManager().settings.skin.value == Skins.iOS) {
+        player.play(AssetSource("audio/imessage-send-sound.mp3"));
+      }
+      else if (SettingsManager().settings.skin.value == Skins.Samsung) {
+        player.play(AssetSource(""));
+      }
     }
 
     return true;
