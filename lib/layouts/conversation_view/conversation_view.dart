@@ -382,14 +382,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     }
 
     // play send sound
-    if (SettingsManager().settings.playSendSound.value && !kIsWeb && !kIsDesktop) {
+    if (SettingsManager().settings.playSendSound.value && SettingsManager().settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop) {
       AudioPlayer player = AudioPlayer();
-      if (SettingsManager().settings.skin.value == Skins.iOS) {
-        player.play(AssetSource("audio/imessage-send-sound.mp3"));
-      }
-      else if (SettingsManager().settings.skin.value == Skins.Samsung) {
-        player.play(AssetSource(""));
-      }
+      player.play(AssetSource("audio/imessage-send-sound.mp3"));
     }
 
     return true;
