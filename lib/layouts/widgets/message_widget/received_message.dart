@@ -571,10 +571,11 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30)))) {
       messageColumn.add(
         Padding(
-          padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().isNotEmpty ? 0.0 : 3.0),
-          child: Text(
-            getContactName(context, contactTitle, widget.message.handle?.address),
-            style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
+          padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 0),
+          child: RichText(
+            text: TextSpan(
+              text: getContactName(context, contactTitle, widget.message.handle?.address),
+              style: context.theme.textTheme.labelMedium!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -753,10 +754,11 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       messagePopupColumn.insert(
         0,
         Padding(
-          padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().isNotEmpty ? 0.0 : 3.0),
-          child: Text(
-            getContactName(context, contactTitle, widget.message.handle?.address),
-            style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
+          padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 0),
+          child: RichText(
+            text: TextSpan(
+              text: getContactName(context, contactTitle, widget.message.handle?.address),
+              style: context.theme.textTheme.labelMedium!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
