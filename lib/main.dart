@@ -189,11 +189,11 @@ Future<Null> initApp(bool isBubble) async {
     if (basename(appData.absolute.path) == "bluebubbles") {
       Directory oldAppData =
       Platform.isWindows ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app")) : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
-      if (oldAppData.existsSync() && !appData.existsSync()) {
+      if (await oldAppData.exists()) {
         Logger.info("Copying appData to new directory");
-        copyDirectory(oldAppData, appData);
+        await copyDirectory(oldAppData, appData);
         Logger.info("Deleting old appData directory");
-        Directory(dirname(oldAppData.absolute.path)).deleteSync(recursive: true);
+        await Directory(dirname(oldAppData.absolute.path)).delete(recursive: true);
         Logger.info("Finished migrating appData");
       }
     }
@@ -229,14 +229,14 @@ Future<Null> initApp(bool isBubble) async {
           customStorePath ??= "C:\\bluebubbles_app";
           objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
           if (kIsDesktop) {
-            objectBoxDirectory.createSync(recursive: true);
+            await objectBoxDirectory.create(recursive: true);
           }
           Logger.info("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
           store = await openStore(directory: join(customStorePath, "objectbox"));
         } else {
           try {
             if (kIsDesktop) {
-              Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
+              await Directory(join(documentsDirectory.path, 'objectbox')).create(recursive: true);
             }
             Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
             store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
@@ -248,7 +248,7 @@ Future<Null> initApp(bool isBubble) async {
               customStorePath ??= "C:\\bluebubbles_app";
               prefs.setBool("use-custom-path", true);
               objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-              objectBoxDirectory.createSync(recursive: true);
+              await objectBoxDirectory.create(recursive: true);
               Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
               store = await openStore(directory: join(customStorePath, 'objectbox'));
             }
@@ -271,7 +271,7 @@ Future<Null> initApp(bool isBubble) async {
         }
       }
 
-      if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
+      if (!(await objectBoxDirectory.exists()) && await File(sqlitePath).exists()) {
         runApp(UpgradingDB());
         print("Converting sqflite to ObjectBox...");
         Stopwatch s = Stopwatch();
@@ -280,7 +280,7 @@ Future<Null> initApp(bool isBubble) async {
         s.stop();
         Logger.info("Migrated in ${s.elapsedMilliseconds} ms");
       } else {
-        if (File(sqlitePath).existsSync() && prefs.getBool('objectbox-migration') != true) {
+        if (await File(sqlitePath).exists() && prefs.getBool('objectbox-migration') != true) {
           runApp(UpgradingDB());
           print("Converting sqflite to ObjectBox...");
           Stopwatch s = Stopwatch();
@@ -644,9 +644,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         );
 
         // Delete temp dir in case any notif icons weren't cleared
-        getApplicationSupportDirectory().then((d) {
+        getApplicationSupportDirectory().then((d) async {
           Directory temp = Directory(join(d.path, "temp"));
-          if (temp.existsSync()) temp.deleteSync(recursive: true);
+          if (await temp.exists()) await temp.delete(recursive: true);
         });
       }
       Future.delayed(Duration.zero, () async => await initSystemTray());
@@ -1048,13 +1048,13 @@ Future<void> initSystemTray() async {
   });
 }
 
-void copyDirectory(Directory source, Directory destination) => source.listSync(recursive: false).forEach((element) {
+Future<void> copyDirectory(Directory source, Directory destination) async => await source.list(recursive: false).forEach((element) async {
       if (element is Directory) {
         Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
-        newDirectory.createSync();
+        await newDirectory.create();
 
-        copyDirectory(element.absolute, newDirectory);
+        await copyDirectory(element.absolute, newDirectory);
       } else if (element is File) {
-        element.copySync(join(destination.path, basename(element.path)));
+        await element.copy(join(destination.path, basename(element.path)));
       }
     });
