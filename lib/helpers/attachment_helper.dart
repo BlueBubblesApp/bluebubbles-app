@@ -360,7 +360,7 @@ class AttachmentHelper {
   static Future<Uint8List?> getVideoThumbnail(String filePath, {bool useCachedFile = true}) async {
     File cachedFile = File("$filePath.thumbnail");
     if (useCachedFile) {
-      if (cachedFile.existsSync()) {
+      if (await cachedFile.exists()) {
         return cachedFile.readAsBytes();
       }
     }
@@ -376,7 +376,7 @@ class AttachmentHelper {
     }
   
     if (useCachedFile) {
-      cachedFile.writeAsBytes(thumbnail);
+      await cachedFile.writeAsBytes(thumbnail);
     }
 
     return thumbnail;

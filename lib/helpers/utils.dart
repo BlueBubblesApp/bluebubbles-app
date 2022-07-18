@@ -617,13 +617,13 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
     var response = await get(Uri.parse(url));
 
     Directory baseDir = Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
-    if (!baseDir.existsSync()) {
-      baseDir.createSync(recursive: true);
+    if (!await baseDir.exists()) {
+      await baseDir.create(recursive: true);
     }
 
     String newPath = "${baseDir.path}/$filename";
     File file = File(newPath);
-    file.writeAsBytesSync(response.bodyBytes);
+    await file.writeAsBytes(response.bodyBytes);
 
     return file;
   } catch (ex) {
@@ -815,8 +815,8 @@ Future<void> paintGroupAvatar({
     String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
         chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
-    if (File(customPath).existsSync()) {
-      Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync(), size: size.toInt());
+    if (await File(customPath).exists()) {
+      Uint8List? customAvatar = await circularize(await File(customPath).readAsBytes(), size: size.toInt());
       if (customAvatar != null) {
         canvas.drawImage(await loadImage(customAvatar), Offset(0, 0), Paint());
         return;
@@ -906,8 +906,8 @@ Future<void> paintAvatar(
     String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
         chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
-    if (File(customPath).existsSync()) {
-      Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync(), size: size.toInt());
+    if (await File(customPath).exists()) {
+      Uint8List? customAvatar = await circularize(await File(customPath).readAsBytes(), size: size.toInt());
       if (customAvatar != null) {
         canvas.drawImage(await loadImage(customAvatar), offset, Paint());
         return;
