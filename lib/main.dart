@@ -189,11 +189,9 @@ Future<Null> initApp(bool isBubble) async {
     if (basename(appData.absolute.path) == "bluebubbles") {
       Directory oldAppData =
       Platform.isWindows ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app")) : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
-      if (await oldAppData.exists()) {
+      if (await oldAppData.exists() && !await Directory(join(appData.path, "objectbox")).exists()) {
         Logger.info("Copying appData to new directory");
         await copyDirectory(oldAppData, appData);
-        Logger.info("Deleting old appData directory");
-        await Directory(dirname(oldAppData.absolute.path)).delete(recursive: true);
         Logger.info("Finished migrating appData");
       }
     }
