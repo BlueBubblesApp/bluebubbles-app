@@ -651,7 +651,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       }
       Future.delayed(Duration.zero, () async {
         await initSystemTray();
-        await WindowsTaskbar.resetOverlayIcon();
+        if (Platform.isWindows) {
+          await WindowsTaskbar.resetOverlayIcon();
+        }
       });
     }
 
