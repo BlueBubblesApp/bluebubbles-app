@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -18,6 +19,8 @@ import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
+import 'package:windows_taskbar/windows_taskbar.dart';
 
 class ChatBloc {
   static StreamSubscription<NewMessageEvent>? _messageSubscription;
@@ -36,6 +39,13 @@ class ChatBloc {
 
   void updateUnreads() {
     unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
+    if (!kIsDesktop || !Platform.isWindows) return;
+    if (unreads.value == 0) {
+      Future.delayed(Duration.zero, () async => await WindowsTaskbar.resetOverlayIcon());
+      return;
+    }
+    int count = min(unreads.value, 10);
+    Future.delayed(Duration.zero, () async => await WindowsTaskbar.setOverlayIcon(ThumbnailToolbarAssetIcon("assets/badges/badge-$count.ico")));
   }
 
   Completer<void>? chatRequest;

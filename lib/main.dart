@@ -41,7 +41,6 @@ import 'package:collection/collection.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_dart/firebase_dart.dart';
-
 // ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:flutter/foundation.dart';
@@ -75,6 +74,7 @@ import 'package:universal_io/io.dart';
 import 'package:version/version.dart' as ver;
 import 'package:win_toast/win_toast.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:windows_taskbar/windows_taskbar.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -649,7 +649,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           if (temp.existsSync()) temp.deleteSync(recursive: true);
         });
       }
-      Future.delayed(Duration.zero, () async => await initSystemTray());
+      Future.delayed(Duration.zero, () async {
+        await initSystemTray();
+        await WindowsTaskbar.resetOverlayIcon();
+      });
     }
 
     // we want to refresh the page rather than loading a new instance of [Home]
