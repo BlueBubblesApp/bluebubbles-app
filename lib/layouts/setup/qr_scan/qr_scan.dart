@@ -543,6 +543,23 @@ class _QRScanState extends State<QRScan> {
             });
           }
 
+          // If desktop/web and no FCM data
+          if ((kIsDesktop || kIsWeb) && data["data"] == null) {
+            // Check proxy service
+            dio.Response response = await api.serverInfo();
+            String proxyService = response.data['data']['proxy_service'];
+            if (proxyService == "dynamic-dns") {
+              goToNextPage();
+            }
+          }
+
+          // If no fcm data
+          if (data["data"] == null) {
+            return setState(() {
+              error = "Make sure FCM is set up on your server!";
+            });
+          }
+
           FCMData fcmData = FCMData.fromMap(data["data"]);
           SettingsManager().saveFCMData(fcmData);
           goToNextPage();
