@@ -915,11 +915,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         EventDispatcher().stream.listen((Map<String, dynamic> event) async {
           if (!event.containsKey("type")) return;
 
-          if (event["type"] == 'theme-update') {
+          if (event["type"] == 'theme-update' && mounted) {
             await WindowEffects.setEffect(color: context.theme.backgroundColor);
           }
 
-          if (event["type"] == 'popup-pushed') {
+          if (event["type"] == 'popup-pushed' && mounted) {
             bool popup = event["data"] as bool;
             if (popup) {
               SettingsManager().settings.windowEffect.value = WindowEffect.disabled;
