@@ -40,15 +40,12 @@ class ScrollbarWrapper extends StatelessWidget {
           scrollController: controller,
           child: (kIsDesktop || kIsWeb)
               ? showScrollbar
-                  ? MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: RawScrollbar(
-                        controller: controller,
-                        thumbColor: context.theme.colorScheme.properSurface.withOpacity(0.5),
-                        thickness: 10,
-                        radius: Radius.circular(5),
-                        child: child,
-                      ),
+                  ? RawScrollbar(
+                      controller: controller,
+                      thumbColor: context.theme.colorScheme.properSurface.withOpacity(0.5),
+                      thickness: 10,
+                      radius: Radius.circular(5),
+                      child: child,
                     )
                   : ScrollConfiguration(
                       behavior: ScrollConfiguration.of(context).copyWith(scrollbars: showScrollbar),
