@@ -2,11 +2,14 @@ import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/sync/sync_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:dio/dio.dart';
 import 'package:tuple/tuple.dart';
+import 'package:universal_io/io.dart';
+import 'package:windows_taskbar/windows_taskbar.dart';
 
 class FullSyncManager extends SyncManager {
   final tag = 'FullSyncManager';
@@ -33,6 +36,11 @@ class FullSyncManager extends SyncManager {
     }
 
     super.start();
+
+    if (kIsDesktop && Platform.isWindows) {
+      await WindowsTaskbar.setProgressMode(TaskbarProgressMode.indeterminate);
+    }
+
     addToOutput('Full sync is starting...');
     addToOutput("Reloading your contacts...");
     await ContactManager().loadContacts(force: true, loadAvatars: true);
@@ -55,6 +63,11 @@ class FullSyncManager extends SyncManager {
 
     try {
       int completedChats = 0;
+
+      if (kIsDesktop && Platform.isWindows) {
+        await WindowsTaskbar.setProgressMode(TaskbarProgressMode.normal);
+      }
+
       await for (final chatEvent in streamChatPages(totalChats)) {
         double chatProgress = chatEvent.item1;
         List<Chat> newChats = chatEvent.item2;
@@ -102,6 +115,10 @@ class FullSyncManager extends SyncManager {
               setProgress(completedChats, totalChats ?? newChats.length);
               chatsSynced += 1;
 
+              if (kIsDesktop && Platform.isWindows) {
+                await WindowsTaskbar.setProgress(completedChats, totalChats ?? newChats.length);
+              }
+
               // If we're supposed to be stopping, break out
               if (status.value == SyncStatus.STOPPING) break;
             }
@@ -118,14 +135,29 @@ class FullSyncManager extends SyncManager {
         if (chatProgress >= 1.0) {
           // When we've hit the last chunk, we're finished
           await complete();
+
+          if (kIsDesktop && Platform.isWindows) {
+            await WindowsTaskbar.setProgressMode(TaskbarProgressMode.noProgress);
+            await WindowsTaskbar.setFlashTaskbarAppIcon(mode: TaskbarFlashMode.timernofg);
+          }
         } else if (status.value == SyncStatus.STOPPING) {
           // If we are supposed to be stopping, complete the future
           if (completer != null && !completer!.isCompleted) completer!.complete();
+
+          if (kIsDesktop && Platform.isWindows) {
+            await WindowsTaskbar.setProgressMode(TaskbarProgressMode.noProgress);
+            await WindowsTaskbar.setFlashTaskbarAppIcon(mode: TaskbarFlashMode.timernofg);
+          }
         }
       }
     } catch (e) {
       addToOutput('Failed to sync chats! Error: ${e.toString()}', level: LogLevel.ERROR);
       completeWithError(e.toString());
+
+      if (kIsDesktop && Platform.isWindows) {
+        await WindowsTaskbar.setProgressMode(TaskbarProgressMode.error);
+        await WindowsTaskbar.setFlashTaskbarAppIcon(mode: TaskbarFlashMode.timernofg);
+      }
     }
 
     return completer!.future;
