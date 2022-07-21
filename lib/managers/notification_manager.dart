@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -24,12 +25,12 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as fln;
 import 'package:get/get.dart';
+import 'package:local_notifier/local_notifier.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:quick_notify/quick_notify.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as uh;
-import 'package:win_toast/win_toast.dart';
 
 import 'chat/chat_manager.dart';
 
@@ -53,6 +54,15 @@ class NotificationManager {
   /// [defaultAvatar] is the avatar that is used if there is no contact icon
   Uint8List? defaultAvatar;
   Uint8List? defaultMultiUserAvatar;
+
+  /// For desktop use only
+  static LocalNotification? allToast;
+  static Map<String, List<LocalNotification>> notifications = {};
+  static Map<String, int> notificationCounts = {};
+  /// If more than [maxChatCount] chats have notifications, all notifications will be grouped into one
+  static const maxChatCount = 0;
+  /// If a chat has more than [maxMessageCount] notifications, the notifications for that chat will be grouped into one
+  static const maxMessageCount = 3;
 
   /// Checks if a [guid] has been marked as processed
   bool hasProcessed(String guid) {
@@ -243,6 +253,72 @@ class NotificationManager {
     }
     if (kIsDesktop) {
       if (Platform.isWindows) {
+
+        List<int> selectedIndices = SettingsManager().settings.selectedActionIndices;
+        List<String> _actions = SettingsManager().settings.actionList;
+
+        List<String> actions = _actions
+            .whereIndexed((index, element) => selectedIndices.contains(index))
+            .map((action) => action == "Mark Read"
+                ? action
+                : !isReaction && SettingsManager().settings.enablePrivateAPI.value
+                    ? ReactionTypes.reactionToEmoji[action]!
+                    : null)
+            .whereNotNull()
+            .toList();
+
+        bool showMarkRead = actions.contains("Mark Read");
+
+        List<LocalNotificationAction> nActions = actions.map((String a) => LocalNotificationAction(text: a)).toList();
+
+        LocalNotification? toast;
+
+        notifications[chatGuid] ??= [];
+        notificationCounts[chatGuid] = (notificationCounts[chatGuid] ?? 0) + 1;
+
+        List<LocalNotification> _notifications = List.from(notifications[chatGuid]!);
+
+        Iterable<String> chats = notifications.keys;
+
+        if (chats.length > maxChatCount) {
+          for (String chat in chats) {
+            for (LocalNotification _toast in notifications[chat]!) {
+              await _toast.close();
+            }
+            notifications[chat] = [];
+          }
+
+          await allToast?.close();
+
+          String title = "${notificationCounts.values.sum} messages";
+          String body = "from ${chats.length} chats";
+
+          // Don't create notification for no reason
+          if (allToast?.title == title && allToast?.body == body) return;
+
+          allToast = LocalNotification(
+            title: "${notificationCounts.values.sum} messages",
+            body: "from ${chats.length} chats",
+          );
+
+          allToast!.onClick = () {
+            notifications = {};
+            notificationCounts = {};
+            appWindow.show();
+          };
+
+          allToast!.onClose = (reason) {
+            if (reason != LocalNotificationCloseReason.unknown) {
+              notifications = {};
+              notificationCounts = {};
+            }
+          };
+
+          await allToast!.show();
+
+          return;
+        }
+
         Uint8List avatar = await avatarAsBytes(
             isGroup: chatIsGroup, handle: handle, participants: participants, chatGuid: chatGuid, quality: 256);
 
@@ -251,53 +327,126 @@ class NotificationManager {
         File(path).createSync(recursive: true);
         File(path).writeAsBytesSync(avatar);
 
-        List<int> selectedIndices = SettingsManager().settings.selectedActionIndices;
-        List<String> _actions = SettingsManager().settings.actionList;
+        if (notificationCounts[chatGuid]! <= maxMessageCount) {
+          toast = LocalNotification(
+            imagePath: path,
+            title: chatIsGroup ? "$chatTitle: $contactName" : chatTitle,
+            body: messageText,
+            actions: nActions,
+          );
+          notifications[chatGuid]!.add(toast);
 
-        List<String> actions = _actions.whereIndexed((index, element) => selectedIndices.contains(index))
-                .map((action) => action == "Mark Read"
-                    ? action
-                    : !isReaction && SettingsManager().settings.enablePrivateAPI.value
-                        ? ReactionTypes.reactionToEmoji[action]!
-                        : null)
-                .whereNotNull()
-                .toList();
+          toast.onClick = () async {
+            notifications[chatGuid]!.remove(toast);
+            notificationCounts[chatGuid] = 0;
 
-        final toast = await WinToast.instance().showToast(
-          imagePath: path,
-          type: ToastType.imageAndText02,
-          title: chatIsGroup ? "$chatTitle: $contactName" : chatTitle,
-          subtitle: messageText,
-          actions: actions,
-        );
-        toast?.eventStream.listen((event) async {
-          // If we get any event, the notification has been shown, and we can delete the temp file
-          if (File(path).existsSync()) {
-            File(path).deleteSync();
-          }
-
-          // Show window and open the right chat
-          if (event is ActivatedEvent) {
             Chat? chat = Chat.findOne(guid: chatGuid);
             if (chat == null) return;
-            if (event.actionIndex == null) {
-              WinToast.instance().bringWindowToFront();
-              if (ChatManager().activeChat?.chat.guid != chatGuid && Get.context != null) {
-                CustomNavigator.pushAndRemoveUntil(
-                  Get.context!,
-                  ConversationView(chat: Chat.findOne(guid: chatGuid)),
-                  (route) => route.isFirst,
-                );
-              }
-            } else if (actions[event.actionIndex!] == "Mark Read") {
+            appWindow.show();
+            if (ChatManager().activeChat?.chat.guid != chatGuid && Get.context != null) {
+              CustomNavigator.pushAndRemoveUntil(
+                Get.context!,
+                ConversationView(chat: Chat.findOne(guid: chatGuid)),
+                (route) => route.isFirst,
+              );
+            }
+          };
+
+          toast.onClickAction = (index) async {
+            notifications[chatGuid]!.remove(toast);
+            notificationCounts[chatGuid] = 0;
+
+            Chat? chat = Chat.findOne(guid: chatGuid);
+            if (chat == null) return;
+            if (actions[index] == "Mark Read") {
               await ChatBloc().toggleChatUnread(chat, false);
               EventDispatcher().emit('refresh', null);
             } else if (SettingsManager().settings.enablePrivateAPI.value) {
               Message? message = Message.findOne(guid: messageGuid);
-              await ActionHandler.sendReaction(chat, message, ReactionTypes.emojiToReaction[actions[event.actionIndex!]]!);
+              await ActionHandler.sendReaction(chat, message, ReactionTypes.emojiToReaction[actions[index]]!);
+            }
+            if (await File(path).exists()) {
+              await File(path).delete();
+            }
+          };
+
+          toast.onClose = (reason) async {
+            notifications[chatGuid]!.remove(toast);
+            if (reason != LocalNotificationCloseReason.unknown) {
+              notificationCounts[chatGuid] = 0;
+            }
+            if (await File(path).exists()) {
+              await File(path).delete();
+            }
+          };
+        } else {
+          String body = "${notificationCounts[chatGuid]!} messages";
+          bool toasted = false;
+          for (LocalNotification _toast in _notifications) {
+            if (_toast.body != body) {
+              await _toast.close();
+            } else {
+              toasted = true;
             }
           }
-        });
+          if (toasted) return;
+
+          notifications[chatGuid] = [];
+          toast = LocalNotification(
+            imagePath: path,
+            title: chatTitle,
+            body: "${notificationCounts[chatGuid]!} messages",
+            actions: showMarkRead ? [LocalNotificationAction(text: "Mark Read")] : [],
+          );
+          notifications[chatGuid]!.add(toast);
+
+          toast.onClick = () async {
+            notifications[chatGuid]!.remove(toast);
+            notificationCounts[chatGuid] = 0;
+
+            // Show window and open the right chat
+            Chat? chat = Chat.findOne(guid: chatGuid);
+            if (chat == null) return;
+            appWindow.show();
+            if (ChatManager().activeChat?.chat.guid != chatGuid && Get.context != null) {
+              CustomNavigator.pushAndRemoveUntil(
+                Get.context!,
+                ConversationView(chat: Chat.findOne(guid: chatGuid)),
+                (route) => route.isFirst,
+              );
+            }
+
+            if (await File(path).exists()) {
+            await File(path).delete();
+            }
+          };
+
+          toast.onClickAction = (index) async {
+            notifications[chatGuid]!.remove(toast);
+            notificationCounts[chatGuid] = 0;
+
+            Chat? chat = Chat.findOne(guid: chatGuid);
+            if (chat == null) return;
+            await ChatBloc().toggleChatUnread(chat, false);
+            EventDispatcher().emit('refresh', null);
+
+            if (await File(path).exists()) {
+              await File(path).delete();
+            }
+          };
+
+          toast.onClose = (reason) async {
+            notifications[chatGuid]!.remove(toast);
+            if (reason != LocalNotificationCloseReason.unknown) {
+              notificationCounts[chatGuid] = 0;
+            }
+            if (await File(path).exists()) {
+              await File(path).delete();
+            }
+          };
+        }
+
+        await toast.show();
       } else {
         QuickNotify.notify(title: chatIsGroup ? "$chatTitle: $contactName" : chatTitle, content: messageText);
       }

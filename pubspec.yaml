@@ -129,11 +129,10 @@ dependencies:
   emojis: ^0.9.9
   defer_pointer: ^0.0.2
   pasteboard: ^0.0.3
-  win_toast:
+  local_notifier:
     git:
-      url: https://github.com/jjoelj/flutter-plugins.git
-      ref: f64b90f651e8655a75568b0db67319ba48a5156a
-      path: packages/win_toast
+      url: https://github.com/jjoelj/local_notifier.git
+      ref: 78d87ac4b89ad68854dad27aea0b819758d7228d
   dynamic_color: ^1.4.0
   material_color_utilities: ^0.1.5
   dart_vlc: ^0.2.1

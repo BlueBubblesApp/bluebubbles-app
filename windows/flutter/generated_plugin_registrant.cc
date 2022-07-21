@@ -14,6 +14,7 @@
 #include <flutter_acrylic/flutter_acrylic_plugin.h>
 #include <flutter_native_view/flutter_native_view_plugin.h>
 #include <geolocator_windows/geolocator_windows.h>
+#include <local_notifier/local_notifier_plugin.h>
 #include <maps_launcher/maps_launcher_plugin.h>
 #include <objectbox_flutter_libs/objectbox_flutter_libs_plugin.h>
 #include <pasteboard/pasteboard_plugin.h>
@@ -24,7 +25,6 @@
 #include <secure_application/secure_application_plugin.h>
 #include <system_tray/system_tray_plugin.h>
 #include <url_launcher_windows/url_launcher_windows.h>
-#include <win_toast/win_toast_plugin.h>
 #include <window_manager/window_manager_plugin.h>
 #include <windows_taskbar/windows_taskbar_plugin.h>
 
@@ -45,6 +45,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("FlutterNativeViewPlugin"));
   GeolocatorWindowsRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("GeolocatorWindows"));
+  LocalNotifierPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("LocalNotifierPlugin"));
   MapsLauncherPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("MapsLauncherPlugin"));
   ObjectboxFlutterLibsPluginRegisterWithRegistrar(
@@ -65,8 +67,6 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("SystemTrayPlugin"));
   UrlLauncherWindowsRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("UrlLauncherWindows"));
-  WinToastPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("WinToastPlugin"));
   WindowManagerPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("WindowManagerPlugin"));
   WindowsTaskbarPluginRegisterWithRegistrar(

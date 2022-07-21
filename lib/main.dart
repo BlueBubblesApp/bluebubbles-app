@@ -56,6 +56,7 @@ import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:local_notifier/local_notifier.dart';
 import 'package:material_color_utilities/palettes/core_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' show basename, dirname, join;
@@ -72,7 +73,6 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:version/version.dart' as ver;
-import 'package:win_toast/win_toast.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:windows_taskbar/windows_taskbar.dart';
 
@@ -637,11 +637,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     if (kIsDesktop) {
       if (Platform.isWindows) {
-        WinToast.instance().initialize(
-          appName: "BlueBubbles",
-          productName: "BlueBubbles",
-          companyName: "23344BlueBubbles",
-        );
 
         // Delete temp dir in case any notif icons weren't cleared
         getApplicationSupportDirectory().then((d) {
@@ -650,6 +645,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         });
       }
       Future.delayed(Duration.zero, () async {
+        await localNotifier.setup(
+          appName: "BlueBubbles",
+        );
         await initSystemTray();
         if (Platform.isWindows) {
           await WindowsTaskbar.resetOverlayIcon();
@@ -915,11 +913,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         EventDispatcher().stream.listen((Map<String, dynamic> event) async {
           if (!event.containsKey("type")) return;
 
-          if (event["type"] == 'theme-update' && mounted) {
-            await WindowEffects.setEffect(color: context.theme.backgroundColor);
+          if (event["type"] == 'theme-update') {
+            Color? color = mounted ? context.theme.backgroundColor : Get.context?.theme.backgroundColor;
+            if (color != null) {
+              await WindowEffects.setEffect(color: color);
+            }
           }
 
-          if (event["type"] == 'popup-pushed' && mounted) {
+          if (event["type"] == 'popup-pushed') {
             bool popup = event["data"] as bool;
             if (popup) {
               SettingsManager().settings.windowEffect.value = WindowEffect.disabled;
