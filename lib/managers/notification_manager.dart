@@ -60,7 +60,7 @@ class NotificationManager {
   static Map<String, List<LocalNotification>> notifications = {};
   static Map<String, int> notificationCounts = {};
   /// If more than [maxChatCount] chats have notifications, all notifications will be grouped into one
-  static const maxChatCount = 0;
+  static const maxChatCount = 2;
   /// If a chat has more than [maxMessageCount] notifications, the notifications for that chat will be grouped into one
   static const maxMessageCount = 3;
 
