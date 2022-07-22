@@ -1065,6 +1065,22 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
             }
 
+            if (linuxData != null) {
+              if ((linuxData.physicalKey == PhysicalKeyboardKey.keyV ||
+                  linuxData.logicalKey == LogicalKeyboardKey.keyV) &&
+                  (event.isControlPressed)) {
+                Pasteboard.image.then((image) {
+                  if (image != null) {
+                    addAttachment(PlatformFile(
+                      name: "${randomString(8)}.png",
+                      bytes: image,
+                      size: image.length,
+                    ));
+                  }
+                });
+              }
+            }
+
             if (webData != null) {
               if ((webData.physicalKey == PhysicalKeyboardKey.keyV || webData.logicalKey == LogicalKeyboardKey.keyV) &&
                   (event.isControlPressed || previousKeyCode == 0x1700000000)) {
