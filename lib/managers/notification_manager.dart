@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -31,6 +30,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:quick_notify/quick_notify.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as uh;
+import 'package:window_manager/window_manager.dart';
 
 import 'chat/chat_manager.dart';
 
@@ -299,12 +299,20 @@ class NotificationManager {
           allToast = LocalNotification(
             title: "${notificationCounts.values.sum} messages",
             body: "from ${chats.length} chats",
+            actions: showMarkRead ? [LocalNotificationAction(text: "Mark All Read")] : [],
           );
 
-          allToast!.onClick = () {
+          allToast!.onClick = () async {
             notifications = {};
             notificationCounts = {};
-            appWindow.show();
+            await WindowManager.instance.focus();
+          };
+
+          allToast!.onClickAction = (index) async {
+            notifications = {};
+            notificationCounts = {};
+
+            await ChatBloc().markAllAsRead();
           };
 
           allToast!.onClose = (reason) {
@@ -342,7 +350,9 @@ class NotificationManager {
 
             Chat? chat = Chat.findOne(guid: chatGuid);
             if (chat == null) return;
-            appWindow.show();
+
+            await WindowManager.instance.focus();
+
             if (ChatManager().activeChat?.chat.guid != chatGuid && Get.context != null) {
               CustomNavigator.pushAndRemoveUntil(
                 Get.context!,
@@ -365,6 +375,7 @@ class NotificationManager {
               Message? message = Message.findOne(guid: messageGuid);
               await ActionHandler.sendReaction(chat, message, ReactionTypes.emojiToReaction[actions[index]]!);
             }
+
             if (await File(path).exists()) {
               await File(path).delete();
             }
@@ -407,7 +418,9 @@ class NotificationManager {
             // Show window and open the right chat
             Chat? chat = Chat.findOne(guid: chatGuid);
             if (chat == null) return;
-            appWindow.show();
+
+            await WindowManager.instance.focus();
+
             if (ChatManager().activeChat?.chat.guid != chatGuid && Get.context != null) {
               CustomNavigator.pushAndRemoveUntil(
                 Get.context!,
@@ -427,8 +440,11 @@ class NotificationManager {
 
             Chat? chat = Chat.findOne(guid: chatGuid);
             if (chat == null) return;
+
             await ChatBloc().toggleChatUnread(chat, false);
             EventDispatcher().emit('refresh', null);
+
+            await WindowManager.instance.focus();
 
             if (await File(path).exists()) {
               await File(path).delete();
