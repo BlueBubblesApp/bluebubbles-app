@@ -191,14 +191,10 @@ class SettingsScaffold extends StatelessWidget {
                         ),
                       ),
                     ),
-                  SliverList(
-                    delegate: SliverChildListDelegate(
-                      [
-                        Container(
-                          height: 30,
-                          color: SettingsManager().settings.skin.value != Skins.Material ? headerColor : tileColor,
-                        ),
-                      ],
+                  SliverToBoxAdapter(
+                    child: Container(
+                      height: 30,
+                      color: SettingsManager().settings.skin.value != Skins.Material ? headerColor : tileColor,
                     ),
                   ),
                 ],

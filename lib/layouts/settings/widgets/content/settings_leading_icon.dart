@@ -19,7 +19,7 @@ class SettingsLeadingIcon extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Material(
+        Obx(() => Material(
           shape: SettingsManager().settings.skin.value == Skins.Samsung ? SquircleBorder(
             side: BorderSide(
                 color: containerColor ?? context.theme.colorScheme.outline,
@@ -38,7 +38,7 @@ class SettingsLeadingIcon extends StatelessWidget {
                 color: SettingsManager().settings.skin.value != Skins.Material ? Colors.white : context.theme.colorScheme.outline,
                 size: SettingsManager().settings.skin.value != Skins.Material ? 23 : 30),
           ),
-        ),
+        )),
       ],
     );
   }
