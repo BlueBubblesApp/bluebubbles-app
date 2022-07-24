@@ -6,18 +6,12 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class TestingModeBinding implements Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<TestingModeController>(() => TestingModeController());
-  }
-}
-
 class TestingModeController extends GetxController {
   final RxString mostRecentReply = "N/A".obs;
 }
 
-class TestingMode extends GetView<TestingModeController> {
+class TestingMode extends StatelessWidget {
+  final controller = Get.put(TestingModeController());
 
   @override
   Widget build(BuildContext context) {
@@ -29,23 +23,23 @@ class TestingMode extends GetView<TestingModeController> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Testing Mode",
                   style: context.theme.textTheme.titleLarge,
                   textAlign: TextAlign.center,
                 ),
               ),
-              Container(height: 20.0),
+              const SizedBox(height: 20.0),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Use the button below to send a test notification.",
                   style: context.theme.textTheme.bodyLarge,
                   textAlign: TextAlign.center,
                 ),
               ),
-              Container(height: 20.0),
+              const SizedBox(height: 20.0),
               ClipOval(
                 child: Material(
                   color: context.theme.colorScheme.primary, // button color
@@ -74,7 +68,7 @@ class TestingMode extends GetView<TestingModeController> {
                   ),
                 ),
               ),
-              Container(height: 20.0),
+              const SizedBox(height: 20.0),
               Obx(() => Text("Most recent reply: ${controller.mostRecentReply}")),
             ],
           ),

@@ -3,8 +3,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/helpers/window_effects.dart';
-import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
+import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -14,7 +13,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
 class SettingsScaffold extends StatelessWidget {
@@ -41,18 +39,8 @@ class SettingsScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? headerColor : Colors.transparent).obs;
-    final Rx<Color> _tileColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? tileColor : Colors.transparent).obs;
-
-    if (kIsDesktop) {
-      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
-        _headerColor.value = effect != WindowEffect.disabled ? Colors.transparent : headerColor;
-        _tileColor.value = effect != WindowEffect.disabled ? Colors.transparent : tileColor;
-      });
-    }
-
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (SettingsManager().settings.skin.value != Skins.Samsung || controller.positions.length != 1) return;
+      if (SettingsManager().settings.skin.value != Skins.Samsung) return;
       // this is so settings pages that would normally not scroll can still scroll
       // to make the header large or small
       if (controller.position.viewportDimension < context.height) {
@@ -68,8 +56,8 @@ class SettingsScaffold extends StatelessWidget {
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
-      child: Obx(() => Scaffold(
-        backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? _tileColor.value : _headerColor.value,
+      child: Scaffold(
+        backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
         appBar: SettingsManager().settings.skin.value == Skins.Samsung
             ? null
             : PreferredSize(
@@ -83,7 +71,7 @@ class SettingsScaffold extends StatelessWidget {
                   scrolledUnderElevation: 3,
                   surfaceTintColor: context.theme.colorScheme.primary,
                   leading: buildBackButton(context),
-                  backgroundColor: _headerColor.value,
+                  backgroundColor: headerColor,
                   centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
                   title: Text(
                     title,
@@ -106,7 +94,7 @@ class SettingsScaffold extends StatelessWidget {
             return false;
           },
           child: ScrollbarWrapper(
-            showScrollbar: true,
+            showScrollbar: false,
             controller: controller,
             child: Obx(
               () => CustomScrollView(
@@ -117,8 +105,8 @@ class SettingsScaffold extends StatelessWidget {
                     : ThemeSwitcher.getScrollPhysics(),
                 slivers: <Widget>[
                   if (SettingsManager().settings.skin.value == Skins.Samsung)
-                    Obx(() => SliverAppBar(
-                      backgroundColor: _headerColor.value,
+                    SliverAppBar(
+                      backgroundColor: headerColor,
                       pinned: true,
                       stretch: true,
                       expandedHeight: context.height / 3,
@@ -190,20 +178,20 @@ class SettingsScaffold extends StatelessWidget {
                           );
                         },
                       ),
-                    )),
+                    ),
                   if (SettingsManager().settings.skin.value != Skins.Samsung && initialHeader != null)
                     SliverToBoxAdapter(
-                      child: Obx(() => Container(
+                      child: Container(
                           height: 50,
                           alignment: Alignment.bottomLeft,
-                          color: SettingsManager().settings.skin.value == Skins.iOS ? _headerColor.value : _tileColor.value,
+                          color: SettingsManager().settings.skin.value == Skins.iOS ? headerColor : tileColor,
                           child: Padding(
                             padding: EdgeInsets.only(bottom: 8.0, left: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 15),
                             child: Text(initialHeader!.psCapitalize,
                                 style: SettingsManager().settings.skin.value == Skins.iOS
                                     ? iosSubtitle
                                     : materialSubtitle),
-                          ))),
+                          )),
                     ),
                   ...bodySlivers,
                   SliverList(
@@ -212,10 +200,10 @@ class SettingsScaffold extends StatelessWidget {
                         Obx(() => SettingsManager().settings.skin.value == Skins.Samsung
                             ? Container(height: remainingHeight.value)
                             : SizedBox.shrink()),
-                        Obx(() => Container(
+                        Container(
                           height: 30,
-                          color: SettingsManager().settings.skin.value != Skins.Material ? _headerColor.value : _tileColor.value,
-                        )),
+                          color: SettingsManager().settings.skin.value != Skins.Material ? headerColor : tileColor,
+                        ),
                       ],
                     ),
                   ),
@@ -224,7 +212,7 @@ class SettingsScaffold extends StatelessWidget {
             ),
           ),
         ),
-      )),
+      ),
     );
   }
 }
@@ -238,6 +226,7 @@ class SettingsTile extends StatelessWidget {
     this.trailing,
     this.leading,
     this.subtitle,
+    this.backgroundColor,
     this.isThreeLine = false,
   }) : super(key: key);
 
@@ -247,6 +236,7 @@ class SettingsTile extends StatelessWidget {
   final String? title;
   final Widget? trailing;
   final Widget? leading;
+  final Color? backgroundColor;
   final bool isThreeLine;
 
   @override
@@ -261,7 +251,6 @@ class SettingsTile extends StatelessWidget {
         child: GestureDetector(
           onSecondaryTapUp: (details) => onLongPress as void Function()?,
           child: ListTile(
-            mouseCursor: (onTap != null || onLongPress != null) ? SystemMouseCursors.click : null,
             leading: leading,
             title: title != null ? Text(
               title!,
@@ -472,7 +461,6 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     this.backgroundColor,
     this.secondaryColor,
     this.useCupertino = true,
-    this.cursor = SystemMouseCursors.click,
   }) : super(key: key);
   final String title;
   final void Function(T?) onChanged;
@@ -487,51 +475,34 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
   final Color? backgroundColor;
   final Color? secondaryColor;
   final bool useCupertino;
-  final MouseCursor cursor;
 
   @override
   Widget build(BuildContext context) {
-    final Rx<Color?> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
-        ? backgroundColor
-        : Colors.transparent)
-        .obs;
-
-    if (kIsDesktop) {
-      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
-        _backgroundColor.value =
-        effect != WindowEffect.disabled ? Colors.transparent : backgroundColor;
-      });
-    }
-
     if (SettingsManager().settings.skin.value == Skins.iOS && useCupertino) {
       final texts = options.map((e) => Text(capitalize ? textProcessing!(e).capitalize! : textProcessing!(e), style: context.theme.textTheme.bodyLarge!.copyWith(color: e == initial ? context.theme.colorScheme.onPrimary : null)));
       final map = Map<T, Widget>.fromIterables(options, cupertinoCustomWidgets ?? texts);
-      return Obx(() => Container(
-        color: _backgroundColor.value,
+      return Container(
+        color: backgroundColor,
         padding: EdgeInsets.symmetric(horizontal: 13),
         height: 50,
         width: context.width,
-          child: MouseRegion(
-            cursor: cursor,
-            hitTestBehavior: HitTestBehavior.deferToChild,
-            child: CupertinoSlidingSegmentedControl<T>(
+        child: CupertinoSlidingSegmentedControl<T>(
           children: map,
           groupValue: initial,
           thumbColor: context.theme.colorScheme.primary,
-          backgroundColor: _backgroundColor.value ?? CupertinoColors.tertiarySystemFill,
+          backgroundColor: backgroundColor ?? CupertinoColors.tertiarySystemFill,
           onValueChanged: onChanged,
           padding: EdgeInsets.zero,
         ),
-          ),
-      ));
+      );
     }
     Color surfaceColor = context.theme.colorScheme.properSurface;
     if (SettingsManager().settings.skin.value == Skins.Material
         && surfaceColor.computeDifference(context.theme.colorScheme.background) < 15) {
       surfaceColor = context.theme.colorScheme.surfaceVariant;
     }
-    return Obx(() => Container(
-      color: _backgroundColor.value,
+    return Container(
+      color: backgroundColor,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -595,7 +566,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
           ],
         ),
       ),
-    ));
+    );
   }
 }
 
@@ -604,6 +575,7 @@ class SettingsSlider extends StatelessWidget {
       {required this.startingVal,
       this.update,
       this.onChangeEnd,
+      required this.text,
       this.formatValue,
       required this.min,
       required this.max,
@@ -616,6 +588,7 @@ class SettingsSlider extends StatelessWidget {
   final double startingVal;
   final Function(double val)? update;
   final Function(double val)? onChangeEnd;
+  final String text;
   final Function(double value)? formatValue;
   final double min;
   final double max;
@@ -634,10 +607,7 @@ class SettingsSlider extends StatelessWidget {
       leading: leading,
       trailing: Text(value, style: context.theme.textTheme.bodyLarge),
       title: SettingsManager().settings.skin.value == Skins.iOS
-          ? MouseRegion(
-          cursor: SystemMouseCursors.click,
-          hitTestBehavior: HitTestBehavior.deferToChild,
-          child: CupertinoSlider(
+          ? CupertinoSlider(
               activeColor: context.theme.colorScheme.primary.withOpacity(0.6),
               thumbColor: context.theme.colorScheme.primary,
               value: startingVal,
@@ -646,7 +616,7 @@ class SettingsSlider extends StatelessWidget {
               divisions: divisions,
               min: min,
               max: max,
-            ),)
+            )
           : Slider(
               activeColor: context.theme.colorScheme.primary.withOpacity(0.6),
               thumbColor: context.theme.colorScheme.primary,
@@ -680,27 +650,17 @@ class SettingsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? headerColor : Colors.transparent).obs;
-    final Rx<Color> _tileColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? tileColor : Colors.transparent).obs;
-
-    if (kIsDesktop) {
-      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
-        _headerColor.value = effect != WindowEffect.disabled ? Colors.transparent : headerColor;
-        _tileColor.value = effect != WindowEffect.disabled ? Colors.transparent : tileColor;
-      });
-    }
-
     if (SettingsManager().settings.skin.value == Skins.Samsung) return SizedBox(height: 15);
     return Column(children: [
-      Obx(() => Container(
+      Container(
           height: SettingsManager().settings.skin.value == Skins.iOS ? 60 : 40,
           alignment: Alignment.bottomLeft,
-          color: SettingsManager().settings.skin.value == Skins.iOS ? _headerColor.value : _tileColor.value,
+          color: SettingsManager().settings.skin.value == Skins.iOS ? headerColor : tileColor,
           child: Padding(
             padding: EdgeInsets.only(bottom: 8.0, left: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 15),
             child: Text(text.psCapitalize,
                 style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-          ))),
+          )),
     ]);
   }
 }
@@ -713,18 +673,6 @@ class SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
-        ? backgroundColor
-        : Colors.transparent)
-        .obs;
-
-    if (kIsDesktop) {
-      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
-        _backgroundColor.value =
-        effect != WindowEffect.disabled ? Colors.transparent : backgroundColor;
-      });
-    }
-
     return Padding(
       padding: SettingsManager().settings.skin.value == Skins.iOS ? const EdgeInsets.symmetric(horizontal: 10) : EdgeInsets.zero,
       child: ClipRRect(
@@ -732,11 +680,11 @@ class SettingsSection extends StatelessWidget {
             SettingsManager().settings.skin.value == Skins.Samsung ? BorderRadius.circular(25) :
             SettingsManager().settings.skin.value == Skins.iOS ? BorderRadius.circular(10) : BorderRadius.circular(0),
         clipBehavior: SettingsManager().settings.skin.value != Skins.Material ? Clip.antiAlias : Clip.none,
-        child: Obx(() => Container(
+        child: Container(
           padding: SettingsManager().settings.skin.value == Skins.Samsung ? EdgeInsets.symmetric(vertical: 5) : null,
-          color: _backgroundColor.value,
+          color: backgroundColor,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: children),
-        )),
+        ),
       ),
     );
   }

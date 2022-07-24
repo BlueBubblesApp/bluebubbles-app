@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,31 +10,37 @@ import 'package:get/get_utils/src/extensions/context_extensions.dart';
 import 'package:window_manager/window_manager.dart';
 
 class TitleBarWrapper extends StatelessWidget {
-  TitleBarWrapper({Key? key, required this.child, this.hideInSplitView = false}) : super(key: key);
+  TitleBarWrapper({
+    Key? key,
+    required this.child,
+    this.hideInSplitView = false
+  }) : super(key: key);
 
   final Widget child;
   final bool hideInSplitView;
 
   @override
   Widget build(BuildContext context) {
-    bool showAltLayout =
-        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600;
-    return Obx(() => (SettingsManager().settings.useCustomTitleBar.value && !kIsWeb && Platform.isLinux) ||
-            (kIsDesktop && !Platform.isLinux) && (!showAltLayout || !hideInSplitView)
-        ? WindowBorder(
-            color: Colors.transparent,
-            width: 0,
-            child: Stack(children: <Widget>[
-              if (kIsDesktop)
-                Scaffold(
-                  backgroundColor: context.theme.backgroundColor
-                      .withOpacity(WindowEffects.getOpacity(color: context.theme.backgroundColor)),
-                ),
-              child,
-              TitleBar(),
-            ]),
-          )
-        : child);
+    if (kIsWeb || (!kIsWeb && !kIsDesktop)) {
+      return child;
+    }
+
+    bool showAltLayout = SettingsManager().settings.tabletMode.value
+        && (!context.isPhone || context.isLandscape)
+        && context.width > 600;
+
+    if (showAltLayout && hideInSplitView) {
+      return child;
+    }
+
+    return Obx(() => (SettingsManager().settings.useCustomTitleBar.value && Platform.isLinux) || (kIsDesktop && !Platform.isLinux)
+      ? WindowBorder(
+          color: Colors.transparent,
+          width: 0,
+          child: Stack(children: <Widget>[child, const TitleBar()]),
+        )
+      : child
+    );
   }
 }
 
@@ -79,8 +84,7 @@ class WindowButtons extends StatelessWidget {
         MinimizeWindowButton(
           colors: buttonColors,
           onPressed: () async => SettingsManager().settings.minimizeToTray.value
-              ? await WindowManager.instance.hide()
-              : await WindowManager.instance.minimize(),
+              ? await WindowManager.instance.hide() : await WindowManager.instance.minimize(),
           animate: true,
         ),
         MaximizeWindowButton(
@@ -90,8 +94,7 @@ class WindowButtons extends StatelessWidget {
         CloseWindowButton(
           colors: closeButtonColors,
           onPressed: () async => SettingsManager().settings.closeToTray.value
-              ? await WindowManager.instance.hide()
-              : await WindowManager.instance.close(),
+              ? await WindowManager.instance.hide() : await WindowManager.instance.close(),
           animate: true,
         ),
       ],

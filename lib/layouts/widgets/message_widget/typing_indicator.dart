@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
+import 'package:bluebubbles/layouts/setup/pages/unfinished/theme_selector.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';

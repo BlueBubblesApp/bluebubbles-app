@@ -15,12 +15,12 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
+import 'package:bluebubbles/layouts/startup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
-import 'package:bluebubbles/layouts/setup/splash_screen.dart';
-import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
-import 'package:bluebubbles/layouts/testing_mode.dart';
-import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
+import 'package:bluebubbles/layouts/startup/splash_screen.dart';
+import 'package:bluebubbles/layouts/startup/upgrading_db.dart';
+import 'package:bluebubbles/layouts/startup/testing_mode.dart';
+import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -606,7 +606,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         defaultTransition: Transition.cupertino,
 
         getPages: [
-          GetPage(page: () => TestingMode(), name: "/testing-mode", binding: TestingModeBinding()),
+          GetPage(page: () => TestingMode(), name: "/testing-mode"),
         ],
       ),
     );
