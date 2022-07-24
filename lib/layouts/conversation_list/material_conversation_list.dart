@@ -11,7 +11,7 @@ import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
+import 'package:bluebubbles/layouts/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -829,7 +829,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
   }
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
-    return VerticalSplitView(
+    return TabletModeWrapper(
       initialRatio: 0.4,
       minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
       maxRatio: 0.5,

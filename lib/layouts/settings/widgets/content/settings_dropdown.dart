@@ -43,7 +43,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
       final map = Map<T, Widget>.fromIterables(options, cupertinoCustomWidgets ?? texts);
       return Container(
         color: backgroundColor,
-        padding: EdgeInsets.symmetric(horizontal: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 13),
         height: 50,
         width: context.width,
         child: CupertinoSlidingSegmentedControl<T>(
@@ -73,28 +73,24 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      child: Text(
-                        title,
-                        style: context.theme.textTheme.bodyLarge,
-                      ),
+                    Text(
+                      title,
+                      style: context.theme.textTheme.bodyLarge,
                     ),
                     (subtitle != null)
-                        ? Container(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 3.0),
-                        child: Text(
-                          subtitle ?? "",
-                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
-                        ),
-                      ),
-                    )
-                        : Container(),
+                        ? Padding(
+                          padding: const EdgeInsets.only(top: 3.0),
+                          child: Text(
+                            subtitle ?? "",
+                            style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                          ),
+                        )
+                        : const SizedBox.shrink(),
                   ]),
             ),
-            SizedBox(width: 15),
+            const SizedBox(width: 15),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 9),
+              padding: const EdgeInsets.symmetric(horizontal: 9),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 color: secondaryColor ?? surfaceColor,

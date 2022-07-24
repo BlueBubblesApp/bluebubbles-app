@@ -24,7 +24,7 @@ class SettingsSubtitle extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ) : null,
         minVerticalPadding: 0,
-        visualDensity: VisualDensity(horizontal: 0, vertical: -4),
+        visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
         dense: true,
       ),
     );

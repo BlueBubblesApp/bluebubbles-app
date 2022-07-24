@@ -1,3 +1,4 @@
+/*
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/logger.dart';
@@ -33,7 +34,7 @@ class SchedulePanel extends StatefulWidget {
   State<SchedulePanel> createState() => _SchedulePanelState();
 }
 
-class _SchedulePanelState extends State<SchedulePanel> {
+class _SchedulePanelState extends OptimizedState<SchedulePanel> {
   Chat? _chat;
   String? title;
   late TextEditingController messageController;
@@ -254,3 +255,4 @@ class _SchedulePanelState extends State<SchedulePanel> {
     );
   }
 }
+*/

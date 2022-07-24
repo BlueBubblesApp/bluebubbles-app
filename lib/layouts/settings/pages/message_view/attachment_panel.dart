@@ -1,38 +1,26 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
+import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class AttachmentPanel extends StatelessWidget {
+class AttachmentPanel extends StatefulWidget {
+
+  @override
+  State<StatefulWidget> createState() => _AttachmentPanelState();
+}
+
+class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHelpers {
+
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle =
-    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
-    final materialSubtitle = context.theme
-        .textTheme
-        .labelLarge
-        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
-    // Samsung theme should always use the background color as the "header" color
-    Color headerColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
-    Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-    
-    // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
-      final temp = headerColor;
-      headerColor = tileColor;
-      tileColor = temp;
-    }
-
     return SettingsScaffold(
         title: "Attachments & Media",
         initialHeader: "Download & Save",
@@ -190,20 +178,20 @@ class AttachmentPanel extends StatelessWidget {
                                         width: 32,
                                         height: 32,
                                         decoration: BoxDecoration(
-                                          color: SettingsManager().settings.skin.value == Skins.iOS
+                                          color: iOS
                                               ? Colors.grey
                                               : Colors.transparent,
                                           borderRadius: BorderRadius.circular(5),
                                         ),
                                         alignment: Alignment.center,
                                         child: Icon(
-                                            SettingsManager().settings.skin.value == Skins.iOS
+                                            iOS
                                                 ? CupertinoIcons.sparkles
                                                 : Icons.auto_awesome,
-                                            color: SettingsManager().settings.skin.value == Skins.iOS
+                                            color: iOS
                                                 ? Colors.white
                                                 : Colors.grey,
-                                            size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30),
+                                            size: iOS ? 23 : 30),
                                       ),
                                     ),
                                   ),
@@ -213,7 +201,7 @@ class AttachmentPanel extends StatelessWidget {
                           max: 100,
                           divisions: 18)),
                     if (!kIsWeb)
-                      SettingsSubtitle(
+                      const SettingsSubtitle(
                         subtitle: "Controls the resolution of attachment previews in the message screen. A higher value will make attachments show in better quality at the cost of longer load times.",
                         unlimitedSpace: true,
                       ),
@@ -230,7 +218,7 @@ class AttachmentPanel extends StatelessWidget {
                     backgroundColor: tileColor,
                     children: [
                       Obx(() {
-                        if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        if (iOS) {
                           return SettingsTile(
                             backgroundColor: tileColor,
                             title: kIsDesktop ? "Arrow key direction" : "Swipe direction",
@@ -238,7 +226,7 @@ class AttachmentPanel extends StatelessWidget {
                                 "Set the ${kIsDesktop ? "arrow key" : "swipe direction"} to go to previous media items",
                           );
                         } else {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                       }),
                       Obx(() => SettingsOptions<SwipeDirection>(
@@ -258,16 +246,17 @@ class AttachmentPanel extends StatelessWidget {
                           )),
                     ],
                   ),
-                SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Advanced"),
-                SettingsSection(
-                  backgroundColor: tileColor,
-                  children: [
-                    if (!kIsWeb)
+                if (!kIsWeb)
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Advanced"),
+                if (!kIsWeb)
+                  SettingsSection(
+                    backgroundColor: tileColor,
+                    children: [
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
                               SettingsManager().settings.preCachePreviewImages.value = val;
@@ -278,8 +267,8 @@ class AttachmentPanel extends StatelessWidget {
                             subtitle: "Caches URL preview images for faster load times",
                             backgroundColor: tileColor,
                           )),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -287,6 +276,6 @@ class AttachmentPanel extends StatelessWidget {
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings(SettingsManager().settings);
+    SettingsManager().saveSettings();
   }
 }

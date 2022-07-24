@@ -5,10 +5,12 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -21,32 +23,16 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_html/html.dart' as html;
 
-class AboutPanel extends StatelessWidget {
-  // Not sure how to do this other than manually yet
-  final desktopVersion = "1.9.7.0";
-  final desktopPre = false;
+class AboutPanel extends StatefulWidget {
+
+  @override
+  State<StatefulWidget> createState() => _AboutPanelState();
+}
+
+class _AboutPanelState extends OptimizedState<AboutPanel> with ThemeHelpers {
 
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle =
-    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
-    final materialSubtitle = context.theme
-        .textTheme
-        .labelLarge
-        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
-    // Samsung theme should always use the background color as the "header" color
-    Color headerColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
-    Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-    
-    // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
-      final temp = headerColor;
-      headerColor = tileColor;
-      tileColor = temp;
-    }
-
     return SettingsScaffold(
         title: "About & Links",
         initialHeader: "Links",
@@ -69,12 +55,9 @@ class AboutPanel extends StatelessWidget {
                         await launchUrl(Uri(scheme: "https", host: "bluebubbles.app", path: "donate"));
                       },
                       onLongPress: () async {
-                        if (kIsWeb) {
-                          (await html.document.onContextMenu.first).preventDefault();
-                        }
                         await launchUrl(Uri(scheme: "https", host: "github.com", path: "sponsors/BlueBubblesApp"));
                       },
-                      leading: SettingsLeadingIcon(
+                      leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.money_dollar_circle,
                         materialIcon: Icons.attach_money,
                       ),
@@ -93,7 +76,7 @@ class AboutPanel extends StatelessWidget {
                       onTap: () async {
                         await launchUrl(Uri(scheme: "https", host: "bluebubbles.app"));
                       },
-                      leading: SettingsLeadingIcon(
+                      leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.globe,
                         materialIcon: Icons.language,
                       ),
@@ -113,12 +96,9 @@ class AboutPanel extends StatelessWidget {
                         await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp"));
                       },
                       onLongPress: () async {
-                        if (kIsWeb) {
-                          (await html.document.onContextMenu.first).preventDefault();
-                        }
                         await launchUrl(Uri(scheme: "https", host: "github.com", path: "BlueBubblesApp/bluebubbles-app/issues"));
                       },
-                      leading: SettingsLeadingIcon(
+                      leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
                         materialIcon: Icons.code,
                       ),
@@ -198,7 +178,7 @@ class AboutPanel extends StatelessWidget {
                                 leading: buildBackButton(context),
                                 backgroundColor: headerColor,
                                 iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
-                                centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
+                                centerTitle: iOS,
                                 title: Padding(
                                   padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
                                   child: Text(
@@ -214,7 +194,7 @@ class AboutPanel extends StatelessWidget {
                           ),
                         );
                       },
-                      leading: SettingsLeadingIcon(
+                      leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.doc_plaintext,
                         materialIcon: Icons.article,
                       ),
@@ -230,6 +210,11 @@ class AboutPanel extends StatelessWidget {
                       backgroundColor: tileColor,
                       title: "Developers",
                       onTap: () {
+                        final devs = {
+                          "Zach": "zlshames",
+                          "Tanay": "tneotia",
+                          "Joel": "jojejo",
+                        };
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
@@ -241,47 +226,19 @@ class AboutPanel extends StatelessWidget {
                             backgroundColor: context.theme.colorScheme.properSurface,
                             content: Column(
                               mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  alignment: Alignment.center,
-                                  padding: EdgeInsets.all(8),
-                                  child: RichText(
-                                    text: TextSpan(
-                                        text: "Zach",
-                                        style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: context.theme.colorScheme.primary),
-                                        recognizer: TapGestureRecognizer()
-                                          ..onTap = () async {
-                                            await launchUrl(Uri(scheme: "https", host: "github.com", path: "zlshames"));
-                                          }),
-                                  ),
+                              children: devs.entries.map((e) => Container(
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.all(8),
+                                child: RichText(
+                                  text: TextSpan(
+                                    text: e.key,
+                                    style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: context.theme.colorScheme.primary),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () async {
+                                        await launchUrl(Uri(scheme: "https", host: "github.com", path: e.value));
+                                      }),
                                 ),
-                                Container(
-                                  alignment: Alignment.center,
-                                  padding: EdgeInsets.all(8),
-                                  child: RichText(
-                                    text: TextSpan(
-                                        text: "Tanay",
-                                        style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: context.theme.colorScheme.primary),
-                                        recognizer: TapGestureRecognizer()
-                                          ..onTap = () async {
-                                            await launchUrl(Uri(scheme: "https", host: "github.com", path: "tneotia"));
-                                          }),
-                                  ),
-                                ),
-                                Container(
-                                  alignment: Alignment.center,
-                                  padding: EdgeInsets.all(8),
-                                  child: RichText(
-                                    text: TextSpan(
-                                        text: "Joel",
-                                        style: context.theme.textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline, color: context.theme.colorScheme.primary),
-                                        recognizer: TapGestureRecognizer()
-                                          ..onTap = () async {
-                                            await launchUrl(Uri(scheme: "https", host: "github.com", path: "jjoelj"));
-                                          }),
-                                  ),
-                                ),
-                              ],
+                              )).toList(),
                             ),
                             actions: [
                               TextButton(
@@ -294,7 +251,7 @@ class AboutPanel extends StatelessWidget {
                           ),
                         );
                       },
-                      leading: SettingsLeadingIcon(
+                      leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.person_alt,
                         materialIcon: Icons.person,
                       ),
@@ -450,13 +407,13 @@ class AboutPanel extends StatelessWidget {
                                       onPressed: () async {
                                         Navigator.of(context).pop();
                                       },
-                                      child: Text('Close'),
+                                      child: const Text('Close'),
                                     )
                                   ],
                                 );
                               });
                         },
-                        leading: SettingsLeadingIcon(
+                        leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.keyboard,
                           materialIcon: Icons.keyboard,
                         ),
@@ -527,7 +484,7 @@ class AboutPanel extends StatelessWidget {
                                                           style: context.theme.textTheme.bodyLarge),
                                                     if (kIsDesktop)
                                                       Text(
-                                                        "${desktopVersion}_${Platform.operatingSystem.capitalizeFirst!}${desktopPre ? "_Beta" : ""}",
+                                                        "${packageInfo?.version ?? "Unknown Version"}_${Platform.operatingSystem.capitalizeFirst!}",
                                                         style: context.theme.textTheme.bodyLarge,
                                                       ),
                                                   ],
@@ -570,7 +527,7 @@ class AboutPanel extends StatelessWidget {
                           },
                         );
                       },
-                      leading: SettingsLeadingIcon(
+                      leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.info_circle,
                         materialIcon: Icons.info,
                       ),

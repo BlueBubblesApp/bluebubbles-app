@@ -6,8 +6,9 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:file_picker/file_picker.dart';
@@ -25,8 +26,7 @@ class AvatarCrop extends StatefulWidget {
   State<AvatarCrop> createState() => _AvatarCropState();
 }
 
-class _AvatarCropState extends State<AvatarCrop> {
-
+class _AvatarCropState extends OptimizedState<AvatarCrop> with ThemeHelpers {
   final _cropController = CropController();
   Uint8List? _imageData;
   bool _isLoading = true;
@@ -60,19 +60,6 @@ class _AvatarCropState extends State<AvatarCrop> {
 
   @override
   Widget build(BuildContext context) {
-    // Samsung theme should always use the background color as the "header" color
-    Color headerColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
-    Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-    
-    // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
-      final temp = headerColor;
-      headerColor = tileColor;
-      tileColor = temp;
-    }
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
@@ -94,7 +81,7 @@ class _AvatarCropState extends State<AvatarCrop> {
               surfaceTintColor: context.theme.colorScheme.primary,
               leading: buildBackButton(context),
               backgroundColor: headerColor,
-              centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
+              centerTitle: iOS,
               title: Text(
                 "Select & Crop Avatar",
                 style: context.theme.textTheme.titleLarge,
@@ -107,18 +94,7 @@ class _AvatarCropState extends State<AvatarCrop> {
                           style: context.theme.textTheme.bodyLarge!
                               .apply(color: _imageData == null || _isLoading ? context.theme.colorScheme.outline : context.theme.colorScheme.primary)),
                       onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text("Saving avatar...", style: context.theme.textTheme.titleLarge),
-                            content: Padding(
-                              padding: const EdgeInsets.only(top: 15.0),
-                              child: buildProgressIndicator(context),
-                            ),
-                            backgroundColor: context.theme.colorScheme.properSurface,
-                          ),
-                          barrierDismissible: false,
-                        );
+                        showSavingAvatarDialog();
                         _cropController.crop();
                       }),
                 ),
@@ -202,6 +178,21 @@ class _AvatarCropState extends State<AvatarCrop> {
           ),
         )
       ),
+    );
+  }
+
+  void showSavingAvatarDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Saving avatar...", style: context.theme.textTheme.titleLarge),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 15.0),
+          child: buildProgressIndicator(context),
+        ),
+        backgroundColor: context.theme.colorScheme.properSurface,
+      ),
+      barrierDismissible: false,
     );
   }
 }

@@ -9,15 +9,15 @@ import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/pages/theming/avatar/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/layouts/settings/pages/theming/avatar/custom_avatar_panel.dart';
+import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/settings/pages/theming/advanced/advanced_theming_panel.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:dio/dio.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/cupertino.dart';
@@ -28,69 +28,46 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:universal_io/io.dart';
 
-class ThemingPanelController extends GetxController {
-  late Settings _settingsCopy;
+class ThemingPanelController extends StatefulController {
   final RxList<DisplayMode> modes = <DisplayMode>[].obs;
   final RxList<int> refreshRates = <int>[].obs;
   final RxInt currentMode = 0.obs;
   final RxnBool gettingIcons = RxnBool();
-
-  @override
-  void onInit() {
-    super.onInit();
-    _settingsCopy = SettingsManager().settings;
-  }
+  final RxBool downloadingFont = false.obs;
+  final RxnDouble progress = RxnDouble();
+  final RxnInt totalSize = RxnInt();
 
   @override
   void onReady() async {
-    if (!kIsWeb && !kIsDesktop) {
-      modes.value = await FlutterDisplayMode.supported;
-      refreshRates.value = modes.map((e) => e.refreshRate.round()).toSet().toList();
-      currentMode.value = (await _settingsCopy.getDisplayMode()).refreshRate.round();
-    }
     super.onReady();
-  }
-
-  @override
-  void dispose() async {
-    await SettingsManager().saveSettings(_settingsCopy);
-    super.dispose();
+    if (!kIsWeb && !kIsDesktop) {
+      updateObx(() async {
+        modes.value = await FlutterDisplayMode.supported;
+        refreshRates.value = modes.map((e) => e.refreshRate.round()).toSet().toList();
+        currentMode.value = (await SettingsManager().settings.getDisplayMode()).refreshRate.round();
+      });
+    }
   }
 }
 
-class ThemingPanel extends StatelessWidget {
-  final controller = Get.put(ThemingPanelController());
+class ThemingPanel extends CustomStateful<ThemingPanelController> {
+  ThemingPanel() : super(parentController: Get.put(ThemingPanelController()));
+
+  @override
+  State<StatefulWidget> createState() => _ThemingPanelState();
+}
+
+class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelController> with ThemeHelpers {
 
   @override
   Widget build(BuildContext context) {
     Widget nextIcon = Obx(() => SettingsManager().settings.skin.value != Skins.Material ? Icon(
       SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.chevron_right : Icons.arrow_forward,
       color: context.theme.colorScheme.outline,
-      size: SettingsManager().settings.skin.value == Skins.iOS ? 18 : 24,
+      size: iOS ? 18 : 24,
     ) : SizedBox.shrink());
 
-    /// for some reason we need a [GetBuilder] here otherwise the theme switching refuses to work right
-    return GetBuilder<ThemingPanelController>(builder: (_) {
-      final iosSubtitle =
-      context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
-      final materialSubtitle = context.theme
-          .textTheme
-          .labelLarge
-          ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
-      // Samsung theme should always use the background color as the "header" color
-      Color headerColor = ThemeManager().inDarkMode(context)
-          ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
-      Color tileColor = ThemeManager().inDarkMode(context)
-          ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-
-      // reverse material color mapping to be more accurate
-      if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
-        final temp = headerColor;
-        headerColor = tileColor;
-        tileColor = temp;
-      }
-
-      return SettingsScaffold(
+    return SettingsScaffold(
         title: "Theming & Styles",
         initialHeader: "Appearance",
         iosSubtitle: iosSubtitle,
@@ -151,7 +128,7 @@ class ThemingPanel extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: tileColor,
                       ),
-                      padding: EdgeInsets.only(left: 15, top: 10),
+                      padding: const EdgeInsets.only(left: 15, top: 10),
                       child: Text("Avatar Scale Factor", style: context.theme.textTheme.bodyLarge),
                     ),
                     Obx(() => SettingsSlider(
@@ -181,13 +158,13 @@ class ThemingPanel extends StatelessWidget {
                   backgroundColor: tileColor,
                   children: [
                     Obx(() => SettingsOptions<Skins>(
-                      initial: controller._settingsCopy.skin.value,
+                      initial: SettingsManager().settings.skin.value,
                       onChanged: (val) {
                         if (val == null) return;
-                        controller._settingsCopy.skin.value = val;
+                        SettingsManager().settings.skin.value = val;
                         ChatBloc().refreshChats();
                         saveSettings();
-                        controller.update();
+                        setState(() {});
                         EventDispatcher().emit('theme-update', null);
                       },
                       options: Skins.values,
@@ -209,10 +186,10 @@ class ThemingPanel extends StatelessWidget {
                     ),
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        controller._settingsCopy.tabletMode.value = val;
+                        SettingsManager().settings.tabletMode.value = val;
                         saveSettings();
                       },
-                      initialVal: controller._settingsCopy.tabletMode.value,
+                      initialVal: SettingsManager().settings.tabletMode.value,
                       title: "Tablet Mode",
                       backgroundColor: tileColor,
                       subtitle: "Enables tablet mode (split view) depending on screen width",
@@ -229,7 +206,7 @@ class ThemingPanel extends StatelessWidget {
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
-                          controller._settingsCopy.immersiveMode.value = val;
+                          SettingsManager().settings.immersiveMode.value = val;
                           saveSettings();
                           if (val) {
                             SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -238,7 +215,7 @@ class ThemingPanel extends StatelessWidget {
                           }
                           EventDispatcher().emit('theme-update', null);
                         },
-                        initialVal: controller._settingsCopy.immersiveMode.value,
+                        initialVal: SettingsManager().settings.immersiveMode.value,
                         title: "Immersive Mode",
                         backgroundColor: tileColor,
                         subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
@@ -261,7 +238,7 @@ class ThemingPanel extends StatelessWidget {
                   children: [
                     if (!kIsWeb && !kIsDesktop && monetPalette != null)
                       Obx(() {
-                        if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        if (iOS) {
                           return SettingsTile(
                             backgroundColor: tileColor,
                             title: "Material You",
@@ -273,7 +250,7 @@ class ThemingPanel extends StatelessWidget {
                             isThreeLine: true,
                           );
                         } else {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                       }),
                     if (!kIsWeb && !kIsDesktop && monetPalette != null)
@@ -282,7 +259,7 @@ class ThemingPanel extends StatelessWidget {
                           showMonetDialog(context);
                         },
                         child: SettingsOptions<Monet>(
-                          initial: controller._settingsCopy.monetTheming.value,
+                          initial: SettingsManager().settings.monetTheming.value,
                           onChanged: (val) {
                             // disable colors from music
                             final currentTheme = ThemeStruct.getLightTheme();
@@ -295,7 +272,7 @@ class ThemingPanel extends StatelessWidget {
                               SettingsManager().saveSelectedTheme(context,
                                   selectedLightTheme: previousLight, selectedDarkTheme: previousDark);
                             }
-                            controller._settingsCopy.monetTheming.value = val ?? Monet.none;
+                            SettingsManager().settings.monetTheming.value = val ?? Monet.none;
                             saveSettings();
                             loadTheme(context);
                           },
@@ -325,7 +302,7 @@ class ThemingPanel extends StatelessWidget {
                               try {
                                 await MethodChannelInterface().invokeMethod("start-notif-listener");
                                 // disable monet theming if music theme enabled
-                                controller._settingsCopy.monetTheming.value = Monet.none;
+                                SettingsManager().settings.monetTheming.value = Monet.none;
                                 saveSettings();
                                 var allThemes = ThemeStruct.getThemes();
                                 var currentLight = ThemeStruct.getLightTheme();
@@ -337,7 +314,7 @@ class ThemingPanel extends StatelessWidget {
                                     allThemes.firstWhere((element) => element.name == "Music Theme ☀"),
                                     selectedDarkTheme:
                                     allThemes.firstWhere((element) => element.name == "Music Theme 🌙"));
-                                controller._settingsCopy.colorsFromMedia.value = val;
+                                SettingsManager().settings.colorsFromMedia.value = val;
                                 saveSettings();
                               } catch (e) {
                                 showSnackbar(
@@ -353,11 +330,11 @@ class ThemingPanel extends StatelessWidget {
                               prefs.remove("previous-dark");
                               SettingsManager().saveSelectedTheme(context,
                                   selectedLightTheme: previousLight, selectedDarkTheme: previousDark);
-                              controller._settingsCopy.colorsFromMedia.value = val;
+                              SettingsManager().settings.colorsFromMedia.value = val;
                               saveSettings();
                             }
                           },
-                          initialVal: controller._settingsCopy.colorsFromMedia.value,
+                          initialVal: SettingsManager().settings.colorsFromMedia.value,
                           title: "Colors from Media",
                           backgroundColor: tileColor,
                           subtitle:
@@ -365,7 +342,7 @@ class ThemingPanel extends StatelessWidget {
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop)
-                      SettingsSubtitle(
+                      const SettingsSubtitle(
                         subtitle: "Note: Requires full notification access. Enabling this option will set a custom Music Theme as the selected theme.",
                       ),
                     if (!kIsWeb && !kIsDesktop)
@@ -378,10 +355,10 @@ class ThemingPanel extends StatelessWidget {
                       ),
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        controller._settingsCopy.colorfulAvatars.value = val;
+                        SettingsManager().settings.colorfulAvatars.value = val;
                         saveSettings();
                       },
-                      initialVal: controller._settingsCopy.colorfulAvatars.value,
+                      initialVal: SettingsManager().settings.colorfulAvatars.value,
                       title: "Colorful Avatars",
                       backgroundColor: tileColor,
                       subtitle: "Gives letter avatars a splash of color",
@@ -395,10 +372,10 @@ class ThemingPanel extends StatelessWidget {
                     ),
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        controller._settingsCopy.colorfulBubbles.value = val;
+                        SettingsManager().settings.colorfulBubbles.value = val;
                         saveSettings();
                       },
-                      initialVal: controller._settingsCopy.colorfulBubbles.value,
+                      initialVal: SettingsManager().settings.colorfulBubbles.value,
                       title: "Colorful Bubbles",
                       backgroundColor: tileColor,
                       subtitle: "Gives received message bubbles a splash of color",
@@ -491,12 +468,12 @@ class ThemingPanel extends StatelessWidget {
                         subtitle: "Get iMessage group chat icons from the server",
                       ),
                     if (!kIsWeb)
-                      SettingsSubtitle(
+                      const SettingsSubtitle(
                         subtitle: "Note: Overrides any custom avatars set for group chats.",
                       ),
                   ],
                 ),
-                if (!kIsWeb && !kIsDesktop && controller.refreshRates.length > 2)
+                if (!kIsWeb && !kIsDesktop)
                   Obx(() {
                     if (controller.refreshRates.length > 2) {
                       return SettingsHeader(
@@ -506,31 +483,29 @@ class ThemingPanel extends StatelessWidget {
                           materialSubtitle: materialSubtitle,
                           text: "Refresh Rate");
                     } else {
-                      return SizedBox.shrink();
+                      return const SizedBox.shrink();
                     }
                   }),
-                if (!kIsWeb && !kIsDesktop && controller.refreshRates.length > 2)
-                  SettingsSection(
+                if (!kIsWeb && !kIsDesktop)
+                  Obx(() => controller.refreshRates.length > 2 ? SettingsSection(
                     backgroundColor: tileColor,
                     children: [
-                      Obx(() {
-                        return SettingsOptions<int>(
-                          initial: controller.currentMode.value,
-                          onChanged: (val) async {
-                            if (val == null) return;
-                            controller.currentMode.value = val;
-                            controller._settingsCopy.refreshRate.value = controller.currentMode.value;
-                            saveSettings();
-                          },
-                          options: controller.refreshRates,
-                          textProcessing: (val) => val == 0 ? "Auto" : "$val Hz",
-                          title: "Display",
-                          backgroundColor: tileColor,
-                          secondaryColor: headerColor,
-                        );
-                      }),
+                      SettingsOptions<int>(
+                        initial: controller.currentMode.value,
+                        onChanged: (val) async {
+                          if (val == null) return;
+                          controller.currentMode.value = val;
+                          SettingsManager().settings.refreshRate.value = controller.currentMode.value;
+                          saveSettings();
+                        },
+                        options: controller.refreshRates,
+                        textProcessing: (val) => val == 0 ? "Auto" : "$val Hz",
+                        title: "Display",
+                        backgroundColor: tileColor,
+                        secondaryColor: headerColor,
+                      ),
                     ],
-                  ),
+                  ) : const SizedBox.shrink()),
                 if (!kIsWeb)
                   SettingsHeader(
                       headerColor: headerColor,
@@ -557,8 +532,8 @@ class ThemingPanel extends StatelessWidget {
                                       children: <Widget>[
                                         Obx(
                                               () => Text(
-                                              '${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)',
-                                                style: context.theme.textTheme.bodyLarge),
+                                              '${controller.progress.value != null && controller.totalSize.value != null ? getSizeString(controller.progress.value! * controller.totalSize.value! / 1000) : ""} / ${getSizeString((controller.totalSize.value ?? 0).toDouble() / 1000)} (${((controller.progress.value ?? 0) * 100).floor()}%)',
+                                              style: context.theme.textTheme.bodyLarge),
                                         ),
                                         SizedBox(height: 10.0),
                                         Obx(
@@ -567,7 +542,7 @@ class ThemingPanel extends StatelessWidget {
                                             child: LinearProgressIndicator(
                                               backgroundColor: context.theme.colorScheme.outline,
                                               valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                                              value: progress.value,
+                                              value: controller.progress.value,
                                               minHeight: 5,
                                             ),
                                           ),
@@ -576,14 +551,14 @@ class ThemingPanel extends StatelessWidget {
                                           height: 15.0,
                                         ),
                                         Obx(() => Text(
-                                          progress.value == 1 ? "Download Complete!" : "You can close this dialog. The font will continue to download in the background.",
+                                          controller.progress.value == 1 ? "Download Complete!" : "You can close this dialog. The font will continue to download in the background.",
                                           maxLines: 2,
                                           textAlign: TextAlign.center,
                                           style: context.theme.textTheme.bodyLarge,
                                         )),
-                                  ]),
+                                      ]),
                                   actions: [
-                                    Obx(() => downloadingFont.value
+                                    Obx(() => controller.downloadingFont.value
                                         ? Container(height: 0, width: 0)
                                         : TextButton(
                                       child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
@@ -594,8 +569,8 @@ class ThemingPanel extends StatelessWidget {
                                         Navigator.of(context).pop();
                                         Future.delayed(Duration(milliseconds: 400), ()
                                         {
-                                          progress.value = null;
-                                          totalSize.value = null;
+                                          controller.progress.value = null;
+                                          controller.totalSize.value = null;
                                         });
                                       },
                                     ),
@@ -613,21 +588,21 @@ class ThemingPanel extends StatelessWidget {
                                   fontExistsOnDisk.value = true;
                                   showSnackbar("Notice", "Font loaded");
                                 } else if (data is DownloadProgress) {
-                                  downloadingFont.value = true;
-                                  progress.value = data.progress;
-                                  totalSize.value = data.totalSize;
-                                  if (progress.value == 1.0) {
-                                    downloadingFont.value = false;
+                                  controller.downloadingFont.value = true;
+                                  controller.progress.value = data.progress;
+                                  controller.totalSize.value = data.totalSize;
+                                  if (controller.progress.value == 1.0) {
+                                    controller.downloadingFont.value = false;
                                   }
                                 }
                               });
                             },
                             title:
-                            "Download${downloadingFont.value ? "ing" : ""} iOS Emoji Font${downloadingFont.value ? " (${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)}) (${((progress.value ?? 0) * 100).floor()}%)" : ""}",
+                            "Download${controller.downloadingFont.value ? "ing" : ""} iOS Emoji Font${controller.downloadingFont.value ? " (${controller.progress.value != null && controller.totalSize.value != null ? getSizeString(controller.progress.value! * controller.totalSize.value! / 1000) : ""} / ${getSizeString((controller.totalSize.value ?? 0).toDouble() / 1000)}) (${((controller.progress.value ?? 0) * 100).floor()}%)" : ""}",
                             backgroundColor: tileColor,
                           );
                         } else {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                       }),
                       Obx(() {
@@ -642,7 +617,7 @@ class ThemingPanel extends StatelessWidget {
                             backgroundColor: tileColor,
                           );
                         } else {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                       }),
                     ],
@@ -651,12 +626,11 @@ class ThemingPanel extends StatelessWidget {
             ),
           ),
         ]
-      );
-    });
+    );
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings(controller._settingsCopy);
+    SettingsManager().saveSettings();
   }
 
   void showMonetDialog(BuildContext context) {

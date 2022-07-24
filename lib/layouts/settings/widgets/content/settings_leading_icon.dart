@@ -1,13 +1,14 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class SettingsLeadingIcon extends StatelessWidget {
   final IconData iosIcon;
   final IconData materialIcon;
   final Color? containerColor;
 
-  SettingsLeadingIcon({
+  const SettingsLeadingIcon({
     required this.iosIcon,
     required this.materialIcon,
     this.containerColor,
@@ -19,30 +20,22 @@ class SettingsLeadingIcon extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Material(
-          shape: SettingsManager().settings.skin.value == Skins.Samsung
-              ? SquircleBorder(
+          shape: SettingsManager().settings.skin.value == Skins.Samsung ? SquircleBorder(
             side: BorderSide(
-                color: SettingsManager().settings.skin.value == Skins.Samsung
-                    ? containerColor ?? Colors.grey
-                    : Colors.transparent,
-                width: 3.0),
-          )
-              : null,
-          color: SettingsManager().settings.skin.value == Skins.Samsung
-              ? containerColor ?? Colors.grey
+                color: containerColor ?? context.theme.colorScheme.outline,
+                width: 3.0
+            ),
+          ) : null,
+          color: SettingsManager().settings.skin.value != Skins.Material
+              ? containerColor ?? context.theme.colorScheme.outline
               : Colors.transparent,
-          child: Container(
+          borderRadius: SettingsManager().settings.skin.value == Skins.iOS
+              ? BorderRadius.circular(5) : null,
+          child: SizedBox(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
-              color: SettingsManager().settings.skin.value == Skins.iOS
-                  ? containerColor ?? Colors.grey
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(5),
-            ),
-            alignment: Alignment.center,
             child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? iosIcon : materialIcon,
-                color: SettingsManager().settings.skin.value != Skins.Material ? Colors.white : Colors.grey,
+                color: SettingsManager().settings.skin.value != Skins.Material ? Colors.white : context.theme.colorScheme.outline,
                 size: SettingsManager().settings.skin.value != Skins.Material ? 23 : 30),
           ),
         ),

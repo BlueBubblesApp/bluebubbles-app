@@ -5,35 +5,25 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/pages/conversation_list/pinned_order_panel.dart';
+import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class ChatListPanel extends StatelessWidget {
+class ChatListPanel extends StatefulWidget {
+
+  @override
+  State<StatefulWidget> createState() => _ChatListPanelState();
+}
+
+class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelpers {
+  
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle =
-    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
-    final materialSubtitle = context.theme
-        .textTheme
-        .labelLarge
-        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
-    // Samsung theme should always use the background color as the "header" color
-    Color headerColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
-    Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-    
-    // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
-      final temp = headerColor;
-      headerColor = tileColor;
-      tileColor = temp;
-    }
     final inactiveCheckColor = context.theme.colorScheme.properSurface.computeDifference(tileColor) < 15
         ? context.theme.colorScheme.properOnSurface.withOpacity(0.6) : context.theme.colorScheme.properSurface;
 
@@ -198,7 +188,7 @@ class ChatListPanel extends StatelessWidget {
                           isThreeLine: true,
                         )),
                     Obx(() {
-                      if (SettingsManager().settings.skin.value == Skins.iOS) {
+                      if (iOS) {
                         return Container(
                           color: tileColor,
                           child: Padding(
@@ -207,11 +197,11 @@ class ChatListPanel extends StatelessWidget {
                           ),
                         );
                       } else {
-                        return SizedBox.shrink();
+                        return const SizedBox.shrink();
                       }
                     }),
                     Obx(() {
-                      if (SettingsManager().settings.skin.value == Skins.iOS) {
+                      if (iOS) {
                         return SettingsSwitch(
                           onChanged: (bool val) {
                             SettingsManager().settings.reducedForehead.value = val;
@@ -223,7 +213,7 @@ class ChatListPanel extends StatelessWidget {
                           subtitle: "Reduces the appbar size on conversation pages",
                         );
                       } else {
-                        return SizedBox.shrink();
+                        return const SizedBox.shrink();
                       }
                     }),
                     Container(
@@ -235,7 +225,7 @@ class ChatListPanel extends StatelessWidget {
                     ),
                     if (!kIsDesktop && !kIsWeb)
                       Obx(() {
-                        if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        if (iOS) {
                           return SettingsTile(
                             title: "Max Pin Rows",
                             subtitle:
@@ -244,12 +234,12 @@ class ChatListPanel extends StatelessWidget {
                             backgroundColor: tileColor,
                           );
                         } else {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                       }),
                     if (!kIsDesktop && !kIsWeb)
                       Obx(() {
-                        if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        if (iOS) {
                           return Row(
                             children: <Widget>[
                               Flexible(
@@ -272,16 +262,16 @@ class ChatListPanel extends StatelessWidget {
                                           : SettingsManager().settings.pinColumnsPortrait.value.toString()}",
                                 ),
                               ),
-                              SizedBox(width: 20),
+                              const SizedBox(width: 20),
                             ],
                           );
                         } else {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                       }),
                     if (kIsDesktop)
                       Obx(() {
-                        if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        if (iOS) {
                           return SettingsTile(
                             title:
                                 "Pinned Chat Configuration (${SettingsManager().settings.pinRowsPortrait.value} row${SettingsManager().settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${SettingsManager().settings.pinColumnsLandscape})",
@@ -290,12 +280,12 @@ class ChatListPanel extends StatelessWidget {
                             backgroundColor: tileColor,
                           );
                         } else {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                       }),
                     if (kIsDesktop)
                       Obx(() {
-                        if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        if (iOS) {
                           return Row(
                             children: <Widget>[
                               Flexible(
@@ -303,10 +293,12 @@ class ChatListPanel extends StatelessWidget {
                                   children: <Widget>[
                                     Row(
                                       children: <Widget>[
-                                        Container(
-                                          width: 100,
-                                          margin: EdgeInsets.only(left: 48),
-                                          child: Text("Row Count"),
+                                        const Padding(
+                                          padding: EdgeInsets.only(left: 48),
+                                          child: SizedBox(
+                                            width: 100,
+                                            child: Text("Row Count"),
+                                          ),
                                         ),
                                         Flexible(
                                           child: SettingsOptions<int>(
@@ -327,10 +319,12 @@ class ChatListPanel extends StatelessWidget {
                                     ),
                                     Row(
                                       children: <Widget>[
-                                        Container(
-                                          width: 100,
-                                          margin: EdgeInsets.only(left: 48),
-                                          child: Text("Column Count"),
+                                        const Padding(
+                                          padding: EdgeInsets.only(left: 48),
+                                          child: SizedBox(
+                                            width: 100,
+                                            child: Text("Column Count"),
+                                          ),
                                         ),
                                         Flexible(
                                           child: SettingsOptions<int>(
@@ -359,7 +353,7 @@ class ChatListPanel extends StatelessWidget {
                                   return Container(
                                     width: width,
                                     height: 108,
-                                    margin: EdgeInsets.only(left: 24, right: 48),
+                                    margin: const EdgeInsets.only(left: 24, right: 48),
                                     clipBehavior: Clip.antiAlias,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(3),
@@ -369,7 +363,7 @@ class ChatListPanel extends StatelessWidget {
                                         Flexible(
                                           child: Container(
                                             color: context.theme.colorScheme.secondary,
-                                            padding: EdgeInsets.symmetric(horizontal: 2),
+                                            padding: const EdgeInsets.symmetric(horizontal: 2),
                                             child: AbsorbPointer(
                                               child: Obx(
                                                 () => Column(
@@ -377,7 +371,7 @@ class ChatListPanel extends StatelessWidget {
                                                   children: <Widget>[
                                                     Container(
                                                         height: 12,
-                                                        padding: EdgeInsets.only(left: 2, top: 3),
+                                                        padding: const EdgeInsets.only(left: 2, top: 3),
                                                         child: Text(
                                                           "Messages",
                                                           style: context.textTheme.labelLarge!.copyWith(fontSize: 4),
@@ -449,7 +443,7 @@ class ChatListPanel extends StatelessWidget {
                                                             shrinkWrap: true,
                                                             itemBuilder: (context, index) => Container(
                                                                 height: 12,
-                                                                margin: EdgeInsets.symmetric(vertical: 1),
+                                                                margin: const EdgeInsets.symmetric(vertical: 1),
                                                                 decoration: BoxDecoration(
                                                                     color: context.theme.colorScheme.secondary
                                                                         .lightenOrDarken(10),
@@ -474,12 +468,12 @@ class ChatListPanel extends StatelessWidget {
                                     ),
                                   );
                                 }
-                                return SizedBox.shrink();
+                                return const SizedBox.shrink();
                               }),
                             ],
                           );
                         } else {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                       }),
                     if (!kIsWeb)
@@ -502,7 +496,7 @@ class ChatListPanel extends StatelessWidget {
                           );
                         },
                         trailing: Icon(
-                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+                          iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
                           color: context.theme.colorScheme.outline,
                         ),
                       ),
@@ -520,8 +514,8 @@ class ChatListPanel extends StatelessWidget {
                     backgroundColor: tileColor,
                     children: [
                       Obx(() {
-                        if (SettingsManager().settings.skin.value == Skins.Samsung ||
-                            SettingsManager().settings.skin.value == Skins.Material) {
+                        if (samsung ||
+                            material) {
                           return SettingsSwitch(
                             onChanged: (bool val) {
                               SettingsManager().settings.swipableConversationTiles.value = val;
@@ -533,17 +527,17 @@ class ChatListPanel extends StatelessWidget {
                             backgroundColor: tileColor,
                           );
                         } else {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                       }),
-                      if (SettingsManager().settings.skin.value == Skins.iOS)
+                      if (iOS)
                         SettingsTile(
                           backgroundColor: tileColor,
                           title: "Customize Swipe Actions",
                           subtitle: "Enable or disable specific swipe actions",
                         ),
                       Obx(() {
-                        if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        if (iOS) {
                           return Container(
                             color: tileColor,
                             constraints: BoxConstraints(maxWidth: CustomNavigator.width(context) - 20),
@@ -563,7 +557,7 @@ class ChatListPanel extends StatelessWidget {
                                         width: CustomNavigator.width(context) / 5 - 12,
                                         color: Colors.yellow[800],
                                         child: IconButton(
-                                          icon: Icon(CupertinoIcons.pin, color: Colors.white),
+                                          icon: const Icon(CupertinoIcons.pin, color: Colors.white),
                                           onPressed: () async {
                                             SettingsManager().settings.iosShowPin.value =
                                                 !SettingsManager().settings.iosShowPin.value;
@@ -616,7 +610,7 @@ class ChatListPanel extends StatelessWidget {
                                               color: Colors.purple[700],
                                               width: CustomNavigator.width(context) / 5 - 12,
                                               child: IconButton(
-                                                icon: Icon(CupertinoIcons.bell_slash, color: Colors.white),
+                                                icon: const Icon(CupertinoIcons.bell_slash, color: Colors.white),
                                                 onPressed: () async {
                                                   SettingsManager().settings.iosShowAlert.value =
                                                       !SettingsManager().settings.iosShowAlert.value;
@@ -663,7 +657,7 @@ class ChatListPanel extends StatelessWidget {
                                               color: Colors.red,
                                               width: CustomNavigator.width(context) / 5 - 12,
                                               child: IconButton(
-                                                icon: Icon(CupertinoIcons.trash, color: Colors.white),
+                                                icon: const Icon(CupertinoIcons.trash, color: Colors.white),
                                                 onPressed: () async {
                                                   SettingsManager().settings.iosShowDelete.value =
                                                       !SettingsManager().settings.iosShowDelete.value;
@@ -710,7 +704,7 @@ class ChatListPanel extends StatelessWidget {
                                               color: Colors.blue,
                                               width: CustomNavigator.width(context) / 5 - 12,
                                               child: IconButton(
-                                                icon: Icon(CupertinoIcons.person_crop_circle_badge_exclam,
+                                                icon: const Icon(CupertinoIcons.person_crop_circle_badge_exclam,
                                                     color: Colors.white),
                                                 onPressed: () {
                                                   SettingsManager().settings.iosShowMarkRead.value =
@@ -759,7 +753,7 @@ class ChatListPanel extends StatelessWidget {
                                               color: Colors.red,
                                               width: CustomNavigator.width(context) / 5 - 12,
                                               child: IconButton(
-                                                icon: Icon(CupertinoIcons.tray_arrow_down, color: Colors.white),
+                                                icon: const Icon(CupertinoIcons.tray_arrow_down, color: Colors.white),
                                                 onPressed: () {
                                                   SettingsManager().settings.iosShowArchive.value =
                                                       !SettingsManager().settings.iosShowArchive.value;
@@ -842,7 +836,7 @@ class ChatListPanel extends StatelessWidget {
                             ),
                           );
                         } else {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                       }),
                     ],

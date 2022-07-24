@@ -29,6 +29,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.4.1"
+  animated_size_and_fade:
+    dependency: "direct main"
+    description:
+      name: animated_size_and_fade
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.0.0"
   archive:
     dependency: transitive
     description:

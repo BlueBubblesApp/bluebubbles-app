@@ -1,17 +1,13 @@
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
+
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
-import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -25,7 +21,6 @@ class SettingsScaffold extends StatelessWidget {
   final Color tileColor;
   final List<Widget> bodySlivers;
   final List<Widget> actions;
-  final RxDouble remainingHeight = RxDouble(0);
 
   SettingsScaffold(
       {required this.title,
@@ -39,16 +34,6 @@ class SettingsScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (SettingsManager().settings.skin.value != Skins.Samsung) return;
-      // this is so settings pages that would normally not scroll can still scroll
-      // to make the header large or small
-      if (controller.position.viewportDimension < context.height) {
-        remainingHeight.value = context.height - controller.position.viewportDimension + (context.height / 3 - 50);
-      } else if (controller.position.maxScrollExtent < context.height / 3 - 50) {
-        remainingHeight.value = context.height / 3 - 50 - controller.position.maxScrollExtent;
-      }
-    });
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
@@ -193,13 +178,22 @@ class SettingsScaffold extends StatelessWidget {
                                     : materialSubtitle),
                           )),
                     ),
-                  ...bodySlivers,
+                  if (SettingsManager().settings.skin.value != Skins.Samsung)
+                    ...bodySlivers,
+                  if (SettingsManager().settings.skin.value == Skins.Samsung)
+                    SliverToBoxAdapter(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(minHeight: context.height - 50 - context.mediaQueryPadding.top - context.mediaQueryViewPadding.top),
+                        child: CustomScrollView(
+                          physics: NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          slivers: bodySlivers,
+                        ),
+                      ),
+                    ),
                   SliverList(
                     delegate: SliverChildListDelegate(
                       [
-                        Obx(() => SettingsManager().settings.skin.value == Skins.Samsung
-                            ? Container(height: remainingHeight.value)
-                            : SizedBox.shrink()),
                         Container(
                           height: 30,
                           color: SettingsManager().settings.skin.value != Skins.Material ? headerColor : tileColor,

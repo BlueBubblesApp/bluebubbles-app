@@ -62,8 +62,8 @@ class PinnedOrderPanel extends StatelessWidget {
               Obx(() {
                 if (!ChatBloc().loadedChatBatch.value) {
                   return Center(
-                    child: Container(
-                      padding: EdgeInsets.only(top: 50.0),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 50.0),
                       child: Column(
                         children: [
                           Padding(
@@ -81,8 +81,8 @@ class PinnedOrderPanel extends StatelessWidget {
                 }
                 if (ChatBloc().hasChats.value && ChatBloc().chats.bigPinHelper(true).isEmpty) {
                   return Center(
-                    child: Container(
-                      padding: EdgeInsets.only(top: 50.0),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 50.0),
                       child: Text(
                         "You have no pinned chats :(",
                         style: context.theme.textTheme.labelLarge,

@@ -1,21 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubbles/helpers/constants.dart';
+import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/dialogs/sync_dialog.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/pages/sync/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/dialogs/manual_entry_dialog.dart';
 import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
-import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/cupertino.dart';
@@ -31,7 +30,7 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:version/version.dart';
 
-class ServerManagementPanelController extends GetxController {
+class ServerManagementPanelController extends StatefulController {
   final RxnInt latency = RxnInt();
   final RxnString fetchStatus = RxnString();
   final RxnString serverVersion = RxnString();
@@ -52,17 +51,14 @@ class ServerManagementPanelController extends GetxController {
   final RxBool isRestartingPrivateAPI = false.obs;
   final RxDouble opacity = 1.0.obs;
 
-  late Settings _settingsCopy;
-  FCMData? _fcmDataCopy;
-
   @override
-  void onInit() {
-    _settingsCopy = SettingsManager().settings;
-    _fcmDataCopy = SettingsManager().fcmData;
+  void onReady() {
+    super.onReady();
     if (SocketManager().state.value == SocketState.CONNECTED) {
-      getServerStats();
+      updateObx(() {
+        getServerStats();
+      });
     }
-    super.onInit();
   }
 
   void getServerStats() {
@@ -97,42 +93,21 @@ class ServerManagementPanelController extends GetxController {
       showSnackbar("Error", "Failed to load server details!");
     });
   }
-
-  void saveSettings() async {
-    await SettingsManager().saveSettings(_settingsCopy);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
-  }
 }
 
-class ServerManagementPanel extends StatelessWidget {
-  final controller = Get.put(ServerManagementPanelController());
+class ServerManagementPanel extends CustomStateful<ServerManagementPanelController> {
+  ServerManagementPanel({
+    Key? key,
+  }) : super(parentController: Get.put(ServerManagementPanelController()));
+
+  @override
+  State<ServerManagementPanel> createState() => _ServerManagementPanelState();
+}
+
+class _ServerManagementPanelState extends CustomState<ServerManagementPanel, void, ServerManagementPanelController> with ThemeHelpers {
 
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle =
-    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
-    final materialSubtitle = context.theme
-        .textTheme
-        .labelLarge
-        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
-    // Samsung theme should always use the background color as the "header" color
-    Color headerColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
-    Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-    
-    // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
-      final temp = headerColor;
-      headerColor = tileColor;
-      tileColor = temp;
-    }
-
     return SettingsScaffold(
       title: "Connection & Server Management",
       initialHeader: "Connection & Server Details",
@@ -178,9 +153,9 @@ class ServerManagementPanel extends StatelessWidget {
                                           : SocketState.DISCONNECTED))),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : controller._settingsCopy.serverAddress.value}", recognizer: TapGestureRecognizer()
+                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : SettingsManager().settings.serverAddress.value}", recognizer: TapGestureRecognizer()
                                       ..onTap = () {
-                                        Clipboard.setData(ClipboardData(text: controller._settingsCopy.serverAddress.value));
+                                        Clipboard.setData(ClipboardData(text: SettingsManager().settings.serverAddress.value));
                                         showSnackbar('Copied', "Address copied to clipboard");
                                       }),
                                     TextSpan(text: "\n\n"),
@@ -207,48 +182,56 @@ class ServerManagementPanel extends StatelessWidget {
                         )
                     );
                   }),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ? SettingsTile(
-                    title: "Show Stats",
-                    subtitle: "Show iMessage statistics",
-                    backgroundColor: tileColor,
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.chart_bar_square,
-                      materialIcon: Icons.stacked_bar_chart,
-                    ),
-                    onTap: () {
-                      showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: context.theme.colorScheme.properSurface,
-                            content: Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                              child: SelectableText.rich(
-                                TextSpan(
-                                    children: controller.stats.entries.map((e) => TextSpan(text: "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}")).toList()
-                                ),
-                                style: context.theme.textTheme.bodyLarge,
-                              ),
-                            ),
-                            title: Text("Stats", style: context.theme.textTheme.titleLarge),
-                            actions: <Widget>[
-                              TextButton(
-                                child: Text("Dismiss", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            ],
-                          )
-                      );
-                    },
-                  ) : SizedBox.shrink()),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ?  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ) : SizedBox.shrink()),
+                  Obx(() => AnimatedSizeAndFade.showHide(
+                    show: (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SettingsTile(
+                          title: "Show Stats",
+                          subtitle: "Show iMessage statistics",
+                          backgroundColor: tileColor,
+                          leading: SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.chart_bar_square,
+                            materialIcon: Icons.stacked_bar_chart,
+                          ),
+                          onTap: () {
+                            showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: context.theme.colorScheme.properSurface,
+                                  content: Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                                    child: SelectableText.rich(
+                                      TextSpan(
+                                          children: controller.stats.entries.map((e) => TextSpan(text: "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}")).toList()
+                                      ),
+                                      style: context.theme.textTheme.bodyLarge,
+                                    ),
+                                  ),
+                                  title: Text("Stats", style: context.theme.textTheme.titleLarge),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: Text("Dismiss", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                  ],
+                                )
+                            );
+                          },
+                        ),
+                        Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 65.0),
+                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                          ),
+                        )
+                      ],
+                    )
+                  )),
                   SettingsTile(
                     title: "Show QR Code",
                     subtitle: "Generate QR Code to screenshot or sync other devices",
@@ -311,7 +294,7 @@ class ServerManagementPanel extends StatelessWidget {
                 backgroundColor: tileColor,
                 children: [
                   /*Obx(() {
-                    if (controller.proxyService.value != null && SettingsManager().settings.skin.value == Skins.iOS)
+                    if (controller.proxyService.value != null && iOS)
                       return Container(
                         decoration: BoxDecoration(
                           color: tileColor,
@@ -415,8 +398,7 @@ class ServerManagementPanel extends StatelessWidget {
                           onConnect: () {
                             Get.back();
                             fcm.registerDevice();
-                            SocketManager()
-                                .startSocketIO(forceNewConnection: true);
+                            SocketManager().startSocketIO(forceNewConnection: true);
                           },
                           onClose: () {
                             Get.back();
@@ -431,8 +413,7 @@ class ServerManagementPanel extends StatelessWidget {
                           onConnect: () {
                             Get.back();
                             fcm.registerDevice();
-                            SocketManager()
-                                .startSocketIO(forceNewConnection: true);
+                            SocketManager().startSocketIO(forceNewConnection: true);
                           },
                           onClose: () {
                             Get.back();
@@ -455,7 +436,7 @@ class ServerManagementPanel extends StatelessWidget {
                         return;
                       }
                       if (fcmData != null && fcmData[0] != null && sanitizeServerAddress(address: fcmData[1]) != null) {
-                        controller._fcmDataCopy = FCMData(
+                        final data = FCMData(
                           projectID: fcmData[2],
                           storageBucket: fcmData[3],
                           apiKey: fcmData[4],
@@ -463,11 +444,11 @@ class ServerManagementPanel extends StatelessWidget {
                           clientID: fcmData[6],
                           applicationID: fcmData[7],
                         );
-                        controller._settingsCopy.guidAuthKey.value = fcmData[0];
-                        controller._settingsCopy.serverAddress.value = sanitizeServerAddress(address: fcmData[1])!;
+                        SettingsManager().settings.guidAuthKey.value = fcmData[0];
+                        SettingsManager().settings.serverAddress.value = sanitizeServerAddress(address: fcmData[1])!;
 
-                        SettingsManager().saveSettings(controller._settingsCopy);
-                        SettingsManager().saveFCMData(controller._fcmDataCopy!);
+                        SettingsManager().saveSettings(SettingsManager().settings);
+                        SettingsManager().saveFCMData(data);
                         fcm.registerDevice();
                       }
                     },
@@ -481,32 +462,23 @@ class ServerManagementPanel extends StatelessWidget {
                       ),
                     ),
                   if (!kIsWeb)
-                    Obx(() {
-                      String subtitle;
-
-                      switch (SocketManager().state.value) {
-                        case SocketState.CONNECTED:
-                          subtitle = "Tap to sync messages";
-                          break;
-                        default:
-                          subtitle = "Disconnected, cannot sync";
-                      }
-
-                      return SettingsTile(
-                          title: "Manually Sync Messages",
-                          subtitle: subtitle,
-                          backgroundColor: tileColor,
-                          leading: SettingsLeadingIcon(
-                            iosIcon: CupertinoIcons.arrow_2_circlepath,
-                            materialIcon: Icons.sync,
-                          ),
-                          onTap: () async {
-                            showDialog(
-                              context: context,
-                              builder: (context) => SyncDialog(),
-                            );
-                          });
-                    }),
+                    Obx(() =>SettingsTile(
+                      title: "Manually Sync Messages",
+                      subtitle: SocketManager().state.value == SocketState.CONNECTED
+                          ? "Tap to sync messages" : "Disconnected, cannot sync",
+                      backgroundColor: tileColor,
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.arrow_2_circlepath,
+                        materialIcon: Icons.sync,
+                      ),
+                      onTap: () async {
+                        if (SocketManager().state.value != SocketState.CONNECTED) return;
+                        showDialog(
+                          context: context,
+                          builder: (context) => SyncDialog(),
+                        );
+                      })
+                    ),
                 ]
               ),
               SettingsHeader(
@@ -521,22 +493,22 @@ class ServerManagementPanel extends StatelessWidget {
                 children: [
                   Obx(() => SettingsTile(
                     title: "Fetch${kIsWeb || kIsDesktop ? "" : " & Share"} Server Logs",
-                    subtitle: controller.fetchStatus.value
-                        ?? (SocketManager().state.value == SocketState.CONNECTED ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
+                    subtitle: controller.fetchStatus.value ?? (SocketManager().state.value == SocketState.CONNECTED
+                        ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
                     backgroundColor: tileColor,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.doc_plaintext,
                       materialIcon: Icons.article,
                     ),
                     onTap: () {
-                      if (![SocketState.CONNECTED].contains(SocketManager().state.value)) return;
+                      if (SocketManager().state.value != SocketState.CONNECTED) return;
 
                       controller.fetchStatus.value = "Fetching logs, please wait...";
 
                       api.serverLogs().then((response) async {
                         if (kIsDesktop) {
                           String downloadsPath = (await getDownloadsDirectory())!.path;
-                          File(join(downloadsPath, "main.log")).writeAsStringSync(response.data['data']);
+                          await File(join(downloadsPath, "main.log")).writeAsString(response.data['data']);
                           return showSnackbar('Success', 'Saved logs to $downloadsPath!');
                         }
 
@@ -553,11 +525,11 @@ class ServerManagementPanel extends StatelessWidget {
                         String appDocPath = SettingsManager().appDocDir.path;
                         File logFile = File("$appDocPath/attachments/main.log");
 
-                        if (logFile.existsSync()) {
-                          logFile.deleteSync();
+                        if (await logFile.exists()) {
+                          await logFile.delete();
                         }
 
-                        logFile.writeAsStringSync(response.data['data']);
+                        await logFile.writeAsString(response.data['data']);
 
                         try {
                           Share.file("BlueBubbles Server Log", logFile.absolute.path);
@@ -580,7 +552,10 @@ class ServerManagementPanel extends StatelessWidget {
                   Obx(() => SettingsTile(
                       title: "Restart iMessage",
                       subtitle: controller.isRestartingMessages.value && SocketManager().state.value == SocketState.CONNECTED
-                          ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the iMessage app" : "Disconnected, cannot restart",
+                          ? "Restart in progress..."
+                          : SocketManager().state.value == SocketState.CONNECTED
+                          ? "Restart the iMessage app"
+                          : "Disconnected, cannot restart",
                       backgroundColor: tileColor,
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.chat_bubble,
@@ -616,26 +591,26 @@ class ServerManagementPanel extends StatelessWidget {
                             strokeWidth: 3,
                             valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                           ))))),
-                  Obx(() {
-                    if (SettingsManager().settings.enablePrivateAPI.value) {
-                      return Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                        ),
-                      );
-                    } else {
-                      return SizedBox.shrink();
-                    }
-                  }),
-                  Obx(() {
-                    if (SettingsManager().settings.enablePrivateAPI.value
-                        && (controller.serverVersionCode.value ?? 0) >= 41) {
-                      return SettingsTile(
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    ),
+                  ),
+                  Obx(() => AnimatedSizeAndFade.showHide(
+                    show: SettingsManager().settings.enablePrivateAPI.value
+                        && (controller.serverVersionCode.value ?? 0) >= 41,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SettingsTile(
                           title: "Restart Private API & Services",
                           subtitle: controller.isRestartingPrivateAPI.value && SocketManager().state.value == SocketState.CONNECTED
-                              ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the Private API" : "Disconnected, cannot restart",
+                              ? "Restart in progress..."
+                              : SocketManager().state.value == SocketState.CONNECTED
+                              ? "Restart the Private API"
+                              : "Disconnected, cannot restart",
                           backgroundColor: tileColor,
                           leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.exclamationmark_shield,
@@ -670,18 +645,17 @@ class ServerManagementPanel extends StatelessWidget {
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
                                 valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                              )));
-                    } else {
-                      return SizedBox.shrink();
-                    }
-                  }),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                              ))),
+                        Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 65.0),
+                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                          ),
+                        )
+                      ],
                     ),
-                  ),
+                  )),
                   Obx(() => SettingsTile(
                       title: "Restart BlueBubbles Server",
                       subtitle: (controller.isRestarting.value)
@@ -704,34 +678,22 @@ class ServerManagementPanel extends StatelessWidget {
                         // Save the last time we restarted
                         controller.lastRestart = now;
 
-                        void stopRestarting() {
-                          controller.isRestarting.value = false;
-                        }
-
                         // Perform the restart
                         try {
                           if (kIsDesktop || kIsWeb) {
                             var db = FirebaseDatabase(databaseURL: SettingsManager().fcmData?.firebaseURL);
                             var ref = db.reference().child('config').child('nextRestart');
-                            await ref.set(DateTime
-                                .now()
-                                .toUtc()
-                                .millisecondsSinceEpoch);
+                            await ref.set(DateTime.now().toUtc().millisecondsSinceEpoch);
                           } else {
                             await MethodChannelInterface().invokeMethod(
-                                "set-next-restart", {"value": DateTime
-                                .now()
-                                .toUtc()
-                                .millisecondsSinceEpoch});
+                              "set-next-restart", {
+                                "value": DateTime.now().toUtc().millisecondsSinceEpoch
+                              }
+                            );
                           }
                         } finally {
-                          stopRestarting();
+                          controller.isRestarting.value = false;
                         }
-
-                        // After 5 seconds, remove the restarting message
-                        Future.delayed(Duration(seconds: 5), () {
-                          stopRestarting();
-                        });
                       },
                       trailing: (!controller.isRestarting.value)
                           ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
@@ -744,210 +706,73 @@ class ServerManagementPanel extends StatelessWidget {
                             strokeWidth: 3,
                             valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                           )))),
-
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
-                    ),
-                  ) : SizedBox.shrink()),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? SettingsTile(
-                    title: "Check for Server Updates",
-                    subtitle: "Check for new BlueBubbles Server updates",
-                    backgroundColor: tileColor,
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.desktopcomputer,
-                      materialIcon: Icons.dvr,
-                    ),
-                    onTap: () async {
-                      final response = await api.checkUpdate();
-                      if (response.statusCode == 200) {
-                        bool available = response.data['data']['available'] ?? false;
-                        Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: context.theme.colorScheme.properSurface,
-                            title: Text("Update Check", style: context.theme.textTheme.titleLarge),
-                            content: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  SizedBox(
-                                    height: 15.0,
-                                  ),
-                                  Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyLarge),
-                                  SizedBox(
-                                    height: 15.0,
-                                  ),
-                                  if (metadata.isNotEmpty)
-                                    Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}", style: context.theme.textTheme.bodyLarge)
-                                ]
-                            ),
-                            actions: [
-                              TextButton(
-                                  child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                  onPressed: () => Navigator.of(context).pop()
-                              ),
-                            ]
+                  Obx(() => AnimatedSizeAndFade.showHide(
+                    show: (controller.serverVersionCode.value ?? 0) >= 42,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 65.0),
+                            child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                           ),
-                        );
-                      } else {
-                        showSnackbar("Error", "Failed to check for updates!");
-                      }
-                    },
-                  ) : SizedBox.shrink()),
+                        ),
+                        SettingsTile(
+                          title: "Check for Server Updates",
+                          subtitle: "Check for new BlueBubbles Server updates",
+                          backgroundColor: tileColor,
+                          leading: SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.desktopcomputer,
+                            materialIcon: Icons.dvr,
+                          ),
+                          onTap: () async {
+                            final response = await api.checkUpdate();
+                            if (response.statusCode == 200) {
+                              bool available = response.data['data']['available'] ?? false;
+                              Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: context.theme.colorScheme.properSurface,
+                                  title: Text("Update Check", style: context.theme.textTheme.titleLarge),
+                                  content: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        SizedBox(
+                                          height: 15.0,
+                                        ),
+                                        Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyLarge),
+                                        SizedBox(
+                                          height: 15.0,
+                                        ),
+                                        if (metadata.isNotEmpty)
+                                          Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}", style: context.theme.textTheme.bodyLarge)
+                                      ]
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                        child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                        onPressed: () => Navigator.of(context).pop()
+                                    ),
+                                  ]
+                                ),
+                              );
+                            } else {
+                              showSnackbar("Error", "Failed to check for updates!");
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  )),
                 ],
               ),
             ],
           ),
         ),
       ]
-    );
-  }
-}
-
-class SyncDialog extends StatefulWidget {
-  SyncDialog({Key? key}) : super(key: key);
-
-  @override
-  State<SyncDialog> createState() => _SyncDialogState();
-}
-
-class _SyncDialogState extends State<SyncDialog> {
-  String? errorCode;
-  bool finished = false;
-  String? message;
-  double? progress;
-  Duration? lookback;
-  int page = 0;
-
-  void syncMessages() async {
-    if (lookback == null) return;
-
-    DateTime now = DateTime.now().toUtc().subtract(lookback!);
-    MessageManager().getMessages(withChats: true, withAttachments: true, withHandles: true, after: now.millisecondsSinceEpoch, limit: 100).then((dynamic messages) {
-      if (mounted) {
-        setState(() {
-          message = "Adding ${messages.length} messages...";
-        });
-      }
-
-      MessageHelper.bulkAddMessages(null, messages, onProgress: (int progress, int length) {
-        if (progress == 0 || length == 0) {
-          this.progress = null;
-        } else {
-          this.progress = progress / length;
-        }
-
-        if (mounted) {
-          setState(() {
-            message = "Adding $progress of $length (${((this.progress ?? 0) * 100).floor().toInt()}%)";
-          });
-        }
-      }).then((List<Message> items) {
-        onFinish(true, items.length);
-      });
-    }).catchError((_) {
-      onFinish(false, 0);
-    });
-  }
-
-  void onFinish([bool success = true, int? total]) {
-    if (!mounted) return;
-
-    progress = 100;
-    message = "Finished adding $total messages!";
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    String title = errorCode != null ? "Error!" : message ?? "";
-    Widget content = Container();
-    if (errorCode != null) {
-      content = Text(errorCode!);
-    } else {
-      content = Container(
-        height: 5,
-        child: Center(
-          child: LinearProgressIndicator(
-            value: progress,
-            backgroundColor: context.theme.colorScheme.outline,
-            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-          ),
-        ),
-      );
-    }
-
-    List<Widget> actions = [
-      TextButton(
-        onPressed: () {
-          Navigator.of(context).pop();
-        },
-        child: Text(
-          "OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary),
-        ),
-      )
-    ];
-
-    if (page == 0) {
-      title = "How far back would you like to go?";
-      content = Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.0),
-            child: Text(
-              "Days: ${lookback?.inDays ?? "1"}",
-              style: context.theme.textTheme.bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.0),
-            child: Slider(
-              value: lookback?.inDays.toDouble() ?? 1.0,
-              onChanged: (double value) {
-                if (!mounted) return;
-
-                setState(() {
-                  lookback = Duration(days: value.toInt());
-                });
-              },
-              label: lookback?.inDays.toString() ?? "1",
-              divisions: 29,
-              min: 1,
-              max: 30,
-            ),
-          )
-        ],
-      );
-
-      actions = [
-        TextButton(
-          onPressed: () {
-            if (!mounted) return;
-            lookback ??= Duration(days: 1);
-            page = 1;
-            message = "Fetching messages...";
-            setState(() {});
-            syncMessages();
-          },
-          child: Text(
-            "Sync",
-            style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary),
-          ),
-        )
-      ];
-    }
-
-    return AlertDialog(
-      backgroundColor: context.theme.colorScheme.properSurface,
-      title: Text(title, style: context.theme.textTheme.titleLarge),
-      content: content,
-      actions: actions,
     );
   }
 }

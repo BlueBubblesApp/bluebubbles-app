@@ -38,10 +38,7 @@ class SettingsSwitch extends StatelessWidget {
               ? Text(
             subtitle!,
             style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: isThreeLine ? 1.5 : 1),
-            maxLines: isThreeLine ? 2 : 1,
-            overflow: TextOverflow.ellipsis,
-          )
-              : null,
+          ) : null,
           value: initialVal,
           activeColor: context.theme.colorScheme.primary,
           activeTrackColor: context.theme.colorScheme.primaryContainer,
@@ -53,7 +50,7 @@ class SettingsSwitch extends StatelessWidget {
               : context.theme.colorScheme.surfaceVariant,
           inactiveThumbColor: thumbColor,
           onChanged: onChanged,
-          isThreeLine: isThreeLine,
+          contentPadding: EdgeInsets.symmetric(vertical: isThreeLine ? 10 : 0, horizontal: 16.0),
         ),
       ),
     );

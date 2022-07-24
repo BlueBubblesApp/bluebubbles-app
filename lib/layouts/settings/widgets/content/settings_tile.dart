@@ -1,6 +1,8 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_html/html.dart' as html;
 
 class SettingsTile extends StatelessWidget {
   const SettingsTile({
@@ -34,7 +36,12 @@ class SettingsTile extends StatelessWidget {
         splashColor: context.theme.colorScheme.surfaceVariant,
         splashFactory: context.theme.splashFactory,
         child: GestureDetector(
-          onSecondaryTapUp: (details) => onLongPress as void Function()?,
+          onSecondaryTapUp: (details) async {
+            if (kIsWeb) {
+              (await html.document.onContextMenu.first).preventDefault();
+            }
+            onLongPress?.call();
+          },
           child: ListTile(
             leading: leading,
             title: title != null ? Text(
@@ -46,11 +53,8 @@ class SettingsTile extends StatelessWidget {
                 ? Text(
               subtitle!,
               style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface, height: isThreeLine ? 1.5 : 1),
-              maxLines: isThreeLine ? 2 : 1,
-              overflow: TextOverflow.ellipsis,
-            )
-                : null,
-            isThreeLine: isThreeLine,
+            ) : null,
+            contentPadding: EdgeInsets.symmetric(vertical: isThreeLine ? 10 : 0, horizontal: 16.0),
           ),
         ),
       ),

@@ -1,3 +1,4 @@
+/*
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -21,7 +22,7 @@ class SchedulingPanel extends StatefulWidget {
   State<SchedulingPanel> createState() => _SchedulingPanelState();
 }
 
-class _SchedulingPanelState extends State<SchedulingPanel> {
+class _SchedulingPanelState extends OptimizedState<SchedulingPanel> {
   List<ScheduledMessage> scheduled = [];
   final scrollController = ScrollController();
 
@@ -197,3 +198,4 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
     );
   }
 }
+*/

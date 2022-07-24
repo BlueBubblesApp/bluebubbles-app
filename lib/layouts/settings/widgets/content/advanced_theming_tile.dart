@@ -106,26 +106,24 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
                   },
                 );
               },
-              child: Container(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.color_lens,
-                      size: 40,
-                      color: textColor!.computeDifference(widget.tuple.item1.value) < 15 ? widget.tuple.item1.value.lightenOrDarken(50) : textColor,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.color_lens,
+                    size: 40,
+                    color: textColor!.computeDifference(widget.tuple.item1.value) < 15 ? widget.tuple.item1.value.lightenOrDarken(50) : textColor,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      widget.tuple.item1.key + (widget.tuple.item2 != null ? " / ${widget.tuple.item2!.key}" : ""),
+                      style: whiteLightTheme.textTheme.titleMedium?.copyWith(color: textColor.computeDifference(widget.tuple.item1.value) < 15 ? widget.tuple.item1.value.lightenOrDarken(20) : textColor),
+                      textAlign: TextAlign.center,
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        widget.tuple.item1.key + (widget.tuple.item2 != null ? " / ${widget.tuple.item2!.key}" : ""),
-                        style: whiteLightTheme.textTheme.titleMedium?.copyWith(color: textColor.computeDifference(widget.tuple.item1.value) < 15 ? widget.tuple.item1.value.lightenOrDarken(20) : textColor),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           )

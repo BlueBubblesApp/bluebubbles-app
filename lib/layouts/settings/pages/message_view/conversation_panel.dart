@@ -1,35 +1,22 @@
-import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class ConversationPanel extends StatelessWidget {
+class ConversationPanel extends StatefulWidget {
+
+  @override
+  State<StatefulWidget> createState() => _ConversationPanelState();
+}
+
+class _ConversationPanelState extends OptimizedState<ConversationPanel> with ThemeHelpers {
+
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle =
-    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
-    final materialSubtitle = context.theme
-        .textTheme
-        .labelLarge
-        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
-    // Samsung theme should always use the background color as the "header" color
-    Color headerColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
-    Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-    
-    // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
-      final temp = headerColor;
-      headerColor = tileColor;
-      tileColor = temp;
-    }
-
     return SettingsScaffold(
       title: "Conversations",
       initialHeader: "Customization",
@@ -258,6 +245,6 @@ class ConversationPanel extends StatelessWidget {
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings(SettingsManager().settings);
+    SettingsManager().saveSettings();
   }
 }

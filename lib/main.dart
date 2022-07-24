@@ -103,10 +103,8 @@ late final Box<ThemeStruct> themeBox;
 late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
 final RxBool fontExistsOnDisk = false.obs;
-final RxBool downloadingFont = false.obs;
-final RxnDouble progress = RxnDouble();
-final RxnInt totalSize = RxnInt();
 late final CorePalette? monetPalette;
+PackageInfo? packageInfo;
 
 String? _recentIntent;
 
@@ -312,7 +310,6 @@ Future<Null> initApp(bool isBubble) async {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
     if (kIsDesktop) {
-      PackageInfo? packageInfo;
       try {
         packageInfo = await PackageInfo.fromPlatform();
       } catch (_) {

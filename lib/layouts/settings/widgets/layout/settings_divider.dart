@@ -7,7 +7,7 @@ class SettingsDivider extends StatelessWidget {
   final double thickness;
   final Color? color;
 
-  SettingsDivider({
+  const SettingsDivider({
     this.thickness = 1,
     this.color,
   });
@@ -21,7 +21,7 @@ class SettingsDivider extends StatelessWidget {
         height: 0.5,
       );
     } else {
-      return Container();
+      return const SizedBox.shrink();
     }
   }
 }

@@ -4,20 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 
+/// [GetxController] with support for optimized state management
 class StatefulController extends GetxController {
   final Map<Object, Function> updateWidgetFunctions = {};
+  late final void Function(VoidCallback) updateObx;
 }
 
+/// [StatefulWidget] with support for optimized state management and a built-in
+/// [GetxController]
 abstract class CustomStateful<T extends StatefulController> extends StatefulWidget {
   CustomStateful({Key? key, required this.parentController}) : super(key: key);
 
   final T parentController;
 }
 
+/// [State] with support for optimized state management using a custom
+/// [GetxController]
 abstract class CustomState<T extends CustomStateful, R, S> extends State<T> {
+  // completer to check if the page animation is complete
   final animCompleted = Completer<void>();
 
   @protected
+  /// Convenience getter for the [GetxController]
   S get controller => widget.parentController as S;
 
   @override
@@ -25,8 +33,11 @@ abstract class CustomState<T extends CustomStateful, R, S> extends State<T> {
   void initState() {
     super.initState();
 
+    // set functions in the custom [GetxController]
     widget.parentController.updateWidgetFunctions[T] = updateWidget;
+    widget.parentController.updateObx = updateObx;
 
+    // complete the completer when we know the page animation has finished
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (ModalRoute.of(context)?.animation != null) {
         if (ModalRoute.of(context)?.animation?.status != AnimationStatus.completed) {
@@ -47,38 +58,43 @@ abstract class CustomState<T extends CustomStateful, R, S> extends State<T> {
     });
   }
 
+  @override
+  /// Force delete the [GetxController] when the page has disposed
+  void dispose() {
+    Get.delete<S>();
+    super.dispose();
+  }
+
   @protected
   @mustCallSuper
   @optionalTypeArgs
+  /// Override this method to update the widget easily
+  /// ```
+  /// @override
+  /// void updateWidget(int newVal) {
+  ///   controller.currentPage = newVal;
+  ///   super.updateWidget(newVal);
+  /// }
+  /// ```
   void updateWidget(R newVal) {
     setState(() {});
   }
 
   @override
+  /// Optimized [setState] function
   void setState(VoidCallback fn) {
-    if (!mounted) return;
-
-    void checkFrame() {
-      // if there's a current frame,
-      if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
-        // wait for the end of that frame.
-        SchedulerBinding.instance.endOfFrame.then((_) {
-          if (mounted) super.setState(fn);
-        });
-      } else {
-        super.setState(fn);
-      }
-    }
-
-    if (animCompleted.isCompleted) {
-      checkFrame();
-    } else {
-      animCompleted.future.then((_) {
-        checkFrame();
-      });
-    }
+    _optimizedUpdate(() {
+      super.setState(fn);
+    });
   }
 
+  /// Optimized method to perform an update for any [Rx] variable
+  void updateObx(VoidCallback fn) {
+    _optimizedUpdate(fn);
+  }
+
+  /// Asynchronous [setState] function, in case we need to perform something
+  /// after we are sure the state has been set
   Future<void> setStateAsync(VoidCallback fn) async {
     if (!mounted) return;
 
@@ -98,6 +114,32 @@ abstract class CustomState<T extends CustomStateful, R, S> extends State<T> {
     } else {
       await animCompleted.future;
       await checkFrame();
+    }
+  }
+
+  /// Internal function that runs the optimized widget updating code
+  void _optimizedUpdate(VoidCallback fn) {
+    if (!mounted) return;
+
+    void checkFrame() {
+      // if there's a current frame,
+      if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
+        // wait for the end of that frame.
+        SchedulerBinding.instance.endOfFrame.then((_) {
+          if (mounted) fn.call();
+        });
+      } else {
+        fn.call();
+      }
+    }
+
+    // make sure the page animation is completed before trying to update the state
+    if (animCompleted.isCompleted) {
+      checkFrame();
+    } else {
+      animCompleted.future.then((_) {
+        checkFrame();
+      });
     }
   }
 }
@@ -135,27 +177,13 @@ abstract class OptimizedState<T extends StatefulWidget> extends State<T> {
 
   @override
   void setState(VoidCallback fn) {
-    if (!mounted) return;
+    _optimizedUpdate(() {
+      super.setState(fn);
+    });
+  }
 
-    void checkFrame() {
-      // if there's a current frame,
-      if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
-        // wait for the end of that frame.
-        SchedulerBinding.instance.endOfFrame.then((_) {
-          if (mounted) super.setState(fn);
-        });
-      } else {
-        super.setState(fn);
-      }
-    }
-
-    if (animCompleted.isCompleted) {
-      checkFrame();
-    } else {
-      animCompleted.future.then((_) {
-        checkFrame();
-      });
-    }
+  void updateObx(VoidCallback fn) {
+    _optimizedUpdate(fn);
   }
 
   Future<void> setStateAsync(VoidCallback fn) async {
@@ -177,6 +205,30 @@ abstract class OptimizedState<T extends StatefulWidget> extends State<T> {
     } else {
       await animCompleted.future;
       await checkFrame();
+    }
+  }
+
+  void _optimizedUpdate(VoidCallback fn) {
+    if (!mounted) return;
+
+    void checkFrame() {
+      // if there's a current frame,
+      if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
+        // wait for the end of that frame.
+        SchedulerBinding.instance.endOfFrame.then((_) {
+          if (mounted) fn.call();
+        });
+      } else {
+        fn.call();
+      }
+    }
+
+    if (animCompleted.isCompleted) {
+      checkFrame();
+    } else {
+      animCompleted.future.then((_) {
+        checkFrame();
+      });
     }
   }
 }

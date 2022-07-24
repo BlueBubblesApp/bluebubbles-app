@@ -1,51 +1,26 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
+import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/settings/pages/theming/avatar/avatar_crop.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 
-class CustomAvatarPanelController extends GetxController {
-  late Settings _settingsCopy;
+class CustomAvatarPanel extends StatefulWidget {
 
   @override
-  void onInit() {
-    super.onInit();
-    _settingsCopy = SettingsManager().settings;
-  }
-
-  @override
-  void dispose() {
-    SettingsManager().saveSettings(_settingsCopy);
-    super.dispose();
-  }
+  State<StatefulWidget> createState() => _CustomAvatarPanelState();
 }
 
-class CustomAvatarPanel extends StatelessWidget {
-  final controller = Get.put(CustomAvatarPanelController());
+class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> with ThemeHelpers {
+
   @override
   Widget build(BuildContext context) {
-    // Samsung theme should always use the background color as the "header" color
-    Color headerColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
-    Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-    
-    // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
-      final temp = headerColor;
-      headerColor = tileColor;
-      tileColor = temp;
-    }
-
     return SettingsScaffold(
       title: "Custom Avatars",
       initialHeader: null,
@@ -58,8 +33,8 @@ class CustomAvatarPanel extends StatelessWidget {
           if (!ChatBloc().loadedChatBatch.value) {
             return SliverToBoxAdapter(
               child: Center(
-                child: Container(
-                  padding: EdgeInsets.only(top: 50.0),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 50.0),
                   child: Column(
                     children: [
                       Padding(
@@ -79,8 +54,8 @@ class CustomAvatarPanel extends StatelessWidget {
           if (ChatBloc().loadedChatBatch.value && ChatBloc().chats.isEmpty) {
             return SliverToBoxAdapter(
               child: Center(
-                child: Container(
-                  padding: EdgeInsets.only(top: 50.0),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 50.0),
                   child: Text(
                     "You have no chats :(",
                     style: context.theme.textTheme.labelLarge,

@@ -1,41 +1,29 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:secure_application/secure_application.dart';
 
-class MiscPanel extends StatelessWidget {
+class MiscPanel extends StatefulWidget {
+
+  @override
+  State<StatefulWidget> createState() => _MiscPanelState();
+}
+
+class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
   final RxnBool refreshingContacts = RxnBool();
 
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle =
-    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
-    final materialSubtitle = context.theme
-        .textTheme
-        .labelLarge
-        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
-    // Samsung theme should always use the background color as the "header" color
-    Color headerColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
-    Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-    
-    // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
-      final temp = headerColor;
-      headerColor = tileColor;
-      tileColor = temp;
-    }
-
     return SettingsScaffold(
       title: "Miscellaneous & Advanced",
       initialHeader: SettingsManager().canAuthenticate ? "Security" : "Speed & Responsiveness",
@@ -83,7 +71,7 @@ class MiscPanel extends StatelessWidget {
                               padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
                               child: RichText(
                                 text: TextSpan(
-                                  children: [
+                                  children: const [
                                     TextSpan(text: "Security Info", style: TextStyle(fontWeight: FontWeight.bold)),
                                     TextSpan(text: "\n\n"),
                                     TextSpan(
@@ -105,7 +93,7 @@ class MiscPanel extends StatelessWidget {
                               ),
                             ));
                       } else {
-                        return SizedBox.shrink();
+                        return const SizedBox.shrink();
                       }
                     }),
                     if (SettingsManager().canAuthenticate)
@@ -139,7 +127,7 @@ class MiscPanel extends StatelessWidget {
                             secondaryColor: headerColor,
                           );
                         } else {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                       }),
                     if (SettingsManager().canAuthenticate)
@@ -188,7 +176,7 @@ class MiscPanel extends StatelessWidget {
                         backgroundColor: tileColor,
                       )),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS) {
+                    if (iOS) {
                       return Container(
                         color: tileColor,
                         child: Padding(
@@ -197,22 +185,22 @@ class MiscPanel extends StatelessWidget {
                         ),
                       );
                     } else {
-                      return SizedBox.shrink();
+                      return const SizedBox.shrink();
                     }
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS) {
+                    if (iOS) {
                       return SettingsTile(
                         title: "Scroll Speed Multiplier",
                         subtitle: "Controls how fast scrolling occurs",
                         backgroundColor: tileColor,
                       );
                     } else {
-                      return SizedBox.shrink();
+                      return const SizedBox.shrink();
                     }
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS) {
+                    if (iOS) {
                       return SettingsSlider(
                           text: "Scroll Speed Multiplier",
                           startingVal: SettingsManager().settings.scrollVelocity.value,
@@ -228,7 +216,7 @@ class MiscPanel extends StatelessWidget {
                           max: 1,
                           divisions: 8);
                     } else {
-                      return SizedBox.shrink();
+                      return const SizedBox.shrink();
                     }
                   }),
                 ],
@@ -269,7 +257,7 @@ class MiscPanel extends StatelessWidget {
                           max: 10,
                           divisions: 9);
                     } else {
-                      return SizedBox.shrink();
+                      return const SizedBox.shrink();
                     }
                   }),
                   Container(
@@ -297,7 +285,7 @@ class MiscPanel extends StatelessWidget {
                     ),
                   ),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS) {
+                    if (iOS) {
                       return SettingsTile(
                         title: "Maximum Group Avatar Count",
                         subtitle: "Controls the maximum number of contact avatars in a group chat's widget",
@@ -305,12 +293,12 @@ class MiscPanel extends StatelessWidget {
                         backgroundColor: tileColor,
                       );
                     } else {
-                      return SizedBox.shrink();
+                      return const SizedBox.shrink();
                     }
                   }),
                   Obx(
                         () {
-                      if (SettingsManager().settings.skin.value == Skins.iOS) {
+                      if (iOS) {
                         return SettingsSlider(
                           divisions: 3,
                           max: 5,
@@ -348,7 +336,7 @@ class MiscPanel extends StatelessWidget {
                           refreshingContacts.value = false;
                       },
                       trailing: Obx(() => refreshingContacts.value == null
-                          ? SizedBox.shrink()
+                          ? const SizedBox.shrink()
                           : refreshingContacts.value == true ? Container(
                           constraints: BoxConstraints(
                             maxHeight: 20,

@@ -1,12 +1,14 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class VerticalSplitView extends StatefulWidget {
+class TabletModeWrapper extends StatefulWidget {
   final Widget left;
   final Widget right;
   final double initialRatio;
@@ -15,24 +17,23 @@ class VerticalSplitView extends StatefulWidget {
   final double maxRatio;
   final bool allowResize;
 
-  const VerticalSplitView(
-      {Key? key,
-        required this.left,
-        required this.right,
-        this.initialRatio = 0.5,
-        this.allowResize = true,
-        this.dividerWidth = 7.0,
-        this.minRatio = 0,
-        this.maxRatio = 0})
-      : assert(initialRatio >= 0),
+  const TabletModeWrapper({Key? key,
+    required this.left,
+    required this.right,
+    this.initialRatio = 0.5,
+    this.allowResize = true,
+    this.dividerWidth = 7.0,
+    this.minRatio = 0,
+    this.maxRatio = 0
+  }) : assert(initialRatio >= 0),
         assert(initialRatio <= 1),
         super(key: key);
 
   @override
-  State<VerticalSplitView> createState() => _VerticalSplitViewState();
+  State<TabletModeWrapper> createState() => _TabletModeWrapperState();
 }
 
-class _VerticalSplitViewState extends State<VerticalSplitView> {
+class _TabletModeWrapperState extends OptimizedState<TabletModeWrapper> with ThemeHelpers {
   //from 0-1
   late final RxDouble _ratio;
   double? _maxWidth;
@@ -48,7 +49,7 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'split-refresh' && mounted) {
+      if (event["type"] == 'split-refresh') {
         _ratio.value = prefs.getDouble('splitRatio') ?? _ratio.value;
         setState(() {});
       }
@@ -61,30 +62,28 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, BoxConstraints constraints) {
-      assert(_ratio <= 1);
-      assert(_ratio >= 0);
-      _maxWidth ??= constraints.maxWidth - widget.dividerWidth;
-      if (_maxWidth != constraints.maxWidth) {
-        _maxWidth = constraints.maxWidth - widget.dividerWidth;
-      }
+    if (!showAltLayout) {
+      return TitleBarWrapper(child: widget.left);
+    }
+    return LayoutBuilder(
+      builder: (context, BoxConstraints constraints) {
+        _maxWidth ??= constraints.maxWidth - widget.dividerWidth;
 
-      return TitleBarWrapper(
-        child: SizedBox(
-          width: constraints.maxWidth,
-          child: Obx(() => Row(
-            children: <Widget>[
-              SizedBox(
-                width: _width1,
-                child: widget.left,
-              ),
-              (widget.allowResize) ? MouseRegion(
-                cursor: SystemMouseCursors.resizeLeftRight,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  child: Container(
-                      color: context.theme.colorScheme.properSurface,
-                      child: SizedBox(
+        return TitleBarWrapper(
+          child: SizedBox(
+            width: constraints.maxWidth,
+            child: Obx(() => Row(
+              children: <Widget>[
+                SizedBox(
+                  width: _width1,
+                  child: widget.left,
+                ),
+                (widget.allowResize) ? MouseRegion(
+                  cursor: SystemMouseCursors.resizeLeftRight,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    child: Container(
+                        color: context.theme.colorScheme.properSurface,
                         width: widget.dividerWidth,
                         height: constraints.maxHeight,
                         child: Column(
@@ -95,37 +94,37 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
                               borderRadius: BorderRadius.circular(25),
                               color: context.theme.colorScheme.properOnSurface,
                             )),
-                            SizedBox(height: 20,),
+                            const SizedBox(height: 20),
                             Container(height: 4, width: 4, decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(25),
                               color: context.theme.colorScheme.properOnSurface,
                             )),
-                            SizedBox(height: 20,),
+                            const SizedBox(height: 20),
                             Container(height: 4, width: 4, decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(25),
                               color: context.theme.colorScheme.properOnSurface,
                             )),
                           ],
-                        ),
-                      )),
-                  onPanUpdate: (DragUpdateDetails details) {
-                    _ratio.value = (_ratio.value + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
-                    CustomNavigator.listener.refresh();
-                  },
+                        )),
+                    onPanUpdate: (DragUpdateDetails details) {
+                      _ratio.value = (_ratio.value + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
+                      CustomNavigator.listener.refresh();
+                    },
+                  ),
+                ) : Container(
+                  width: widget.dividerWidth,
+                  height: constraints.maxHeight,
+                  color: context.theme.colorScheme.properSurface
                 ),
-              ) : SizedBox(
-                width: widget.dividerWidth,
-                height: constraints.maxHeight,
-                child: Container(color: context.theme.colorScheme.properSurface)
-              ),
-              SizedBox(
-                width: _width2,
-                child: widget.right,
-              ),
-            ],
-          ),
-        )),
-      );
-    });
+                SizedBox(
+                  width: _width2,
+                  child: widget.right,
+                ),
+              ],
+            ),
+          )),
+        );
+      }
+    );
   }
 }

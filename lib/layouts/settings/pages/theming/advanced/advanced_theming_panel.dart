@@ -1,16 +1,16 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/dialogs/old_themes_dialog.dart';
 import 'package:bluebubbles/layouts/settings/pages/theming/advanced/advanced_theming_content.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,9 +23,9 @@ class AdvancedThemingPanel extends StatefulWidget {
   State<AdvancedThemingPanel> createState() => _AdvancedThemingPanelState();
 }
 
-class _AdvancedThemingPanelState extends State<AdvancedThemingPanel> with SingleTickerProviderStateMixin {
+class _AdvancedThemingPanelState extends OptimizedState<AdvancedThemingPanel> with SingleTickerProviderStateMixin, ThemeHelpers {
   int index = ThemeManager().inDarkMode(Get.context!) ? 1 : 0;
-  StreamController streamController = StreamController.broadcast();
+  final StreamController streamController = StreamController.broadcast();
   late final TabController controller;
   late final List<ThemeObject> oldThemes;
 
@@ -49,19 +49,6 @@ class _AdvancedThemingPanelState extends State<AdvancedThemingPanel> with Single
 
   @override
   Widget build(BuildContext context) {
-    // Samsung theme should always use the background color as the "header" color
-    Color headerColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
-    Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-    
-    // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
-      final temp = headerColor;
-      headerColor = tileColor;
-      tileColor = temp;
-    }
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
@@ -70,7 +57,7 @@ class _AdvancedThemingPanelState extends State<AdvancedThemingPanel> with Single
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
-        backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
+        backgroundColor: material ? tileColor : headerColor,
         appBar: PreferredSize(
           preferredSize: Size(CustomNavigator.width(context), 50),
           child: AppBar(
@@ -83,7 +70,7 @@ class _AdvancedThemingPanelState extends State<AdvancedThemingPanel> with Single
             surfaceTintColor: context.theme.colorScheme.primary,
             leading: buildBackButton(context),
             backgroundColor: headerColor,
-            centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
+            centerTitle: iOS,
             title: Text(
               "Advanced Theming",
               style: context.theme.textTheme.titleLarge,
@@ -95,115 +82,8 @@ class _AdvancedThemingPanelState extends State<AdvancedThemingPanel> with Single
                   onPressed: () {
                     showDialog(
                         context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text("Old Themes", style: context.theme.textTheme.titleLarge),
-                          backgroundColor: context.theme.colorScheme.properSurface,
-                          content: SingleChildScrollView(
-                            child: Container(
-                              width: double.maxFinite,
-                              child: StatefulBuilder(builder: (context, setState) {
-                                return Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child:
-                                      Text("Tap an old theme to view its colors"),
-                                    ),
-                                    ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        maxHeight: context.mediaQuery.size.height * 0.4,
-                                      ),
-                                      child: ListView.builder(
-                                        shrinkWrap: true,
-                                        itemCount: oldThemes.length,
-                                        itemBuilder: (context, index) {
-                                          return ListTile(
-                                            title: Text(
-                                              oldThemes[index].name ?? "Unknown Theme",
-                                              style: context.theme.textTheme.bodyLarge),
-                                            onTap: () {
-                                              showDialog(
-                                                  context: context,
-                                                  builder: (context) => AlertDialog(
-                                                    title: Text("${oldThemes[index].name ?? "Unknown Theme"} Colors", style: context.theme.textTheme.titleLarge),
-                                                    backgroundColor: context.theme.colorScheme.properSurface,
-                                                    content: SingleChildScrollView(
-                                                      child: Container(
-                                                        width: double.maxFinite,
-                                                        child: StatefulBuilder(builder: (context, setState) {
-                                                          return ConstrainedBox(
-                                                            constraints: BoxConstraints(
-                                                              maxHeight: context.mediaQuery.size.height * 0.4,
-                                                            ),
-                                                            child: ListView.builder(
-                                                              shrinkWrap: true,
-                                                              itemCount: 4,
-                                                              itemBuilder: (context, index2) {
-                                                                final hex = oldThemes[index].entries.firstWhere((element) => element.name == ThemeColors.Colors.reversed.toList()[index2]).color!.hex;
-                                                                return ListTile(
-                                                                  title: Text(
-                                                                    ThemeColors.Colors.reversed.toList()[index2],
-                                                                    style: context.theme.textTheme.bodyLarge),
-                                                                  subtitle: Text(
-                                                                    hex,
-                                                                  ),
-                                                                  leading: Container(
-                                                                    decoration: BoxDecoration(
-                                                                      shape: BoxShape.circle,
-                                                                      color: oldThemes[index].entries.firstWhere((element) => element.name == ThemeColors.Colors.reversed.toList()[index2]).color!
-                                                                    ),
-                                                                    height: 30,
-                                                                    width: 30,
-                                                                  ),
-                                                                  onTap: () {
-                                                                    Clipboard.setData(ClipboardData(text: hex));
-                                                                    showSnackbar('Copied', 'Hex code copied to clipboard');
-                                                                  }
-                                                                );
-                                                              },
-                                                            ),
-                                                          );
-                                                        }),
-                                                      ),
-                                                    ),
-                                                    actions: [
-                                                      TextButton(
-                                                          child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                                          onPressed: () {
-                                                            Navigator.of(context).pop();
-                                                          }
-                                                      ),
-                                                    ],
-                                                  )
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              }),
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                                child: Text("Delete Old", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                onPressed: () {
-                                  themeObjectBox.removeAll();
-                                  themeEntryBox.removeAll();
-                                  clearOld();
-                                  Navigator.of(context).pop();
-                                }
-                            ),
-                            TextButton(
-                                child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                }
-                            ),
-                          ],
+                        builder: (context) => OldThemesDialog(
+                          oldThemes, clearOld,
                         )
                     );
                   },
@@ -225,31 +105,28 @@ class _AdvancedThemingPanelState extends State<AdvancedThemingPanel> with Single
             )
           ],
         ),
-        floatingActionButton: Padding(
-          padding: const EdgeInsets.only(bottom: .0),
-          child: FloatingActionButton.extended(
-            backgroundColor: context.theme.colorScheme.primary,
-            onPressed: () {
-              streamController.sink.add(null);
-            },
-            label: Text("Create New", style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.onPrimary)),
-            icon: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.edit,
-              color: context.theme.colorScheme.onPrimary,
-            )
-          ),
+        floatingActionButton: FloatingActionButton.extended(
+          backgroundColor: context.theme.colorScheme.primary,
+          onPressed: () {
+            streamController.sink.add(null);
+          },
+          label: Text("Create New", style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.onPrimary)),
+          icon: Icon(
+            iOS ? CupertinoIcons.pencil : Icons.edit,
+            color: context.theme.colorScheme.onPrimary,
+          )
         ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: index,
           backgroundColor: headerColor,
           destinations: [
             NavigationDestination(
-              icon: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.sun_max : Icons.brightness_high),
+              icon: Icon(iOS ? CupertinoIcons.sun_max : Icons.brightness_high),
               label: "LIGHT THEME",
             ),
             NavigationDestination(
               icon: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.moon : Icons.brightness_3,
+                iOS ? CupertinoIcons.moon : Icons.brightness_3,
               ),
               label: "DARK THEME",
             ),

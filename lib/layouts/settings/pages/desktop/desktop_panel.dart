@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -23,6 +22,8 @@ import 'package:reorderables/reorderables.dart';
 import 'package:window_manager/window_manager.dart';
 
 class DesktopPanel extends StatelessWidget {
+  final RxList<bool> showButtons = RxList<bool>.filled(ReactionTypes.toList().length + 1, false);
+
   @override
   Widget build(BuildContext context) {
     final RxnBool useCustomPath = RxnBool(prefs.getBool("use-custom-path"));
@@ -45,8 +46,6 @@ class DesktopPanel extends StatelessWidget {
       headerColor = tileColor;
       tileColor = temp;
     }
-
-    RxList showButtons = RxList.generate(ReactionTypes.toList().length + 1, (index) => false);
 
     return SettingsScaffold(
       title: "Desktop Settings",

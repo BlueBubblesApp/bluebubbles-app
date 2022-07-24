@@ -5,14 +5,16 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/dialogs/create_new_theme_dialog.dart';
+import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/settings/widgets/content/advanced_theming_tile.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +22,11 @@ import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
 
 class AdvancedThemingContent extends StatefulWidget {
-  AdvancedThemingContent({Key? key, required this.isDarkMode, required this.controller}) : super(key: key);
+  AdvancedThemingContent({
+    Key? key,
+    required this.isDarkMode,
+    required this.controller
+  }) : super(key: key);
   final bool isDarkMode;
   final StreamController controller;
 
@@ -28,7 +34,7 @@ class AdvancedThemingContent extends StatefulWidget {
   State<AdvancedThemingContent> createState() => _AdvancedThemingContentState();
 }
 
-class _AdvancedThemingContentState extends State<AdvancedThemingContent> {
+class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent> with ThemeHelpers {
   late ThemeStruct currentTheme;
   List<ThemeStruct> allThemes = [];
   bool editable = false;
@@ -45,86 +51,17 @@ class _AdvancedThemingContentState extends State<AdvancedThemingContent> {
 
     widget.controller.stream.listen((event) {
       BuildContext _context = context;
-      final TextEditingController controller = TextEditingController();
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: context.theme.colorScheme.properSurface,
-          actions: [
-            TextButton(
-              child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-              onPressed: () {
-                if (ThemeStruct.findOne(controller.text) != null || controller.text.isEmpty) {
-                  showSnackbar("Error", "Please use a unique name for your new theme");
-                } else {
-                  Navigator.of(_context).pop();
-                  final tuple = applyMonet(currentTheme.data, currentTheme.data);
-                  ThemeData finalData = currentTheme.data;
-                  if (widget.isDarkMode) {
-                    finalData = tuple.item2;
-                  } else {
-                    finalData = tuple.item1;
-                  }
-                  ThemeStruct newTheme = ThemeStruct(themeData: finalData, name: controller.text);
-                  allThemes.add(newTheme);
-                  currentTheme = newTheme;
-                  if (widget.isDarkMode) {
-                    SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: currentTheme);
-                  } else {
-                    SettingsManager().saveSelectedTheme(_context, selectedLightTheme: currentTheme);
-                  }
-                }
-              },
-            ),
-          ],
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 15.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS
-                          ? CupertinoIcons.info
-                          : Icons.info_outline,
-                      size: 20,
-                      color: context.theme.colorScheme.primary,
-                    ),
-                    SizedBox(width: 20),
-                    Expanded(
-                        child: Text(
-                          "Your new theme will copy the colors currently displayed in the advanced theming menu",
-                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
-                        )
-                    ),
-                  ],
-                ),
-              ),
-              TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  labelText: "Theme Name",
-                  enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: context.theme.colorScheme.outline,
-                      )),
-                  focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: context.theme.colorScheme.primary,
-                      )),
-                ),
-              ),
-            ],
-          ),
-          title: Text("Create a New Theme", style: context.theme.textTheme.titleLarge),
-        )
+        builder: (context) => CreateNewThemeDialog(_context, widget.isDarkMode, currentTheme, (newTheme) {
+          allThemes.add(newTheme);
+          currentTheme = newTheme;
+          if (widget.isDarkMode) {
+            SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: currentTheme);
+          } else {
+            SettingsManager().saveSelectedTheme(_context, selectedLightTheme: currentTheme);
+          }
+        })
       );
     });
   }
@@ -132,19 +69,10 @@ class _AdvancedThemingContentState extends State<AdvancedThemingContent> {
   @override
   Widget build(BuildContext context) {
     editable = !currentTheme.isPreset && SettingsManager().settings.monetTheming.value == Monet.none;
-    // Samsung theme should always use the background color as the "header" color
-    Color headerColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
-    Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-    
-    // reverse material color mapping to be more accurate
-    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
-      final temp = headerColor;
-      headerColor = tileColor;
-      tileColor = temp;
-    }
-    final length = currentTheme.colors(widget.isDarkMode, returnMaterialYou: false).keys.where((e) => e != "outline").length ~/ 2 + 1;
+    final length = currentTheme
+        .colors(widget.isDarkMode, returnMaterialYou: false).keys
+        .where((e) => e != "outline").length ~/ 2 + 1;
+
     return CustomScrollView(
       physics: ThemeSwitcher.getScrollPhysics(),
       slivers: <Widget>[
@@ -158,11 +86,13 @@ class _AdvancedThemingContentState extends State<AdvancedThemingContent> {
               ..addAll(allThemes.where((a) => widget.isDarkMode ? a.name.contains("🌙") : a.name.contains("☀")))
               ..add(ThemeStruct(name: "Divider2"))
               ..addAll(allThemes.where((a) => !widget.isDarkMode ? a.name.contains("🌙") : a.name.contains("☀"))),
-            backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
-            secondaryColor: SettingsManager().settings.skin.value == Skins.Material ? headerColor : tileColor,
+            backgroundColor: material ? tileColor : headerColor,
+            secondaryColor: material ? headerColor : tileColor,
             textProcessing: (struct) => struct.name.toUpperCase(),
             useCupertino: false,
-            materialCustomWidgets: (struct) => struct.name.contains("Divider") ? Divider(color: context.theme.colorScheme.outline, thickness: 2, height: 2) : Row(
+            materialCustomWidgets: (struct) => struct.name.contains("Divider")
+                ? Divider(color: context.theme.colorScheme.outline, thickness: 2, height: 2)
+                : Row(
               children: [
                 Column(
                   mainAxisSize: MainAxisSize.min,
@@ -308,7 +238,7 @@ class _AdvancedThemingContentState extends State<AdvancedThemingContent> {
               "Make the background of the messages view an animated gradient based on the background and primary colors",
           isThreeLine: true,
         )),
-        SliverToBoxAdapter(
+        const SliverToBoxAdapter(
           child: SettingsSubtitle(
             subtitle: "Tap to edit the base color\nLong press to edit the color for elements displayed on top of the base color\nDouble tap to learn how the colors are used",
             unlimitedSpace: true,
@@ -323,13 +253,13 @@ class _AdvancedThemingContentState extends State<AdvancedThemingContent> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS
+                      iOS
                           ? CupertinoIcons.info
                           : Icons.info_outline,
                       size: 20,
                       color: context.theme.colorScheme.primary,
                     ),
-                    SizedBox(width: 20),
+                    const SizedBox(width: 20),
                     Expanded(
                       child: Text(
                           "You have Material You theming enabled, so some or all of these colors may be generated by Monet. Disable Material You to view the original theme colors.",
@@ -341,7 +271,7 @@ class _AdvancedThemingContentState extends State<AdvancedThemingContent> {
               )
           ),
         SliverPadding(
-          padding: EdgeInsets.only(top: 20, bottom: 10, left: 15),
+          padding: const EdgeInsets.only(top: 20, bottom: 10, left: 15),
           sliver: SliverToBoxAdapter(
             child: Text("COLORS", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
           ),
@@ -364,7 +294,7 @@ class _AdvancedThemingContentState extends State<AdvancedThemingContent> {
           ),
         ),
         SliverPadding(
-          padding: EdgeInsets.only(top: 20, bottom: 10, left: 15),
+          padding: const EdgeInsets.only(top: 20, bottom: 10, left: 15),
           sliver: SliverToBoxAdapter(
             child: Text("FONT SIZE SCALING", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
           ),
@@ -431,7 +361,7 @@ class _AdvancedThemingContentState extends State<AdvancedThemingContent> {
               ),
             ),
           ),
-        SliverPadding(
+        const SliverPadding(
           padding: EdgeInsets.all(25),
         ),
       ],
