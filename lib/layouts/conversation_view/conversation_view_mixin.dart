@@ -319,7 +319,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     return Padding(
-      padding: const EdgeInsets.only(right: 30.0, top: 45),
+      padding: EdgeInsets.only(right: 30.0, top: kIsDesktop ? 10 : 45),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.end,
@@ -593,7 +593,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                     ])))));
 
     final children = [
-      if (kIsDesktop) SizedBox(height: 8.0, width: 5.0),
+      if (kIsDesktop) SizedBox(height: chat!.participants.length == 1 ?  8.0 : 3.0, width: 5.0),
       ContactAvatarGroupWidget(
         chat: chat!,
         size: chat!.participants.length == 1 ? 40 : 45,
@@ -604,6 +604,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         Container(
           constraints: BoxConstraints(
             maxWidth: CustomNavigator.width(context) / 2 - 55,
+            maxHeight: 20.5
           ),
           child: RichText(
             maxLines: 1,
@@ -629,7 +630,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     ];
 
     return PreferredSize(
-      preferredSize: Size.fromHeight(context.orientation == Orientation.landscape && context.isPhone ? 55 : 75),
+      preferredSize: Size.fromHeight(!kIsDesktop && (context.orientation == Orientation.landscape && context.isPhone) ? 55 : 75),
       child: ClipPath(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
@@ -645,7 +646,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               children: [
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 15.0, top: 45),
+                    padding: EdgeInsets.only(left: 15.0, top: kIsDesktop ? 5 : 45),
                     child: GestureDetector(
                       onTap: () {
                         if (LifeCycleManager().isBubble) {
@@ -692,7 +693,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     child: GestureDetector(
                       onTap: openDetails,
                       child: Builder(builder: (context) {
-                        if (context.orientation == Orientation.landscape && context.isPhone) {
+                        if (!kIsDesktop && (context.orientation == Orientation.landscape && context.isPhone)) {
                           return Row(
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.center,

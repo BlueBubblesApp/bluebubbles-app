@@ -200,23 +200,20 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
-                  Container(
-                    color: tileColor,
-                    child: Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        SettingsManager().settings.doubleTapForDetails.value = val;
-                        if (val && SettingsManager().settings.enableQuickTapback.value) {
-                          SettingsManager().settings.enableQuickTapback.value = false;
-                        }
-                        saveSettings();
-                      },
-                      initialVal: SettingsManager().settings.doubleTapForDetails.value,
-                      title: "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Details",
-                      subtitle: "Opens the message details popup when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
-                      backgroundColor: tileColor,
-                      isThreeLine: true,
-                    )),
-                  ),
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      SettingsManager().settings.doubleTapForDetails.value = val;
+                      if (val && SettingsManager().settings.enableQuickTapback.value) {
+                        SettingsManager().settings.enableQuickTapback.value = false;
+                      }
+                      saveSettings();
+                    },
+                    initialVal: SettingsManager().settings.doubleTapForDetails.value,
+                    title: "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Details",
+                    subtitle: "Opens the message details popup when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
+                    backgroundColor: tileColor,
+                    isThreeLine: true,
+                  )),
                   if (!kIsDesktop && !kIsWeb)
                     Container(
                       color: tileColor,

@@ -32,7 +32,7 @@ class CreateNewThemeDialog extends StatelessWidget {
             if (ThemeStruct.findOne(controller.text) != null || controller.text.isEmpty) {
               showSnackbar("Error", "Please use a unique name for your new theme");
             } else {
-              Navigator.of(_context).pop();
+              Navigator.of(kIsDesktop ? context : _context).pop();
               final tuple = applyMonet(currentTheme.data, currentTheme.data);
               ThemeData finalData = currentTheme.data;
               if (isDarkMode) {

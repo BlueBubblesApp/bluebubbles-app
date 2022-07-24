@@ -128,7 +128,7 @@ class Reaction {
     messages.add(message);
   }
 
-  Widget? getSmallWidget(BuildContext context, {Message? message, bool bigPin = false, bool isReactionPicker = false, bool isSelected = false}) {
+  Widget? getSmallWidget(BuildContext context, {Message? message, bool bigPin = false, bool isReactionPicker = false, bool isSelected = false, double size = 28}) {
     if (messages.isEmpty && message == null) return null;
     if (messages.isEmpty && message != null) messages = [message];
 
@@ -153,11 +153,11 @@ class Reaction {
             children: <Widget>[
               if (bigPin)
                 Positioned(
-                  left: -6,
-                  top: 24,
+                  left: size * -0.24,
+                  top: size,
                   child: Container(
-                    height: 5.5,
-                    width: 5.5,
+                    height: size * 0.2,
+                    width: size * 0.2,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(100),
                       color: context.theme.colorScheme.properSurface,
@@ -172,11 +172,11 @@ class Reaction {
                 ),
               if (bigPin)
                 Positioned(
-                  top: 15.5,
-                  left: -1.5,
+                  top: size * 0.62,
+                  left: size * -0.06,
                   child: Container(
-                    height: 10,
-                    width: 10,
+                    height: size * 0.4,
+                    width: size * 0.4,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(100),
                       color: context.theme.colorScheme.properSurface,
@@ -190,9 +190,9 @@ class Reaction {
                   ),
                 ),
               Container(
-                height: bigPin ? 25 : 28,
-                width: bigPin ? 25 : 28,
-                margin: EdgeInsets.only(right: bigPin ? 10 : 0),
+                height: size,
+                width: size,
+                margin: EdgeInsets.only(right: bigPin ? size * 0.4 : 0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100),
                   color: isReactionPicker
@@ -208,18 +208,11 @@ class Reaction {
                         ],
                 ),
                 child: Padding(
-                  padding: bigPin
-                      ? const EdgeInsets.only(
-                          top: 6.0,
-                          left: 5.0,
-                          right: 5.0,
-                          bottom: 5.0,
-                        )
-                      : const EdgeInsets.only(
-                          top: 8.0,
-                          left: 7.0,
-                          right: 7.0,
-                          bottom: 7.0,
+                  padding: EdgeInsets.only(
+                          top: size * 0.29,
+                          left: size * 0.25,
+                          right: size * 0.25,
+                          bottom: size * 0.25,
                         ),
                   child: getReactionIcon(reactionType, iconColor),
                 ),

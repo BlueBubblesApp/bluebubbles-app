@@ -231,7 +231,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                             subtitle:
                                 "The maximum row count of pins displayed${kIsDesktop ? "" : " when using the app in the portrait orientation"}",
                             isThreeLine: true,
-                            backgroundColor: tileColor,
                           );
                         } else {
                           return const SizedBox.shrink();
@@ -254,7 +253,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                     saveSettings();
                                   },
                                   startingVal: SettingsManager().settings.pinRowsPortrait.value.toDouble(),
-                                  text: "Maximum Pin Rows",
                                   backgroundColor: tileColor,
                                   formatValue: (val) =>
                                       "${SettingsManager().settings.pinRowsPortrait.value} row${SettingsManager().settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${kIsDesktop
@@ -277,7 +275,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                 "Pinned Chat Configuration (${SettingsManager().settings.pinRowsPortrait.value} row${SettingsManager().settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${SettingsManager().settings.pinColumnsLandscape})",
                             subtitle:
                                 "Pinned chats will overflow onto multiple pages if they do not fit in this configuration. Keep in mind that you cannot access different pages of the pinned chats without a touchscreen or horizontal scrolling capability.",
-                            backgroundColor: tileColor,
                           );
                         } else {
                           return const SizedBox.shrink();
@@ -488,7 +485,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                       SettingsTile(
                         title: "Pinned Order",
                         subtitle: "Set the order for your pinned chats",
-                        backgroundColor: tileColor,
                         onTap: () {
                           CustomNavigator.pushSettings(
                             context,
@@ -532,7 +528,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                       }),
                       if (iOS)
                         SettingsTile(
-                          backgroundColor: tileColor,
                           title: "Customize Swipe Actions",
                           subtitle: "Enable or disable specific swipe actions",
                         ),

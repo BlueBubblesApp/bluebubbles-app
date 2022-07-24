@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
+import 'package:universal_io/io.dart';
 
 class ThemeStruct {
   int? id;
@@ -243,7 +244,7 @@ class ThemeStruct {
   Map<String, Color> colors(bool dark, {bool returnMaterialYou = true}) {
     ThemeData finalData = data;
     if (returnMaterialYou) {
-      final tuple = applyMonet(data, data);
+      final tuple = Platform.isWindows ? applyWindowsAccent(data, data) : applyMonet(data, data);
       if (dark) {
         finalData = tuple.item2;
       } else {

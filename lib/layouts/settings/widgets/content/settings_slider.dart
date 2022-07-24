@@ -9,7 +9,6 @@ class SettingsSlider extends StatelessWidget {
       {required this.startingVal,
         this.update,
         this.onChangeEnd,
-        required this.text,
         this.formatValue,
         required this.min,
         required this.max,
@@ -22,7 +21,6 @@ class SettingsSlider extends StatelessWidget {
   final double startingVal;
   final Function(double val)? update;
   final Function(double val)? onChangeEnd;
-  final String text;
   final Function(double value)? formatValue;
   final double min;
   final double max;

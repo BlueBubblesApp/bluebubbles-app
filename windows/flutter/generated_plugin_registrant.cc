@@ -10,6 +10,8 @@
 #include <connectivity_plus_windows/connectivity_plus_windows_plugin.h>
 #include <dart_vlc/dart_vlc_plugin.h>
 #include <desktop_drop/desktop_drop_plugin.h>
+#include <dynamic_color/dynamic_color_plugin_c_api.h>
+#include <flutter_acrylic/flutter_acrylic_plugin.h>
 #include <flutter_native_view/flutter_native_view_plugin.h>
 #include <geolocator_windows/geolocator_windows.h>
 #include <maps_launcher/maps_launcher_plugin.h>
@@ -34,6 +36,10 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("DartVlcPlugin"));
   DesktopDropPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("DesktopDropPlugin"));
+  DynamicColorPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("DynamicColorPluginCApi"));
+  FlutterAcrylicPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("FlutterAcrylicPlugin"));
   FlutterNativeViewPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("FlutterNativeViewPlugin"));
   GeolocatorWindowsRegisterWithRegistrar(

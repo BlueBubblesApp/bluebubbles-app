@@ -35,7 +35,6 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> with The
                 backgroundColor: tileColor,
                 children: [
                   Obx(() => SettingsTile(
-                    backgroundColor: tileColor,
                     onTap: () async {
                       if (Logger.saveLogs.value) {
                         await Logger.stopSavingLogs();
@@ -67,7 +66,6 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> with The
                     backgroundColor: tileColor,
                     children: [
                       SettingsTile(
-                        backgroundColor: tileColor,
                         onTap: () async {
                           final RxList<String> log = <String>[].obs;
                           showDialog(

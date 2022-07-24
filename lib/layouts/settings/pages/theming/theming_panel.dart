@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/settings/pages/theming/avatar/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/layouts/settings/pages/theming/avatar/custom_avatar_panel.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
@@ -20,10 +21,12 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:dio/dio.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:universal_io/io.dart';
@@ -115,7 +118,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                             ),
                           );
                         },
-                        backgroundColor: tileColor,
                       ),
                     Container(
                       color: tileColor,
@@ -132,7 +134,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       child: Text("Avatar Scale Factor", style: context.theme.textTheme.bodyLarge),
                     ),
                     Obx(() => SettingsSlider(
-                        text: "Avatar Scale Factor",
                         startingVal: SettingsManager().settings.avatarScale.value.toDouble(),
                         update: (double val) {
                           SettingsManager().settings.avatarScale.value = val;
@@ -153,7 +154,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     tileColor: tileColor,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
-                    text: "Skin and Layout"),
+                    text: "Skin${kIsDesktop ? "" : " and Layout"}"),
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
@@ -177,24 +178,26 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       backgroundColor: tileColor,
                       secondaryColor: headerColor,
                     )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 15.0),
-                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                    if (!kIsDesktop)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
                       ),
-                    ),
-                    Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        SettingsManager().settings.tabletMode.value = val;
-                        saveSettings();
-                      },
-                      initialVal: SettingsManager().settings.tabletMode.value,
-                      title: "Tablet Mode",
-                      backgroundColor: tileColor,
-                      subtitle: "Enables tablet mode (split view) depending on screen width",
-                      isThreeLine: true,
-                    )),
+                    if (!kIsDesktop)
+                      Obx(() => SettingsSwitch(
+                        onChanged: (bool val) {
+                          SettingsManager().settings.tabletMode.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.tabletMode.value,
+                        title: "Tablet Mode",
+                        backgroundColor: tileColor,
+                        subtitle: "Enables tablet mode (split view) depending on screen width",
+                        isThreeLine: true,
+                      )),
                     if (!kIsWeb && !kIsDesktop)
                       Container(
                         color: tileColor,
@@ -227,6 +230,114 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       ),
                   ],
                 ),
+                if (kIsDesktop && Platform.isWindows)
+                  SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Window Effect",
+                  ),
+                if (kIsDesktop && Platform.isWindows)
+                  SettingsSection(
+                    backgroundColor: tileColor,
+                    children: [
+                      Obx(() => SettingsOptions<WindowEffect>(
+                          initial: SettingsManager().settings.windowEffect.value,
+                          options: WindowEffects.effects,
+                          textProcessing: (WindowEffect effect) => effect.toString().substring("WindowEffect.".length),
+                          onChanged: (WindowEffect? effect) async {
+                            bool defaultOpacityLight = SettingsManager().settings.windowEffectCustomOpacityLight.value == WindowEffects.defaultOpacity(dark: false);
+                            bool defaultOpacityDark = SettingsManager().settings.windowEffectCustomOpacityDark.value == WindowEffects.defaultOpacity(dark: true);
+                            effect ??= WindowEffect.disabled;
+                            SettingsManager().settings.windowEffect.value = effect;
+                            if (defaultOpacityLight) {
+                              SettingsManager().settings.windowEffectCustomOpacityLight.value = WindowEffects.defaultOpacity(dark: false);
+                            }
+                            if (defaultOpacityDark) {
+                              SettingsManager().settings.windowEffectCustomOpacityDark.value = WindowEffects.defaultOpacity(dark: true);
+                            }
+                            prefs.setString('window-effect', effect.toString());
+                            await WindowEffects.setEffect(color: context.theme.backgroundColor);
+                            saveSettings();
+                          },
+                          title: "Window Effect",
+                          subtitle: "${WindowEffects.descriptions[SettingsManager().settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}",
+                          backgroundColor: tileColor,
+                          secondaryColor: headerColor,
+                          capitalize: true,
+                        ),
+                      ),
+                      if (SettingsManager().settings.skin.value == Skins.iOS)
+                        Obx(() => SettingsSubtitle(
+                              unlimitedSpace: true,
+                              subtitle:
+                                  "${WindowEffects.descriptions[SettingsManager().settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}",
+                            )),
+                      Obx(() {
+                        if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.backgroundColor)) {
+                          return SettingsTile(
+                            title: "Background Opacity (Light)",
+                            trailing: SettingsManager().settings.windowEffectCustomOpacityLight.value != WindowEffects.defaultOpacity(dark: false) ? ElevatedButton(
+                              onPressed: () {
+                                SettingsManager().settings.windowEffectCustomOpacityLight.value = WindowEffects.defaultOpacity(dark: false);
+                                saveSettings();
+                              },
+                              child: Text("Reset to Default"),
+                            ) : null,
+                          );
+                        }
+                        return SizedBox.shrink();
+                      }),
+                      Obx(() {
+                        if (WindowEffects.dependsOnColor() && !WindowEffects.isDark(color: context.theme.backgroundColor)) {
+                          return SettingsSlider(
+                            startingVal: SettingsManager().settings.windowEffectCustomOpacityLight.value,
+                            max: 1,
+                            min: 0,
+                            divisions: 100,
+                            formatValue: (value) => value.toStringAsFixed(2),
+                            update: (value) => SettingsManager().settings.windowEffectCustomOpacityLight.value = value,
+                            onChangeEnd: (value) {
+                              saveSettings();
+                            },
+                          );
+                        }
+                        return SizedBox.shrink();
+                      }),
+                      Obx(() {
+                        if (WindowEffects.dependsOnColor() && WindowEffects.isDark(color: context.theme.backgroundColor)) {
+                          return SettingsTile(
+                            title: "Background Opacity (Dark)",
+                            trailing: SettingsManager().settings.windowEffectCustomOpacityDark.value != WindowEffects.defaultOpacity(dark: true) ? ElevatedButton(
+                              onPressed: () {
+                                SettingsManager().settings.windowEffectCustomOpacityDark.value = WindowEffects.defaultOpacity(dark: true);
+                                saveSettings();
+                              },
+                              child: Text("Reset to Default"),
+                            ) : null,
+                          );
+                        }
+                        return SizedBox.shrink();
+                      }),
+                      Obx(() {
+                        if (WindowEffects.dependsOnColor() && WindowEffects.isDark(color: context.theme.backgroundColor)) {
+                          return SettingsSlider(
+                            startingVal: SettingsManager().settings.windowEffectCustomOpacityDark.value,
+                            max: 1,
+                            min: 0,
+                            divisions: 100,
+                            formatValue: (value) => value.toStringAsFixed(2),
+                            update: (value) => SettingsManager().settings.windowEffectCustomOpacityDark.value = value,
+                            onChangeEnd: (value) {
+                              saveSettings();
+                            },
+                          );
+                        }
+                        return SizedBox.shrink();
+                      }),
+                    ]
+                  ),
                 SettingsHeader(
                     headerColor: headerColor,
                     tileColor: tileColor,
@@ -236,11 +347,25 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
+                    if (kIsDesktop && Platform.isWindows)
+                      Obx(() => SettingsSwitch(
+                        initialVal: SettingsManager().settings.useWindowsAccent.value,
+                        backgroundColor: tileColor,
+                        title: "Use Windows Accent Color",
+                        subtitle: "Apply the Windows accent color to your theme",
+                        onChanged: (value) async {
+                          if (value) {
+                            windowsAccentColor = await DynamicColorPlugin.getAccentColor();
+                          }
+                          SettingsManager().settings.useWindowsAccent.value = value;
+                          saveSettings();
+                          loadTheme(context);
+                        },
+                      )),
                     if (!kIsWeb && !kIsDesktop && monetPalette != null)
                       Obx(() {
                         if (iOS) {
                           return SettingsTile(
-                            backgroundColor: tileColor,
                             title: "Material You",
                             subtitle:
                             "Use Android 12's Monet engine to provide wallpaper-based coloring to your theme. Tap for more info.",
@@ -398,7 +523,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                             CustomAvatarColorPanel(),
                           );
                         },
-                        backgroundColor: tileColor,
                         subtitle: "Customize the color for different avatars",
                       ),
                     if (!kIsWeb)
@@ -419,7 +543,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                             CustomAvatarPanel(),
                           );
                         },
-                        backgroundColor: tileColor,
                         subtitle: "Customize the avatar for different chats",
                       ),
                     if (!kIsWeb)
@@ -464,7 +587,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           }
                           controller.gettingIcons.value = false;
                         },
-                        backgroundColor: tileColor,
                         subtitle: "Get iMessage group chat icons from the server",
                       ),
                     if (!kIsWeb)
@@ -614,7 +736,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                               showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
                             },
                             title: "Delete iOS Emoji Font",
-                            backgroundColor: tileColor,
                           );
                         } else {
                           return const SizedBox.shrink();

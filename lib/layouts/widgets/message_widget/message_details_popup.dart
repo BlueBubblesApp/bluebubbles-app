@@ -170,8 +170,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     bool hideReactions =
         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value) || !isSierra;
 
-    double offsetX = widget.message.isFromMe! ? CustomNavigator.width(context) - widget.childSize!.width - 10 : 10;
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
@@ -201,7 +199,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   duration: Duration(milliseconds: 250),
                   curve: Curves.easeOut,
                   top: messageTopOffset,
-                  left: offsetX,
+                  left: widget.message.isFromMe! ? null : 10,
+                  right: widget.message.isFromMe! ? 10 : null,
                   child: Container(
                     width: widget.childSize!.width,
                     height: widget.childSize!.height + 5,
@@ -211,6 +210,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Positioned(
                   top: 40,
                   left: 10,
+                  right: 10,
                   child: AnimatedSize(
                     duration: Duration(milliseconds: 500),
                     curve: Sprung.underDamped,
@@ -223,7 +223,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                               child: Container(
                                 alignment: Alignment.center,
                                 height: 120,
-                                width: CustomNavigator.width(context) - 20,
                                 color: context.theme.colorScheme.properSurface,
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 0),
@@ -266,19 +265,18 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     double narrowWidth = widget.message.isFromMe! || !SettingsManager().settings.alwaysShowAvatars.value ? 330 : 360;
     bool narrowScreen = CustomNavigator.width(context) < narrowWidth;
     double reactionIconSize = 50;
-    double maxMenuWidth = (ReactionTypes.toList().length / (narrowScreen ? 2 : 1) * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize * 2).toDouble();
     if (topMinimum > context.height - 120 - menuHeight) {
       topMinimum = context.height - 120 - menuHeight;
     }
-    bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
-    double leftOffset =
-        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 25 : 20 + (shiftRight ? 35 : 0))
-            .toDouble();
+    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value);
+
+    double offset = 20 + (shiftRight ? 35 : 0);
 
     return Positioned(
       bottom: context.height - messageTopOffset + 10,
-      left: leftOffset,
+      left: widget.message.isFromMe! ? null : offset,
+      right: widget.message.isFromMe! ? offset : null,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(40.0),
         child: BackdropFilter(
@@ -294,51 +292,58 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.start,
-                  children: ReactionTypes.toList()
-                      .slice(0, narrowScreen ? 3 : null)
-                      .map(
-                        (e) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
-                          child: GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              sendReaction(selfReaction == e ? "-$e" : e);
-                            },
-                            onTapDown: (TapDownDetails details) {
-                              if (currentlySelectedReaction == e) {
-                                currentlySelectedReaction = null;
-                              } else {
-                                currentlySelectedReaction = e;
-                              }
-                              if (mounted) setState(() {});
-                            },
-                            onTapUp: (details) {},
-                            onTapCancel: () {
-                              currentlySelectedReaction = selfReaction;
-                              if (mounted) setState(() {});
-                            },
-                            child: Container(
-                              width: reactionIconSize - 15,
-                              height: reactionIconSize - 15,
-                              decoration: BoxDecoration(
-                                color: currentlySelectedReaction == e
-                                    ? context.theme.colorScheme.primary
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(
-                                  20,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(6),
-                                child: Reaction.getReactionIcon(e, currentlySelectedReaction == e
-                                    ? context.theme.colorScheme.onPrimary
-                                    : context.theme.colorScheme.outline, usePink: currentlySelectedReaction == e),
+                  children: ReactionTypes.toList().slice(0, narrowScreen ? 3 : null).map((e) {
+                    final RxBool hovered = false.obs;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        onEnter: (details) => hovered.value = true,
+                        onExit: (details) => hovered.value = false,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            sendReaction(selfReaction == e ? "-$e" : e);
+                          },
+                          onTapDown: (TapDownDetails details) {
+                            if (currentlySelectedReaction == e) {
+                              currentlySelectedReaction = null;
+                            } else {
+                              currentlySelectedReaction = e;
+                            }
+                            if (mounted) setState(() {});
+                          },
+                          onTapUp: (details) {},
+                          onTapCancel: () {
+                            currentlySelectedReaction = selfReaction;
+                            if (mounted) setState(() {});
+                          },
+                          child: Obx(() => AnimatedContainer(
+                            duration: Duration(milliseconds: 150),
+                            width: reactionIconSize - 15,
+                            height: reactionIconSize - 15,
+                            decoration: BoxDecoration(
+                              color: hovered.value ? context.theme.colorScheme.primary.withOpacity(0.3) : currentlySelectedReaction == e
+                                  ? context.theme.colorScheme.primary
+                                  : context.theme.colorScheme.properSurface.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(
+                                20,
                               ),
                             ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(6),
+                              child: Reaction.getReactionIcon(
+                                  e,
+                                  currentlySelectedReaction == e
+                                      ? context.theme.colorScheme.onPrimary
+                                      : context.theme.colorScheme.outline,
+                                  usePink: currentlySelectedReaction == e),
+                            ),),
                           ),
                         ),
-                      )
-                      .toList(),
+                      ),
+                    );
+                  }).toList(),
                 ),
                 if (narrowScreen)
                   Row(
@@ -360,7 +365,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                                   20,
                                 ),
                               ),
-                              child: GestureDetector(
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                onHover: (event) {},
+                                child: GestureDetector(
                                 onTap: () {
                                   HapticFeedback.lightImpact();
                                   sendReaction(selfReaction == e ? "-$e" : e);
@@ -385,6 +393,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                                       : context.theme.colorScheme.outline, usePink: false),
                                 ),
                               ),
+                              ),
                             ),
                           ),
                         )
@@ -406,7 +415,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   bool get isSent => !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
 
   Widget buildDetailsMenu() {
-    double maxMenuWidth = min(max(CustomNavigator.width(context) * 3 / 5, 200), CustomNavigator.width(context) * 4 / 5);
+    bool showAltLayout =
+        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !LifeCycleManager().isBubble;
+    double maxMenuWidth = min(max(CustomNavigator.width(context) * 3 / 5, 200), CustomNavigator.width(context) * 4 / 5) * (showAltLayout ? 0.5 : 1);
     double maxHeight = context.height - messageTopOffset - widget.childSize!.height;
 
     List<Widget> allActions = [
@@ -422,6 +433,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               EventDispatcher().emit("focus-keyboard", widget.message);
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Reply",
@@ -455,6 +467,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               }
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Download to Device",
@@ -530,6 +543,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text("Copy", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
               trailing: Icon(
@@ -642,6 +656,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               }
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Download Original to Device",
@@ -677,6 +692,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open Direct Message",
@@ -702,6 +718,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               showReplyThread(context, widget.message, widget.messageBloc);
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "View Thread",
@@ -750,6 +767,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Start Conversation",
@@ -797,6 +815,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Forward",
@@ -824,6 +843,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               popDetails();
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Re-download from Server",
@@ -857,6 +877,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               popDetails();
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Share",
@@ -972,6 +993,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             popDetails();
           },
           child: ListTile(
+            mouseCursor: SystemMouseCursors.click,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               "Delete",
@@ -1057,6 +1079,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                           name: 'Popup Menu');
                     },
                     child: ListTile(
+                      mouseCursor: SystemMouseCursors.click,
                       dense: !kIsDesktop && !kIsWeb,
                       title: Text("More...", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
                       trailing: Icon(
@@ -1080,14 +1103,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     }
 
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
-    bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
-    double leftOffset =
-        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 15 : 20 + (shiftRight ? 35 : 0))
-            .toDouble();
+    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value);
+
+    double offset = 20 + (shiftRight ? 35 : 0);
     return Positioned(
       top: topOffset > context.height - 100 ? null : topOffset + (widget.message.isFromMe! ? 5 : 10),
       bottom: topOffset > context.height - 100 ? 45 : null,
-      left: leftOffset,
+      left: widget.message.isFromMe! ? null : offset,
+      right: widget.message.isFromMe! ? offset : null,
       child: menu,
     );
   }

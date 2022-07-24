@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
@@ -235,7 +234,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                   SettingsTile(
                     title: "Show QR Code",
                     subtitle: "Generate QR Code to screenshot or sync other devices",
-                    backgroundColor: tileColor,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.qrcode,
                       materialIcon: Icons.qr_code,
@@ -390,7 +388,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       iosIcon: CupertinoIcons.gear,
                       materialIcon: Icons.room_preferences,
                     ),
-                    backgroundColor: tileColor,
                     onLongPress: kIsWeb || kIsDesktop ? null : () {
                       showDialog(
                         context: context,
@@ -661,7 +658,6 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       subtitle: (controller.isRestarting.value)
                           ? "Restart in progress..."
                           : "This will briefly disconnect you",
-                      backgroundColor: tileColor,
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.desktopcomputer,
                         materialIcon: Icons.dvr,

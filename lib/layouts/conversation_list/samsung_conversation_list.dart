@@ -25,6 +25,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
@@ -55,9 +56,9 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
       double actualHeight = context.height - padding.top - padding.bottom;
       if (scrollController.position.viewportDimension < actualHeight) {
         remainingHeight.value =
-            context.height - scrollController.position.viewportDimension + (context.height / 3 - 50);
-      } else if (scrollController.position.maxScrollExtent < context.height / 3 - 50) {
-        remainingHeight.value = context.height / 3 - 50 - scrollController.position.maxScrollExtent;
+            context.height - scrollController.position.viewportDimension + (context.height / 3 - (kToolbarHeight + (kIsDesktop ? 20 : 0)));
+      } else if (scrollController.position.maxScrollExtent < context.height / 3 - (kToolbarHeight + (kIsDesktop ? 20 : 0))) {
+        remainingHeight.value = context.height / 3 - (kToolbarHeight + (kIsDesktop ? 20 : 0)) - scrollController.position.maxScrollExtent;
       }
     });
   }
@@ -290,7 +291,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
         alignment: Alignment.bottomLeft,
         child: Container(
           padding: EdgeInsets.only(left: showArchived || showUnknown ? 60 : 16),
-          height: 50,
+          height: (kToolbarHeight + (kIsDesktop ? 20 : 0)),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Row(
@@ -315,7 +316,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
     return Align(
       alignment: Alignment.bottomRight,
       child: Container(
-        height: 50,
+        height: (kToolbarHeight + (kIsDesktop ? 20 : 0)),
         child: Align(
           alignment: Alignment.center,
           child: Row(
@@ -428,7 +429,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
   }
 
   double _calculateExpandRatio(BoxConstraints constraints, BuildContext context) {
-    var expandRatio = (constraints.maxHeight - 50) / (context.height / 3 - 50);
+    var expandRatio = (constraints.maxHeight - (kToolbarHeight + (kIsDesktop ? 20 : 0))) / (context.height / 3 - (kToolbarHeight + (kIsDesktop ? 20 : 0)));
 
     if (expandRatio > 1.0) expandRatio = 1.0;
     if (expandRatio < 0.0) expandRatio = 0.0;
@@ -443,6 +444,17 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
         ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
         ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+
+    final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+        ? headerColor
+        : Colors.transparent)
+        .obs;
+
+    final Rx<Color> _tileColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+        ? tileColor
+        : Colors.transparent)
+        .obs;
+
     return WillPopScope(
       onWillPop: () async {
         if (selected.isNotEmpty) {
@@ -452,8 +464,8 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
         }
         return true;
       },
-      child: Scaffold(
-        backgroundColor: headerColor,
+      child: Obx(() => Scaffold(
+        backgroundColor: _headerColor.value,
         body: SafeArea(
           child: NotificationListener<ScrollEndNotification>(
             onNotification: (_) {
@@ -478,12 +490,13 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                   controller: scrollController,
                   slivers: [
                     SliverAppBar(
-                      backgroundColor: headerColor,
+                      backgroundColor: _headerColor.value,
+                      shadowColor: Colors.black,
                       pinned: true,
                       stretch: true,
                       expandedHeight: context.height / 3,
+                      toolbarHeight: kToolbarHeight + (kIsDesktop ? 20 : 0),
                       elevation: 0,
-                      scrolledUnderElevation: 0,
                       automaticallyImplyLeading: false,
                       flexibleSpace: LayoutBuilder(
                         builder: (context, constraints) {
@@ -510,7 +523,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                               return Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(25),
-                                  color: tileColor,
+                                  color: _tileColor.value,
                                 ),
                                 clipBehavior: Clip.antiAlias,
                                 child: ListView.builder(
@@ -546,7 +559,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                                 if (!ChatBloc().loadedChatBatch.value) {
                                   return Center(
                                     child: Container(
-                                      padding: EdgeInsets.only(top: 50.0),
+                                      padding: EdgeInsets.only(top: kToolbarHeight + (kIsDesktop ? 20 : 0)),
                                       child: Column(
                                         children: [
                                           Padding(
@@ -570,9 +583,9 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                                         .isEmpty) {
                                   return Center(
                                     child: Container(
-                                      padding: EdgeInsets.only(top: 50.0),
+                                      padding: EdgeInsets.only(top: kToolbarHeight + (kIsDesktop ? 20 : 0)),
                                       child: Text(
-                                        "You have no archived chats :(",
+                                        "You have no archived chats",
                                         style: context.textTheme.labelLarge,
                                       ),
                                     ),
@@ -581,7 +594,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
                                 return Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(25),
-                                    color: tileColor,
+                                    color: _tileColor.value,
                                   ),
                                   clipBehavior: Clip.antiAlias,
                                   child: ListView.builder(
@@ -709,7 +722,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
         floatingActionButton: selected.isEmpty && !SettingsManager().settings.moveChatCreatorToHeader.value
             ? widget.parent.buildFloatingActionButton()
             : null,
-      ),
+      )),
     );
   }
 

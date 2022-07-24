@@ -18,6 +18,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
 class SearchView extends StatefulWidget {
@@ -140,9 +141,11 @@ class SearchViewState extends State<SearchView> {
     Brightness brightness = context.theme.colorScheme.brightness;
     // Samsung theme should always use the background color as the "header" color
     Color headerColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+        ? context.theme.colorScheme.background
+        : context.theme.colorScheme.properSurface;
     Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+        ? context.theme.colorScheme.properSurface
+        : context.theme.colorScheme.background;
 
     // reverse material color mapping to be more accurate
     if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
@@ -150,250 +153,279 @@ class SearchViewState extends State<SearchView> {
       headerColor = tileColor;
       tileColor = temp;
     }
+
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+            ? context.theme.colorScheme.background
+            : Colors.transparent)
+        .obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _backgroundColor.value =
+              effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+        }
+      });
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+            ? Colors.transparent
+            : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
-      child: Scaffold(
-        // extendBodyBehindAppBar: true,
-        backgroundColor: context.theme.colorScheme.background,
-        appBar: PreferredSize(
-          preferredSize: Size(CustomNavigator.width(context), 50),
-          child: ClipRRect(
-            child: BackdropFilter(
-              child: AppBar(
-                systemOverlayStyle:
-                brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-                toolbarHeight: 50,
-                elevation: 0,
-                scrolledUnderElevation: 3,
-                surfaceTintColor: context.theme.colorScheme.primary,
-                leading: buildBackButton(context),
-                backgroundColor: headerColor.withOpacity(0.5),
-                title: Text(
-                  "Search",
-                  style: context.theme.textTheme.titleLarge,
-                ),
-                centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
-              ),
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            ),
-          ),
-        ),
-        body: Column(
-          children: [
-            Container(padding: EdgeInsets.only(top: 8.0)),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS
-                        ? CupertinoIcons.info
-                        : Icons.info_outline,
-                    size: 20,
-                    color: context.theme.colorScheme.primary,
-                  ),
-                  SizedBox(width: 20),
-                  Expanded(
-                      child: Text(
-                        "Enter at least 3 characters to begin a search",
-                        style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
-                      )
-                  ),
-                ],
-              ),
-            ),
-            Container(
-                padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
-                child: CupertinoTextField(
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) {
-                    search(textEditingController.text);
-                  },
-                  focusNode: _focusNode,
-                  padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
-                  controller: textEditingController,
-                  placeholder: "Enter a search term...",
-                  style: context.theme.textTheme.bodyLarge,
-                  placeholderStyle: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
-                  cursorColor: context.theme.colorScheme.primary,
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: context.theme.colorScheme.primary)),
-                  maxLines: 1,
-                  prefix: Padding(
-                    padding: EdgeInsets.only(left: 15),
-                    child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search,
-                        color: context.theme.colorScheme.outline),
-                  ),
-                  suffix: Padding(
-                    padding: EdgeInsets.only(right: 15),
-                    child: (!isSearching)
-                        ? InkWell(
-                        child: Icon(Icons.arrow_forward,
-                            color: context.theme.colorScheme.primary),
-                        onTap: () {
-                          search(textEditingController.text);
-                        })
-                        : Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: SettingsManager().settings.skin.value == Skins.iOS
-                          ? Theme(
-                        data: ThemeData(
-                          cupertinoOverrideTheme: CupertinoThemeData(
-                              brightness: ThemeData.estimateBrightnessForColor(context.theme.colorScheme.background)),
-                        ),
-                        child: CupertinoActivityIndicator(),
-                      )
-                          : Container(
-                          height: 20,
-                          width: 20,
-                          child: Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                              ))),
+      child: Obx(() => Scaffold(
+            // extendBodyBehindAppBar: true,
+            backgroundColor: _backgroundColor.value,
+            appBar: PreferredSize(
+              preferredSize: Size(CustomNavigator.width(context), 50),
+              child: ClipRRect(
+                child: BackdropFilter(
+                  child: AppBar(
+                    systemOverlayStyle:
+                        brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+                    toolbarHeight: 50,
+                    elevation: 0,
+                    scrolledUnderElevation: 3,
+                    surfaceTintColor: context.theme.colorScheme.primary,
+                    leading: buildBackButton(context),
+                    backgroundColor: headerColor.withOpacity(0.5),
+                    title: Text(
+                      "Search",
+                      style: context.theme.textTheme.titleLarge,
                     ),
+                    centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
                   ),
-                  suffixMode: OverlayVisibilityMode.editing,
-                )),
-            Divider(color: context.theme.colorScheme.outline),
-            (!isSearching && noResults)
-                ? Padding(
-                    padding: EdgeInsets.only(top: 25.0),
-                    child: Text("No results found!", style: context.theme.textTheme.bodyLarge))
-                : (!isSearching)
-                    ? Flexible(
-                        fit: FlexFit.loose,
-                        child: ScrollbarWrapper(
-                          controller: _scrollController,
-                          child: AnimatedList(
-                            key: _listKey,
-                            controller: _scrollController,
-                            physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
-                                ? NeverScrollableScrollPhysics()
-                                : ThemeSwitcher.getScrollPhysics(),
-                            initialItemCount: results.length,
-                            itemBuilder: (BuildContext context, int index, Animation<double> animation) {
-                              TextStyle titleStyle = (SettingsManager().settings.skin.value == Skins.Material ? context.theme.textTheme.bodyMedium : context.theme.textTheme.bodyLarge)!.copyWith(
-                                  fontWeight: SettingsManager().settings.skin.value == Skins.iOS
-                                      ? FontWeight.w600 : null)
-                                  .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0);
-
-                              TextStyle subtitleStyle = context.theme.textTheme.bodySmall!.copyWith(
-                                  color: context.theme.colorScheme.outline,
-                                  height: 1.5
-                              ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.05 : 1.0);
-
-                              Message message = results[index]['message'];
-                              Chat? chat = results[index]['chat'];
-
-                              // Create the textspans
-                              List<InlineSpan> spans = [];
-
-                              // Get the current position of the search term
-                              int termIndex =
-                                  (message.text ?? "").toLowerCase().indexOf(textEditingController.text.toLowerCase());
-                              int termEnd = termIndex + textEditingController.text.length;
-
-                              if (termIndex >= 0) {
-                                // We only want a snippet of the text, so only get a 50x50 range
-                                // of characters from the string, with the search term in the middle
-                                String subText = message.text!.substring((termIndex - 50 >= 0) ? termIndex - 50 : 0,
-                                    (termEnd + 50 < message.text!.length) ? termEnd + 50 : message.text!.length);
-
-                                // Recarculate the term position in the snippet
-                                termIndex = subText.toLowerCase().indexOf(textEditingController.text.toLowerCase());
-                                termEnd = termIndex + textEditingController.text.length;
-
-                                // Add the beginning string
-                                spans.add(TextSpan(
-                                    text: subText.substring(0, termIndex).trimLeft(),
-                                    style: subtitleStyle));
-
-                                // Add the search term
-                                spans.add(TextSpan(
-                                    text: subText.substring(termIndex, termEnd),
-                                    style: subtitleStyle
-                                        .apply(color: context.theme.colorScheme.primary, fontWeightDelta: 2)));
-
-                                // Add the ending string
-                                spans.add(TextSpan(
-                                    text: subText.substring(termEnd, subText.length).trimRight(),
-                                    style: subtitleStyle));
-                              } else {
-                                spans.add(TextSpan(text: message.text, style: subtitleStyle));
-                              }
-
-                              return Container(
-                                decoration: BoxDecoration(
-                                  border: (!SettingsManager().settings.hideDividers.value)
-                                      ? Border(
-                                    bottom: BorderSide(
-                                      color: context.theme.colorScheme.background.lightenOrDarken(15),
-                                      width: 0.5,
-                                    ),
-                                  )
-                                      : null,
-                                ),
-                                child: ListTile(
-                                  onTap: () {
-                                    MessageBloc customBloc = MessageBloc(chat, canLoadMore: false);
-                                    CustomNavigator.push(
-                                      context,
-                                      ConversationView(
-                                        chat: chat,
-                                        existingAttachments: [],
-                                        existingText: null,
-                                        isCreator: false,
-                                        customMessageBloc: customBloc,
-                                        onMessagesViewComplete: () {
-                                          customBloc.loadSearchChunk(message);
-                                        },
-                                      ),
-                                    );
-                                  },
-                                  title: Text(chat?.title ?? "Unknown title",
-                                      style: titleStyle),
-                                  subtitle: RichText(
-                                    text: TextSpan(children: spans),
-                                  ),
-                                  leading: ContactAvatarGroupWidget(
-                                    chat: chat!,
-                                    size: 40,
-                                    editable: false,
-                                  ),
-                                  minVerticalPadding: 10,
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(buildDate(message.dateCreated),
-                                        style: context.theme.textTheme.bodySmall!.copyWith(
-                                          color: context.theme.colorScheme.outline,
-                                        ).apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1 : 1.1)),
-                                      if (SettingsManager().settings.skin.value == Skins.iOS)
-                                        Icon(
-                                          CupertinoIcons.forward,
-                                          color: context.theme.colorScheme.outline,
+                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                ),
+              ),
+            ),
+            body: Column(
+              children: [
+                Container(padding: EdgeInsets.only(top: 8.0)),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info_outline,
+                        size: 20,
+                        color: context.theme.colorScheme.primary,
+                      ),
+                      SizedBox(width: 20),
+                      Expanded(
+                          child: Text(
+                        "Enter at least 3 characters to begin a search",
+                        style: context.theme.textTheme.bodySmall!
+                            .copyWith(color: context.theme.colorScheme.properOnSurface),
+                      )),
+                    ],
+                  ),
+                ),
+                Container(
+                    padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+                    child: CupertinoTextField(
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) {
+                        search(textEditingController.text);
+                      },
+                      focusNode: _focusNode,
+                      padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
+                      controller: textEditingController,
+                      placeholder: "Enter a search term...",
+                      style: context.theme.textTheme.bodyLarge,
+                      placeholderStyle:
+                          context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
+                      cursorColor: context.theme.colorScheme.primary,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: context.theme.colorScheme.primary)),
+                      maxLines: 1,
+                      prefix: Padding(
+                        padding: EdgeInsets.only(left: 15),
+                        child: Icon(
+                            SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search,
+                            color: context.theme.colorScheme.outline),
+                      ),
+                      suffix: Padding(
+                        padding: EdgeInsets.only(right: 15),
+                        child: (!isSearching)
+                            ? InkWell(
+                                child: Icon(Icons.arrow_forward, color: context.theme.colorScheme.primary),
+                                onTap: () {
+                                  search(textEditingController.text);
+                                })
+                            : Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: SettingsManager().settings.skin.value == Skins.iOS
+                                    ? Theme(
+                                        data: ThemeData(
+                                          cupertinoOverrideTheme: CupertinoThemeData(
+                                              brightness: ThemeData.estimateBrightnessForColor(
+                                                  context.theme.colorScheme.background)),
                                         ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      )
-                    : Container()
-          ],
-        ),
-      ),
+                                        child: CupertinoActivityIndicator(),
+                                      )
+                                    : Container(
+                                        height: 20,
+                                        width: 20,
+                                        child: Center(
+                                            child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                        ))),
+                              ),
+                      ),
+                      suffixMode: OverlayVisibilityMode.editing,
+                    )),
+                Divider(color: context.theme.colorScheme.outline),
+                (!isSearching && noResults)
+                    ? Padding(
+                        padding: EdgeInsets.only(top: 25.0),
+                        child: Text("No results found!", style: context.theme.textTheme.bodyLarge))
+                    : (!isSearching)
+                        ? Flexible(
+                            fit: FlexFit.loose,
+                            child: ScrollbarWrapper(
+                              controller: _scrollController,
+                              child: AnimatedList(
+                                key: _listKey,
+                                controller: _scrollController,
+                                physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                                    ? NeverScrollableScrollPhysics()
+                                    : ThemeSwitcher.getScrollPhysics(),
+                                initialItemCount: results.length,
+                                itemBuilder: (BuildContext context, int index, Animation<double> animation) {
+                                  TextStyle titleStyle = (SettingsManager().settings.skin.value == Skins.Material
+                                          ? context.theme.textTheme.bodyMedium
+                                          : context.theme.textTheme.bodyLarge)!
+                                      .copyWith(
+                                          fontWeight: SettingsManager().settings.skin.value == Skins.iOS
+                                              ? FontWeight.w600
+                                              : null)
+                                      .apply(
+                                          fontSizeFactor:
+                                              SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0);
+
+                                  TextStyle subtitleStyle = context.theme.textTheme.bodySmall!
+                                      .copyWith(color: context.theme.colorScheme.outline, height: 1.5)
+                                      .apply(
+                                          fontSizeFactor:
+                                              SettingsManager().settings.skin.value == Skins.Material ? 1.05 : 1.0);
+
+                                  Message message = results[index]['message'];
+                                  Chat? chat = results[index]['chat'];
+
+                                  // Create the textspans
+                                  List<InlineSpan> spans = [];
+
+                                  // Get the current position of the search term
+                                  int termIndex = (message.text ?? "")
+                                      .toLowerCase()
+                                      .indexOf(textEditingController.text.toLowerCase());
+                                  int termEnd = termIndex + textEditingController.text.length;
+
+                                  if (termIndex >= 0) {
+                                    // We only want a snippet of the text, so only get a 50x50 range
+                                    // of characters from the string, with the search term in the middle
+                                    String subText = message.text!.substring((termIndex - 50 >= 0) ? termIndex - 50 : 0,
+                                        (termEnd + 50 < message.text!.length) ? termEnd + 50 : message.text!.length);
+
+                                    // Recarculate the term position in the snippet
+                                    termIndex = subText.toLowerCase().indexOf(textEditingController.text.toLowerCase());
+                                    termEnd = termIndex + textEditingController.text.length;
+
+                                    // Add the beginning string
+                                    spans.add(TextSpan(
+                                        text: subText.substring(0, termIndex).trimLeft(), style: subtitleStyle));
+
+                                    // Add the search term
+                                    spans.add(TextSpan(
+                                        text: subText.substring(termIndex, termEnd),
+                                        style: subtitleStyle.apply(
+                                            color: context.theme.colorScheme.primary, fontWeightDelta: 2)));
+
+                                    // Add the ending string
+                                    spans.add(TextSpan(
+                                        text: subText.substring(termEnd, subText.length).trimRight(),
+                                        style: subtitleStyle));
+                                  } else {
+                                    spans.add(TextSpan(text: message.text, style: subtitleStyle));
+                                  }
+
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      border: (!SettingsManager().settings.hideDividers.value)
+                                          ? Border(
+                                              bottom: BorderSide(
+                                                color: context.theme.colorScheme.background.lightenOrDarken(15),
+                                                width: 0.5,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                    child: ListTile(
+                                      onTap: () {
+                                        MessageBloc customBloc = MessageBloc(chat, canLoadMore: false);
+                                        CustomNavigator.push(
+                                          context,
+                                          ConversationView(
+                                            chat: chat,
+                                            existingAttachments: [],
+                                            existingText: null,
+                                            isCreator: false,
+                                            customMessageBloc: customBloc,
+                                            onMessagesViewComplete: () {
+                                              customBloc.loadSearchChunk(message);
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      title: Text(chat?.title ?? "Unknown title", style: titleStyle),
+                                      subtitle: RichText(
+                                        text: TextSpan(children: spans),
+                                      ),
+                                      leading: ContactAvatarGroupWidget(
+                                        chat: chat!,
+                                        size: 40,
+                                        editable: false,
+                                      ),
+                                      minVerticalPadding: 10,
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(buildDate(message.dateCreated),
+                                              style: context.theme.textTheme.bodySmall!
+                                                  .copyWith(
+                                                    color: context.theme.colorScheme.outline,
+                                                  )
+                                                  .apply(
+                                                      fontSizeFactor:
+                                                          SettingsManager().settings.skin.value == Skins.Material
+                                                              ? 1
+                                                              : 1.1)),
+                                          if (SettingsManager().settings.skin.value == Skins.iOS)
+                                            Icon(
+                                              CupertinoIcons.forward,
+                                              color: context.theme.colorScheme.outline,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          )
+                        : Container()
+              ],
+            ),
+          )),
     );
   }
 }

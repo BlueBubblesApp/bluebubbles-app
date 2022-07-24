@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -37,7 +38,14 @@ class TitleBarWrapper extends StatelessWidget {
       ? WindowBorder(
           color: Colors.transparent,
           width: 0,
-          child: Stack(children: <Widget>[child, const TitleBar()]),
+          child: Stack(children: <Widget>[
+            Scaffold(
+              backgroundColor: context.theme.backgroundColor
+                  .withOpacity(WindowEffects.getOpacity(color: context.theme.backgroundColor)),
+            ),
+            child,
+            const TitleBar()
+          ]),
         )
       : child
     );
@@ -84,7 +92,8 @@ class WindowButtons extends StatelessWidget {
         MinimizeWindowButton(
           colors: buttonColors,
           onPressed: () async => SettingsManager().settings.minimizeToTray.value
-              ? await WindowManager.instance.hide() : await WindowManager.instance.minimize(),
+              ? await WindowManager.instance.hide()
+              : await WindowManager.instance.minimize(),
           animate: true,
         ),
         MaximizeWindowButton(
@@ -94,7 +103,8 @@ class WindowButtons extends StatelessWidget {
         CloseWindowButton(
           colors: closeButtonColors,
           onPressed: () async => SettingsManager().settings.closeToTray.value
-              ? await WindowManager.instance.hide() : await WindowManager.instance.close(),
+              ? await WindowManager.instance.hide()
+              : await WindowManager.instance.close(),
           animate: true,
         ),
       ],

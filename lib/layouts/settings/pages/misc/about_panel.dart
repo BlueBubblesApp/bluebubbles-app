@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -10,7 +9,6 @@ import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -21,7 +19,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:universal_html/html.dart' as html;
 
 class AboutPanel extends StatefulWidget {
 
@@ -48,7 +45,6 @@ class _AboutPanelState extends OptimizedState<AboutPanel> with ThemeHelpers {
                   backgroundColor: tileColor,
                   children: [
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Support Us",
                       subtitle: kIsDesktop || kIsWeb ? "Left click for PayPal / Venmo\nRight click for Github Sponsors" : "Tap for PayPal / Venmo\nTap and hold for GitHub Sponsors",
                       onTap: () async {
@@ -71,7 +67,6 @@ class _AboutPanelState extends OptimizedState<AboutPanel> with ThemeHelpers {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Website",
                       onTap: () async {
                         await launchUrl(Uri(scheme: "https", host: "bluebubbles.app"));
@@ -89,7 +84,6 @@ class _AboutPanelState extends OptimizedState<AboutPanel> with ThemeHelpers {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Source Code",
                       subtitle: kIsWeb || kIsDesktop ? "Right click to report a bug" : "Tap and hold to report a bug",
                       onTap: () async {
@@ -111,7 +105,6 @@ class _AboutPanelState extends OptimizedState<AboutPanel> with ThemeHelpers {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Join Our Discord",
                       onTap: () async {
                         await launchUrl(Uri(scheme: "https", host: "discord.gg", path: "hbx7EhNFjp"));
@@ -135,7 +128,6 @@ class _AboutPanelState extends OptimizedState<AboutPanel> with ThemeHelpers {
                   backgroundColor: tileColor,
                   children: [
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Changelog",
                       onTap: () async {
                         String changelog =
@@ -207,7 +199,6 @@ class _AboutPanelState extends OptimizedState<AboutPanel> with ThemeHelpers {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Developers",
                       onTap: () {
                         final devs = {
@@ -266,7 +257,6 @@ class _AboutPanelState extends OptimizedState<AboutPanel> with ThemeHelpers {
                       ),
                     if (kIsWeb || kIsDesktop)
                       SettingsTile(
-                        backgroundColor: tileColor,
                         title: "Keyboard Shortcuts",
                         onTap: () {
                           showDialog(
@@ -426,7 +416,6 @@ class _AboutPanelState extends OptimizedState<AboutPanel> with ThemeHelpers {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "About",
                       onTap: () {
                         showDialog<void>(
