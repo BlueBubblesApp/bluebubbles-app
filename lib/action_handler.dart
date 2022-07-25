@@ -402,8 +402,8 @@ class ActionHandler {
             PlatformFile(
               path: file.path,
               name: file.path.split("/").last,
-              size: file.lengthSync(),
-              bytes: file.readAsBytesSync(),
+              size: await file.length(),
+              bytes: await file.readAsBytes(),
             ),
             chat,
             i == message.attachments.length - 1 ? message.text ?? "" : "",

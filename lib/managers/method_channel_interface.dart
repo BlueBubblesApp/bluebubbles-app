@@ -210,7 +210,7 @@ class MethodChannelInterface {
         List<PlatformFile> attachments = [];
 
         // Loop through all of the attachments sent by native code
-        call.arguments["attachments"].forEach((element) {
+        call.arguments["attachments"].forEach((element) async {
           // Get the file in that directory
           File file = File(element);
 
@@ -218,8 +218,8 @@ class MethodChannelInterface {
           attachments.add(PlatformFile(
             name: file.path.split("/").last,
             path: file.path,
-            bytes: file.readAsBytesSync(),
-            size: file.lengthSync(),
+            bytes: await file.readAsBytes(),
+            size: await file.length(),
           ));
         });
 
