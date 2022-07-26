@@ -272,8 +272,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     super.dispose();
   }
 
-  Future<bool> send(
-    List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
+  Future<bool> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
     bool alreadySent = false;
     if (isCreator!) {
@@ -382,9 +381,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     }
 
     // play send sound
-    if (SettingsManager().settings.playSendSound.value && SettingsManager().settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop) {
+    if (SettingsManager().settings.playSendSound.value && SettingsManager().settings.sendSoundPath.value != null) {
       AudioPlayer player = AudioPlayer();
-      player.play(AssetSource("audio/imessage-send-sound.mp3"));
+      player.play(DeviceFileSource(SettingsManager().settings.sendSoundPath.value!));
     }
 
     return true;

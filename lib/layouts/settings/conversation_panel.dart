@@ -4,9 +4,12 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bluebubbles/layouts/settings/message_sounds_panel.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 
 class ConversationPanel extends StatelessWidget {
   @override
@@ -29,6 +32,12 @@ class ConversationPanel extends StatelessWidget {
       headerColor = tileColor;
       tileColor = temp;
     }
+
+    Widget nextIcon = Obx(() => SettingsManager().settings.skin.value != Skins.Material ? Icon(
+      SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+      color: context.theme.colorScheme.outline,
+      size: SettingsManager().settings.skin.value == Skins.iOS ? 18 : 24,
+    ) : SizedBox.shrink());
 
     return SettingsScaffold(
       title: "Conversations",
@@ -109,22 +118,25 @@ class ConversationPanel extends StatelessWidget {
                       backgroundColor: tileColor,
                       isThreeLine: true,
                     )),
-                  if (!kIsWeb && !kIsDesktop && SettingsManager().settings.skin.value == Skins.iOS)
-                    Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        SettingsManager().settings.playSendSound.value = val;
-                        saveSettings();
-                      },
-                      initialVal: SettingsManager().settings.playSendSound.value,
-                      title: "Play Send Sound",
-                      backgroundColor: tileColor,
-                    )),
+                  if (!kIsWeb)
                     Container(
                       color: tileColor,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 15.0),
                         child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
+                    ),
+                  if (!kIsWeb)
+                    SettingsTile(
+                      title: "Send and Receive Sounds",
+                      trailing: nextIcon,
+                      onTap: () async {
+                        CustomNavigator.pushSettings(
+                          context,
+                          MessageSoundsPanel(),
+                        );
+                      },
+                      subtitle: "Customize message send and receive sounds",
                     ),
                 ],
               ),

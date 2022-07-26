@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:math';
-
+import 'package:audioplayers/audioplayers.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -153,6 +153,13 @@ class _MessageState extends State<MessageWidget> {
         // If the associated message GUID matches this one, fetch associated messages
         if (fetchAssoc) fetchAssociatedMessages(shouldReload: true);
         if (fetchAttach) fetchAttachments(forceReload: true);
+
+        // play receive sound
+        if (SettingsManager().settings.playReceiveSound.value && SettingsManager().settings.receiveSoundPath.value != null) {
+          AudioPlayer player = AudioPlayer();
+          player.play(DeviceFileSource(SettingsManager().settings.receiveSoundPath.value!));
+        }
+
       } else if (data.type == NewMessageType.UPDATE) {
         String? oldGuid = data.event["oldGuid"];
         // If the guid does not match our current guid, then it's not meant for us
