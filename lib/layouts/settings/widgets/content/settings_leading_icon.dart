@@ -34,9 +34,11 @@ class SettingsLeadingIcon extends StatelessWidget {
           child: SizedBox(
             width: 32,
             height: 32,
-            child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? iosIcon : materialIcon,
-                color: SettingsManager().settings.skin.value != Skins.Material ? Colors.white : context.theme.colorScheme.outline,
-                size: SettingsManager().settings.skin.value != Skins.Material ? 23 : 30),
+            child: Center(
+              child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? iosIcon : materialIcon,
+                  color: SettingsManager().settings.skin.value != Skins.Material ? Colors.white : context.theme.colorScheme.outline,
+                  size: SettingsManager().settings.skin.value != Skins.Material ? 23 : 30),
+            ),
           ),
         )),
       ],
