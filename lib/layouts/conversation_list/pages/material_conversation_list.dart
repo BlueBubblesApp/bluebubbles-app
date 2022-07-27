@@ -4,7 +4,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
+import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
@@ -32,7 +32,7 @@ import 'package:universal_io/io.dart';
 class MaterialConversationList extends StatefulWidget {
   MaterialConversationList({Key? key, required this.parent}) : super(key: key);
 
-  final ConversationListState parent;
+  final parent;
 
   @override
   State<MaterialConversationList> createState() => _MaterialConversationListState();
@@ -345,7 +345,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                               ],
                                             ),
                                           ),
-                                          widget.parent.getHeaderTextWidget(size: 23),
+                                          widget.parent.getHeaderTextWidget(fontSize: 23),
                                           Expanded(
                                             child: Row(
                                               mainAxisAlignment: MainAxisAlignment.end,
@@ -944,7 +944,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
 }
 
 class FABStatefulWrapper extends StatefulWidget {
-  final ConversationListState parent;
+  final parent;
 
   FABStatefulWrapper({required this.parent});
 

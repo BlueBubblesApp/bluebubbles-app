@@ -43,9 +43,15 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
       && (!context.isPhone || context.isLandscape)
       && context.width > 600;
 
+  bool get showAltLayoutContextless => SettingsManager().settings.tabletMode.value
+      && (!Get.context!.isPhone || Get.context!.isLandscape)
+      && Get.context!.width > 600;
+
   bool get iOS => SettingsManager().settings.skin.value == Skins.iOS;
 
   bool get material => SettingsManager().settings.skin.value == Skins.Material;
 
   bool get samsung => SettingsManager().settings.skin.value == Skins.Samsung;
+
+  Brightness get brightness => context.theme.colorScheme.brightness;
 }

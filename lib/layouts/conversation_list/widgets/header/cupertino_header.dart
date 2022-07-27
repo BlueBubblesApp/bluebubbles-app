@@ -1,0 +1,179 @@
+import 'dart:ui';
+
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/header/header_widgets.dart';
+import 'package:bluebubbles/layouts/search/search_view.dart';
+import 'package:bluebubbles/layouts/widgets/fade_on_scroll.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+class CupertinoHeader extends StatelessWidget {
+  const CupertinoHeader({Key? key, required this.controller});
+
+  final ConversationListController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final double topMargin = context.orientation == Orientation.landscape && context.isPhone
+        ? 20
+        : SettingsManager().settings.reducedForehead.value
+        ? 20
+        : kIsDesktop
+        ? 40
+        : kToolbarHeight + 30;
+
+    return SliverToBoxAdapter(
+      child: FadeOnScroll(
+        scrollController: controller.scrollController,
+        zeroOpacityOffset: topMargin + 15,
+        child: Column(
+          children: <Widget>[
+            Container(
+              margin: EdgeInsets.only(
+                top: topMargin,
+                left: 20,
+                right: 20,
+                bottom: 5,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      HeaderText(controller: controller),
+                      ConnectionIndicator(),
+                      SyncIndicator(),
+                    ],
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ClipOval(
+                        child: Material(
+                          color: context.theme.colorScheme.properSurface, // button color
+                          child: InkWell(
+                            child: SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: Icon(
+                                CupertinoIcons.search,
+                                color: context.theme.colorScheme.properOnSurface,
+                                size: 20
+                              )
+                            ),
+                            onTap: () {
+                              CustomNavigator.pushLeft(context, SearchView());
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10.0),
+                      if (SettingsManager().settings.moveChatCreatorToHeader.value)
+                        ClipOval(
+                          child: Material(
+                            color: context.theme.colorScheme.properSurface, // button color
+                            child: InkWell(
+                              child: SizedBox(
+                                width: 30,
+                                height: 30,
+                                child: Icon(
+                                  CupertinoIcons.pencil,
+                                  color: context.theme.colorScheme.properOnSurface,
+                                  size: 20,
+                                ),
+                              ),
+                              onTap: () => controller.openNewChatCreator(context),
+                            ),
+                          ),
+                        ),
+                      if (SettingsManager().settings.moveChatCreatorToHeader.value
+                          && SettingsManager().settings.cameraFAB.value)
+                        const SizedBox(width: 10.0),
+                      if (SettingsManager().settings.moveChatCreatorToHeader.value
+                          && SettingsManager().settings.cameraFAB.value)
+                        ClipOval(
+                          child: Material(
+                            color: context.theme.colorScheme.properSurface, // button color
+                            child: InkWell(
+                              child: SizedBox(
+                                width: 30,
+                                height: 30,
+                                child: Icon(
+                                  CupertinoIcons.camera,
+                                  color: context.theme.colorScheme.properOnSurface,
+                                  size: 20
+                                ),
+                              ),
+                              onTap: () => controller.openCamera(context)
+                            ),
+                          ),
+                        ),
+                      if (SettingsManager().settings.moveChatCreatorToHeader.value)
+                        const SizedBox(width: 10.0),
+                      OverflowMenu(),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CupertinoMiniHeader extends StatelessWidget {
+  const CupertinoMiniHeader({Key? key, required this.controller});
+
+  final ConversationListController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final double topMargin = context.orientation == Orientation.landscape && context.isPhone
+        ? 20
+        : SettingsManager().settings.reducedForehead.value
+        ? 20
+        : kIsDesktop
+        ? 40
+        : kToolbarHeight + 30;
+
+    return FadeOnScroll(
+      scrollController: controller.scrollController,
+      fullOpacityOffset: topMargin + 15,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+              width: CustomNavigator.width(context),
+              height: (topMargin - 20).clamp(40, double.infinity),
+              color: context.theme.colorScheme.properSurface.withOpacity(0.5),
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 5),
+                child: Text(
+                  controller.showArchivedChats
+                      ? "Archive"
+                      : controller.showUnknownSenders
+                      ? "Unknown Senders"
+                      : "Messages",
+                  style: context.textTheme.titleMedium!
+                      .copyWith(color: context.theme.colorScheme.properOnSurface),
+                ),
+              )
+          ),
+        ),
+      ),
+    );
+  }
+}

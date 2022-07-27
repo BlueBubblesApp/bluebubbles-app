@@ -63,7 +63,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
       }
     });
 
-    if (SettingsManager().settings.tabletMode.value && (!Get.context!.isPhone || Get.context!.isLandscape)) {
+    if (showAltLayoutContextless) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         CustomNavigator.pushAndRemoveSettingsUntil(
           context,

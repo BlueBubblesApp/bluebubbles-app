@@ -13,7 +13,7 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/window_effects.dart';
-import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
+import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/startup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';

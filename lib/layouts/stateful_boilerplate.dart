@@ -13,20 +13,25 @@ class StatefulController extends GetxController {
 /// [StatefulWidget] with support for optimized state management and a built-in
 /// [GetxController]
 abstract class CustomStateful<T extends StatefulController> extends StatefulWidget {
-  CustomStateful({Key? key, required this.parentController}) : super(key: key);
+  const CustomStateful({Key? key, required this.parentController}) : super(key: key);
 
   final T parentController;
 }
 
 /// [State] with support for optimized state management using a custom
 /// [GetxController]
-abstract class CustomState<T extends CustomStateful, R, S> extends State<T> {
+abstract class CustomState<T extends CustomStateful, R, S extends StatefulController> extends State<T> {
   // completer to check if the page animation is complete
   final animCompleted = Completer<void>();
 
   @protected
   /// Convenience getter for the [GetxController]
   S get controller => widget.parentController as S;
+
+  @protected
+  String? _tag;
+  /// Set tag of associated [GetxController] if needed
+  set tag(String t) => _tag = t;
 
   @override
   @mustCallSuper
@@ -61,7 +66,7 @@ abstract class CustomState<T extends CustomStateful, R, S> extends State<T> {
   @override
   /// Force delete the [GetxController] when the page has disposed
   void dispose() {
-    Get.delete<S>();
+    Get.delete<S>(tag: _tag);
     super.dispose();
   }
 

@@ -4,7 +4,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
+import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
@@ -33,7 +33,7 @@ import 'package:universal_io/io.dart';
 class SamsungConversationList extends StatefulWidget {
   SamsungConversationList({Key? key, required this.parent}) : super(key: key);
 
-  final ConversationListState parent;
+  final parent;
 
   @override
   State<SamsungConversationList> createState() => _SamsungConversationListState();
@@ -299,7 +299,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                widget.parent.getHeaderTextWidget(size: 20),
+                widget.parent.getHeaderTextWidget(fontSize: 20),
                 widget.parent.getConnectionIndicatorWidget(),
                 widget.parent.getSyncIndicatorWidget(),
               ],
