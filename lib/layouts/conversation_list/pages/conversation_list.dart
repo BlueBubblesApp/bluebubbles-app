@@ -1,4 +1,6 @@
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/conversation_list_fab.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/header/material_header.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/initial_widget_right.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
@@ -30,8 +32,20 @@ class ConversationListController extends StatefulController {
   final bool showArchivedChats;
   final bool showUnknownSenders;
   final ScrollController scrollController = ScrollController();
+  final List<Chat> selectedChats = [];
+  bool showMaterialFABText = true;
+  double materialScrollStartPosition = 0;
 
   ConversationListController({required this.showArchivedChats, required this.showUnknownSenders});
+
+  void updateSelectedChats() {
+    updateWidgetFunctions[MaterialHeader]?.call(null);
+    updateMaterialFAB();
+  }
+
+  void updateMaterialFAB() {
+    updateWidgetFunctions[ConversationListFAB]?.call(null);
+  }
 
   void openCamera(BuildContext context) async {
     bool camera = await Permission.camera.isGranted;
@@ -140,7 +154,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
   Widget build(BuildContext context) {
     final child = ThemeSwitcher(
       iOSSkin: CupertinoConversationList(parentController: controller),
-      materialSkin: MaterialConversationList(parent: this),
+      materialSkin: MaterialConversationList(parentController: controller),
       samsungSkin: SamsungConversationList(parent: this),
     );
 

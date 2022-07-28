@@ -1,27 +1,47 @@
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 
-class ConversationListFAB extends StatefulWidget {
-  const ConversationListFAB({Key? key, required this.parentController}) : super(key: key);
-
-  final ConversationListController parentController;
+class ConversationListFAB extends CustomStateful<ConversationListController> {
+  const ConversationListFAB({Key? key, required super.parentController});
 
   @override
   State<StatefulWidget> createState() => _ConversationListFABState();
 }
 
-class _ConversationListFABState extends OptimizedState<ConversationListFAB> with ThemeHelpers {
+class _ConversationListFABState extends CustomState<ConversationListFAB, void, ConversationListController> with ThemeHelpers {
 
-  ConversationListController get controller => widget.parentController;
+  @override
+  void initState() {
+    super.initState();
+
+    controller.scrollController.addListener(() {
+      if (!material) return;
+      if (controller.materialScrollStartPosition - controller.scrollController.offset < -75
+          && controller.scrollController.position.userScrollDirection == ScrollDirection.reverse
+          && controller.showMaterialFABText) {
+        setState(() {
+          controller.showMaterialFABText = false;
+        });
+      } else if (controller.materialScrollStartPosition - controller.scrollController.offset > 75
+          && controller.scrollController.position.userScrollDirection == ScrollDirection.forward
+          && !controller.showMaterialFABText) {
+        setState(() {
+          controller.showMaterialFABText = true;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() => Column(
+    final widget = Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         if (SettingsManager().settings.cameraFAB.value && iOS)
@@ -59,6 +79,59 @@ class _ConversationListFABState extends OptimizedState<ConversationListFAB> with
           ),
         ),
       ],
-    ));
+    );
+
+    return ThemeSwitcher(
+      iOSSkin: widget,
+      materialSkin: AnimatedCrossFade(
+        crossFadeState: controller.selectedChats.isEmpty
+            ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+        alignment: Alignment.center,
+        duration: const Duration(milliseconds: 300),
+        secondChild: const SizedBox.shrink(),
+        firstChild: InkWell(
+          onLongPress: SettingsManager().settings.cameraFAB.value
+              ? () => controller.openCamera(context) : null,
+          child: Container(
+            height: 65,
+            padding: const EdgeInsets.only(right: 4.5, bottom: 9),
+            child: FloatingActionButton.extended(
+              backgroundColor: context.theme.colorScheme.primaryContainer,
+              label: AnimatedSwitcher(
+                duration: Duration(milliseconds: 150),
+                transitionBuilder: (Widget child, Animation<double> animation) => SizeTransition(
+                  child: child,
+                  sizeFactor: animation,
+                  axis: Axis.horizontal,
+                ),
+                child: controller.showMaterialFABText ? Padding(
+                  padding: const EdgeInsets.only(left: 6.0),
+                  child: Text(
+                    "Start Chat",
+                    style: TextStyle(
+                      color: context.theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ) : const SizedBox.shrink(),
+              ),
+              extendedIconLabelSpacing: 0,
+              icon: Padding(
+                padding: const EdgeInsets.only(left: 5.0),
+                child: Icon(
+                  Icons.message_outlined,
+                  color: context.theme.colorScheme.onPrimaryContainer,
+                  size: 25,
+                ),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(17),
+              ),
+              onPressed: () => controller.openNewChatCreator(context),
+            ),
+          ),
+        ),
+      ),
+      samsungSkin: widget,
+    );
   }
 }

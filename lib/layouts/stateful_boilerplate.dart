@@ -39,8 +39,12 @@ abstract class CustomState<T extends CustomStateful, R, S extends StatefulContro
     super.initState();
 
     // set functions in the custom [GetxController]
+    // this if clause allows us to only set the late final variable
+    // when we are sure the controller is a fresh one
+    if (widget.parentController.updateWidgetFunctions.isEmpty) {
+      widget.parentController.updateObx = updateObx;
+    }
     widget.parentController.updateWidgetFunctions[T] = updateWidget;
-    widget.parentController.updateObx = updateObx;
 
     // complete the completer when we know the page animation has finished
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
