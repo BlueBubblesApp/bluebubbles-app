@@ -109,15 +109,15 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
               return NotificationListener(
                 onNotification: (notif) {
                   if (notif is ScrollStartNotification) {
-                    controller.materialScrollStartPosition = controller.scrollController.offset;
+                    controller.materialScrollStartPosition = controller.materialScrollController.offset;
                   }
                   return true;
                 },
                 child: ScrollbarWrapper(
                   showScrollbar: true,
-                  controller: controller.scrollController,
+                  controller: controller.materialScrollController,
                   child: Obx(() => ListView.builder(
-                    controller: controller.scrollController,
+                    controller: controller.materialScrollController,
                     physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                         ? NeverScrollableScrollPhysics()
                         : ThemeSwitcher.getScrollPhysics(),

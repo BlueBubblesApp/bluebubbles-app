@@ -163,7 +163,6 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       onChanged: (val) {
                         if (val == null) return;
                         SettingsManager().settings.skin.value = val;
-                        ChatBloc().refreshChats();
                         saveSettings();
                         setState(() {});
                         EventDispatcher().emit('theme-update', null);

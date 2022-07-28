@@ -15,7 +15,6 @@ import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/cupertino_conversation_list.dart';
@@ -34,7 +33,9 @@ import 'package:get/get.dart';
 class ConversationListController extends StatefulController {
   final bool showArchivedChats;
   final bool showUnknownSenders;
-  final ScrollController scrollController = ScrollController();
+  final ScrollController iosScrollController = ScrollController();
+  final ScrollController materialScrollController = ScrollController();
+  final ScrollController samsungScrollController = ScrollController();
   final List<Chat> selectedChats = [];
   bool showMaterialFABText = true;
   double materialScrollStartPosition = 0;
@@ -123,23 +124,6 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         : controller.showUnknownSenders
         ? "Unknown"
         : "Messages";
-
-    if (kIsDesktop && !controller.showUnknownSenders) {
-      ChatBloc().refreshChats();
-    }
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'refresh' && mounted) {
-        setState(() {});
-      }
-
-      if (event["type"] == 'theme-update' && mounted) {
-        setState(() {});
-      }
-    });
 
     if (prefs.getString('lastOpenedChat') != null &&
         showAltLayoutContextless &&

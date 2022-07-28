@@ -21,16 +21,16 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
   void initState() {
     super.initState();
 
-    controller.scrollController.addListener(() {
+    controller.materialScrollController.addListener(() {
       if (!material) return;
-      if (controller.materialScrollStartPosition - controller.scrollController.offset < -75
-          && controller.scrollController.position.userScrollDirection == ScrollDirection.reverse
+      if (controller.materialScrollStartPosition - controller.materialScrollController.offset < -75
+          && controller.materialScrollController.position.userScrollDirection == ScrollDirection.reverse
           && controller.showMaterialFABText) {
         setState(() {
           controller.showMaterialFABText = false;
         });
-      } else if (controller.materialScrollStartPosition - controller.scrollController.offset > 75
-          && controller.scrollController.position.userScrollDirection == ScrollDirection.forward
+      } else if (controller.materialScrollStartPosition - controller.materialScrollController.offset > 75
+          && controller.materialScrollController.position.userScrollDirection == ScrollDirection.forward
           && !controller.showMaterialFABText) {
         setState(() {
           controller.showMaterialFABText = true;

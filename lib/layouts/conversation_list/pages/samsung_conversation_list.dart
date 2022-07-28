@@ -73,19 +73,19 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
             child: NotificationListener<ScrollEndNotification>(
               onNotification: (_) {
                 final scrollDistance = context.height / 3 - 57;
-                if (controller.scrollController.offset > 0
-                    && controller.scrollController.offset < scrollDistance
-                    && controller.scrollController.offset != controller.scrollController.position.maxScrollExtent) {
-                  final double snapOffset = controller.scrollController.offset / scrollDistance > 0.5 ? scrollDistance : 0;
+                if (controller.samsungScrollController.offset > 0
+                    && controller.samsungScrollController.offset < scrollDistance
+                    && controller.samsungScrollController.offset != controller.samsungScrollController.position.maxScrollExtent) {
+                  final double snapOffset = controller.samsungScrollController.offset / scrollDistance > 0.5 ? scrollDistance : 0;
 
                   Future.microtask(
-                          () => controller.scrollController.animateTo(snapOffset, duration: Duration(milliseconds: 200), curve: Curves.linear));
+                          () => controller.samsungScrollController.animateTo(snapOffset, duration: Duration(milliseconds: 200), curve: Curves.linear));
                 }
                 return false;
               },
               child: ScrollbarWrapper(
                 showScrollbar: true,
-                controller: controller.scrollController,
+                controller: controller.samsungScrollController,
                   child: Obx(() {
                     final chats = ChatBloc().chats
                         .archivedHelper(controller.showArchivedChats)
@@ -94,7 +94,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                       physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                           ? NeverScrollableScrollPhysics()
                           : ThemeSwitcher.getScrollPhysics(),
-                      controller: controller.scrollController,
+                      controller: controller.samsungScrollController,
                       slivers: [
                         SamsungHeader(parentController: controller),
                         SliverToBoxAdapter(

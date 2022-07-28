@@ -29,7 +29,7 @@ class CupertinoHeader extends StatelessWidget {
 
     return SliverToBoxAdapter(
       child: FadeOnScroll(
-        scrollController: controller.scrollController,
+        scrollController: controller.iosScrollController,
         zeroOpacityOffset: topMargin + 15,
         child: Column(
           children: <Widget>[
@@ -149,7 +149,7 @@ class CupertinoMiniHeader extends StatelessWidget {
         : kToolbarHeight + 30;
 
     return FadeOnScroll(
-      scrollController: controller.scrollController,
+      scrollController: controller.iosScrollController,
       fullOpacityOffset: topMargin + 15,
       child: ClipRect(
         child: BackdropFilter(

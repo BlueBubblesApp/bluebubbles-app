@@ -75,9 +75,9 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
         children: [
           ScrollbarWrapper(
             showScrollbar: true,
-            controller: controller.scrollController,
+            controller: controller.iosScrollController,
             child: Obx(() => CustomScrollView(
-              controller: controller.scrollController,
+              controller: controller.iosScrollController,
               physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                   ? NeverScrollableScrollPhysics()
                   : ThemeManager().scrollPhysics,

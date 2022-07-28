@@ -15,7 +15,7 @@ class FadeOnScroll extends StatefulWidget {
       });
 
   @override
-  _FadeOnScrollState createState() => _FadeOnScrollState();
+  State<StatefulWidget> createState() => _FadeOnScrollState();
 }
 
 class _FadeOnScrollState extends State<FadeOnScroll> {
@@ -24,7 +24,11 @@ class _FadeOnScrollState extends State<FadeOnScroll> {
   @override
   initState() {
     super.initState();
-    _offset = widget.scrollController.offset;
+    if (widget.scrollController.positions.length > 1) {
+      _offset = 0;
+    } else {
+      _offset = widget.scrollController.offset;
+    }
     widget.scrollController.addListener(_setOffset);
   }
 
