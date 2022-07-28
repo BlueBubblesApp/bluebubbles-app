@@ -201,7 +201,8 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                   style: context.textTheme.labelLarge,
                                 ),
                               ),
-                              buildProgressIndicator(context, size: 15),
+                              if (!ChatBloc().loadedChatBatch.value)
+                                buildProgressIndicator(context, size: 15),
                             ],
                           ),
                         ),

@@ -112,7 +112,8 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                                     ),
                                   ),
                                 ) : const SizedBox.shrink(),
-                                const OverflowMenu(),
+                                if (!showArchived && !showUnknown)
+                                  const OverflowMenu(),
                               ],
                             ),
                           )
@@ -139,7 +140,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                       IconButton(
                         onPressed: () {
                           controller.selectedChats.clear();
-                          setState(() {});
+                          controller.updateSelectedChats();
                         },
                         icon: Icon(
                           Icons.close,
@@ -164,7 +165,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                               element.toggleHasUnread(!element.hasUnreadMessage!);
                             }
                             controller.selectedChats.clear();
-                            setState(() {});
+                            controller.updateSelectedChats();
                           },
                           icon: Icon(
                             controller.selectedChats[0].hasUnreadMessage!
@@ -181,7 +182,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                               element.toggleMute(element.muteType != "mute");
                             }
                             controller.selectedChats.clear();
-                            setState(() {});
+                            controller.updateSelectedChats();
                           },
                           icon: Icon(
                             controller.selectedChats[0].muteType == "mute"
@@ -198,7 +199,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                               element.togglePin(!element.isPinned!);
                             }
                             controller.selectedChats.clear();
-                            setState(() {});
+                            controller.updateSelectedChats();
                           },
                           icon: Icon(
                             controller.selectedChats[0].isPinned! ? Icons.push_pin_outlined : Icons.push_pin,
@@ -215,7 +216,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                             }
                           }
                           controller.selectedChats.clear();
-                          setState(() {});
+                          controller.updateSelectedChats();
                         },
                         icon: Icon(
                           showArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
@@ -229,7 +230,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                             Chat.deleteChat(element);
                           }
                           controller.selectedChats.clear();
-                          setState(() {});
+                          controller.updateSelectedChats();
                         },
                         icon: Icon(
                           Icons.delete_outlined,

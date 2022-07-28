@@ -1,6 +1,9 @@
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/conversation_list_fab.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/footer/samsung_footer.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/header/material_header.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/header/samsung_header.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/initial_widget_right.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
@@ -39,8 +42,13 @@ class ConversationListController extends StatefulController {
   ConversationListController({required this.showArchivedChats, required this.showUnknownSenders});
 
   void updateSelectedChats() {
-    updateWidgetFunctions[MaterialHeader]?.call(null);
-    updateMaterialFAB();
+    if (SettingsManager().settings.skin.value == Skins.Material) {
+      updateWidgetFunctions[MaterialHeader]?.call(null);
+      updateMaterialFAB();
+    } else if (SettingsManager().settings.skin.value == Skins.Samsung) {
+      updateWidgetFunctions[SamsungFooter]?.call(null);
+      updateWidgetFunctions[ExpandedHeaderText]?.call(null);
+    }
   }
 
   void updateMaterialFAB() {
@@ -155,7 +163,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
     final child = ThemeSwitcher(
       iOSSkin: CupertinoConversationList(parentController: controller),
       materialSkin: MaterialConversationList(parentController: controller),
-      samsungSkin: SamsungConversationList(parent: this),
+      samsungSkin: SamsungConversationList(parentController: controller),
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
