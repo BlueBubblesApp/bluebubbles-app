@@ -191,13 +191,13 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Text(
-                                  chats.isEmpty
-                                      ? showArchived
-                                      ? "You have no archived chats"
-                                      : showUnknown
-                                      ? "You have no messages from unknown senders :)"
-                                      : "You have no chats :("
-                                      : "Loading chats...",
+                                  !ChatBloc().loadedChatBatch.value
+                                    ? "Loading chats..."
+                                    : showArchived
+                                    ? "You have no archived chats"
+                                    : showUnknown
+                                    ? "You have no messages from unknown senders :)"
+                                    : "You have no chats :(",
                                   style: context.textTheme.labelLarge,
                                 ),
                               ),

@@ -49,8 +49,8 @@ class CupertinoHeader extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       HeaderText(controller: controller),
-                      ConnectionIndicator(),
-                      SyncIndicator(),
+                      const ConnectionIndicator(),
+                      const SyncIndicator(),
                     ],
                   ),
                   Row(
@@ -120,7 +120,7 @@ class CupertinoHeader extends StatelessWidget {
                         ),
                       if (SettingsManager().settings.moveChatCreatorToHeader.value)
                         const SizedBox(width: 10.0),
-                      OverflowMenu(),
+                      const OverflowMenu(),
                     ],
                   )
                 ],
