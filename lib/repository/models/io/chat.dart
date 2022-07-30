@@ -35,13 +35,6 @@ String getFullChatTitle(Chat _chat) {
       chat = _chat.getParticipants();
     }
 
-    //todo - do we really need this here?
-    /*// If there are no participants, try to get them from the server
-    if (chat.participants.isEmpty) {
-      await ActionHandler.handleChat(chat: chat);
-      chat = chat.getParticipants();
-    }*/
-
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
       String? name = ContactManager().getContactTitle(chat.participants[i]);

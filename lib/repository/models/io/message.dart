@@ -604,7 +604,7 @@ class Message {
         return newMessage;
       } else {
         // If we don't have a chat, we just want to add the message
-        messageBox.put(newMessage);
+        newMessage.save();
         return newMessage;
       }
     }
