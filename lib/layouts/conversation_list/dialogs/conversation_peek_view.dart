@@ -6,10 +6,12 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
@@ -28,11 +30,7 @@ Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
       pageBuilder: (context, animation, secondaryAnimation) {
         return FadeTransition(
           opacity: animation,
-          child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              return ConversationPeekView(position: offset, chat: c, messages: messages);
-            },
-          ),
+          child: ConversationPeekView(position: offset, chat: c, messages: messages),
         );
       },
       fullscreenDialog: true,
@@ -50,13 +48,11 @@ class ConversationPeekView extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => _ConversationPeekViewState();
-
 }
 
-class _ConversationPeekViewState extends State<ConversationPeekView> with SingleTickerProviderStateMixin {
-  double targetValue = 1;
-  late AnimationController controller;
-  double itemHeight = kIsDesktop || kIsWeb ? 56 : 48;
+class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> with SingleTickerProviderStateMixin {
+  late final AnimationController controller;
+  final double itemHeight = kIsDesktop || kIsWeb ? 56 : 48;
 
   @override
   void initState() {
@@ -84,113 +80,125 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+            ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Theme(
-        data: context.theme.copyWith(colorScheme: context.theme.colorScheme.copyWith(primaryContainer: widget.chat.isTextForwarding ? Colors.green : context.theme.colorScheme.primaryContainer)),
+        data: context.theme.copyWith(
+          // in case some components still use legacy theming
+          primaryColor: context.theme.colorScheme.bubble(context, widget.chat.isIMessage),
+          colorScheme: context.theme.colorScheme.copyWith(
+            primary: context.theme.colorScheme.bubble(context, widget.chat.isIMessage),
+            onPrimary: context.theme.colorScheme.onBubble(context, widget.chat.isIMessage),
+            surface: SettingsManager().settings.monetTheming.value == Monet.full
+                ? null
+                : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+            onSurface: SettingsManager().settings.monetTheming.value == Monet.full
+                ? null
+                : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+          ),
+        ),
         child: TitleBarWrapper(
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Container(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                      child: Container(
-                        color: context.theme.colorScheme.properSurface.withOpacity(0.3),
-                      ),
+          child: Container(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                    child: Container(
+                      color: context.theme.colorScheme.properSurface.withOpacity(0.3),
                     ),
                   ),
-                  Positioned(
-                    left: min(widget.position.dx, context.width - min(context.width - 50, 500) - 25),
-                    top: min(widget.position.dy, context.height - min(context.height / 2, context.height - itemHeight * 5) - itemHeight * 5 - 25),
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(begin: 0.8, end: targetValue),
-                      curve: Curves.easeOutBack,
-                      duration: Duration(milliseconds: 400),
-                      child: FadeTransition(
-                        opacity: CurvedAnimation(
-                          parent: controller,
-                          curve: Interval(0.0, .9, curve: Curves.ease),
-                          reverseCurve: Curves.easeInCubic,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).pop();
-                                CustomNavigator.pushAndRemoveUntil(
-                                  context,
-                                  ConversationView(
-                                    chat: widget.chat,
-                                    existingAttachments: [],
-                                    existingText: null,
-                                  ),
-                                  (route) => route.isFirst,
-                                );
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: context.theme.colorScheme.properSurface,
-                                  borderRadius: BorderRadius.circular(10),
+                ),
+                Positioned(
+                  left: min(widget.position.dx, context.width - min(context.width - 50, 500) - 25),
+                  top: min(widget.position.dy, context.height - min(context.height / 2, context.height - itemHeight * 5) - itemHeight * 5 - 25),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.8, end: 1),
+                    curve: Curves.easeOutBack,
+                    duration: Duration(milliseconds: 400),
+                    child: FadeTransition(
+                      opacity: CurvedAnimation(
+                        parent: controller,
+                        curve: Interval(0.0, .9, curve: Curves.ease),
+                        reverseCurve: Curves.easeInCubic,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              CustomNavigator.pushAndRemoveUntil(
+                                context,
+                                ConversationView(
+                                  chat: widget.chat,
+                                  existingAttachments: [],
+                                  existingText: null,
                                 ),
-                                width: min(context.width - 50, 500),
-                                height: min(context.height / 2, context.height - itemHeight * 5),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: ListView.builder(
-                                    shrinkWrap: true,
-                                    reverse: true,
-                                    itemBuilder: (context, index) {
-                                      return AbsorbPointer(
-                                        absorbing: true,
-                                        child: Padding(
-                                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                                            child: MessageWidget(
-                                              key: Key(widget.messages[index].guid!),
-                                              message: widget.messages[index],
-                                              olderMessage: index == widget.messages.length - 1 ? null : widget.messages[index + 1],
-                                              newerMessage: index == 0 ? null : widget.messages[index - 1],
-                                              showHandle: widget.chat.isGroup(),
-                                              isFirstSentMessage: false,
-                                              showHero: false,
-                                              showReplies: true,
-                                              bloc: MessageBloc(widget.chat),
-                                              autoplayEffect: false,
-                                            )),
-                                      );
-                                    },
-                                    itemCount: widget.messages.length,
-                                  ),
+                                    (route) => route.isFirst,
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: context.theme.colorScheme.properSurface,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              width: min(context.width - 50, 500),
+                              height: min(context.height / 2, context.height - itemHeight * 5),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  reverse: true,
+                                  itemBuilder: (context, index) {
+                                    return AbsorbPointer(
+                                      absorbing: true,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(left: 5.0, right: 5.0),
+                                        child: MessageWidget(
+                                          key: Key(widget.messages[index].guid!),
+                                          message: widget.messages[index],
+                                          olderMessage: index == widget.messages.length - 1 ? null : widget.messages[index + 1],
+                                          newerMessage: index == 0 ? null : widget.messages[index - 1],
+                                          showHandle: widget.chat.isGroup(),
+                                          isFirstSentMessage: false,
+                                          showHero: false,
+                                          showReplies: true,
+                                          bloc: MessageBloc(widget.chat),
+                                          autoplayEffect: false,
+                                        )
+                                      ),
+                                    );
+                                  },
+                                  itemCount: widget.messages.length,
                                 ),
                               ),
                             ),
-                            SizedBox(height: 5),
-                            buildDetailsMenu(context)
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 5),
+                          buildDetailsMenu(context),
+                        ],
                       ),
-                      builder: (context, size, child) {
-                        return Transform.scale(
-                          scale: size,
-                          child: child,
-                        );
-                      },
                     ),
+                    builder: (context, size, child) {
+                      return Transform.scale(
+                        scale: size,
+                        child: child,
+                      );
+                    },
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
+          )
         ),
       ),
     );
@@ -206,7 +214,6 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
         child: InkWell(
           onTap: () async {
             widget.chat.togglePin(!widget.chat.isPinned!);
-            if (mounted) setState(() {});
             popPeekView();
           },
           child: ListTile(
@@ -229,7 +236,6 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
         child: InkWell(
           onTap: () async {
             widget.chat.toggleMute(widget.chat.muteType != "mute");
-            if (mounted) setState(() {});
             popPeekView();
           },
           child: ListTile(
@@ -252,7 +258,6 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
         child: InkWell(
           onTap: () async {
             ChatBloc().toggleChatUnread(widget.chat, !widget.chat.hasUnreadMessage!);
-            if (mounted) setState(() {});
             popPeekView();
           },
           child: ListTile(
@@ -279,7 +284,6 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
             } else {
               ChatBloc().archiveChat(widget.chat);
             }
-            if (mounted) setState(() {});
             popPeekView();
           },
           child: ListTile(
@@ -303,7 +307,6 @@ class _ConversationPeekViewState extends State<ConversationPeekView> with Single
           onTap: () async {
             ChatBloc().deleteChat(widget.chat);
             Chat.deleteChat(widget.chat);
-            if (mounted) setState(() {});
             popPeekView();
           },
           child: ListTile(
