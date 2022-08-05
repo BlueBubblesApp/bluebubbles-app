@@ -29,15 +29,15 @@ mkdir -p /opt/bluebubbles_app/
 unzip ./bluebubbles_linux.zip -d /opt/bluebubbles_app/
 
 # Symlink libobjectbox to the correct place
-ls -s /opt/bluebubbles_app/bundle/lib/libobjectbox.so /usr/lib
+ln -s /opt/bluebubbles_app/bundle/lib/libobjectbox.so /usr/lib/libobjectbox.so
 
 # Make the binary executable and add it to a location on PATH
 echo 'Making the Binary executable'
-chmod +x /opt/bluebubbles_app/bundle/bluebubbles_app
+chmod +x /opt/bluebubbles_app/bundle/bluebubbles*
 chmod -R 755 /opt/bluebubbles_app
-rm -f /usr/local/bin/bluebubbles_app
-ln -s /opt/bluebubbles_app/bundle/bluebubbles_app /usr/local/bin/bluebubbles_app
-chmod +x /usr/local/bin/bluebubbles_app
+rm -f /usr/local/bin/bluebubbles*
+ln -s /opt/bluebubbles_app/bundle/bluebubbles* /usr/local/bin/bluebubbles
+chmod +x /usr/local/bin/bluebubbles
 
 # Setup the .desktop file
 echo 'Setting up Bluebubbles.destkop file'
