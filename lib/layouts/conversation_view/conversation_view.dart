@@ -36,6 +36,7 @@ import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -379,6 +380,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         isCreator = false;
         wasCreator = true;
       });
+    }
+
+    // play send sound
+    if (SettingsManager().settings.playSendSound.value && SettingsManager().settings.sendSoundPath.value != null) {
+      AudioPlayer player = AudioPlayer();
+      player.play(DeviceFileSource(SettingsManager().settings.sendSoundPath.value!));
     }
 
     return true;

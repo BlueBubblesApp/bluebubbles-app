@@ -28,6 +28,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:get/get_utils/src/extensions/context_extensions.dart';
 
@@ -153,6 +154,13 @@ class _MessageState extends State<MessageWidget> {
         // If the associated message GUID matches this one, fetch associated messages
         if (fetchAssoc) fetchAssociatedMessages(shouldReload: true);
         if (fetchAttach) fetchAttachments(forceReload: true);
+
+        // play receive sound
+        if (SettingsManager().settings.playReceiveSound.value && SettingsManager().settings.receiveSoundPath.value != null) {
+          AudioPlayer player = AudioPlayer();
+          player.play(DeviceFileSource(SettingsManager().settings.receiveSoundPath.value!));
+        }
+
       } else if (data.type == NewMessageType.UPDATE) {
         String? oldGuid = data.event["oldGuid"];
         // If the guid does not match our current guid, then it's not meant for us
