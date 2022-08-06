@@ -1,10 +1,18 @@
 cmake_minimum_required(VERSION 3.10)
 project(runner LANGUAGES CXX)
 
-set(BINARY_NAME "bluebubbles_app")
-set(APPLICATION_ID "com.bluebubbles.bluebubbles_app")
+set(BINARY_NAME "bluebubbles")
+set(APPLICATION_ID "app.bluebubbles.BlueBubbles")
 
 cmake_policy(SET CMP0063 NEW)
+
+EXECUTE_PROCESS(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCH)
+message(STATUS "Architecture: ${ARCH}")
+if (${ARCH} STREQUAL "aarch64")
+  message(STATUS "Setting arm64 version of pdfium")
+  set(PDFIUM_VERSION "4888" CACHE STRING "Version of pdfium used")
+  set(PDFIUM_ARCH "arm64" CACHE STRING "Architecture of pdfium used")
+endif()
 
 set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
 

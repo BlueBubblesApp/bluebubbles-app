@@ -88,7 +88,7 @@ callbackHandler() async {
       } else {
         try {
           if (kIsDesktop) {
-            Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
+            await Directory(join(documentsDirectory.path, 'objectbox')).create(recursive: true);
           }
           debugPrint("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
           store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
@@ -100,7 +100,7 @@ callbackHandler() async {
             customStorePath ??= "C:\\bluebubbles_app";
             prefs.setBool("use-custom-path", true);
             objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-            objectBoxDirectory.createSync(recursive: true);
+            await objectBoxDirectory.create(recursive: true);
             debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
             store = await openStore(directory: join(customStorePath, 'objectbox'));
           }
@@ -122,7 +122,7 @@ callbackHandler() async {
       }
     }
 
-    if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
+    if (!await objectBoxDirectory.exists() && await File(sqlitePath).exists()) {
       runApp(UpgradingDB());
       print("Converting sqflite to ObjectBox...");
       Stopwatch s = Stopwatch();
@@ -131,7 +131,7 @@ callbackHandler() async {
       s.stop();
       print("Migrated in ${s.elapsedMilliseconds} ms");
     } else {
-      if (File(sqlitePath).existsSync() && prefs.getBool('objectbox-migration') != true) {
+      if (await File(sqlitePath).exists() && prefs.getBool('objectbox-migration') != true) {
         runApp(UpgradingDB());
         print("Converting sqflite to ObjectBox...");
         Stopwatch s = Stopwatch();

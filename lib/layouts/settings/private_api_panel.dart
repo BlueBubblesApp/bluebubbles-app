@@ -104,7 +104,6 @@ class PrivateAPIPanel extends StatelessWidget {
                           ),
                         ),
                         SettingsTile(
-                          backgroundColor: tileColor,
                           title: "Set up Private API Features",
                           subtitle: "View instructions on how to set up these features",
                           onTap: () async {

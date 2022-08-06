@@ -251,7 +251,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               ? FontWeight.w500 : null,
           color: shouldHighlight.value
               ? SettingsManager().settings.skin.value == Skins.iOS
-              ? context.theme.colorScheme.onBackground
+              ? context.theme.colorScheme.onBubble(context, widget.chat.isIMessage)
               : null
               : null)
           .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.1 : 1.0);
@@ -288,12 +288,12 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
                   (widget.chat.hasUnreadMessage ?? false)
                   ? FontWeight.w600
-                  : shouldHighlight.value ? FontWeight.w500 : null,
+                  : null,
               color: SettingsManager().settings.skin.value == Skins.Material &&
                   (widget.chat.hasUnreadMessage ?? false)
-                  ? Theme.of(context).textTheme.bodyMedium!.color : shouldHighlight.value
+                  ? context.textTheme.bodyMedium!.color : shouldHighlight.value
                   ? SettingsManager().settings.skin.value == Skins.iOS
-                      ? context.theme.colorScheme.outline
+                      ? context.theme.colorScheme.onBubble(context, widget.chat.isIMessage).withOpacity(0.85)
                       : null
                   : context.theme.colorScheme.outline,
               height: 1.5
@@ -417,7 +417,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                             (widget.chat.hasUnreadMessage ?? false)
                             ? Theme.of(context).textTheme.bodyMedium!.color : shouldHighlight.value
                                 ? SettingsManager().settings.skin.value == Skins.iOS
-                                    ? context.theme.colorScheme.outline
+                                    ? context.theme.colorScheme.onBubble(context, widget.chat.isIMessage)
                                     : null
                                 : context.theme.colorScheme.outline,
                         fontWeight: SettingsManager().settings.skin.value == Skins.Material &&
@@ -487,11 +487,11 @@ class _Cupertino extends StatelessWidget {
             duration: Duration(milliseconds: 100),
             decoration: BoxDecoration(
               color: parent.shouldPartialHighlight.value
-                  ? context.theme.colorScheme.primary.withAlpha(100)
+                  ? context.theme.colorScheme.properSurface.lightenOrDarken(10)
                   : parent.shouldHighlight.value
-                      ? context.theme.colorScheme.primary
+                      ? context.theme.colorScheme.bubble(context, parent.widget.chat.isIMessage)
                       : parent.hoverHighlight.value
-                          ? context.theme.colorScheme.secondary.withAlpha(200)
+                          ? context.theme.colorScheme.properSurface
                           : null,
               borderRadius: BorderRadius.circular(
                   parent.shouldHighlight.value || parent.shouldPartialHighlight.value || parent.hoverHighlight.value
@@ -518,6 +518,7 @@ class _Cupertino extends StatelessWidget {
                   parent.onTapUp();
                 },
                 onLongPress: () async {
+                  if (kIsDesktop || kIsWeb) return;
                   await peekChat(context, parent.widget.chat, parent.longPressPosition ?? Offset.zero);
                 },
                 child: Listener(
@@ -547,6 +548,7 @@ class _Cupertino extends StatelessWidget {
                               dense: SettingsManager().settings.denseChatTiles.value,
                               contentPadding: EdgeInsets.only(left: 0),
                               minVerticalPadding: 10,
+                              horizontalTitleGap: 10,
                               title: parent.buildTitle(),
                               subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
                               leading: parent.buildLeading(),
@@ -570,7 +572,7 @@ class _Cupertino extends StatelessWidget {
                                               ? CupertinoIcons.forward
                                               : Icons.arrow_forward,
                                           color: parent.shouldHighlight.value
-                                              ? Colors.white
+                                              ? context.theme.colorScheme.onBubble(context, parent.widget.chat.isIMessage)
                                               : context.theme.colorScheme.outline,
                                           size: 15,
                                         ),
@@ -580,7 +582,7 @@ class _Cupertino extends StatelessWidget {
                                               child: Icon(
                                                 CupertinoIcons.bell_slash_fill,
                                                 color: parent.shouldHighlight.value
-                                                    ? Colors.white
+                                                    ? context.theme.colorScheme.onBubble(context, parent.widget.chat.isIMessage)
                                                     : context.theme.colorScheme.outline,
                                                 size: 12,
                                               )
@@ -650,11 +652,11 @@ class _Material extends StatelessWidget {
                   color: parent.selected
                       ? context.theme.colorScheme.primaryContainer.withOpacity(0.5)
                       : shouldPartialHighlight
-                          ? context.theme.primaryColor.withAlpha(100)
+                          ? context.theme.colorScheme.properSurface
                           : shouldHighlight
-                              ? context.theme.colorScheme.secondary
+                              ? context.theme.colorScheme.primaryContainer
                               : hoverHighlight
-                                  ? context.theme.colorScheme.secondary.withAlpha(200)
+                                  ? context.theme.colorScheme.properSurface
                                   : null,
                 ),
                 duration: Duration(milliseconds: 100),

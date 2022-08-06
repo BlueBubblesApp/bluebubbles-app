@@ -17,6 +17,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:universal_html/html.dart' as uh;
 
@@ -55,6 +56,13 @@ class NotificationPanel extends StatelessWidget {
       tileColor = temp;
     }
 
+    final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? headerColor : Colors.transparent).obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) =>
+      _headerColor.value = effect != WindowEffect.disabled ? Colors.transparent : headerColor);
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
@@ -64,8 +72,8 @@ class NotificationPanel extends StatelessWidget {
       ),
       child: GetBuilder<NotificationPanelController>(
         init: NotificationPanelController(),
-        builder: (controller) => Scaffold(
-          backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : headerColor,
+        builder: (controller) => Obx(() => Scaffold(
+          backgroundColor: SettingsManager().settings.skin.value == Skins.Material ? tileColor : _headerColor.value,
           appBar: SettingsManager().settings.skin.value == Skins.Samsung
               ? null
               : PreferredSize(
@@ -79,7 +87,7 @@ class NotificationPanel extends StatelessWidget {
               scrolledUnderElevation: 3,
               surfaceTintColor: context.theme.colorScheme.primary,
               leading: buildBackButton(context),
-              backgroundColor: headerColor,
+              backgroundColor: _headerColor.value,
               centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
               title: Text(
                 "Notifications",
@@ -113,8 +121,8 @@ class NotificationPanel extends StatelessWidget {
                           (kIsDesktop || kIsWeb) ? NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics(),
                       slivers: <Widget>[
                         if (SettingsManager().settings.skin.value == Skins.Samsung)
-                          SliverAppBar(
-                            backgroundColor: headerColor,
+                          Obx(() => SliverAppBar(
+                            backgroundColor: _headerColor.value,
                             pinned: true,
                             stretch: true,
                             expandedHeight: context.height / 3,
@@ -175,22 +183,22 @@ class NotificationPanel extends StatelessWidget {
                                 );
                               },
                             ),
-                          ),
+                          )),
                         SliverList(
                           delegate: SliverChildListDelegate(
                             <Widget>[
                               if (SettingsManager().settings.skin.value != Skins.Samsung)
-                                Container(
+                                Obx(() => Container(
                                     height: 50,
                                     alignment: Alignment.bottomLeft,
-                                    color: SettingsManager().settings.skin.value == Skins.iOS ? headerColor : tileColor,
+                                    color: SettingsManager().settings.skin.value == Skins.iOS ? _headerColor.value : tileColor,
                                     child: Padding(
                                       padding: EdgeInsets.only(bottom: 8.0, left: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 15),
                                       child: Text("Notifications".psCapitalize,
                                           style: SettingsManager().settings.skin.value == Skins.iOS
                                               ? iosSubtitle
                                               : materialSubtitle),
-                                    )),
+                                    ))),
                               SettingsSection(backgroundColor: tileColor, children: [
                                 if (!kIsWeb)
                                   Obx(() => SettingsSwitch(
@@ -217,7 +225,6 @@ class NotificationPanel extends StatelessWidget {
                                         : uh.Notification.permission == "denied"
                                             ? "Notifications denied, please update your browser settings to re-enable notifications"
                                             : "Click to enable notifications",
-                                    backgroundColor: tileColor,
                                   ),
                                 Container(
                                   color: tileColor,
@@ -325,7 +332,6 @@ class NotificationPanel extends StatelessWidget {
                                       )
                                     );
                                   },
-                                  backgroundColor: tileColor,
                                   subtitle: "Mute all chats except when your choice of text is found in a message",
                                 ),
                               ]),
@@ -381,7 +387,7 @@ class NotificationPanel extends StatelessWidget {
           ),
           bottomNavigationBar: kIsWeb ? null : Obx(() => NavigationBar(
             selectedIndex: controller.index.value,
-            backgroundColor: headerColor,
+            backgroundColor: _headerColor.value,
             destinations: [
               NavigationDestination(
                 icon: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.globe : Icons.public),
@@ -401,7 +407,7 @@ class NotificationPanel extends StatelessWidget {
               controller.tabController.animateTo(page);
             },
           )),
-        ),
+        )),
       ),
     );
   }
@@ -454,6 +460,18 @@ class ChatListState extends State<ChatList> {
 
   @override
   Widget build(BuildContext context) {
+    final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? widget.headerColor : Colors.transparent).obs;
+    final Rx<Color> _tileColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? widget.tileColor : Colors.transparent).obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _headerColor.value = effect != WindowEffect.disabled ? Colors.transparent : widget.headerColor;
+          _tileColor.value = effect != WindowEffect.disabled ? Colors.transparent : widget.tileColor;
+        }
+      });
+    }
+
     return NotificationListener<ScrollEndNotification>(
       onNotification: (_) {
         if (SettingsManager().settings.skin.value != Skins.Samsung) return false;
@@ -472,8 +490,8 @@ class ChatListState extends State<ChatList> {
         physics: ThemeSwitcher.getScrollPhysics(),
         slivers: <Widget>[
           if (SettingsManager().settings.skin.value == Skins.Samsung)
-            SliverAppBar(
-              backgroundColor: widget.headerColor,
+            Obx(() => SliverAppBar(
+              backgroundColor: _headerColor.value,
               pinned: true,
               stretch: true,
               expandedHeight: context.height / 3,
@@ -534,7 +552,7 @@ class ChatListState extends State<ChatList> {
                   );
                 },
               ),
-            ),
+            )),
           Obx(() {
             if (!ChatBloc().loadedChatBatch.value) {
               return SliverToBoxAdapter(
@@ -580,7 +598,7 @@ class ChatListState extends State<ChatList> {
                   borderRadius: BorderRadius.circular(25),
                   child: Container(
                     height: context.height - 175,
-                    color: widget.tileColor,
+                    color: _tileColor.value,
                     child: ScrollbarWrapper(
                       controller: _controller,
                       child: ListView.builder(

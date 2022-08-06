@@ -372,7 +372,7 @@ class Chat {
           File? newFile = await saveImageFromUrl(message.guid!, message.metadata!["image"]);
 
           // If we downloaded a file, set the new metadata path
-          if (newFile != null && newFile.existsSync()) {
+          if (newFile != null && await newFile.exists()) {
             message.metadata!["image"] = newFile.path;
           }
         }

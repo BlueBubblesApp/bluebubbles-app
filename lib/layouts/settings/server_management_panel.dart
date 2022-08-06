@@ -23,6 +23,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -133,6 +134,17 @@ class ServerManagementPanel extends StatelessWidget {
       tileColor = temp;
     }
 
+    // These Rx variables are only needed in widgets not contained in settings_widgets.dart
+    final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? headerColor : Colors.transparent).obs;
+    final Rx<Color> _tileColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? tileColor : Colors.transparent).obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        _headerColor.value = effect != WindowEffect.disabled ? Colors.transparent : headerColor;
+        _tileColor.value = effect != WindowEffect.disabled ? Colors.transparent : tileColor;
+      });
+    }
+
     return SettingsScaffold(
       title: "Connection & Server Management",
       initialHeader: "Connection & Server Details",
@@ -150,7 +162,7 @@ class ServerManagementPanel extends StatelessWidget {
                   Obx(() {
                     bool redact = SettingsManager().settings.redactedMode.value;
                     return Container(
-                        color: tileColor,
+                        color: _tileColor.value,
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
                           child: AnimatedOpacity(
@@ -210,7 +222,6 @@ class ServerManagementPanel extends StatelessWidget {
                   Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ? SettingsTile(
                     title: "Show Stats",
                     subtitle: "Show iMessage statistics",
-                    backgroundColor: tileColor,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.chart_bar_square,
                       materialIcon: Icons.stacked_bar_chart,
@@ -252,7 +263,6 @@ class ServerManagementPanel extends StatelessWidget {
                   SettingsTile(
                     title: "Show QR Code",
                     subtitle: "Generate QR Code to screenshot or sync other devices",
-                    backgroundColor: tileColor,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.qrcode,
                       materialIcon: Icons.qr_code,
@@ -407,7 +417,6 @@ class ServerManagementPanel extends StatelessWidget {
                       iosIcon: CupertinoIcons.gear,
                       materialIcon: Icons.room_preferences,
                     ),
-                    backgroundColor: tileColor,
                     onLongPress: kIsWeb || kIsDesktop ? null : () {
                       showDialog(
                         context: context,
@@ -495,7 +504,6 @@ class ServerManagementPanel extends StatelessWidget {
                       return SettingsTile(
                           title: "Manually Sync Messages",
                           subtitle: subtitle,
-                          backgroundColor: tileColor,
                           leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.arrow_2_circlepath,
                             materialIcon: Icons.sync,
@@ -523,7 +531,6 @@ class ServerManagementPanel extends StatelessWidget {
                     title: "Fetch${kIsWeb || kIsDesktop ? "" : " & Share"} Server Logs",
                     subtitle: controller.fetchStatus.value
                         ?? (SocketManager().state.value == SocketState.CONNECTED ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
-                    backgroundColor: tileColor,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.doc_plaintext,
                       materialIcon: Icons.article,
@@ -581,7 +588,6 @@ class ServerManagementPanel extends StatelessWidget {
                       title: "Restart iMessage",
                       subtitle: controller.isRestartingMessages.value && SocketManager().state.value == SocketState.CONNECTED
                           ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the iMessage app" : "Disconnected, cannot restart",
-                      backgroundColor: tileColor,
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.chat_bubble,
                         materialIcon: Icons.sms,
@@ -636,7 +642,6 @@ class ServerManagementPanel extends StatelessWidget {
                           title: "Restart Private API & Services",
                           subtitle: controller.isRestartingPrivateAPI.value && SocketManager().state.value == SocketState.CONNECTED
                               ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the Private API" : "Disconnected, cannot restart",
-                          backgroundColor: tileColor,
                           leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.exclamationmark_shield,
                             materialIcon: Icons.gpp_maybe,
@@ -687,7 +692,6 @@ class ServerManagementPanel extends StatelessWidget {
                       subtitle: (controller.isRestarting.value)
                           ? "Restart in progress..."
                           : "This will briefly disconnect you",
-                      backgroundColor: tileColor,
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.desktopcomputer,
                         materialIcon: Icons.dvr,
@@ -755,7 +759,6 @@ class ServerManagementPanel extends StatelessWidget {
                   Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? SettingsTile(
                     title: "Check for Server Updates",
                     subtitle: "Check for new BlueBubbles Server updates",
-                    backgroundColor: tileColor,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.desktopcomputer,
                       materialIcon: Icons.dvr,

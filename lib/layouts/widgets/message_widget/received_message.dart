@@ -571,10 +571,11 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30)))) {
       messageColumn.add(
         Padding(
-          padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().isNotEmpty ? 0.0 : 3.0),
-          child: Text(
-            getContactName(context, contactTitle, widget.message.handle?.address),
-            style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
+          padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 0),
+          child: RichText(
+            text: TextSpan(
+              text: getContactName(context, contactTitle, widget.message.handle?.address),
+              style: context.theme.textTheme.labelMedium!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -622,6 +623,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   ]);
       }
     }
+
+    List<Widget> messagePopupColumn = List<Widget>.from(messageColumn);
 
     // Fourth, let's add any reactions or stickers to the widget
     if (message != null) {
@@ -703,6 +706,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             },
           ),
         );
+        messagePopupColumn.add(MessageWidgetMixin.addStickersToWidget(
+          message: MessageWidgetMixin.addReactionsToWidget(
+              messageWidget: SizedBox(child: message),
+              reactions: widget.reactionsWidget,
+              message: widget.message,
+              shouldShow: widget.message.getRealAttachments().isEmpty),
+          stickers: widget.stickersWidget,
+          isFromMe: widget.message.isFromMe!,
+        ),);
       } else {
         messageColumn.add(
           MessageWidgetMixin.addStickersToWidget(
@@ -715,28 +727,38 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             isFromMe: widget.message.isFromMe!,
           ),
         );
+        messagePopupColumn.add(MessageWidgetMixin.addStickersToWidget(
+          message: MessageWidgetMixin.addReactionsToWidget(
+              messageWidget: SizedBox(child: message),
+              reactions: widget.reactionsWidget,
+              message: widget.message,
+              shouldShow: widget.message.getRealAttachments().isEmpty),
+          stickers: widget.stickersWidget,
+          isFromMe: widget.message.isFromMe!,
+        ),);
       }
     }
 
     if (widget.showTimeStamp) {
-      messageColumn.add(
-        DeliveredReceipt(
-          message: widget.message,
-          showDeliveredReceipt: widget.showTimeStamp,
-          shouldAnimate: true,
-        ),
+      Widget receipt =
+      DeliveredReceipt(
+        message: widget.message,
+        showDeliveredReceipt: widget.showTimeStamp,
+        shouldAnimate: true,
       );
+      messageColumn.add(receipt);
+      messagePopupColumn.add(receipt);
     }
 
-    List<Widget> messagePopupColumn = List<Widget>.from(messageColumn);
     if (!addedSender && isGroup) {
       messagePopupColumn.insert(
         0,
         Padding(
-          padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().isNotEmpty ? 0.0 : 3.0),
-          child: Text(
-            getContactName(context, contactTitle, widget.message.handle?.address),
-            style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
+          padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 0),
+          child: RichText(
+            text: TextSpan(
+              text: getContactName(context, contactTitle, widget.message.handle?.address),
+              style: context.theme.textTheme.labelMedium!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -959,7 +981,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (widget.message.expressiveSendStyleId != null)
+                      if (showReplies && widget.message.expressiveSendStyleId != null)
                         GestureDetector(
                           onTap: () {
                             HapticFeedback.mediumImpact();

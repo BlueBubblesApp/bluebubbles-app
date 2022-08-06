@@ -22,10 +22,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_html/html.dart' as html;
 
 class AboutPanel extends StatelessWidget {
-  // Not sure how to do this other than manually yet
-  final desktopVersion = "1.9.7.0";
-  final desktopPre = false;
-
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
@@ -62,7 +58,6 @@ class AboutPanel extends StatelessWidget {
                   backgroundColor: tileColor,
                   children: [
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Support Us",
                       subtitle: kIsDesktop || kIsWeb ? "Left click for PayPal / Venmo\nRight click for Github Sponsors" : "Tap for PayPal / Venmo\nTap and hold for GitHub Sponsors",
                       onTap: () async {
@@ -88,7 +83,6 @@ class AboutPanel extends StatelessWidget {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Website",
                       onTap: () async {
                         await launchUrl(Uri(scheme: "https", host: "bluebubbles.app"));
@@ -106,7 +100,6 @@ class AboutPanel extends StatelessWidget {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Source Code",
                       subtitle: kIsWeb || kIsDesktop ? "Right click to report a bug" : "Tap and hold to report a bug",
                       onTap: () async {
@@ -131,7 +124,6 @@ class AboutPanel extends StatelessWidget {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Join Our Discord",
                       onTap: () async {
                         await launchUrl(Uri(scheme: "https", host: "discord.gg", path: "hbx7EhNFjp"));
@@ -155,7 +147,6 @@ class AboutPanel extends StatelessWidget {
                   backgroundColor: tileColor,
                   children: [
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Changelog",
                       onTap: () async {
                         String changelog =
@@ -227,7 +218,6 @@ class AboutPanel extends StatelessWidget {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "Developers",
                       onTap: () {
                         showDialog(
@@ -309,7 +299,6 @@ class AboutPanel extends StatelessWidget {
                       ),
                     if (kIsWeb || kIsDesktop)
                       SettingsTile(
-                        backgroundColor: tileColor,
                         title: "Keyboard Shortcuts",
                         onTap: () {
                           showDialog(
@@ -469,7 +458,6 @@ class AboutPanel extends StatelessWidget {
                       ),
                     ),
                     SettingsTile(
-                      backgroundColor: tileColor,
                       title: "About",
                       onTap: () {
                         showDialog<void>(
@@ -526,9 +514,12 @@ class AboutPanel extends StatelessWidget {
                                                                   : "N/A"}",
                                                           style: context.theme.textTheme.bodyLarge),
                                                     if (kIsDesktop)
-                                                      Text(
-                                                        "${desktopVersion}_${Platform.operatingSystem.capitalizeFirst!}${desktopPre ? "_Beta" : ""}",
-                                                        style: context.theme.textTheme.bodyLarge,
+                                                      FutureBuilder<PackageInfo>(
+                                                        future: PackageInfo.fromPlatform(),
+                                                        builder: (context, snapshot) => Text(
+                                                          "${snapshot.data?.version}_${Platform.operatingSystem.capitalizeFirst!}",
+                                                          style: context.theme.textTheme.bodyLarge,
+                                                        ),
                                                       ),
                                                   ],
                                                 ),

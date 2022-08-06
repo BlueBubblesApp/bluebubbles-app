@@ -49,7 +49,6 @@ class TroubleshootPanel extends StatelessWidget {
                 backgroundColor: tileColor,
                 children: [
                   Obx(() => SettingsTile(
-                    backgroundColor: tileColor,
                     onTap: () async {
                       if (Logger.saveLogs.value) {
                         await Logger.stopSavingLogs();
@@ -81,7 +80,6 @@ class TroubleshootPanel extends StatelessWidget {
                     backgroundColor: tileColor,
                     children: [
                       SettingsTile(
-                        backgroundColor: tileColor,
                         onTap: () async {
                           final RxList<String> log = <String>[].obs;
                           showDialog(

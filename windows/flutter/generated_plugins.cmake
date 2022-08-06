@@ -7,6 +7,8 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus_windows
   dart_vlc
   desktop_drop
+  dynamic_color
+  flutter_acrylic
   flutter_native_view
   geolocator_windows
   maps_launcher

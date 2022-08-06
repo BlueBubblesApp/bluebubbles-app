@@ -12,6 +12,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
@@ -36,6 +37,7 @@ import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
+import 'package:collection/collection.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_dart/firebase_dart.dart';
@@ -46,6 +48,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide MenuItem;
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
@@ -107,6 +110,7 @@ final RxBool downloadingFont = false.obs;
 final RxnDouble progress = RxnDouble();
 final RxnInt totalSize = RxnInt();
 late final CorePalette? monetPalette;
+Color? windowsAccentColor;
 
 String? _recentIntent;
 
@@ -156,7 +160,7 @@ Future<Null> initApp(bool isBubble) async {
 
   if (kIsDesktop) {
     await WindowManager.instance.ensureInitialized();
-    DartVLC.initialize(useFlutterNativeView: true);
+    await DartVLC.initialize();
   }
 
   HttpOverrides.global = MyHttpOverrides();
@@ -177,18 +181,17 @@ Future<Null> initApp(bool isBubble) async {
   };
   dynamic exception;
   StackTrace? stacktrace;
-  if (Platform.isWindows && !kIsWeb) {
+  if ((Platform.isLinux || Platform.isWindows) && !kIsWeb) {
     //ignore: unnecessary_cast, we need this as a workaround
     Directory appData = (await getApplicationSupportDirectory()) as Directory;
+
     // Migrate to new appdata location if this function returns the new place and we still have the old place
-    if (basename(dirname(appData.absolute.path)) == "com.bluebubbles.app") {
+    if (basename(appData.absolute.path) == "bluebubbles") {
       Directory oldAppData =
-          Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app"));
-      if (oldAppData.existsSync()) {
+      Platform.isWindows ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app")) : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
+      if (await oldAppData.exists() && !await Directory(join(appData.path, "objectbox")).exists()) {
         Logger.info("Copying appData to new directory");
-        copyDirectory(oldAppData, appData);
-        Logger.info("Deleting old appData directory");
-        Directory(dirname(oldAppData.absolute.path)).deleteSync(recursive: true);
+        await copyDirectory(oldAppData, appData);
         Logger.info("Finished migrating appData");
       }
     }
@@ -224,14 +227,14 @@ Future<Null> initApp(bool isBubble) async {
           customStorePath ??= "C:\\bluebubbles_app";
           objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
           if (kIsDesktop) {
-            objectBoxDirectory.createSync(recursive: true);
+            await objectBoxDirectory.create(recursive: true);
           }
           Logger.info("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
           store = await openStore(directory: join(customStorePath, "objectbox"));
         } else {
           try {
             if (kIsDesktop) {
-              Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
+              await Directory(join(documentsDirectory.path, 'objectbox')).create(recursive: true);
             }
             Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
             store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
@@ -243,7 +246,7 @@ Future<Null> initApp(bool isBubble) async {
               customStorePath ??= "C:\\bluebubbles_app";
               prefs.setBool("use-custom-path", true);
               objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-              objectBoxDirectory.createSync(recursive: true);
+              await objectBoxDirectory.create(recursive: true);
               Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
               store = await openStore(directory: join(customStorePath, 'objectbox'));
             }
@@ -266,7 +269,7 @@ Future<Null> initApp(bool isBubble) async {
         }
       }
 
-      if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
+      if (!(await objectBoxDirectory.exists()) && await File(sqlitePath).exists()) {
         runApp(UpgradingDB());
         print("Converting sqflite to ObjectBox...");
         Stopwatch s = Stopwatch();
@@ -275,7 +278,7 @@ Future<Null> initApp(bool isBubble) async {
         s.stop();
         Logger.info("Migrated in ${s.elapsedMilliseconds} ms");
       } else {
-        if (File(sqlitePath).existsSync() && prefs.getBool('objectbox-migration') != true) {
+        if (await File(sqlitePath).exists() && prefs.getBool('objectbox-migration') != true) {
           runApp(UpgradingDB());
           print("Converting sqflite to ObjectBox...");
           Stopwatch s = Stopwatch();
@@ -354,6 +357,10 @@ Future<Null> initApp(bool isBubble) async {
     }
     if (kIsDesktop) {
       await WindowManager.instance.setTitle('BlueBubbles');
+      await Window.initialize();
+      if (Platform.isWindows) {
+        await Window.hideWindowControls();
+      }
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
         await WindowManager.instance.setMinimumSize(Size(300, 300));
@@ -383,6 +390,10 @@ Future<Null> initApp(bool isBubble) async {
         await WindowManager.instance.setTitle('BlueBubbles');
         await WindowManager.instance.show();
       });
+
+      if (Platform.isWindows) {
+        windowsAccentColor = await DynamicColorPlugin.getAccentColor();
+      }
     }
     if (!kIsWeb) {
       try {
@@ -417,7 +428,7 @@ Future<Null> initApp(bool isBubble) async {
         .getDarkTheme()
         .data;
 
-    final tuple = applyMonet(light, dark);
+    final tuple = Platform.isWindows ? applyWindowsAccent(light, dark) : applyMonet(light, dark);
     light = tuple.item1;
     dark = tuple.item2;
 
@@ -631,9 +642,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         );
 
         // Delete temp dir in case any notif icons weren't cleared
-        getApplicationSupportDirectory().then((d) {
+        getApplicationSupportDirectory().then((d) async {
           Directory temp = Directory(join(d.path, "temp"));
-          if (temp.existsSync()) temp.deleteSync(recursive: true);
+          if (await temp.exists()) await temp.delete(recursive: true);
         });
       }
       Future.delayed(Duration.zero, () async => await initSystemTray());
@@ -891,6 +902,39 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
     ));
 
+    if (kIsDesktop && Platform.isWindows) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+        await WindowEffects.setEffect(color: context.theme.backgroundColor);
+        EventDispatcher().stream.listen((Map<String, dynamic> event) async {
+          if (!event.containsKey("type")) return;
+
+          if (event["type"] == 'theme-update') {
+            await WindowEffects.setEffect(color: context.theme.backgroundColor);
+          }
+
+          if (event["type"] == 'popup-pushed') {
+            bool popup = event["data"] as bool;
+            if (popup) {
+              SettingsManager().settings.windowEffect.value = WindowEffect.disabled;
+            } else {
+              SettingsManager().settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((effect) => effect.toString() == prefs.getString('window-effect')) ?? WindowEffect.aero;
+            }
+          }
+        });
+      });
+    }
+
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _backgroundColor.value =
+          effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+        }
+      });
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
@@ -908,8 +952,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           StartIncrementalSyncIntent: StartIncrementalSyncAction(),
           GoBackIntent: GoBackAction(context),
         },
-        child: Scaffold(
-          backgroundColor: context.theme.colorScheme.background,
+        child: Obx(() => Scaffold(
+          backgroundColor: _backgroundColor.value,
           body: Builder(
             builder: (BuildContext context) {
               if (SettingsManager().settings.finishedSetup.value) {
@@ -944,7 +988,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               }
             },
           ),
-        ),
+        )),
       ),
     );
   }
@@ -1002,13 +1046,13 @@ Future<void> initSystemTray() async {
   });
 }
 
-void copyDirectory(Directory source, Directory destination) => source.listSync(recursive: false).forEach((element) {
+Future<void> copyDirectory(Directory source, Directory destination) async => await source.list(recursive: false).forEach((element) async {
       if (element is Directory) {
         Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
-        newDirectory.createSync();
+        await newDirectory.create();
 
-        copyDirectory(element.absolute, newDirectory);
+        await copyDirectory(element.absolute, newDirectory);
       } else if (element is File) {
-        element.copySync(join(destination.path, basename(element.path)));
+        await element.copy(join(destination.path, basename(element.path)));
       }
     });

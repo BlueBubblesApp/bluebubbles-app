@@ -74,24 +74,19 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       widget.handle?.color != null ? HexColor(widget.handle!.color!) : toColorGradient(widget.handle!.address)[0],
       title: Container(
           width: CustomNavigator.width(context) - 112,
-          child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Choose a Color',
-                    style: Theme.of(context).textTheme.headline6),
-                TextButton(
-                  onPressed: () async {
-                    didReset = true;
-                    Get.back();
-                    widget.handle!.color = null;
-                    widget.handle!.save(updateColor: true);
-                    EventDispatcher().emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
-                  },
-                  child: Text("RESET"),
-                )
-              ]
-          )
-      ),
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('Choose a Color', style: Theme.of(context).textTheme.headline6),
+            TextButton(
+              onPressed: () async {
+                didReset = true;
+                Get.back();
+                widget.handle!.color = null;
+                widget.handle!.save(updateColor: true);
+                EventDispatcher().emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
+              },
+              child: Text("RESET"),
+            )
+          ])),
       width: 40,
       height: 40,
       spacing: 0,
@@ -135,93 +130,101 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
     super.build(context);
     String? initials = ContactManager().getContactInitials(widget.handle);
     Color tileColor = ThemeManager().inDarkMode(context)
-        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
-    return GestureDetector(
-      onTap: onAvatarTap,
-      child: Container(
-        key: Key("$keyPrefix-avatar-container"),
-        width: (widget.size ?? 40) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
-        height: (widget.size ?? 40) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
-        padding: EdgeInsets.all(widget.borderThickness),
-        decoration: BoxDecoration(
-          color: SettingsManager().settings.skin.value == Skins.Samsung ? tileColor : context.theme.colorScheme.background, // border color
-          shape: BoxShape.circle,
-        ),
-        child: Obx(() {
-          Uint8List? avatar;
-          if (contact?.hasAvatar ?? false) {
-            if (widget.preferHighResAvatar) {
-              avatar = contact?.avatarHiRes.value ?? contact?.avatar.value;
-            } else {
-              avatar = contact?.avatar.value ?? contact?.avatarHiRes.value;
+        ? context.theme.colorScheme.properSurface
+        : context.theme.colorScheme.background;
+    return MouseRegion(
+      cursor: !widget.editable || !SettingsManager().settings.colorfulAvatars.value || widget.handle == null ? MouseCursor.defer : SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onAvatarTap,
+        child: Container(
+          key: Key("$keyPrefix-avatar-container"),
+          width: (widget.size ?? 40) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
+          height: (widget.size ?? 40) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
+          padding: EdgeInsets.all(widget.borderThickness),
+          decoration: BoxDecoration(
+            color: SettingsManager().settings.skin.value == Skins.Samsung
+                ? tileColor
+                : context.theme.colorScheme.background, // border color
+            shape: BoxShape.circle,
+          ),
+          child: Obx(() {
+            Uint8List? avatar;
+            if (contact?.hasAvatar ?? false) {
+              if (widget.preferHighResAvatar) {
+                avatar = contact?.avatarHiRes.value ?? contact?.avatar.value;
+              } else {
+                avatar = contact?.avatar.value ?? contact?.avatarHiRes.value;
+              }
             }
-          }
 
-          List<Color> colors = [];
-          if (widget.handle?.color == null) {
-            colors = toColorGradient(widget.handle?.address);
-          } else {
-            colors = [
-              HexColor(widget.handle!.color!).lightenAmount(0.02),
-              HexColor(widget.handle!.color!),
-            ];
-          }
-          return CircleAvatar(
-            key: Key("$keyPrefix-avatar"),
-            radius: ((widget.size != null) ? widget.size! / 2 : 20) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
-            backgroundImage:
-            !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value) && avatar != null
-                ? MemoryImage(avatar)
-                : null,
-            child: avatar == null ||
-                (SettingsManager().settings.redactedMode.value &&
-                    SettingsManager().settings.hideContactPhotos.value)
-                ? Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: AlignmentDirectional.topStart,
-                    colors: [
-                      !SettingsManager().settings.colorfulAvatars.value
-                          ? HexColor("928E8E")
-                          : colors.isNotEmpty
-                          ? colors[1]
-                          : HexColor("928E8E"),
-                      !SettingsManager().settings.colorfulAvatars.value
-                          ? HexColor("686868")
-                          : colors.isNotEmpty
-                          ? colors[0]
-                          : HexColor("686868")
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(widget.size ?? 40),
-                ),
-                child: Container(
-                  child: (SettingsManager().settings.redactedMode.value &&
-                      SettingsManager().settings.removeLetterAvatars.value) ||
-                      initials == null
-                      ? Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS
-                        ? CupertinoIcons.person_fill
-                        : Icons.person,
-                    color: Colors.white,
-                    key: Key("$keyPrefix-avatar-icon"),
-                    size: ((widget.size ?? 40) / 2) * (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
-                  )
-                      : Text(
-                    initials,
-                    key: Key("$keyPrefix-avatar-text"),
-                    style: TextStyle(
-                      fontSize: widget.fontSize ?? 18,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  alignment: AlignmentDirectional.center,
-                ),
-              )
+            List<Color> colors = [];
+            if (widget.handle?.color == null) {
+              colors = toColorGradient(widget.handle?.address);
+            } else {
+              colors = [
+                HexColor(widget.handle!.color!).lightenAmount(0.02),
+                HexColor(widget.handle!.color!),
+              ];
+            }
+            return CircleAvatar(
+              key: Key("$keyPrefix-avatar"),
+              radius: ((widget.size != null) ? widget.size! / 2 : 20) *
+                  (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
+              backgroundImage: !(SettingsManager().settings.redactedMode.value &&
+                          SettingsManager().settings.hideContactPhotos.value) &&
+                      avatar != null
+                  ? MemoryImage(avatar)
+                  : null,
+              child: avatar == null ||
+                      (SettingsManager().settings.redactedMode.value &&
+                          SettingsManager().settings.hideContactPhotos.value)
+                  ? Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: AlignmentDirectional.topStart,
+                          colors: [
+                            !SettingsManager().settings.colorfulAvatars.value
+                                ? HexColor("928E8E")
+                                : colors.isNotEmpty
+                                    ? colors[1]
+                                    : HexColor("928E8E"),
+                            !SettingsManager().settings.colorfulAvatars.value
+                                ? HexColor("686868")
+                                : colors.isNotEmpty
+                                    ? colors[0]
+                                    : HexColor("686868")
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(widget.size ?? 40),
+                      ),
+                      child: Container(
+                        child: (SettingsManager().settings.redactedMode.value &&
+                                    SettingsManager().settings.removeLetterAvatars.value) ||
+                                initials == null
+                            ? Icon(
+                                SettingsManager().settings.skin.value == Skins.iOS
+                                    ? CupertinoIcons.person_fill
+                                    : Icons.person,
+                                color: Colors.white,
+                                key: Key("$keyPrefix-avatar-icon"),
+                                size: ((widget.size ?? 40) / 2) *
+                                    (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1),
+                              )
+                            : Text(
+                                initials,
+                                key: Key("$keyPrefix-avatar-text"),
+                                style: TextStyle(
+                                  fontSize: widget.fontSize ?? 18,
+                                  color: Colors.white,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                        alignment: AlignmentDirectional.center,
+                      ),
+                    )
                   : null,
             );
-          }
+          }),
         ),
       ),
     );

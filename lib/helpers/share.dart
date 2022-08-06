@@ -90,13 +90,13 @@ class Share {
     String? filePath;
 
     filePath = "${AttachmentHelper.getTempPath()}/$fileName";
-    file = File(filePath)
-      ..createSync()
-      ..writeAsStringSync(vcfString);
+    file = File(filePath);
+    await file.create();
+    await file.writeAsString(vcfString);
 
     PlatformFile pFile = PlatformFile(
       name: fileName,
-      size: file.lengthSync(),
+      size: await file.length(),
       path: filePath,
     );
 
