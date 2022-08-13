@@ -1520,9 +1520,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             PlatformFile(
               name: "${randomString(8)}.m4a",
               path: kIsWeb ? null : pathName,
-              size: 0,
-              bytes:
-                  kIsWeb ? (await Dio().get(pathName, options: Options(responseType: ResponseType.bytes))).data : null,
+              size: kIsWeb ? 0 : await File(pathName).length(),
+              bytes: kIsWeb
+                  ? (await api.dio.get(pathName, options: Options(responseType: ResponseType.bytes))).data
+                  : await File(pathName).readAsBytes(),
             ));
       }
     }
