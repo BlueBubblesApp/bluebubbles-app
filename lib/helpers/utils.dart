@@ -532,7 +532,7 @@ String? sanitizeServerAddress({String? address}) {
 
   Uri? uri = Uri.tryParse(serverAddress);
   if (uri?.scheme.isEmpty ?? true) {
-    if (serverAddress.contains("ngrok.io")) {
+    if (serverAddress.contains("ngrok.io") || serverAddress.contains("trycloudflare.com")) {
       serverAddress = "https://$serverAddress";
     } else {
       serverAddress = "http://$serverAddress";
