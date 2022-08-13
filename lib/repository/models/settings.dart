@@ -68,7 +68,7 @@ class Settings {
   final RxDouble avatarScale = 1.0.obs;
   final RxBool askWhereToSave = false.obs;
   final RxBool statusIndicatorsOnChats = false.obs;
-
+  final RxInt apiTimeout = 15000.obs;
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -336,6 +336,8 @@ class Settings {
         settings.askWhereToSave.value = entry.value;
       } else if (entry.name == "indicatorsOnPinnedChats") {
         settings.statusIndicatorsOnChats.value = entry.value;
+      } else if (entry.name == "apiTimeout") {
+        settings.apiTimeout.value = entry.value;
       } else if (entry.name == "useCustomTitleBar") {
         settings.useCustomTitleBar.value = entry.value;
       } else if (entry.name == "betterScrolling") {
@@ -466,6 +468,7 @@ class Settings {
       'actionList': actionList,
       'askWhereToSave': askWhereToSave.value,
       'indicatorsOnPinnedChats': statusIndicatorsOnChats.value,
+      'apiTimeout': apiTimeout.value,
       'swipeToReply': swipeToReply.value,
       'privateAPISend': privateAPISend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
@@ -578,6 +581,7 @@ class Settings {
     SettingsManager().settings.minimizeToTray.value = map['minimizeToTray'] ?? false;
     SettingsManager().settings.askWhereToSave.value = map['askWhereToSave'] ?? false;
     SettingsManager().settings.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
+    SettingsManager().settings.apiTimeout.value = map['apiTimeout'] ?? 15000;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.privateAPISend.value = map['privateAPISend'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -694,6 +698,7 @@ class Settings {
     s.minimizeToTray.value = map['minimizeToTray'] ?? false;
     s.askWhereToSave.value = map['askWhereToSave'] ?? false;
     s.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
+    s.apiTimeout.value = map['apiTimeout'] ?? 15000;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;

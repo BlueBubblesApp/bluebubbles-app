@@ -54,7 +54,11 @@ class ApiService extends GetxService {
   /// Initialize dio with a couple options and intercept all requests for logging
   @override
   void onInit() {
-    dio = Dio(BaseOptions(connectTimeout: 15000, receiveTimeout: 15000, sendTimeout: 15000));
+    dio = Dio(BaseOptions(
+        connectTimeout: 15000,
+        receiveTimeout: SettingsManager().settings.apiTimeout.value,
+        sendTimeout: SettingsManager().settings.apiTimeout.value,
+    ));
     dio.interceptors.add(ApiInterceptor());
     // Uncomment to run tests on most API requests
     // testAPI();
@@ -226,7 +230,7 @@ class ApiService extends GetxService {
       final response = await dio.get(
           "$origin/attachment/$guid/download",
           queryParameters: buildQueryParams({"original": original}),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: 1800000),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
@@ -240,7 +244,7 @@ class ApiService extends GetxService {
       final response = await dio.get(
         "$origin/attachment/$guid/blurhash",
         queryParameters: buildQueryParams(),
-        options: Options(responseType: ResponseType.bytes, receiveTimeout: 1800000),
+        options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12),
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
       );
@@ -395,7 +399,7 @@ class ApiService extends GetxService {
       final response = await dio.get(
           "$origin/chat/$guid/icon",
           queryParameters: buildQueryParams(),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: 1800000),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
