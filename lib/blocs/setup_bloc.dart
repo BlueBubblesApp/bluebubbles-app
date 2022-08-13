@@ -93,13 +93,15 @@ class SetupBloc {
         Logger.info('Received FCM data from the server. Attempting to re-authenticate', tag: 'FCM-Auth');
 
         // Parse out the new FCM data
-        FCMData fcmData = parseFcmJson(fcmResponse.data["data"]);
+        if (fcmResponse.data["data"] != null) {
+          FCMData fcmData = parseFcmJson(fcmResponse.data["data"]);
 
-        // Save the FCM data in settings
-        SettingsManager().saveFCMData(fcmData);
+          // Save the FCM data in settings
+          SettingsManager().saveFCMData(fcmData);
 
-        // Retry authenticating with Firebase
-        result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData!.toMap());
+          // Retry authenticating with Firebase
+          result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData!.toMap());
+        }
       } on PlatformException catch (e) {
         if (!catchException) {
           throw Exception("[FCM Auth] -> $e");

@@ -253,61 +253,64 @@ class ServerManagementPanel extends StatelessWidget {
                       );
                     },
                   ) : SizedBox.shrink()),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ?  Container(
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42
+                      && controller.stats.isNotEmpty
+                      && SettingsManager().fcmData != null ? Container(
                     color: tileColor,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 65.0),
                       child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ) : SizedBox.shrink()),
-                  SettingsTile(
-                    title: "Show QR Code",
-                    subtitle: "Generate QR Code to screenshot or sync other devices",
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.qrcode,
-                      materialIcon: Icons.qr_code,
+                  if (SettingsManager().fcmData != null)
+                    SettingsTile(
+                      title: "Show QR Code",
+                      subtitle: "Generate QR Code to screenshot or sync other devices",
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.qrcode,
+                        materialIcon: Icons.qr_code,
+                      ),
+                      onTap: () {
+                        List<dynamic> json = [
+                          SettingsManager().settings.guidAuthKey.value,
+                          SettingsManager().settings.serverAddress.value,
+                          SettingsManager().fcmData!.projectID,
+                          SettingsManager().fcmData!.storageBucket,
+                          SettingsManager().fcmData!.apiKey,
+                          SettingsManager().fcmData!.firebaseURL,
+                          SettingsManager().fcmData!.clientID,
+                          SettingsManager().fcmData!.applicationID,
+                        ];
+                        String qrtext = jsonEncode(json);
+                        showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              backgroundColor: context.theme.colorScheme.properSurface,
+                              content: Container(
+                                height: 320,
+                                width: 320,
+                                child: QrImage(
+                                  data: qrtext,
+                                  version: QrVersions.auto,
+                                  size: 320,
+                                  gapless: true,
+                                  backgroundColor: context.theme.colorScheme.properSurface,
+                                  foregroundColor: context.theme.colorScheme.properOnSurface,
+                                ),
+                              ),
+                              title: Text("QR Code", style: context.theme.textTheme.titleLarge),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: Text("Dismiss", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            )
+                        );
+                      },
                     ),
-                    onTap: () {
-                      List<dynamic> json = [
-                        SettingsManager().settings.guidAuthKey.value,
-                        SettingsManager().settings.serverAddress.value,
-                        SettingsManager().fcmData!.projectID,
-                        SettingsManager().fcmData!.storageBucket,
-                        SettingsManager().fcmData!.apiKey,
-                        SettingsManager().fcmData!.firebaseURL,
-                        SettingsManager().fcmData!.clientID,
-                        SettingsManager().fcmData!.applicationID,
-                      ];
-                      String qrtext = jsonEncode(json);
-                      showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: context.theme.colorScheme.properSurface,
-                            content: Container(
-                              height: 320,
-                              width: 320,
-                              child: QrImage(
-                                data: qrtext,
-                                version: QrVersions.auto,
-                                size: 320,
-                                gapless: true,
-                                backgroundColor: context.theme.colorScheme.properSurface,
-                                foregroundColor: context.theme.colorScheme.properOnSurface,
-                              ),
-                            ),
-                            title: Text("QR Code", style: context.theme.textTheme.titleLarge),
-                            actions: <Widget>[
-                              TextButton(
-                                child: Text("Dismiss", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            ],
-                          )
-                      );
-                    },
-                  ),
                 ],
               ),
               SettingsHeader(

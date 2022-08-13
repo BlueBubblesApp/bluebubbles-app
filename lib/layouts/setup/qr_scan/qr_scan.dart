@@ -543,9 +543,15 @@ class _QRScanState extends State<QRScan> {
             });
           }
 
-          FCMData fcmData = FCMData.fromMap(data["data"]);
-          SettingsManager().saveFCMData(fcmData);
-          goToNextPage();
+          if (data["data"] == null && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
+            return setState(() {
+              error = "Firebase is required when using Ngrok or Cloudflare!";
+            });
+          } else {
+            FCMData fcmData = FCMData.fromMap(data["data"]);
+            SettingsManager().saveFCMData(fcmData);
+            goToNextPage();
+          }
         } else if (mounted) {
           if (err != null) {
             final errorData = jsonDecode(err as String);
