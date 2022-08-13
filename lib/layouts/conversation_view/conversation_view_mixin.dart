@@ -1012,12 +1012,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               style: context.theme.textTheme.titleLarge,
             ),
             content: Container(
-                // height: 70,
-                // color: Colors.black,
+              height: 70,
+              child: Center(
                 child: CircularProgressIndicator(
-                    backgroundColor: context.theme.colorScheme.properSurface,
-                    valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                 ),
+              ),
               ),
           );
         });
