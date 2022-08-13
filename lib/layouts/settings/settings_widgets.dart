@@ -504,12 +504,15 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     }
 
     if (SettingsManager().settings.skin.value == Skins.iOS && useCupertino) {
-      final texts = options.map((e) => Text(capitalize ? textProcessing!(e).capitalize! : textProcessing!(e), style: context.theme.textTheme.bodyLarge!.copyWith(color: e == initial ? context.theme.colorScheme.onPrimary : null)));
+      final texts = options.map((e) => Text(capitalize ? textProcessing!(e).capitalize! : textProcessing!(e),
+          style: context.theme.textTheme.bodyLarge!.copyWith(color: e == initial ? context.theme.colorScheme.onPrimary : null),
+          maxLines: 1,
+      ));
       final map = Map<T, Widget>.fromIterables(options, cupertinoCustomWidgets ?? texts);
       return Obx(() => Container(
         color: _backgroundColor.value,
         padding: EdgeInsets.symmetric(horizontal: 13),
-        height: 50,
+        height: context.theme.textTheme.bodyLarge!.fontSize! * 3,
         width: context.width,
           child: MouseRegion(
             cursor: cursor,
@@ -546,6 +549,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                       child: Text(
                         title,
                         style: context.theme.textTheme.bodyLarge,
+                        maxLines: 1,
                       ),
                     ),
                     (subtitle != null)
