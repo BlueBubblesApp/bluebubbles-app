@@ -328,8 +328,26 @@ class ActionHandler {
           String? tempGuid = message.guid;
           // If there is an error, replace the temp value with an error
           message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message']}");
-          message.error =
-          error.statusCode == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+          message.error = error.statusCode ?? MessageError.BAD_REQUEST.code;
+
+          await Message.replaceMessage(tempGuid, message);
+          MessageManager().updateMessage(chat, tempGuid!, message);
+          completer.complete();
+        } else if (error is DioError) {
+          String? tempGuid = message.guid;
+          // If there is an error, replace the temp value with an error
+          String _error;
+          if (error.type == DioErrorType.connectTimeout) {
+            _error = "Connect timeout occured! Check your connection.";
+          } else if (error.type == DioErrorType.sendTimeout) {
+            _error = "Send timeout occured!";
+          } else if (error.type == DioErrorType.receiveTimeout) {
+            _error = "Receive data timeout occured! Check server logs for more info.";
+          } else {
+            _error = error.error.toString();
+          }
+          message.guid = message.guid!.replaceAll("temp", "error-$_error");
+          message.error = error.response?.statusCode ?? MessageError.BAD_REQUEST.code;
 
           await Message.replaceMessage(tempGuid, message);
           MessageManager().updateMessage(chat, tempGuid!, message);
