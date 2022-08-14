@@ -56,7 +56,11 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                     }
                   }
                 } else {
-                  showSnackbar('Customization', "Please click the edit button to start customizing!");
+                  if (SettingsManager().settings.monetTheming.value != Monet.none) {
+                    showSnackbar('Notice', "Turn off Material You to start customizing!");
+                  } else {
+                    showSnackbar('Notice', "Create a new theme to start customizing!");
+                  }
                 }
               },
               onLongPress: widget.tuple.item2 != null ? () async {
@@ -75,7 +79,11 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                     }
                   }
                 } else {
-                  showSnackbar('Customization', "Please click the edit button to start customizing!");
+                  if (SettingsManager().settings.monetTheming.value != Monet.none) {
+                    showSnackbar('Notice', "Turn off Material You to start customizing!");
+                  } else {
+                    showSnackbar('Notice', "Create a new theme to start customizing!");
+                  }
                 }
               } : null,
               onDoubleTap: () {
