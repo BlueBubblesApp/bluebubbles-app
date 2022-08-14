@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -155,14 +156,18 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                         primary: context.theme.colorScheme.properSurface,
                                       ),
                                       onPressed: () async {
-                                        final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
-                                        if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+                                        final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
+                                        if (res == null || res.files.isEmpty) return;
 
                                         for (pf.PlatformFile file in res.files) {
+                                          if (file.size / 1024000 > 100) {
+                                            showSnackbar("Error", "This file is over 100 MB! Please compress it before sending.");
+                                            continue;
+                                          }
                                           widget.onAddAttachment(PlatformFile(
                                             path: file.path,
                                             name: file.name,
-                                            bytes: file.bytes,
+                                            bytes: Uint8List.fromList(await file.readStream!.first),
                                             size: file.size
                                           ));
                                         }

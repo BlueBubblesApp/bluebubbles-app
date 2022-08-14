@@ -492,15 +492,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   Future<void> toggleShareMenu() async {
     if (kIsDesktop) {
-      final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
+      final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
       if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
       for (pf.PlatformFile e in res.files) {
+        if (e.size / 1024000 > 100) {
+          showSnackbar("Error", "This file is over 100 MB! Please compress it before sending.");
+          continue;
+        }
         addAttachment(PlatformFile(
           path: e.path,
           name: e.name,
           size: e.size,
-          bytes: e.bytes,
+          bytes: Uint8List.fromList(await e.readStream!.first)
         ));
       }
       Get.back();
@@ -515,15 +519,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             ListTile(
               title: Text("Upload file", style: Theme.of(context).textTheme.bodyLarge),
               onTap: () async {
-                final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
+                final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
                 if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
                 for (pf.PlatformFile e in res.files) {
+                  if (e.size / 1024000 > 100) {
+                    showSnackbar("Error", "This file is over 100 MB! Please compress it before sending.");
+                    continue;
+                  }
                   addAttachment(PlatformFile(
                     path: null,
                     name: e.name,
                     size: e.size,
-                    bytes: e.bytes,
+                    bytes: Uint8List.fromList(await e.readStream!.first),
                   ));
                 }
                 Get.back();
