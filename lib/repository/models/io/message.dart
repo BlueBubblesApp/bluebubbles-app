@@ -849,7 +849,7 @@ class Message {
   }
 
   List<Message> getReactions() {
-    return associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType)).toList();
+    return associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", ""))).toList();
   }
 
   void generateTempGuid() {
