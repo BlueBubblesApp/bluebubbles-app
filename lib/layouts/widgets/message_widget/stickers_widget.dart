@@ -45,7 +45,7 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
 
       // Get the associated attachments
       if (msg.attachments.isEmpty) {
-        msg.fetchAttachments();
+        msg.attachments = msg.fetchAttachments() ?? [];
       }
       for (Attachment? attachment in msg.attachments) {
         // If we've already loaded it, don't try again
