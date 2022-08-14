@@ -646,7 +646,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               children: [
                 Expanded(
                   child: Padding(
-                    padding: EdgeInsets.only(left: 15.0, top: kIsDesktop ? 5 : 45),
+                    padding: EdgeInsets.only(left: 15.0, top: kIsDesktop || kIsWeb ? 5 : 45),
                     child: GestureDetector(
                       onTap: () {
                         if (LifeCycleManager().isBubble) {

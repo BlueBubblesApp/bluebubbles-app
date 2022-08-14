@@ -818,7 +818,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 onTap: () async {
                   GiphyGif? gif = await GiphyGet.getGif(
                     context: context,
-                    apiKey: dotenv.get('GIPHY_API_KEY'),
+                    apiKey: GIPHY_API_KEY,
                     tabColor: context.theme.primaryColor,
                   );
                   if (gif?.images?.original != null) {

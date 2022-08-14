@@ -203,7 +203,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                       children: <Widget>[
                         Container(
                           margin: EdgeInsets.only(
-                              top: (kIsDesktop ? 40 : kToolbarHeight + 30), left: 20, right: 20, bottom: 5),
+                              top: (kIsDesktop || kIsWeb ? 40 : kToolbarHeight + 30), left: 20, right: 20, bottom: 5),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: <Widget>[
