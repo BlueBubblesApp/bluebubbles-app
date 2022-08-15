@@ -32,7 +32,7 @@ apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
 
     lintOptions {
         checkReleaseBuilds false
@@ -46,7 +46,7 @@ android {
     defaultConfig {
         applicationId "com.bluebubbles.messaging"
         minSdkVersion 21
-        targetSdkVersion 31
+        targetSdkVersion 33
         versionCode 20000000 + flutterVersionCode.toInteger()
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -135,36 +135,36 @@ flutter {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.4.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
+    implementation 'androidx.appcompat:appcompat:1.5.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test:runner:1.4.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-    implementation 'com.google.firebase:firebase-analytics:21.0.0'
+    implementation 'com.google.firebase:firebase-analytics:21.1.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "androidx.core:core:1.7.0"
-    implementation "androidx.sharetarget:sharetarget:1.2.0-rc01"
+    implementation "androidx.core:core:1.8.0"
+    implementation "androidx.sharetarget:sharetarget:1.2.0-rc02"
 
     //for location sending
-    implementation "com.google.android.gms:play-services-location:19.0.1"
+    implementation "com.google.android.gms:play-services-location:20.0.0"
 
     // for album art color
     implementation 'androidx.palette:palette:1.0.0'
 
     // Add the SDK for Firebase Cloud Messaging
-    implementation 'com.google.firebase:firebase-messaging:23.0.4'
-    implementation 'com.google.firebase:firebase-analytics:21.0.0'
+    implementation 'com.google.firebase:firebase-messaging:23.0.7'
+    implementation 'com.google.firebase:firebase-analytics:21.1.0'
     implementation 'com.google.firebase:firebase-database:20.0.5'
-    implementation 'com.google.firebase:firebase-messaging-directboot:23.0.4'
+    implementation 'com.google.firebase:firebase-messaging-directboot:23.0.7'
     implementation 'com.google.firebase:firebase-iid:21.1.0'
 
     //for json string to map
-    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.google.code.gson:gson:2.8.9'
 
     //for crash reporting
     // implementation 'io.sentry:sentry-android:2.2.2'
 
-    implementation 'com.google.mlkit:smart-reply:17.0.1'
+    implementation 'com.google.mlkit:smart-reply:17.0.2'
     implementation 'com.google.mlkit:entity-extraction:16.0.0-beta4'
 
     // for workmanager
