@@ -718,7 +718,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
       if (kIsWeb && SettingsManager().settings.finishedSetup.value) {
         String? str = await SettingsManager().getServerVersion();
-        ver.Version version = ver.Version.parse(str);
+        ver.Version version = ver.Version.parse(str!);
         int sum = version.major * 100 + version.minor * 21 + version.patch;
         if (sum < 42) {
           setState(() {
@@ -1008,30 +1008,33 @@ Future<void> initSystemTray() async {
   // We first init the systray menu and then add the menu entries
   await systemTray.initSystemTray(title: "BlueBubbles", iconPath: path, toolTip: "BlueBubbles");
 
-  await systemTray.setContextMenu(
+  final Menu menu = Menu();
+  await menu.buildFrom(
     [
-      MenuItem(
+      MenuItemLable(
         label: 'Open App',
-        onClicked: () async {
+        onClicked: (_) async {
           LifeCycleManager().opened(null);
           await WindowManager.instance.show();
         },
       ),
-      MenuItem(
+      MenuItemLable(
         label: 'Hide App',
-        onClicked: () async {
+        onClicked: (_) async {
           LifeCycleManager().close();
           await WindowManager.instance.hide();
         },
       ),
-      MenuItem(
+      MenuItemLable(
         label: 'Close App',
-        onClicked: () async {
+        onClicked: (_) async {
           await WindowManager.instance.close();
         },
       ),
-    ],
+    ]
   );
+
+  await systemTray.setContextMenu(menu);
 
   // handle system tray event
   systemTray.registerSystemTrayEventHandler((eventName) async {

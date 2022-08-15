@@ -329,28 +329,28 @@ class MethodChannelInterface {
           if (ThemeManager().inDarkMode(Get.context!)) {
             if (primaryPercent != 0.5 && darkBgPercent != 0.5) {
               double difference = min((primaryPercent / (primaryPercent + darkBgPercent)), 1 - (primaryPercent / (primaryPercent + darkBgPercent)));
-              Tween color1 = Tween<double>(begin: 0, end: difference);
-              Tween color2 = Tween<double>(begin: 1 - difference, end: 1);
-              ConversationViewMixin.gradientTween.value = MultiTween<String>()
-                ..add("color1", color1)
-                ..add("color2", color2);
+              Tween<double> color1 = Tween<double>(begin: 0, end: difference);
+              Tween<double> color2 = Tween<double>(begin: 1 - difference, end: 1);
+              ConversationViewMixin.gradientTween.value = MovieTween()
+                ..chain(color1)
+                ..chain(color2);
             } else {
-              ConversationViewMixin.gradientTween.value = MultiTween<String>()
-                ..add("color1", Tween<double>(begin: 0.0, end: 0.2))
-                ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
+              ConversationViewMixin.gradientTween.value = MovieTween()
+                ..chain(Tween<double>(begin: 0.0, end: 0.2))
+                ..chain(Tween<double>(begin: 0.8, end: 1.0));
             }
           } else {
             if (primaryPercent != 0.5 && lightBgPercent != 0.5) {
               double difference = min((primaryPercent / (primaryPercent + lightBgPercent)), 1 - (primaryPercent / (primaryPercent + lightBgPercent)));
-              Tween color1 = Tween<double>(begin: 0.0, end: difference);
-              Tween color2 = Tween<double>(begin: 1.0 - difference, end: 1.0);
-              ConversationViewMixin.gradientTween.value = MultiTween<String>()
-                ..add("color1", color1)
-                ..add("color2", color2);
+              Tween<double> color1 = Tween<double>(begin: 0.0, end: difference);
+              Tween<double> color2 = Tween<double>(begin: 1.0 - difference, end: 1.0);
+              ConversationViewMixin.gradientTween.value = MovieTween()
+                ..chain(color1)
+                ..chain(color2);
             } else {
-              ConversationViewMixin.gradientTween.value = MultiTween<String>()
-                ..add("color1", Tween<double>(begin: 0.0, end: 0.2))
-                ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
+              ConversationViewMixin.gradientTween.value = MovieTween()
+                ..chain(Tween<double>(begin: 0.0, end: 0.2))
+                ..chain(Tween<double>(begin: 0.8, end: 1.0));
             }
           }
           SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);

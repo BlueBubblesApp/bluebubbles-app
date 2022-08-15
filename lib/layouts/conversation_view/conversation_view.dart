@@ -92,7 +92,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   Message? message;
   Tween<double> tween = Tween<double>(begin: 1, end: 0);
   double offset = 0;
-  CustomAnimationControl controller = CustomAnimationControl.stop;
+  Control controller = Control.stop;
   bool wasCreator = false;
   GlobalKey key = GlobalKey();
   Worker? worker;
@@ -231,7 +231,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   begin: CustomNavigator.width(context) - 30,
                   end: min(max(size.width, size2.width) + 68,
                       CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
-              controller = CustomAnimationControl.play;
+              controller = Control.play;
               message = event.message;
             });
           } else {
@@ -372,7 +372,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     if (alreadySent) {
       setState(() {
         tween = Tween<double>(begin: 1, end: 0);
-        controller = CustomAnimationControl.stop;
+        controller = Control.stop;
         message = null;
         existingText = "";
         existingAttachments = [];
@@ -619,7 +619,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       if (message != null) {
                         setState(() {
                           tween = Tween<double>(begin: 1, end: 0);
-                          controller = CustomAnimationControl.stop;
+                          controller = Control.stop;
                           message = null;
                           existingText = "";
                           existingAttachments = [];
@@ -630,11 +630,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                     },
                     child: Visibility(
                       visible: message != null,
-                      child: CustomAnimation<double>(
+                      child: CustomAnimationBuilder<double>(
                           control: controller,
                           tween: tween,
                           duration: Duration(milliseconds: 250),
-                          builder: (context, child, value) {
+                          builder: (context, value, child) {
                             return SentMessageHelper.buildMessageWithTail(
                               context,
                               message,
@@ -729,11 +729,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       ? buildConversationViewHeader(context) as PreferredSizeWidget?
                       : buildChatSelectorHeader() as PreferredSizeWidget?,
                   body: Obx(() => adjustBackground.value
-                      ? MirrorAnimation<MultiTweenValues<String>>(
+                      ? MirrorAnimationBuilder<Movie>(
                           tween: ConversationViewMixin.gradientTween.value,
                           curve: Curves.fastOutSlowIn,
                           duration: Duration(seconds: 3),
-                          builder: (context, child, anim) {
+                          builder: (context, anim, child) {
                             return Container(
                               decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
                                   ? BoxDecoration(

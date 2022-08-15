@@ -55,7 +55,7 @@ void sendEffectAction(
   );
   message.generateTempGuid();
   final GlobalKey key = GlobalKey();
-  CustomAnimationControl animController = CustomAnimationControl.stop;
+  Control animController = Control.stop;
   final FireworkController fireworkController = FireworkController(vsync: provider, windowSize: Size(CustomNavigator.width(context), context.height));
   final CelebrationController celebrationController = CelebrationController(vsync: provider, windowSize: Size(CustomNavigator.width(context), context.height));
   final ConfettiController confettiController = ConfettiController(duration: Duration(seconds: 1));
@@ -161,7 +161,7 @@ void sendEffectAction(
                                                             setState(() {
                                                               bubbleSelected = bubbleEffects[index];
                                                             });
-                                                            animController = CustomAnimationControl.playFromStart;
+                                                            animController = Control.playFromStart;
                                                           },
                                                           child: Container(
                                                             width: CustomNavigator.width(context) / 3,
@@ -296,7 +296,7 @@ void sendEffectAction(
                                                     MessageEffect.none,
                                                 controller: animController, updateController: () {
                                               setState(() {
-                                                animController = CustomAnimationControl.stop;
+                                                animController = Control.stop;
                                               });
                                             }),
                                           ),

@@ -156,7 +156,6 @@ class AttachmentSender {
         message.error = error.statusCode == 400
             ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
       } else if (error is DioError) {
-        String? tempGuid = message.guid;
         // If there is an error, replace the temp value with an error
         String _error;
         if (error.type == DioErrorType.connectTimeout) {

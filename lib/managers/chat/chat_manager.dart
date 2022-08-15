@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/logger.dart';
@@ -231,6 +232,7 @@ class ChatManager {
     if (withHandle) withQuery.add("handle");
 
     api.chatMessages(guid, withQuery: withQuery.join(","), offset: offset, limit: limit).then((response) {
+      log(response.data["data"].toString());
       if (!completer.isCompleted) completer.complete(response.data["data"]);
     }).catchError((err) {
       late final dynamic error;
