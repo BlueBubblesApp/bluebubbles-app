@@ -226,7 +226,7 @@ class ChatManager {
 
   Future<List<dynamic>> getMessages(String guid, {bool withAttachment = true, bool withHandle = true, int offset = 0, int limit = 25}) async {
     Completer<List<dynamic>> completer = Completer();
-    final withQuery = <String>[];
+    final withQuery = <String>["attributedBody"];
     if (withAttachment) withQuery.add("attachment");
     if (withHandle) withQuery.add("handle");
 
