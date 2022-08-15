@@ -284,7 +284,7 @@ class ApiService extends GetxService {
   /// to specify what you would like in the response or how to query the DB.
   ///
   /// [withQuery] options: `"attachment"` / `"attachments"`, `"handle"` / `"handles"`
-  /// `"sms"`, `"attributedBody"` (set as one string, comma separated, no spaces)
+  /// `"sms"`, `"message.attributedbody"` (set as one string, comma separated, no spaces)
   Future<Response> chatMessages(String guid, {String withQuery = "", String sort = "DESC", int? before, int? after, int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
