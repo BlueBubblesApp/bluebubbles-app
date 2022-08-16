@@ -77,7 +77,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   FocusNode? subjectFocusNode;
   List<PlatformFile> pickedImages = [];
   TextFieldData? textFieldData;
-  final StreamController _streamController = StreamController.broadcast();
   DropzoneViewController? dropZoneController;
   ChatController? safeChat;
   Chat? chat;
@@ -94,8 +93,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   final RxBool canRecord = true.obs;
 
   // bool selfTyping = false;
-
-  Stream get stream => _streamController.stream;
 
   bool get _canRecord => controller!.text.isEmpty && pickedImages.isEmpty && subjectController!.text.isEmpty && !recordDelay;
   bool recordDelay = false;
@@ -357,7 +354,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   void updateTextFieldAttachments() {
     if (textFieldData != null) {
       textFieldData!.attachments = List<PlatformFile>.from(pickedImages);
-      _streamController.sink.add(null);
     }
 
     setCanRecord();
@@ -382,8 +378,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   void dispose() {
     focusNode!.dispose();
     subjectFocusNode!.dispose();
-    _streamController.close();
-
     if (safeChat?.chat == null) controller!.dispose();
     if (safeChat?.chat == null) subjectController!.dispose();
 
@@ -492,7 +486,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   Future<void> toggleShareMenu() async {
     if (kIsDesktop) {
       final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
-      if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+      if (res == null || res.files.isEmpty || res.files.first.readStream == null) return;
 
       for (pf.PlatformFile e in res.files) {
         if (e.size / 1024000 > 100) {
@@ -519,7 +513,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               title: Text("Upload file", style: Theme.of(context).textTheme.bodyLarge),
               onTap: () async {
                 final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
-                if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+                if (res == null || res.files.isEmpty || res.files.first.readStream == null) return;
 
                 for (pf.PlatformFile e in res.files) {
                   if (e.size / 1024000 > 100) {
