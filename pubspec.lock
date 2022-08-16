@@ -246,7 +246,7 @@ packages:
       path: "."
       ref: BlueBubbles
       resolved-ref: cfdbd7b2f944c580dbdbb76f9ee9cd4306c3e41d
-      url: "https://github.com/tneotia/chewie_audio-1.git"
+      url: "https://github.com/BlueBubblesApp/chewie_audio.git"
     source: git
     version: "1.2.0"
   cli_dialog:
@@ -2456,12 +2456,12 @@ packages:
     source: hosted
     version: "1.1.0"
   win32:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: win32
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.7.0"
+    version: "2.6.1"
   win32_registry:
     dependency: transitive
     description:

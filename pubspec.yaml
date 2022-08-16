@@ -44,7 +44,7 @@ dependencies:
   video_player: ^2.4.6 # no desktop support, todo desktop
   chewie_audio: # no desktop support, todo desktop
     git:
-      url: https://github.com/tneotia/chewie_audio-1.git
+      url: https://github.com/BlueBubblesApp/chewie_audio.git
       ref: BlueBubbles
   mime_type: ^1.0.0
   receive_sharing_intent: ^1.4.5 # mobile only
@@ -150,6 +150,7 @@ dependency_overrides:
   material_color_utilities: ^0.2.0 # flutter test SDK depends on 0.1.4
   path: ^1.8.2 # flutter test SDK depends on 1.8.1
   ffi: ^2.0.1
+  win32: 2.6.1 # conflicts with bitsdojo_window
   bitsdojo_window_linux:
     git:
       url: https://github.com/jjoelj/bitsdojo_window.git
