@@ -143,6 +143,7 @@ dependencies:
   screen_retriever: ^0.1.2
   flutter_acrylic: ^1.0.0+2
   expandable_page_view: ^1.0.17
+  idb_shim: ^2.0.1+1
 
 dependency_overrides:
   rxdart: ^0.27.5

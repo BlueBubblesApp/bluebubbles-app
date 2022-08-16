@@ -10,6 +10,7 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -250,15 +251,19 @@ class SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap as void Function()?,
-        onLongPress: onLongPress as void Function()?,
-        splashColor: context.theme.colorScheme.surfaceVariant,
-        splashFactory: context.theme.splashFactory,
-        child: GestureDetector(
-          onSecondaryTapUp: (details) => onLongPress as void Function()?,
+    return Listener(
+      onPointerDown: (event) {
+        if (event.buttons == kSecondaryButton) {
+          (onLongPress as void Function()?)?.call();
+        }
+      },
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap as void Function()?,
+          onLongPress: onLongPress as void Function()?,
+          splashColor: context.theme.colorScheme.surfaceVariant,
+          splashFactory: context.theme.splashFactory,
           child: ListTile(
             mouseCursor: (onTap != null || onLongPress != null) ? SystemMouseCursors.click : null,
             leading: leading,
