@@ -324,7 +324,7 @@ class Message {
   final chat = ToOne<Chat>();
 
   String? get dbAttributedBody => attributedBody == null ? null : jsonEncode(attributedBody!.toMap());
-  set dbAttributedBody(String? json) => json == null ? null : AttributedBody.fromMap(jsonDecode(json));
+  set dbAttributedBody(String? json) => attributedBody = json == null ? null : AttributedBody.fromMap(jsonDecode(json));
 
   Message(
       {this.id,
@@ -466,6 +466,8 @@ class Message {
       threadOriginatorPart: json.containsKey('threadOriginatorPart') ? json['threadOriginatorPart'] : null,
       attributedBody: json['attributedBody'] == null ? null : AttributedBody.fromMap(json['attributedBody'])
     );
+
+    print(data.attributedBody);
 
     // Adds fallback getter for the ID
     data.id ??= json.containsKey("id") ? json["id"] : null;

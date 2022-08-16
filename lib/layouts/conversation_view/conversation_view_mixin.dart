@@ -77,8 +77,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   TextEditingController chatSelectorController = TextEditingController(text: " ");
 
   static Rx<MovieTween> gradientTween = Rx<MovieTween>(MovieTween()
-    ..chain(Tween<double>(begin: 0, end: 0.2))
-    ..chain(Tween<double>(begin: 0.8, end: 1)));
+    ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+        .tween("color1", Tween<double>(begin: 0, end: 0.2))
+    ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+        .tween("color2", Tween<double>(begin: 0.8, end: 1)));
   Timer? _debounce;
 
   /// Conversation view methods

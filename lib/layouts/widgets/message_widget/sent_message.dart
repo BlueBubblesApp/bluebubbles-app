@@ -679,10 +679,6 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
 
   @override
   Widget build(BuildContext context) {
-    if (widget.message.attributedBody != null) {
-      print("fired");
-      print(widget.message.attributedBody?.string);
-    }
     if (Skin.of(context) != null) {
       skin.value = Skin.of(context)!.skin;
     }
