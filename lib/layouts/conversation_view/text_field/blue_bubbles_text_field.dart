@@ -23,6 +23,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:chunked_stream/chunked_stream.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:dio/dio.dart';
 import 'package:emojis/emoji.dart';
@@ -497,7 +498,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           path: e.path,
           name: e.name,
           size: e.size,
-          bytes: Uint8List.fromList(await e.readStream!.first)
+          bytes: await readByteStream(e.readStream!),
         ));
       }
       Get.back();
@@ -512,8 +513,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             ListTile(
               title: Text("Upload file", style: Theme.of(context).textTheme.bodyLarge),
               onTap: () async {
-                final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
-                if (res == null || res.files.isEmpty || res.files.first.readStream == null) return;
+                final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
+                if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
                 for (pf.PlatformFile e in res.files) {
                   if (e.size / 1024000 > 100) {
@@ -524,7 +525,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     path: null,
                     name: e.name,
                     size: e.size,
-                    bytes: Uint8List.fromList(await e.readStream!.first),
+                    bytes: e.bytes!,
                   ));
                 }
                 Get.back();

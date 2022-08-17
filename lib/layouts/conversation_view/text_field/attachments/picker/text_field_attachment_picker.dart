@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -13,6 +12,7 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:chunked_stream/chunked_stream.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
@@ -167,7 +167,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                           widget.onAddAttachment(PlatformFile(
                                             path: file.path,
                                             name: file.name,
-                                            bytes: Uint8List.fromList(await file.readStream!.first),
+                                            bytes: await readByteStream(file.readStream!),
                                             size: file.size
                                           ));
                                         }

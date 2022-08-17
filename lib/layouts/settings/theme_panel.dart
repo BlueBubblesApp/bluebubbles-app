@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -682,18 +680,16 @@ class ThemePanel extends StatelessWidget {
                         return SettingsTile(
                           onTap: () async {
                             if (kIsWeb) {
-                              final res = await FilePicker.platform.pickFiles(withReadStream: true, type: FileType.custom, allowedExtensions: ["ttf"]);
-                              if (res == null || res.files.isEmpty || res.files.first.readStream == null) return;
-
-                              final data = Uint8List.fromList(await res.files.first.readStream!.first);
+                              final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["ttf"]);
+                              if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
                               final txn = db.transaction("BBStore", idbModeReadWrite);
                               final store = txn.objectStore("BBStore");
-                              await store.put(data, "iosFont");
+                              await store.put(res.files.first.bytes!, "iosFont");
                               await txn.completed;
 
                               final fontLoader = FontLoader("Apple Color Emoji");
-                              final cachedFontBytes = ByteData.view(data.buffer);
+                              final cachedFontBytes = ByteData.view(res.files.first.bytes!.buffer);
                               fontLoader.addFont(
                                 Future<ByteData>.value(cachedFontBytes),
                               );

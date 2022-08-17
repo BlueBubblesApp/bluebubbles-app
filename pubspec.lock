@@ -249,6 +249,13 @@ packages:
       url: "https://github.com/BlueBubblesApp/chewie_audio.git"
     source: git
     version: "1.2.0"
+  chunked_stream:
+    dependency: "direct main"
+    description:
+      name: chunked_stream
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.4.1"
   cli_dialog:
     dependency: transitive
     description:
