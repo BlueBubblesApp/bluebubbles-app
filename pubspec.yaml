@@ -194,8 +194,8 @@ flutter_native_splash:
   image: "assets/icon/splash-foreground-dark.png"
   image_dark: "assets/icon/splash-foreground-dark.png"
   android_12:
-    image: "assets/icon/splash-foreground-dark.png"
-    image_dark: "assets/icon/splash-foreground-dark.png"
+    image: "assets/icon/splash-foreground-dark-2.png"
+    image_dark: "assets/icon/splash-foreground-dark-2.png"
     icon_background_color: "#FFFFFF"
     icon_background_color_dark: "000000"
 
