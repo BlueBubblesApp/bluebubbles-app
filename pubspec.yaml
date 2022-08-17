@@ -33,7 +33,7 @@ dependencies:
   assorted_layout_widgets: ^6.1.1
   record: ^4.3.3 # mobile and web
   fast_contacts: ^1.1.1 # mobile only
-  permission_handler: ^10.0.0 # mobile only
+  permission_handler: ^9.2.0 # mobile only
   path_provider: ^2.0.11 # no web support
   sqflite: ^2.0.3+1 # mobile only
   sqflite_common_ffi: ^2.1.1+1 # desktop
@@ -137,7 +137,7 @@ dependencies:
   dynamic_color: ^1.4.0
   material_color_utilities: ^0.2.0
   dart_vlc: ^0.3.0
-  geolocator: ^9.0.1
+  geolocator: 8.2.1
   flex_color_scheme: ^5.1.0
   reorderables: ^0.5.0
   screen_retriever: ^0.1.2
