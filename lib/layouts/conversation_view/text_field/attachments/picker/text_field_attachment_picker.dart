@@ -9,7 +9,6 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:chunked_stream/chunked_stream.dart';
@@ -19,9 +18,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:universal_io/io.dart';
 
 class TextFieldAttachmentPicker extends StatefulWidget {
   TextFieldAttachmentPicker({
@@ -93,28 +92,20 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
       }
     }
 
-    // Create a file that the camera can write to
-    String appDocPath = SettingsManager().appDocDir.path;
-    String ext = (type == 'video') ? ".mp4" : ".png";
-    File file = File("$appDocPath/attachments/${randomString(16)}$ext");
-    await file.create(recursive: true);
-
-    // Take the picture after opening the camera
-    await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": type});
-
-    // If we don't get data back, return outta here
-    if (!file.existsSync()) return;
-    if (file.statSync().size == 0) {
-      file.deleteSync();
-      return;
+    late final XFile? file;
+    if (type == 'camera') {
+      file = await ImagePicker().pickImage(source: ImageSource.camera);
+    } else {
+      file = await ImagePicker().pickVideo(source: ImageSource.camera);
     }
-
-    widget.onAddAttachment(PlatformFile(
-      path: file.path,
-      name: file.path.split('/').last,
-      size: file.lengthSync(),
-      bytes: file.readAsBytesSync(),
-    ));
+    if (file != null) {
+      widget.onAddAttachment(PlatformFile(
+        path: file.path,
+        name: file.path.split('/').last,
+        size: await file.length(),
+        bytes: await file.readAsBytes(),
+      ));
+    }
   }
 
   @override
