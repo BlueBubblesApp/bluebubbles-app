@@ -467,8 +467,6 @@ class Message {
       attributedBody: json['attributedBody'] == null ? null : AttributedBody.fromMap(json['attributedBody'])
     );
 
-    print(data.attributedBody);
-
     // Adds fallback getter for the ID
     data.id ??= json.containsKey("id") ? json["id"] : null;
 
