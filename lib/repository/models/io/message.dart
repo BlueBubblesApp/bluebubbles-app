@@ -304,7 +304,7 @@ class Message {
   List<Attachment?> attachments = [];
   List<Message> associatedMessages = [];
   bool? bigEmoji;
-  AttributedBody? attributedBody;
+  List<AttributedBody>? attributedBody;
 
   final RxInt _error = RxInt(0);
   int get error => _error.value;
@@ -323,8 +323,8 @@ class Message {
 
   final chat = ToOne<Chat>();
 
-  String? get dbAttributedBody => attributedBody == null ? null : jsonEncode(attributedBody!.toMap());
-  set dbAttributedBody(String? json) => attributedBody = json == null ? null : AttributedBody.fromMap(jsonDecode(json));
+  String? get dbAttributedBody => attributedBody == null ? null : jsonEncode(attributedBody!.map((e) => e.toMap()).toList());
+  set dbAttributedBody(String? json) => attributedBody = json == null ? null : (jsonDecode(json) as List).map((e) => AttributedBody.fromMap(e)).toList();
 
   Message(
       {this.id,
@@ -464,7 +464,10 @@ class Message {
       metadata: metadata is String ? null : metadata,
       threadOriginatorGuid: json.containsKey('threadOriginatorGuid') ? json['threadOriginatorGuid'] : null,
       threadOriginatorPart: json.containsKey('threadOriginatorPart') ? json['threadOriginatorPart'] : null,
-      attributedBody: json['attributedBody'] == null ? null : AttributedBody.fromMap(json['attributedBody'])
+      attributedBody: json['attributedBody'] == null ? null
+          : json['attributedBody'] is List
+          ? json['attributedBody'].map((e) => AttributedBody.fromMap(e)).toList()
+          : <AttributedBody>[AttributedBody.fromMap(json['attributedBody'])]
     );
 
     // Adds fallback getter for the ID
