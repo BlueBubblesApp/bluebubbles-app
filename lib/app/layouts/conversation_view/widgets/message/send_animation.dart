@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -37,7 +38,13 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
 
   Future<void> send(Tuple6<List<PlatformFile>, String, String, String?, int?, String?> tuple) async {
     await controller.scrollToBottom();
-
+    if (ss.settings.sendSoundPath.value != null) {
+      PlayerController controller = PlayerController();
+      await controller.preparePlayer(
+        ss.settings.sendSoundPath.value!, 1.0
+      );
+      controller.startPlayer();
+    }
     final attachments = List<PlatformFile>.from(tuple.item1);
     final text = tuple.item2;
     final subject = tuple.item3;

@@ -65,6 +65,8 @@ class Settings {
   final RxBool cancelQueuedMessages = false.obs;
   final RxBool repliesToPrevious = false.obs;
   final RxnString localhostPort = RxnString(null);
+  final RxnString sendSoundPath = RxnString();
+  final RxnString receiveSoundPath = RxnString();
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -226,6 +228,8 @@ class Settings {
       'cancelQueuedMessages': cancelQueuedMessages.value,
       'repliesToPrevious': repliesToPrevious.value,
       'useLocalhost': localhostPort.value,
+      'sendSoundPath': sendSoundPath.value,
+      'receiveSoundPath': receiveSoundPath.value,
       'privateAPISend': privateAPISend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
@@ -328,6 +332,8 @@ class Settings {
     ss.settings.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
     ss.settings.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
     ss.settings.localhostPort.value = map['useLocalhost'];
+    ss.settings.sendSoundPath.value = map['sendSoundPath'];
+    ss.settings.receiveSoundPath.value = map['receiveSoundPath'];
     ss.settings.privateAPISend.value = map['privateAPISend'] ?? false;
     ss.settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     ss.settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -434,6 +440,8 @@ class Settings {
     s.cancelQueuedMessages.value = map['cancelQueuedMessages'] ?? false;
     s.repliesToPrevious.value = map['repliesToPrevious'] ?? false;
     s.localhostPort.value = map['useLocalhost'];
+    s.sendSoundPath.value = map['sendSoundPath'];
+    s.receiveSoundPath.value = map['recieveSoundPath'];
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
