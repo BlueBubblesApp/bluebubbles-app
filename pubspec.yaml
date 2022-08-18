@@ -144,6 +144,7 @@ dependencies:
   flutter_acrylic: ^1.0.0+2
   expandable_page_view: ^1.0.17
   animated_size_and_fade: ^3.0.0
+  audioplayers: ^1.0.1
 
 dependency_overrides:
   rxdart: ^0.27.3

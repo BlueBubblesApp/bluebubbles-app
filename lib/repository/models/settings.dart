@@ -34,6 +34,10 @@ class Settings {
   final RxBool doubleTapForDetails = false.obs;
   final RxBool denseChatTiles = false.obs;
   final RxBool smartReply = false.obs;
+  final RxBool playSendSound = false.obs;
+  final RxnString sendSoundPath = RxnString();
+  final RxBool playReceiveSound = false.obs;
+  final RxnString receiveSoundPath = RxnString();
   final RxBool reducedForehead = false.obs;
   final RxBool preCachePreviewImages = true.obs;
   final RxBool showConnectionIndicator = false.obs;
@@ -196,6 +200,14 @@ class Settings {
         settings.denseChatTiles.value = entry.value;
       } else if (entry.name == "smartReply") {
         settings.smartReply.value = entry.value;
+      } else if (entry.name == "playSendSound") {
+        settings.playSendSound.value = entry.value;
+      } else if (entry.name == "sendSoundPath") {
+        settings.sendSoundPath.value = entry.value;
+      } else if (entry.name == "playReceiveSound") {
+        settings.playReceiveSound.value = entry.value;
+      } else if (entry.name == "receiveSoundPath") {
+        settings.receiveSoundPath.value = entry.value;
       } else if (entry.name == "reducedForehead") {
         settings.reducedForehead.value = entry.value;
       } else if (entry.name == "preCachePreviewImages") {
@@ -428,6 +440,10 @@ class Settings {
       'doubleTapForDetails': doubleTapForDetails.value,
       'denseChatTiles': denseChatTiles.value,
       'smartReply': smartReply.value,
+      'playSendSound': playSendSound.value,
+      'sendSoundPath': sendSoundPath.value,
+      'playReceiveSound': playReceiveSound.value,
+      'receiveSoundPath': receiveSoundPath.value,
       'reducedForehead': reducedForehead.value,
       'preCachePreviewImages': preCachePreviewImages.value,
       'showConnectionIndicator': showConnectionIndicator.value,
@@ -542,6 +558,10 @@ class Settings {
     SettingsManager().settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     SettingsManager().settings.denseChatTiles.value = map['denseChatTiles'] ?? false;
     SettingsManager().settings.smartReply.value = map['smartReply'] ?? false;
+    SettingsManager().settings.playSendSound.value = map['playSendSound'] ?? false;
+    SettingsManager().settings.sendSoundPath.value = map['sendSoundPath'];
+    SettingsManager().settings.playReceiveSound.value = map['playReceiveSound'] ?? false;
+    SettingsManager().settings.receiveSoundPath.value = map['receiveSoundPath'];
     SettingsManager().settings.reducedForehead.value = map['reducedForehead'] ?? false;
     SettingsManager().settings.preCachePreviewImages.value = map['preCachePreviewImages'] ?? true;
     SettingsManager().settings.showConnectionIndicator.value = map['showConnectionIndicator'] ?? false;
@@ -655,6 +675,10 @@ class Settings {
     s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     s.denseChatTiles.value = map['denseChatTiles'] ?? false;
     s.smartReply.value = map['smartReply'] ?? false;
+    s.playSendSound.value = map['playSendSound'] ?? false;
+    s.sendSoundPath.value = map['sendSoundPath'];
+    s.playReceiveSound.value = map['playReceiveSound'] ?? false;
+    s.receiveSoundPath.value = map['recieveSoundPath'];
     s.reducedForehead.value = map['reducedForehead'] ?? false;
     s.preCachePreviewImages.value = map['preCachePreviewImages'] ?? true;
     s.showConnectionIndicator.value = map['showConnectionIndicator'] ?? false;
