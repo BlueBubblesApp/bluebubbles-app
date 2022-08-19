@@ -168,7 +168,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     WidgetsBinding.instance.addObserver(this);
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      // This will clear the notifications,
+      //so we need to set the last clear time.
       ChatManager().setActiveChat(chat);
+      lastNotificationClear = DateTime.now().millisecondsSinceEpoch;
+
       if (widget.isCreator) {
         setState(() {
           getShowAlert();

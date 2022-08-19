@@ -65,6 +65,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   String previousSearch = '';
   int previousContactCount = 0;
   bool shouldShowAlert = false;
+  int lastNotificationClear = 0;
 
   final RxBool fetchingChatController = false.obs;
 
@@ -157,7 +158,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       // wait for the end of that frame.
       await SchedulerBinding.instance.endOfFrame;
     }
-    ChatManager().clearChatNotifications(chat!);
+
+    // Make sure we don't call clear notifications too often.
+    int now = DateTime.now().millisecondsSinceEpoch;
+    if (now - lastNotificationClear > 1000) {
+      ChatManager().clearChatNotifications(chat!);
+      lastNotificationClear = now;
+    }
   }
 
   void initChatController(Chat chat) async {
