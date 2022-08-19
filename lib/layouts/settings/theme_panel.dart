@@ -680,22 +680,26 @@ class ThemePanel extends StatelessWidget {
                         return SettingsTile(
                           onTap: () async {
                             if (kIsWeb) {
-                              final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["ttf"]);
-                              if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+                              try {
+                                final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["ttf"]);
+                                if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-                              final txn = db.transaction("BBStore", idbModeReadWrite);
-                              final store = txn.objectStore("BBStore");
-                              await store.put(res.files.first.bytes!, "iosFont");
-                              await txn.completed;
+                                final txn = db.transaction("BBStore", idbModeReadWrite);
+                                final store = txn.objectStore("BBStore");
+                                await store.put(res.files.first.bytes!, "iosFont");
+                                await txn.completed;
 
-                              final fontLoader = FontLoader("Apple Color Emoji");
-                              final cachedFontBytes = ByteData.view(res.files.first.bytes!.buffer);
-                              fontLoader.addFont(
-                                Future<ByteData>.value(cachedFontBytes),
-                              );
-                              await fontLoader.load();
-                              fontExistsOnDisk.value = true;
-                              return showSnackbar("Notice", "Font loaded");
+                                final fontLoader = FontLoader("Apple Color Emoji");
+                                final cachedFontBytes = ByteData.view(res.files.first.bytes!.buffer);
+                                fontLoader.addFont(
+                                  Future<ByteData>.value(cachedFontBytes),
+                                );
+                                await fontLoader.load();
+                                fontExistsOnDisk.value = true;
+                                return showSnackbar("Notice", "Font loaded");
+                              } catch (_) {
+                                return showSnackbar("Error", "Failed to load font file. Please make sure it is a valid ttf and under 50mb.");
+                              }
                             }
 
                             showDialog(
@@ -776,7 +780,7 @@ class ThemePanel extends StatelessWidget {
                           },
                           title:
                           kIsWeb ? "Upload Font File" : "Download${downloadingFont.value ? "ing" : ""} iOS Emoji Font${downloadingFont.value ? " (${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)}) (${((progress.value ?? 0) * 100).floor()}%)" : ""}",
-                          subtitle: "Upload your ttf emoji file into BlueBubbles",
+                          subtitle: kIsWeb ? "Upload your ttf emoji file into BlueBubbles" : null,
                         );
                       } else {
                         return SizedBox.shrink();
