@@ -7,7 +7,6 @@ import 'package:bluebubbles/managers/sync/sync_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio/dio.dart' as dio;
-import 'package:get/get.dart';
 
 import '../../repository/models/models.dart';
 

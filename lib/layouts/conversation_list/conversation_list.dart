@@ -100,20 +100,15 @@ class ConversationListState extends State<ConversationList> {
   }
 
   void openNewChatCreator({List<PlatformFile>? existing}) async {
-    // EventDispatcher().emit("update-highlight", null);
-    // CustomNavigator.pushAndRemoveUntil(
-    //   context,
-    //   ConversationView(
-    //     isCreator: true,
-    //     existingAttachments: existing ?? [],
-    //   ),
-    //   (route) => route.isFirst,
-    // );
-
-    int syncStart = SettingsManager().settings.lastIncrementalSync.value - 432000000;
-    print(DateTime.fromMillisecondsSinceEpoch(syncStart));
-    var incrementalSyncManager = IncrementalSyncManager(syncStart, saveDate: false);
-    await incrementalSyncManager.start();
+    EventDispatcher().emit("update-highlight", null);
+    CustomNavigator.pushAndRemoveUntil(
+      context,
+      ConversationView(
+        isCreator: true,
+        existingAttachments: existing ?? [],
+      ),
+      (route) => route.isFirst,
+    );
   }
 
   void openCamera() async {
