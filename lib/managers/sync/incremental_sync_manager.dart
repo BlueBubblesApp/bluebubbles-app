@@ -59,7 +59,8 @@ class IncrementalSyncManager extends SyncManager {
     }
 
     super.start();
-    addToOutput("Starting incremental sync for messages since: $startTimestamp - $syncStart");
+    addToOutput(
+        "Starting incremental sync for messages since: $startTimestamp - $syncStart");
 
     // 0: Hit API endpoint to check for updated messages
     // 1: If no new updated messages, complete the sync
@@ -78,7 +79,6 @@ class IncrementalSyncManager extends SyncManager {
     int serverVersion = await SettingsManager().getServerVersionCode();
     // TODO: Fix to < when done testing
     bool isBugged = serverVersion < 142; // Server: v1.2.0
-    print(serverVersion);
 
     // 0: Hit API endpoint to check for updated messages
     dio.Response<dynamic> uMessageCountRes = await api.messageCount(
@@ -88,7 +88,6 @@ class IncrementalSyncManager extends SyncManager {
 
     // 1: If no new updated messages, complete the sync
     int count = uMessageCountRes.data['data']['total'];
-    print("The count: $count");
 
     // Manually set/modify the count if we are on a bugged server
     if (isBugged) {
@@ -101,7 +100,7 @@ class IncrementalSyncManager extends SyncManager {
       }
     }
 
-    addToOutput('Found $count updated message(s) to sync...');
+    addToOutput('Found $count message(s) to sync...');
     if (count == 0) {
       return await complete();
     }
@@ -114,10 +113,15 @@ class IncrementalSyncManager extends SyncManager {
     for (var i = 0; i < pages; i++) {
       addToOutput('Fetching page ${i + 1} of $pages...');
       dio.Response<dynamic> messages = await api.messages(
-          after: startTimestamp, before: syncStart, offset: i * batchSize, limit: batchSize, withQuery: ["chats", "attachments"]);
+          after: startTimestamp,
+          before: syncStart,
+          offset: i * batchSize,
+          limit: batchSize,
+          withQuery: ["chats", "attachments"]);
 
       int messageCount = messages.data['data'].length;
-      addToOutput('Page ${i + 1} returned $messageCount message(s)...', level: LogLevel.DEBUG);
+      addToOutput('Page ${i + 1} returned $messageCount message(s)...',
+          level: LogLevel.DEBUG);
 
       // If we don't get any messages back, break out so we can complete.
       if (messageCount == 0) break;
@@ -179,7 +183,8 @@ class IncrementalSyncManager extends SyncManager {
 
     // If we've synced chats, we should also update the latest message
     if (syncedChats.isNotEmpty) {
-      List<Chat> updatedChats = await Chat.syncLatestMessages(syncedChats.values.toList(), true);
+      List<Chat> updatedChats =
+          await Chat.syncLatestMessages(syncedChats.values.toList(), true);
       await ChatBloc().updateChatPositions(updatedChats);
     }
 
