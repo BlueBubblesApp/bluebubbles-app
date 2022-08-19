@@ -149,6 +149,10 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
       Chat inputChat = params[0];
       List<Message> inputMessages = params[1];
 
+      if (inputChat.participants.isEmpty) {
+        inputChat.participants = List<Handle>.from(inputChat.handles);
+      }
+
       // Processing Code
       // 0: Gather handles from chat and cache them
       // They should already exist because this function makes that assumption. #logic
@@ -161,8 +165,15 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
 
       // 1. For each message, match the handles & replace the old reference
       for (Message message in inputMessages) {
-        if (message.handle == null) continue;
+        if (message.handle == null && message.handleId == null) continue;
+        if (message.handle == null && message.handleId == 0) continue;
+
+        // If the handle is null, find the handle data by the original handle ID.
+        message.handle ??= handlesCache.values.firstWhereOrNull(
+            (element) => element.originalROWID == message.handleId);
         if (!handlesCache.containsKey(message.handle!.address)) continue;
+
+        message.handleId = handlesCache[message.handle!.address]?.id ?? 0;
         message.handle = handlesCache[message.handle!.address];
       }
 

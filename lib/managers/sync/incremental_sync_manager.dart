@@ -76,7 +76,6 @@ class IncrementalSyncManager extends SyncManager {
     // for this, we just multiple the count by 2. This way, even if all
     // the messages have a null text, we can still account for them when we fetch.
     int serverVersion = await SettingsManager().getServerVersionCode();
-    // TODO: Fix to < when done testing
     bool isBugged = serverVersion < 142; // Server: v1.2.0
 
     // 0: Hit API endpoint to check for updated messages
@@ -116,7 +115,7 @@ class IncrementalSyncManager extends SyncManager {
           before: syncStart,
           offset: i * batchSize,
           limit: batchSize,
-          withQuery: ["chats", "attachments"]);
+          withQuery: ["chats", "chats.participants", "attachments"]);
 
       int messageCount = messages.data['data'].length;
       addToOutput('Page ${i + 1} returned $messageCount message(s)...',

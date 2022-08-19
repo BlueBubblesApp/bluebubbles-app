@@ -64,8 +64,6 @@ abstract class SyncManager {
     } else {
       progress.value = double.parse((amount / total).toStringAsFixed(2));
     }
-
-    addToOutput("Progress Update: ${progress.value}", level: LogLevel.DEBUG);
   }
 
   void setProgressExact(double percent) {
