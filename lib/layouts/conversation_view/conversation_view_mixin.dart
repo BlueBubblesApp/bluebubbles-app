@@ -66,6 +66,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   int previousContactCount = 0;
   bool shouldShowAlert = false;
   int lastNotificationClear = 0;
+  bool isDisposing = false;
 
   final RxBool fetchingChatController = false.obs;
 
@@ -153,7 +154,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   void didChangeDependenciesConversationView() async {
-    if (isCreator!) return;
+    if (isDisposing || isCreator!) return;
     if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
       // wait for the end of that frame.
       await SchedulerBinding.instance.endOfFrame;
@@ -182,10 +183,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   @override
   void dispose() {
+    print("DISPOSING");
     _debounce?.cancel();
     messageBloc?.dispose();
     _contactStreamController.close();
-
     ChatManager().setActiveChat(previousChat);
     super.dispose();
   }
@@ -403,6 +404,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         leading: Padding(
           padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
           child: buildBackButton(context, callback: () {
+            isDisposing = true;
             if (LifeCycleManager().isBubble) {
               SystemNavigator.pop();
               return false;
@@ -669,6 +671,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           buildBackButton(context, callback: () {
+                            isDisposing = true;
                             if (LifeCycleManager().isBubble) {
                               SystemNavigator.pop();
                               return false;
