@@ -145,9 +145,10 @@ class ThemePanel extends StatelessWidget {
                       ),
                     if (!kIsWeb)
                       SettingsTile(
-                        title: "Theming",
-                        subtitle: "Edit existing themes and create custom themes",
+                        title: "Advanced Theming",
+                        subtitle: "Customize app colors and font sizes with custom themes\n${ThemeStruct.getLightTheme().name}   |   ${ThemeStruct.getDarkTheme().name}",
                         trailing: nextIcon,
+                        isThreeLine: true,
                         onTap: () async {
                           Navigator.of(context).push(
                             CupertinoPageRoute(
@@ -830,7 +831,7 @@ class ThemePanel extends StatelessWidget {
         title: Text("Monet Theming Info", style: context.theme.textTheme.titleLarge),
         backgroundColor: context.theme.colorScheme.properSurface,
         content: Text(
-            "Harmonize - Overwrites primary color, and blends background & accent color with the current theme colors\r\n"
+            "Harmonize - Overwrites primary color and blends remainder of colors with the current theme colors\r\n"
                 "Full - Overwrites primary, background, and accent colors, along with other minor colors.\r\n",
           style: context.theme.textTheme.bodyLarge,
         ),
