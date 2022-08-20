@@ -543,13 +543,15 @@ class _QRScanState extends State<QRScan> {
             });
           }
 
-          if (data["data"] == null && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
+          if (isNullOrEmpty(data["data"])! && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
             return setState(() {
               error = "Firebase is required when using Ngrok or Cloudflare!";
             });
           } else {
-            FCMData fcmData = FCMData.fromMap(data["data"]);
-            SettingsManager().saveFCMData(fcmData);
+            try {
+              FCMData fcmData = FCMData.fromMap(data["data"]);
+              SettingsManager().saveFCMData(fcmData);
+            } catch (_) {}
             goToNextPage();
           }
         } else if (mounted) {
