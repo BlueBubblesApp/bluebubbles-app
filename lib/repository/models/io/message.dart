@@ -395,6 +395,14 @@ class Message {
 
     List<Attachment> attachments =
         json.containsKey("attachments") ? (json['attachments'] as List).map((a) => Attachment.fromMap(a)).toList() : [];
+    List<AttributedBody>? attributedBody;
+    if (json.containsKey("attributedBody") && json["attributedBody"] != null) {
+      if (json['attributedBody'] is Map) {
+        json['attributedBody'] = [json['attributedBody']];
+      }
+
+      attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a)).toList();
+    }
 
     // Load the metadata
     dynamic metadata = json.containsKey("metadata") ? json["metadata"] : null;
@@ -464,10 +472,7 @@ class Message {
       metadata: metadata is String ? null : metadata,
       threadOriginatorGuid: json.containsKey('threadOriginatorGuid') ? json['threadOriginatorGuid'] : null,
       threadOriginatorPart: json.containsKey('threadOriginatorPart') ? json['threadOriginatorPart'] : null,
-      attributedBody: json['attributedBody'] == null ? null
-          : json['attributedBody'] is List
-          ? json['attributedBody'].map((e) => AttributedBody.fromMap(e)).toList()
-          : <AttributedBody>[AttributedBody.fromMap(json['attributedBody'])]
+      attributedBody: attributedBody
     );
 
     // Adds fallback getter for the ID
