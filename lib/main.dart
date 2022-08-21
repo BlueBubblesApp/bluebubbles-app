@@ -1067,10 +1067,10 @@ Future<void> initSystemTray() async {
   // handle system tray event
   systemTray.registerSystemTrayEventHandler((eventName) async {
     switch (eventName) {
-      case 'leftMouseUp':
+      case 'click':
         await WindowManager.instance.show();
         break;
-      case "rightMouseUp":
+      case "right-click":
         await systemTray.popUpContextMenu();
         break;
     }
