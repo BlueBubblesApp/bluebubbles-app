@@ -152,9 +152,8 @@ class AttachmentSender {
 
       // If there is an error, replace the temp value with an error
       if (error is Response) {
-        message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message']}");
-        message.error = error.statusCode == 400
-            ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+        message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message'] ?? error.data.toString()}");
+        message.error = error.statusCode ?? MessageError.BAD_REQUEST.code;
       } else if (error is DioError) {
         // If there is an error, replace the temp value with an error
         String _error;

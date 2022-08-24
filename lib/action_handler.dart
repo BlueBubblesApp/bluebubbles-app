@@ -208,7 +208,7 @@ class ActionHandler {
 
     final response = await api.createChat([address], text.trim()).catchError((err) {
       // If there is an error, replace the temp value with an error
-      message.guid = message.guid!.replaceAll("temp", "error-${err is Response ? err.data['error']['message'] : err.toString()}");
+      message.guid = message.guid!.replaceAll("temp", "error-${err is Response ? (err.data['error']['message'] ?? err.data.toString()) : err.toString()}");
       message.error =
         err is! Response || err.data['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
     });
@@ -327,7 +327,7 @@ class ActionHandler {
         if (error is Response) {
           String? tempGuid = message.guid;
           // If there is an error, replace the temp value with an error
-          message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message']}");
+          message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message'] ?? error.data.toString()}");
           message.error = error.statusCode ?? MessageError.BAD_REQUEST.code;
 
           await Message.replaceMessage(tempGuid, message);
