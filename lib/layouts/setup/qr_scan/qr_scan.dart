@@ -18,6 +18,7 @@ import 'package:get/get.dart' hide Response;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:simple_animations/simple_animations.dart';
+import 'package:universal_io/io.dart';
 
 class QRScan extends StatefulWidget {
   QRScan({Key? key, required this.controller}) : super(key: key);
@@ -551,7 +552,11 @@ class _QRScanState extends State<QRScan> {
             try {
               FCMData fcmData = FCMData.fromMap(data["data"]);
               SettingsManager().saveFCMData(fcmData);
-            } catch (_) {}
+            } catch (_) {
+              if (Platform.isAndroid) {
+                showSnackbar("Warning", "No Firebase project detected! You will not receive notifications for new messages!");
+              }
+            }
             goToNextPage();
           }
         } else if (mounted) {
