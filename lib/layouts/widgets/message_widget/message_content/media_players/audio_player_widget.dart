@@ -61,17 +61,17 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         showControls: true,
         autoInitialize: true,
         materialProgressColors: ChewieProgressColors(
-            playedColor: context.theme.colorScheme.primary,
-            handleColor: context.theme.colorScheme.primary,
-            bufferedColor: context.theme.colorScheme.primaryContainer,
-            backgroundColor: context.theme.colorScheme.properSurface),
+            playedColor: Get.context!.theme.colorScheme.primary,
+            handleColor: Get.context!.theme.colorScheme.primary,
+            bufferedColor: Get.context!.theme.colorScheme.primaryContainer,
+            backgroundColor: Get.context!.theme.colorScheme.properSurface),
         cupertinoProgressColors: ChewieProgressColors(
-            playedColor: context.theme.colorScheme.primary,
-            handleColor: context.theme.colorScheme.primary,
-            bufferedColor: context.theme.colorScheme.primaryContainer,
-            backgroundColor: context.theme.colorScheme.properSurface),
-        cupertinoBackgroundColor: Theme.of(widget.context).colorScheme.properSurface,
-        cupertinoIconColor: Theme.of(widget.context).colorScheme.properOnSurface,
+            playedColor: Get.context!.theme.colorScheme.primary,
+            handleColor: Get.context!.theme.colorScheme.primary,
+            bufferedColor: Get.context!.theme.colorScheme.primaryContainer,
+            backgroundColor: Get.context!.theme.colorScheme.properSurface),
+        cupertinoBackgroundColor: Get.context!.theme.colorScheme.properSurface,
+        cupertinoIconColor: Get.context!.theme.colorScheme.properOnSurface,
         cupertinoColumnAlignment: widget.isFromMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       );
 

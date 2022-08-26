@@ -1,3 +1,4 @@
+import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -6,6 +7,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -229,6 +231,48 @@ class MiscPanel extends StatelessWidget {
                       return SizedBox.shrink();
                     }
                   }),
+                ],
+              ),
+              SettingsHeader(
+                  headerColor: headerColor,
+                  tileColor: tileColor,
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Networking"),
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
+                  SettingsTile(
+                    title: "API Timeout Duration",
+                    subtitle: "Controls the duration (in seconds) until a network request will time out.\nIncrease this setting if you have poor connection.",
+                    isThreeLine: true,
+                  ),
+                  Obx(() =>
+                      SettingsSlider(
+                          startingVal: SettingsManager().settings.apiTimeout.value / 1000,
+                          update: (double val) {
+                            SettingsManager().settings.apiTimeout.value = val.toInt() * 1000;
+                          },
+                          onChangeEnd: (double val) {
+                            saveSettings();
+                            api.dio = Dio(BaseOptions(
+                              connectTimeout: 15000,
+                              receiveTimeout: SettingsManager().settings.apiTimeout.value,
+                              sendTimeout: SettingsManager().settings.apiTimeout.value,
+                            ));
+                            api.dio.interceptors.add(ApiInterceptor());
+                          },
+                          backgroundColor: tileColor,
+                          min: 5,
+                          max: 60,
+                          divisions: 11)),
+                  Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: Obx(() => Text(
+                      "Note: Attachment uploads will timeout after ${SettingsManager().settings.apiTimeout.value ~/ 1000 * 12} seconds",
+                      style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                    )),
+                  )
                 ],
               ),
               SettingsHeader(

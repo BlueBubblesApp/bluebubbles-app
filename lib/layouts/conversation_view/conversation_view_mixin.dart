@@ -76,9 +76,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   TextEditingController chatSelectorController = TextEditingController(text: " ");
 
-  static Rx<MultiTween<String>> gradientTween = Rx<MultiTween<String>>(MultiTween<String>()
-    ..add("color1", Tween<double>(begin: 0, end: 0.2))
-    ..add("color2", Tween<double>(begin: 0.8, end: 1)));
+  static Rx<MovieTween> gradientTween = Rx<MovieTween>(MovieTween()
+    ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+        .tween("color1", Tween<double>(begin: 0, end: 0.2))
+    ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+        .tween("color2", Tween<double>(begin: 0.8, end: 1)));
   Timer? _debounce;
 
   /// Conversation view methods
@@ -646,7 +648,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               children: [
                 Expanded(
                   child: Padding(
-                    padding: EdgeInsets.only(left: 15.0, top: kIsDesktop ? 5 : 45),
+                    padding: EdgeInsets.only(left: 15.0, top: kIsDesktop || kIsWeb ? 5 : 45),
                     child: GestureDetector(
                       onTap: () {
                         if (LifeCycleManager().isBubble) {
@@ -1012,12 +1014,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               style: context.theme.textTheme.titleLarge,
             ),
             content: Container(
-                // height: 70,
-                // color: Colors.black,
+              height: 70,
+              child: Center(
                 child: CircularProgressIndicator(
-                    backgroundColor: context.theme.colorScheme.properSurface,
-                    valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                 ),
+              ),
               ),
           );
         });

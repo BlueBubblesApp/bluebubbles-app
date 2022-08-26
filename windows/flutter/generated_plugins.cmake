@@ -11,12 +11,14 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_acrylic
   flutter_native_view
   geolocator_windows
+  local_auth_windows
   maps_launcher
   objectbox_flutter_libs
   pasteboard
   permission_handler_windows
   printing
   quick_notify
+  record_windows
   screen_retriever
   secure_application
   system_tray

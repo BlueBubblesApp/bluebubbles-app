@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -55,6 +56,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart' hi
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
+import 'package:idb_shim/idb_browser.dart';
+import 'package:idb_shim/idb_shim.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:material_color_utilities/palettes/core_palette.dart';
@@ -111,6 +114,7 @@ final RxnDouble progress = RxnDouble();
 final RxnInt totalSize = RxnInt();
 late final CorePalette? monetPalette;
 Color? windowsAccentColor;
+late final Database db;
 
 String? _recentIntent;
 
@@ -406,6 +410,30 @@ Future<Null> initApp(bool isBubble) async {
       } on StateError catch (_) {
         fontExistsOnDisk.value = false;
       }
+    } else if (kIsWeb) {
+      final idbFactory = idbFactoryBrowser;
+      idbFactory.open("BlueBubbles.db", version: 1, onUpgradeNeeded: (VersionChangeEvent e) {
+        final db = (e.target as OpenDBRequest).result;
+        if (!db.objectStoreNames.contains("BBStore")) {
+          db.createObjectStore("BBStore");
+        }
+      }).then((_db) async {
+        db = _db;
+        final txn = db.transaction("BBStore", idbModeReadOnly);
+        final store = txn.objectStore("BBStore");
+        Uint8List? bytes = await store.getObject("iosFont") as Uint8List?;
+        await txn.completed;
+
+        if (!isNullOrEmpty(bytes)!) {
+          fontExistsOnDisk.value = true;
+          final fontLoader = FontLoader("Apple Color Emoji");
+          final cachedFontBytes = ByteData.view(bytes!.buffer);
+          fontLoader.addFont(
+            Future<ByteData>.value(cachedFontBytes),
+          );
+          await fontLoader.load();
+        }
+      });
     }
 
     if (kIsDesktop) {
@@ -718,7 +746,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
       if (kIsWeb && SettingsManager().settings.finishedSetup.value) {
         String? str = await SettingsManager().getServerVersion();
-        ver.Version version = ver.Version.parse(str);
+        ver.Version version = ver.Version.parse(str!);
         int sum = version.major * 100 + version.minor * 21 + version.patch;
         if (sum < 42) {
           setState(() {
@@ -1008,38 +1036,41 @@ Future<void> initSystemTray() async {
   // We first init the systray menu and then add the menu entries
   await systemTray.initSystemTray(title: "BlueBubbles", iconPath: path, toolTip: "BlueBubbles");
 
-  await systemTray.setContextMenu(
+  final Menu menu = Menu();
+  await menu.buildFrom(
     [
-      MenuItem(
+      MenuItemLable(
         label: 'Open App',
-        onClicked: () async {
+        onClicked: (_) async {
           LifeCycleManager().opened(null);
           await WindowManager.instance.show();
         },
       ),
-      MenuItem(
+      MenuItemLable(
         label: 'Hide App',
-        onClicked: () async {
+        onClicked: (_) async {
           LifeCycleManager().close();
           await WindowManager.instance.hide();
         },
       ),
-      MenuItem(
+      MenuItemLable(
         label: 'Close App',
-        onClicked: () async {
+        onClicked: (_) async {
           await WindowManager.instance.close();
         },
       ),
-    ],
+    ]
   );
+
+  await systemTray.setContextMenu(menu);
 
   // handle system tray event
   systemTray.registerSystemTrayEventHandler((eventName) async {
     switch (eventName) {
-      case 'leftMouseUp':
+      case 'click':
         await WindowManager.instance.show();
         break;
-      case "rightMouseUp":
+      case "right-click":
         await systemTray.popUpContextMenu();
         break;
     }

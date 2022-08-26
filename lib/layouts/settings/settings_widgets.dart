@@ -3,7 +3,6 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
@@ -11,6 +10,7 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -251,15 +251,19 @@ class SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap as void Function()?,
-        onLongPress: onLongPress as void Function()?,
-        splashColor: context.theme.colorScheme.surfaceVariant,
-        splashFactory: context.theme.splashFactory,
-        child: GestureDetector(
-          onSecondaryTapUp: (details) => onLongPress as void Function()?,
+    return Listener(
+      onPointerDown: (event) {
+        if (event.buttons == kSecondaryButton) {
+          (onLongPress as void Function()?)?.call();
+        }
+      },
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap as void Function()?,
+          onLongPress: onLongPress as void Function()?,
+          splashColor: context.theme.colorScheme.surfaceVariant,
+          splashFactory: context.theme.splashFactory,
           child: ListTile(
             mouseCursor: (onTap != null || onLongPress != null) ? SystemMouseCursors.click : null,
             leading: leading,
@@ -504,12 +508,15 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     }
 
     if (SettingsManager().settings.skin.value == Skins.iOS && useCupertino) {
-      final texts = options.map((e) => Text(capitalize ? textProcessing!(e).capitalize! : textProcessing!(e), style: context.theme.textTheme.bodyLarge!.copyWith(color: e == initial ? context.theme.colorScheme.onPrimary : null)));
+      final texts = options.map((e) => Text(capitalize ? textProcessing!(e).capitalize! : textProcessing!(e),
+          style: context.theme.textTheme.bodyLarge!.copyWith(color: e == initial ? context.theme.colorScheme.onPrimary : null),
+          maxLines: 1,
+      ));
       final map = Map<T, Widget>.fromIterables(options, cupertinoCustomWidgets ?? texts);
       return Obx(() => Container(
         color: _backgroundColor.value,
         padding: EdgeInsets.symmetric(horizontal: 13),
-        height: 50,
+        height: context.theme.textTheme.bodyLarge!.fontSize! * 3,
         width: context.width,
           child: MouseRegion(
             cursor: cursor,
@@ -546,6 +553,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                       child: Text(
                         title,
                         style: context.theme.textTheme.bodyLarge,
+                        maxLines: 1,
                       ),
                     ),
                     (subtitle != null)
@@ -607,6 +615,7 @@ class SettingsSlider extends StatelessWidget {
       this.formatValue,
       required this.min,
       required this.max,
+      this.leadingMinWidth,
       required this.divisions,
       this.leading,
       this.backgroundColor,
@@ -619,6 +628,7 @@ class SettingsSlider extends StatelessWidget {
   final Function(double value)? formatValue;
   final double min;
   final double max;
+  final double? leadingMinWidth;
   final int divisions;
   final Widget? leading;
   final Color? backgroundColor;
@@ -633,6 +643,7 @@ class SettingsSlider extends StatelessWidget {
     return ListTile(
       leading: leading,
       trailing: Text(value, style: context.theme.textTheme.bodyLarge),
+      minLeadingWidth: leadingMinWidth,
       title: SettingsManager().settings.skin.value == Skins.iOS
           ? MouseRegion(
           cursor: SystemMouseCursors.click,

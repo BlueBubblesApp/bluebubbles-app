@@ -16,7 +16,6 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
@@ -26,8 +25,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
 
 class MaterialConversationList extends StatefulWidget {
   MaterialConversationList({Key? key, required this.parent}) : super(key: key);
@@ -366,31 +365,15 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                                           }
                                                           }
 
-                                                          String appDocPath = SettingsManager().appDocDir.path;
-                                                          String ext = ".png";
-                                                          File file =
-                                                          File("$appDocPath/attachments/${randomString(16)}$ext");
-                                                          await file.create(recursive: true);
-
-                                                          // Take the picture after opening the camera
-                                                          await MethodChannelInterface().invokeMethod(
-                                                          "open-camera", {"path": file.path, "type": "camera"});
-
-                                                          // If we don't get data back, return outta here
-                                                          if (!file.existsSync()) return;
-                                                          if (file.statSync().size == 0) {
-                                                          file.deleteSync();
-                                                          return;
+                                                          final XFile? file = await ImagePicker().pickImage(source: ImageSource.camera);
+                                                          if (file != null) {
+                                                            widget.parent.openNewChatCreator(existing: [PlatformFile(
+                                                              path: file.path,
+                                                              name: file.path.split('/').last,
+                                                              size: await file.length(),
+                                                              bytes: await file.readAsBytes(),
+                                                            )]);
                                                           }
-
-                                                          widget.parent.openNewChatCreator(existing: [
-                                                          PlatformFile(
-                                                          name: file.path.split("/").last,
-                                                          path: file.path,
-                                                          bytes: file.readAsBytesSync(),
-                                                          size: file.lengthSync(),
-                                                          )
-                                                          ]);
                                                         } : null,
                                                         child: IconButton(
                                                             onPressed: () {

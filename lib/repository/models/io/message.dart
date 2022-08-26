@@ -16,6 +16,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
+import 'package:bluebubbles/repository/models/attributed_body.dart';
 import 'package:bluebubbles/repository/models/io/attachment.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
@@ -303,6 +304,7 @@ class Message {
   List<Attachment?> attachments = [];
   List<Message> associatedMessages = [];
   bool? bigEmoji;
+  List<AttributedBody>? attributedBody;
 
   final RxInt _error = RxInt(0);
   int get error => _error.value;
@@ -320,6 +322,9 @@ class Message {
   final dbAttachments = ToMany<Attachment>();
 
   final chat = ToOne<Chat>();
+
+  String? get dbAttributedBody => attributedBody == null ? null : jsonEncode(attributedBody!.map((e) => e.toMap()).toList());
+  set dbAttributedBody(String? json) => attributedBody = json == null ? null : (jsonDecode(json) as List).map((e) => AttributedBody.fromMap(e)).toList();
 
   Message(
       {this.id,
@@ -362,7 +367,8 @@ class Message {
       this.dateDeleted,
       this.metadata,
       this.threadOriginatorGuid,
-      this.threadOriginatorPart}) {
+      this.threadOriginatorPart,
+      this.attributedBody}) {
     if (error2 != null) _error.value = error2;
     if (dateRead2 != null) _dateRead.value = dateRead2;
     if (dateDelivered2 != null) _dateDelivered.value = dateDelivered2;
@@ -389,6 +395,14 @@ class Message {
 
     List<Attachment> attachments =
         json.containsKey("attachments") ? (json['attachments'] as List).map((a) => Attachment.fromMap(a)).toList() : [];
+    List<AttributedBody>? attributedBody;
+    if (json.containsKey("attributedBody") && json["attributedBody"] != null) {
+      if (json['attributedBody'] is Map) {
+        json['attributedBody'] = [json['attributedBody']];
+      }
+
+      attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a)).toList();
+    }
 
     // Load the metadata
     dynamic metadata = json.containsKey("metadata") ? json["metadata"] : null;
@@ -458,6 +472,7 @@ class Message {
       metadata: metadata is String ? null : metadata,
       threadOriginatorGuid: json.containsKey('threadOriginatorGuid') ? json['threadOriginatorGuid'] : null,
       threadOriginatorPart: json.containsKey('threadOriginatorPart') ? json['threadOriginatorPart'] : null,
+      attributedBody: attributedBody
     );
 
     // Adds fallback getter for the ID
@@ -849,7 +864,7 @@ class Message {
   }
 
   List<Message> getReactions() {
-    return associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType)).toList();
+    return associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", ""))).toList();
   }
 
   void generateTempGuid() {

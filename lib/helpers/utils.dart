@@ -532,7 +532,7 @@ String? sanitizeServerAddress({String? address}) {
 
   Uri? uri = Uri.tryParse(serverAddress);
   if (uri?.scheme.isEmpty ?? true) {
-    if (serverAddress.contains("ngrok.io")) {
+    if (serverAddress.contains("ngrok.io") || serverAddress.contains("trycloudflare.com")) {
       serverAddress = "https://$serverAddress";
     } else {
       serverAddress = "http://$serverAddress";
@@ -554,7 +554,7 @@ Future<String> getDeviceName() async {
 
     if (Platform.isAndroid) {
       AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-      items.addAll([androidInfo.brand!, androidInfo.model!, androidInfo.androidId!]);
+      items.addAll([androidInfo.brand!, androidInfo.model!, androidInfo.id!]);
     } else if (kIsWeb) {
       WebBrowserInfo webInfo = await deviceInfo.webBrowserInfo;
       items.addAll([describeEnum(webInfo.browserName), webInfo.platform!]);

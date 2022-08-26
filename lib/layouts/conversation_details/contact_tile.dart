@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -273,12 +271,20 @@ class ContactTile extends StatelessWidget {
                     showDialog(
                         context: context,
                         builder: (BuildContext context) {
-                          return BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                            child: SizedBox(
-                              height: 40,
-                              width: 40,
-                              child: CircularProgressIndicator(),
+                          return AlertDialog(
+                            backgroundColor: context.theme.colorScheme.properSurface,
+                            title: Text(
+                              "Removing participant...",
+                              style: context.theme.textTheme.titleLarge,
+                            ),
+                            content: Container(
+                              height: 70,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  backgroundColor: context.theme.colorScheme.properSurface,
+                                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                ),
+                              ),
                             ),
                           );
                         });

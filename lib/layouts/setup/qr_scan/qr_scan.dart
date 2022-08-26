@@ -17,7 +17,8 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:simple_animations/stateless_animation/custom_animation.dart';
+import 'package:simple_animations/simple_animations.dart';
+import 'package:universal_io/io.dart';
 
 class QRScan extends StatefulWidget {
   QRScan({Key? key, required this.controller}) : super(key: key);
@@ -32,7 +33,7 @@ class _QRScanState extends State<QRScan> {
   TextEditingController urlController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   String error = "";
-  CustomAnimationControl controller = CustomAnimationControl.mirror;
+  Control controller = Control.mirror;
   Tween<double> tween = Tween<double>(begin: 0, end: 5);
   bool obscureText = true;
 
@@ -226,12 +227,12 @@ class _QRScanState extends State<QRScan> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    CustomAnimation<double>(
+                                    CustomAnimationBuilder<double>(
                                       control: controller,
                                       tween: tween,
                                       duration: Duration(milliseconds: 600),
                                       curve: Curves.easeOut,
-                                      builder: (context, _, anim) {
+                                      builder: (context, anim, _) {
                                         return Padding(
                                           padding: EdgeInsets.only(left: 0.0),
                                           child: Icon(CupertinoIcons.camera, color: Colors.white, size: 20),
@@ -543,9 +544,21 @@ class _QRScanState extends State<QRScan> {
             });
           }
 
-          FCMData fcmData = FCMData.fromMap(data["data"]);
-          SettingsManager().saveFCMData(fcmData);
-          goToNextPage();
+          if (isNullOrEmpty(data["data"])! && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
+            return setState(() {
+              error = "Firebase is required when using Ngrok or Cloudflare!";
+            });
+          } else {
+            try {
+              FCMData fcmData = FCMData.fromMap(data["data"]);
+              SettingsManager().saveFCMData(fcmData);
+            } catch (_) {
+              if (Platform.isAndroid) {
+                showSnackbar("Warning", "No Firebase project detected! You will not receive notifications for new messages!");
+              }
+            }
+            goToNextPage();
+          }
         } else if (mounted) {
           if (err != null) {
             final errorData = jsonDecode(err as String);

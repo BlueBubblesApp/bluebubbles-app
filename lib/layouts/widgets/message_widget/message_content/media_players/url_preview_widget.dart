@@ -104,7 +104,7 @@ class UrlPreviewWidget extends StatelessWidget {
   final PageController pageController = PageController();
 
   /// Returns a File object representing the [attachment]
-  File attachmentFile(Attachment attachment) {
+  dynamic attachmentFile(Attachment attachment) {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
     return File(pathName);

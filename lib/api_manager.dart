@@ -54,7 +54,11 @@ class ApiService extends GetxService {
   /// Initialize dio with a couple options and intercept all requests for logging
   @override
   void onInit() {
-    dio = Dio(BaseOptions(connectTimeout: 15000, receiveTimeout: 15000, sendTimeout: 15000));
+    dio = Dio(BaseOptions(
+        connectTimeout: 15000,
+        receiveTimeout: SettingsManager().settings.apiTimeout.value,
+        sendTimeout: SettingsManager().settings.apiTimeout.value,
+    ));
     dio.interceptors.add(ApiInterceptor());
     // Uncomment to run tests on most API requests
     // testAPI();
@@ -226,7 +230,7 @@ class ApiService extends GetxService {
       final response = await dio.get(
           "$origin/attachment/$guid/download",
           queryParameters: buildQueryParams({"original": original}),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: 1800000),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
@@ -240,7 +244,7 @@ class ApiService extends GetxService {
       final response = await dio.get(
         "$origin/attachment/$guid/blurhash",
         queryParameters: buildQueryParams(),
-        options: Options(responseType: ResponseType.bytes, receiveTimeout: 1800000),
+        options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12),
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
       );
@@ -280,7 +284,7 @@ class ApiService extends GetxService {
   /// to specify what you would like in the response or how to query the DB.
   ///
   /// [withQuery] options: `"attachment"` / `"attachments"`, `"handle"` / `"handles"`
-  /// `"sms"` (set as one string, comma separated, no spaces)
+  /// `"sms"`, `"message.attributedbody"` (set as one string, comma separated, no spaces)
   Future<Response> chatMessages(String guid, {String withQuery = "", String sort = "DESC", int? before, int? after, int offset = 0, int limit = 100, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
@@ -395,7 +399,7 @@ class ApiService extends GetxService {
       final response = await dio.get(
           "$origin/chat/$guid/icon",
           queryParameters: buildQueryParams(),
-          options: Options(responseType: ResponseType.bytes, receiveTimeout: 1800000),
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout * 12),
           cancelToken: cancelToken,
           onReceiveProgress: onReceiveProgress,
       );
@@ -433,7 +437,7 @@ class ApiService extends GetxService {
   /// the response or how to query the DB.
   ///
   /// [withQuery] options: `"chats"` / `"chat"`, `"attachment"` / `"attachments"`,
-  /// `"handle"`, `"chats.participants"` / `"chat.participants"`,  `"attachment.metadata"`
+  /// `"handle"`, `"chats.participants"` / `"chat.participants"`,  `"attachment.metadata"`, `"attributedBody"
   Future<Response> messages({List<String> withQuery = const [], List<dynamic> where = const [], String sort = "DESC", int? before, int? after, String? chatGuid, int offset = 0, int limit = 100, bool convertAttachment = true, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
@@ -450,7 +454,7 @@ class ApiService extends GetxService {
   /// like in the response or how to query the DB.
   ///
   /// [withQuery] options: `"chats"` / `"chat"`, `"attachment"` / `"attachments"`,
-  /// `"chats.participants"` / `"chat.participants"` (set as one string, comma separated, no spaces)
+  /// `"chats.participants"` / `"chat.participants"`, `"attributedBody"` (set as one string, comma separated, no spaces)
   Future<Response> singleMessage(String guid, {String withQuery = "", CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.get(
@@ -504,7 +508,7 @@ class ApiService extends GetxService {
           cancelToken: cancelToken,
           data: formData,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: 0),
+          options: Options(sendTimeout: 0, receiveTimeout: dio.options.receiveTimeout * 12),
       );
       return returnSuccessOrError(response);
     });
@@ -530,7 +534,7 @@ class ApiService extends GetxService {
           cancelToken: cancelToken,
           data: formData,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: 0),
+          options: Options(sendTimeout: 0, receiveTimeout: dio.options.receiveTimeout * 12),
       );
       return returnSuccessOrError(response);
     });
@@ -631,7 +635,7 @@ class ApiService extends GetxService {
           queryParameters: buildQueryParams(),
           data: contacts,
           onSendProgress: onSendProgress,
-          options: Options(sendTimeout: 0),
+          options: Options(sendTimeout: 0, receiveTimeout: dio.options.receiveTimeout * 12),
           cancelToken: cancelToken
       );
       return returnSuccessOrError(response);

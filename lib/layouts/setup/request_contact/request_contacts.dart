@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:simple_animations/stateless_animation/custom_animation.dart';
+import 'package:simple_animations/simple_animations.dart';
 
 class RequestContacts extends StatefulWidget {
   RequestContacts({Key? key, required this.controller}) : super(key: key);
@@ -18,7 +18,7 @@ class RequestContacts extends StatefulWidget {
 }
 
 class _RequestContactsState extends State<RequestContacts> {
-  CustomAnimationControl controller = CustomAnimationControl.mirror;
+  Control controller = Control.mirror;
   Tween<double> tween = Tween<double>(begin: 0, end: 5);
 
   @override
@@ -204,12 +204,12 @@ class _RequestContactsState extends State<RequestContacts> {
                                   ),
                                   Positioned(
                                     left: 40,
-                                    child: CustomAnimation<double>(
+                                    child: CustomAnimationBuilder<double>(
                                       control: controller,
                                       tween: tween,
                                       duration: Duration(milliseconds: 600),
                                       curve: Curves.easeOut,
-                                      builder: (context, _, anim) {
+                                      builder: (context, anim, _) {
                                         return Padding(
                                           padding: EdgeInsets.only(left: anim),
                                           child: Icon(Icons.arrow_forward, color: Colors.white, size: 20),
