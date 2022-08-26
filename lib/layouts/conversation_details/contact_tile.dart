@@ -267,7 +267,7 @@ class ContactTile extends StatelessWidget {
                   label: 'Remove',
                   backgroundColor: Colors.red,
                   icon: SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete,
-                  onPressed: (context) async {
+                  onPressed: (_) async {
                     showDialog(
                         context: context,
                         builder: (BuildContext context) {
@@ -290,6 +290,7 @@ class ContactTile extends StatelessWidget {
                         });
 
                     api.chatParticipant("remove", chat.guid, handle.address).then((response) async {
+                      Get.back();
                       Logger.info("Removed participant ${handle.address}");
                       Chat updatedChat = Chat.fromMap(response.data["data"]);
                       updatedChat.save();
@@ -298,7 +299,6 @@ class ContactTile extends StatelessWidget {
 
                       Logger.info("Updating chat with ${chatWithParticipants.participants.length} participants");
                       updateChat.call(chatWithParticipants);
-                      Navigator.of(context).pop();
                     }).catchError((err) {
                       Logger.error("Failed to remove participant ${handle.address}");
 

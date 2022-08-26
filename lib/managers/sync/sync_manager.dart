@@ -41,7 +41,7 @@ abstract class SyncManager {
   /// Start the sync
   Future<void> start() async {
     startedAt = DateTime.now().toUtc();
-    setProgress(1, 1);
+    setProgress(0, 1);
     error = null;
 
     Logger.info('$name Sync is starting...', tag: 'SyncManager');
