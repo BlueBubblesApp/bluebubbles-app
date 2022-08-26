@@ -4,11 +4,9 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/sync/incremental_sync_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/repository/tasks/sync_tasks.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -28,7 +26,6 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -193,7 +190,9 @@ class ConversationListState extends State<ConversationList> {
                           FCMData.deleteFcmData();
                           prefs.setString("selected-dark", "OLED Dark");
                           prefs.setString("selected-light", "Bright White");
-                          themeBox.putMany(Themes.defaultThemes);
+                          if (!kIsWeb) {
+                            themeBox.putMany(Themes.defaultThemes);
+                          }
                           loadTheme(context);
                           Get.offAll(() => WillPopScope(
                             onWillPop: () async => false,

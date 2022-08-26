@@ -641,7 +641,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                     "Are you sure?",
                                     style: context.theme.textTheme.titleLarge,
                                   ),
-                                  content: Text(
+                                  content: kIsWeb ? null : Text(
                                     "If you just need to free up some storage, you can remove all downloaded attachments with the button below.",
                                     style: context.theme.textTheme.bodyLarge,
                                   ),
@@ -673,7 +673,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         FCMData.deleteFcmData();
                                         prefs.setString("selected-dark", "OLED Dark");
                                         prefs.setString("selected-light", "Bright White");
-                                        themeBox.putMany(Themes.defaultThemes);
+                                        if (!kIsWeb) {
+                                          themeBox.putMany(Themes.defaultThemes);
+                                        }
                                         loadTheme(context);
                                         Get.offAll(() => WillPopScope(
                                           onWillPop: () async => false,

@@ -234,13 +234,14 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                 ),
                 label: 'Download'
               ),
-              NavigationDestination(
-                icon: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
-                  color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
+              if (!kIsWeb && !kIsDesktop)
+                NavigationDestination(
+                  icon: Icon(
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
+                    color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
+                  ),
+                  label: 'Share'
                 ),
-                label: 'Share'
-              ),
               if (SettingsManager().settings.skin.value == Skins.iOS)
                 NavigationDestination(
                     icon: Icon(
