@@ -420,15 +420,19 @@ class ApiService extends GetxService {
   }
 
   /// Get the number of messages in the server iMessage DB
-  Future<Response> messageCount({bool updated = false, bool onlyMe = false, CancelToken? cancelToken}) async {
+  Future<Response> messageCount(
+      {bool updated = false, bool onlyMe = false, DateTime? after, DateTime? before, CancelToken? cancelToken}) async {
     // we don't have a query that supports providing updated and onlyMe
     assert(updated != true && onlyMe != true);
+    Map<String, dynamic> params = {};
+    if (after != null) params['after'] = after.millisecondsSinceEpoch;
+    if (before != null) params['before'] = before.millisecondsSinceEpoch;
+    print(params);
     return runApiGuarded(() async {
       final response = await dio.get(
           "$origin/message/count${updated ? "/updated" : onlyMe ? "/me" : ""}",
-          queryParameters: buildQueryParams(),
-          cancelToken: cancelToken
-      );
+          queryParameters: buildQueryParams(params),
+          cancelToken: cancelToken);
       return returnSuccessOrError(response);
     });
   }

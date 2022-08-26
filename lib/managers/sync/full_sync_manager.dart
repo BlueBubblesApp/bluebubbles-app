@@ -63,7 +63,7 @@ class FullSyncManager extends SyncManager {
 
         // 1: Asynchronously save the chats
         // This returns the IDs, so we need to fetch them next
-        List<Chat> chats = await Chat.bulkSaveNewChats(newChats);
+        List<Chat> chats = await Chat.bulkSyncChats(newChats);
 
         // 2: For each chat, get the messages.
         // We will stream the messages by page

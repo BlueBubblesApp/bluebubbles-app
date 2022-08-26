@@ -1027,3 +1027,17 @@ String getDisplayName(String? displayName, String? firstName, String? lastName) 
   String? _displayName = (displayName?.isEmpty ?? false) ? null : displayName;
   return _displayName ?? [firstName, lastName].where((e) => e?.isNotEmpty ?? false).toList().join(" ");
 }
+
+Map<String, dynamic> mergeTopLevelDicts(Map<String, dynamic>? d1, Map<String, dynamic>? d2) {
+  if (d1 == null && d2 == null) return {};
+  if (d1 == null && d2 != null) return d2;
+  if (d1 != null && d2 == null) return d1;
+
+  // Update metadata
+  for (var i in d2!.entries) {
+    if (d1!.containsKey(i.key)) continue;
+    d1[i.key] = i.value;
+  }
+
+  return d1!;
+}

@@ -15,6 +15,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/tasks/sync_tasks.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
@@ -303,110 +304,6 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
   }
 }
 
-/// Async method to get chats from objectbox
-class BulkSaveNewChats extends AsyncTask<List<dynamic>, List<Chat>> {
-  final List<dynamic> params;
-
-  BulkSaveNewChats(this.params);
-
-  @override
-  AsyncTask<List<dynamic>, List<Chat>> instantiate(List<dynamic> parameters, [Map<String, SharedData>? sharedData]) {
-    return BulkSaveNewChats(parameters);
-  }
-
-  @override
-  List<dynamic> parameters() {
-    return params;
-  }
-
-  @override
-  FutureOr<List<Chat>> run() {
-    return store.runInTransaction(TxMode.write, () {
-      // 0. Create map for the chats and handles to save
-      // 1. Check for existing handles and save new ones
-      // 2. Fetch all inserted/existing handles based on input
-      // 3. Create map of inserted/existing handles
-      // 4. Check for existing chats and save new ones
-      // 5. Fetch all inserted/existing chats based on input
-      // 6. Create map of inserted chats
-      // 7. Loop over chat -> participants map and relate all the participants to the chats
-      // 8. Save & return updated chats
-
-      /// Takes the list of chats from [params] and saves it
-      /// to the objectbox store.
-      List<Chat> inputChats = params[0];
-      List<String> inputChatGuids = inputChats.map((element) => element.guid).toList();
-
-      // 0. Create map for the chats and handles to save
-      Map<String, Handle> handlesToSave = {};
-      Map<String, List<String>> chatHandles = {};
-      Map<String, Chat> chatsToSave = {};
-      for (final chat in inputChats) {
-        chatsToSave[chat.guid] = chat;
-        for (final p in chat.participants) {
-          if (!handlesToSave.containsKey(p.address)) {
-            handlesToSave[p.address] = p;
-          }
-
-          if (!chatHandles.containsKey(chat.guid)) {
-            chatHandles[chat.guid] = [];
-          }
-
-          if (!chatHandles[chat.guid]!.contains(p.address)) {
-            chatHandles[chat.guid]?.add(p.address);
-          }
-        }
-      }
-
-      // 1. Check for existing handles and save new ones
-      List<Handle> inputHandles = handlesToSave.values.toList();
-      List<String> inputHandleAddresses = inputHandles.map((element) => element.address).toList();
-      QueryBuilder<Handle> handleQuery = handleBox.query(Handle_.address.oneOf(inputHandleAddresses));
-      List<String> existingHandleAddresses = handleQuery.build().find().map((e) => e.address).toList();
-      inputHandles = inputHandles.where((element) => !existingHandleAddresses.contains(element.address)).toList();
-      handleBox.putMany(inputHandles);
-
-      // 2. Fetch all inserted/existing handles based on input
-      QueryBuilder<Handle> handleQuery2 = handleBox.query(Handle_.address.oneOf(inputHandleAddresses));
-      List<Handle> handles = handleQuery2.build().find().toList();
-
-      // 3. Create map of inserted/existing handles
-      Map<String, Handle> handleMap = {};
-      for (final h in handles) {
-        handleMap[h.address] = h;
-      }
-
-      // 4. Check for existing chats and save new ones
-      QueryBuilder<Chat> chatQuery = chatBox.query(Chat_.guid.oneOf(inputChatGuids));
-      List<String> existingChatGuids = chatQuery.build().find().map((e) => e.guid).toList();
-      inputChats = inputChats.where((element) => !existingChatGuids.contains(element.guid)).toList();
-      chatBox.putMany(inputChats);
-
-      // 5. Fetch all inserted/existing chats based on input
-      QueryBuilder<Chat> chatQuery2 = chatBox.query(Chat_.guid.oneOf(inputChatGuids));
-      List<Chat> chats = chatQuery2.build().find().toList();
-
-      // 6. Create map of inserted/existing chats
-      Map<String, Chat> chatMap = {};
-      for (final c in chats) {
-        chatMap[c.guid] = c;
-      }
-
-      // Loop over chat -> participants map and relate all the participants to the chats
-      for (final item in chatHandles.entries) {
-        final chat = chatMap[item.key];
-        if (chat == null) continue;
-        final participants = item.value.map((e) => handleMap[e]).whereNotNull().toList();
-        chat.handles.addAll(participants);
-        chat.participants = participants;
-      }
-
-      // 8. Save & return updated chats
-      chatBox.putMany(chats);
-      return chats;
-    });
-  }
-}
 
 @Entity()
 class Chat {
@@ -917,11 +814,11 @@ class Chat {
 
       // We want to determine all the participants that exist in the response that are not already in our locally saved chat (AKA all the new participants)
       List<Handle> newParticipants =
-      chat.participants.where((a) => (participants.where((b) => b.address == a.address).toList().isEmpty)).toList();
+          chat.participants.where((a) => (participants.where((b) => b.address == a.address).toList().isEmpty)).toList();
 
       // We want to determine all the participants that exist in the locally saved chat that are not in the response (AKA all the removed participants)
       List<Handle> removedParticipants =
-      participants.where((a) => (chat.participants.where((b) => b.address == a.address).toList().isEmpty)).toList();
+          participants.where((a) => (chat.participants.where((b) => b.address == a.address).toList().isEmpty)).toList();
 
       // Add all participants that are missing from our local db
       for (Handle newParticipant in newParticipants) {
@@ -1150,11 +1047,27 @@ class Chat {
     return (await createAsyncTask<List<Chat>>(task)) ?? [];
   }
 
-  static Future<List<Chat>> bulkSaveNewChats(List<Chat> chats) async {
-    if (kIsWeb) throw Exception("Web does not support saving chats!");
+  static Future<List<Chat>> syncLatestMessages(List<Chat> chats, bool toggleUnread) async {
+    if (kIsWeb) throw Exception("Use socket to sync the last message on Web!");
 
-    final task = BulkSaveNewChats([chats]);
+    final task = SyncLastMessages([chats, toggleUnread]);
     return (await createAsyncTask<List<Chat>>(task)) ?? [];
+  }
+
+  static Future<List<Chat>> bulkSyncChats(List<Chat> chats) async {
+    if (kIsWeb) throw Exception("Web does not support saving chats!");
+    if (chats.isEmpty) return [];
+
+    final task = BulkSyncChats([chats]);
+    return (await createAsyncTask<List<Chat>>(task)) ?? [];
+  }
+
+  static Future<List<Message>> bulkSyncMessages(Chat chat, List<Message> messages) async {
+    if (kIsWeb) throw Exception("Web does not support saving messages!");
+    if (messages.isEmpty) return [];
+
+    final task = BulkSyncMessages([chat, messages]);
+    return (await createAsyncTask<List<Message>>(task)) ?? [];
   }
 
   bool isGroup() {
@@ -1185,6 +1098,46 @@ class Chat {
     return message;
   }
 
+  static Chat merge(Chat chat1, Chat chat2) {
+    chat1.id ??= chat2.id;
+    chat1._customAvatarPath.value ??= chat2._customAvatarPath.value;
+    chat1._pinIndex.value ??= chat2._pinIndex.value;
+    chat1.autoSendReadReceipts ??= chat2.autoSendReadReceipts;
+    chat1.autoSendTypingIndicators ??= chat2.autoSendTypingIndicators;
+    chat1.chatIdentifier ??= chat2.chatIdentifier;
+    chat1.displayName ??= chat2.displayName;
+    chat1.fakeLatestMessageText ??= chat2.fakeLatestMessageText;
+    if (chat1.fakeParticipants.isEmpty) {
+      chat1.fakeParticipants = chat2.fakeParticipants;
+    }
+    
+    if (chat1.handles.isEmpty) {
+      chat1.handles.addAll(chat2.handles);
+    }
+
+    chat1.hasUnreadMessage ??= chat2.hasUnreadMessage;
+    chat1.isArchived ??= chat2.isArchived;
+    chat1.isFiltered ??= chat2.isFiltered;
+    chat1.isPinned ??= chat2.isPinned;
+    chat1.latestMessage ??= chat2.latestMessage;
+    chat1.latestMessageDate ??= chat2.latestMessageDate;
+    chat1.latestMessageText ??= chat2.latestMessageText;
+    
+    if (chat1.messages.isEmpty) {
+      chat1.messages.addAll(chat2.messages);
+    }
+
+    chat1.muteArgs ??= chat2.muteArgs;
+    if (chat1.participants.isEmpty) {
+      chat1.participants.addAll(chat2.participants);
+    }
+
+    chat1.style ??= chat2.style;
+    chat1.title ??= chat2.title;
+
+    return chat1;
+  }
+
   static int sort(Chat? a, Chat? b) {
     // If they both are pinned & ordered, reflect the order
     if (a!.isPinned! && b!.isPinned! && a.pinIndex != null && b.pinIndex != null) {
@@ -1201,10 +1154,12 @@ class Chat {
     if (a.isPinned! && !b.isPinned!) return -1;
 
     // Compare the last message dates
-    if ((a.latestMessageDate ?? a.latestMessageGetter?.dateCreated) == null && (b.latestMessageDate ?? b.latestMessageGetter?.dateCreated) == null) return 0;
+    if ((a.latestMessageDate ?? a.latestMessageGetter?.dateCreated) == null &&
+        (b.latestMessageDate ?? b.latestMessageGetter?.dateCreated) == null) return 0;
     if ((a.latestMessageDate ?? a.latestMessageGetter?.dateCreated) == null) return 1;
     if ((b.latestMessageDate ?? b.latestMessageGetter?.dateCreated) == null) return -1;
-    return -(a.latestMessageDate ?? a.latestMessageGetter?.dateCreated)!.compareTo((b.latestMessageDate ?? b.latestMessageGetter?.dateCreated)!);
+    return -(a.latestMessageDate ?? a.latestMessageGetter?.dateCreated)!
+        .compareTo((b.latestMessageDate ?? b.latestMessageGetter?.dateCreated)!);
   }
 
   static void flush() {
