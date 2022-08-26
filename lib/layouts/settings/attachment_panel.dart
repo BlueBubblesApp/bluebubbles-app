@@ -256,16 +256,17 @@ class AttachmentPanel extends StatelessWidget {
                           )),
                     ],
                   ),
-                SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Advanced"),
-                SettingsSection(
-                  backgroundColor: tileColor,
-                  children: [
-                    if (!kIsWeb)
+                if (!kIsWeb)
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Advanced"),
+                if (!kIsWeb)
+                  SettingsSection(
+                    backgroundColor: tileColor,
+                    children: [
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
                               SettingsManager().settings.preCachePreviewImages.value = val;
@@ -276,8 +277,8 @@ class AttachmentPanel extends StatelessWidget {
                             subtitle: "Caches URL preview images for faster load times",
                             backgroundColor: tileColor,
                           )),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           ),

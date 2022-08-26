@@ -31,7 +31,6 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:idb_shim/idb.dart';
-import 'package:idb_shim/idb_browser.dart';
 import 'package:universal_io/io.dart';
 
 class ThemePanelController extends GetxController {
@@ -792,19 +791,17 @@ class ThemePanel extends StatelessWidget {
                         return SettingsTile(
                           onTap: () async {
                             if (kIsWeb) {
-                              IdbFactory? idbFactory = getIdbFactory();
-                              final db = await idbFactory?.open("BlueBubbles", version: 1, onUpgradeNeeded: (VersionChangeEvent event) {});
-                              final txn = db?.transaction("BlueBubbles", "readwrite");
-                              final store = txn?.objectStore("BlueBubbles");
-                              await store?.delete("iosFont");
-                              await txn?.completed;
+                              final txn = db.transaction("BBStore", idbModeReadWrite);
+                              final store = txn.objectStore("BBStore");
+                              await store.delete("iosFont");
+                              await txn.completed;
                             } else {
                               await DynamicCachedFonts.removeCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf");
                             }
                             fontExistsOnDisk.value = false;
                             showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
                           },
-                          title: "Delete iOS Emoji Font",
+                          title: "Delete ${kIsWeb ? "" : "iOS "}Emoji Font",
                         );
                       } else {
                         return SizedBox.shrink();

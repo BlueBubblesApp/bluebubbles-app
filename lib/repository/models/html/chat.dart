@@ -522,8 +522,16 @@ class Chat {
     throw Exception("Use socket to get chats on Web!");
   }
 
-  static Future<List<Chat>> bulkSaveNewChats(List<Chat> chats) async {
-    return [];
+  static Future<List<Chat>> syncLatestMessages(List<Chat> chats, bool toggleUnread) async {
+    return chats;
+  }
+
+  static Future<List<Chat>> bulkSyncChats(List<Chat> chats) async {
+    return chats;
+  }
+
+  static Future<List<Message>> bulkSyncMessages(Chat chat, List<Message> messages) async {
+    return messages;
   }
 
   bool isGroup() {

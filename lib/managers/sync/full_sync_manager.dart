@@ -6,6 +6,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/sync/sync_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:tuple/tuple.dart';
 
 class FullSyncManager extends SyncManager {
@@ -68,7 +69,7 @@ class FullSyncManager extends SyncManager {
         // 2: For each chat, get the messages.
         // We will stream the messages by page
         for (final chat in chats) {
-          if ((chat.chatIdentifier ?? "").startsWith("urn:biz")) continue;
+          if (kIsWeb || (chat.chatIdentifier ?? "").startsWith("urn:biz")) continue;
           try {
             await for (final messageEvent in streamChatMessages(chat.guid, messageCount, batchSize: messageCount)) {
               List<Message> newMessages = messageEvent.item2;

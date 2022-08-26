@@ -85,9 +85,7 @@ class TroubleshootPanel extends StatelessWidget {
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
-                              backgroundColor: context.theme.colorScheme.secondary,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                              titlePadding: EdgeInsets.only(top: 15),
+                              backgroundColor: context.theme.colorScheme.surface,
                               title: Text("Fetching contacts...", style: context.theme.textTheme.titleLarge),
                               content: Padding(
                                 padding: const EdgeInsets.all(8.0),
