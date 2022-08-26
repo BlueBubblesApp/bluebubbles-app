@@ -46,6 +46,8 @@ Below are the last few BlueBubbles App release changelogs
 - Fixed stickers not loading in
 - Fixed Giphy not working on Web
 - Fixed taking photos / videos from camera button in the app would sometimes be unresponsive
+- Fixed some issues removing people from chats
+   - This may not reflect in the UI immediately still, but a restart of the app will reflect it
 - Desktop
   - Fixed link previews
   - Fixed issues with window bounds going off screen
