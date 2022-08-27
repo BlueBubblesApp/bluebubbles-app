@@ -272,8 +272,8 @@ class NotificationManager {
         );
         toast?.eventStream.listen((event) async {
           // If we get any event, the notification has been shown, and we can delete the temp file
-          if (File(path).existsSync()) {
-            File(path).deleteSync();
+          if (await File(path).exists()) {
+            await File(path).delete();
           }
 
           // Show window and open the right chat

@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:emojis/emojis.dart';
 import 'package:flutter/foundation.dart';
@@ -94,7 +95,7 @@ class Reaction {
         if (msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) {
           output.add(msg);
         }
-      } else if (msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) {
+      } else if (kIsWeb && msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) {
         output.add(msg);
       }
     }
@@ -127,16 +128,16 @@ class Reaction {
     messages.add(message);
   }
 
-  Widget? getSmallWidget(BuildContext context, {Message? message, bool bigPin = false, bool isReactionPicker = true}) {
+  Widget? getSmallWidget(BuildContext context, {Message? message, bool bigPin = false, bool isReactionPicker = false, bool isSelected = false, double size = 28}) {
     if (messages.isEmpty && message == null) return null;
     if (messages.isEmpty && message != null) messages = [message];
 
     List<Widget> reactionList = [];
 
     for (int i = 0; i < messages.length; i++) {
-      Color iconColor = Colors.white;
-      if (!messages[i].isFromMe! && context.theme.colorScheme.secondary.computeLuminance() >= 0.179) {
-        iconColor = Colors.black.withAlpha(95);
+      Color iconColor = isSelected ? context.theme.colorScheme.onBackground : context.theme.colorScheme.onPrimary;
+      if (!messages[i].isFromMe!) {
+        iconColor = context.theme.colorScheme.properOnSurface;
       }
 
       reactionList.add(
@@ -152,14 +153,14 @@ class Reaction {
             children: <Widget>[
               if (bigPin)
                 Positioned(
-                  left: -6,
-                  top: 24,
+                  left: size * -0.24,
+                  top: size,
                   child: Container(
-                    height: 5.5,
-                    width: 5.5,
+                    height: size * 0.2,
+                    width: size * 0.2,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(100),
-                      color: context.theme.colorScheme.secondary,
+                      color: context.theme.colorScheme.properSurface,
                       boxShadow: [
                         BoxShadow(
                           blurRadius: 1.0,
@@ -171,14 +172,14 @@ class Reaction {
                 ),
               if (bigPin)
                 Positioned(
-                  top: 15.5,
-                  left: -1.5,
+                  top: size * 0.62,
+                  left: size * -0.06,
                   child: Container(
-                    height: 10,
-                    width: 10,
+                    height: size * 0.4,
+                    width: size * 0.4,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(100),
-                      color: context.theme.colorScheme.secondary,
+                      color: context.theme.colorScheme.properSurface,
                       boxShadow: [
                         BoxShadow(
                           blurRadius: 1.0,
@@ -189,12 +190,14 @@ class Reaction {
                   ),
                 ),
               Container(
-                height: bigPin ? 25 : 28,
-                width: bigPin ? 25 : 28,
-                margin: EdgeInsets.only(right: bigPin ? 10 : 0),
+                height: size,
+                width: size,
+                margin: EdgeInsets.only(right: bigPin ? size * 0.4 : 0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100),
-                  color: messages[i].isFromMe! ? context.theme.primaryColor : context.theme.colorScheme.secondary,
+                  color: isReactionPicker
+                      ? (isSelected ? context.theme.colorScheme.background : context.theme.colorScheme.primary)
+                      : messages[i].isFromMe! ? context.theme.colorScheme.primary : context.theme.colorScheme.properSurface,
                   boxShadow: isReactionPicker
                       ? null
                       : [
@@ -205,18 +208,11 @@ class Reaction {
                         ],
                 ),
                 child: Padding(
-                  padding: bigPin
-                      ? const EdgeInsets.only(
-                          top: 6.0,
-                          left: 5.0,
-                          right: 5.0,
-                          bottom: 5.0,
-                        )
-                      : const EdgeInsets.only(
-                          top: 8.0,
-                          left: 7.0,
-                          right: 7.0,
-                          bottom: 7.0,
+                  padding: EdgeInsets.only(
+                          top: size * 0.29,
+                          left: size * 0.25,
+                          right: size * 0.25,
+                          bottom: size * 0.25,
                         ),
                   child: getReactionIcon(reactionType, iconColor),
                 ),
@@ -235,10 +231,10 @@ class Reaction {
     );
   }
 
-  static Widget getReactionIcon(String? reactionType, Color iconColor) {
+  static Widget getReactionIcon(String? reactionType, Color iconColor, {bool usePink = true}) {
     return SvgPicture.asset(
       'assets/reactions/$reactionType-black.svg',
-      color: reactionType == "love" ? Colors.pink : iconColor,
+      color: reactionType == "love" && usePink ? Colors.pink : iconColor,
     );
   }
 }

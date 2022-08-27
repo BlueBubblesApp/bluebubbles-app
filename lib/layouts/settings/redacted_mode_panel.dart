@@ -2,10 +2,10 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,10 +14,24 @@ class RedactedModePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+    final iosSubtitle =
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
+    final materialSubtitle = context.theme
+        .textTheme
+        .labelLarge
+        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
 
     return SettingsScaffold(
       title: "Redacted Mode",
@@ -33,26 +47,18 @@ class RedactedModePanel extends StatelessWidget {
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
-                  Container(
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                        color: tileColor,
-                        border: Border(
-                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                        ),
-                      ) : null,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                        child: Text(
-                            "Redacted Mode hides your personal information, such as contact names, message content, and more. This is useful when taking screenshots to send to developers."
-                        ),
-                      )
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                    child: Text(
+                        "Redacted Mode hides your personal information, such as contact names, message content, and more. This is useful when taking screenshots to send to developers."
+                    ),
                   ),
                 ],
               ),
-              AbsorbPointer(
-                absorbing: true,
-                child: Container(
-                  color: headerColor == Theme.of(context).colorScheme.secondary ? tileColor : headerColor,
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10),
+                child: AbsorbPointer(
+                  absorbing: true,
                   child: MessageWidget(
                     newerMessage: null,
                     olderMessage: null,
@@ -96,15 +102,6 @@ class RedactedModePanel extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
-                decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                  color: headerColor,
-                  border: Border(
-                      top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                  ),
-                ) : null,
-              ),
-              Container(color: SettingsManager().settings.skin.value == Skins.Samsung ? null : tileColor, padding: EdgeInsets.only(top: 5.0)),
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
@@ -141,6 +138,13 @@ class RedactedModePanel extends StatelessWidget {
                         backgroundColor: tileColor,
                         subtitle: "Removes any trace of message text",
                       ),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      ),
                       SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.hideReactions.value = val;
@@ -173,6 +177,13 @@ class RedactedModePanel extends StatelessWidget {
                         backgroundColor: tileColor,
                         subtitle: "Replaces large emojis with placeholder boxes",
                       ),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      ),
                       SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.hideAttachments.value = val;
@@ -183,6 +194,13 @@ class RedactedModePanel extends StatelessWidget {
                         backgroundColor: tileColor,
                         subtitle: "Replaces attachments with placeholder boxes",
                       ),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      ),
                       SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.hideAttachmentTypes.value = val;
@@ -192,6 +210,7 @@ class RedactedModePanel extends StatelessWidget {
                         title: "Hide Attachment Types",
                         backgroundColor: tileColor,
                         subtitle: "Removes the attachment file type text from the placeholder box",
+                        isThreeLine: true,
                       ),
                     ],
                   ),
@@ -215,6 +234,13 @@ class RedactedModePanel extends StatelessWidget {
                         backgroundColor: tileColor,
                         subtitle: "Replaces message bubbles with empty bubbles",
                       ),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
+                      ),
                       SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.hideContactInfo.value = val;
@@ -224,6 +250,14 @@ class RedactedModePanel extends StatelessWidget {
                         title: "Hide Contact Info",
                         backgroundColor: tileColor,
                         subtitle: "Removes any trace of contact names, numbers, and emails",
+                        isThreeLine: true,
+                      ),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
                       ),
                       SettingsSwitch(
                         onChanged: (bool val) {
@@ -256,6 +290,14 @@ class RedactedModePanel extends StatelessWidget {
                         title: "Generate Fake Contact Names",
                         backgroundColor: tileColor,
                         subtitle: "Replaces contact names, numbers, and emails with auto-generated fake names",
+                        isThreeLine: true,
+                      ),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 15.0),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                        ),
                       ),
                       SettingsSwitch(
                         onChanged: (bool val) {

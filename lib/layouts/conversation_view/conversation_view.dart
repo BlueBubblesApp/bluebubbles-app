@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -11,6 +10,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
@@ -28,6 +28,7 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
@@ -35,6 +36,7 @@ import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -90,7 +92,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   Message? message;
   Tween<double> tween = Tween<double>(begin: 1, end: 0);
   double offset = 0;
-  CustomAnimationControl controller = CustomAnimationControl.stop;
+  Control controller = Control.stop;
   bool wasCreator = false;
   GlobalKey key = GlobalKey();
   Worker? worker;
@@ -166,7 +168,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     WidgetsBinding.instance.addObserver(this);
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      // This will clear the notifications,
+      //so we need to set the last clear time.
       ChatManager().setActiveChat(chat);
+      lastNotificationClear = DateTime.now().millisecondsSinceEpoch;
+
       if (widget.isCreator) {
         setState(() {
           getShowAlert();
@@ -176,10 +182,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   void getAdjustBackground() async {
-    var lightTheme = ThemeObject.getLightTheme(fetchData: false);
-    var darkTheme = ThemeObject.getDarkTheme(fetchData: false);
-    if ((lightTheme.gradientBg && !ThemeObject.inDarkMode(Get.context!)) ||
-        (darkTheme.gradientBg && ThemeObject.inDarkMode(Get.context!))) {
+    var lightTheme = ThemeStruct.getLightTheme();
+    var darkTheme = ThemeStruct.getDarkTheme();
+    if ((lightTheme.gradientBg && !ThemeManager().inDarkMode(Get.context!)) ||
+        (darkTheme.gradientBg && ThemeManager().inDarkMode(Get.context!))) {
       if (adjustBackground.value != true) adjustBackground.value = true;
     } else {
       if (adjustBackground.value != false) adjustBackground.value = false;
@@ -203,20 +209,20 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         if (event.type == MessageBlocEventType.insert && mounted && event.outGoing) {
           final constraints = BoxConstraints(
             maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
-            minHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
-            maxHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
+            minHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
+            maxHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
           );
           final renderParagraph = RichText(
             text: TextSpan(
               text: event.message!.text,
-              style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+              style: context.theme.extension<BubbleText>()!.bubbleText,
             ),
             maxLines: 1,
           ).createRenderObject(context);
           final renderParagraph2 = RichText(
             text: TextSpan(
               text: event.message!.subject ?? "",
-              style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+              style: context.theme.extension<BubbleText>()!.bubbleText,
             ),
             maxLines: 1,
           ).createRenderObject(context);
@@ -229,7 +235,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   begin: CustomNavigator.width(context) - 30,
                   end: min(max(size.width, size2.width) + 68,
                       CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
-              controller = CustomAnimationControl.play;
+              controller = Control.play;
               message = event.message;
             });
           } else {
@@ -285,8 +291,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         } catch (_) {}
       }
 
-      if (chat == null &&
-          (await SettingsManager().isMinBigSur)) {
+      if (chat == null && (await SettingsManager().isMinBigSur)) {
         if (searchQuery.isNotEmpty) {
           selected.add(UniqueContact(address: searchQuery, displayName: searchQuery));
           resetCursor();
@@ -371,7 +376,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     if (alreadySent) {
       setState(() {
         tween = Tween<double>(begin: 1, end: 0);
-        controller = CustomAnimationControl.stop;
+        controller = Control.stop;
         message = null;
         existingText = "";
         existingAttachments = [];
@@ -392,7 +397,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           child: widget.selectIcon ??
               Icon(
                 Icons.check,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
           backgroundColor: Theme.of(context).primaryColor,
         ),
@@ -413,9 +418,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           onPressed: currentChat!.scrollToBottom,
           child: Icon(
             Icons.arrow_downward,
-            color: Theme.of(context).textTheme.bodyText1!.color,
+            color: context.theme.colorScheme.onSecondary,
           ),
-          backgroundColor: Theme.of(context).colorScheme.secondary,
+          backgroundColor: context.theme.colorScheme.secondary,
         ),
       );
     } else if (currentChat != null &&
@@ -433,7 +438,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 child: Container(
                   height: 35,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.7),
+                    color: context.theme.colorScheme.secondary.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 10),
@@ -443,7 +448,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       child: Text(
                         "\u{2193} Scroll to bottom \u{2193}",
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style:
+                            context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSecondary),
                       ),
                     ),
                   ),
@@ -525,7 +531,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
                               "Loading existing chats...",
-                              style: Theme.of(context).textTheme.subtitle1,
+                              style: context.theme.textTheme.labelLarge,
                             ),
                           ),
                           buildProgressIndicator(context, size: 15),
@@ -555,7 +561,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                         padding: const EdgeInsets.all(8.0),
                                         child: Text(
                                           "Loading chat...",
-                                          style: Theme.of(context).textTheme.subtitle1,
+                                          style: context.theme.textTheme.labelLarge,
                                         ),
                                       ),
                                       buildProgressIndicator(context, size: 15),
@@ -617,7 +623,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       if (message != null) {
                         setState(() {
                           tween = Tween<double>(begin: 1, end: 0);
-                          controller = CustomAnimationControl.stop;
+                          controller = Control.stop;
                           message = null;
                           existingText = "";
                           existingAttachments = [];
@@ -628,11 +634,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                     },
                     child: Visibility(
                       visible: message != null,
-                      child: CustomAnimation<double>(
+                      child: CustomAnimationBuilder<double>(
                           control: controller,
                           tween: tween,
                           duration: Duration(milliseconds: 250),
-                          builder: (context, child, value) {
+                          builder: (context, value, child) {
                             return SentMessageHelper.buildMessageWithTail(
                               context,
                               message,
@@ -670,78 +676,94 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             ),
           ],
         ));
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
             ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Theme(
-        data: Theme.of(context)
-            .copyWith(primaryColor: chat?.isTextForwarding ?? false ? Colors.green : Theme.of(context).primaryColor),
-        child: Builder(
-          builder: (context) {
-            return WillPopScope(
-              onWillPop: () async {
-                if (LifeCycleManager().isBubble) {
-                  ChatManager().setActiveChat(null);
-                  SystemNavigator.pop();
+          data: context.theme.copyWith(
+            // in case some components still use legacy theming
+            primaryColor: context.theme.colorScheme.bubble(context, chat?.isIMessage ?? true),
+            colorScheme: context.theme.colorScheme.copyWith(
+              primary: context.theme.colorScheme.bubble(context, chat?.isIMessage ?? true),
+              onPrimary: context.theme.colorScheme.onBubble(context, chat?.isIMessage ?? true),
+              surface: SettingsManager().settings.monetTheming.value == Monet.full
+                  ? null
+                  : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+              onSurface: SettingsManager().settings.monetTheming.value == Monet.full
+                  ? null
+                  : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+            ),
+          ),
+          child: WillPopScope(
+            onWillPop: () async {
+              if (LifeCycleManager().isBubble) {
+                ChatManager().setActiveChat(null);
+                SystemNavigator.pop();
+              }
+              return !LifeCycleManager().isBubble;
+            },
+            child: Obx(
+              () {
+                final Rx<Color> _backgroundColor =
+                    (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+                            ? context.theme.colorScheme.background
+                            : Colors.transparent)
+                        .obs;
+
+                if (kIsDesktop) {
+                  SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+                    if (mounted) {
+                      _backgroundColor.value =
+                          effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+                    }
+                  });
                 }
-                return !LifeCycleManager().isBubble;
+
+                chat?.getTitle();
+                return Scaffold(
+                  backgroundColor: _backgroundColor.value,
+                  extendBodyBehindAppBar: !isCreator!,
+                  appBar: (!isCreator! || false.obs.value) // Necessary
+                      ? buildConversationViewHeader(context) as PreferredSizeWidget?
+                      : buildChatSelectorHeader() as PreferredSizeWidget?,
+                  body: Obx(() => adjustBackground.value
+                      ? MirrorAnimationBuilder<Movie>(
+                          tween: ConversationViewMixin.gradientTween.value,
+                          curve: Curves.fastOutSlowIn,
+                          duration: Duration(seconds: 3),
+                          builder: (context, anim, child) {
+                            return Container(
+                              decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
+                                  ? BoxDecoration(
+                                      gradient:
+                                          LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
+                                      anim.get("color1"),
+                                      anim.get("color2")
+                                    ], colors: [
+                                      context.theme.colorScheme
+                                          .bubble(context, chat?.isIMessage ?? true)
+                                          .withOpacity(0.5),
+                                      context.theme.colorScheme.background,
+                                    ]))
+                                  : null,
+                              child: child,
+                            );
+                          },
+                          child: child,
+                        )
+                      : child),
+                  floatingActionButton: AnimatedOpacity(
+                      duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
+                );
               },
-              child: Obx(
-                () {
-                  chat?.getTitle();
-                  return Scaffold(
-                    backgroundColor: Theme.of(context).backgroundColor,
-                    extendBodyBehindAppBar: !isCreator!,
-                    appBar: (!isCreator! || false.obs.value) // Necessary
-                        ? buildConversationViewHeader(context) as PreferredSizeWidget?
-                        : buildChatSelectorHeader() as PreferredSizeWidget?,
-                    body: Obx(() => adjustBackground.value
-                        ? MirrorAnimation<MultiTweenValues<String>>(
-                            tween: ConversationViewMixin.gradientTween.value,
-                            curve: Curves.fastOutSlowIn,
-                            duration: Duration(seconds: 3),
-                            builder: (context, child, anim) {
-                              return Container(
-                                decoration:
-                                    (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
-                                        ? BoxDecoration(
-                                            gradient: LinearGradient(
-                                                begin: Alignment.topRight,
-                                                end: Alignment.bottomLeft,
-                                                stops: [
-                                                anim.get("color1"),
-                                                anim.get("color2")
-                                              ],
-                                                colors: [
-                                                AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
-                                                    ? Theme.of(context).primaryColor.lightenPercent(20)
-                                                    : Theme.of(context).primaryColor.darkenPercent(20),
-                                                Theme.of(context).backgroundColor
-                                              ]))
-                                        : null,
-                                child: child,
-                              );
-                            },
-                            child: child,
-                          )
-                        : child),
-                    floatingActionButton: AnimatedOpacity(
-                        duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
-                  );
-                },
-              ),
-            );
-          },
-        ),
-      ),
+            ),
+          )),
     );
   }
 }

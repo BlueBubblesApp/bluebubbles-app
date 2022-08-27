@@ -8,9 +8,11 @@ class ReactionsWidget extends StatefulWidget {
     Key? key,
     required this.associatedMessages,
     this.bigPin = false,
+    this.size = 28,
   }) : super(key: key);
   final List<Message> associatedMessages;
   final bool bigPin;
+  final double size;
 
   @override
   State<ReactionsWidget> createState() => _ReactionsWidgetState();
@@ -22,13 +24,14 @@ class _ReactionsWidgetState extends State<ReactionsWidget> {
     Map<String, Reaction> reactionsMap = {};
     // Filter associated messages down to just the sticker
     List<Message> reactions =
-        widget.associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType)).toList();
+        widget.associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", ""))).toList();
+
 
     final bool hideReactions =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
 
     // If the reactions are empty, return nothing
-    if (reactions.isEmpty || hideReactions) {
+    if (reactions.isEmpty || hideReactions || Reaction.getUniqueReactionMessages(reactions).isEmpty) {
       return Container();
     }
 
@@ -42,6 +45,7 @@ class _ReactionsWidgetState extends State<ReactionsWidget> {
       Widget? itemWidget = item.getSmallWidget(
         context,
         bigPin: widget.bigPin,
+        size: widget.size,
       );
       if (itemWidget != null) {
         reactionWidgets.add(

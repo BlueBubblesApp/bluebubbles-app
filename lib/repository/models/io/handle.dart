@@ -14,6 +14,7 @@ class Handle {
   @Unique()
   String address;
   String? country;
+  String? defaultEmail;
   String? defaultPhone;
   String? uncanonicalizedId;
 
@@ -27,6 +28,7 @@ class Handle {
     this.address = "",
     this.country,
     String? handleColor,
+    this.defaultEmail,
     this.defaultPhone,
     this.uncanonicalizedId,
   }) {
@@ -109,6 +111,12 @@ class Handle {
     return this;
   }
 
+  Handle updateDefaultEmail(String newEmail) {
+    defaultEmail = newEmail;
+    save();
+    return this;
+  }
+
   static Handle? findOne({int? id, int? originalROWID, String? address}) {
     if (kIsWeb || id == 0) return null;
     if (id != null) {
@@ -127,6 +135,20 @@ class Handle {
       query.close();
       return result;
     }
+  }
+
+  static Handle merge(Handle handle1, Handle handle2) {
+    handle1.id ??= handle2.id;
+    handle1._color.value ??= handle2._color.value;
+    
+    if ((handle1.defaultPhone ?? '').isEmpty) {
+      handle1.defaultPhone = handle2.defaultPhone;
+    }
+
+    handle1.country ??= handle2.country;
+    handle1.uncanonicalizedId ??= handle2.uncanonicalizedId;
+
+    return handle1;
   }
 
   /// Find a list of handles by the specified condition, or return all handles

@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 import 'package:sqflite/sqflite.dart';
@@ -65,8 +68,7 @@ class Settings {
   final RxDouble avatarScale = 1.0.obs;
   final RxBool askWhereToSave = false.obs;
   final RxBool statusIndicatorsOnChats = false.obs;
-  final RxBool material3 = false.obs;
-
+  final RxInt apiTimeout = 15000.obs;
   // final RxString emojiFontFamily;
 
   // Private API features
@@ -125,6 +127,9 @@ class Settings {
   final RxBool launchAtStartup = false.obs;
   final RxBool minimizeToTray = false.obs;
   final RxBool closeToTray = true.obs;
+  final Rx<WindowEffect> windowEffect = WindowEffect.disabled.obs;
+  final RxDouble windowEffectCustomOpacityLight = 0.5.obs;
+  final RxDouble windowEffectCustomOpacityDark = 0.5.obs;
 
   // Scrolling
   final RxBool betterScrolling = false.obs;
@@ -136,6 +141,9 @@ class Settings {
 
   // Linux settings
   final RxBool useCustomTitleBar = RxBool(true);
+
+  // Windows settings
+  final RxBool useWindowsAccent = RxBool(false);
 
   Settings();
 
@@ -305,7 +313,7 @@ class Settings {
       } else if (entry.name == "filterUnknownSenders") {
         settings.filterUnknownSenders.value = entry.value;
       } else if (entry.name == "tabletMode") {
-        settings.tabletMode.value = entry.value;
+        settings.tabletMode.value = kIsDesktop || entry.value;
       } else if (entry.name == "immersiveMode") {
         settings.immersiveMode.value = entry.value;
       } else if (entry.name == "swipeToReply") {
@@ -328,14 +336,22 @@ class Settings {
         settings.askWhereToSave.value = entry.value;
       } else if (entry.name == "indicatorsOnPinnedChats") {
         settings.statusIndicatorsOnChats.value = entry.value;
-      } else if (entry.name == "material3") {
-        settings.material3.value = entry.value;
+      } else if (entry.name == "apiTimeout") {
+        settings.apiTimeout.value = entry.value;
       } else if (entry.name == "useCustomTitleBar") {
         settings.useCustomTitleBar.value = entry.value;
       } else if (entry.name == "betterScrolling") {
         settings.betterScrolling.value = entry.value;
       } else if (entry.name == "betterScrollingMultiplier") {
         settings.betterScrollingMultiplier.value = entry.value;
+      } else if (entry.name == "windowEffect") {
+        settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == entry.value) ?? WindowEffect.disabled;
+      } else if (entry.name == "windowEffectCustomOpacityLight") {
+        settings.windowEffectCustomOpacityLight.value = entry.value;
+      } else if (entry.name == "windowEffectCustomOpacityDark") {
+        settings.windowEffectCustomOpacityDark.value = entry.value;
+      } else if (entry.name == "useWindowsAccent") {
+        settings.useWindowsAccent.value = entry.value;
       }
     }
     settings.save();
@@ -452,7 +468,7 @@ class Settings {
       'actionList': actionList,
       'askWhereToSave': askWhereToSave.value,
       'indicatorsOnPinnedChats': statusIndicatorsOnChats.value,
-      'material3': material3.value,
+      'apiTimeout': apiTimeout.value,
       'swipeToReply': swipeToReply.value,
       'privateAPISend': privateAPISend.value,
       'highlightSelectedChat': highlightSelectedChat.value,
@@ -493,6 +509,10 @@ class Settings {
       'pinColumnsLandscape': pinColumnsLandscape.value,
       'maxAvatarsInGroupWidget': maxAvatarsInGroupWidget.value,
       'useCustomTitleBar': useCustomTitleBar.value,
+      'windowEffect': windowEffect.value.name,
+      'windowEffectCustomOpacityLight': windowEffectCustomOpacityLight.value,
+      'windowEffectCustomOpacityDark': windowEffectCustomOpacityDark.value,
+      'useWindowsAccent': useWindowsAccent.value,
     };
     if (includeAll) {
       map.addAll({
@@ -551,7 +571,7 @@ class Settings {
     SettingsManager().settings.notificationSound.value = map['notificationSound'] ?? "default";
     SettingsManager().settings.globalTextDetection.value = map['globalTextDetection'] ?? "";
     SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
-    SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
+    SettingsManager().settings.tabletMode.value = kIsDesktop || (map['tabletMode'] ?? true);
     SettingsManager().settings.immersiveMode.value = map['immersiveMode'] ?? false;
     SettingsManager().settings.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     SettingsManager().settings.launchAtStartup.value = map['launchAtStartup'] ?? false;
@@ -561,7 +581,7 @@ class Settings {
     SettingsManager().settings.minimizeToTray.value = map['minimizeToTray'] ?? false;
     SettingsManager().settings.askWhereToSave.value = map['askWhereToSave'] ?? false;
     SettingsManager().settings.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
-    SettingsManager().settings.material3.value = map['material3'] ?? false;
+    SettingsManager().settings.apiTimeout.value = map['apiTimeout'] ?? 15000;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.privateAPISend.value = map['privateAPISend'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -610,6 +630,10 @@ class Settings {
     SettingsManager().settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     SettingsManager().settings.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
     SettingsManager().settings.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
+    SettingsManager().settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
+    SettingsManager().settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
+    SettingsManager().settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
+    SettingsManager().settings.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     SettingsManager().settings.save();
   }
 
@@ -663,7 +687,7 @@ class Settings {
     s.monetTheming.value = map['monetTheming'] != null ? Monet.values[map['monetTheming']] : Monet.none;
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
-    s.tabletMode.value = map['tabletMode'] ?? true;
+    s.tabletMode.value = kIsDesktop || (map['tabletMode'] ?? true);
     s.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     s.immersiveMode.value = map['immersiveMode'] ?? false;
     s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
@@ -674,7 +698,7 @@ class Settings {
     s.minimizeToTray.value = map['minimizeToTray'] ?? false;
     s.askWhereToSave.value = map['askWhereToSave'] ?? false;
     s.statusIndicatorsOnChats.value = map['indicatorsOnPinnedChats'] ?? false;
-    s.material3.value = map['material3'] ?? false;
+    s.apiTimeout.value = map['apiTimeout'] ?? 15000;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.privateAPISend.value = map['privateAPISend'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -723,6 +747,10 @@ class Settings {
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
     s.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
     s.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
+    s.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
+    s.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
+    s.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
+    s.useWindowsAccent.value = map['useWindowsAccent'] ?? false;
     return s;
   }
 }

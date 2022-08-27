@@ -16,7 +16,6 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
@@ -24,9 +23,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
 
 class MaterialConversationList extends StatefulWidget {
   MaterialConversationList({Key? key, required this.parent}) : super(key: key);
@@ -229,20 +229,30 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
     hasPinnedChat();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-            ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness:
-            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Obx(() => buildForDevice()),
     );
   }
 
   Widget buildChatList() {
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+        ? context.theme.colorScheme.background
+        : Colors.transparent)
+        .obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _backgroundColor.value =
+              effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+        }
+      });
+    }
+
     bool showArchived = widget.parent.widget.showArchivedChats;
     bool showUnknown = widget.parent.widget.showUnknownSenders;
     return Obx(
@@ -255,19 +265,20 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
           }
           return true;
         },
-        child: Padding(
-          padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+        child: Container(
+          color: _backgroundColor.value,
+          padding: EdgeInsets.only(top: kIsDesktop ? 30 : 0),
           child: Scaffold(
             appBar: PreferredSize(
               preferredSize: Size.fromHeight(60),
               child: Container(
-                color: Colors.transparent,
+                color: selected.isEmpty ? Colors.transparent : _backgroundColor.value,
                 child: Stack(
                   children: [
                     Container(
-                      height: 80,
+                      height: selected.isEmpty ? 80 : 0,
                       width: context.width,
-                      color: context.theme.backgroundColor,
+                      color: _backgroundColor.value
                     ),
                     AnimatedSwitcher(
                       duration: Duration(milliseconds: 500),
@@ -275,138 +286,112 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                           ? SafeArea(
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    if (!showArchived && !showUnknown) {
-                                      CustomNavigator.pushLeft(
-                                        context,
-                                        SearchView(),
-                                      );
-                                    }
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(25),
-                                      color: context.theme.backgroundColor.lightenOrDarken(20),
-                                    ),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(25),
+                                    color: context.theme.colorScheme.properSurface,
+                                  ),
+                                  child: InkWell(
+                                    onTap: () {
+                                      if (!showArchived && !showUnknown) {
+                                        CustomNavigator.pushLeft(
+                                          context,
+                                          SearchView(),
+                                        );
+                                      }
+                                    },
+                                    borderRadius: BorderRadius.circular(25),
                                     child: Padding(
-                                      padding: const EdgeInsets.only(left: 15.0, top: 5.0, bottom: 5.0),
-                                      child: Stack(
-                                        alignment: Alignment.centerLeft,
+                                      padding: const EdgeInsets.only(left: 5.0, top: 5.0, bottom: 5.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          Row(
-                                            children: [
-                                              (!showArchived && !showUnknown)
-                                                  ? GestureDetector(
-                                                      onTap: () async {
-                                                        CustomNavigator.pushLeft(
-                                                          context,
-                                                          SearchView(),
-                                                        );
-                                                      },
-                                                      child: Icon(
-                                                        Icons.search,
-                                                        color: context.textTheme.bodyText1!.color,
+                                          Expanded(
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                (!showArchived && !showUnknown)
+                                                    ? IconButton(
+                                                        onPressed: () async {
+                                                          CustomNavigator.pushLeft(
+                                                            context,
+                                                            SearchView(),
+                                                          );
+                                                        },
+                                                        icon: Icon(
+                                                          Icons.search,
+                                                          color: context.theme.colorScheme.properOnSurface,
+                                                        ),
+                                                      )
+                                                    : IconButton(
+                                                        onPressed: () async {
+                                                          Navigator.of(context).pop();
+                                                        },
+                                                        padding: EdgeInsets.zero,
+                                                        icon: Icon(
+                                                          Icons.arrow_back,
+                                                          color: context.theme.colorScheme.properOnSurface,
+                                                        ),
                                                       ),
-                                                    )
-                                                  : GestureDetector(
-                                                      onTap: () async {
-                                                        Navigator.of(context).pop();
-                                                      },
-                                                      child: Icon(
-                                                        Icons.arrow_back,
-                                                        color: context.textTheme.bodyText1!.color,
-                                                      ),
-                                                    ),
-                                              SizedBox(width: 5),
-                                              Stack(
-                                                alignment: Alignment.centerLeft,
-                                                children: [
-                                                  widget.parent.getSyncIndicatorWidget(),
-                                                  widget.parent.getConnectionIndicatorWidget(),
-                                                ],
-                                              ),
-                                            ],
+                                                SizedBox(width: 5),
+                                                Stack(
+                                                  alignment: Alignment.centerLeft,
+                                                  children: [
+                                                    widget.parent.getSyncIndicatorWidget(),
+                                                    widget.parent.getConnectionIndicatorWidget(),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                          Center(child: widget.parent.getHeaderTextWidget(size: 20)),
-                                          Container(
-                                            alignment: Alignment.centerRight,
+                                          widget.parent.getHeaderTextWidget(size: 23),
+                                          Expanded(
                                             child: Row(
                                               mainAxisAlignment: MainAxisAlignment.end,
+                                              mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 (SettingsManager().settings.moveChatCreatorToHeader.value &&
                                                         !showArchived &&
                                                         !showUnknown)
                                                     ? GestureDetector(
-                                                        onTap: () {
-                                                          EventDispatcher().emit("update-highlight", null);
-                                                          CustomNavigator.pushAndRemoveUntil(
-                                                            context,
-                                                            ConversationView(
-                                                              isCreator: true,
-                                                            ),
-                                                            (route) => route.isFirst,
-                                                          );
-                                                        },
-                                                        child: Padding(
-                                                          padding: const EdgeInsets.only(right: 4.0),
-                                                          child: Icon(
-                                                            Icons.create,
-                                                            color: context.textTheme.bodyText1!.color,
-                                                          ),
-                                                        ),
-                                                      )
-                                                    : Container(),
-                                                (SettingsManager().settings.moveChatCreatorToHeader.value &&
-                                                        SettingsManager().settings.cameraFAB.value &&
-                                                        !showArchived &&
-                                                        !showUnknown)
-                                                    ? GestureDetector(
-                                                        onTap: () async {
+                                                        onLongPress: SettingsManager().settings.cameraFAB.value ? () async {
                                                           bool camera = await Permission.camera.isGranted;
                                                           if (!camera) {
                                                             bool granted = (await Permission.camera.request()) ==
-                                                                PermissionStatus.granted;
-                                                            if (!granted) {
-                                                              showSnackbar("Error", "Camera was denied");
-                                                              return;
-                                                            }
+                                                          PermissionStatus.granted;
+                                                          if (!granted) {
+                                                          showSnackbar("Error", "Camera was denied");
+                                                          return;
+                                                          }
                                                           }
 
-                                                          String appDocPath = SettingsManager().appDocDir.path;
-                                                          String ext = ".png";
-                                                          File file =
-                                                              File("$appDocPath/attachments/${randomString(16)}$ext");
-                                                          await file.create(recursive: true);
-
-                                                          // Take the picture after opening the camera
-                                                          await MethodChannelInterface().invokeMethod(
-                                                              "open-camera", {"path": file.path, "type": "camera"});
-
-                                                          // If we don't get data back, return outta here
-                                                          if (!file.existsSync()) return;
-                                                          if (file.statSync().size == 0) {
-                                                            file.deleteSync();
-                                                            return;
-                                                          }
-
-                                                          widget.parent.openNewChatCreator(existing: [
-                                                            PlatformFile(
-                                                              name: file.path.split("/").last,
+                                                          final XFile? file = await ImagePicker().pickImage(source: ImageSource.camera);
+                                                          if (file != null) {
+                                                            widget.parent.openNewChatCreator(existing: [PlatformFile(
                                                               path: file.path,
-                                                              bytes: file.readAsBytesSync(),
-                                                              size: file.lengthSync(),
-                                                            )
-                                                          ]);
-                                                        },
-                                                        child: Padding(
-                                                          padding: const EdgeInsets.all(8.0),
-                                                          child: Icon(
-                                                            Icons.photo_camera,
-                                                            color: context.textTheme.bodyText1!.color,
+                                                              name: file.path.split('/').last,
+                                                              size: await file.length(),
+                                                              bytes: await file.readAsBytes(),
+                                                            )]);
+                                                          }
+                                                        } : null,
+                                                        child: IconButton(
+                                                            onPressed: () {
+                                                              EventDispatcher().emit("update-highlight", null);
+                                                              CustomNavigator.pushAndRemoveUntil(
+                                                                context,
+                                                                ConversationView(
+                                                                  isCreator: true,
+                                                                ),
+                                                                (route) => route.isFirst,
+                                                              );
+                                                            },
+                                                            icon: Icon(
+                                                              Icons.create_outlined,
+                                                              color: context.theme.colorScheme.properOnSurface,
+                                                            ),
                                                           ),
-                                                        ),
-                                                      )
+                                                    )
                                                     : Container(),
                                                 widget.parent.buildSettingsButton(),
                                               ],
@@ -419,100 +404,107 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                 ),
                               ),
                             )
-                          : Padding(
-                              padding: const EdgeInsets.only(
-                                top: 20.0,
-                                right: 20.0,
-                                left: 20.0,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      if (([0, selected.length])
-                                          .contains(selected.where((element) => element.hasUnreadMessage!).length))
-                                        GestureDetector(
-                                          onTap: () {
-                                            for (Chat element in selected) {
-                                              element.toggleHasUnread(!element.hasUnreadMessage!);
-                                            }
+                          : SafeArea(
+                            child: Padding(
+                                padding: const EdgeInsets.only(
+                                  right: 20.0,
+                                  left: 20.0,
+                                  top: 10,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          onPressed: () {
                                             selected = [];
-                                            if (mounted) setState(() {});
+                                            setState(() {});
                                           },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
+                                          icon: Icon(
+                                            Icons.close,
+                                            color: context.theme.colorScheme.primary,
+                                          ),
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          selected.length.toString(),
+                                          style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.primary,),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (([0, selected.length])
+                                            .contains(selected.where((element) => element.hasUnreadMessage!).length))
+                                          IconButton(
+                                            onPressed: () {
+                                              for (Chat element in selected) {
+                                                element.toggleHasUnread(!element.hasUnreadMessage!);
+                                              }
+                                              selected = [];
+                                              if (mounted) setState(() {});
+                                            },
+                                            icon: Icon(
                                               selected[0].hasUnreadMessage!
-                                                  ? Icons.mark_chat_read
-                                                  : Icons.mark_chat_unread,
-                                              color: context.textTheme.bodyText1!.color,
+                                                  ? Icons.mark_chat_read_outlined
+                                                  : Icons.mark_chat_unread_outlined,
+                                              color: context.theme.colorScheme.primary,
                                             ),
                                           ),
-                                        ),
-                                      if (([0, selected.length])
-                                          .contains(selected.where((element) => element.muteType == "mute").length))
-                                        GestureDetector(
-                                          onTap: () {
-                                            for (Chat element in selected) {
-                                              element.toggleMute(element.muteType != "mute");
-                                            }
-                                            selected = [];
-                                            if (mounted) setState(() {});
-                                          },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
+                                        if (([0, selected.length])
+                                            .contains(selected.where((element) => element.muteType == "mute").length))
+                                          IconButton(
+                                            onPressed: () {
+                                              for (Chat element in selected) {
+                                                element.toggleMute(element.muteType != "mute");
+                                              }
+                                              selected = [];
+                                              if (mounted) setState(() {});
+                                            },
+                                            icon: Icon(
                                               selected[0].muteType == "mute"
-                                                  ? Icons.notifications_active
-                                                  : Icons.notifications_off,
-                                              color: context.textTheme.bodyText1!.color,
+                                                  ? Icons.notifications_active_outlined
+                                                  : Icons.notifications_off_outlined,
+                                              color: context.theme.colorScheme.primary,
                                             ),
                                           ),
-                                        ),
-                                      if (([0, selected.length])
-                                          .contains(selected.where((element) => element.isPinned!).length))
-                                        GestureDetector(
-                                          onTap: () {
+                                        if (([0, selected.length])
+                                            .contains(selected.where((element) => element.isPinned!).length))
+                                          IconButton(
+                                            onPressed: () {
+                                              for (Chat element in selected) {
+                                                element.togglePin(!element.isPinned!);
+                                              }
+                                              selected = [];
+                                              if (mounted) setState(() {});
+                                            },
+                                            icon: Icon(
+                                              selected[0].isPinned! ? Icons.push_pin_outlined : Icons.push_pin,
+                                              color: context.theme.colorScheme.primary,
+                                            ),
+                                          ),
+                                        IconButton(
+                                          onPressed: () {
                                             for (Chat element in selected) {
-                                              element.togglePin(!element.isPinned!);
+                                              if (element.isArchived!) {
+                                                ChatBloc().unArchiveChat(element);
+                                              } else {
+                                                ChatBloc().archiveChat(element);
+                                              }
                                             }
                                             selected = [];
                                             if (mounted) setState(() {});
                                           },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
-                                              selected[0].isPinned! ? Icons.star_outline : Icons.star,
-                                              color: context.textTheme.bodyText1!.color,
-                                            ),
+                                          icon: Icon(
+                                            showArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
+                                            color: context.theme.colorScheme.primary,
                                           ),
                                         ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          for (Chat element in selected) {
-                                            if (element.isArchived!) {
-                                              ChatBloc().unArchiveChat(element);
-                                            } else {
-                                              ChatBloc().archiveChat(element);
-                                            }
-                                          }
-                                          selected = [];
-                                          if (mounted) setState(() {});
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Icon(
-                                            showArchived ? Icons.unarchive : Icons.archive,
-                                            color: context.textTheme.bodyText1!.color,
-                                          ),
-                                        ),
-                                      ),
-                                      if (selected[0].isArchived!)
-                                        GestureDetector(
-                                          onTap: () {
+                                        IconButton(
+                                          onPressed: () {
                                             for (Chat element in selected) {
                                               ChatBloc().deleteChat(element);
                                               Chat.deleteChat(element);
@@ -520,25 +512,23 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                             selected = [];
                                             if (mounted) setState(() {});
                                           },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
-                                              Icons.delete_forever,
-                                              color: context.textTheme.bodyText1!.color,
-                                            ),
+                                          icon: Icon(
+                                            Icons.delete_outlined,
+                                            color: context.theme.colorScheme.primary,
                                           ),
                                         ),
-                                    ],
-                                  ),
-                                ],
+                                      ],
+                                    )
+                                  ],
+                                ),
                               ),
-                            ),
+                          ),
                     ),
                   ],
                 ),
               ),
             ),
-            backgroundColor: Colors.transparent,
+            backgroundColor: _backgroundColor.value,
             extendBodyBehindAppBar: true,
             body: Obx(
               () {
@@ -552,7 +542,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
                               "Loading chats...",
-                              style: Theme.of(context).textTheme.subtitle1,
+                              style: context.theme.textTheme.labelLarge,
                             ),
                           ),
                           buildProgressIndicator(context, size: 15),
@@ -561,14 +551,17 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                     ),
                   );
                 }
-                if (ChatBloc().loadedChatBatch.value &&
-                    ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).isEmpty) {
+                if (ChatBloc().loadedChatBatch.value && ChatBloc()
+                    .chats
+                    .archivedHelper(showArchived)
+                    .unknownSendersHelper(showUnknown)
+                    .bigPinHelper(false).isEmpty) {
                   return Center(
                     child: Container(
                       padding: EdgeInsets.only(top: 50.0),
                       child: Text(
-                        "You have no archived chats :(",
-                        style: context.textTheme.subtitle1,
+                        "You have no archived chats",
+                        style: context.theme.textTheme.labelLarge,
                       ),
                     ),
                   );
@@ -835,6 +828,20 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
   }
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+        ? context.theme.colorScheme.background
+        : Colors.transparent)
+        .obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _backgroundColor.value =
+          effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+        }
+      });
+    }
+
     return VerticalSplitView(
       initialRatio: 0.4,
       minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
@@ -890,12 +897,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
               CupertinoPage(
                   name: "initial",
                   child: Scaffold(
-                    backgroundColor: context.theme.backgroundColor,
+                    backgroundColor: _backgroundColor.value,
                     extendBodyBehindAppBar: true,
                     body: Center(
                       child: Container(
                           child: Text("Select a chat from the list",
-                              style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))),
+                              style: context.theme.textTheme.bodyLarge)),
                     ),
                   ))
             ],
@@ -968,7 +975,7 @@ class _FABStatefulWrapperState extends State<FABStatefulWrapper> {
           9,
         ),
         child: FloatingActionButton.extended(
-          backgroundColor: context.theme.primaryColor.oppositeLightenOrDarken(15),
+          backgroundColor: context.theme.colorScheme.primaryContainer,
           label: AnimatedSwitcher(
             duration: Duration(milliseconds: 150),
             transitionBuilder: (Widget child, Animation<double> animation) => SizeTransition(
@@ -982,17 +989,20 @@ class _FABStatefulWrapperState extends State<FABStatefulWrapper> {
                     child: Text(
                       "Start Chat",
                       style: TextStyle(
-                        color: Colors.white,
+                        color: context.theme.colorScheme.onPrimaryContainer,
                       ),
                     ),
                   )
                 : Container(width: 0, height: 0),
           ),
           extendedIconLabelSpacing: 0,
-          icon: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message_outlined,
-              color: Colors.white,
-              size: 25),
+          icon: Padding(
+            padding: const EdgeInsets.only(left: 5.0),
+            child: Icon(
+                Icons.message_outlined,
+                color: context.theme.colorScheme.onPrimaryContainer,
+                size: 25),
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(17),
           ),

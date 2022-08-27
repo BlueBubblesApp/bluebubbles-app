@@ -1,7 +1,9 @@
-import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,13 +12,23 @@ class ConversationPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context)
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
+    final materialSubtitle = context.theme
         .textTheme
-        .subtitle1
-        ?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold);
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+        .labelLarge
+        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
 
     return SettingsScaffold(
       title: "Conversations",
@@ -44,8 +56,8 @@ class ConversationPanel extends StatelessWidget {
                   Container(
                     color: tileColor,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      padding: const EdgeInsets.only(left: 15.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
                   Obx(() => SettingsSwitch(
@@ -54,15 +66,16 @@ class ConversationPanel extends StatelessWidget {
                       saveSettings();
                     },
                     initialVal: SettingsManager().settings.recipientAsPlaceholder.value,
-                    title: "Show Recipient (or Group Name) as Placeholder",
+                    title: "Show Chat Name as Placeholder",
                     subtitle: "Changes the default hint text in the message box to display the recipient name",
                     backgroundColor: tileColor,
+                    isThreeLine: true,
                   )),
                   Container(
                     color: tileColor,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      padding: const EdgeInsets.only(left: 15.0),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
                   Obx(() => SettingsSwitch(
@@ -71,16 +84,17 @@ class ConversationPanel extends StatelessWidget {
                       saveSettings();
                     },
                     initialVal: SettingsManager().settings.alwaysShowAvatars.value,
-                    title: "Show avatars in non-group chats",
+                    title: "Show Avatars in DM Chats",
                     subtitle: "Shows contact avatars in direct messages rather than just in group messages",
                     backgroundColor: tileColor,
+                    isThreeLine: true,
                   )),
                   if (!kIsWeb && !kIsDesktop)
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                   if (!kIsWeb && !kIsDesktop)
@@ -91,8 +105,9 @@ class ConversationPanel extends StatelessWidget {
                       },
                       initialVal: SettingsManager().settings.smartReply.value,
                       title: "Show Smart Replies",
-                      subtitle: "Shows smart reply suggestions above the message box",
+                      subtitle: "Shows smart reply suggestions above the message text field",
                       backgroundColor: tileColor,
+                      isThreeLine: true,
                     )),
                 ],
               ),
@@ -120,8 +135,8 @@ class ConversationPanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                   if (!kIsWeb && !kIsDesktop)
@@ -139,8 +154,8 @@ class ConversationPanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                   if (!kIsWeb && !kIsDesktop)
@@ -158,8 +173,8 @@ class ConversationPanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                   if (!kIsWeb && !kIsDesktop)
@@ -176,8 +191,8 @@ class ConversationPanel extends StatelessWidget {
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                   if (!kIsWeb && !kIsDesktop)
@@ -188,52 +203,36 @@ class ConversationPanel extends StatelessWidget {
                       },
                       initialVal: SettingsManager().settings.openKeyboardOnSTB.value,
                       title: "Open Keyboard After Tapping Scroll To Bottom",
-                      subtitle: "Opens the keyboard after tapping the 'scroll to bottom' button",
                       backgroundColor: tileColor,
                     )),
                   if (!kIsWeb && !kIsDesktop)
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
-                  Container(
-                    color: tileColor,
-                    child: Obx(() => SwitchListTile(
-                      title: Text(
-                        "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Details",
-                        style: Theme.of(context).textTheme.bodyText1,
-                      ),
-                      value: SettingsManager().settings.doubleTapForDetails.value,
-                      activeColor: Theme.of(context).primaryColor,
-                      activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                      inactiveTrackColor: tileColor == Theme.of(context).colorScheme.secondary
-                          ? Theme.of(context).backgroundColor.withOpacity(0.6)
-                          : Theme.of(context).colorScheme.secondary.withOpacity(0.6),
-                      inactiveThumbColor: tileColor == Theme.of(context).colorScheme.secondary
-                          ? Theme.of(context).backgroundColor
-                          : Theme.of(context).colorScheme.secondary,
-                      onChanged: (bool val) {
-                        SettingsManager().settings.doubleTapForDetails.value = val;
-                        if (val && SettingsManager().settings.enableQuickTapback.value) {
-                          SettingsManager().settings.enableQuickTapback.value = false;
-                        }
-                        saveSettings();
-                      },
-                      subtitle: Text(
-                          "Opens the message details popup when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
-                          style: Theme.of(context).textTheme.subtitle1),
-                      tileColor: tileColor,
-                    )),
-                  ),
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      SettingsManager().settings.doubleTapForDetails.value = val;
+                      if (val && SettingsManager().settings.enableQuickTapback.value) {
+                        SettingsManager().settings.enableQuickTapback.value = false;
+                      }
+                      saveSettings();
+                    },
+                    initialVal: SettingsManager().settings.doubleTapForDetails.value,
+                    title: "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Details",
+                    subtitle: "Opens the message details popup when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
+                    backgroundColor: tileColor,
+                    isThreeLine: true,
+                  )),
                   if (!kIsDesktop && !kIsWeb)
                     Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                   if (!kIsDesktop && !kIsWeb)
@@ -243,8 +242,7 @@ class ConversationPanel extends StatelessWidget {
                         saveSettings();
                       },
                       initialVal: SettingsManager().settings.sendWithReturn.value,
-                      title: "Send Message with Return Key",
-                      subtitle: "Use the enter key as a send button",
+                      title: "Send Message with Enter",
                       backgroundColor: tileColor,
                     )),
                 ],

@@ -10,6 +10,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:path/path.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
@@ -63,7 +64,7 @@ class _ContactWidgetState extends State<ContactWidget> {
         height: 60,
         width: 250,
         child: Material(
-          color: Theme.of(context).colorScheme.secondary,
+          color: context.theme.colorScheme.properSurface,
           child: InkWell(
             onTap: () async {
               if (kIsWeb || widget.file.path == null) {
@@ -95,11 +96,11 @@ class _ContactWidgetState extends State<ContactWidget> {
                         children: [
                           Text(
                             "Contact Card",
-                            style: Theme.of(context).textTheme.subtitle2,
+                            style: context.theme.textTheme.bodyMedium,
                           ),
                           Text(
                             (contact?.displayName ?? '').isEmpty ? 'Unknown' : contact!.displayName,
-                            style: Theme.of(context).textTheme.bodyText1,
+                            style: context.theme.textTheme.bodyMedium,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
                             softWrap: true,
@@ -124,10 +125,10 @@ class _ContactWidgetState extends State<ContactWidget> {
                                 SettingsManager().settings.skin.value == Skins.iOS
                                     ? CupertinoIcons.person_fill
                                     : Icons.person,
-                                color: Theme.of(context).textTheme.headline1?.color!)
+                                color: context.theme.colorScheme.properOnSurface)
                             : Text(
                                 initials,
-                                style: Theme.of(context).textTheme.headline1,
+                                style: context.theme.textTheme.titleLarge,
                             ),
                           alignment: AlignmentDirectional.center,
                         ),
@@ -138,7 +139,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                           SettingsManager().settings.skin.value == Skins.iOS
                               ? CupertinoIcons.forward
                               : Icons.arrow_forward,
-                          color: Colors.grey,
+                          color: context.theme.colorScheme.outline,
                           size: 15,
                         ),
                       )

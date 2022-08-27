@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
@@ -7,6 +8,7 @@ import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:chewie_audio/chewie_audio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
@@ -59,17 +61,17 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         showControls: true,
         autoInitialize: true,
         materialProgressColors: ChewieProgressColors(
-            playedColor: Theme.of(widget.context).primaryColor,
-            handleColor: Theme.of(widget.context).primaryColor,
-            bufferedColor: Theme.of(widget.context).backgroundColor,
-            backgroundColor: Theme.of(widget.context).disabledColor),
+            playedColor: Get.context!.theme.colorScheme.primary,
+            handleColor: Get.context!.theme.colorScheme.primary,
+            bufferedColor: Get.context!.theme.colorScheme.primaryContainer,
+            backgroundColor: Get.context!.theme.colorScheme.properSurface),
         cupertinoProgressColors: ChewieProgressColors(
-            playedColor: Theme.of(widget.context).primaryColor,
-            handleColor: Theme.of(widget.context).primaryColor,
-            bufferedColor: Theme.of(widget.context).backgroundColor,
-            backgroundColor: Theme.of(widget.context).disabledColor),
-        cupertinoBackgroundColor: Theme.of(widget.context).colorScheme.secondary,
-        cupertinoIconColor: Theme.of(widget.context).textTheme.bodyText1?.color,
+            playedColor: Get.context!.theme.colorScheme.primary,
+            handleColor: Get.context!.theme.colorScheme.primary,
+            bufferedColor: Get.context!.theme.colorScheme.primaryContainer,
+            backgroundColor: Get.context!.theme.colorScheme.properSurface),
+        cupertinoBackgroundColor: Get.context!.theme.colorScheme.properSurface,
+        cupertinoIconColor: Get.context!.theme.colorScheme.properOnSurface,
         cupertinoColumnAlignment: widget.isFromMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       );
 
@@ -102,14 +104,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     }
     return Container(
       alignment: Alignment.center,
-      color: Theme.of(context).colorScheme.secondary,
+      color: context.theme.colorScheme.properSurface,
       height: SettingsManager().settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop ? 75 : 48,
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Theme(
-        data: Theme.of(context).copyWith(
+        data: context.theme.copyWith(
             platform: SettingsManager().settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop ? TargetPlatform.iOS : TargetPlatform.android,
-            dialogBackgroundColor: Theme.of(context).colorScheme.secondary,
-            iconTheme: Theme.of(context).iconTheme.copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
+            dialogBackgroundColor: context.theme.colorScheme.properSurface,
+            iconTheme: context.theme.iconTheme.copyWith(color: context.theme.colorScheme.properOnSurface)),
         child: ChewieAudio(
           controller: controller,
         ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -7,10 +8,12 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
@@ -32,9 +35,10 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
+import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
-import 'package:bluebubbles/repository/models/dart_vlc.dart';
+import 'package:collection/collection.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_dart/firebase_dart.dart';
@@ -45,12 +49,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide MenuItem;
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
+import 'package:idb_shim/idb_browser.dart';
+import 'package:idb_shim/idb_shim.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:material_color_utilities/palettes/core_palette.dart';
@@ -60,6 +67,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:secure_application/secure_application.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:system_tray/system_tray.dart';
@@ -97,6 +105,7 @@ late final Box<FCMData> fcmDataBox;
 late final Box<Handle> handleBox;
 late final Box<Message> messageBox;
 late final Box<ScheduledMessage> scheduledBox;
+late final Box<ThemeStruct> themeBox;
 late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
 final RxBool fontExistsOnDisk = false.obs;
@@ -104,6 +113,8 @@ final RxBool downloadingFont = false.obs;
 final RxnDouble progress = RxnDouble();
 final RxnInt totalSize = RxnInt();
 late final CorePalette? monetPalette;
+Color? windowsAccentColor;
+late final Database db;
 
 String? _recentIntent;
 
@@ -124,8 +135,8 @@ class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-    // If there is a bad certificate callback, override it if the host is part of
-    // your server URL
+      // If there is a bad certificate callback, override it if the host is part of
+      // your server URL
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         String serverUrl = sanitizeServerAddress() ?? "";
         return serverUrl.contains(host);
@@ -153,7 +164,7 @@ Future<Null> initApp(bool isBubble) async {
 
   if (kIsDesktop) {
     await WindowManager.instance.ensureInitialized();
-    DartVLC.initialize(useFlutterNativeView: true);
+    await DartVLC.initialize();
   }
 
   HttpOverrides.global = MyHttpOverrides();
@@ -174,18 +185,17 @@ Future<Null> initApp(bool isBubble) async {
   };
   dynamic exception;
   StackTrace? stacktrace;
-  if (Platform.isWindows && !kIsWeb) {
+  if ((Platform.isLinux || Platform.isWindows) && !kIsWeb) {
     //ignore: unnecessary_cast, we need this as a workaround
     Directory appData = (await getApplicationSupportDirectory()) as Directory;
+
     // Migrate to new appdata location if this function returns the new place and we still have the old place
-    if (basename(dirname(appData.absolute.path)) == "com.bluebubbles.app") {
+    if (basename(appData.absolute.path) == "bluebubbles") {
       Directory oldAppData =
-      Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app"));
-      if (oldAppData.existsSync()) {
+      Platform.isWindows ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app")) : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
+      if (await oldAppData.exists() && !await Directory(join(appData.path, "objectbox")).exists()) {
         Logger.info("Copying appData to new directory");
-        copyDirectory(oldAppData, appData);
-        Logger.info("Deleting old appData directory");
-        Directory(dirname(oldAppData.absolute.path)).deleteSync(recursive: true);
+        await copyDirectory(oldAppData, appData);
         Logger.info("Finished migrating appData");
       }
     }
@@ -194,12 +204,12 @@ Future<Null> initApp(bool isBubble) async {
     prefs = await SharedPreferences.getInstance();
     if (!kIsWeb) {
       Directory documentsDirectory =
-      //ignore: unnecessary_cast, we need this as a workaround
-      (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+          //ignore: unnecessary_cast, we need this as a workaround
+          (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
       Directory objectBoxDirectory = Directory(join(documentsDirectory.path, 'objectbox'));
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
-      Future<void> initStore({bool saveThemes = false}) async {
+      Future<void> initStore() async {
         bool? useCustomPath = prefs.getBool("use-custom-path");
         String? customStorePath = prefs.getString("custom-path");
         if (!kIsDesktop) {
@@ -221,14 +231,14 @@ Future<Null> initApp(bool isBubble) async {
           customStorePath ??= "C:\\bluebubbles_app";
           objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
           if (kIsDesktop) {
-            objectBoxDirectory.createSync(recursive: true);
+            await objectBoxDirectory.create(recursive: true);
           }
           Logger.info("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
           store = await openStore(directory: join(customStorePath, "objectbox"));
         } else {
           try {
             if (kIsDesktop) {
-              Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
+              await Directory(join(documentsDirectory.path, 'objectbox')).create(recursive: true);
             }
             Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
             store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
@@ -240,7 +250,7 @@ Future<Null> initApp(bool isBubble) async {
               customStorePath ??= "C:\\bluebubbles_app";
               prefs.setBool("use-custom-path", true);
               objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-              objectBoxDirectory.createSync(recursive: true);
+              await objectBoxDirectory.create(recursive: true);
               Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
               store = await openStore(directory: join(customStorePath, 'objectbox'));
             }
@@ -253,18 +263,17 @@ Future<Null> initApp(bool isBubble) async {
         handleBox = store.box<Handle>();
         messageBox = store.box<Message>();
         scheduledBox = store.box<ScheduledMessage>();
+        themeBox = store.box<ThemeStruct>();
         themeEntryBox = store.box<ThemeEntry>();
         themeObjectBox = store.box<ThemeObject>();
-        if (saveThemes && themeObjectBox.isEmpty()) {
-          for (ThemeObject theme in Themes.themes) {
-            if (theme.name == "OLED Dark") theme.selectedDarkTheme = true;
-            if (theme.name == "Bright White") theme.selectedLightTheme = true;
-            theme.save(updateIfNotAbsent: false);
-          }
+        if (themeBox.isEmpty()) {
+          prefs.setString("selected-dark", "OLED Dark");
+          prefs.setString("selected-light", "Bright White");
+          themeBox.putMany(Themes.defaultThemes);
         }
       }
 
-      if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
+      if (!(await objectBoxDirectory.exists()) && await File(sqlitePath).exists()) {
         runApp(UpgradingDB());
         print("Converting sqflite to ObjectBox...");
         Stopwatch s = Stopwatch();
@@ -273,7 +282,7 @@ Future<Null> initApp(bool isBubble) async {
         s.stop();
         Logger.info("Migrated in ${s.elapsedMilliseconds} ms");
       } else {
-        if (File(sqlitePath).existsSync() && prefs.getBool('objectbox-migration') != true) {
+        if (await File(sqlitePath).exists() && prefs.getBool('objectbox-migration') != true) {
           runApp(UpgradingDB());
           print("Converting sqflite to ObjectBox...");
           Stopwatch s = Stopwatch();
@@ -282,7 +291,7 @@ Future<Null> initApp(bool isBubble) async {
           s.stop();
           print("Migrated in ${s.elapsedMilliseconds} ms");
         } else {
-          await initStore(saveThemes: true);
+          await initStore();
         }
       }
     }
@@ -338,7 +347,7 @@ Future<Null> initApp(bool isBubble) async {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
       final InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid);
+          InitializationSettings(android: initializationSettingsAndroid);
       await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
       tz.initializeTimeZones();
       // it doesn't matter if this errors
@@ -352,39 +361,79 @@ Future<Null> initApp(bool isBubble) async {
     }
     if (kIsDesktop) {
       await WindowManager.instance.setTitle('BlueBubbles');
+      await Window.initialize();
+      if (Platform.isWindows) {
+        await Window.hideWindowControls();
+      }
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() async {
-        appWindow.minSize = Size(300, 300);
+        await WindowManager.instance.setMinimumSize(Size(300, 300));
+        Display primary = await ScreenRetriever.instance.getPrimaryDisplay();
+        Size size = primary.size;
+        Rect bounds = Rect.fromLTWH(0, 0, size.width, size.height);
 
         double? width = prefs.getDouble("window-width");
         double? height = prefs.getDouble("window-height");
         if (width != null && height != null) {
-          await WindowManager.instance.setSize(Size(width, height));
+          if ((width == width.clamp(300, bounds.width)) && (height == height.clamp(300, bounds.height))) {
+            await WindowManager.instance.setSize(Size(width, height));
+          }
         }
-
-        appWindow.alignment = Alignment.center;
 
         double? posX = prefs.getDouble("window-x");
         double? posY = prefs.getDouble("window-y");
-        if (posX != null && posY != null) {
-          appWindow.position = Offset(posX, posY);
+        if (posX != null && posY != null && width != null && height != null) {
+          if ((posX == posX.clamp(bounds.left, bounds.right - width)) &&
+              (posY == posY.clamp(bounds.top, bounds.bottom - height))) {
+            await WindowManager.instance.setPosition(Offset(posX, posY));
+          }
+        } else {
+          await WindowManager.instance.setAlignment(Alignment.center);
         }
 
-        appWindow.title = 'BlueBubbles';
-        appWindow.show();
+        await WindowManager.instance.setTitle('BlueBubbles');
+        await WindowManager.instance.show();
       });
+
+      if (Platform.isWindows) {
+        windowsAccentColor = await DynamicColorPlugin.getAccentColor();
+      }
     }
     if (!kIsWeb) {
       try {
         DynamicCachedFonts.loadCachedFont(
-            "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
-            fontFamily: "Apple Color Emoji")
+                "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
+                fontFamily: "Apple Color Emoji")
             .then((_) {
           fontExistsOnDisk.value = true;
         });
       } on StateError catch (_) {
         fontExistsOnDisk.value = false;
       }
+    } else if (kIsWeb) {
+      final idbFactory = idbFactoryBrowser;
+      idbFactory.open("BlueBubbles.db", version: 1, onUpgradeNeeded: (VersionChangeEvent e) {
+        final db = (e.target as OpenDBRequest).result;
+        if (!db.objectStoreNames.contains("BBStore")) {
+          db.createObjectStore("BBStore");
+        }
+      }).then((_db) async {
+        db = _db;
+        final txn = db.transaction("BBStore", idbModeReadOnly);
+        final store = txn.objectStore("BBStore");
+        Uint8List? bytes = await store.getObject("iosFont") as Uint8List?;
+        await txn.completed;
+
+        if (!isNullOrEmpty(bytes)!) {
+          fontExistsOnDisk.value = true;
+          final fontLoader = FontLoader("Apple Color Emoji");
+          final cachedFontBytes = ByteData.view(bytes!.buffer);
+          fontLoader.addFont(
+            Future<ByteData>.value(cachedFontBytes),
+          );
+          await fontLoader.load();
+        }
+      });
     }
 
     if (kIsDesktop) {
@@ -400,14 +449,14 @@ Future<Null> initApp(bool isBubble) async {
   monetPalette = await DynamicColorPlugin.getCorePalette();
 
   if (exception == null) {
-    ThemeData light = ThemeObject
+    ThemeData light = ThemeStruct
         .getLightTheme()
-        .themeData;
-    ThemeData dark = ThemeObject
+        .data;
+    ThemeData dark = ThemeStruct
         .getDarkTheme()
-        .themeData;
+        .data;
 
-    final tuple = applyMonet(light, dark);
+    final tuple = Platform.isWindows ? applyWindowsAccent(light, dark) : applyMonet(light, dark);
     light = tuple.item1;
     dark = tuple.item2;
 
@@ -461,72 +510,67 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return AdaptiveTheme(
-
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
-      light: lightTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.primaryColor)),
-      dark: darkTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: darkTheme.primaryColor)),
+      light: lightTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.colorScheme.primary)),
+      dark: darkTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: darkTheme.colorScheme.primary)),
 
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
       initial: AdaptiveThemeMode.system,
-      builder: (theme, darkTheme) =>
-          GetMaterialApp(
+      builder: (theme, darkTheme) => GetMaterialApp(
+        /// Hide the debug banner in debug mode
+        debugShowCheckedModeBanner: false,
 
-            /// Hide the debug banner in debug mode
-            debugShowCheckedModeBanner: false,
+        title: 'BlueBubbles',
 
-            title: 'BlueBubbles',
+        /// Set the light theme from the [AdaptiveTheme]
+        theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
 
-            /// Set the light theme from the [AdaptiveTheme]
-            theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
+        /// Set the dark theme from the [AdaptiveTheme]
+        darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
 
-            /// Set the dark theme from the [AdaptiveTheme]
-            darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
+        /// [NavigatorManager] is set as the navigator key so that we can control navigation from anywhere
+        navigatorKey: NavigatorManager().navigatorKey,
 
-            /// [NavigatorManager] is set as the navigator key so that we can control navigation from anywhere
-            navigatorKey: NavigatorManager().navigatorKey,
+        /// [Home] is the starting widget for the app
+        home: Home(),
 
-            /// [Home] is the starting widget for the app
-            home: Home(),
-
-            shortcuts: {
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
-              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
-              if (kIsDesktop)
-                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): const OpenSearchIntent(),
-              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
-              if (kIsDesktop) LogicalKeySet(
-                  LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
-              if (kIsDesktop)
-                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR):
+        shortcuts: {
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
+          LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF): const OpenSearchIntent(),
+          LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
+          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyR): const ReplyRecentIntent(),
+          LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR):
                 const StartIncrementalSyncIntent(),
-              if (kIsDesktop)
-                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation):
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyG): const StartIncrementalSyncIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.exclamation):
               const HeartRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at):
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.at):
               const LikeRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign):
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.numberSign):
               const DislikeRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar):
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.dollar):
               const LaughRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent):
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.percent):
               const EmphasizeRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret):
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.caret):
               const QuestionRecentIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowDown): const OpenNextChatIntent(),
-              if (kIsDesktop) LogicalKeySet(
-                  LogicalKeyboardKey.control, LogicalKeyboardKey.tab): const OpenNextChatIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowUp): const OpenPreviousChatIntent(),
-              if (kIsDesktop)
-                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab):
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowDown): const OpenNextChatIntent(),
+          if (kIsDesktop) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.tab): const OpenNextChatIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.arrowUp): const OpenPreviousChatIntent(),
+          if (kIsDesktop)
+            LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift, LogicalKeyboardKey.tab):
                 const OpenPreviousChatIntent(),
-              LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
-              LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
-            },
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
+          LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
+        },
 
             builder: (context, child) =>
                 SecureApplication(
@@ -544,9 +588,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
                       opacity: 1.0,
                       lockedBuilder: (context, controller) =>
                           Container(
-                            color: Theme
-                                .of(context)
-                                .backgroundColor,
+                            color: context.theme.colorScheme.background,
                             child: Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -555,23 +597,17 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
                                     padding: EdgeInsets.symmetric(horizontal: 20.0),
                                     child: Text(
                                       "BlueBubbles is currently locked. Please unlock to access your messages.",
-                                      style: Theme
-                                          .of(context)
-                                          .textTheme
-                                          .bodyText1!
-                                          .apply(fontSizeFactor: 1.5),
+                                      style: context.theme.textTheme.titleLarge,
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
                                   Container(height: 20.0),
                                   ClipOval(
                                     child: Material(
-                                      color: Theme
-                                          .of(context)
-                                          .primaryColor, // button color
+                                      color: context.theme.colorScheme.primary, // button color
                                       child: InkWell(
                                         child: SizedBox(
-                                            width: 60, height: 60, child: Icon(Icons.lock_open, color: Colors.white)),
+                                            width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
                                         onTap: () async {
                                           var localAuth = LocalAuthentication();
                                           bool didAuthenticate = await localAuth.authenticate(
@@ -593,12 +629,12 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
                   }),
                 ),
 
-            defaultTransition: Transition.cupertino,
+        defaultTransition: Transition.cupertino,
 
-            getPages: [
-              GetPage(page: () => TestingMode(), name: "/testing-mode", binding: TestingModeBinding()),
-            ],
-          ),
+        getPages: [
+          GetPage(page: () => TestingMode(), name: "/testing-mode", binding: TestingModeBinding()),
+        ],
+      ),
     );
   }
 }
@@ -634,12 +670,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         );
 
         // Delete temp dir in case any notif icons weren't cleared
-        getApplicationSupportDirectory().then((d) {
+        getApplicationSupportDirectory().then((d) async {
           Directory temp = Directory(join(d.path, "temp"));
-          if (temp.existsSync()) temp.deleteSync(recursive: true);
+          if (await temp.exists()) await temp.delete(recursive: true);
         });
       }
-      initSystemTray();
+      Future.delayed(Duration.zero, () async => await initSystemTray());
     }
 
     // we want to refresh the page rather than loading a new instance of [Home]
@@ -710,7 +746,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
       if (kIsWeb && SettingsManager().settings.finishedSetup.value) {
         String? str = await SettingsManager().getServerVersion();
-        ver.Version version = ver.Version.parse(str);
+        ver.Version version = ver.Version.parse(str!);
         int sum = version.major * 100 + version.minor * 21 + version.patch;
         if (sum < 42) {
           setState(() {
@@ -735,7 +771,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             if (!available || prefs.getString("update-check") == metadata['version']) return;
             Get.defaultDialog(
               title: "Server Update Check",
-              titleStyle: Theme.of(context).textTheme.headline1,
+              titleStyle: context.theme.textTheme.headlineMedium,
               textConfirm: "OK",
               cancel: Container(height: 0, width: 0),
               content: Column(
@@ -744,7 +780,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                     SizedBox(
                       height: 15.0,
                     ),
-                    Text("Updates available:", style: context.theme.textTheme.bodyText1),
+                    Text("Updates available:", style: context.theme.textTheme.bodyMedium),
                     SizedBox(
                       height: 15.0,
                     ),
@@ -758,7 +794,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 }
                 Navigator.of(context).pop();
               },
-              backgroundColor: Theme.of(context).backgroundColor,
+              backgroundColor: context.theme.colorScheme.properSurface,
             );
           }
         });
@@ -773,17 +809,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             if (value.isEmpty) return;
 
             // If we don't have storage permission, we can't do anything
-            if (!await Permission.storage
-                .request()
-                .isGranted) return;
+            if (!await Permission.storage.request().isGranted) return;
 
             // Add the attached files to a list
             List<PlatformFile> attachments = [];
             for (SharedMediaFile element in value) {
               attachments.add(PlatformFile(
-                name: element.path
-                    .split("/")
-                    .last,
+                name: element.path.split("/").last,
                 path: element.path,
                 size: 0,
               ));
@@ -798,7 +830,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 existingAttachments: attachments,
                 isCreator: true,
               ),
-                  (route) => route.isFirst,
+              (route) => route.isFirst,
             );
           });
 
@@ -814,7 +846,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 existingText: text,
                 isCreator: true,
               ),
-                  (route) => route.isFirst,
+              (route) => route.isFirst,
             );
           });
         }
@@ -878,12 +910,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void didChangePlatformBrightness() {
     super.didChangePlatformBrightness();
-    if (AdaptiveTheme
-        .maybeOf(context)
-        ?.mode == AdaptiveThemeMode.system) {
-      if (AdaptiveTheme
-          .maybeOf(context)
-          ?.brightness == Brightness.light) {
+    if (AdaptiveTheme.maybeOf(context)?.mode == AdaptiveThemeMode.system) {
+      if (AdaptiveTheme.maybeOf(context)?.brightness == Brightness.light) {
         AdaptiveTheme.maybeOf(context)?.setLight();
       } else {
         AdaptiveTheme.maybeOf(context)?.setDark();
@@ -896,36 +924,51 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-          ? Colors.transparent
-          : Theme
-          .of(context)
-          .backgroundColor, // navigation bar color
-      systemNavigationBarIconBrightness:
-      Theme
-          .of(context)
-          .backgroundColor
-          .computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+      systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
       statusBarColor: Colors.transparent, // status bar color
-      statusBarIconBrightness:
-      context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+      statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
     ));
+
+    if (kIsDesktop && Platform.isWindows) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+        await WindowEffects.setEffect(color: context.theme.backgroundColor);
+        EventDispatcher().stream.listen((Map<String, dynamic> event) async {
+          if (!event.containsKey("type")) return;
+
+          if (event["type"] == 'theme-update') {
+            await WindowEffects.setEffect(color: context.theme.backgroundColor);
+          }
+
+          if (event["type"] == 'popup-pushed') {
+            bool popup = event["data"] as bool;
+            if (popup) {
+              SettingsManager().settings.windowEffect.value = WindowEffect.disabled;
+            } else {
+              SettingsManager().settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((effect) => effect.toString() == prefs.getString('window-effect')) ?? WindowEffect.aero;
+            }
+          }
+        });
+      });
+    }
+
+    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        if (mounted) {
+          _backgroundColor.value =
+          effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
+        }
+      });
+    }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-            ? Colors.transparent
-            : Theme
-            .of(context)
-            .backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-        Theme
-            .of(context)
-            .backgroundColor
-            .computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness:
-        context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Actions(
         actions: {
@@ -937,8 +980,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           StartIncrementalSyncIntent: StartIncrementalSyncAction(),
           GoBackIntent: GoBackAction(context),
         },
-        child: Scaffold(
-          backgroundColor: context.theme.backgroundColor,
+        child: Obx(() => Scaffold(
+          backgroundColor: _backgroundColor.value,
           body: Builder(
             builder: (BuildContext context) {
               if (SettingsManager().settings.finishedSetup.value) {
@@ -973,7 +1016,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               }
             },
           ),
-        ),
+        )),
       ),
     );
   }
@@ -993,52 +1036,54 @@ Future<void> initSystemTray() async {
   // We first init the systray menu and then add the menu entries
   await systemTray.initSystemTray(title: "BlueBubbles", iconPath: path, toolTip: "BlueBubbles");
 
-  await systemTray.setContextMenu(
+  final Menu menu = Menu();
+  await menu.buildFrom(
     [
-      MenuItem(
+      MenuItemLable(
         label: 'Open App',
-        onClicked: () {
+        onClicked: (_) async {
           LifeCycleManager().opened(null);
-          appWindow.show();
+          await WindowManager.instance.show();
         },
       ),
-      MenuItem(
+      MenuItemLable(
         label: 'Hide App',
-        onClicked: () {
+        onClicked: (_) async {
           LifeCycleManager().close();
-          appWindow.hide();
+          await WindowManager.instance.hide();
         },
       ),
-      MenuItem(
+      MenuItemLable(
         label: 'Close App',
-        onClicked: () {
-          appWindow.close();
+        onClicked: (_) async {
+          await WindowManager.instance.close();
         },
       ),
-    ],
+    ]
   );
+
+  await systemTray.setContextMenu(menu);
 
   // handle system tray event
   systemTray.registerSystemTrayEventHandler((eventName) async {
     switch (eventName) {
-      case 'leftMouseUp':
-        appWindow.show();
+      case 'click':
+        await WindowManager.instance.show();
         break;
-      case "rightMouseUp":
+      case "right-click":
         await systemTray.popUpContextMenu();
         break;
     }
   });
 }
 
-void copyDirectory(Directory source, Directory destination) =>
-    source.listSync(recursive: false).forEach((element) {
+Future<void> copyDirectory(Directory source, Directory destination) async => await source.list(recursive: false).forEach((element) async {
       if (element is Directory) {
         Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
-        newDirectory.createSync();
+        await newDirectory.create();
 
-        copyDirectory(element.absolute, newDirectory);
+        await copyDirectory(element.absolute, newDirectory);
       } else if (element is File) {
-        element.copySync(join(destination.path, basename(element.path)));
+        await element.copy(join(destination.path, basename(element.path)));
       }
     });

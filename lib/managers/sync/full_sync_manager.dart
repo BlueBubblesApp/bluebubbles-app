@@ -6,6 +6,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/sync/sync_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:tuple/tuple.dart';
 
 class FullSyncManager extends SyncManager {
@@ -63,12 +64,12 @@ class FullSyncManager extends SyncManager {
 
         // 1: Asynchronously save the chats
         // This returns the IDs, so we need to fetch them next
-        List<Chat> chats = await Chat.bulkSaveNewChats(newChats);
+        List<Chat> chats = await Chat.bulkSyncChats(newChats);
 
         // 2: For each chat, get the messages.
         // We will stream the messages by page
         for (final chat in chats) {
-          if ((chat.chatIdentifier ?? "").startsWith("urn:biz")) continue;
+          if (kIsWeb || (chat.chatIdentifier ?? "").startsWith("urn:biz")) continue;
           try {
             await for (final messageEvent in streamChatMessages(chat.guid, messageCount, batchSize: messageCount)) {
               List<Message> newMessages = messageEvent.item2;
@@ -176,7 +177,7 @@ class FullSyncManager extends SyncManager {
       // Fetch the messages and throw an error if we don't get back a good response.
       // Throwing an error should _not_ cancel the sync
       Response messagePage = await api.chatMessages(chatGuid,
-          after: 0, before: endTimestamp, offset: i * countPerBatch, limit: countPerBatch, withQuery: "attachments");
+          after: 0, before: endTimestamp, offset: i * countPerBatch, limit: countPerBatch, withQuery: "attachments,attributedBody");
       dynamic data = messagePage.data;
       if (messagePage.statusCode != 200) {
         throw MessageRequestException(

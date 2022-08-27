@@ -303,6 +303,32 @@ class Attachment {
     return "${getPath()}.jpg";
   }
 
+  static Attachment merge(Attachment attachment1, Attachment attachment2) {
+    attachment1.id ??= attachment2.id;
+    attachment1.blurhash ??= attachment2.blurhash;
+    attachment1.bytes ??= attachment2.bytes;
+    attachment1.guid ??= attachment2.guid;
+    attachment1.height ??= attachment2.height;
+    attachment1.width ??= attachment2.width;
+    attachment1.hideAttachment ??= attachment2.hideAttachment;
+    attachment1.isOutgoing ??= attachment2.isOutgoing;
+    attachment1.isSticker ??= attachment2.isSticker;
+    
+    if (!attachment1.message.hasValue) {
+      attachment1.message.target = attachment2.message.target;
+    }
+
+    attachment1.mimeType ??= attachment2.mimeType;
+    attachment1.totalBytes ??= attachment2.totalBytes;
+    attachment1.transferName ??= attachment2.transferName;
+    attachment1.transferState ??= attachment2.transferState;
+    attachment1.uti ??= attachment2.uti;
+    attachment1.webUrl ??= attachment2.webUrl;
+    attachment1.metadata = mergeTopLevelDicts(attachment1.metadata, attachment2.metadata);
+
+    return attachment1;
+  }
+
   Map<String, dynamic> toMap() => {
         "ROWID": id,
         "originalROWID": originalROWID,

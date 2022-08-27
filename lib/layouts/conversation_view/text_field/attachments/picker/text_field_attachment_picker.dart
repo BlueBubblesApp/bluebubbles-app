@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
@@ -8,17 +9,18 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:chunked_stream/chunked_stream.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:universal_io/io.dart';
 
 class TextFieldAttachmentPicker extends StatefulWidget {
   TextFieldAttachmentPicker({
@@ -90,28 +92,20 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
       }
     }
 
-    // Create a file that the camera can write to
-    String appDocPath = SettingsManager().appDocDir.path;
-    String ext = (type == 'video') ? ".mp4" : ".png";
-    File file = File("$appDocPath/attachments/${randomString(16)}$ext");
-    await file.create(recursive: true);
-
-    // Take the picture after opening the camera
-    await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": type});
-
-    // If we don't get data back, return outta here
-    if (!file.existsSync()) return;
-    if (file.statSync().size == 0) {
-      file.deleteSync();
-      return;
+    late final XFile? file;
+    if (type == 'camera') {
+      file = await ImagePicker().pickImage(source: ImageSource.camera);
+    } else {
+      file = await ImagePicker().pickVideo(source: ImageSource.camera);
     }
-
-    widget.onAddAttachment(PlatformFile(
-      path: file.path,
-      name: file.path.split('/').last,
-      size: file.lengthSync(),
-      bytes: file.readAsBytesSync(),
-    ));
+    if (file != null) {
+      widget.onAddAttachment(PlatformFile(
+        path: file.path,
+        name: file.path.split('/').last,
+        size: await file.length(),
+        bytes: await file.readAsBytes(),
+      ));
+    }
   }
 
   @override
@@ -150,17 +144,21 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        primary: Theme.of(context).colorScheme.secondary,
+                                        primary: context.theme.colorScheme.properSurface,
                                       ),
                                       onPressed: () async {
-                                        final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
-                                        if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+                                        final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
+                                        if (res == null || res.files.isEmpty) return;
 
                                         for (pf.PlatformFile file in res.files) {
+                                          if (file.size / 1024000 > 100) {
+                                            showSnackbar("Error", "This file is over 100 MB! Please compress it before sending.");
+                                            continue;
+                                          }
                                           widget.onAddAttachment(PlatformFile(
                                             path: file.path,
                                             name: file.name,
-                                            bytes: file.bytes,
+                                            bytes: await readByteStream(file.readStream!),
                                             size: file.size
                                           ));
                                         }
@@ -172,13 +170,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
                                               SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.folder_open : Icons.folder_open,
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: context.theme.colorScheme.properOnSurface,
                                             ),
                                           ),
                                           Text(
                                             "Files",
                                             style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: context.theme.colorScheme.properOnSurface,
                                               fontSize: 13,
                                             ),
                                           ),
@@ -199,46 +197,10 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        primary: Theme.of(context).colorScheme.secondary,
+                                        primary: context.theme.colorScheme.properSurface,
                                       ),
                                       onPressed: () async {
-                                        showDialog(
-                                          context: context,
-                                          builder: (buildContext) => AlertDialog(
-                                            backgroundColor: Theme.of(context).colorScheme.secondary,
-                                            title: Text(
-                                              "Send Current Location?",
-                                              style: Theme.of(context).textTheme.headline1,
-                                            ),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                style: TextButton.styleFrom(
-                                                  backgroundColor: Colors.blue[600],
-                                                ),
-                                                child: Text(
-                                                  "Send",
-                                                  style: Theme.of(context).textTheme.bodyText1,
-                                                ),
-                                                onPressed: () async {
-                                                  Share.location(ChatManager().activeChat!.chat);
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                              TextButton(
-                                                style: TextButton.styleFrom(
-                                                  backgroundColor: Colors.red,
-                                                ),
-                                                child: Text(
-                                                  "Cancel",
-                                                  style: Theme.of(context).textTheme.bodyText1,
-                                                ),
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                        );
+                                        await Share.location(ChatManager().activeChat!.chat);
                                       },
                                       child: Column(
                                         mainAxisAlignment: MainAxisAlignment.center,
@@ -247,13 +209,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
                                               SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location : Icons.location_on,
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: context.theme.colorScheme.properOnSurface,
                                             ),
                                           ),
                                           Text(
                                             "Location",
                                             style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: context.theme.colorScheme.properOnSurface,
                                               fontSize: 13,
                                             ),
                                           ),
@@ -283,7 +245,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        primary: Theme.of(context).colorScheme.secondary,
+                                        primary: context.theme.colorScheme.properSurface,
                                       ),
                                       onPressed: () async {
                                         openFullCamera();
@@ -295,13 +257,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
                                               SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: context.theme.colorScheme.properOnSurface,
                                             ),
                                           ),
                                           Text(
                                             "Camera",
                                             style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: context.theme.colorScheme.properOnSurface,
                                               fontSize: 13,
                                             ),
                                           ),
@@ -322,7 +284,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        primary: Theme.of(context).colorScheme.secondary,
+                                        primary: context.theme.colorScheme.properSurface,
                                       ),
                                       onPressed: () async {
                                         openFullCamera(type: "video");
@@ -334,13 +296,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
                                               SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam,
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: context.theme.colorScheme.properOnSurface,
                                             ),
                                           ),
                                           Text(
                                             "Video",
                                             style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              color: context.theme.colorScheme.properOnSurface,
                                               fontSize: 13,
                                             ),
                                           ),

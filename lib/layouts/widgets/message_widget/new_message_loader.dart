@@ -2,6 +2,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class NewMessageLoader extends StatelessWidget {
   @override
@@ -12,7 +13,7 @@ class NewMessageLoader extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: Text(
             "Loading more messages...",
-            style: Theme.of(context).textTheme.subtitle2,
+            style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.outline),
           ),
         ),
         Padding(

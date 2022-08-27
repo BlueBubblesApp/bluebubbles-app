@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -20,6 +21,21 @@ class PinnedTileTextBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<Color> getBubbleColors(Message message) {
+      List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
+      if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
+        if (message.handle?.color == null) {
+          bubbleColors = toColorGradient(message.handle?.address);
+        } else {
+          bubbleColors = [
+            HexColor(message.handle!.color!),
+            HexColor(message.handle!.color!).lightenAmount(0.075),
+          ];
+        }
+      }
+      return bubbleColors;
+    }
+
     bool showTail = !chat.isGroup();
     if (!(chat.hasUnreadMessage ?? false)) return Container();
     Message? lastMessage = chat.latestMessageGetter;
@@ -34,7 +50,9 @@ class PinnedTileTextBubble extends StatelessWidget {
       return Container();
     }
 
-    TextStyle style = Get.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
+    Color background = SettingsManager().settings.colorfulBubbles.value && lastMessage != null ? getBubbleColors(lastMessage).first.withOpacity(0.7) : context.theme.colorScheme.bubble(context, chat.isIMessage).withOpacity(0.6);
+
+    TextStyle style = context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onBubble(context, chat.isIMessage).withOpacity(SettingsManager().settings.colorfulBubbles.value ? 1 : 0.85));
 
     if (hide && !generate) style = style.apply(color: Colors.transparent);
 
@@ -62,16 +80,16 @@ class PinnedTileTextBubble extends StatelessWidget {
           children: <Widget>[
             if (showTail)
               Positioned(
-                top: -8.5,
-                right: leftSide ? null : 7,
-                left: leftSide ? 7 : null,
+                top: -size * 0.08,
+                right: leftSide ? null : size * 0.08,
+                left: leftSide ? size * 0.08 : null,
                 child: CustomPaint(
-                  size: Size(18, 9),
-                  painter: TailPainter(leftSide: leftSide),
+                  size: Size(size * 0.21, size * 0.105),
+                  painter: TailPainter(leftSide: leftSide, background: background),
                 ),
               ),
             ConstrainedBox(
-              constraints: BoxConstraints(minWidth: showTail ? 30 : 0),
+              constraints: BoxConstraints(minWidth: showTail ? size * 0.5 : 0),
               child: ClipRRect(
                 clipBehavior: Clip.antiAlias,
                 borderRadius: BorderRadius.circular(10.0),
@@ -87,12 +105,12 @@ class PinnedTileTextBubble extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10.0),
-                      color: context.theme.colorScheme.secondary.withOpacity(0.8),
+                      color: background,
                     ),
                     child: Text(
                       messageText,
                       overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
+                      maxLines: size ~/ 30,
                       textAlign: TextAlign.center,
                       style: style,
                     ),
@@ -111,13 +129,15 @@ class TailPainter extends CustomPainter {
   TailPainter({
     Key? key,
     required this.leftSide,
+    required this.background,
   });
 
   final bool leftSide;
+  final Color background;
 
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()..color = Get.theme.colorScheme.secondary.withOpacity(0.8);
+    Paint paint = Paint()..color = background;
     Path path = Path();
 
     if (leftSide) {

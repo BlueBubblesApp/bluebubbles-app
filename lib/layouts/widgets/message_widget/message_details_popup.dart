@@ -8,8 +8,8 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/share.dart';
@@ -19,7 +19,6 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_alert_dialog.dart';
-import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -40,7 +39,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sprung/sprung.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -88,7 +86,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     super.initState();
     currentChat = widget.currentChat;
 
-    topMinimum = (widget.message.hasReactions ? CupertinoNavigationBar().preferredSize.height + 170 : 110);
+    topMinimum = (widget.message.hasReactions ? 250 : 110);
     messageTopOffset = max(topMinimum, min(widget.childOffsetY, Get.height - widget.childSize!.height - 200));
 
     dmChat = ChatBloc().chats.firstWhereOrNull(
@@ -172,18 +170,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     bool hideReactions =
         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value) || !isSierra;
 
-    double offsetX = widget.message.isFromMe! ? CustomNavigator.width(context) - widget.childSize!.width - 10 : 10;
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
-            ? Colors.transparent
-            : Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness:
-            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: TitleBarWrapper(
         child: Scaffold(
@@ -199,7 +191,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                     child: Container(
-                      color: oledDarkTheme.colorScheme.secondary.withOpacity(0.3),
+                      color: oledDarkTheme.colorScheme.properSurface.withOpacity(0.3),
                     ),
                   ),
                 ),
@@ -207,7 +199,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   duration: Duration(milliseconds: 250),
                   curve: Curves.easeOut,
                   top: messageTopOffset,
-                  left: offsetX,
+                  left: widget.message.isFromMe! ? null : 10,
+                  right: widget.message.isFromMe! ? 10 : null,
                   child: Container(
                     width: widget.childSize!.width,
                     height: widget.childSize!.height + 5,
@@ -217,6 +210,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Positioned(
                   top: 40,
                   left: 10,
+                  right: 10,
                   child: AnimatedSize(
                     duration: Duration(milliseconds: 500),
                     curve: Sprung.underDamped,
@@ -229,8 +223,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                               child: Container(
                                 alignment: Alignment.center,
                                 height: 120,
-                                width: CustomNavigator.width(context) - 20,
-                                color: Theme.of(context).colorScheme.secondary,
+                                color: context.theme.colorScheme.properSurface,
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 0),
                                   child: ListView.builder(
@@ -272,24 +265,18 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     double narrowWidth = widget.message.isFromMe! || !SettingsManager().settings.alwaysShowAvatars.value ? 330 : 360;
     bool narrowScreen = CustomNavigator.width(context) < narrowWidth;
     double reactionIconSize = 50;
-    double maxMenuWidth = (ReactionTypes.toList().length / (narrowScreen ? 2 : 1) * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize * 2).toDouble();
     if (topMinimum > context.height - 120 - menuHeight) {
       topMinimum = context.height - 120 - menuHeight;
     }
-    bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
-    double leftOffset =
-        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 25 : 20 + (shiftRight ? 35 : 0))
-            .toDouble();
-    Color iconColor = Colors.white;
+    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value);
 
-    if (Theme.of(context).colorScheme.secondary.computeLuminance() >= 0.179) {
-      iconColor = Colors.black.withAlpha(95);
-    }
+    double offset = 20 + (shiftRight ? 35 : 0);
 
     return Positioned(
       bottom: context.height - messageTopOffset + 10,
-      left: leftOffset,
+      left: widget.message.isFromMe! ? null : offset,
+      right: widget.message.isFromMe! ? offset : null,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(40.0),
         child: BackdropFilter(
@@ -297,7 +284,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           child: Container(
             padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.secondary.withAlpha(150),
+              color: context.theme.colorScheme.properSurface.withAlpha(150),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -305,49 +292,58 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.start,
-                  children: ReactionTypes.toList()
-                      .slice(0, narrowScreen ? 3 : null)
-                      .map(
-                        (e) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
-                          child: GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              sendReaction(selfReaction == e ? "-$e" : e);
-                            },
-                            onTapDown: (TapDownDetails details) {
-                              if (currentlySelectedReaction == e) {
-                                currentlySelectedReaction = null;
-                              } else {
-                                currentlySelectedReaction = e;
-                              }
-                              if (mounted) setState(() {});
-                            },
-                            onTapUp: (details) {},
-                            onTapCancel: () {
-                              currentlySelectedReaction = selfReaction;
-                              if (mounted) setState(() {});
-                            },
-                            child: Container(
-                              width: reactionIconSize - 15,
-                              height: reactionIconSize - 15,
-                              decoration: BoxDecoration(
-                                color: currentlySelectedReaction == e
-                                    ? Theme.of(context).primaryColor
-                                    : Theme.of(context).colorScheme.secondary.withAlpha(150),
-                                borderRadius: BorderRadius.circular(
-                                  20,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(6),
-                                child: Reaction.getReactionIcon(e, iconColor),
+                  children: ReactionTypes.toList().slice(0, narrowScreen ? 3 : null).map((e) {
+                    final RxBool hovered = false.obs;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        onEnter: (details) => hovered.value = true,
+                        onExit: (details) => hovered.value = false,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            sendReaction(selfReaction == e ? "-$e" : e);
+                          },
+                          onTapDown: (TapDownDetails details) {
+                            if (currentlySelectedReaction == e) {
+                              currentlySelectedReaction = null;
+                            } else {
+                              currentlySelectedReaction = e;
+                            }
+                            if (mounted) setState(() {});
+                          },
+                          onTapUp: (details) {},
+                          onTapCancel: () {
+                            currentlySelectedReaction = selfReaction;
+                            if (mounted) setState(() {});
+                          },
+                          child: Obx(() => AnimatedContainer(
+                            duration: Duration(milliseconds: 150),
+                            width: reactionIconSize - 15,
+                            height: reactionIconSize - 15,
+                            decoration: BoxDecoration(
+                              color: hovered.value ? context.theme.colorScheme.primary.withOpacity(0.3) : currentlySelectedReaction == e
+                                  ? context.theme.colorScheme.primary
+                                  : context.theme.colorScheme.properSurface.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(
+                                20,
                               ),
                             ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(6),
+                              child: Reaction.getReactionIcon(
+                                  e,
+                                  currentlySelectedReaction == e
+                                      ? context.theme.colorScheme.onPrimary
+                                      : context.theme.colorScheme.outline,
+                                  usePink: currentlySelectedReaction == e),
+                            ),),
                           ),
                         ),
-                      )
-                      .toList(),
+                      ),
+                    );
+                  }).toList(),
                 ),
                 if (narrowScreen)
                   Row(
@@ -363,13 +359,16 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                               height: reactionIconSize - 15,
                               decoration: BoxDecoration(
                                 color: currentlySelectedReaction == e
-                                    ? Theme.of(context).primaryColor
-                                    : Theme.of(context).colorScheme.secondary.withAlpha(150),
+                                    ? context.theme.colorScheme.primary
+                                    : Colors.transparent,
                                 borderRadius: BorderRadius.circular(
                                   20,
                                 ),
                               ),
-                              child: GestureDetector(
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                onHover: (event) {},
+                                child: GestureDetector(
                                 onTap: () {
                                   HapticFeedback.lightImpact();
                                   sendReaction(selfReaction == e ? "-$e" : e);
@@ -389,8 +388,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(6),
-                                  child: Reaction.getReactionIcon(e, iconColor),
+                                  child: Reaction.getReactionIcon(e, currentlySelectedReaction == e
+                                      ? context.theme.colorScheme.onPrimary
+                                      : context.theme.colorScheme.outline, usePink: false),
                                 ),
+                              ),
                               ),
                             ),
                           ),
@@ -413,7 +415,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   bool get isSent => !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
 
   Widget buildDetailsMenu() {
-    double maxMenuWidth = min(max(CustomNavigator.width(context) * 3 / 5, 200), CustomNavigator.width(context) * 4 / 5);
+    bool showAltLayout =
+        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !LifeCycleManager().isBubble;
+    double maxMenuWidth = min(max(CustomNavigator.width(context) * 3 / 5, 200), CustomNavigator.width(context) * 4 / 5) * (showAltLayout ? 0.5 : 1);
     double maxHeight = context.height - messageTopOffset - widget.childSize!.height;
 
     List<Widget> allActions = [
@@ -429,14 +433,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               EventDispatcher().emit("focus-keyboard", widget.message);
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Reply",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.reply : Icons.reply,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -462,16 +467,17 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               }
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Download to Device",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.cloud_download
                     : Icons.file_download,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -492,13 +498,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open In Browser",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.macwindow
                     : Icons.open_in_browser,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -516,13 +522,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open In New Tab",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.macwindow
                     : Icons.open_in_browser,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -537,13 +543,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
-              title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
+              title: Text("Copy", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.doc_on_clipboard
                     : Icons.content_copy,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -572,62 +579,57 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   (element?.uti?.contains("coreaudio") ?? false) ||
                   (element?.uti?.contains("tiff") ?? false));
               final length = toDownload.length;
-              Get.defaultDialog(
-                backgroundColor: context.theme.colorScheme.secondary,
-                radius: 15.0,
-                barrierDismissible: false,
-                contentPadding: EdgeInsets.symmetric(horizontal: 20),
-                titlePadding: EdgeInsets.only(top: 15),
-                title: "Downloading attachment${length > 1 ? "s" : ""}...",
-                titleStyle: Theme.of(context).textTheme.headline1,
-                confirm: Obx(
-                  () => downloadingAttachments.value
-                      ? Container(height: 0, width: 0)
-                      : Container(
-                          margin: EdgeInsets.only(bottom: 10),
-                          child: TextButton(
-                            child: Text("CLOSE"),
-                            onPressed: () async {
-                              if (Get.isSnackbarOpen ?? false) {
-                                Get.close(1);
-                              }
-                              Get.back();
-                              popDetails();
-                            },
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  title: Text("Downloading attachment${length > 1 ? "s" : ""}...", style: context.theme.textTheme.titleLarge),
+                  content: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Obx(
+                              () => Text(
+                              '${progress.value != null && attachmentObs.value != null ? getSizeString(progress.value! * attachmentObs.value!.totalBytes! / 1000) : ""} / ${getSizeString(attachmentObs.value!.totalBytes!.toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)',
+                              style: context.theme.textTheme.bodyLarge),
+                        ),
+                        SizedBox(height: 10.0),
+                        Obx(
+                              () => ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: LinearProgressIndicator(
+                              backgroundColor: context.theme.colorScheme.outline,
+                              valueColor: AlwaysStoppedAnimation<Color>(Get.context!.theme.colorScheme.primary),
+                              value: progress.value,
+                              minHeight: 5,
+                            ),
                           ),
                         ),
-                ),
-                cancel: Container(height: 0, width: 0),
-                content: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 300),
-                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-                    Obx(
-                      () => Text(
-                          '${progress.value != null && attachmentObs.value != null ? getSizeString(progress.value! * attachmentObs.value!.totalBytes! / 1000) : ""} / ${getSizeString(attachmentObs.value!.totalBytes!.toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)'),
-                    ),
-                    SizedBox(height: 10.0),
-                    Obx(
-                      () => ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: LinearProgressIndicator(
-                          backgroundColor: Colors.white,
-                          value: progress.value,
-                          minHeight: 5,
-                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                        SizedBox(
+                          height: 15.0,
                         ),
-                      ),
+                        Obx(() => Text(
+                          progress.value == 1 ? "Download Complete!" : "You can close this dialog. The attachments will continue to download in the background.",
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                          style: context.theme.textTheme.bodyLarge,
+                        )),
+                      ]),
+                  actions: [
+                    Obx(() => downloadingAttachments.value
+                        ? Container(height: 0, width: 0)
+                        : TextButton(
+                      child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                      onPressed: () async {
+                        if (Get.isSnackbarOpen ?? false) {
+                          Get.close(1);
+                        }
+                        Navigator.of(context).pop();
+                        popDetails();
+                      },
                     ),
-                    SizedBox(
-                      height: 15.0,
                     ),
-                    Obx(
-                      () => Text(
-                        progress.value == 1 ? "Download Complete!" : "Downloading attachment ",
-                        maxLines: 2,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ]),
+                  ],
                 ),
               );
               try {
@@ -646,6 +648,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   bool lastAttachment = element.guid == toDownload.last?.guid;
                   await AttachmentHelper.saveToGallery(file, showAlert: lastAttachment);
                 }
+                progress.value = 1;
                 downloadingAttachments.value = false;
               } catch (ex, trace) {
                 Logger.error(trace.toString());
@@ -653,83 +656,17 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               }
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Download Original to Device",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.cloud_download
                     : Icons.file_download,
-                color: Theme.of(context).textTheme.bodyText1!.color,
-              ),
-            ),
-          ),
-        ),
-      if (!kIsDesktop && !kIsWeb && !isEmptyString(widget.message.fullText))
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () async {
-              if (isEmptyString(widget.message.fullText)) return;
-              await showDialog(
-                  context: context,
-                  builder: (_) {
-                    Widget title = Text(
-                      "Copy",
-                      style: Theme.of(context).textTheme.headline1,
-                    );
-                    Widget content = Container(
-                      constraints: BoxConstraints(
-                        maxHeight: context.height * 2 / 3,
-                      ),
-                      child: SingleChildScrollView(
-                        physics: ThemeSwitcher.getScrollPhysics(),
-                        child: SelectableText(
-                          widget.message.fullText,
-                          style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                      ),
-                    );
-                    List<Widget> actions = <Widget>[
-                      TextButton(
-                        child: Text(
-                          "Done",
-                          // style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).pop('dialog');
-                        },
-                      ),
-                    ];
-                    if (SettingsManager().settings.skin.value == Skins.iOS) {
-                      return CupertinoAlertDialog(
-                        title: title,
-                        backgroundColor: Theme.of(context).colorScheme.secondary,
-                        content: content,
-                      );
-                    }
-                    return AlertDialog(
-                      title: title,
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                      content: content,
-                      actions: actions,
-                    );
-                  });
-              popDetails();
-            },
-            child: ListTile(
-              dense: !kIsDesktop && !kIsWeb,
-              title: Text(
-                "Copy Selection",
-                style: Theme.of(context).textTheme.bodyText1,
-              ),
-              trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.doc_on_clipboard
-                    : Icons.content_copy,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -755,16 +692,17 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Open Direct Message",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.arrow_up_right_square
                     : Icons.open_in_new,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -780,16 +718,17 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               showReplyThread(context, widget.message, widget.messageBloc);
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "View Thread",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.bubble_left_bubble_right
                     : Icons.forum,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -828,16 +767,17 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Start Conversation",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.chat_bubble
                     : Icons.message,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -875,16 +815,17 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               );
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Forward",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.arrow_right
                     : Icons.forward,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -902,14 +843,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               popDetails();
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Re-download from Server",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.refresh : Icons.refresh,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -935,14 +877,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               popDetails();
             },
             child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Share",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.share : Icons.share,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -959,41 +902,41 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   return AlertDialog(
                     title: Text(
                       "Select Reminder Time",
-                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                      style: context.theme.textTheme.titleLarge,
                     ),
                     content: Column(mainAxisSize: MainAxisSize.min, children: [
                       Wrap(
                         alignment: WrapAlignment.center,
                         children: [
                           TextButton(
-                            child: Text("Cancel"),
+                            child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
-                            child: Text("1 Hour"),
+                            child: Text("1 Hour", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                             onPressed: () {
                               finalDate = DateTime.now().toLocal().add(Duration(hours: 1));
                               Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
-                            child: Text("1 Day"),
+                            child: Text("1 Day", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                             onPressed: () {
                               finalDate = DateTime.now().toLocal().add(Duration(days: 1));
                               Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
-                            child: Text("1 Week"),
+                            child: Text("1 Week", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                             onPressed: () {
                               finalDate = DateTime.now().toLocal().add(Duration(days: 7));
                               Navigator.of(context).pop();
                             },
                           ),
                           TextButton(
-                            child: Text("Custom"),
+                            child: Text("Custom", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                             onPressed: () async {
                               final messageDate = await showDatePicker(
                                   context: context,
@@ -1014,7 +957,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                         ],
                       )
                     ]),
-                    backgroundColor: Theme.of(context).backgroundColor,
+                    backgroundColor: context.theme.colorScheme.properSurface,
                   );
                 },
               );
@@ -1032,11 +975,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
                 "Remind Later",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.alarm : Icons.alarm,
-                color: Theme.of(context).textTheme.bodyText1!.color,
+                color: context.theme.colorScheme.properOnSurface,
               ),
             ),
           ),
@@ -1050,14 +993,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             popDetails();
           },
           child: ListTile(
+            mouseCursor: SystemMouseCursors.click,
             dense: !kIsDesktop && !kIsWeb,
             title: Text(
               "Delete",
-              style: Theme.of(context).textTheme.bodyText1,
+              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
             ),
             trailing: Icon(
               SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
-              color: Theme.of(context).textTheme.bodyText1!.color,
+              color: context.theme.colorScheme.properOnSurface,
             ),
           ),
         ),
@@ -1105,7 +1049,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
-          color: Theme.of(context).colorScheme.secondary.withAlpha(150),
+          color: context.theme.colorScheme.properSurface.withAlpha(150),
           width: maxMenuWidth,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1125,25 +1069,24 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                       Get.dialog(
                           SettingsManager().settings.skin.value == Skins.iOS
                               ? CupertinoAlertDialog(
-                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  backgroundColor: context.theme.colorScheme.properSurface,
                                   content: content,
                                 )
                               : AlertDialog(
-                                  contentPadding: EdgeInsets.all(5),
-                                  shape: cupertino.RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  backgroundColor: context.theme.colorScheme.properSurface,
                                   content: content,
                                 ),
                           name: 'Popup Menu');
                     },
                     child: ListTile(
+                      mouseCursor: SystemMouseCursors.click,
                       dense: !kIsDesktop && !kIsWeb,
-                      title: Text("More...", style: Theme.of(context).textTheme.bodyText1),
+                      title: Text("More...", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
                       trailing: Icon(
                         SettingsManager().settings.skin.value == Skins.iOS
                             ? cupertino.CupertinoIcons.ellipsis
                             : Icons.more_vert,
-                        color: Theme.of(context).textTheme.bodyText1!.color,
+                        color: context.theme.colorScheme.properOnSurface,
                       ),
                     ),
                   ),
@@ -1160,14 +1103,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     }
 
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
-    bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
-    double leftOffset =
-        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 15 : 20 + (shiftRight ? 35 : 0))
-            .toDouble();
+    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value);
+
+    double offset = 20 + (shiftRight ? 35 : 0);
     return Positioned(
       top: topOffset > context.height - 100 ? null : topOffset + (widget.message.isFromMe! ? 5 : 10),
       bottom: topOffset > context.height - 100 ? 45 : null,
-      left: leftOffset,
+      left: widget.message.isFromMe! ? null : offset,
+      right: widget.message.isFromMe! ? offset : null,
       child: menu,
     );
   }

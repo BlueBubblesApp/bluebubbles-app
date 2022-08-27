@@ -39,8 +39,8 @@ class BaseLogger extends GetxService {
       String startupPath = (await getDownloadsDirectory())!.path;
       startupPath = join(startupPath, "BlueBubbles_Logs_Startup.txt");
       startupFile = File(startupPath);
-      if (startupFile.existsSync()) {
-        startupFile.writeAsStringSync("", mode: FileMode.writeOnly);
+      if (await startupFile.exists()) {
+        await startupFile.writeAsString("", mode: FileMode.writeOnly);
         startup.listen((val) async {
           if (val) {
             await writeToStartupFile('----------------${DateTime.now().toLocal()}----------------');
@@ -51,7 +51,7 @@ class BaseLogger extends GetxService {
       String logPath = (await getApplicationSupportDirectory()).path;
       logPath = join(logPath, "BlueBubbles_Logs.txt");
       logFile = File(logPath);
-      logFile.writeAsStringSync("", mode: FileMode.writeOnly);
+      await logFile.writeAsString("", mode: FileMode.writeOnly);
       saveLogs.listen((val) async {
         if (val) {
           await writeLiveLogs('---------------- START LOG ${DateTime.now().toLocal()}----------------');
@@ -77,8 +77,8 @@ class BaseLogger extends GetxService {
   }
 
   Future<void> writeToStartupFile(String log) async {
-    if (kIsDesktop && startupFile.existsSync()) {
-      startupFile.writeAsStringSync('$log\n', mode: FileMode.writeOnlyAppend);
+    if (kIsDesktop && await startupFile.exists()) {
+      await startupFile.writeAsString('$log\n', mode: FileMode.writeOnlyAppend);
     }
   }
 
@@ -118,12 +118,12 @@ class BaseLogger extends GetxService {
           ? null
           : TextButton(
               style: TextButton.styleFrom(
-                backgroundColor: Get.theme.colorScheme.secondary,
+                backgroundColor: Get.theme.colorScheme.surfaceVariant,
               ),
               onPressed: () {
                 Share.file("BlueBubbles Logs", filePath);
               },
-              child: Text("SHARE", style: TextStyle(color: Theme.of(Get.context!).primaryColor)),
+              child: Text("SHARE", style: TextStyle(color: Get.theme.colorScheme.onSurfaceVariant)),
             ),
     );
   }

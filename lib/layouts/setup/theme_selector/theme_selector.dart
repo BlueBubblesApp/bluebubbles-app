@@ -1,16 +1,13 @@
 import 'dart:math';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -174,10 +171,10 @@ class ThemeSelector extends StatelessWidget {
       builder: (_) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
-            systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
-            systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+            systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
             statusBarColor: Colors.transparent, // status bar color
-            statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
           ),
           child: Scaffold(
             backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -189,7 +186,7 @@ class ThemeSelector extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 20.0),
                     child: Text(
                       "Select your app theme and skin",
-                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                      style: Theme.of(context).textTheme.bodyMedium!.apply(fontSizeFactor: 1.5),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -761,7 +758,7 @@ class TriangleBorder extends ShapeBorder {
 
 Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData theme) {
   Color backgroundColor = theme.backgroundColor;
-  Color? fontColor = theme.textTheme.headline1!.color;
+  Color? fontColor = theme.textTheme.headlineMedium!.color;
   String? title = chat.title ?? chat.displayName;
   Skins skin = Skin.of(context)!.skin;
   if (skin == Skins.Material ||
@@ -772,7 +769,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
       elevation: 0.0,
       title: Text(
         title!,
-        style: theme.textTheme.headline1!.apply(color: fontColor),
+        style: theme.textTheme.headlineMedium!.apply(color: fontColor),
       ),
       bottom: PreferredSize(
         child: Container(
@@ -816,15 +813,13 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
     );
   }
 
-  TextStyle? titleStyle = theme.textTheme.bodyText1;
-
   // Calculate separation factor
   // Anything below -60 won't work due to the alignment
   double distance = avatars.length * -4.0;
   if (distance <= -30.0 && distance > -60) distance = -30.0;
   if (distance <= -60.0) distance = -35.0;
 
-  return CupertinoNavigationBar(
+  return SizedBox.shrink();/*CupertinoNavigationBar(
       backgroundColor: theme.colorScheme.secondary.withAlpha(125),
       border: Border(
         bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
@@ -888,7 +883,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
                               text: TextSpan(
-                                style: theme.textTheme.headline2,
+                                style: theme.textTheme.titleMedium,
                                 children: [
                                   TextSpan(
                                     text: title,
@@ -900,11 +895,11 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
                           ),
                           RichText(
                             text: TextSpan(
-                              style: theme.textTheme.headline2,
+                              style: theme.textTheme.titleMedium,
                               children: [
                                 TextSpan(
                                   text: " >",
-                                  style: theme.textTheme.subtitle1,
+                                  style: theme.textTheme.labelLarge,
                                 ),
                               ],
                             ),
@@ -917,5 +912,5 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
           ),
         ],
       ),
-      trailing: Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0))));
+      trailing: Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0))));*/
 }

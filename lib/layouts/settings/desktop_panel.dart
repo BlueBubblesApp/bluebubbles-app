@@ -1,15 +1,16 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -17,20 +18,36 @@ import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:reorderables/reorderables.dart';
+import 'package:window_manager/window_manager.dart';
 
 class DesktopPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final RxnBool useCustomPath = RxnBool(prefs.getBool("use-custom-path"));
     final RxnString customPath = RxnString(prefs.getString("custom-path"));
-    final iosSubtitle =
-        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context)
-        .textTheme
-        .subtitle1
-        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+    final iosSubtitle = context.theme.textTheme.labelLarge?.copyWith(
+        color: ThemeManager().inDarkMode(context)
+            ? context.theme.colorScheme.onBackground
+            : context.theme.colorScheme.properOnSurface,
+        fontWeight: FontWeight.w300);
+    final materialSubtitle = context.theme.textTheme.labelLarge
+        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.background
+        : context.theme.colorScheme.properSurface;
+
+    Color tileColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.properSurface
+        : context.theme.colorScheme.background;
+
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
 
     RxList showButtons = RxList.generate(ReactionTypes.toList().length + 1, (index) => false);
 
@@ -141,7 +158,6 @@ class DesktopPanel extends StatelessWidget {
                         min: 4.0,
                         divisions: 20,
                         startingVal: SettingsManager().settings.betterScrollingMultiplier.value,
-                        text: SettingsManager().settings.betterScrollingMultiplier.value.toString(),
                         update: (double val) {
                           SettingsManager().settings.betterScrollingMultiplier.value = val;
                         },
@@ -167,7 +183,8 @@ class DesktopPanel extends StatelessWidget {
                     SettingsTile(
                       title: "Actions",
                       subtitle:
-                          "Click actions to toggle them. Click the arrows to move them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
+                          "Click actions to toggle them. Drag actions to move them. You can select up to 5 actions. Tapback actions require Private API to be enabled.",
+                      isThreeLine: true,
                     ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,9 +197,36 @@ class DesktopPanel extends StatelessWidget {
                                 Padding(
                                   padding: EdgeInsets.all(15),
                                   child: Center(
-                                    child: Wrap(
+                                    child: ReorderableWrap(
+                                      needsLongPressDraggable: false,
                                       spacing: 10,
                                       alignment: WrapAlignment.center,
+                                      buildDraggableFeedback: (context, constraints, child) => AnimatedScale(
+                                          duration: Duration(milliseconds: 250), scale: 1.1, child: child),
+                                      onReorder: (int oldIndex, int newIndex) {
+                                        List<String> selected = SettingsManager()
+                                            .settings
+                                            .selectedActionIndices
+                                            .map((index) => SettingsManager().settings.actionList[index])
+                                            .toList();
+                                        String? temp = SettingsManager().settings.actionList[oldIndex];
+                                        // If dragging to the right
+                                        for (int i = oldIndex; i <= newIndex - 1; i++) {
+                                          SettingsManager().settings.actionList[i] =
+                                              SettingsManager().settings.actionList[i + 1];
+                                        }
+                                        // If dragging to the left
+                                        for (int i = oldIndex; i >= newIndex + 1; i--) {
+                                          SettingsManager().settings.actionList[i] =
+                                              SettingsManager().settings.actionList[i - 1];
+                                        }
+                                        SettingsManager().settings.actionList[newIndex] = temp;
+
+                                        List<int> selectedIndices = selected
+                                            .map((s) => SettingsManager().settings.actionList.indexOf(s))
+                                            .toList();
+                                        SettingsManager().settings.selectedActionIndices.value = selectedIndices;
+                                      },
                                       children: List.generate(
                                         ReactionTypes.toList().length + 1,
                                         (int index) => MouseRegion(
@@ -203,11 +247,8 @@ class DesktopPanel extends StatelessWidget {
                                                   (SettingsManager().settings.selectedActionIndices.length == 5));
 
                                               Color color = selected
-                                                  ? context.theme.primaryColor
-                                                  : context.theme.colorScheme.secondary;
-
-                                              RxBool hoverRight = false.obs;
-                                              RxBool hoverLeft = false.obs;
+                                                  ? context.theme.colorScheme.primary
+                                                  : context.theme.colorScheme.properSurface.lightenOrDarken(10);
 
                                               return MouseRegion(
                                                 cursor:
@@ -223,214 +264,42 @@ class DesktopPanel extends StatelessWidget {
                                                       SettingsManager().settings.selectedActionIndices.add(index);
                                                     }
                                                   },
-                                                  child: Stack(
-                                                    clipBehavior: Clip.none,
-                                                    children: [
-                                                      AnimatedContainer(
-                                                        margin: EdgeInsets.symmetric(vertical: 5),
-                                                        height: 56,
-                                                        width: 90,
-                                                        padding: EdgeInsets.symmetric(horizontal: 9),
-                                                        decoration: BoxDecoration(
-                                                          borderRadius: BorderRadius.circular(8),
-                                                          border: Border.all(
-                                                              color: color.withOpacity(selected ? 1 : 0.5),
-                                                              width: selected ? 1.5 : 1),
-                                                          color: color.withOpacity(disabled
-                                                              ? 0.2
-                                                              : selected
-                                                                  ? 0.8
-                                                                  : 0.7),
-                                                        ),
-                                                        foregroundDecoration: BoxDecoration(
-                                                          color: color.withOpacity(hardDisabled || disabled ? 0.7 : 0),
-                                                          borderRadius: BorderRadius.circular(8),
-                                                        ),
-                                                        curve: Curves.linear,
-                                                        duration: Duration(milliseconds: 150),
-                                                        child: Center(
-                                                          child: Material(
-                                                            color: Colors.transparent,
-                                                            child: Text(
-                                                              ReactionTypes.reactionToEmoji[value] ?? "Mark Read",
-                                                              style: TextStyle(
-                                                                  fontSize: 16,
-                                                                  color: (hardDisabled && value == "Mark Read")
-                                                                      ? context.textTheme.subtitle1!.color
-                                                                      : null),
-                                                              textAlign: TextAlign.center,
-                                                            ),
-                                                          ),
+                                                  child: AnimatedContainer(
+                                                    margin: EdgeInsets.symmetric(vertical: 5),
+                                                    height: 56,
+                                                    width: 90,
+                                                    padding: EdgeInsets.symmetric(horizontal: 9),
+                                                    decoration: BoxDecoration(
+                                                      borderRadius: BorderRadius.circular(8),
+                                                      border: Border.all(
+                                                          color: color.withOpacity(selected ? 1 : 0.5),
+                                                          width: selected ? 1.5 : 1),
+                                                      color: color.withOpacity(disabled
+                                                          ? 0.2
+                                                          : selected
+                                                              ? 0.8
+                                                              : 0.7),
+                                                    ),
+                                                    foregroundDecoration: BoxDecoration(
+                                                      color: color.withOpacity(hardDisabled || disabled ? 0.7 : 0),
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    curve: Curves.linear,
+                                                    duration: Duration(milliseconds: 150),
+                                                    child: Center(
+                                                      child: Material(
+                                                        color: Colors.transparent,
+                                                        child: Text(
+                                                          ReactionTypes.reactionToEmoji[value] ?? "Mark Read",
+                                                          style: TextStyle(
+                                                              fontSize: 16,
+                                                              color: (hardDisabled && value == "Mark Read")
+                                                                  ? context.textTheme.subtitle1!.color
+                                                                  : null),
+                                                          textAlign: TextAlign.center,
                                                         ),
                                                       ),
-                                                      Positioned(
-                                                        left: -1,
-                                                        top: 4,
-                                                        height: 60,
-                                                        width: 24,
-                                                        child: AnimatedScale(
-                                                          duration: Duration(milliseconds: 100),
-                                                          scale: index != 0 && showButtons[index] ? 1 : 0,
-                                                          curve: Curves.bounceIn,
-                                                          child: MouseRegion(
-                                                            cursor: SystemMouseCursors.click,
-                                                            onEnter: (event) {
-                                                              if (hoverLeft.value != true) {
-                                                                hoverLeft.value = true;
-                                                              }
-                                                            },
-                                                            onExit: (event) {
-                                                              if (hoverLeft.value != false) {
-                                                                hoverLeft.value = false;
-                                                              }
-                                                            },
-                                                            child: GestureDetector(
-                                                              onTap: () {
-                                                                bool currentSelected = SettingsManager()
-                                                                    .settings
-                                                                    .selectedActionIndices
-                                                                    .contains(index);
-                                                                bool previousSelected = SettingsManager()
-                                                                    .settings
-                                                                    .selectedActionIndices
-                                                                    .contains(index - 1);
-                                                                String temp =
-                                                                    SettingsManager().settings.actionList[index];
-                                                                SettingsManager().settings.actionList[index] =
-                                                                    SettingsManager().settings.actionList[index - 1];
-                                                                SettingsManager().settings.actionList[index - 1] = temp;
-                                                                if (!previousSelected && currentSelected) {
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .remove(index);
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .add(index - 1);
-                                                                }
-                                                                if (previousSelected && !currentSelected) {
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .add(index);
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .remove(index - 1);
-                                                                }
-                                                              },
-                                                              child: Obx(
-                                                                () => AnimatedContainer(
-                                                                  duration: Duration(milliseconds: 100),
-                                                                  decoration: BoxDecoration(
-                                                                    borderRadius: BorderRadius.only(
-                                                                        topLeft: Radius.circular(8),
-                                                                        bottomLeft: Radius.circular(8)),
-                                                                  ),
-                                                                  width: 24,
-                                                                  height: 60,
-                                                                  child: AnimatedScale(
-                                                                    scale: hoverLeft.value ? 1.5 : 1,
-                                                                    curve: Curves.bounceInOut,
-                                                                    duration: Duration(milliseconds: 100),
-                                                                    child: Icon(Icons.arrow_left,
-                                                                        color: context.theme.textTheme.bodyText1!.color,
-                                                                        size: 24),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Positioned(
-                                                        right: -1,
-                                                        top: 4,
-                                                        height: 60,
-                                                        width: 24,
-                                                        child: AnimatedScale(
-                                                          duration: Duration(milliseconds: 100),
-                                                          scale: index != ReactionTypes.toList().length &&
-                                                                  showButtons[index]
-                                                              ? 1
-                                                              : 0,
-                                                          curve: Curves.bounceIn,
-                                                          child: MouseRegion(
-                                                            cursor: SystemMouseCursors.click,
-                                                            onEnter: (event) {
-                                                              if (hoverRight.value != true) {
-                                                                hoverRight.value = true;
-                                                              }
-                                                            },
-                                                            onExit: (event) {
-                                                              if (hoverRight.value != false) {
-                                                                hoverRight.value = false;
-                                                              }
-                                                            },
-                                                            child: GestureDetector(
-                                                              behavior: HitTestBehavior.opaque,
-                                                              onTap: () {
-                                                                bool currentSelected = SettingsManager()
-                                                                    .settings
-                                                                    .selectedActionIndices
-                                                                    .contains(index);
-                                                                bool nextSelected = SettingsManager()
-                                                                    .settings
-                                                                    .selectedActionIndices
-                                                                    .contains(index + 1);
-                                                                String temp =
-                                                                    SettingsManager().settings.actionList[index];
-                                                                SettingsManager().settings.actionList[index] =
-                                                                    SettingsManager().settings.actionList[index + 1];
-                                                                SettingsManager().settings.actionList[index + 1] = temp;
-                                                                if (!nextSelected && currentSelected) {
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .remove(index);
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .add(index + 1);
-                                                                }
-                                                                if (nextSelected && !currentSelected) {
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .add(index);
-                                                                  SettingsManager()
-                                                                      .settings
-                                                                      .selectedActionIndices
-                                                                      .remove(index + 1);
-                                                                }
-                                                              },
-                                                              child: Obx(
-                                                                () => AnimatedContainer(
-                                                                  duration: Duration(milliseconds: 100),
-                                                                  decoration: BoxDecoration(
-                                                                    borderRadius: BorderRadius.only(
-                                                                        topRight: Radius.circular(8),
-                                                                        bottomRight: Radius.circular(8)),
-                                                                    color: Colors.transparent,
-                                                                  ),
-                                                                  width: 24,
-                                                                  height: 60,
-                                                                  child: AnimatedScale(
-                                                                    scale: hoverRight.value ? 1.5 : 1,
-                                                                    curve: Curves.bounceInOut,
-                                                                    duration: Duration(milliseconds: 100),
-                                                                    child: Icon(Icons.arrow_right,
-                                                                        color: context.theme.textTheme.bodyText1!.color,
-                                                                        size: 24),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
+                                                    ),
                                                   ),
                                                 ),
                                               );
@@ -483,9 +352,9 @@ class DesktopPanel extends StatelessWidget {
                                       width: size,
                                       margin: EdgeInsets.symmetric(vertical: margin / 2, horizontal: margin),
                                       decoration: BoxDecoration(
-                                        color: context.theme.colorScheme.secondary.withOpacity(0.4),
+                                        color: context.theme.colorScheme.primaryContainer.withOpacity(0.4),
                                         borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: context.theme.colorScheme.secondary),
+                                        border: Border.all(color: context.theme.colorScheme.primaryContainer),
                                       ),
                                       child: Stack(
                                         children: <Widget>[
@@ -501,7 +370,7 @@ class DesktopPanel extends StatelessWidget {
                                             child: Center(
                                               child: Text(
                                                 "BlueBubbles",
-                                                style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.0305),
+                                                style: context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.0305),
                                                 textAlign: TextAlign.center,
                                               ),
                                             ),
@@ -520,7 +389,7 @@ class DesktopPanel extends StatelessWidget {
                                             left: size * 0.216,
                                             child: Text(
                                               "John Doe",
-                                              style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.036),
+                                              style: context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.036),
                                             ),
                                           ),
                                           Positioned(
@@ -528,7 +397,7 @@ class DesktopPanel extends StatelessWidget {
                                             left: size * 0.216,
                                             child: Text(
                                               "${(numActions > (showMarkRead ? 1 : 0)) ? "Message" : "All"} notifications will look like this.",
-                                              style: context.textTheme.subtitle1!.copyWith(fontSize: size * 0.036),
+                                              style: context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.036),
                                             ),
                                           ),
                                           Positioned(
@@ -536,7 +405,7 @@ class DesktopPanel extends StatelessWidget {
                                             right: size * 0.15,
                                             child: Center(
                                               child: Icon(Icons.more_horiz,
-                                                  size: size * 0.04, color: context.textTheme.subtitle1!.color),
+                                                  size: size * 0.04, color: context.textTheme.labelLarge!.color),
                                             ),
                                           ),
                                           Positioned(
@@ -544,7 +413,7 @@ class DesktopPanel extends StatelessWidget {
                                             right: size * 0.05,
                                             child: Center(
                                               child: Icon(Icons.close_rounded,
-                                                  size: size * 0.04, color: context.textTheme.subtitle1!.color),
+                                                  size: size * 0.04, color: context.textTheme.labelLarge!.color),
                                             ),
                                           ),
                                           ...List.generate(
@@ -581,9 +450,9 @@ class DesktopPanel extends StatelessWidget {
                                                           decoration: BoxDecoration(
                                                             borderRadius: BorderRadius.circular(5),
                                                             border: Border.all(
-                                                                color: context.textTheme.bodyText1!.color!
-                                                                    .withOpacity(0.1)),
-                                                            color: context.theme.colorScheme.secondary.withOpacity(0.6),
+                                                                color:
+                                                                    context.theme.colorScheme.outline.withOpacity(0.2)),
+                                                            color: context.theme.colorScheme.primary.withOpacity(0.6),
                                                           ),
                                                           child: Center(
                                                             child: Text(
@@ -591,7 +460,7 @@ class DesktopPanel extends StatelessWidget {
                                                                   ? SettingsManager().settings.actionList[index]
                                                                   : ReactionTypes.reactionToEmoji[
                                                                       SettingsManager().settings.actionList[index]]!,
-                                                              style: context.textTheme.bodyText1!
+                                                              style: context.textTheme.bodyMedium!
                                                                   .copyWith(fontSize: size * 0.037),
                                                               textAlign: TextAlign.center,
                                                             ),
@@ -627,9 +496,9 @@ class DesktopPanel extends StatelessWidget {
                                       height: size / 3 * (!showMarkRead ? 0.9 : 1.28),
                                       margin: EdgeInsets.symmetric(vertical: margin / 2, horizontal: margin),
                                       decoration: BoxDecoration(
-                                        color: context.theme.colorScheme.secondary.withOpacity(0.4),
+                                        color: context.theme.colorScheme.primaryContainer.withOpacity(0.4),
                                         borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: context.theme.colorScheme.secondary),
+                                        border: Border.all(color: context.theme.colorScheme.primaryContainer),
                                       ),
                                       child: Stack(
                                         children: <Widget>[
@@ -645,7 +514,7 @@ class DesktopPanel extends StatelessWidget {
                                             child: Center(
                                               child: Text(
                                                 "BlueBubbles",
-                                                style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.0305),
+                                                style: context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.0305),
                                                 textAlign: TextAlign.center,
                                               ),
                                             ),
@@ -664,7 +533,7 @@ class DesktopPanel extends StatelessWidget {
                                             left: size * 0.216,
                                             child: Text(
                                               "John Doe",
-                                              style: context.textTheme.bodyText1!.copyWith(fontSize: size * 0.036),
+                                              style: context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.036),
                                             ),
                                           ),
                                           Positioned(
@@ -672,7 +541,7 @@ class DesktopPanel extends StatelessWidget {
                                             left: size * 0.216,
                                             child: Text(
                                               "Reaction notifications will look like this.",
-                                              style: context.textTheme.subtitle1!.copyWith(fontSize: size * 0.036),
+                                              style: context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.036),
                                             ),
                                           ),
                                           Positioned(
@@ -680,7 +549,7 @@ class DesktopPanel extends StatelessWidget {
                                             right: size * 0.15,
                                             child: Center(
                                               child: Icon(Icons.more_horiz,
-                                                  size: size * 0.04, color: context.textTheme.subtitle1!.color),
+                                                  size: size * 0.04, color: context.textTheme.labelLarge!.color),
                                             ),
                                           ),
                                           Positioned(
@@ -688,7 +557,7 @@ class DesktopPanel extends StatelessWidget {
                                             right: size * 0.05,
                                             child: Center(
                                               child: Icon(Icons.close_rounded,
-                                                  size: size * 0.04, color: context.textTheme.subtitle1!.color),
+                                                  size: size * 0.04, color: context.textTheme.labelLarge!.color),
                                             ),
                                           ),
                                           if (showMarkRead)
@@ -703,14 +572,14 @@ class DesktopPanel extends StatelessWidget {
                                                 decoration: BoxDecoration(
                                                   borderRadius: BorderRadius.circular(5),
                                                   border: Border.all(
-                                                      color: context.textTheme.bodyText1!.color!.withOpacity(0.1)),
-                                                  color: context.theme.colorScheme.secondary.withOpacity(0.6),
+                                                      color: context.theme.colorScheme.outline.withOpacity(0.2)),
+                                                  color: context.theme.colorScheme.primary.withOpacity(0.6),
                                                 ),
                                                 child: Center(
                                                   child: Text(
                                                     "Mark Read",
                                                     style:
-                                                        context.textTheme.bodyText1!.copyWith(fontSize: size * 0.037),
+                                                        context.textTheme.bodyMedium!.copyWith(fontSize: size * 0.037),
                                                     textAlign: TextAlign.center,
                                                   ),
                                                 ),
@@ -751,14 +620,21 @@ class DesktopPanel extends StatelessWidget {
                               return AlertDialog(
                                 title: Text(
                                   "Are you sure?",
-                                  style: Theme.of(context).textTheme.bodyText1,
+                                  style: context.theme.textTheme.titleLarge,
                                 ),
                                 content: Text(
-                                    "All of your data and settings will be deleted, and you will have to set the app up again from scratch."),
-                                backgroundColor: context.theme.colorScheme.secondary,
+                                    "All of your data and settings will be deleted, and you will have to set the app up again from scratch.", style: context.theme.textTheme.bodyLarge),
+                                backgroundColor: context.theme.colorScheme.properSurface,
                                 actions: <Widget>[
                                   TextButton(
-                                    child: Text("Yes"),
+                                    child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                    onPressed: () {
+                                      useCustomPath.value = true;
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                  TextButton(
+                                    child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                     onPressed: () async {
                                       prefs.setBool("use-custom-path", val);
                                       await DBProvider.deleteDB();
@@ -768,14 +644,7 @@ class DesktopPanel extends StatelessWidget {
                                       SettingsManager().settings.save();
                                       SettingsManager().fcmData = null;
                                       FCMData.deleteFcmData();
-                                      appWindow.close();
-                                    },
-                                  ),
-                                  TextButton(
-                                    child: Text("Cancel"),
-                                    onPressed: () {
-                                      useCustomPath.value = true;
-                                      Navigator.of(context).pop();
+                                      await WindowManager.instance.close();
                                     },
                                   ),
                                 ],
@@ -813,14 +682,20 @@ class DesktopPanel extends StatelessWidget {
                                     return AlertDialog(
                                       title: Text(
                                         "Are you sure?",
-                                        style: Theme.of(context).textTheme.bodyText1,
+                                        style: context.theme.textTheme.titleLarge,
                                       ),
                                       content: Text(
-                                          "The database will now be stored at $path\n\nAll of your data and settings will be deleted, and you will have to set the app up again from scratch."),
-                                      backgroundColor: context.theme.colorScheme.secondary,
+                                          "The database will now be stored at $path\n\nAll of your data and settings will be deleted, and you will have to set the app up again from scratch.", style: context.theme.textTheme.bodyLarge,),
+                                      backgroundColor: context.theme.colorScheme.properSurface,
                                       actions: <Widget>[
                                         TextButton(
-                                          child: Text("Yes"),
+                                          child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                           onPressed: () async {
                                             customPath.value = path;
                                             await DBProvider.deleteDB();
@@ -832,13 +707,7 @@ class DesktopPanel extends StatelessWidget {
                                             FCMData.deleteFcmData();
                                             prefs.setBool("use-custom-path", true);
                                             prefs.setString("custom-path", path);
-                                            appWindow.close();
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text("Cancel"),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
+                                            await WindowManager.instance.close();
                                           },
                                         ),
                                       ],

@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -178,21 +179,20 @@ class ActionHandler {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: Theme.of(context).colorScheme.secondary,
+            backgroundColor: context.theme.colorScheme.properSurface,
             title: Text(
               "Creating a new chat...",
-              style: Theme.of(context).textTheme.bodyText1,
+              style: context.theme.textTheme.titleLarge,
             ),
-            content:
-            Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-              Container(
-                // height: 70,
-                // color: Colors.black,
+            content: Container(
+              height: 70,
+              child: Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                 ),
               ),
-            ]),
+            ),
           );
         });
 
@@ -208,7 +208,7 @@ class ActionHandler {
 
     final response = await api.createChat([address], text.trim()).catchError((err) {
       // If there is an error, replace the temp value with an error
-      message.guid = message.guid!.replaceAll("temp", "error-${err is Response ? err.data['error']['message'] : err.toString()}");
+      message.guid = message.guid!.replaceAll("temp", "error-${err is Response ? (err.data['error']['message'] ?? err.data.toString()) : err.toString()}");
       message.error =
         err is! Response || err.data['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
     });
@@ -327,9 +327,27 @@ class ActionHandler {
         if (error is Response) {
           String? tempGuid = message.guid;
           // If there is an error, replace the temp value with an error
-          message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message']}");
-          message.error =
-          error.statusCode == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+          message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message'] ?? error.data.toString()}");
+          message.error = error.statusCode ?? MessageError.BAD_REQUEST.code;
+
+          await Message.replaceMessage(tempGuid, message);
+          MessageManager().updateMessage(chat, tempGuid!, message);
+          completer.complete();
+        } else if (error is DioError) {
+          String? tempGuid = message.guid;
+          // If there is an error, replace the temp value with an error
+          String _error;
+          if (error.type == DioErrorType.connectTimeout) {
+            _error = "Connect timeout occured! Check your connection.";
+          } else if (error.type == DioErrorType.sendTimeout) {
+            _error = "Send timeout occured!";
+          } else if (error.type == DioErrorType.receiveTimeout) {
+            _error = "Receive data timeout occured! Check server logs for more info.";
+          } else {
+            _error = error.error.toString();
+          }
+          message.guid = message.guid!.replaceAll("temp", "error-$_error");
+          message.error = error.response?.statusCode ?? MessageError.BAD_REQUEST.code;
 
           await Message.replaceMessage(tempGuid, message);
           MessageManager().updateMessage(chat, tempGuid!, message);
@@ -404,8 +422,8 @@ class ActionHandler {
             PlatformFile(
               path: file.path,
               name: file.path.split("/").last,
-              size: file.lengthSync(),
-              bytes: file.readAsBytesSync(),
+              size: await file.length(),
+              bytes: await file.readAsBytes(),
             ),
             chat,
             i == message.attachments.length - 1 ? message.text ?? "" : "",
@@ -602,6 +620,7 @@ class ActionHandler {
 
         if (handle != null) {
           message.handle?.color = handle.color;
+          message.handle?.defaultEmail = handle.defaultEmail;
           message.handle?.defaultPhone = handle.defaultPhone;
         }
 

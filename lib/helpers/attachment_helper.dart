@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
@@ -164,23 +165,23 @@ class AttachmentHelper {
               return AlertDialog(
                 title: Text(
                   "Confirm save",
-                  style: Theme.of(context).textTheme.bodyText1,
+                  style: context.theme.textTheme.titleLarge,
                 ),
-                content: Text("This file already exists.\nAre you sure you want to overwrite it?"),
-                backgroundColor: context.theme.colorScheme.secondary,
+                content: Text("This file already exists.\nAre you sure you want to overwrite it?", style: context.theme.textTheme.bodyLarge),
+                backgroundColor: context.theme.colorScheme.properSurface,
                 actions: <Widget>[
                   TextButton(
-                    child: Text("Yes"),
+                    child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  TextButton(
+                    child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                     onPressed: () async {
                       File(file.path!).copy(savePath);
                       Navigator.of(context).pop();
                       showSnackbar('Success', 'Saved attachment to $savePath!');
-                    },
-                  ),
-                  TextButton(
-                    child: Text("No"),
-                    onPressed: () {
-                      Navigator.of(context).pop();
                     },
                   ),
                 ],
@@ -222,7 +223,7 @@ class AttachmentHelper {
         rootDirectory: dir,
         fsType: FilesystemType.folder,
         pickText: 'Save file',
-        folderIconColor: Theme.of(Get.context!).primaryColor,
+        folderIconColor: Get.theme.colorScheme.primary,
       );
       if (path != null) {
         final bytes = file.bytes ?? await File(file.path!).readAsBytes();
@@ -359,7 +360,7 @@ class AttachmentHelper {
   static Future<Uint8List?> getVideoThumbnail(String filePath, {bool useCachedFile = true}) async {
     File cachedFile = File("$filePath.thumbnail");
     if (useCachedFile) {
-      if (cachedFile.existsSync()) {
+      if (await cachedFile.exists()) {
         return cachedFile.readAsBytes();
       }
     }
@@ -375,7 +376,7 @@ class AttachmentHelper {
     }
   
     if (useCachedFile) {
-      cachedFile.writeAsBytes(thumbnail);
+      await cachedFile.writeAsBytes(thumbnail);
     }
 
     return thumbnail;

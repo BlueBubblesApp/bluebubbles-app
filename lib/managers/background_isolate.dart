@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
@@ -62,7 +61,7 @@ callbackHandler() async {
     Directory objectBoxDirectory = Directory(join(documentsDirectory.path, 'objectbox'));
     final sqlitePath = join(documentsDirectory.path, "chat.db");
 
-    Future<void> initStore({bool saveThemes = false}) async {
+    Future<void> initStore() async {
       bool? useCustomPath = prefs.getBool("use-custom-path");
       String? customStorePath = prefs.getString("custom-path");
       if (!kIsDesktop) {
@@ -89,7 +88,7 @@ callbackHandler() async {
       } else {
         try {
           if (kIsDesktop) {
-            Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
+            await Directory(join(documentsDirectory.path, 'objectbox')).create(recursive: true);
           }
           debugPrint("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
           store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
@@ -101,7 +100,7 @@ callbackHandler() async {
             customStorePath ??= "C:\\bluebubbles_app";
             prefs.setBool("use-custom-path", true);
             objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-            objectBoxDirectory.createSync(recursive: true);
+            await objectBoxDirectory.create(recursive: true);
             debugPrint("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
             store = await openStore(directory: join(customStorePath, 'objectbox'));
           }
@@ -115,18 +114,15 @@ callbackHandler() async {
       handleBox = store.box<Handle>();
       messageBox = store.box<Message>();
       scheduledBox = store.box<ScheduledMessage>();
-      themeEntryBox = store.box<ThemeEntry>();
-      themeObjectBox = store.box<ThemeObject>();
-      if (saveThemes && themeObjectBox.isEmpty()) {
-        for (ThemeObject theme in Themes.themes) {
-          if (theme.name == "OLED Dark") theme.selectedDarkTheme = true;
-          if (theme.name == "Bright White") theme.selectedLightTheme = true;
-          theme.save(updateIfNotAbsent: false);
-        }
+      themeBox = store.box<ThemeStruct>();
+      if (themeBox.isEmpty()) {
+        prefs.setString("selected-dark", "OLED Dark");
+        prefs.setString("selected-light", "Bright White");
+        themeBox.putMany(Themes.defaultThemes);
       }
     }
 
-    if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
+    if (!await objectBoxDirectory.exists() && await File(sqlitePath).exists()) {
       runApp(UpgradingDB());
       print("Converting sqflite to ObjectBox...");
       Stopwatch s = Stopwatch();
@@ -135,7 +131,7 @@ callbackHandler() async {
       s.stop();
       print("Migrated in ${s.elapsedMilliseconds} ms");
     } else {
-      if (File(sqlitePath).existsSync() && prefs.getBool('objectbox-migration') != true) {
+      if (await File(sqlitePath).exists() && prefs.getBool('objectbox-migration') != true) {
         runApp(UpgradingDB());
         print("Converting sqflite to ObjectBox...");
         Stopwatch s = Stopwatch();

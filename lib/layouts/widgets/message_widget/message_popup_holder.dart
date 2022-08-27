@@ -1,18 +1,25 @@
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
+import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:get/get.dart';
 import 'package:universal_html/html.dart' as html;
 
 class MessagePopupHolder extends StatefulWidget {
@@ -77,30 +84,34 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     HapticFeedback.lightImpact();
     getOffset();
 
-    ChatController? currentChat = ChatManager().activeChat;
     if (mounted) {
       setState(() {
         visible = false;
       });
     }
 
+    EventDispatcher().emit('popup-pushed', true);
     widget.popupPushed.call(true);
     await Navigator.push(
-      context,
+      Get.context ?? context,
       PageRouteBuilder(
         settings: RouteSettings(arguments: {"hideTail": true}),
         transitionDuration: Duration(milliseconds: 150),
         pageBuilder: (context, animation, secondaryAnimation) {
           return FadeTransition(
             opacity: animation,
-            child: MessageDetailsPopup(
-              currentChat: currentChat,
-              child: widget.popupChild,
-              childOffsetY: childOffsetY,
-              childSize: childSize,
-              message: widget.message,
-              newerMessage: widget.newerMessage,
-              messageBloc: widget.messageBloc,
+            child: Theme(
+              data: context.theme.copyWith(
+                // in case some components still use legacy theming
+                primaryColor: context.theme.colorScheme.bubble(context, true),
+                colorScheme: context.theme.colorScheme.copyWith(
+                  primary: context.theme.colorScheme.bubble(context, true),
+                  onPrimary: context.theme.colorScheme.onBubble(context, true),
+                  surface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                  onSurface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+                ),
+              ),
+              child: buildForDevice(),
             ),
           );
         },
@@ -108,6 +119,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         opaque: false,
       ),
     );
+    EventDispatcher().emit('popup-pushed', false);
     widget.popupPushed.call(false);
     if (keyboardStatus || kIsDesktop || kIsWeb) EventDispatcher().emit('focus-keyboard', null);
     if (mounted) {
@@ -120,6 +132,33 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
   void sendReaction(String type) {
     Logger.info("Sending reaction type: $type");
     ActionHandler.sendReaction(widget.message.getChat() ?? ChatManager().activeChat!.chat, widget.message, type);
+  }
+
+  Widget buildForDevice() {
+    bool showAltLayout =
+        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !LifeCycleManager().isBubble;
+
+    ChatController? currentChat = ChatManager().activeChat;
+    Widget popup = MessageDetailsPopup(
+      currentChat: currentChat,
+      child: widget.popupChild,
+      childOffsetY: childOffsetY,
+      childSize: childSize,
+      message: widget.message,
+      newerMessage: widget.newerMessage,
+      messageBloc: widget.messageBloc,
+    );
+
+    if (showAltLayout) {
+      return VerticalSplitView(
+          allowResize: false,
+          left: GestureDetector(onTap: () => Navigator.pop(Get.context ?? context)),
+          right: popup,
+        dividerWidth: 0,
+      );
+    } else {
+      return TitleBarWrapper(child: popup);
+    }
   }
 
   @override

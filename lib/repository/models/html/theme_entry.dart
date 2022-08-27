@@ -28,18 +28,6 @@ class ThemeEntry {
     this.fontWeight,
   });
 
-  factory ThemeEntry.fromMap(Map<String, dynamic> json) {
-    return ThemeEntry(
-      id: json["ROWID"],
-      themeId: json["themeId"],
-      name: json["name"],
-      color: HexColor(json["color"]),
-      isFont: json["isFont"] == 1,
-      fontSize: json["fontSize"],
-      fontWeight: json["fontWeight"],
-    );
-  }
-
   factory ThemeEntry.fromStyle(String title, TextStyle style) {
     return ThemeEntry(
       color: style.color,
@@ -57,22 +45,4 @@ class ThemeEntry {
           fontSize: fontSize?.toDouble(),
         )
       : color;
-
-  ThemeEntry save(ThemeObject theme) {
-    return this;
-  }
-
-  static ThemeEntry? findOne(String name, int themeId) {
-    return null;
-  }
-
-  Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "name": name,
-        "themeId": themeId,
-        "color": color!.value.toRadixString(16),
-        "isFont": isFont! ? 1 : 0,
-        "fontSize": fontSize,
-        "fontWeight": fontWeight,
-      };
 }

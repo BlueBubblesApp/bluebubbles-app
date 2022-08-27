@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
@@ -12,6 +13,7 @@ import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -21,6 +23,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -70,7 +73,7 @@ class ServerManagementPanelController extends GetxController {
       latency.value = later - now;
       macOSVersion.value = response.data['data']['os_version'];
       serverVersion.value = response.data['data']['server_version'];
-      Version version = Version.parse(serverVersion.value);
+      Version version = Version.parse(serverVersion.value!);
       serverVersionCode.value = version.major * 100 + version.minor * 21 + version.patch;
       privateAPIStatus.value = response.data['data']['private_api'] ?? false;
       helperBundleStatus.value = response.data['data']['helper_connected'] ?? false;
@@ -112,10 +115,35 @@ class ServerManagementPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor = context.theme.headerColor;
-    Color tileColor = context.theme.tileColor;
+    final iosSubtitle =
+    context.theme.textTheme.labelLarge?.copyWith(color: ThemeManager().inDarkMode(context) ? context.theme.colorScheme.onBackground : context.theme.colorScheme.properOnSurface, fontWeight: FontWeight.w300);
+    final materialSubtitle = context.theme
+        .textTheme
+        .labelLarge
+        ?.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
+    // Samsung theme should always use the background color as the "header" color
+    Color headerColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
+    Color tileColor = ThemeManager().inDarkMode(context)
+        ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
+    
+    // reverse material color mapping to be more accurate
+    if (SettingsManager().settings.skin.value == Skins.Material && ThemeManager().inDarkMode(context)) {
+      final temp = headerColor;
+      headerColor = tileColor;
+      tileColor = temp;
+    }
+
+    // These Rx variables are only needed in widgets not contained in settings_widgets.dart
+    final Rx<Color> _headerColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? headerColor : Colors.transparent).obs;
+    final Rx<Color> _tileColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? tileColor : Colors.transparent).obs;
+
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        _headerColor.value = effect != WindowEffect.disabled ? Colors.transparent : headerColor;
+        _tileColor.value = effect != WindowEffect.disabled ? Colors.transparent : tileColor;
+      });
+    }
 
     return SettingsScaffold(
       title: "Connection & Server Management",
@@ -134,7 +162,7 @@ class ServerManagementPanel extends StatelessWidget {
                   Obx(() {
                     bool redact = SettingsManager().settings.redactedMode.value;
                     return Container(
-                        color: tileColor,
+                        color: _tileColor.value,
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
                           child: AnimatedOpacity(
@@ -191,12 +219,9 @@ class ServerManagementPanel extends StatelessWidget {
                         )
                     );
                   }),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty
-                      ? SettingsDivider(thickness: 0.3) : SizedBox.shrink()),
                   Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ? SettingsTile(
                     title: "Show Stats",
                     subtitle: "Show iMessage statistics",
-                    backgroundColor: tileColor,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.chart_bar_square,
                       materialIcon: Icons.stacked_bar_chart,
@@ -205,21 +230,22 @@ class ServerManagementPanel extends StatelessWidget {
                       showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            backgroundColor: context.theme.backgroundColor,
+                            backgroundColor: context.theme.colorScheme.properSurface,
                             content: Padding(
                               padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
                               child: SelectableText.rich(
                                 TextSpan(
                                     children: controller.stats.entries.map((e) => TextSpan(text: "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}")).toList()
                                 ),
+                                style: context.theme.textTheme.bodyLarge,
                               ),
                             ),
-                            title: Text("Stats"),
+                            title: Text("Stats", style: context.theme.textTheme.titleLarge),
                             actions: <Widget>[
                               TextButton(
-                                child: Text("Dismiss"),
+                                child: Text("Dismiss", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                 onPressed: () {
-                                  Get.back();
+                                  Navigator.of(context).pop();
                                 },
                               ),
                             ],
@@ -227,59 +253,64 @@ class ServerManagementPanel extends StatelessWidget {
                       );
                     },
                   ) : SizedBox.shrink()),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ?  Container(
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42
+                      && controller.stats.isNotEmpty
+                      && SettingsManager().fcmData != null ? Container(
                     color: tileColor,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ) : SizedBox.shrink()),
-                  SettingsTile(
-                    title: "Show QR Code",
-                    subtitle: "Generate QR Code to screenshot or sync other devices",
-                    backgroundColor: tileColor,
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.qrcode,
-                      materialIcon: Icons.qr_code,
+                  if (SettingsManager().fcmData != null)
+                    SettingsTile(
+                      title: "Show QR Code",
+                      subtitle: "Generate QR Code to screenshot or sync other devices",
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.qrcode,
+                        materialIcon: Icons.qr_code,
+                      ),
+                      onTap: () {
+                        List<dynamic> json = [
+                          SettingsManager().settings.guidAuthKey.value,
+                          SettingsManager().settings.serverAddress.value,
+                          SettingsManager().fcmData!.projectID,
+                          SettingsManager().fcmData!.storageBucket,
+                          SettingsManager().fcmData!.apiKey,
+                          SettingsManager().fcmData!.firebaseURL,
+                          SettingsManager().fcmData!.clientID,
+                          SettingsManager().fcmData!.applicationID,
+                        ];
+                        String qrtext = jsonEncode(json);
+                        showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              backgroundColor: context.theme.colorScheme.properSurface,
+                              content: Container(
+                                height: 320,
+                                width: 320,
+                                child: QrImageView(
+                                  data: qrtext,
+                                  version: QrVersions.auto,
+                                  size: 320,
+                                  gapless: true,
+                                  backgroundColor: context.theme.colorScheme.properSurface,
+                                  foregroundColor: context.theme.colorScheme.properOnSurface,
+                                ),
+                              ),
+                              title: Text("QR Code", style: context.theme.textTheme.titleLarge),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: Text("Dismiss", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            )
+                        );
+                      },
                     ),
-                    onTap: () {
-                      List<dynamic> json = [
-                        SettingsManager().settings.guidAuthKey.value,
-                        SettingsManager().settings.serverAddress.value,
-                        SettingsManager().fcmData!.projectID,
-                        SettingsManager().fcmData!.storageBucket,
-                        SettingsManager().fcmData!.apiKey,
-                        SettingsManager().fcmData!.firebaseURL,
-                        SettingsManager().fcmData!.clientID,
-                        SettingsManager().fcmData!.applicationID,
-                      ];
-                      String qrtext = jsonEncode(json);
-                      showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            content: Container(
-                              height: 320,
-                              width: 320,
-                              child: QrImage(
-                                data: qrtext,
-                                version: QrVersions.auto,
-                                size: 320,
-                                gapless: true,
-                              ),
-                            ),
-                            title: Text("QR Code"),
-                            actions: <Widget>[
-                              TextButton(
-                                child: Text("Dismiss"),
-                                onPressed: () {
-                                  Get.back();
-                                },
-                              ),
-                            ],
-                          )
-                      );
-                    },
-                  ),
                 ],
               ),
               SettingsHeader(
@@ -378,7 +409,7 @@ class ServerManagementPanel extends StatelessWidget {
                     color: tileColor,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ) : SizedBox.shrink()),*/
                   SettingsTile(
@@ -389,7 +420,6 @@ class ServerManagementPanel extends StatelessWidget {
                       iosIcon: CupertinoIcons.gear,
                       materialIcon: Icons.room_preferences,
                     ),
-                    backgroundColor: tileColor,
                     onLongPress: kIsWeb || kIsDesktop ? null : () {
                       showDialog(
                         context: context,
@@ -459,7 +489,7 @@ class ServerManagementPanel extends StatelessWidget {
                       color: tileColor,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                       ),
                     ),
                   if (!kIsWeb)
@@ -477,7 +507,6 @@ class ServerManagementPanel extends StatelessWidget {
                       return SettingsTile(
                           title: "Manually Sync Messages",
                           subtitle: subtitle,
-                          backgroundColor: tileColor,
                           leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.arrow_2_circlepath,
                             materialIcon: Icons.sync,
@@ -505,7 +534,6 @@ class ServerManagementPanel extends StatelessWidget {
                     title: "Fetch${kIsWeb || kIsDesktop ? "" : " & Share"} Server Logs",
                     subtitle: controller.fetchStatus.value
                         ?? (SocketManager().state.value == SocketState.CONNECTED ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
-                    backgroundColor: tileColor,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.doc_plaintext,
                       materialIcon: Icons.article,
@@ -556,14 +584,13 @@ class ServerManagementPanel extends StatelessWidget {
                     color: tileColor,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
                   Obx(() => SettingsTile(
                       title: "Restart iMessage",
                       subtitle: controller.isRestartingMessages.value && SocketManager().state.value == SocketState.CONNECTED
                           ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the iMessage app" : "Disconnected, cannot restart",
-                      backgroundColor: tileColor,
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.chat_bubble,
                         materialIcon: Icons.sms,
@@ -588,7 +615,7 @@ class ServerManagementPanel extends StatelessWidget {
                         });
                       },
                       trailing: Obx(() => (!controller.isRestartingMessages.value)
-                          ? Icon(Icons.refresh, color: Colors.grey)
+                          ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
                           : Container(
                           constraints: BoxConstraints(
                             maxHeight: 20,
@@ -596,7 +623,7 @@ class ServerManagementPanel extends StatelessWidget {
                           ),
                           child: CircularProgressIndicator(
                             strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                           ))))),
                   Obx(() {
                     if (SettingsManager().settings.enablePrivateAPI.value) {
@@ -604,7 +631,7 @@ class ServerManagementPanel extends StatelessWidget {
                         color: tileColor,
                         child: Padding(
                           padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                          child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                         ),
                       );
                     } else {
@@ -618,7 +645,6 @@ class ServerManagementPanel extends StatelessWidget {
                           title: "Restart Private API & Services",
                           subtitle: controller.isRestartingPrivateAPI.value && SocketManager().state.value == SocketState.CONNECTED
                               ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the Private API" : "Disconnected, cannot restart",
-                          backgroundColor: tileColor,
                           leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.exclamationmark_shield,
                             materialIcon: Icons.gpp_maybe,
@@ -643,7 +669,7 @@ class ServerManagementPanel extends StatelessWidget {
                             });
                           },
                           trailing: (!controller.isRestartingPrivateAPI.value)
-                              ? Icon(Icons.refresh, color: Colors.grey)
+                              ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
                               : Container(
                               constraints: BoxConstraints(
                                 maxHeight: 20,
@@ -651,7 +677,7 @@ class ServerManagementPanel extends StatelessWidget {
                               ),
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
-                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                               )));
                     } else {
                       return SizedBox.shrink();
@@ -661,7 +687,7 @@ class ServerManagementPanel extends StatelessWidget {
                     color: tileColor,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
                   Obx(() => SettingsTile(
@@ -669,7 +695,6 @@ class ServerManagementPanel extends StatelessWidget {
                       subtitle: (controller.isRestarting.value)
                           ? "Restart in progress..."
                           : "This will briefly disconnect you",
-                      backgroundColor: tileColor,
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.desktopcomputer,
                         materialIcon: Icons.dvr,
@@ -716,7 +741,7 @@ class ServerManagementPanel extends StatelessWidget {
                         });
                       },
                       trailing: (!controller.isRestarting.value)
-                          ? Icon(Icons.refresh, color: Colors.grey)
+                          ? Icon(Icons.refresh, color: context.theme.colorScheme.outline)
                           : Container(
                           constraints: BoxConstraints(
                             maxHeight: 20,
@@ -724,20 +749,19 @@ class ServerManagementPanel extends StatelessWidget {
                           ),
                           child: CircularProgressIndicator(
                             strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                           )))),
 
                   Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? Container(
                     color: tileColor,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                      child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ) : SizedBox.shrink()),
                   Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? SettingsTile(
                     title: "Check for Server Updates",
                     subtitle: "Check for new BlueBubbles Server updates",
-                    backgroundColor: tileColor,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.desktopcomputer,
                       materialIcon: Icons.dvr,
@@ -747,26 +771,33 @@ class ServerManagementPanel extends StatelessWidget {
                       if (response.statusCode == 200) {
                         bool available = response.data['data']['available'] ?? false;
                         Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
-                        Get.defaultDialog(
-                          title: "Update Check",
-                          titleStyle: Theme.of(context).textTheme.headline1,
-                          confirm: Container(height: 0, width: 0),
-                          cancel: Container(height: 0, width: 0),
-                          content: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                SizedBox(
-                                  height: 15.0,
-                                ),
-                                Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyText1),
-                                SizedBox(
-                                  height: 15.0,
-                                ),
-                                if (metadata.isNotEmpty)
-                                  Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
-                              ]
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: context.theme.colorScheme.properSurface,
+                            title: Text("Update Check", style: context.theme.textTheme.titleLarge),
+                            content: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  SizedBox(
+                                    height: 15.0,
+                                  ),
+                                  Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyLarge),
+                                  SizedBox(
+                                    height: 15.0,
+                                  ),
+                                  if (metadata.isNotEmpty)
+                                    Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}", style: context.theme.textTheme.bodyLarge)
+                                ]
+                            ),
+                            actions: [
+                              TextButton(
+                                  child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                  onPressed: () => Navigator.of(context).pop()
+                              ),
+                            ]
                           ),
-                          backgroundColor: Theme.of(context).backgroundColor,
                         );
                       } else {
                         showSnackbar("Error", "Failed to check for updates!");
@@ -849,8 +880,8 @@ class _SyncDialogState extends State<SyncDialog> {
         child: Center(
           child: LinearProgressIndicator(
             value: progress,
-            backgroundColor: Colors.white,
-            valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+            backgroundColor: context.theme.colorScheme.outline,
+            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
           ),
         ),
       );
@@ -862,10 +893,7 @@ class _SyncDialogState extends State<SyncDialog> {
           Navigator.of(context).pop();
         },
         child: Text(
-          "Ok",
-          style: Theme.of(context).textTheme.bodyText1!.apply(
-                color: Theme.of(context).primaryColor,
-              ),
+          "OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary),
         ),
       )
     ];
@@ -879,7 +907,7 @@ class _SyncDialogState extends State<SyncDialog> {
             padding: EdgeInsets.symmetric(horizontal: 20.0),
             child: Text(
               "Days: ${lookback?.inDays ?? "1"}",
-              style: Theme.of(context).textTheme.bodyText1,
+              style: context.theme.textTheme.bodyLarge,
               textAlign: TextAlign.center,
             ),
           ),
@@ -915,17 +943,15 @@ class _SyncDialogState extends State<SyncDialog> {
           },
           child: Text(
             "Sync",
-            style: Theme.of(context).textTheme.bodyText1!.apply(
-                  color: Theme.of(context).primaryColor,
-                ),
+            style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary),
           ),
         )
       ];
     }
 
     return AlertDialog(
-      backgroundColor: Theme.of(context).backgroundColor,
-      title: Text(title, style: Theme.of(context).textTheme.headline1),
+      backgroundColor: context.theme.colorScheme.properSurface,
+      title: Text(title, style: context.theme.textTheme.titleLarge),
       content: content,
       actions: actions,
     );

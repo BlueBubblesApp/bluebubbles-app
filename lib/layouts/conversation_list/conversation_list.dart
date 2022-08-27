@@ -1,12 +1,15 @@
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
@@ -21,7 +24,6 @@ import 'package:bluebubbles/layouts/conversation_list/samsung_conversation_list.
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -70,8 +72,8 @@ class ConversationListState extends State<ConversationList> {
   }
 
   Widget getHeaderTextWidget({double? size}) {
-    TextStyle? style = context.textTheme.headline1;
-    if (size != null) style = style!.copyWith(fontSize: size);
+    TextStyle? style = context.textTheme.headlineLarge!.copyWith(color: context.theme.colorScheme.onBackground, fontWeight: FontWeight.w500);
+    if (size != null) style = style.copyWith(fontSize: size);
 
     return Padding(
       padding: const EdgeInsets.only(right: 10.0),
@@ -115,34 +117,20 @@ class ConversationListState extends State<ConversationList> {
       }
     }
 
-    String appDocPath = SettingsManager().appDocDir.path;
-    String ext = ".png";
-    File file = File("$appDocPath/attachments/${randomString(16)}$ext");
-    await file.create(recursive: true);
-
-    // Take the picture after opening the camera
-    await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
-
-    // If we don't get data back, return outta here
-    if (!file.existsSync()) return;
-    if (file.statSync().size == 0) {
-      file.deleteSync();
-      return;
-    }
-
-    openNewChatCreator(existing: [
-      PlatformFile(
-        name: file.path.split("/").last,
+    final XFile? file = await ImagePicker().pickImage(source: ImageSource.camera);
+    if (file != null) {
+      openNewChatCreator(existing: [PlatformFile(
         path: file.path,
-        bytes: file.readAsBytesSync(),
-        size: file.lengthSync(),
-      )
-    ]);
+        name: file.path.split('/').last,
+        size: await file.length(),
+        bytes: await file.readAsBytes(),
+      )]);
+    }
   }
 
   Widget buildSettingsButton() => !widget.showArchivedChats && !widget.showUnknownSenders
       ? PopupMenuButton(
-          color: context.theme.colorScheme.secondary,
+          color: context.theme.colorScheme.properSurface,
           shape: SettingsManager().settings.skin.value != Skins.Material ? RoundedRectangleBorder(
             borderRadius: BorderRadius.all(
               Radius.circular(20.0),
@@ -181,33 +169,35 @@ class ConversationListState extends State<ConversationList> {
                   return AlertDialog(
                     title: Text(
                       "Are you sure?",
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: context.theme.textTheme.titleLarge,
                     ),
-                    backgroundColor: Theme.of(context).backgroundColor,
+                    backgroundColor: context.theme.colorScheme.properSurface,
                     actions: <Widget>[
                       TextButton(
-                        child: Text("Yes"),
+                        child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                         onPressed: () async {
                           await DBProvider.deleteDB();
                           await SettingsManager().resetConnection();
-                          SettingsManager().settings.finishedSetup.value = false;
-                          Get.offAll(
-                              () => WillPopScope(
-                                    onWillPop: () async => false,
-                                    child: TitleBarWrapper(child: SetupView()),
-                                  ),
-                              duration: Duration.zero,
-                              transition: Transition.noTransition);
                           SettingsManager().settings = Settings();
                           SettingsManager().settings.save();
                           SettingsManager().fcmData = null;
                           FCMData.deleteFcmData();
-                        },
-                      ),
-                      TextButton(
-                        child: Text("Cancel"),
-                        onPressed: () {
-                          Navigator.of(context).pop();
+                          prefs.setString("selected-dark", "OLED Dark");
+                          prefs.setString("selected-light", "Bright White");
+                          if (!kIsWeb) {
+                            themeBox.putMany(Themes.defaultThemes);
+                          }
+                          loadTheme(context);
+                          Get.offAll(() => WillPopScope(
+                            onWillPop: () async => false,
+                            child: TitleBarWrapper(child: SetupView()),
+                          ), duration: Duration.zero, transition: Transition.noTransition);
                         },
                       ),
                     ],
@@ -221,15 +211,15 @@ class ConversationListState extends State<ConversationList> {
               PopupMenuItem(
                 value: 0,
                 child: Text(
-                  'Mark all as read',
-                  style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                  'Mark All As Read',
+                  style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                 ),
               ),
               PopupMenuItem(
                 value: 1,
                 child: Text(
                   'Archived',
-                  style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                  style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                 ),
               ),
               if (SettingsManager().settings.filterUnknownSenders.value)
@@ -237,14 +227,14 @@ class ConversationListState extends State<ConversationList> {
                   value: 3,
                   child: Text(
                     'Unknown Senders',
-                    style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                    style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                   ),
                 ),
               PopupMenuItem(
                 value: 2,
                 child: Text(
                   'Settings',
-                  style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                  style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                 ),
               ),
               if (kIsWeb)
@@ -252,35 +242,35 @@ class ConversationListState extends State<ConversationList> {
                     value: 4,
                     child: Text(
                       'Logout',
-                      style: context.textTheme.bodyText1!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                      style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                     ))
             ];
           },
           icon: SettingsManager().settings.skin.value == Skins.Material ? Icon(
                   Icons.more_vert,
-                  color: context.textTheme.bodyText1!.color,
+                  color: context.theme.colorScheme.onBackground,
                   size: 25,
                 ) : null,
           child: SettingsManager().settings.skin.value == Skins.Material
               ? null
               : ThemeSwitcher(
                   iOSSkin: Container(
-                    width: 20,
-                    height: 20,
+                    width: 30,
+                    height: 30,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(40),
-                      color: context.theme.colorScheme.secondary,
+                      color: context.theme.colorScheme.properSurface,
                     ),
                     child: Icon(
                       Icons.more_horiz,
-                      color: context.theme.primaryColor,
-                      size: 15,
+                      color: context.theme.colorScheme.properOnSurface,
+                      size: 20,
                     ),
                   ),
                   materialSkin: Container(),
                   samsungSkin: Icon(
                     Icons.more_vert,
-                    color: context.textTheme.bodyText1!.color,
+                    color: context.theme.colorScheme.onBackground,
                     size: 25,
                   ),
                 ),
@@ -291,7 +281,7 @@ class ConversationListState extends State<ConversationList> {
     return Obx(() => Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            if (SettingsManager().settings.cameraFAB.value && SettingsManager().settings.skin.value != Skins.Material)
+            if (SettingsManager().settings.cameraFAB.value && SettingsManager().settings.skin.value == Skins.iOS)
               ConstrainedBox(
                 constraints: BoxConstraints(
                   maxWidth: 45,
@@ -301,20 +291,26 @@ class ConversationListState extends State<ConversationList> {
                   child: Icon(
                     SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
                     size: 20,
+                    color: context.theme.colorScheme.onPrimaryContainer
                   ),
                   onPressed: openCamera,
                   heroTag: null,
+                    backgroundColor: context.theme.colorScheme.primaryContainer,
                 ),
               ),
-            if (SettingsManager().settings.cameraFAB.value)
+            if (SettingsManager().settings.cameraFAB.value && SettingsManager().settings.skin.value == Skins.iOS)
               SizedBox(
                 height: 10,
               ),
-            FloatingActionButton(
-                backgroundColor: context.theme.primaryColor,
-                child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message,
-                    color: Colors.white, size: 25),
-                onPressed: openNewChatCreator),
+            InkWell(
+              onLongPress: SettingsManager().settings.skin.value == Skins.iOS || !SettingsManager().settings.cameraFAB.value ? null : openCamera,
+              child: FloatingActionButton(
+                  backgroundColor: context.theme.colorScheme.primary,
+                  child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message,
+                      color: context.theme.colorScheme.onPrimary, size: 25),
+                  onPressed: openNewChatCreator,
+              ),
+            ),
           ],
         ));
   }

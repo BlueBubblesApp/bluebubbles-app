@@ -9,11 +9,14 @@
 #include <bitsdojo_window_linux/bitsdojo_window_plugin.h>
 #include <dart_vlc/dart_vlc_plugin.h>
 #include <desktop_drop/desktop_drop_plugin.h>
+#include <flutter_acrylic/flutter_acrylic_plugin.h>
 #include <maps_launcher/maps_launcher_plugin.h>
 #include <objectbox_flutter_libs/objectbox_flutter_libs_plugin.h>
 #include <pasteboard/pasteboard_plugin.h>
 #include <printing/printing_plugin.h>
 #include <quick_notify/quick_notify_plugin.h>
+#include <record_linux/record_linux_plugin.h>
+#include <screen_retriever/screen_retriever_plugin.h>
 #include <system_tray/system_tray_plugin.h>
 #include <url_launcher_linux/url_launcher_plugin.h>
 #include <window_manager/window_manager_plugin.h>
@@ -28,6 +31,9 @@ void fl_register_plugins(FlPluginRegistry* registry) {
   g_autoptr(FlPluginRegistrar) desktop_drop_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "DesktopDropPlugin");
   desktop_drop_plugin_register_with_registrar(desktop_drop_registrar);
+  g_autoptr(FlPluginRegistrar) flutter_acrylic_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(registry, "FlutterAcrylicPlugin");
+  flutter_acrylic_plugin_register_with_registrar(flutter_acrylic_registrar);
   g_autoptr(FlPluginRegistrar) maps_launcher_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "MapsLauncherPlugin");
   maps_launcher_plugin_register_with_registrar(maps_launcher_registrar);
@@ -43,6 +49,12 @@ void fl_register_plugins(FlPluginRegistry* registry) {
   g_autoptr(FlPluginRegistrar) quick_notify_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "QuickNotifyPlugin");
   quick_notify_plugin_register_with_registrar(quick_notify_registrar);
+  g_autoptr(FlPluginRegistrar) record_linux_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(registry, "RecordLinuxPlugin");
+  record_linux_plugin_register_with_registrar(record_linux_registrar);
+  g_autoptr(FlPluginRegistrar) screen_retriever_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(registry, "ScreenRetrieverPlugin");
+  screen_retriever_plugin_register_with_registrar(screen_retriever_registrar);
   g_autoptr(FlPluginRegistrar) system_tray_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "SystemTrayPlugin");
   system_tray_plugin_register_with_registrar(system_tray_registrar);

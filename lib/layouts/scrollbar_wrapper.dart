@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/foundation.dart';
@@ -25,9 +26,9 @@ class ScrollbarWrapper extends StatelessWidget {
           enableMMBScrolling: true,
           mmbScrollConfig: MMBScrollConfig(
             customScrollCursor: DefaultCustomScrollCursor(
-              cursorColor: context.textTheme.subtitle1!.color!,
+              cursorColor: context.textTheme.labelLarge!.color!,
               backgroundColor: Colors.white,
-              borderColor: context.textTheme.headline1!.color!,
+              borderColor: context.textTheme.headlineMedium!.color!,
             ),
           ),
           enableCustomMouseWheelScrolling: SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb),
@@ -39,12 +40,15 @@ class ScrollbarWrapper extends StatelessWidget {
           scrollController: controller,
           child: (kIsDesktop || kIsWeb)
               ? showScrollbar
-                  ? RawScrollbar(
-                      controller: controller,
-                      thumbColor: context.theme.colorScheme.secondary.withOpacity(0.7),
-                      thickness: 10,
-                      radius: Radius.circular(5),
-                      child: child,
+                  ? MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: RawScrollbar(
+                        controller: controller,
+                        thumbColor: context.theme.colorScheme.properSurface.withOpacity(0.5),
+                        thickness: 10,
+                        radius: Radius.circular(5),
+                        child: child,
+                      ),
                     )
                   : ScrollConfiguration(
                       behavior: ScrollConfiguration.of(context).copyWith(scrollbars: showScrollbar),

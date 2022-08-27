@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -52,23 +53,23 @@ class RegularFileOpener extends StatelessWidget {
                     return AlertDialog(
                       title: Text(
                         "Confirm save",
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: context.theme.textTheme.titleLarge,
                       ),
-                      content: Text("This file already exists.\nAre you sure you want to overwrite it?"),
-                      backgroundColor: context.theme.colorScheme.secondary,
+                      content: Text("This file already exists.\nAre you sure you want to overwrite it?", style: context.theme.textTheme.bodyLarge),
+                      backgroundColor: context.theme.colorScheme.properSurface,
                       actions: <Widget>[
                         TextButton(
-                          child: Text("Yes"),
+                          child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        TextButton(
+                          child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
                           onPressed: () async {
                             File(file.path!).copy(savePath);
                             Navigator.of(context).pop();
                             showSnackbar('Success', 'Saved attachment to $savePath!');
-                          },
-                        ),
-                        TextButton(
-                          child: Text("No"),
-                          onPressed: () {
-                            Navigator.of(context).pop();
                           },
                         ),
                       ],
@@ -100,7 +101,7 @@ class RegularFileOpener extends StatelessWidget {
           maxHeight: 140,
           maxWidth: 200,
         ),
-        color: Theme.of(context).colorScheme.secondary,
+        color: context.theme.colorScheme.properSurface,
         child: Padding(
           padding: const EdgeInsets.all(15.0),
           child: Column(
@@ -112,18 +113,18 @@ class RegularFileOpener extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyText2,
+                style: context.theme.textTheme.bodyMedium,
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Icon(
                   fileIcon,
-                  color: Theme.of(context).textTheme.bodyText2!.color,
+                  color: context.theme.colorScheme.properOnSurface,
                 ),
               ),
               Text(
                 attachment.mimeType!,
-                style: Theme.of(context).textTheme.bodyText2,
+                style: context.theme.textTheme.bodyMedium,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),

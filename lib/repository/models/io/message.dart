@@ -16,6 +16,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
+import 'package:bluebubbles/repository/models/attributed_body.dart';
 import 'package:bluebubbles/repository/models/io/attachment.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
@@ -303,6 +304,7 @@ class Message {
   List<Attachment?> attachments = [];
   List<Message> associatedMessages = [];
   bool? bigEmoji;
+  List<AttributedBody>? attributedBody;
 
   final RxInt _error = RxInt(0);
   int get error => _error.value;
@@ -320,6 +322,9 @@ class Message {
   final dbAttachments = ToMany<Attachment>();
 
   final chat = ToOne<Chat>();
+
+  String? get dbAttributedBody => attributedBody == null ? null : jsonEncode(attributedBody!.map((e) => e.toMap()).toList());
+  set dbAttributedBody(String? json) => attributedBody = json == null ? null : (jsonDecode(json) as List).map((e) => AttributedBody.fromMap(e)).toList();
 
   Message(
       {this.id,
@@ -362,7 +367,8 @@ class Message {
       this.dateDeleted,
       this.metadata,
       this.threadOriginatorGuid,
-      this.threadOriginatorPart}) {
+      this.threadOriginatorPart,
+      this.attributedBody}) {
     if (error2 != null) _error.value = error2;
     if (dateRead2 != null) _dateRead.value = dateRead2;
     if (dateDelivered2 != null) _dateDelivered.value = dateDelivered2;
@@ -389,6 +395,14 @@ class Message {
 
     List<Attachment> attachments =
         json.containsKey("attachments") ? (json['attachments'] as List).map((a) => Attachment.fromMap(a)).toList() : [];
+    List<AttributedBody>? attributedBody;
+    if (json.containsKey("attributedBody") && json["attributedBody"] != null) {
+      if (json['attributedBody'] is Map) {
+        json['attributedBody'] = [json['attributedBody']];
+      }
+
+      attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a)).toList();
+    }
 
     // Load the metadata
     dynamic metadata = json.containsKey("metadata") ? json["metadata"] : null;
@@ -458,6 +472,7 @@ class Message {
       metadata: metadata is String ? null : metadata,
       threadOriginatorGuid: json.containsKey('threadOriginatorGuid') ? json['threadOriginatorGuid'] : null,
       threadOriginatorPart: json.containsKey('threadOriginatorPart') ? json['threadOriginatorPart'] : null,
+      attributedBody: attributedBody
     );
 
     // Adds fallback getter for the ID
@@ -732,7 +747,8 @@ class Message {
       threadOriginator?.handle ??= Handle.findOne(id: threadOriginator.handleId);
       if (threadOriginator != null) associatedMessages.add(threadOriginator);
       if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
-      if (!guid!.startsWith("temp")) bloc?.threadOriginators.conditionalAdd(guid!, threadOriginatorGuid!, shouldRefresh);
+      if (!guid!.startsWith("temp"))
+        bloc?.threadOriginators.conditionalAdd(guid!, threadOriginatorGuid!, shouldRefresh);
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     return this;
@@ -829,7 +845,9 @@ class Message {
   }
 
   bool isGroupEvent() {
-    return isEmptyString(fullText) && (!hasAttachments || (itemType == 3 && groupActionType == 1)) && balloonBundleId == null;
+    return isEmptyString(fullText) &&
+        (!hasAttachments || (itemType == 3 && groupActionType == 1)) &&
+        balloonBundleId == null;
   }
 
   bool isBigEmoji() {
@@ -849,7 +867,7 @@ class Message {
   }
 
   List<Message> getReactions() {
-    return associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType)).toList();
+    return associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", ""))).toList();
   }
 
   void generateTempGuid() {
@@ -872,37 +890,8 @@ class Message {
     return chat.messages.length;
   }
 
-  void merge(Message otherMessage) {
-    if (dateCreated == null && otherMessage.dateCreated != null) {
-      dateCreated = otherMessage.dateCreated;
-    }
-    if (_dateDelivered.value == null && otherMessage._dateDelivered.value != null) {
-      _dateDelivered.value = otherMessage._dateDelivered.value;
-    }
-    if (_dateRead.value == null && otherMessage._dateRead.value != null) {
-      _dateRead.value = otherMessage._dateRead.value;
-    }
-    if (dateDeleted == null && otherMessage.dateDeleted != null) {
-      dateDeleted = otherMessage.dateDeleted;
-    }
-    if (datePlayed == null && otherMessage.datePlayed != null) {
-      datePlayed = otherMessage.datePlayed;
-    }
-    if (metadata == null && otherMessage.metadata != null) {
-      metadata = otherMessage.metadata;
-    }
-    if (originalROWID == null && otherMessage.originalROWID != null) {
-      originalROWID = otherMessage.originalROWID;
-    }
-    if (!hasAttachments && otherMessage.hasAttachments) {
-      hasAttachments = otherMessage.hasAttachments;
-    }
-    if (!hasReactions && otherMessage.hasReactions) {
-      hasReactions = otherMessage.hasReactions;
-    }
-    if (_error.value == 0 && otherMessage._error.value != 0) {
-      _error.value = otherMessage._error.value;
-    }
+  void mergeWith(Message otherMessage) {
+    Message.merge(this, otherMessage);
   }
 
   /// Get what shape the reply line should be
@@ -983,20 +972,20 @@ class Message {
     final fontSizeFactor = isBigEmoji() ? 4.0 : 1.0;
     final constraints = BoxConstraints(
       maxWidth: maxWidthOverride ?? CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
-      minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodyText2!.fontSize! * fontSizeFactor,
+      minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodySmall!.fontSize! * fontSizeFactor,
     );
     final renderParagraph = RichText(
       text: TextSpan(
         text: textOverride ?? fullText,
-        style: context.theme.textTheme.bodyText2!.apply(color: Colors.white, fontSizeFactor: fontSizeFactor),
+        style: context.theme.textTheme.bodySmall!.apply(color: Colors.white, fontSizeFactor: fontSizeFactor),
       ),
     ).createRenderObject(context);
     // get the text size
     Size size = renderParagraph.getDryLayout(constraints);
     // if the text is shorter than the full width, add 28 to account for the
     // container margins
-    if (size.height < context.theme.textTheme.bodyText2!.fontSize! * 2 * fontSizeFactor ||
-        (subject != null && size.height < context.theme.textTheme.bodyText2!.fontSize! * 3 * fontSizeFactor)) {
+    if (size.height < context.theme.textTheme.bodySmall!.fontSize! * 2 * fontSizeFactor ||
+        (subject != null && size.height < context.theme.textTheme.bodySmall!.fontSize! * 3 * fontSizeFactor)) {
       size = Size(size.width + 28, size.height);
     }
     // if we have a URL preview, extend to the full width
@@ -1012,6 +1001,123 @@ class Message {
     // cache the value
     ChatBloc().cachedMessageBubbleSizes[guid!] = size;
     return size;
+  }
+
+  static Message merge(Message existing, Message newMessage) {
+    existing.id ??= newMessage.id;
+    existing.guid ??= newMessage.guid;
+  
+    // Update date created
+    if ((existing.dateCreated == null && newMessage.dateCreated != null) ||
+        (existing.dateCreated != null &&
+            newMessage.dateCreated != null &&
+            existing.dateCreated!.millisecondsSinceEpoch < newMessage.dateCreated!.millisecondsSinceEpoch)) {
+      existing.dateCreated = newMessage.dateCreated;
+    }
+
+    // Update date delivered
+    if ((existing._dateDelivered.value == null && newMessage._dateDelivered.value != null) ||
+        (existing._dateDelivered.value != null &&
+            newMessage.dateDelivered != null &&
+            existing._dateDelivered.value!.millisecondsSinceEpoch <
+                newMessage._dateDelivered.value!.millisecondsSinceEpoch)) {
+      existing._dateDelivered.value = newMessage.dateDelivered;
+    }
+
+    // Update date delivered
+    if ((existing._dateRead.value == null && newMessage._dateRead.value != null) ||
+        (existing._dateRead.value != null &&
+            newMessage._dateRead.value != null &&
+            existing._dateRead.value!.millisecondsSinceEpoch < newMessage._dateRead.value!.millisecondsSinceEpoch)) {
+      existing._dateRead.value = newMessage.dateRead;
+    }
+
+    // Update date played
+    if ((existing.datePlayed == null && newMessage.datePlayed != null) ||
+        (existing.datePlayed != null &&
+            newMessage.datePlayed != null &&
+            existing.datePlayed!.millisecondsSinceEpoch < newMessage.datePlayed!.millisecondsSinceEpoch)) {
+      existing.datePlayed = newMessage.datePlayed;
+    }
+
+    // Update date deleted
+    if ((existing.dateDeleted == null && newMessage.dateDeleted != null) ||
+        (existing.dateDeleted != null &&
+            newMessage.dateDeleted != null &&
+            existing.dateDeleted!.millisecondsSinceEpoch < newMessage.dateDeleted!.millisecondsSinceEpoch)) {
+      existing.dateDeleted = newMessage.dateDeleted;
+    }
+
+    // Update error
+    if (existing._error.value != newMessage._error.value) {
+      existing._error.value = newMessage._error.value;
+    }
+
+    // Update has Dd results
+    if ((existing.hasDdResults == null && newMessage.hasDdResults != null) ||
+        (!existing.hasDdResults! && newMessage.hasDdResults!)) {
+      existing.hasDdResults = newMessage.hasDdResults;
+    }
+
+    // Update metadata
+    existing.metadata = mergeTopLevelDicts(existing.metadata, newMessage.metadata);
+
+    // Update original ROWID
+    if (existing.originalROWID == null && newMessage.originalROWID != null) {
+      existing.originalROWID = newMessage.originalROWID;
+    }
+
+    // Update attachments flag
+    if (!existing.hasAttachments && newMessage.hasAttachments) {
+      existing.hasAttachments = newMessage.hasAttachments;
+    }
+
+    // Update has reactions flag
+    if (!existing.hasReactions && newMessage.hasReactions) {
+      existing.hasReactions = newMessage.hasReactions;
+    }
+
+    // Update chat
+    if (!existing.chat.hasValue && newMessage.chat.hasValue) {
+      existing.chat.target = newMessage.chat.target;
+    }
+
+    // Update handle
+    if (existing.handle?.id == null && newMessage.handle?.id != null) {
+      existing.handle = newMessage.handle;
+    }
+
+    // Update attachments
+    if (existing.dbAttachments.isEmpty && newMessage.dbAttachments.isNotEmpty) {
+      existing.dbAttachments.addAll(newMessage.dbAttachments);
+    }
+
+    return existing;
+  }
+
+  /// Checks if Message [b] is newer than Message [a], based on date
+  static bool isNewer(Message a, Message b) {
+    if (a.id == null && b.id != null) return true;
+
+    // Check all date created cases
+    if (a.dateCreated == null && b.dateCreated != null) return true;
+    if (a.dateCreated != null && b.dateCreated == null) return false;
+    if (a.dateCreated!.millisecondsSinceEpoch < b.dateCreated!.millisecondsSinceEpoch) return true;
+    if (a.dateCreated!.millisecondsSinceEpoch > b.dateCreated!.millisecondsSinceEpoch) return false;
+
+    // Check all date delivered cases
+    if (a.dateDelivered == null && b.dateDelivered != null) return true;
+    if (a.dateDelivered != null && b.dateDelivered == null) return false;
+    if (a.dateDelivered!.millisecondsSinceEpoch < b.dateDelivered!.millisecondsSinceEpoch) return true;
+    if (a.dateDelivered!.millisecondsSinceEpoch > b.dateDelivered!.millisecondsSinceEpoch) return false;
+
+    // Check all date read cases
+    if (a.dateRead == null && b.dateRead != null) return true;
+    if (a.dateRead != null && b.dateRead == null) return false;
+    if (a.dateRead!.millisecondsSinceEpoch < b.dateRead!.millisecondsSinceEpoch) return true;
+    if (a.dateRead!.millisecondsSinceEpoch > b.dateRead!.millisecondsSinceEpoch) return false;
+
+    return false;
   }
 
   Map<String, dynamic> toMap({bool includeObjects = false}) {

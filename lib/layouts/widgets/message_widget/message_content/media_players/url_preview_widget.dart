@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -128,11 +129,11 @@ class UrlPreviewWidget extends StatelessWidget {
             if (!kIsWeb)
               Obx(() {
                 if (controller.data.value?.image != null && controller.data.value!.image!.isNotEmpty) {
-                  if (controller.data.value!.image!.startsWith("/")) {
+                  if ((kIsDesktop && File(controller.data.value!.image!).existsSync()) || controller.data.value!.image!.startsWith("/")) {
                     dynamic file = File(controller.data.value!.image!);
                     return Image.file(file,
                         filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
-                  } else {
+                  } else if (controller.data.value!.image!.isURL) {
                     return Image.network(controller.data.value!.image!,
                         filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
                   }
@@ -157,18 +158,16 @@ class UrlPreviewWidget extends StatelessWidget {
                         Obx(() {
                           if (controller.data.value == null && !controller.gotError.value) {
                             return Text("Loading Preview...",
-                                style: Theme.of(context).textTheme.bodyText1!.apply(
-                                    fontWeightDelta: 2,
-                                    color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null)
+                                style: context.theme.textTheme.bodyMedium!.apply(
+                                    fontWeightDelta: 2)
                             );
                           } else if (controller.data.value != null &&
                               controller.data.value!.title != null &&
                               controller.data.value!.title != "Image Preview") {
                             return Text(
                               controller.data.value?.title ?? "<No Title>",
-                              style: Theme.of(context).textTheme.bodyText1!.apply(
-                                  fontWeightDelta: 2,
-                                  color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                              style: context.theme.textTheme.bodyMedium!.apply(
+                                  fontWeightDelta: 2),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 2,
                             );
@@ -176,9 +175,8 @@ class UrlPreviewWidget extends StatelessWidget {
                             return Container();
                           } else {
                             return Text("Unable to Load Preview",
-                                style: Theme.of(context).textTheme.bodyText1!.apply(
-                                    fontWeightDelta: 2,
-                                    color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null)
+                                style: context.theme.textTheme.bodyMedium!.apply(
+                                    fontWeightDelta: 2)
                             );
                           }
                         }),
@@ -189,9 +187,8 @@ class UrlPreviewWidget extends StatelessWidget {
                                   controller.data.value!.description!,
                                   maxLines: 3,
                                   overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyText1!.apply(
-                                      fontSizeDelta: -5,
-                                      color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                                  style: context.theme.textTheme.labelMedium!.copyWith(
+                                      fontWeight: FontWeight.normal),
                                 ))
                             : Container()),
                         Obx(() => Padding(
@@ -199,7 +196,8 @@ class UrlPreviewWidget extends StatelessWidget {
                                   top: (controller.data.value?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
                               child: Text(
                                 message.fullText.isURL ? message.fullText : (Uri.tryParse(message.getUrl()!)?.host ?? ""),
-                                style: Theme.of(context).textTheme.subtitle2!.apply(color: SettingsManager().isFullMonet ? Theme.of(context).colorScheme.onSecondary : null),
+                                style: context.theme.textTheme.labelMedium!.copyWith(
+                                    fontWeight: FontWeight.normal, color: context.theme.colorScheme.outline),
                                 overflow: TextOverflow.clip,
                                 maxLines: 1,
                               ),
@@ -229,7 +227,7 @@ class UrlPreviewWidget extends StatelessWidget {
             if (hideContent)
               Positioned.fill(
                 child: Container(
-                  color: Theme.of(context).colorScheme.secondary,
+                  color: context.theme.colorScheme.properSurface,
                 ),
               ),
             if (hideContent && !hideType)
@@ -256,7 +254,7 @@ class UrlPreviewWidget extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Material(
-                  color: Theme.of(context).colorScheme.secondary,
+                  color: context.theme.colorScheme.properSurface,
                   child: InkResponse(
                     borderRadius: BorderRadius.circular(20),
                     onTap: () async {

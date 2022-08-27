@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -401,14 +402,14 @@ class _MessageState extends State<MessageWidget> {
                               min(replyThreshold, offset.value) * 0.4,
                             ),
                           ),
-                          color: context.theme.colorScheme.secondary,
+                          color: context.theme.colorScheme.properSurface,
                         ),
                         child: AnimatedSize(
                           duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
                           child: Icon(
                             SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
                             size: min(replyThreshold, offset.value) * (offset.value >= replyThreshold ? 0.5 : 0.4),
-                            color: context.textTheme.headline1!.color,
+                            color: context.theme.colorScheme.properOnSurface,
                           ),
                         ),
                       ),

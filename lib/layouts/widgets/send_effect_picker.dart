@@ -55,7 +55,7 @@ void sendEffectAction(
   );
   message.generateTempGuid();
   final GlobalKey key = GlobalKey();
-  CustomAnimationControl animController = CustomAnimationControl.stop;
+  Control animController = Control.stop;
   final FireworkController fireworkController = FireworkController(vsync: provider, windowSize: Size(CustomNavigator.width(context), context.height));
   final CelebrationController celebrationController = CelebrationController(vsync: provider, windowSize: Size(CustomNavigator.width(context), context.height));
   final ConfettiController confettiController = ConfettiController(duration: Duration(seconds: 1));
@@ -76,14 +76,13 @@ void sendEffectAction(
               },
               child: AnnotatedRegion<SystemUiOverlayStyle>(
                 value: SystemUiOverlayStyle(
-                  systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
-                  systemNavigationBarIconBrightness:
-                  Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+                  systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+                  systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
                   statusBarColor: Colors.transparent, // status bar color
-                  statusBarIconBrightness: context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+                  statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
                 ),
                 child: Scaffold(
-                  backgroundColor: context.theme.backgroundColor.withOpacity(0.3),
+                  backgroundColor: context.theme.colorScheme.background.withOpacity(0.3),
                   body: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                     child: StatefulBuilder(
@@ -119,8 +118,7 @@ void sendEffectAction(
                                       child: Column(children: [
                                         Text(
                                           "Send with effect",
-                                          style: Theme.of(context).textTheme.subtitle1!,
-                                          textScaleFactor: 1.75,
+                                          style: context.theme.textTheme.headlineSmall!,
                                         ),
                                         Padding(
                                           padding: const EdgeInsets.symmetric(vertical: 20.0),
@@ -163,7 +161,7 @@ void sendEffectAction(
                                                             setState(() {
                                                               bubbleSelected = bubbleEffects[index];
                                                             });
-                                                            animController = CustomAnimationControl.playFromStart;
+                                                            animController = Control.playFromStart;
                                                           },
                                                           child: Container(
                                                             width: CustomNavigator.width(context) / 3,
@@ -173,7 +171,7 @@ void sendEffectAction(
                                                               border:
                                                               Border.fromBorderSide(bubbleSelected == bubbleEffects[index]
                                                                   ? BorderSide(
-                                                                color: Theme.of(context).primaryColor,
+                                                                color: context.theme.colorScheme.primary,
                                                                 width: 1.5,
                                                                 style: BorderStyle.solid,
                                                               )
@@ -259,7 +257,7 @@ void sendEffectAction(
                                                               border:
                                                               Border.fromBorderSide(screenSelected == screenEffects[index]
                                                                   ? BorderSide(
-                                                                color: Theme.of(context).primaryColor,
+                                                                color: context.theme.colorScheme.primary,
                                                                 width: 1.5,
                                                                 style: BorderStyle.solid,
                                                               )
@@ -298,7 +296,7 @@ void sendEffectAction(
                                                     MessageEffect.none,
                                                 controller: animController, updateController: () {
                                               setState(() {
-                                                animController = CustomAnimationControl.stop;
+                                                animController = Control.stop;
                                               });
                                             }),
                                           ),
@@ -309,11 +307,10 @@ void sendEffectAction(
                                             typeSelected == "bubble"
                                                 ? "Send with $bubbleSelected"
                                                 : "Send with $screenSelected",
-                                            style: Theme.of(context)
+                                            style: context.theme
                                                 .textTheme
-                                                .bodyText1!
-                                                .apply(color: Theme.of(context).primaryColor),
-                                            textScaleFactor: 1.15,
+                                                .titleLarge!
+                                                .apply(color: context.theme.colorScheme.primary),
                                           ),
                                           onPressed: () async {
                                             Navigator.of(context).pop();

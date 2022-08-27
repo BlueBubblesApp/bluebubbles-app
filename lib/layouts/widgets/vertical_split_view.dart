@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/main.dart';
@@ -82,7 +83,7 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
                   child: Container(
-                      color: Theme.of(context).colorScheme.secondary,
+                      color: context.theme.colorScheme.properSurface,
                       child: SizedBox(
                         width: widget.dividerWidth,
                         height: constraints.maxHeight,
@@ -92,17 +93,17 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
                           children: [
                             Container(height: 4, width: 4, decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(25),
-                              color: Theme.of(context).textTheme.subtitle1?.color,
+                              color: context.theme.colorScheme.properOnSurface,
                             )),
                             SizedBox(height: 20,),
                             Container(height: 4, width: 4, decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(25),
-                              color: Theme.of(context).textTheme.subtitle1?.color,
+                              color: context.theme.colorScheme.properOnSurface,
                             )),
                             SizedBox(height: 20,),
                             Container(height: 4, width: 4, decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(25),
-                              color: Theme.of(context).textTheme.subtitle1?.color,
+                              color: context.theme.colorScheme.properOnSurface,
                             )),
                           ],
                         ),
@@ -115,7 +116,7 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
               ) : SizedBox(
                 width: widget.dividerWidth,
                 height: constraints.maxHeight,
-                child: Container(color: Theme.of(context).colorScheme.secondary)
+                child: Container(color: context.theme.colorScheme.properSurface)
               ),
               SizedBox(
                 width: _width2,

@@ -1,4 +1,6 @@
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class FailedToConnectDialog extends StatelessWidget {
   const FailedToConnectDialog({Key? key, required this.onDismiss}) : super(key: key);
@@ -12,17 +14,19 @@ class FailedToConnectDialog extends StatelessWidget {
         return true;
       },
       child: AlertDialog(
-        title: Text("Failed to Connect!"),
+        backgroundColor: context.theme.colorScheme.properSurface,
+        title: Text(
+          "Failed To Connect!",
+          style: context.theme.textTheme.titleLarge,
+        ),
         content: Text(
-          "Please make sure you are connected to wifi and that your server is online!",
+          "Please make sure you are connected to the internet and your server is online!",
+          style: context.theme.textTheme.bodyLarge,
         ),
         actions: [
           TextButton(
-            child: Text(
-              "Ok",
-              style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
-            ),
-            onPressed: onDismiss,
+            child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+            onPressed: onDismiss
           ),
         ],
       ),
