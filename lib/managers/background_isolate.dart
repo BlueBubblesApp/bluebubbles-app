@@ -34,6 +34,7 @@ abstract class BackgroundIsolateInterface {
   }
 }
 
+@pragma('vm:entry-point')
 callbackHandler() async {
   // can't use logger here
   debugPrint("(ISOLATE) Starting up...");

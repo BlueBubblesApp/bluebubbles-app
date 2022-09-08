@@ -144,6 +144,7 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
+@pragma('vm:entry-point')
 //ignore: prefer_void_to_null
 Future<Null> main() async {
   await initApp(false);
