@@ -126,6 +126,7 @@ class MethodChannelInterface {
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 
+        if (data == null) return Future.value("");
         // send data to the UI thread if it is active, otherwise handle in the isolate
         final SendPort? send = IsolateNameServer.lookupPortByName('bg_isolate');
         if (send != null) {
