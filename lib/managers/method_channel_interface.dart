@@ -332,12 +332,16 @@ class MethodChannelInterface {
               Tween<double> color1 = Tween<double>(begin: 0, end: difference);
               Tween<double> color2 = Tween<double>(begin: 1 - difference, end: 1);
               ConversationViewMixin.gradientTween.value = MovieTween()
-                ..chain(color1)
-                ..chain(color2);
+                ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                    .tween("color1", color1)
+                ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                    .tween("color2", color2);
             } else {
               ConversationViewMixin.gradientTween.value = MovieTween()
-                ..chain(Tween<double>(begin: 0.0, end: 0.2))
-                ..chain(Tween<double>(begin: 0.8, end: 1.0));
+                ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                    .tween("color1", Tween<double>(begin: 0, end: 0.2))
+                ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                    .tween("color2", Tween<double>(begin: 0.8, end: 1)));
             }
           } else {
             if (primaryPercent != 0.5 && lightBgPercent != 0.5) {
@@ -345,12 +349,16 @@ class MethodChannelInterface {
               Tween<double> color1 = Tween<double>(begin: 0.0, end: difference);
               Tween<double> color2 = Tween<double>(begin: 1.0 - difference, end: 1.0);
               ConversationViewMixin.gradientTween.value = MovieTween()
-                ..chain(color1)
-                ..chain(color2);
+              ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                  .tween("color1", color1)
+              ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                  .tween("color2", color2);
             } else {
               ConversationViewMixin.gradientTween.value = MovieTween()
-                ..chain(Tween<double>(begin: 0.0, end: 0.2))
-                ..chain(Tween<double>(begin: 0.8, end: 1.0));
+              ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                  .tween("color1", Tween<double>(begin: 0, end: 0.2))
+              ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                  .tween("color2", Tween<double>(begin: 0.8, end: 1)));
             }
           }
           SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
