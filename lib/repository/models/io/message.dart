@@ -493,6 +493,7 @@ class Message {
       Message? existing = Message.findOne(guid: guid);
       if (existing != null) {
         id = existing.id;
+        text ??= existing.text;
       }
 
       // Save the participant & set the handle ID to the new participant
@@ -543,6 +544,7 @@ class Message {
         final existingMessage = existingMessages.firstWhereOrNull((e) => e.guid == m.guid);
         if (existingMessage != null) {
           m.id = existingMessage.id;
+          m.text ??= existingMessage.text;
         }
       }
 
