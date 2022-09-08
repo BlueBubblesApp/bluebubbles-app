@@ -341,7 +341,7 @@ class MethodChannelInterface {
                 ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
                     .tween("color1", Tween<double>(begin: 0, end: 0.2))
                 ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
-                    .tween("color2", Tween<double>(begin: 0.8, end: 1)));
+                    .tween("color2", Tween<double>(begin: 0.8, end: 1));
             }
           } else {
             if (primaryPercent != 0.5 && lightBgPercent != 0.5) {
@@ -358,7 +358,7 @@ class MethodChannelInterface {
               ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
                   .tween("color1", Tween<double>(begin: 0, end: 0.2))
               ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
-                  .tween("color2", Tween<double>(begin: 0.8, end: 1)));
+                  .tween("color2", Tween<double>(begin: 0.8, end: 1));
             }
           }
           SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
