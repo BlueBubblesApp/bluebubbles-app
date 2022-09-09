@@ -115,7 +115,7 @@ class IncrementalSyncManager extends SyncManager {
           before: syncStart,
           offset: i * batchSize,
           limit: batchSize,
-          withQuery: ["chats", "chats.participants", "attachments"]);
+          withQuery: ["chats", "chats.participants", "attachments", "attributedBody"]);
 
       int messageCount = messages.data['data'].length;
       addToOutput('Page ${i + 1} returned $messageCount message(s)...',

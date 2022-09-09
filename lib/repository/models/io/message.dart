@@ -430,7 +430,7 @@ class Message {
       guid: json["guid"],
       handleId: (json["handleId"] != null) ? json["handleId"] : 0,
       otherHandle: (json["otherHandle"] != null) ? json["otherHandle"] : null,
-      text: sanitizeString(json["text"]),
+      text: sanitizeString(json["text"] ?? attributedBody?.first.string),
       subject: json.containsKey("subject") ? json["subject"] : null,
       country: json.containsKey("country") ? json["country"] : null,
       error2: json.containsKey("_error") ? json["_error"] : 0,
@@ -493,6 +493,7 @@ class Message {
       Message? existing = Message.findOne(guid: guid);
       if (existing != null) {
         id = existing.id;
+        text ??= existing.text;
       }
 
       // Save the participant & set the handle ID to the new participant
@@ -543,6 +544,7 @@ class Message {
         final existingMessage = existingMessages.firstWhereOrNull((e) => e.guid == m.guid);
         if (existingMessage != null) {
           m.id = existingMessage.id;
+          m.text ??= existingMessage.text;
         }
       }
 

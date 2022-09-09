@@ -1,4 +1,5 @@
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
@@ -140,7 +141,7 @@ List<Attachment> syncAttachments(List<Attachment> attachments) {
   return attachments;
 }
 
-List<Message> syncMessages(List<Message> messages) {
+List<Message> syncMessages(Chat c, List<Message> messages) {
   // Get a list of the GUIDs
   List<String> inputMessageGuids = messages.map((element) => element.guid!).toList();
 
@@ -152,6 +153,9 @@ List<Message> syncMessages(List<Message> messages) {
   // Insert any non-existing messages
   List<Message> newMessages = messages.where(
     (element) => !existingMessageGuids.contains(element.guid)).toList();
+  for (Message m in newMessages) {
+    MessageManager().addMessage(c, m);
+  }
   messageBox.putMany(newMessages);
 
   // Update any existing messages
