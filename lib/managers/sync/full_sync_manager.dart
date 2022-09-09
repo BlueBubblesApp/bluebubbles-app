@@ -177,7 +177,7 @@ class FullSyncManager extends SyncManager {
       // Fetch the messages and throw an error if we don't get back a good response.
       // Throwing an error should _not_ cancel the sync
       Response messagePage = await api.chatMessages(chatGuid,
-          after: 0, before: endTimestamp, offset: i * countPerBatch, limit: countPerBatch, withQuery: "attachments,attributedBody");
+          after: 0, before: endTimestamp, offset: i * countPerBatch, limit: countPerBatch, withQuery: "attachments,message.attributedBody");
       dynamic data = messagePage.data;
       if (messagePage.statusCode != 200) {
         throw MessageRequestException(

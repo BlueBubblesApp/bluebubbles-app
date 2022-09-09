@@ -430,7 +430,7 @@ class Message {
       guid: json["guid"],
       handleId: (json["handleId"] != null) ? json["handleId"] : 0,
       otherHandle: (json["otherHandle"] != null) ? json["otherHandle"] : null,
-      text: sanitizeString(json["text"]),
+      text: sanitizeString(json["text"] ?? attributedBody?.first.string),
       subject: json.containsKey("subject") ? json["subject"] : null,
       country: json.containsKey("country") ? json["country"] : null,
       error2: json.containsKey("_error") ? json["_error"] : 0,
