@@ -195,7 +195,7 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
       }
 
       // 4. Sync the messages & insert synced attachments
-      List<Message> syncedMessages = syncMessages(inputMessages);
+      List<Message> syncedMessages = syncMessages(inputChat, inputMessages);
       for (var message in syncedMessages) {
         // Update related attachments with synced versions
         for (var attachment in message.attachments) {
