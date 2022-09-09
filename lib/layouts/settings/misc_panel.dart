@@ -10,9 +10,11 @@ import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:secure_application/secure_application.dart';
+import 'package:universal_io/io.dart';
 
 class MiscPanel extends StatelessWidget {
   final RxnBool refreshingContacts = RxnBool();
@@ -337,6 +339,32 @@ class MiscPanel extends StatelessWidget {
                       child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
+                  if (Platform.isAndroid)
+                    Obx(() =>
+                        SettingsSwitch(
+                          onChanged: (bool val) {
+                            SettingsManager().settings.allowUpsideDownRotation.value = val;
+                            saveSettings();
+                            SystemChrome.setPreferredOrientations([
+                              DeviceOrientation.landscapeRight,
+                              DeviceOrientation.landscapeLeft,
+                              DeviceOrientation.portraitUp,
+                              if (SettingsManager().settings.allowUpsideDownRotation.value)
+                                DeviceOrientation.portraitDown,
+                            ]);
+                          },
+                          initialVal: SettingsManager().settings.allowUpsideDownRotation.value,
+                          title: "Alllow Upside-Down Rotation",
+                          backgroundColor: tileColor,
+                        )),
+                  if (Platform.isAndroid)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
                   Obx(() {
                     if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return SettingsTile(

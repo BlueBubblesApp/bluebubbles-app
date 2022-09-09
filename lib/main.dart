@@ -991,7 +991,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   DeviceOrientation.landscapeRight,
                   DeviceOrientation.landscapeLeft,
                   DeviceOrientation.portraitUp,
-                  DeviceOrientation.portraitDown,
+                  if (SettingsManager().settings.allowUpsideDownRotation.value)
+                    DeviceOrientation.portraitDown,
                 ]);
                 if (!serverCompatible && kIsWeb) {
                   return FailureToStart(
