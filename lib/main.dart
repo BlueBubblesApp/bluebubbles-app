@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -54,6 +55,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart' hi
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
+import 'package:idb_shim/idb_browser.dart';
+import 'package:idb_shim/idb_shim.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:local_notifier/local_notifier.dart';
@@ -111,6 +114,7 @@ final RxnDouble progress = RxnDouble();
 final RxnInt totalSize = RxnInt();
 late final CorePalette? monetPalette;
 Color? windowsAccentColor;
+late final Database db;
 
 String? _recentIntent;
 
@@ -140,6 +144,7 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
+@pragma('vm:entry-point')
 //ignore: prefer_void_to_null
 Future<Null> main() async {
   await initApp(false);
@@ -189,11 +194,9 @@ Future<Null> initApp(bool isBubble) async {
     if (basename(appData.absolute.path) == "bluebubbles") {
       Directory oldAppData =
       Platform.isWindows ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app")) : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
-      if (oldAppData.existsSync() && !appData.existsSync()) {
+      if (await oldAppData.exists() && !await Directory(join(appData.path, "objectbox")).exists()) {
         Logger.info("Copying appData to new directory");
-        copyDirectory(oldAppData, appData);
-        Logger.info("Deleting old appData directory");
-        Directory(dirname(oldAppData.absolute.path)).deleteSync(recursive: true);
+        await copyDirectory(oldAppData, appData);
         Logger.info("Finished migrating appData");
       }
     }
@@ -229,14 +232,14 @@ Future<Null> initApp(bool isBubble) async {
           customStorePath ??= "C:\\bluebubbles_app";
           objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
           if (kIsDesktop) {
-            objectBoxDirectory.createSync(recursive: true);
+            await objectBoxDirectory.create(recursive: true);
           }
           Logger.info("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
           store = await openStore(directory: join(customStorePath, "objectbox"));
         } else {
           try {
             if (kIsDesktop) {
-              Directory(join(documentsDirectory.path, 'objectbox')).createSync(recursive: true);
+              await Directory(join(documentsDirectory.path, 'objectbox')).create(recursive: true);
             }
             Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
             store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
@@ -248,7 +251,7 @@ Future<Null> initApp(bool isBubble) async {
               customStorePath ??= "C:\\bluebubbles_app";
               prefs.setBool("use-custom-path", true);
               objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-              objectBoxDirectory.createSync(recursive: true);
+              await objectBoxDirectory.create(recursive: true);
               Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
               store = await openStore(directory: join(customStorePath, 'objectbox'));
             }
@@ -271,7 +274,7 @@ Future<Null> initApp(bool isBubble) async {
         }
       }
 
-      if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
+      if (!(await objectBoxDirectory.exists()) && await File(sqlitePath).exists()) {
         runApp(UpgradingDB());
         print("Converting sqflite to ObjectBox...");
         Stopwatch s = Stopwatch();
@@ -280,7 +283,7 @@ Future<Null> initApp(bool isBubble) async {
         s.stop();
         Logger.info("Migrated in ${s.elapsedMilliseconds} ms");
       } else {
-        if (File(sqlitePath).existsSync() && prefs.getBool('objectbox-migration') != true) {
+        if (await File(sqlitePath).exists() && prefs.getBool('objectbox-migration') != true) {
           runApp(UpgradingDB());
           print("Converting sqflite to ObjectBox...");
           Stopwatch s = Stopwatch();
@@ -408,6 +411,30 @@ Future<Null> initApp(bool isBubble) async {
       } on StateError catch (_) {
         fontExistsOnDisk.value = false;
       }
+    } else if (kIsWeb) {
+      final idbFactory = idbFactoryBrowser;
+      idbFactory.open("BlueBubbles.db", version: 1, onUpgradeNeeded: (VersionChangeEvent e) {
+        final db = (e.target as OpenDBRequest).result;
+        if (!db.objectStoreNames.contains("BBStore")) {
+          db.createObjectStore("BBStore");
+        }
+      }).then((_db) async {
+        db = _db;
+        final txn = db.transaction("BBStore", idbModeReadOnly);
+        final store = txn.objectStore("BBStore");
+        Uint8List? bytes = await store.getObject("iosFont") as Uint8List?;
+        await txn.completed;
+
+        if (!isNullOrEmpty(bytes)!) {
+          fontExistsOnDisk.value = true;
+          final fontLoader = FontLoader("Apple Color Emoji");
+          final cachedFontBytes = ByteData.view(bytes!.buffer);
+          fontLoader.addFont(
+            Future<ByteData>.value(cachedFontBytes),
+          );
+          await fontLoader.load();
+        }
+      });
     }
 
     if (kIsDesktop) {
@@ -639,9 +666,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       if (Platform.isWindows) {
 
         // Delete temp dir in case any notif icons weren't cleared
-        getApplicationSupportDirectory().then((d) {
+        getApplicationSupportDirectory().then((d) async {
           Directory temp = Directory(join(d.path, "temp"));
-          if (temp.existsSync()) temp.deleteSync(recursive: true);
+          if (await temp.exists()) await temp.delete(recursive: true);
         });
       }
       Future.delayed(Duration.zero, () async {
@@ -723,7 +750,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
       if (kIsWeb && SettingsManager().settings.finishedSetup.value) {
         String? str = await SettingsManager().getServerVersion();
-        ver.Version version = ver.Version.parse(str);
+        ver.Version version = ver.Version.parse(str!);
         int sum = version.major * 100 + version.minor * 21 + version.patch;
         if (sum < 42) {
           setState(() {
@@ -970,7 +997,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   DeviceOrientation.landscapeRight,
                   DeviceOrientation.landscapeLeft,
                   DeviceOrientation.portraitUp,
-                  DeviceOrientation.portraitDown,
+                  if (SettingsManager().settings.allowUpsideDownRotation.value)
+                    DeviceOrientation.portraitDown,
                 ]);
                 if (!serverCompatible && kIsWeb) {
                   return FailureToStart(
@@ -1016,51 +1044,54 @@ Future<void> initSystemTray() async {
   // We first init the systray menu and then add the menu entries
   await systemTray.initSystemTray(title: "BlueBubbles", iconPath: path, toolTip: "BlueBubbles");
 
-  await systemTray.setContextMenu(
+  final Menu menu = Menu();
+  await menu.buildFrom(
     [
-      MenuItem(
+      MenuItemLable(
         label: 'Open App',
-        onClicked: () async {
+        onClicked: (_) async {
           LifeCycleManager().opened(null);
           await WindowManager.instance.show();
         },
       ),
-      MenuItem(
+      MenuItemLable(
         label: 'Hide App',
-        onClicked: () async {
+        onClicked: (_) async {
           LifeCycleManager().close();
           await WindowManager.instance.hide();
         },
       ),
-      MenuItem(
+      MenuItemLable(
         label: 'Close App',
-        onClicked: () async {
+        onClicked: (_) async {
           await WindowManager.instance.close();
         },
       ),
-    ],
+    ]
   );
+
+  await systemTray.setContextMenu(menu);
 
   // handle system tray event
   systemTray.registerSystemTrayEventHandler((eventName) async {
     switch (eventName) {
-      case 'leftMouseUp':
+      case 'click':
         await WindowManager.instance.show();
         break;
-      case "rightMouseUp":
+      case "right-click":
         await systemTray.popUpContextMenu();
         break;
     }
   });
 }
 
-void copyDirectory(Directory source, Directory destination) => source.listSync(recursive: false).forEach((element) {
+Future<void> copyDirectory(Directory source, Directory destination) async => await source.list(recursive: false).forEach((element) async {
       if (element is Directory) {
         Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
-        newDirectory.createSync();
+        await newDirectory.create();
 
-        copyDirectory(element.absolute, newDirectory);
+        await copyDirectory(element.absolute, newDirectory);
       } else if (element is File) {
-        element.copySync(join(destination.path, basename(element.path)));
+        await element.copy(join(destination.path, basename(element.path)));
       }
     });

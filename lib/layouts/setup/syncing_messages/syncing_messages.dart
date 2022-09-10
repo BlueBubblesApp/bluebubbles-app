@@ -15,7 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:simple_animations/stateless_animation/custom_animation.dart';
+import 'package:simple_animations/simple_animations.dart';
 import 'package:tuple/tuple.dart';
 
 class SyncingMessages extends StatefulWidget {
@@ -29,7 +29,7 @@ class SyncingMessages extends StatefulWidget {
 class _SyncingMessagesState extends State<SyncingMessages> {
   final confettiController = ConfettiController(duration: Duration(milliseconds: 500));
   bool hasPlayed = false;
-  CustomAnimationControl controller = CustomAnimationControl.mirror;
+  Control controller = Control.mirror;
   Tween<double> tween = Tween<double>(begin: 0, end: 5);
   late FullSyncManager syncManager;
 
@@ -188,12 +188,12 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                CustomAnimation<double>(
+                                CustomAnimationBuilder<double>(
                                   control: controller,
                                   tween: tween,
                                   duration: Duration(milliseconds: 600),
                                   curve: Curves.easeOut,
-                                  builder: (context, _, anim) {
+                                  builder: (context, anim, _) {
                                     return Padding(
                                       padding: EdgeInsets.only(left: 0.0),
                                       child: Icon(Icons.check, color: Colors.white, size: 25),

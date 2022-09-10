@@ -740,6 +740,7 @@ class ChatListState extends State<ChatList> {
                                           chat.muteType = null;
                                           chat.muteArgs = null;
                                           chat.save(updateMuteType: true, updateMuteArgs: true);
+                                          if (mounted) setState(() {});
                                         } else {
                                           final messageDate = await showDatePicker(
                                               context: context,
@@ -748,7 +749,7 @@ class ChatListState extends State<ChatList> {
                                               lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
                                           if (messageDate != null) {
                                             final messageTime =
-                                            await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                                            await showTimePicker(context: Get.context!, initialTime: TimeOfDay.now());
                                             if (messageTime != null) {
                                               final finalDate = DateTime(messageDate.year, messageDate.month,
                                                   messageDate.day, messageTime.hour, messageTime.minute);

@@ -95,7 +95,7 @@ class Reaction {
         if (msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) {
           output.add(msg);
         }
-      } else if (msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) {
+      } else if (kIsWeb && msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) {
         output.add(msg);
       }
     }

@@ -17,7 +17,6 @@ import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -27,9 +26,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:universal_io/io.dart';
 
 class CupertinoConversationList extends StatefulWidget {
   const CupertinoConversationList({Key? key, required this.parent}) : super(key: key);
@@ -203,7 +202,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                       children: <Widget>[
                         Container(
                           margin: EdgeInsets.only(
-                              top: (kIsDesktop ? 40 : kToolbarHeight + 30), left: 20, right: 20, bottom: 5),
+                              top: (kIsDesktop || kIsWeb ? 40 : kToolbarHeight + 30), left: 20, right: 20, bottom: 5),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: <Widget>[
@@ -277,30 +276,15 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                               }
                                             }
 
-                                            String appDocPath = SettingsManager().appDocDir.path;
-                                            String ext = ".png";
-                                            File file = File("$appDocPath/attachments/${randomString(16)}$ext");
-                                            await file.create(recursive: true);
-
-                                            // Take the picture after opening the camera
-                                            await MethodChannelInterface()
-                                                .invokeMethod("open-camera", {"path": file.path, "type": "camera"});
-
-                                            // If we don't get data back, return outta here
-                                            if (!file.existsSync()) return;
-                                            if (file.statSync().size == 0) {
-                                              file.deleteSync();
-                                              return;
-                                            }
-
-                                            widget.parent.openNewChatCreator(existing: [
-                                              PlatformFile(
-                                                name: file.path.split("/").last,
+                                            final XFile? file = await ImagePicker().pickImage(source: ImageSource.camera);
+                                            if (file != null) {
+                                              widget.parent.openNewChatCreator(existing: [PlatformFile(
                                                 path: file.path,
-                                                bytes: file.readAsBytesSync(),
-                                                size: file.lengthSync(),
-                                              )
-                                            ]);
+                                                name: file.path.split('/').last,
+                                                size: await file.length(),
+                                                bytes: await file.readAsBytes(),
+                                              )]);
+                                            }
                                           },
                                         ),
                                       ),

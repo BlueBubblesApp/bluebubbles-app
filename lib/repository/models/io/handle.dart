@@ -137,6 +137,20 @@ class Handle {
     }
   }
 
+  static Handle merge(Handle handle1, Handle handle2) {
+    handle1.id ??= handle2.id;
+    handle1._color.value ??= handle2._color.value;
+    
+    if ((handle1.defaultPhone ?? '').isEmpty) {
+      handle1.defaultPhone = handle2.defaultPhone;
+    }
+
+    handle1.country ??= handle2.country;
+    handle1.uncanonicalizedId ??= handle2.uncanonicalizedId;
+
+    return handle1;
+  }
+
   /// Find a list of handles by the specified condition, or return all handles
   /// when no condition is specified
   static List<Handle> find({Condition<Handle>? cond}) {

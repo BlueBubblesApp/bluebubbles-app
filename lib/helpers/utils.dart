@@ -532,7 +532,7 @@ String? sanitizeServerAddress({String? address}) {
 
   Uri? uri = Uri.tryParse(serverAddress);
   if (uri?.scheme.isEmpty ?? true) {
-    if (serverAddress.contains("ngrok.io")) {
+    if (serverAddress.contains("ngrok.io") || serverAddress.contains("trycloudflare.com")) {
       serverAddress = "https://$serverAddress";
     } else {
       serverAddress = "http://$serverAddress";
@@ -554,7 +554,7 @@ Future<String> getDeviceName() async {
 
     if (Platform.isAndroid) {
       AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-      items.addAll([androidInfo.brand!, androidInfo.model!, androidInfo.androidId!]);
+      items.addAll([androidInfo.brand!, androidInfo.model!, androidInfo.id!]);
     } else if (kIsWeb) {
       WebBrowserInfo webInfo = await deviceInfo.webBrowserInfo;
       items.addAll([describeEnum(webInfo.browserName), webInfo.platform!]);
@@ -617,13 +617,13 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
     var response = await get(Uri.parse(url));
 
     Directory baseDir = Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
-    if (!baseDir.existsSync()) {
-      baseDir.createSync(recursive: true);
+    if (!await baseDir.exists()) {
+      await baseDir.create(recursive: true);
     }
 
     String newPath = "${baseDir.path}/$filename";
     File file = File(newPath);
-    file.writeAsBytesSync(response.bodyBytes);
+    await file.writeAsBytes(response.bodyBytes);
 
     return file;
   } catch (ex) {
@@ -815,8 +815,8 @@ Future<void> paintGroupAvatar({
     String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
         chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
-    if (File(customPath).existsSync()) {
-      Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync(), size: size.toInt());
+    if (await File(customPath).exists()) {
+      Uint8List? customAvatar = await circularize(await File(customPath).readAsBytes(), size: size.toInt());
       if (customAvatar != null) {
         canvas.drawImage(await loadImage(customAvatar), Offset(0, 0), Paint());
         return;
@@ -906,8 +906,8 @@ Future<void> paintAvatar(
     String customPath = join((await getApplicationSupportDirectory()).path, "avatars",
         chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
-    if (File(customPath).existsSync()) {
-      Uint8List? customAvatar = await circularize(File(customPath).readAsBytesSync(), size: size.toInt());
+    if (await File(customPath).exists()) {
+      Uint8List? customAvatar = await circularize(await File(customPath).readAsBytes(), size: size.toInt());
       if (customAvatar != null) {
         canvas.drawImage(await loadImage(customAvatar), offset, Paint());
         return;
@@ -1026,4 +1026,18 @@ Future<ui.Image> loadImage(Uint8List data) async {
 String getDisplayName(String? displayName, String? firstName, String? lastName) {
   String? _displayName = (displayName?.isEmpty ?? false) ? null : displayName;
   return _displayName ?? [firstName, lastName].where((e) => e?.isNotEmpty ?? false).toList().join(" ");
+}
+
+Map<String, dynamic> mergeTopLevelDicts(Map<String, dynamic>? d1, Map<String, dynamic>? d2) {
+  if (d1 == null && d2 == null) return {};
+  if (d1 == null && d2 != null) return d2;
+  if (d1 != null && d2 == null) return d1;
+
+  // Update metadata
+  for (var i in d2!.entries) {
+    if (d1!.containsKey(i.key)) continue;
+    d1[i.key] = i.value;
+  }
+
+  return d1!;
 }

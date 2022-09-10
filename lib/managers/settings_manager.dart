@@ -201,7 +201,7 @@ class SettingsManager {
 
   Future<int> getServerVersionCode() async {
     final version = await getServerVersion();
-    Version code = Version.parse(version);
+    Version code = Version.parse(version!);
     return code.major * 100 + code.minor * 21 + code.patch;
   }
 

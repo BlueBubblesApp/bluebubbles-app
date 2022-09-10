@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class PrepareToDownload extends StatefulWidget {
   PrepareToDownload({Key? key, required this.controller}) : super(key: key);
@@ -176,12 +177,33 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                                       activeTrackColor: context.theme.colorScheme.primaryContainer,
                                       inactiveTrackColor: context.theme.colorScheme.onSurfaceVariant,
                                       inactiveThumbColor: context.theme.colorScheme.onBackground,
-                                      onChanged: (bool value) {
+                                      onChanged: (bool value) async {
                                         if (!mounted) return;
 
-                                        setState(() {
-                                          saveToDownloads = value;
-                                        });
+                                        if (value) {
+                                          var hasPermissions = await Permission.storage.isGranted;
+                                          var permDenied = await Permission.storage.isPermanentlyDenied;
+
+                                          // If we don't have the permission, but it isn't permanently denied, prompt the user
+                                          if (!hasPermissions && !permDenied) {
+                                            PermissionStatus response = await Permission.storage.request();
+                                            hasPermissions = response.isGranted;
+                                            permDenied = response.isPermanentlyDenied;
+                                          }
+
+                                          // If we still don't have the permission or we are permanently denied, show the snackbar error
+                                          if (!hasPermissions || permDenied) {
+                                            return showSnackbar("Error", "BlueBubbles does not have the required permissions!");
+                                          } else {
+                                            setState(() {
+                                              saveToDownloads = value;
+                                            });
+                                          }
+                                        } else {
+                                          setState(() {
+                                            saveToDownloads = value;
+                                          });
+                                        }
                                       },
                                     )
                                   ],

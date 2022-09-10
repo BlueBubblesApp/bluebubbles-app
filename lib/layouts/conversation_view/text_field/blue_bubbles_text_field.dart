@@ -23,6 +23,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:chunked_stream/chunked_stream.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:dio/dio.dart';
 import 'package:emojis/emoji.dart';
@@ -33,7 +34,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:get/get.dart';
 import 'package:giphy_get/giphy_get.dart';
@@ -78,7 +78,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   FocusNode? subjectFocusNode;
   List<PlatformFile> pickedImages = [];
   TextFieldData? textFieldData;
-  final StreamController _streamController = StreamController.broadcast();
   DropzoneViewController? dropZoneController;
   ChatController? safeChat;
   Chat? chat;
@@ -95,8 +94,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   final RxBool canRecord = true.obs;
 
   // bool selfTyping = false;
-
-  Stream get stream => _streamController.stream;
 
   bool get _canRecord => controller!.text.isEmpty && pickedImages.isEmpty && subjectController!.text.isEmpty && !recordDelay;
   bool recordDelay = false;
@@ -358,7 +355,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   void updateTextFieldAttachments() {
     if (textFieldData != null) {
       textFieldData!.attachments = List<PlatformFile>.from(pickedImages);
-      _streamController.sink.add(null);
     }
 
     setCanRecord();
@@ -383,8 +379,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   void dispose() {
     focusNode!.dispose();
     subjectFocusNode!.dispose();
-    _streamController.close();
-
     if (safeChat?.chat == null) controller!.dispose();
     if (safeChat?.chat == null) subjectController!.dispose();
 
@@ -492,15 +486,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   Future<void> toggleShareMenu() async {
     if (kIsDesktop) {
-      final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
-      if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+      final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
+      if (res == null || res.files.isEmpty || res.files.first.readStream == null) return;
 
       for (pf.PlatformFile e in res.files) {
+        if (e.size / 1024000 > 100) {
+          showSnackbar("Error", "This file is over 100 MB! Please compress it before sending.");
+          continue;
+        }
         addAttachment(PlatformFile(
           path: e.path,
           name: e.name,
           size: e.size,
-          bytes: e.bytes,
+          bytes: await readByteStream(e.readStream!),
         ));
       }
       Get.back();
@@ -519,11 +517,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
                 for (pf.PlatformFile e in res.files) {
+                  if (e.size / 1024000 > 100) {
+                    showSnackbar("Error", "This file is over 100 MB! Please compress it before sending.");
+                    continue;
+                  }
                   addAttachment(PlatformFile(
                     path: null,
                     name: e.name,
                     size: e.size,
-                    bytes: e.bytes,
+                    bytes: e.bytes!,
                   ));
                 }
                 Get.back();
@@ -810,7 +812,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 onTap: () async {
                   GiphyGif? gif = await GiphyGet.getGif(
                     context: context,
-                    apiKey: dotenv.get('GIPHY_API_KEY'),
+                    apiKey: GIPHY_API_KEY,
                     tabColor: context.theme.primaryColor,
                   );
                   if (gif?.images?.original != null) {
@@ -1536,9 +1538,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             PlatformFile(
               name: "${randomString(8)}.m4a",
               path: kIsWeb ? null : pathName,
-              size: 0,
-              bytes:
-                  kIsWeb ? (await Dio().get(pathName, options: Options(responseType: ResponseType.bytes))).data : null,
+              size: kIsWeb ? 0 : await File(pathName).length(),
+              bytes: kIsWeb
+                  ? (await api.dio.get(pathName, options: Options(responseType: ResponseType.bytes))).data
+                  : await File(pathName).readAsBytes(),
             ));
       }
     }

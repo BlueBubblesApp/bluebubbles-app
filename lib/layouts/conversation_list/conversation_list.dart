@@ -3,12 +3,13 @@ import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
@@ -23,10 +24,8 @@ import 'package:bluebubbles/layouts/conversation_list/samsung_conversation_list.
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -118,29 +117,15 @@ class ConversationListState extends State<ConversationList> {
       }
     }
 
-    String appDocPath = SettingsManager().appDocDir.path;
-    String ext = ".png";
-    File file = File("$appDocPath/attachments/${randomString(16)}$ext");
-    await file.create(recursive: true);
-
-    // Take the picture after opening the camera
-    await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
-
-    // If we don't get data back, return outta here
-    if (!file.existsSync()) return;
-    if (file.statSync().size == 0) {
-      file.deleteSync();
-      return;
-    }
-
-    openNewChatCreator(existing: [
-      PlatformFile(
-        name: file.path.split("/").last,
+    final XFile? file = await ImagePicker().pickImage(source: ImageSource.camera);
+    if (file != null) {
+      openNewChatCreator(existing: [PlatformFile(
         path: file.path,
-        bytes: file.readAsBytesSync(),
-        size: file.lengthSync(),
-      )
-    ]);
+        name: file.path.split('/').last,
+        size: await file.length(),
+        bytes: await file.readAsBytes(),
+      )]);
+    }
   }
 
   Widget buildSettingsButton() => !widget.showArchivedChats && !widget.showUnknownSenders
@@ -205,7 +190,9 @@ class ConversationListState extends State<ConversationList> {
                           FCMData.deleteFcmData();
                           prefs.setString("selected-dark", "OLED Dark");
                           prefs.setString("selected-light", "Bright White");
-                          themeBox.putMany(Themes.defaultThemes);
+                          if (!kIsWeb) {
+                            themeBox.putMany(Themes.defaultThemes);
+                          }
                           loadTheme(context);
                           Get.offAll(() => WillPopScope(
                             onWillPop: () async => false,

@@ -151,10 +151,12 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               style: context.theme.textTheme.titleLarge,
                             ),
                             content: Container(
-                              // height: 70,
-                              // color: Colors.black,
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                              height: 70,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  backgroundColor: context.theme.colorScheme.properSurface,
+                                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                ),
                               ),
                             ),
                           );
@@ -675,11 +677,12 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                                   style: context.theme.textTheme.titleLarge,
                                                 ),
                                                 content: Container(
-                                                  // height: 70,
-                                                  // color: Colors.black,
-                                                  child: CircularProgressIndicator(
-                                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                                        context.theme.colorScheme.primary),
+                                                  height: 70,
+                                                  child: Center(
+                                                    child: CircularProgressIndicator(
+                                                      backgroundColor: context.theme.colorScheme.properSurface,
+                                                      valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                                    ),
                                                   ),
                                                 ),
                                               );

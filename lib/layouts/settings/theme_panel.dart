@@ -22,6 +22,7 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:dio/dio.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart' hide Response;
+import 'package:idb_shim/idb.dart';
 import 'package:universal_io/io.dart';
 
 class ThemePanelController extends GetxController {
@@ -104,8 +106,6 @@ class ThemePanel extends StatelessWidget {
         });
       }
 
-      final allowedEffects = WindowEffects.effects;
-
       return SettingsScaffold(
         title: "Theming & Styles",
         initialHeader: "Appearance",
@@ -144,9 +144,10 @@ class ThemePanel extends StatelessWidget {
                       ),
                     if (!kIsWeb)
                       SettingsTile(
-                        title: "Theming",
-                        subtitle: "Edit existing themes and create custom themes",
+                        title: "Advanced Theming",
+                        subtitle: "Customize app colors and font sizes with custom themes\n${ThemeStruct.getLightTheme().name}   |   ${ThemeStruct.getDarkTheme().name}",
                         trailing: nextIcon,
+                        isThreeLine: true,
                         onTap: () async {
                           Navigator.of(context).push(
                             CupertinoPageRoute(
@@ -279,7 +280,7 @@ class ThemePanel extends StatelessWidget {
                     children: [
                       Obx(() => SettingsOptions<WindowEffect>(
                           initial: SettingsManager().settings.windowEffect.value,
-                          options: allowedEffects,
+                          options: WindowEffects.effects,
                           textProcessing: (WindowEffect effect) => effect.toString().substring("WindowEffect.".length),
                           onChanged: (WindowEffect? effect) async {
                             bool defaultOpacityLight = SettingsManager().settings.windowEffectCustomOpacityLight.value == WindowEffects.defaultOpacity(dark: false);
@@ -665,120 +666,149 @@ class ThemePanel extends StatelessWidget {
                       }),
                     ],
                   ),
-                if (!kIsWeb)
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Text and Font"),
-                if (!kIsWeb)
-                  SettingsSection(
-                    backgroundColor: tileColor,
-                    children: [
-                      Obx(() {
-                        if (!fontExistsOnDisk.value) {
-                          return SettingsTile(
-                            onTap: () async {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  backgroundColor: context.theme.colorScheme.properSurface,
-                                  title: Text("Downloading font file...", style: context.theme.textTheme.titleLarge),
-                                  content: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: <Widget>[
-                                        Obx(
-                                              () => Text(
-                                              '${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)',
-                                                style: context.theme.textTheme.bodyLarge),
-                                        ),
-                                        SizedBox(height: 10.0),
-                                        Obx(
-                                              () => ClipRRect(
-                                            borderRadius: BorderRadius.circular(20),
-                                            child: LinearProgressIndicator(
-                                              backgroundColor: context.theme.colorScheme.outline,
-                                              valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                                              value: progress.value,
-                                              minHeight: 5,
-                                            ),
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Text and Font"),
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    Obx(() {
+                      if (!fontExistsOnDisk.value) {
+                        return SettingsTile(
+                          onTap: () async {
+                            if (kIsWeb) {
+                              try {
+                                final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["ttf"]);
+                                if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+
+                                final txn = db.transaction("BBStore", idbModeReadWrite);
+                                final store = txn.objectStore("BBStore");
+                                await store.put(res.files.first.bytes!, "iosFont");
+                                await txn.completed;
+
+                                final fontLoader = FontLoader("Apple Color Emoji");
+                                final cachedFontBytes = ByteData.view(res.files.first.bytes!.buffer);
+                                fontLoader.addFont(
+                                  Future<ByteData>.value(cachedFontBytes),
+                                );
+                                await fontLoader.load();
+                                fontExistsOnDisk.value = true;
+                                return showSnackbar("Notice", "Font loaded");
+                              } catch (_) {
+                                return showSnackbar("Error", "Failed to load font file. Please make sure it is a valid ttf and under 50mb.");
+                              }
+                            }
+
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                backgroundColor: context.theme.colorScheme.properSurface,
+                                title: Text("Downloading font file...", style: context.theme.textTheme.titleLarge),
+                                content: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: <Widget>[
+                                      Obx(
+                                            () => Text(
+                                            '${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)',
+                                              style: context.theme.textTheme.bodyLarge),
+                                      ),
+                                      SizedBox(height: 10.0),
+                                      Obx(
+                                            () => ClipRRect(
+                                          borderRadius: BorderRadius.circular(20),
+                                          child: LinearProgressIndicator(
+                                            backgroundColor: context.theme.colorScheme.outline,
+                                            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                            value: progress.value,
+                                            minHeight: 5,
                                           ),
                                         ),
-                                        SizedBox(
-                                          height: 15.0,
-                                        ),
-                                        Obx(() => Text(
-                                          progress.value == 1 ? "Download Complete!" : "You can close this dialog. The font will continue to download in the background.",
-                                          maxLines: 2,
-                                          textAlign: TextAlign.center,
-                                          style: context.theme.textTheme.bodyLarge,
-                                        )),
-                                  ]),
-                                  actions: [
-                                    Obx(() => downloadingFont.value
-                                        ? Container(height: 0, width: 0)
-                                        : TextButton(
-                                      child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                                      onPressed: () async {
-                                        if (Get.isSnackbarOpen ?? false) {
-                                          Get.close(1);
-                                        }
-                                        Navigator.of(context).pop();
-                                        Future.delayed(Duration(milliseconds: 400), ()
-                                        {
-                                          progress.value = null;
-                                          totalSize.value = null;
-                                        });
-                                      },
-                                    ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              final DynamicCachedFonts dynamicCachedFont = DynamicCachedFonts(
-                                fontFamily: "Apple Color Emoji",
-                                url:
-                                "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
-                              );
-                              dynamicCachedFont.load().listen((data) {
-                                if (data is FileInfo) {
-                                  fontExistsOnDisk.value = true;
-                                  showSnackbar("Notice", "Font loaded");
-                                } else if (data is DownloadProgress) {
-                                  downloadingFont.value = true;
-                                  progress.value = data.progress;
-                                  totalSize.value = data.totalSize;
-                                  if (progress.value == 1.0) {
-                                    downloadingFont.value = false;
-                                  }
+                                      ),
+                                      SizedBox(
+                                        height: 15.0,
+                                      ),
+                                      Obx(() => Text(
+                                        progress.value == 1 ? "Download Complete!" : "You can close this dialog. The font will continue to download in the background.",
+                                        maxLines: 2,
+                                        textAlign: TextAlign.center,
+                                        style: context.theme.textTheme.bodyLarge,
+                                      )),
+                                ]),
+                                actions: [
+                                  Obx(() => downloadingFont.value
+                                      ? Container(height: 0, width: 0)
+                                      : TextButton(
+                                    child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                                    onPressed: () async {
+                                      if (Get.isSnackbarOpen ?? false) {
+                                        Get.close(1);
+                                      }
+                                      Navigator.of(context).pop();
+                                      Future.delayed(Duration(milliseconds: 400), ()
+                                      {
+                                        progress.value = null;
+                                        totalSize.value = null;
+                                      });
+                                    },
+                                  ),
+                                  ),
+                                ],
+                              ),
+                            );
+                            final DynamicCachedFonts dynamicCachedFont = DynamicCachedFonts(
+                              fontFamily: "Apple Color Emoji",
+                              url:
+                              "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
+                            );
+                            dynamicCachedFont.load().listen((data) {
+                              if (data is FileInfo) {
+                                fontExistsOnDisk.value = true;
+                                showSnackbar("Notice", "Font loaded");
+                              } else if (data is DownloadProgress) {
+                                downloadingFont.value = true;
+                                progress.value = data.progress;
+                                totalSize.value = data.totalSize;
+                                if (progress.value == 1.0) {
+                                  downloadingFont.value = false;
                                 }
-                              });
-                            },
-                            title:
-                            "Download${downloadingFont.value ? "ing" : ""} iOS Emoji Font${downloadingFont.value ? " (${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)}) (${((progress.value ?? 0) * 100).floor()}%)" : ""}",
-                          );
-                        } else {
-                          return SizedBox.shrink();
-                        }
-                      }),
-                      Obx(() {
-                        if (fontExistsOnDisk.value) {
-                          return SettingsTile(
-                            onTap: () async {
+                              }
+                            });
+                          },
+                          title:
+                          kIsWeb ? "Upload Font File" : "Download${downloadingFont.value ? "ing" : ""} iOS Emoji Font${downloadingFont.value ? " (${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)}) (${((progress.value ?? 0) * 100).floor()}%)" : ""}",
+                          subtitle: kIsWeb ? "Upload your ttf emoji file into BlueBubbles" : null,
+                        );
+                      } else {
+                        return SizedBox.shrink();
+                      }
+                    }),
+                    Obx(() {
+                      if (fontExistsOnDisk.value) {
+                        return SettingsTile(
+                          onTap: () async {
+                            if (kIsWeb) {
+                              final txn = db.transaction("BBStore", idbModeReadWrite);
+                              final store = txn.objectStore("BBStore");
+                              await store.delete("iosFont");
+                              await txn.completed;
+                            } else {
                               await DynamicCachedFonts.removeCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf");
-                              fontExistsOnDisk.value = false;
-                              showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
-                            },
-                            title: "Delete iOS Emoji Font",
-                          );
-                        } else {
-                          return SizedBox.shrink();
-                        }
-                      }),
-                    ],
-                  ),
+                            }
+                            fontExistsOnDisk.value = false;
+                            showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
+                          },
+                          title: "Delete ${kIsWeb ? "" : "iOS "}Emoji Font",
+                        );
+                      } else {
+                        return SizedBox.shrink();
+                      }
+                    }),
+                  ],
+                ),
               ],
             ),
           ),
@@ -798,7 +828,7 @@ class ThemePanel extends StatelessWidget {
         title: Text("Monet Theming Info", style: context.theme.textTheme.titleLarge),
         backgroundColor: context.theme.colorScheme.properSurface,
         content: Text(
-            "Harmonize - Overwrites primary color, and blends background & accent color with the current theme colors\r\n"
+            "Harmonize - Overwrites primary color and blends remainder of colors with the current theme colors\r\n"
                 "Full - Overwrites primary, background, and accent colors, along with other minor colors.\r\n",
           style: context.theme.textTheme.bodyLarge,
         ),

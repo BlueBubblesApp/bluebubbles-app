@@ -429,6 +429,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
               (context, index) {
                 return SettingsSlider(
                   leading: Text(currentTheme.textSizes.keys.toList()[index]),
+                  leadingMinWidth: context.theme.textTheme.bodyMedium!.fontSize! * 6,
                   startingVal: currentTheme.textSizes.values.toList()[index] /
                       ThemeStruct.defaultTextSizes.values.toList()[index],
                   update: (double val) {

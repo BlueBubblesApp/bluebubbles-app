@@ -29,7 +29,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   final confettiController = ConfettiController(duration: Duration(milliseconds: 500));
   final GlobalKey key = GlobalKey();
   double height = 250;
-  CustomAnimationControl controller = CustomAnimationControl.mirror;
+  Control controller = Control.mirror;
   Tween<double> tween = Tween<double>(begin: 0, end: 5);
 
   late Animation<double> opacityTitle;
@@ -304,12 +304,12 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                                       ),
                                       Positioned(
                                         left: 40,
-                                        child: CustomAnimation<double>(
+                                        child: CustomAnimationBuilder<double>(
                                           control: controller,
                                           tween: tween,
                                           duration: Duration(milliseconds: 600),
                                           curve: Curves.easeOut,
-                                          builder: (context, _, anim) {
+                                          builder: (context, anim, _) {
                                             return Padding(
                                               padding: EdgeInsets.only(left: anim),
                                               child: Icon(Icons.arrow_forward, color: Colors.white, size: 20),

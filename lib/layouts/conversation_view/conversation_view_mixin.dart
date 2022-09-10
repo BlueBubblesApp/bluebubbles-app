@@ -65,6 +65,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   String previousSearch = '';
   int previousContactCount = 0;
   bool shouldShowAlert = false;
+  int lastNotificationClear = 0;
+  bool isDisposing = false;
 
   final RxBool fetchingChatController = false.obs;
 
@@ -76,9 +78,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   TextEditingController chatSelectorController = TextEditingController(text: " ");
 
-  static Rx<MultiTween<String>> gradientTween = Rx<MultiTween<String>>(MultiTween<String>()
-    ..add("color1", Tween<double>(begin: 0, end: 0.2))
-    ..add("color2", Tween<double>(begin: 0.8, end: 1)));
+  static Rx<MovieTween> gradientTween = Rx<MovieTween>(MovieTween()
+    ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+        .tween("color1", Tween<double>(begin: 0, end: 0.2))
+    ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+        .tween("color2", Tween<double>(begin: 0.8, end: 1)));
   Timer? _debounce;
 
   /// Conversation view methods
@@ -152,12 +156,18 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   void didChangeDependenciesConversationView() async {
-    if (isCreator!) return;
+    if (isDisposing || isCreator!) return;
     if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
       // wait for the end of that frame.
       await SchedulerBinding.instance.endOfFrame;
     }
-    ChatManager().clearChatNotifications(chat!);
+
+    // Make sure we don't call clear notifications too often.
+    int now = DateTime.now().millisecondsSinceEpoch;
+    if (now - lastNotificationClear > 1000) {
+      ChatManager().clearChatNotifications(chat!);
+      lastNotificationClear = now;
+    }
   }
 
   void initChatController(Chat chat) async {
@@ -178,7 +188,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     _debounce?.cancel();
     messageBloc?.dispose();
     _contactStreamController.close();
-
     ChatManager().setActiveChat(previousChat);
     super.dispose();
   }
@@ -396,6 +405,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         leading: Padding(
           padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
           child: buildBackButton(context, callback: () {
+            isDisposing = true;
             if (LifeCycleManager().isBubble) {
               SystemNavigator.pop();
               return false;
@@ -646,7 +656,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               children: [
                 Expanded(
                   child: Padding(
-                    padding: EdgeInsets.only(left: 15.0, top: kIsDesktop ? 5 : 45),
+                    padding: EdgeInsets.only(left: 15.0, top: kIsDesktop || kIsWeb ? 5 : 45),
                     child: GestureDetector(
                       onTap: () {
                         if (LifeCycleManager().isBubble) {
@@ -662,6 +672,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           buildBackButton(context, callback: () {
+                            isDisposing = true;
                             if (LifeCycleManager().isBubble) {
                               SystemNavigator.pop();
                               return false;
@@ -1012,12 +1023,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               style: context.theme.textTheme.titleLarge,
             ),
             content: Container(
-                // height: 70,
-                // color: Colors.black,
+              height: 70,
+              child: Center(
                 child: CircularProgressIndicator(
-                    backgroundColor: context.theme.colorScheme.properSurface,
-                    valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
                 ),
+              ),
               ),
           );
         });

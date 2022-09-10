@@ -152,19 +152,32 @@ class AttachmentSender {
 
       // If there is an error, replace the temp value with an error
       if (error is Response) {
-        message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message']}");
-        message.error = error.statusCode == 400
-            ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+        message.guid = message.guid!.replaceAll("temp", "error-${error.data['error']['message'] ?? error.data.toString()}");
+        message.error = error.statusCode ?? MessageError.BAD_REQUEST.code;
+      } else if (error is DioError) {
+        // If there is an error, replace the temp value with an error
+        String _error;
+        if (error.type == DioErrorType.connectTimeout) {
+          _error = "Connect timeout occured! Check your connection.";
+        } else if (error.type == DioErrorType.sendTimeout) {
+          _error = "Send timeout occured!";
+        } else if (error.type == DioErrorType.receiveTimeout) {
+          _error = "Receive data timeout occured! Check server logs for more info.";
+        } else {
+          _error = error.error.toString();
+        }
+        message.guid = message.guid!.replaceAll("temp", "error-$_error");
+        message.error = error.response?.statusCode ?? MessageError.BAD_REQUEST.code;
       } else {
         message.guid = message.guid!
-            .replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
+            .replaceAll("temp", "error-${error.toString()}");
         message.error = MessageError.BAD_REQUEST.code;
+      }
 
-        // send a notification to the user
-        ChatController? currChat = ChatManager().activeChat;
-        if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
-          NotificationManager().createFailedToSendMessage();
-        }
+      // send a notification to the user
+      ChatController? currChat = ChatManager().activeChat;
+      if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
+        NotificationManager().createFailedToSendMessage();
       }
 
       await Message.replaceMessage(tempGuid, message);
