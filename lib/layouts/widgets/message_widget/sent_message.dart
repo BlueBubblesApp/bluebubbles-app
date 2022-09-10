@@ -130,7 +130,7 @@ class SentMessageHelper {
                               message!.text!,
                               (context.theme.extensions[BubbleText] as BubbleText)
                                   .bubbleText
-                                  .apply(fontSizeFactor: 4)))),
+                                  .apply(fontSizeFactor: bigEmojiScaleFactor)))),
             ),
           );
         })

@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -971,7 +972,7 @@ class Message {
               .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble())));
     }
     // initialize constraints for text rendering
-    final fontSizeFactor = isBigEmoji() ? 4.0 : 1.0;
+    final fontSizeFactor = isBigEmoji() ? bigEmojiScaleFactor : 1.0;
     final constraints = BoxConstraints(
       maxWidth: maxWidthOverride ?? CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
       minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodySmall!.fontSize! * fontSizeFactor,
