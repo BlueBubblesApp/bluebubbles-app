@@ -306,7 +306,7 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
         QueryBuilder<Message> latestMsgQuery = messageBox.query(Message_.chat.equals(i));
         latestMsgQuery.order(Message_.dateCreated, flags: Order.descending);
         Message? latestMessage = latestMsgQuery.build().findFirst();
-        if (latestMessage?.handle == null && latestMessage?.handleId != null) {
+        if (latestMessage?.handle == null && latestMessage?.handleId != null && latestMessage?.handleId != 0) {
           latestMessage!.handle = handleBox.get(latestMessage.handleId!);
         }
         Chat current = existingChats.firstWhere((element) => element.id == i);
