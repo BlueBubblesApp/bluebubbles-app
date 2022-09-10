@@ -2,6 +2,22 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## 1.10.1
+
+### Fixes & Optimizations
+
+* Upgraded flutter to v3.3.0.
+   - This update should fix the keyboard lag issue some users were experiencing.
+* Fixes issue uploading attachments on BlueBubbles Web.
+* Fixes issue where a temporary chat mute would not apply properly.
+* Fixes issue loading texts from macOS Ventura.
+   - This fixes the "Unknown Group Event" issue with macOS Ventura.
+* Fixes issue where new messages wouldn't show in an open chat until re-entering the chat.
+* App can no longer be flipped upside-down, unless enabled in the Settings.
+* Fixes issue where message previews for reactions would always show "You", rather than the real sender.
+* Fixes big emoji issue where font size would be extremely large, on some devices.
+* Fixes grey advanced theming page when the music theme was enabled.
+
 ## 1.10 (Bordeaux)
 
 ### The Big Stuff
