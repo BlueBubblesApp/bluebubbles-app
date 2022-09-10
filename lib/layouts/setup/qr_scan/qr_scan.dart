@@ -544,28 +544,42 @@ class _QRScanState extends State<QRScan> {
             });
           }
 
-          // If desktop/web and no FCM data
-          if ((kIsDesktop || kIsWeb) && isNullOrEmpty(data["data"])!) {
+          // If no FCM data
+          if (isNullOrEmpty(data["data"])!) {
             // Check proxy service
             dio.Response response = await api.serverInfo();
-            String proxyService = response.data['data']['proxy_service'];
-            if (proxyService == "dynamic-dns") {
-              goToNextPage();
-            } else {
+            Map<String, dynamic> resp = response.data;
+            if (response.statusCode != 200) {
               return setState(() {
-                error = "Firebase is required when using Ngrok or Cloudflare!";
+                error =
+                "Failed to connect to server! ${resp["error"]?["type"] ?? "API_ERROR"}: ${resp["message"] ?? resp["error"]["message"]}";
               });
             }
+            String proxyService = resp['data']['proxy_service'];
+            if (proxyService == "dynamic-dns") {
+              if (Platform.isAndroid) {
+                showSnackbar("Warning", "No Firebase project detected! You will not receive notifications for new messages!");
+              }
+              goToNextPage();
+              return;
+            }
+            return setState(() {
+              error = "Firebase is required unless using Dynamic DNS!";
+            });
           }
 
+          // At this point firebase data is not null/empty
+          // This try-catch is for if the data is malformed
           try {
             FCMData fcmData = FCMData.fromMap(data["data"]);
             SettingsManager().saveFCMData(fcmData);
           } catch (_) {
             if (Platform.isAndroid) {
-              showSnackbar("Warning", "No Firebase project detected! You will not receive notifications for new messages!");
+              showSnackbar(
+                  "Warning", "No Firebase project detected! You will not receive notifications for new messages!");
             }
           }
+
           goToNextPage();
         } else if (mounted) {
           if (err != null) {

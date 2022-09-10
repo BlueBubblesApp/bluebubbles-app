@@ -196,7 +196,7 @@ Future<Null> initApp(bool isBubble) async {
       Platform.isWindows ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app")) : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
       if (await oldAppData.exists() && !await Directory(join(appData.path, "objectbox")).exists()) {
         Logger.info("Copying appData to new directory");
-        await copyDirectory(oldAppData, appData);
+        copyDirectory(oldAppData, appData);
         Logger.info("Finished migrating appData");
       }
     }
@@ -1085,13 +1085,15 @@ Future<void> initSystemTray() async {
   });
 }
 
-Future<void> copyDirectory(Directory source, Directory destination) async => await source.list(recursive: false).forEach((element) async {
+void copyDirectory(Directory source, Directory destination) => source.listSync(recursive: false).forEach((element) async {
       if (element is Directory) {
         Directory newDirectory = Directory(join(destination.absolute.path, basename(element.path)));
-        await newDirectory.create();
+        newDirectory.createSync();
+        Logger.info("Created new directory ${basename(element.path)}");
 
-        await copyDirectory(element.absolute, newDirectory);
+        copyDirectory(element.absolute, newDirectory);
       } else if (element is File) {
-        await element.copy(join(destination.path, basename(element.path)));
+        element.copySync(join(destination.path, basename(element.path)));
+        Logger.info("Created file ${basename(element.path)}");
       }
     });
