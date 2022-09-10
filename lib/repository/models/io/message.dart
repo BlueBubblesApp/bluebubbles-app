@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -430,7 +431,7 @@ class Message {
       guid: json["guid"],
       handleId: (json["handleId"] != null) ? json["handleId"] : 0,
       otherHandle: (json["otherHandle"] != null) ? json["otherHandle"] : null,
-      text: sanitizeString(json["text"]),
+      text: sanitizeString(json["text"] ?? attributedBody?.first.string),
       subject: json.containsKey("subject") ? json["subject"] : null,
       country: json.containsKey("country") ? json["country"] : null,
       error2: json.containsKey("_error") ? json["_error"] : 0,
@@ -493,6 +494,7 @@ class Message {
       Message? existing = Message.findOne(guid: guid);
       if (existing != null) {
         id = existing.id;
+        text ??= existing.text;
       }
 
       // Save the participant & set the handle ID to the new participant
@@ -543,6 +545,7 @@ class Message {
         final existingMessage = existingMessages.firstWhereOrNull((e) => e.guid == m.guid);
         if (existingMessage != null) {
           m.id = existingMessage.id;
+          m.text ??= existingMessage.text;
         }
       }
 
@@ -969,7 +972,7 @@ class Message {
               .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble())));
     }
     // initialize constraints for text rendering
-    final fontSizeFactor = isBigEmoji() ? 4.0 : 1.0;
+    final fontSizeFactor = isBigEmoji() ? bigEmojiScaleFactor : 1.0;
     final constraints = BoxConstraints(
       maxWidth: maxWidthOverride ?? CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
       minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodySmall!.fontSize! * fontSizeFactor,

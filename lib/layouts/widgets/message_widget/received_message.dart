@@ -251,7 +251,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             : RichText(
                 text: TextSpan(
                     children: MessageHelper.buildEmojiText(
-                        message.text!, (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(fontSizeFactor: 4)))),
+                        message.text!, (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(fontSizeFactor: bigEmojiScaleFactor)))),
       );
     } else {
       child = Stack(

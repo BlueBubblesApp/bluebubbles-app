@@ -86,6 +86,7 @@ ThemeData oledDarkTheme = FlexColorScheme(
     bubbleText: Typography.englishLike2021.bodyMedium!.copyWith(
       fontSize: 15,
       height: Typography.englishLike2021.bodyMedium!.height! * 0.85,
+      color: Colors.white,
     ),
   ),
 ]);

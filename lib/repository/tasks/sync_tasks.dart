@@ -195,7 +195,7 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
       }
 
       // 4. Sync the messages & insert synced attachments
-      List<Message> syncedMessages = syncMessages(inputMessages);
+      List<Message> syncedMessages = syncMessages(inputChat, inputMessages);
       for (var message in syncedMessages) {
         // Update related attachments with synced versions
         for (var attachment in message.attachments) {
@@ -306,6 +306,9 @@ class SyncLastMessages extends AsyncTask<List<dynamic>, List<Chat>> {
         QueryBuilder<Message> latestMsgQuery = messageBox.query(Message_.chat.equals(i));
         latestMsgQuery.order(Message_.dateCreated, flags: Order.descending);
         Message? latestMessage = latestMsgQuery.build().findFirst();
+        if (latestMessage?.handle == null && latestMessage?.handleId != null) {
+          latestMessage!.handle = handleBox.get(latestMessage.handleId!);
+        }
         Chat current = existingChats.firstWhere((element) => element.id == i);
 
         // Try and update the last message info
