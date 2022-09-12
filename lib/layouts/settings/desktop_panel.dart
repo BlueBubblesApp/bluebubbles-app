@@ -149,7 +149,7 @@ class DesktopPanel extends StatelessWidget {
                         saveSettings();
                       },
                       title: "Improve Mouse Wheel Scrolling",
-                      subtitle: "Enabling this setting will break touch scrolling and degrade trackpad scrolling.",
+                      subtitle: "Enabling this setting will break touch scrolling and trackpad scrolling.",
                     ),
                     if (SettingsManager().settings.betterScrolling.value)
                       SettingsSlider(

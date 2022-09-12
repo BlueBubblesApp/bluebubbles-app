@@ -838,7 +838,7 @@ Future<void> paintGroupAvatar({
     return;
   }
 
-  Paint paint = Paint()..color = (Get.context?.theme.colorScheme.secondary ?? HexColor("928E8E")).withOpacity(0.6);
+  Paint paint = Paint()..color = Get.theme.colorScheme.properSurface;
   canvas.drawCircle(Offset(size * 0.5, size * 0.5), size * 0.5, paint);
 
   int realAvatarCount = min(participants.length, maxAvatars);

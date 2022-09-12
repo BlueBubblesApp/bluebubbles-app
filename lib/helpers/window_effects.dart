@@ -33,12 +33,11 @@ class WindowEffects {
   static final _descriptions = {
     WindowEffect.tabbed: "Tabbed is a Mica-like material that incorporates theme and desktop wallpaper, but is more "
         "sensitive to desktop wallpaper color. Works only on later Windows 11 versions (build 22523 or higher).",
-    WindowEffect.mica: "Mica is an opaque, dynamic material that incorporates theme and desktop wallpaper to paint "
-        "the background of long-lived windows. Works only on Windows 11 or greater (build 22000 or higher).",
+    WindowEffect.mica: "Mica replaces your background color with an incorporation of the desktop wallpaper and your "
+        "theme. It is not affected by your background color. Works only on Windows 11 or greater (build 22000 or higher).",
     WindowEffect.aero: "Aero glass effect. Windows Vista & Windows 7 like glossy blur effect.",
-    WindowEffect.acrylic: "Acrylic is a type of brush that creates a translucent texture. You can apply acrylic to "
-        "app surfaces to add depth and help establish a visual hierarchy. Works only on Windows 10 version 1803 or "
-        "higher (build 17134 or higher).",
+    WindowEffect.acrylic: "Acrylic is a translucent brush effect that works best with colors other than pure white "
+        "and pure black. Works only on Windows 10 version 1803 or higher (build 17134 or higher).",
     WindowEffect.transparent: "Transparent window background.",
     WindowEffect.disabled: "Default window background.",
   };

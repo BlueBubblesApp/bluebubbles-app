@@ -32,8 +32,6 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as uh;
 import 'package:window_manager/window_manager.dart';
 
-import 'chat/chat_manager.dart';
-
 /// [NotificationManager] holds data relating to the current chat, and manages things such as
 class NotificationManager {
   factory NotificationManager() {
@@ -62,7 +60,8 @@ class NotificationManager {
   /// If more than [maxChatCount] chats have notifications, all notifications will be grouped into one
   static const maxChatCount = 2;
   /// If a chat has more than [maxMessageCount] notifications, the notifications for that chat will be grouped into one
-  static const maxMessageCount = 3;
+  /// They will also be grouped if they can't fully fit in the notification space
+  static const maxMessageCount = 4;
 
   /// Checks if a [guid] has been marked as processed
   bool hasProcessed(String guid) {
@@ -335,12 +334,41 @@ class NotificationManager {
         File(path).createSync(recursive: true);
         File(path).writeAsBytesSync(avatar);
 
-        if (notificationCounts[chatGuid]! <= maxMessageCount) {
+        final int charsPerLineEst = 35;
+
+        bool combine = false;
+        bool multiple = false;
+        RegExp re = RegExp("\n");
+        int newLines = (messageText.length ~/ charsPerLineEst).ceil() + re.allMatches(messageText).length;
+        String body = "";
+        for (LocalNotification _toast in _notifications) {
+          if (newLines + ((_toast.body ?? "").length ~/ charsPerLineEst).ceil() + re.allMatches("${_toast.body}\n").length < 4) {
+            body += "${_toast.body}\n";
+            multiple = true;
+          } else {
+            combine = true;
+          }
+        }
+        body += messageText;
+
+        if (!combine && (notificationCounts[chatGuid]! <= maxMessageCount)) {
+          bool toasted = false;
+          for (LocalNotification _toast in _notifications) {
+            if (_toast.body != body) {
+              await _toast.close();
+            } else {
+              toasted = true;
+            }
+          }
+          if (toasted) return;
           toast = LocalNotification(
             imagePath: path,
             title: chatIsGroup ? "$chatTitle: $contactName" : chatTitle,
-            body: messageText,
-            actions: nActions,
+            body: body,
+            actions:
+              _notifications.isNotEmpty ?
+                showMarkRead ? [LocalNotificationAction(text: "Mark ${notificationCounts[chatGuid]!} Messages Read")] : []
+                : nActions,
           );
           notifications[chatGuid]!.add(toast);
 
@@ -368,7 +396,7 @@ class NotificationManager {
 
             Chat? chat = Chat.findOne(guid: chatGuid);
             if (chat == null) return;
-            if (actions[index] == "Mark Read") {
+            if (actions[index] == "Mark Read" || multiple) {
               await ChatBloc().toggleChatUnread(chat, false);
               EventDispatcher().emit('refresh', null);
             } else if (SettingsManager().settings.enablePrivateAPI.value) {

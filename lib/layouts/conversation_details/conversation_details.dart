@@ -387,10 +387,10 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       child: Padding(
                         padding: const EdgeInsets.only(left: 10.0, right: 10, top: 20),
                         child: Row(
-                          mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             if (!kIsWeb && !kIsDesktop)
-                              InkWell(
+                              Expanded(child: InkWell(
                                 onTap: () {
                                   final contact = ContactManager().getContact(chat.participants.first.address);
                                   onPressContact(contact, chat.participants.first);
@@ -421,8 +421,10 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                     ],
                                   ),
                                 ),
-                              ),
-                            InkWell(
+                              )),
+                            if (!kIsWeb && !kIsDesktop)
+                              SizedBox(width: 10),
+                            ConstrainedBox(constraints: BoxConstraints(maxWidth: (kIsDesktop || kIsWeb) ? 400 : double.infinity), child: Expanded(child: InkWell(
                               onTap: () {
                                 final contact = ContactManager().getContact(chat.participants.first.address);
                                 onPressContact(contact, chat.participants.first, isEmail: true);
@@ -451,9 +453,11 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                   ],
                                 ),
                               ),
-                            ),
+                            ))),
                             if (!kIsWeb && !kIsDesktop)
-                              InkWell(
+                              SizedBox(width: 10),
+                            if (!kIsWeb && !kIsDesktop)
+                             Expanded(child: InkWell(
                                 onTap: () async {
                                   final contact = ContactManager().getContact(chat.participants.first.address);
                                   final handle = chat.participants.first;
@@ -484,7 +488,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                     ],
                                   ),
                                 ),
-                              )
+                              )),
                           ],
                         ),
                       ),
@@ -1322,7 +1326,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                           ),
                           ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                  primary: Colors.transparent, padding: EdgeInsets.only(left: 5), elevation: 0.0),
+                                  backgroundColor: Colors.transparent, padding: EdgeInsets.only(left: 5), elevation: 0.0),
                               onPressed: () {
                                 data = data.toggle();
                               },
