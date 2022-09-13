@@ -59,9 +59,7 @@ class NotificationManager {
   static Map<String, int> notificationCounts = {};
   /// If more than [maxChatCount] chats have notifications, all notifications will be grouped into one
   static const maxChatCount = 2;
-  /// If a chat has more than [maxMessageCount] notifications, the notifications for that chat will be grouped into one
-  /// They will also be grouped if they can't fully fit in the notification space
-  static const maxMessageCount = 4;
+  static const maxLines = 4;
 
   /// Checks if a [guid] has been marked as processed
   bool hasProcessed(String guid) {
@@ -341,17 +339,20 @@ class NotificationManager {
         RegExp re = RegExp("\n");
         int newLines = (messageText.length ~/ charsPerLineEst).ceil() + re.allMatches(messageText).length;
         String body = "";
+        int count = 0;
         for (LocalNotification _toast in _notifications) {
-          if (newLines + ((_toast.body ?? "").length ~/ charsPerLineEst).ceil() + re.allMatches("${_toast.body}\n").length < 4) {
+          if (newLines + ((_toast.body ?? "").length ~/ charsPerLineEst).ceil() + re.allMatches("${_toast.body}\n").length <= maxLines) {
             body += "${_toast.body}\n";
+            count += int.tryParse(_toast.subtitle ?? "1") ?? 1;
             multiple = true;
           } else {
             combine = true;
           }
         }
         body += messageText;
+        count += 1;
 
-        if (!combine && (notificationCounts[chatGuid]! <= maxMessageCount)) {
+        if (!combine && (notificationCounts[chatGuid]! == count)) {
           bool toasted = false;
           for (LocalNotification _toast in _notifications) {
             if (_toast.body != body) {
@@ -364,6 +365,7 @@ class NotificationManager {
           toast = LocalNotification(
             imagePath: path,
             title: chatIsGroup ? "$chatTitle: $contactName" : chatTitle,
+            subtitle: "$count",
             body: body,
             actions:
               _notifications.isNotEmpty ?
