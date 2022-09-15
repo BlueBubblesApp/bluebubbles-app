@@ -121,10 +121,19 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
                 ),
         );
       } else if (mimeType == "audio" && !widget.attachment.mimeType!.contains("caf")) {
+        if (kIsDesktop) {
+          return MediaFile(
+            attachment: widget.attachment,
+            child: RegularFileOpener(
+              file: content,
+              attachment: widget.attachment,
+            ),
+          );
+        }
         return MediaFile(
           attachment: widget.attachment,
           child: AudioPlayerWidget(
-              file: content, context: context, width: kIsDesktop ? null : 250, isFromMe: widget.isFromMe),
+              file: content, context: context, width: 250, isFromMe: widget.isFromMe),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
         return MediaFile(

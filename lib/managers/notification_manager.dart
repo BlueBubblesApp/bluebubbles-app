@@ -270,6 +270,7 @@ class NotificationManager {
 
         LocalNotification? toast;
 
+        notifications.removeWhere((key, value) => value.isEmpty);
         notifications[chatGuid] ??= [];
         notificationCounts[chatGuid] = (notificationCounts[chatGuid] ?? 0) + 1;
 
