@@ -3,6 +3,7 @@ package com.bluebubbles.messaging.helpers;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.res.Resources;
 import android.service.notification.StatusBarNotification;
 import androidx.core.app.NotificationManagerCompat;
 
@@ -55,23 +56,24 @@ public class HelperUtils {
     }
 
     public static Bitmap getCircleBitmap(Bitmap bitmap) {
-        final Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
-                bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        final int size = Math.round(108 * Resources.getSystem().getDisplayMetrics().density);
+        final Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         final Canvas canvas = new Canvas(output);
 
         final int color = Color.RED;
         final Paint paint = new Paint();
-        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
-        final RectF rectF = new RectF(rect);
+        final int bitmapSize = Math.round(73 * Resources.getSystem().getDisplayMetrics().density);
+        final int padding = (size - bitmapSize) / 2;
+        final Rect _rect = new Rect(padding, padding, bitmapSize + padding, bitmapSize + padding);
+        final RectF rect = new RectF(_rect);
 
         paint.setAntiAlias(true);
         canvas.drawARGB(0, 0, 0, 0);
         paint.setColor(color);
-        canvas.drawOval(rectF, paint);
+        canvas.drawCircle((rect.left + (rect.right - rect.left) / 2), (rect.top + (rect.bottom - rect.top) / 2), ((rect.right - rect.left) / 2), paint);
 
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-        canvas.drawBitmap(bitmap, rect, rect, paint);
-
+        canvas.drawBitmap(bitmap, null, rect, null);
         bitmap.recycle();
 
         return output;

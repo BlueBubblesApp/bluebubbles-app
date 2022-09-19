@@ -25,7 +25,6 @@ import com.bluebubbles.messaging.method_call_handler.handlers.GetServerUrl;
 import com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle;
 import com.bluebubbles.messaging.method_call_handler.handlers.MediaSessionListener;
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
-import com.bluebubbles.messaging.method_call_handler.handlers.OpenCamera;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenLink;
 import com.bluebubbles.messaging.method_call_handler.handlers.PickFile;
@@ -91,8 +90,6 @@ public class MethodCallHandler {
             new GetServerUrl(context, call, result).Handle();
         } else if (call.method.equals(PickFile.TAG)) {
             new PickFile(context, call, result).Handle();
-        } else if(call.method.equals(OpenCamera.TAG)) {
-            new OpenCamera(context, call, result).Handle();
         } else if (call.method.equals(AlarmScheduler.TAG)) {
             new AlarmScheduler(context, call, result).Handle();
         } else if (call.method.equals(SetNextRestart.TAG)) {

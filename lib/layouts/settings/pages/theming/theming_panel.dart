@@ -22,6 +22,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:dio/dio.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart' hide Response;
+import 'package:idb_shim/idb.dart';
 import 'package:universal_io/io.dart';
 
 class ThemingPanelController extends StatefulController {
@@ -108,9 +110,10 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       ),
                     if (!kIsWeb)
                       SettingsTile(
-                        title: "Theming",
-                        subtitle: "Edit existing themes and create custom themes",
+                        title: "Advanced Theming",
+                        subtitle: "Customize app colors and font sizes with custom themes\n${ThemeStruct.getLightTheme().name}   |   ${ThemeStruct.getDarkTheme().name}",
                         trailing: nextIcon,
+                        isThreeLine: true,
                         onTap: () async {
                           Navigator.of(context).push(
                             CupertinoPageRoute(
@@ -607,11 +610,11 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       return const SizedBox.shrink();
                     }
                   }),
-                if (!kIsWeb && !kIsDesktop)
-                  Obx(() => controller.refreshRates.length > 2 ? SettingsSection(
+                if (!kIsWeb && !kIsDesktop && controller.refreshRates.length > 2)
+                  SettingsSection(
                     backgroundColor: tileColor,
                     children: [
-                      SettingsOptions<int>(
+                      Obx(() => SettingsOptions<int>(
                         initial: controller.currentMode.value,
                         onChanged: (val) async {
                           if (val == null) return;
@@ -624,17 +627,15 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         title: "Display",
                         backgroundColor: tileColor,
                         secondaryColor: headerColor,
-                      ),
+                      )),
                     ],
-                  ) : const SizedBox.shrink()),
-                if (!kIsWeb)
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Text and Font"),
-                if (!kIsWeb)
+                  ),
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Text and Font"),
                   SettingsSection(
                     backgroundColor: tileColor,
                     children: [
@@ -642,6 +643,29 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         if (!fontExistsOnDisk.value) {
                           return SettingsTile(
                             onTap: () async {
+                              if (kIsWeb) {
+                                try {
+                                  final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["ttf"]);
+                                  if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+
+                                  final txn = db.transaction("BBStore", idbModeReadWrite);
+                                  final store = txn.objectStore("BBStore");
+                                  await store.put(res.files.first.bytes!, "iosFont");
+                                  await txn.completed;
+
+                                  final fontLoader = FontLoader("Apple Color Emoji");
+                                  final cachedFontBytes = ByteData.view(res.files.first.bytes!.buffer);
+                                  fontLoader.addFont(
+                                    Future<ByteData>.value(cachedFontBytes),
+                                  );
+                                  await fontLoader.load();
+                                  fontExistsOnDisk.value = true;
+                                  return showSnackbar("Notice", "Font loaded");
+                                } catch (_) {
+                                  return showSnackbar("Error", "Failed to load font file. Please make sure it is a valid ttf and under 50mb.");
+                                }
+                              }
+
                               showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
@@ -719,8 +743,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                               });
                             },
                             title:
-                            "Download${controller.downloadingFont.value ? "ing" : ""} iOS Emoji Font${controller.downloadingFont.value ? " (${controller.progress.value != null && controller.totalSize.value != null ? getSizeString(controller.progress.value! * controller.totalSize.value! / 1000) : ""} / ${getSizeString((controller.totalSize.value ?? 0).toDouble() / 1000)}) (${((controller.progress.value ?? 0) * 100).floor()}%)" : ""}",
-                            backgroundColor: tileColor,
+                            kIsWeb ? "Upload Font File" : "Download${downloadingFont.value ? "ing" : ""} iOS Emoji Font${downloadingFont.value ? " (${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)}) (${((progress.value ?? 0) * 100).floor()}%)" : ""}",
+                            subtitle: kIsWeb ? "Upload your ttf emoji file into BlueBubbles" : null,
                           );
                         } else {
                           return const SizedBox.shrink();
@@ -730,11 +754,18 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         if (fontExistsOnDisk.value) {
                           return SettingsTile(
                             onTap: () async {
-                              await DynamicCachedFonts.removeCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf");
+                              if (kIsWeb) {
+                                final txn = db.transaction("BBStore", idbModeReadWrite);
+                                final store = txn.objectStore("BBStore");
+                                await store.delete("iosFont");
+                                await txn.completed;
+                              } else {
+                                await DynamicCachedFonts.removeCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf");
+                              }
                               fontExistsOnDisk.value = false;
                               showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
                             },
-                            title: "Delete iOS Emoji Font",
+                            title: "Delete ${kIsWeb ? "" : "iOS "}Emoji Font",
                           );
                         } else {
                           return const SizedBox.shrink();
@@ -760,7 +791,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
         title: Text("Monet Theming Info", style: context.theme.textTheme.titleLarge),
         backgroundColor: context.theme.colorScheme.properSurface,
         content: Text(
-            "Harmonize - Overwrites primary color, and blends background & accent color with the current theme colors\r\n"
+            "Harmonize - Overwrites primary color and blends remainder of colors with the current theme colors\r\n"
                 "Full - Overwrites primary, background, and accent colors, along with other minor colors.\r\n",
           style: context.theme.textTheme.bodyLarge,
         ),

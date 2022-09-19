@@ -373,7 +373,7 @@
     },
     {
       "id": "13:4148278195232901830",
-      "lastPropertyId": "39:1372898255926257108",
+      "lastPropertyId": "40:5039085638407799291",
       "name": "Message",
       "properties": [
         {
@@ -576,6 +576,11 @@
           "flags": 520,
           "indexId": "9:1947853053588120767",
           "relationTarget": "Chat"
+        },
+        {
+          "id": "40:5039085638407799291",
+          "name": "dbAttributedBody",
+          "type": 9
         }
       ],
       "relations": []

@@ -2,6 +2,95 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## 1.10.1
+
+### Fixes & Optimizations
+
+* Upgraded flutter to v3.3.0.
+   - This update should fix the keyboard lag issue some users were experiencing.
+* Fixes issue uploading attachments on BlueBubbles Web.
+* Fixes issue where a temporary chat mute would not apply properly.
+* Fixes issue loading texts from macOS Ventura.
+   - This fixes the "Unknown Group Event" issue with macOS Ventura.
+* Fixes issue where new messages wouldn't show in an open chat until re-entering the chat.
+* App can no longer be flipped upside-down, unless enabled in the Settings.
+* Fixes issue where message previews for reactions would always show "You", rather than the real sender.
+* Fixes big emoji issue where font size would be extremely large, on some devices.
+* Fixes grey advanced theming page when the music theme was enabled.
+
+## 1.10 (Bordeaux)
+
+### The Big Stuff
+
+- Full rewrite of theming system to make the app as pretty as possible
+- Bug fixes
+- Performance improvements
+
+### The Nitty Gritty
+
+#### New Features
+- Theming system rewrite
+  - UI Components are now more consistent towards their respective skins
+  - Theme colors now apply in much more places throughout the UI
+  - Many more options to modify theme colors
+  - Simplified customization parameters
+  - Buffed Material You - it now reaches much deeper into the UI to truly transform the app towards your system theme
+  - Over 85 new default themes - there's something for everyone now!
+  - Added visual feedback when tapping items in settings
+  - Added transparency settings on Windows Desktop
+  - Dialog design has been unified across the entire app
+  - Revamped conversation details design
+  - Revamped fullscreen media viewer design
+  - Gradient backgrounds are now supported on default themes as well
+  - Old themes will be completely deactivated, but they are still viewable from the advanced theming menu
+- Added wearable actions to notifications (Pebble / Fitbit / etc smartwatches)
+- Added support for modifying API Timeout duration
+- macOS Ventura support
+- Custom emoji font on Web
+- Desktop
+  - Made notification actions reorderable by dragging
+
+#### Bug Fixes
+- Fixed off-center UI components in various places
+- Fixed broken audio sending
+- Fixed broken audio player
+- Fixed app requiring Firebase on setup
+  - Firebase remains required when using Ngrok / Cloudflare
+- Fixed zoomed in contact photos on notifications and share sheet
+- Fixed app crashing after attaching large files
+- Fixed "removed" reactions not actually getting removed from the UI
+- Fixed stickers not loading in
+- Fixed Giphy not working on Web
+- Fixed taking photos / videos from camera button in the app would sometimes be unresponsive
+- Fixed some issues removing people from chats
+   - This may not reflect in the UI immediately still, but a restart of the app will reflect it
+- Desktop
+  - Fixed link previews
+  - Fixed issues with window bounds going off screen
+  - Fixed / improved wonky UI elements
+  - Removed ability to disable tablet mode
+  - Fixed error on convo tile right click
+  - Fixed globalkey errors with details popup
+  - Fixed appdata migration
+
+#### Improvements
+- Asynchronous incremental sync (better performance when loading the app from background)
+- Share shortcuts are now set as conversations to interact better with Android system
+- Improved contact photo matching (Desktop / Web)
+- Don't auto-save interactive message attachments
+- Force cloudflare URLs to https
+- Request storage permissions when "save sync log" is enabled
+- Improved customize theme error snackbar info
+- Added detection for large files (> 100mb)
+- Laid the groundwork for attributedBody support (mentions) for next update
+- Improved Android 12+ splash screen
+- Improved performance of loading chat messages
+
+#### For Developers
+- Updated targetSdkVersion & compileSdkVersion to 32 (Android 12L)
+- Updated gradle plugin
+- Updated Java & Dart dependencies
+
 ## 1.9.1
 
 ### Bug Fixes
@@ -419,58 +508,3 @@ Please be advised that the next client update will require a minimum server vers
 * Fixes duplicate message issue when sending a message with a link (separated by a new line)
 * Fixes issues sharing .txt files to BlueBubbles
 * Tons of other small fixes and cross-platform enhancements
-
-## v1.5.0
-
-## Changes
-
-### The Big Stuff
-* New notification options
-* New theming options
-  - Ability to dynamically theme the app based on the current song's album cover
-  - Ability to copy and save those dynamic themes
-* Tablet mode
-* Unknown senders tab option
-  - Senders with no associated contact info will be separated
-* Other new features, UI, and UX improvements
-
-### The Nitty Gritty
-
-#### New Features
-
-- **New Notification Options**
-  - Added the option to schedule a reminder for a message by long-pressing the message
-  - Added new notification settings page
-  - Added the ability to change the notification sound
-  - Added the option to disable notifying reactions
-  - Added the ability to set global text detection (only notify when a text contains certain words or phrases)
-  - Added the ability to mute certain individuals in a chat
-  - Added the ability to mute a chat temporarily
-  - Added the ability to set text detection on a specific chat - only notify when a text from the specified chat contains certain words or phrases
-- **New Theming Options**
-   - Added the ability to get background and primary color from album art (requires full notification access)
-   - Added the ability to set an animated gradient background for the chat list (gradient is created between background and primary color)
-- **Other New Features**
-   - Added a better logging mechanism to make it easier to send bug reports to the developers
-   - Added ability to add a camera button above the chat creator button like Signal
-   - Added "Unknown Senders" tab
-
-#### Bug Fixes
-
-- **UI bugs**
-   - Fixed custom bubble color getting reset for new messages
-   - Fixed 24hr time not working properly
-   - Improved smart reply padding in Material theme
-- **UX bugs**
-   - Fixed some bugs with the fullscreen photo viewer
-
-#### Improvements
-
-- **UI Improvements**
-   - Move pinned chat typing indicator to the avatar so the latest message bubble can always be seen
-   - Completely revamped icons for iOS theme to match iOS-style
-   - Improved URL preview
-   - Removed Camera preview from share menu to reduce lag. Replaced by 2 buttons, camera and video
-- **UX Improvements**   
-   - Added pagination to incremental sync (messages should load faster)
-   - Increased chat page size to reduce visible "lag" when resuming the app from the background

@@ -1,3 +1,4 @@
+import 'package:bluebubbles/api_manager.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -7,11 +8,15 @@ import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:secure_application/secure_application.dart';
+import 'package:universal_io/io.dart';
 
 class MiscPanel extends StatefulWidget {
 
@@ -220,6 +225,48 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                 ],
               ),
               SettingsHeader(
+                  headerColor: headerColor,
+                  tileColor: tileColor,
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Networking"),
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
+                  SettingsTile(
+                    title: "API Timeout Duration",
+                    subtitle: "Controls the duration (in seconds) until a network request will time out.\nIncrease this setting if you have poor connection.",
+                    isThreeLine: true,
+                  ),
+                  Obx(() =>
+                      SettingsSlider(
+                          startingVal: SettingsManager().settings.apiTimeout.value / 1000,
+                          update: (double val) {
+                            SettingsManager().settings.apiTimeout.value = val.toInt() * 1000;
+                          },
+                          onChangeEnd: (double val) {
+                            saveSettings();
+                            api.dio = Dio(BaseOptions(
+                              connectTimeout: 15000,
+                              receiveTimeout: SettingsManager().settings.apiTimeout.value,
+                              sendTimeout: SettingsManager().settings.apiTimeout.value,
+                            ));
+                            api.dio.interceptors.add(ApiInterceptor());
+                          },
+                          backgroundColor: tileColor,
+                          min: 5,
+                          max: 60,
+                          divisions: 11)),
+                  Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: Obx(() => Text(
+                      "Note: Attachment uploads will timeout after ${SettingsManager().settings.apiTimeout.value ~/ 1000 * 12} seconds",
+                      style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                    )),
+                  )
+                ],
+              ),
+              SettingsHeader(
                 headerColor: headerColor,
                 tileColor: tileColor,
                 iosSubtitle: iosSubtitle,
@@ -281,6 +328,32 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                       child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
                     ),
                   ),
+                  if (Platform.isAndroid)
+                    Obx(() =>
+                        SettingsSwitch(
+                          onChanged: (bool val) {
+                            SettingsManager().settings.allowUpsideDownRotation.value = val;
+                            saveSettings();
+                            SystemChrome.setPreferredOrientations([
+                              DeviceOrientation.landscapeRight,
+                              DeviceOrientation.landscapeLeft,
+                              DeviceOrientation.portraitUp,
+                              if (SettingsManager().settings.allowUpsideDownRotation.value)
+                                DeviceOrientation.portraitDown,
+                            ]);
+                          },
+                          initialVal: SettingsManager().settings.allowUpsideDownRotation.value,
+                          title: "Alllow Upside-Down Rotation",
+                          backgroundColor: tileColor,
+                        )),
+                  if (Platform.isAndroid)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15.0),
+                        child: SettingsDivider(color: context.theme.colorScheme.surfaceVariant),
+                      ),
+                    ),
                   Obx(() {
                     if (iOS) {
                       return SettingsTile(

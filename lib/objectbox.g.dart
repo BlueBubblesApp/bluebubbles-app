@@ -393,7 +393,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(13, 4148278195232901830),
       name: 'Message',
-      lastPropertyId: const IdUid(39, 1372898255926257108),
+      lastPropertyId: const IdUid(40, 5039085638407799291),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -593,7 +593,12 @@ final _entities = <ModelEntity>[
             type: 11,
             flags: 520,
             indexId: const IdUid(9, 1947853053588120767),
-            relationTarget: 'Chat')
+            relationTarget: 'Chat'),
+        ModelProperty(
+            id: const IdUid(40, 5039085638407799291),
+            name: 'dbAttributedBody',
+            type: 9,
+            flags: 0)
       ],
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[
@@ -1233,7 +1238,10 @@ ModelDefinition getObjectBoxModel() {
           final threadOriginatorPartOffset = object.threadOriginatorPart == null
               ? null
               : fbb.writeString(object.threadOriginatorPart!);
-          fbb.startTable(40);
+          final dbAttributedBodyOffset = object.dbAttributedBody == null
+              ? null
+              : fbb.writeString(object.dbAttributedBody!);
+          fbb.startTable(41);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -1274,6 +1282,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addBool(36, object.bigEmoji);
           fbb.addInt64(37, object.error);
           fbb.addInt64(38, object.chat.targetId);
+          fbb.addOffset(39, dbAttributedBodyOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1346,7 +1355,9 @@ ModelDefinition getObjectBoxModel() {
                 : DateTime.fromMillisecondsSinceEpoch(dateDeliveredValue)
             ..bigEmoji =
                 const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 76)
-            ..error = const fb.Int64Reader().vTableGet(buffer, rootOffset, 78, 0);
+            ..error =
+                const fb.Int64Reader().vTableGet(buffer, rootOffset, 78, 0)
+            ..dbAttributedBody = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 82);
           object.chat.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 80, 0);
           object.chat.attach(store);
@@ -1900,6 +1911,10 @@ class Message_ {
   /// see [Message.chat]
   static final chat =
       QueryRelationToOne<Message, Chat>(_entities[5].properties[38]);
+
+  /// see [Message.dbAttributedBody]
+  static final dbAttributedBody =
+      QueryStringProperty<Message>(_entities[5].properties[39]);
 }
 
 /// [ScheduledMessage] entity fields to define ObjectBox queries.

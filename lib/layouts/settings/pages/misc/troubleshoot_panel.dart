@@ -71,7 +71,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> with The
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
-                              backgroundColor: context.theme.colorScheme.secondary,
+                              backgroundColor: context.theme.colorScheme.surface,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                               titlePadding: const EdgeInsets.only(top: 15),
                               title: Text("Fetching contacts...", style: context.theme.textTheme.titleLarge),

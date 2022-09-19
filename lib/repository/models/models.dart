@@ -34,6 +34,7 @@ export 'package:bluebubbles/repository/models/io/giphy.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/giphy.dart';
 export 'package:bluebubbles/repository/models/platform_file.dart';
 export 'package:bluebubbles/repository/models/settings.dart';
+export 'package:bluebubbles/repository/models/attributed_body.dart';
 
 class Contact {
   Contact({

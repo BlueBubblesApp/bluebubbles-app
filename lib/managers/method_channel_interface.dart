@@ -126,10 +126,11 @@ class MethodChannelInterface {
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 
+        if (data == null) return Future.value("");
         // send data to the UI thread if it is active, otherwise handle in the isolate
         final SendPort? send = IsolateNameServer.lookupPortByName('bg_isolate');
         if (send != null) {
-          data!['action'] = 'new-message';
+          data['action'] = 'new-message';
           send.send(data);
         } else {
           // Add it to the queue with the data as the item
@@ -210,7 +211,7 @@ class MethodChannelInterface {
         List<PlatformFile> attachments = [];
 
         // Loop through all of the attachments sent by native code
-        call.arguments["attachments"].forEach((element) {
+        call.arguments["attachments"].forEach((element) async {
           // Get the file in that directory
           File file = File(element);
 
@@ -218,8 +219,8 @@ class MethodChannelInterface {
           attachments.add(PlatformFile(
             name: file.path.split("/").last,
             path: file.path,
-            bytes: file.readAsBytesSync(),
-            size: file.lengthSync(),
+            bytes: await file.readAsBytes(),
+            size: await file.length(),
           ));
         });
 
@@ -329,28 +330,36 @@ class MethodChannelInterface {
           if (ThemeManager().inDarkMode(Get.context!)) {
             if (primaryPercent != 0.5 && darkBgPercent != 0.5) {
               double difference = min((primaryPercent / (primaryPercent + darkBgPercent)), 1 - (primaryPercent / (primaryPercent + darkBgPercent)));
-              Tween color1 = Tween<double>(begin: 0, end: difference);
-              Tween color2 = Tween<double>(begin: 1 - difference, end: 1);
-              ConversationViewMixin.gradientTween.value = MultiTween<String>()
-                ..add("color1", color1)
-                ..add("color2", color2);
+              Tween<double> color1 = Tween<double>(begin: 0, end: difference);
+              Tween<double> color2 = Tween<double>(begin: 1 - difference, end: 1);
+              ConversationViewMixin.gradientTween.value = MovieTween()
+                ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                    .tween("color1", color1)
+                ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                    .tween("color2", color2);
             } else {
-              ConversationViewMixin.gradientTween.value = MultiTween<String>()
-                ..add("color1", Tween<double>(begin: 0.0, end: 0.2))
-                ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
+              ConversationViewMixin.gradientTween.value = MovieTween()
+                ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                    .tween("color1", Tween<double>(begin: 0, end: 0.2))
+                ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                    .tween("color2", Tween<double>(begin: 0.8, end: 1));
             }
           } else {
             if (primaryPercent != 0.5 && lightBgPercent != 0.5) {
               double difference = min((primaryPercent / (primaryPercent + lightBgPercent)), 1 - (primaryPercent / (primaryPercent + lightBgPercent)));
-              Tween color1 = Tween<double>(begin: 0.0, end: difference);
-              Tween color2 = Tween<double>(begin: 1.0 - difference, end: 1.0);
-              ConversationViewMixin.gradientTween.value = MultiTween<String>()
-                ..add("color1", color1)
-                ..add("color2", color2);
+              Tween<double> color1 = Tween<double>(begin: 0.0, end: difference);
+              Tween<double> color2 = Tween<double>(begin: 1.0 - difference, end: 1.0);
+              ConversationViewMixin.gradientTween.value = MovieTween()
+              ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                  .tween("color1", color1)
+              ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                  .tween("color2", color2);
             } else {
-              ConversationViewMixin.gradientTween.value = MultiTween<String>()
-                ..add("color1", Tween<double>(begin: 0.0, end: 0.2))
-                ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
+              ConversationViewMixin.gradientTween.value = MovieTween()
+              ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                  .tween("color1", Tween<double>(begin: 0, end: 0.2))
+              ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+                  .tween("color2", Tween<double>(begin: 0.8, end: 1));
             }
           }
           SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);

@@ -67,7 +67,7 @@ class ServerManagementPanelController extends StatefulController {
       latency.value = later - now;
       macOSVersion.value = response.data['data']['os_version'];
       serverVersion.value = response.data['data']['server_version'];
-      Version version = Version.parse(serverVersion.value);
+      Version version = Version.parse(serverVersion.value!);
       serverVersionCode.value = version.major * 100 + version.minor * 21 + version.patch;
       privateAPIStatus.value = response.data['data']['private_api'] ?? false;
       helperBundleStatus.value = response.data['data']['helper_connected'] ?? false;
@@ -231,6 +231,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       ],
                     )
                   )),
+                  if (SettingsManager().fcmData != null)
                   SettingsTile(
                     title: "Show QR Code",
                     subtitle: "Generate QR Code to screenshot or sync other devices",
@@ -257,7 +258,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             content: Container(
                               height: 320,
                               width: 320,
-                              child: QrImage(
+                              child: QrImageView(
                                 data: qrtext,
                                 version: QrVersions.auto,
                                 size: 320,

@@ -7,7 +7,6 @@ import Foundation
 
 import bitsdojo_window_macos
 import connectivity_plus_macos
-import dart_vlc
 import desktop_drop
 import device_info_plus_macos
 import dynamic_color
@@ -40,7 +39,6 @@ import window_manager
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   BitsdojoWindowPlugin.register(with: registry.registrar(forPlugin: "BitsdojoWindowPlugin"))
   ConnectivityPlugin.register(with: registry.registrar(forPlugin: "ConnectivityPlugin"))
-  DartVlcPlugin.register(with: registry.registrar(forPlugin: "DartVlcPlugin"))
   DesktopDropPlugin.register(with: registry.registrar(forPlugin: "DesktopDropPlugin"))
   DeviceInfoPlusMacosPlugin.register(with: registry.registrar(forPlugin: "DeviceInfoPlusMacosPlugin"))
   DynamicColorPlugin.register(with: registry.registrar(forPlugin: "DynamicColorPlugin"))

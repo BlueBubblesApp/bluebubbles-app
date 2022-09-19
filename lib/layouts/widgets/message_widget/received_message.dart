@@ -101,7 +101,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   Size? messageSize;
   late String effect;
   bool showReplies = false;
-  CustomAnimationControl controller = CustomAnimationControl.stop;
+  Control controller = Control.stop;
   final GlobalKey key = GlobalKey();
 
   @override
@@ -143,13 +143,13 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       SchedulerBinding.instance!.addPostFrameCallback((_) {
         if (ModalRoute.of(context)?.animation?.status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
           setState(() {
-            controller = CustomAnimationControl.playFromStart;
+            controller = Control.playFromStart;
           });
         } else if (widget.autoplayEffect) {
           ModalRoute.of(context)?.animation?.addStatusListener((status) {
             if (status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
               setState(() {
-                controller = CustomAnimationControl.playFromStart;
+                controller = Control.playFromStart;
               });
             }
           });
@@ -175,14 +175,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
   /// Builds the message bubble with teh tail (if applicable)
   Widget _buildMessageWithTail(Message message, MessageEffect effect) {
-    Animatable<TimelineValue<String>>? tween;
+    MovieTween? tween;
     Size bubbleSize = Size(0, 0);
     double opacity = 0;
 
     // If we haven't played the effect, we should apply it from the start.
     // This must come before we set the bubbleSize variable or else we get a box constraints errors
     if (message.datePlayed == null && effect != MessageEffect.none) {
-      controller = CustomAnimationControl.playFromStart;
+      controller = Control.playFromStart;
       if (effect != MessageEffect.invisibleInk) {
         Timer(Duration(milliseconds: 500), () {
           if (message.datePlayed == null) {
@@ -192,25 +192,25 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       }
     }
 
-    if (controller != CustomAnimationControl.stop) {
+    if (controller != Control.stop) {
       bubbleSize = message.getBubbleSize(context);
     }
-    if (effect == MessageEffect.gentle && controller != CustomAnimationControl.stop) {
-      tween = TimelineTween<String>()
-        ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500))
-            .animate("size", tween: 0.5.tweenTo(0.5))
-        ..addScene(
+    if (effect == MessageEffect.gentle && controller != Control.stop) {
+      tween = MovieTween()
+        ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 500))
+            .tween("size", 0.5.tweenTo(0.5))
+        ..scene(
                 begin: Duration(milliseconds: 1000),
                 duration: const Duration(milliseconds: 800),
                 curve: Curves.easeInOut)
-            .animate("size", tween: 0.5.tweenTo(1.0));
+            .tween("size", 0.5.tweenTo(1.0));
       opacity = 1;
-    } else if (controller != CustomAnimationControl.stop) {
-      tween = TimelineTween<String>()
-        ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
-            .animate("size", tween: 1.0.tweenTo(1.0));
+    } else if (controller != Control.stop) {
+      tween = MovieTween()
+        ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
+            .tween("size", 1.0.tweenTo(1.0));
     }
-    if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop) {
+    if (effect == MessageEffect.invisibleInk && controller != Control.stop) {
       setState(() {
         opacity = 1;
       });
@@ -251,7 +251,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             : RichText(
                 text: TextSpan(
                     children: MessageHelper.buildEmojiText(
-                        message.text!, (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(fontSizeFactor: 4)))),
+                        message.text!, (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(fontSizeFactor: bigEmojiScaleFactor)))),
       );
     } else {
       child = Stack(
@@ -307,12 +307,12 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 colors: getBubbleColors(widget.message),
               ),
             ),
-            child: effect.isBubble && controller != CustomAnimationControl.stop
-                ? CustomAnimation<TimelineValue<String>>(
+            child: effect.isBubble && controller != Control.stop
+                ? CustomAnimationBuilder<Movie>(
                     control: controller,
                     tween: tween!,
                     duration: Duration(milliseconds: 1800),
-                    builder: (context, child, anim) {
+                    builder: (context, anim, child) {
                       double value = anim.get("size");
                       return StatefulBuilder(builder: (context, setState) {
                         return GestureDetector(
@@ -322,7 +322,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               message.setPlayedDate();
                               setState(() {
                                 opacity = 1 - opacity;
-                                controller = CustomAnimationControl.stop;
+                                controller = Control.stop;
                               });
                             }
                           },
@@ -355,7 +355,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                     style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(fontSizeFactor: value),
                                   ),
                                 ),
-                              if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop)
+                              if (effect == MessageEffect.invisibleInk && controller != Control.stop)
                                 Opacity(
                                   opacity: opacity,
                                   child: AbsorbPointer(
@@ -439,48 +439,48 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       );
     }
 
-    if (effect.isBubble && effect != MessageEffect.invisibleInk && controller != CustomAnimationControl.stop) {
-      Animatable<TimelineValue<String>> tween = TimelineTween<String>()
-        ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
-            .animate("size", tween: 1.0.tweenTo(1.0));
-      if (effect == MessageEffect.gentle && controller != CustomAnimationControl.stop) {
-        tween = TimelineTween<String>()
-          ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
-              .animate("size", tween: 0.0.tweenTo(1.2))
-          ..addScene(
+    if (effect.isBubble && effect != MessageEffect.invisibleInk && controller != Control.stop) {
+      MovieTween tween = MovieTween()
+        ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
+            .tween("size", 1.0.tweenTo(1.0));
+      if (effect == MessageEffect.gentle && controller != Control.stop) {
+        tween = MovieTween()
+          ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
+              .tween("size", 0.0.tweenTo(1.2))
+          ..scene(
                   begin: Duration(milliseconds: 1000),
                   duration: const Duration(milliseconds: 800),
                   curve: Curves.easeInOut)
-              .animate("size", tween: 1.2.tweenTo(1.0));
+              .tween("size", 1.2.tweenTo(1.0));
       }
       if (effect == MessageEffect.loud) {
-        tween = TimelineTween<String>()
-          ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 300), curve: Curves.easeIn)
-              .animate("size", tween: 1.0.tweenTo(3.0))
-          ..addScene(
+        tween = MovieTween()
+          ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 300), curve: Curves.easeIn)
+              .tween("size", 1.0.tweenTo(3.0))
+          ..scene(
                   begin: Duration(milliseconds: 200), duration: const Duration(milliseconds: 400), curve: Curves.linear)
-              .animate("rotation", tween: 0.0.tweenTo(2.0))
-          ..addScene(
+              .tween("rotation", 0.0.tweenTo(2.0))
+          ..scene(
                   begin: Duration(milliseconds: 400), duration: const Duration(milliseconds: 500), curve: Curves.easeIn)
-              .animate("size", tween: 3.0.tweenTo(1.0));
+              .tween("size", 3.0.tweenTo(1.0));
       }
       if (effect == MessageEffect.slam) {
-        tween = TimelineTween<String>()
-          ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 200), curve: Curves.easeIn)
-              .animate("size", tween: 1.0.tweenTo(5.0))
-          ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 200), curve: Curves.easeIn)
-              .animate("rotation", tween: 0.0.tweenTo(-pi / 16))
-          ..addScene(
+        tween = MovieTween()
+          ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 200), curve: Curves.easeIn)
+              .tween("size", 1.0.tweenTo(5.0))
+          ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 200), curve: Curves.easeIn)
+              .tween("rotation", 0.0.tweenTo(-pi / 16))
+          ..scene(
                   begin: Duration(milliseconds: 250), duration: const Duration(milliseconds: 150), curve: Curves.easeIn)
-              .animate("size", tween: 5.0.tweenTo(0.8))
-          ..addScene(
+              .tween("size", 5.0.tweenTo(0.8))
+          ..scene(
                   begin: Duration(milliseconds: 250), duration: const Duration(milliseconds: 150), curve: Curves.easeIn)
-              .animate("rotation", tween: (-pi / 16).tweenTo(0))
-          ..addScene(
+              .tween("rotation", (-pi / 16).tweenTo(0))
+          ..scene(
                   begin: Duration(milliseconds: 400), duration: const Duration(milliseconds: 100), curve: Curves.easeIn)
-              .animate("size", tween: 0.8.tweenTo(1.0));
+              .tween("size", 0.8.tweenTo(1.0));
       }
-      return CustomAnimation<TimelineValue<String>>(
+      return CustomAnimationBuilder<Movie>(
           control: controller,
           tween: tween,
           duration: Duration(
@@ -496,11 +496,11 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               }
 
               setState(() {
-                controller = CustomAnimationControl.stop;
+                controller = Control.stop;
               });
             }
           },
-          builder: (context, child, anim) {
+          builder: (context, anim, child) {
             double value1 = 1;
             double value2 = 0;
             if (effect == MessageEffect.gentle) {
@@ -986,13 +986,13 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                           onTap: () {
                             HapticFeedback.mediumImpact();
                             if ((stringToMessageEffect[effect] ?? MessageEffect.none).isBubble) {
-                              if (effect == "invisible ink" && controller == CustomAnimationControl.playFromStart) {
+                              if (effect == "invisible ink" && controller == Control.playFromStart) {
                                 setState(() {
-                                  controller = CustomAnimationControl.stop;
+                                  controller = Control.stop;
                                 });
                               } else {
                                 setState(() {
-                                  controller = CustomAnimationControl.playFromStart;
+                                  controller = Control.playFromStart;
                                 });
                               }
                             } else {
