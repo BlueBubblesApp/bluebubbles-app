@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:universal_io/io.dart';
 
 class ServerCredentials extends StatefulWidget {
   @override
@@ -390,9 +391,21 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
             return;
           }
 
-          FCMData fcmData = FCMData.fromMap(data["data"]);
-          SettingsManager().saveFCMData(fcmData);
-          goToNextPage();
+          if (isNullOrEmpty(data["data"])! && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
+            return setState(() {
+              controller.updateConnectError("Firebase is required when using Ngrok or Cloudflare!");
+            });
+          } else {
+            try {
+              FCMData fcmData = FCMData.fromMap(data["data"]);
+              SettingsManager().saveFCMData(fcmData);
+            } catch (_) {
+              if (Platform.isAndroid) {
+                showSnackbar("Warning", "No Firebase project detected! You will not receive notifications for new messages!");
+              }
+            }
+            goToNextPage();
+          }
         } else if (mounted) {
           if (err != null) {
             final errorData = jsonDecode(err as String);
