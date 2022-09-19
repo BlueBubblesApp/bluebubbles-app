@@ -118,8 +118,11 @@ class ConversationTile extends CustomStateful<ConversationTileController> {
   State<ConversationTile> createState() => _ConversationTileState();
 }
 
-class _ConversationTileState extends CustomState<ConversationTile, void, ConversationTileController> {
+class _ConversationTileState extends CustomState<ConversationTile, void, ConversationTileController> with AutomaticKeepAliveClientMixin {
   ConversationListController get listController => controller.listController;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -149,6 +152,7 @@ class _ConversationTileState extends CustomState<ConversationTile, void, Convers
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return MouseRegion(
       onEnter: (event) => controller.hoverHighlight.value = true,
       onExit: (event) => controller.hoverHighlight.value = false,

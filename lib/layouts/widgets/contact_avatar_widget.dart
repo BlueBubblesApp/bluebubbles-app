@@ -163,7 +163,6 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
           key: Key("$keyPrefix-avatar-container"),
           width: size,
           height: size,
-          padding: EdgeInsets.all(widget.borderThickness),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: AlignmentDirectional.topStart,
@@ -180,7 +179,8 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
               color: SettingsManager().settings.skin.value == Skins.Samsung
                 ? tileColor
                 : context.theme.colorScheme.background,
-              width: widget.borderThickness
+              width: widget.borderThickness,
+              strokeAlign: StrokeAlign.outside
             ),
             shape: BoxShape.circle,
           ),
@@ -225,8 +225,6 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
             } else {
               return Image.memory(
                 avatar!,
-                width: size,
-                height: size,
                 cacheHeight: size.toInt() * 2,
                 cacheWidth: size.toInt() * 2,
                 filterQuality: FilterQuality.none,

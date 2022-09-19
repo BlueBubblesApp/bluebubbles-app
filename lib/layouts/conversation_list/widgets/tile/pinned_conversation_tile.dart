@@ -200,19 +200,13 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
     forceDelete = false;
     unread = controller.chat.hasUnreadMessage ?? false;
     updateObx(() {
-      final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)
-          .and(Chat_.muteType.notEquals("mute"))
-          .and(Chat_.guid.equals(controller.chat.guid)))
+      final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
           .watch();
       sub = unreadQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst();
-        if (chat != null && !unread) {
+        final chat = query.findFirst()!;
+        if (chat.hasUnreadMessage != unread) {
           setState(() {
-            unread = true;
-          });
-        } else if (chat == null && unread) {
-          setState(() {
-            unread = false;
+            unread = chat.hasUnreadMessage!;
           });
         }
       });
@@ -517,20 +511,14 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
     unread = controller.chat.hasUnreadMessage ?? false;
     latestMessage = controller.chat.latestMessageGetter;
     updateObx(() {
-      final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)
-          .and(Chat_.muteType.notEquals("mute"))
-          .and(Chat_.guid.equals(controller.chat.guid)))
+      final unreadQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
           .watch();
       sub = unreadQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst();
-        if (chat != null && !unread) {
+        final chat = query.findFirst()!;
+        latestMessage = chat.latestMessageGetter;
+        if (chat.hasUnreadMessage != unread) {
           setState(() {
-            unread = true;
-            latestMessage = chat.latestMessageGetter;
-          });
-        } else if (chat == null && unread) {
-          setState(() {
-            unread = false;
+            unread = chat.hasUnreadMessage!;
           });
         }
       });

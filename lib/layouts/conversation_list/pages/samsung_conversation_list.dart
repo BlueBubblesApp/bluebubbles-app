@@ -160,7 +160,10 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                                     child: item,
                                   );
                                 } else {
-                                  return item;
+                                  return Container(
+                                    color: _tileColor,
+                                    child: item,
+                                  );
                                 }
                               },
                               childCount: chats.bigPinHelper(true).length,
