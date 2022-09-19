@@ -31,8 +31,7 @@ class _SamsungFooterState extends CustomState<SamsungFooter, void, ConversationL
                 for (Chat element in controller.selectedChats) {
                   element.toggleHasUnread(!element.hasUnreadMessage!);
                 }
-                controller.selectedChats.clear();
-                controller.updateSelectedChats();
+                controller.clearSelectedChats();
               },
               icon: Icon(
                 controller.selectedChats[0].hasUnreadMessage!
@@ -48,8 +47,7 @@ class _SamsungFooterState extends CustomState<SamsungFooter, void, ConversationL
                 for (Chat element in controller.selectedChats) {
                   element.toggleMute(element.muteType != "mute");
                 }
-                controller.selectedChats.clear();
-                controller.updateSelectedChats();
+                controller.clearSelectedChats();
               },
               icon: Icon(
                 controller.selectedChats[0].muteType == "mute"
@@ -65,8 +63,7 @@ class _SamsungFooterState extends CustomState<SamsungFooter, void, ConversationL
                 for (Chat element in controller.selectedChats) {
                   element.togglePin(!element.isPinned!);
                 }
-                controller.selectedChats.clear();
-                controller.updateSelectedChats();
+                controller.clearSelectedChats();
               },
               icon: Icon(
                 controller.selectedChats[0].isPinned! ? Icons.push_pin_outlined : Icons.push_pin,
@@ -82,8 +79,7 @@ class _SamsungFooterState extends CustomState<SamsungFooter, void, ConversationL
                   ChatBloc().archiveChat(element);
                 }
               }
-              controller.selectedChats.clear();
-              controller.updateSelectedChats();
+              controller.clearSelectedChats();
             },
             icon: Icon(
               showArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
@@ -96,8 +92,7 @@ class _SamsungFooterState extends CustomState<SamsungFooter, void, ConversationL
                 ChatBloc().deleteChat(element);
                 Chat.deleteChat(element);
               }
-              controller.selectedChats.clear();
-              controller.updateSelectedChats();
+              controller.clearSelectedChats();
             },
             icon: Icon(
               Icons.delete_outlined,

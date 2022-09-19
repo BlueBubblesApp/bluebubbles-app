@@ -2,7 +2,8 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
+import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/settings/pages/theming/avatar/avatar_crop.dart';
@@ -72,6 +73,10 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> with The
                   key: Key(
                       ChatBloc().chats[index].guid.toString()),
                   chat: ChatBloc().chats[index],
+                  controller: Get.put(
+                    ConversationListController(showUnknownSenders: true, showArchivedChats: true),
+                    tag: "custom-avatar-panel"
+                  ),
                   inSelectMode: true,
                   onSelect: (_) {
                     if (ChatBloc().chats[index].customAvatarPath != null) {

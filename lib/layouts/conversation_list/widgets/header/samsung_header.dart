@@ -172,11 +172,12 @@ class _ExpandedHeaderTextState extends CustomState<ExpandedHeaderText, void, Con
     final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true))
         .watch(triggerImmediately: true);
     sub = unreadQuery.listen((Query<Chat> query) {
+      final count = query.count();
       if (unreadChats == -1) {
-        unreadChats = query.count();
-      } else {
+        unreadChats = count;
+      } else if (unreadChats != count) {
         setState(() {
-          unreadChats = query.count();
+          unreadChats = count;
         });
       }
     });

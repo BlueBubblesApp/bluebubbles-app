@@ -5,7 +5,8 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
+import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
@@ -112,6 +113,10 @@ class PinnedOrderPanel extends StatelessWidget {
                       absorbing: true,
                       child: ConversationTile(
                         chat: ChatBloc().chats.bigPinHelper(true)[index],
+                        controller: Get.put(
+                          ConversationListController(showUnknownSenders: true, showArchivedChats: true),
+                          tag: "pinned-order-panel"
+                        ),
                         inSelectMode: true,
                         onSelect: (_) {},
                       ),

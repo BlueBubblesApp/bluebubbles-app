@@ -5,7 +5,8 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
+import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/layouts/settings/dialogs/notification_settings_dialog.dart';
 import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
@@ -465,6 +466,10 @@ class ChatListState extends OptimizedState<ChatList> with ThemeHelpers {
                         return ConversationTile(
                           key: Key(ChatBloc().chats[index].guid.toString()),
                           chat: ChatBloc().chats[index],
+                          controller: Get.put(
+                            ConversationListController(showUnknownSenders: true, showArchivedChats: true),
+                            tag: "notification-panel"
+                          ),
                           inSelectMode: true,
                           subtitle: Text(getSubtitle(ChatBloc().chats[index]),
                               style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),

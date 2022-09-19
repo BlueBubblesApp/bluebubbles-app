@@ -71,7 +71,7 @@ extension ColorHelpers on Color {
   }
 
   Color lightenOrDarken([double percent = 10]) {
-    if (computeLuminance() >= 0.5) {
+    if (computeDifference(Colors.black) >= 50) {
       return darkenPercent(percent);
     } else {
       return lightenPercent(percent);
@@ -79,7 +79,7 @@ extension ColorHelpers on Color {
   }
   
   Color oppositeLightenOrDarken([double percent = 10]) {
-    if (computeLuminance() >= 0.5) {
+    if (computeDifference(Colors.black) >= 50) {
       return lightenPercent(percent);
     } else {
       return darkenPercent(percent);

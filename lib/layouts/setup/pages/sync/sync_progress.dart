@@ -145,6 +145,7 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
                   duration: Duration.zero,
                   transition: Transition.noTransition
                 );
+                Get.delete<SetupViewController>(force: true);
               },
               child: Shimmer.fromColors(
                 baseColor: Colors.white70,

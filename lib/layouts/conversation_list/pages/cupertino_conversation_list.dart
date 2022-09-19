@@ -6,18 +6,21 @@ import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
-import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
-import 'package:bluebubbles/layouts/conversation_list/pinned_conversation_tile.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/tile/conversation_tile.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/tile/pinned_conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/conversation_list_fab.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/header/cupertino_header.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -44,9 +47,11 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
   void initState() {
     super.initState();
     // update widget when background color changes
-    SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
-      setState(() {});
-    });
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        setState(() {});
+      });
+    }
   }
 
   @override
@@ -213,9 +218,108 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        return ConversationTile(
-                          key: Key(chats[index].guid.toString()),
-                          chat: chats[index],
+                        final chat = chats[index];
+                        final child = ConversationTile(
+                          key: Key(chat.guid.toString()),
+                          chat: chat,
+                          controller: controller,
+                        );
+                        final separator = Obx(() => !SettingsManager().settings.hideDividers.value ? Padding(
+                          padding: const EdgeInsets.only(left: 20),
+                          child: Divider(
+                            color: context.theme.colorScheme.outline.withOpacity(0.5),
+                            thickness: 0.5,
+                            height: 0.5,
+                          ),
+                        ) : const SizedBox.shrink());
+                        
+                        if (kIsWeb || kIsDesktop) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              child,
+                              separator,
+                            ],
+                          );
+                        }
+                        
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Slidable(
+                              startActionPane: ActionPane(
+                                motion: StretchMotion(),
+                                extentRatio: 0.2,
+                                children: [
+                                  if (SettingsManager().settings.iosShowPin.value)
+                                    SlidableAction(
+                                      label: chat.isPinned! ? 'Unpin' : 'Pin',
+                                      backgroundColor: Colors.yellow[800]!,
+                                      foregroundColor: Colors.white,
+                                      icon: chat.isPinned! ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
+                                      onPressed: (context) {
+                                        chat.togglePin(!chat.isPinned!);
+                                      },
+                                    ),
+                                ],
+                              ),
+                              endActionPane: ActionPane(
+                                motion: StretchMotion(),
+                                extentRatio: 0.9,
+                                children: [
+                                  if (!chat.isArchived! && SettingsManager().settings.iosShowAlert.value)
+                                    SlidableAction(
+                                      label: chat.muteType == "mute" ? 'Unmute' : 'Mute',
+                                      backgroundColor: Colors.purple[700]!,
+                                      flex: 2,
+                                      icon: chat.muteType == "mute" ? CupertinoIcons.bell : CupertinoIcons.bell_slash,
+                                      onPressed: (context) {
+                                        chat.toggleMute(chat.muteType != "mute");
+                                      },
+                                    ),
+                                  if (SettingsManager().settings.iosShowDelete.value)
+                                    SlidableAction(
+                                      label: "Delete",
+                                      backgroundColor: Colors.red,
+                                      flex: 2,
+                                      icon: CupertinoIcons.trash,
+                                      onPressed: (context) {
+                                        ChatBloc().deleteChat(chat);
+                                        Chat.deleteChat(chat);
+                                      },
+                                    ),
+                                  if (SettingsManager().settings.iosShowMarkRead.value)
+                                    SlidableAction(
+                                      label: chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
+                                      backgroundColor: Colors.blue,
+                                      flex: 3,
+                                      icon: chat.hasUnreadMessage!
+                                          ? CupertinoIcons.person_crop_circle_badge_checkmark
+                                          : CupertinoIcons.person_crop_circle_badge_exclam,
+                                      onPressed: (context) {
+                                        ChatBloc().toggleChatUnread(chat, !chat.hasUnreadMessage!);
+                                      },
+                                    ),
+                                  if (SettingsManager().settings.iosShowArchive.value)
+                                    SlidableAction(
+                                      label: chat.isArchived! ? 'UnArchive' : 'Archive',
+                                      backgroundColor: chat.isArchived! ? Colors.blue : Colors.red,
+                                      flex: 2,
+                                      icon: chat.isArchived! ? CupertinoIcons.tray_arrow_up : CupertinoIcons.tray_arrow_down,
+                                      onPressed: (context) {
+                                        if (chat.isArchived!) {
+                                          ChatBloc().unArchiveChat(chat);
+                                        } else {
+                                          ChatBloc().archiveChat(chat);
+                                        }
+                                      },
+                                    ),
+                                ],
+                              ),
+                              child: child,
+                            ),
+                            separator,
+                          ],
                         );
                       },
                       childCount: chats.length,

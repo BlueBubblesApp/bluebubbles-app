@@ -5,6 +5,9 @@ import 'package:bluebubbles/layouts/conversation_list/widgets/footer/samsung_foo
 import 'package:bluebubbles/layouts/conversation_list/widgets/header/material_header.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/header/samsung_header.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/initial_widget_right.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/tile/conversation_tile.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/tile/material_conversation_tile.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/tile/samsung_conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/wrappers/tablet_mode_wrapper.dart';
@@ -50,6 +53,16 @@ class ConversationListController extends StatefulController {
       updateWidgetFunctions[SamsungFooter]?.call(null);
       updateWidgetFunctions[ExpandedHeaderText]?.call(null);
     }
+  }
+
+  void clearSelectedChats() {
+    final copy = List.from(selectedChats);
+    for (Chat c in copy) {
+      selectedChats.removeWhere((element) => element.guid == c.guid);
+      Get.find<ConversationTileController>(tag: c.guid).updateWidgetFunctions[MaterialConversationTile]?.call(null);
+      Get.find<ConversationTileController>(tag: c.guid).updateWidgetFunctions[SamsungConversationTile]?.call(null);
+    }
+    updateSelectedChats();
   }
 
   void updateMaterialFAB() {

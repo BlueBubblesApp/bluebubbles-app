@@ -33,6 +33,11 @@ abstract class CustomState<T extends CustomStateful, R, S extends StatefulContro
   /// Set tag of associated [GetxController] if needed
   set tag(String t) => _tag = t;
 
+  @protected
+  bool _forceDelete = true;
+  /// Set forceDelete false if needed
+  set forceDelete(bool fd) => _forceDelete = fd;
+
   @override
   @mustCallSuper
   void initState() {
@@ -68,9 +73,10 @@ abstract class CustomState<T extends CustomStateful, R, S extends StatefulContro
   }
 
   @override
-  /// Force delete the [GetxController] when the page has disposed
+  /// Force delete the [GetxController] when the page has disposed (unless we
+  /// don't want to)
   void dispose() {
-    Get.delete<S>(tag: _tag);
+    if (_forceDelete) Get.delete<S>(tag: _tag);
     super.dispose();
   }
 

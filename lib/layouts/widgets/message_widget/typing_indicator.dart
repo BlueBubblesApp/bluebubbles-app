@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class TypingIndicator extends StatefulWidget {
-  TypingIndicator({
+  const TypingIndicator({
     Key? key,
     this.visible = false,
     this.bigPin = false,

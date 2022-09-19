@@ -170,6 +170,7 @@ class TailPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
+    final oldPainter = oldDelegate as TailPainter;
+    return leftSide != oldPainter.leftSide || background != oldPainter.background;
   }
 }

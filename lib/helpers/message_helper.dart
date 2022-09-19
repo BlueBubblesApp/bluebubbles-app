@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/emoji_regex.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -418,6 +419,14 @@ class MessageHelper {
   }
 
   static List<TextSpan> buildEmojiText(String text, TextStyle style) {
+    if (!fontExistsOnDisk.value) {
+      return [
+        TextSpan(
+          text: text,
+          style: style,
+        )
+      ];
+    }
     RegExp darkSunglasses = RegExp('\u{1F576}');
     RegExp _emojiRegex = RegExp("${emojiRegex.pattern}|${darkSunglasses.pattern}");
     List<RegExpMatch> matches = _emojiRegex.allMatches(text).toList();

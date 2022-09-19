@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
@@ -20,9 +21,11 @@ class _InitialWidgetRightState extends OptimizedState<InitialWidgetRight> {
   void initState() {
     super.initState();
     // update widget when background color changes
-    SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
-      setState(() {});
-    });
+    if (kIsDesktop) {
+      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+        setState(() {});
+      });
+    }
   }
 
   @override
