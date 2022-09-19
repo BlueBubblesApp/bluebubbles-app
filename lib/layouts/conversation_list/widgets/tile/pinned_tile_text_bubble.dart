@@ -18,43 +18,48 @@ class PinnedTileTextBubble extends StatelessWidget {
 
   final Chat chat;
   final double size;
+  final bool leftSide = Random().nextBool();
+
+  bool get showTail => !chat.isGroup();
+
+  List<Color> getBubbleColors(Message message, BuildContext context) {
+    List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
+    if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
+      if (message.handle?.color == null) {
+        bubbleColors = toColorGradient(message.handle?.address);
+      } else {
+        bubbleColors = [
+          HexColor(message.handle!.color!),
+          HexColor(message.handle!.color!).lightenAmount(0.075),
+        ];
+      }
+    }
+    return bubbleColors;
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Color> getBubbleColors(Message message) {
-      List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
-      if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
-        if (message.handle?.color == null) {
-          bubbleColors = toColorGradient(message.handle?.address);
-        } else {
-          bubbleColors = [
-            HexColor(message.handle!.color!),
-            HexColor(message.handle!.color!).lightenAmount(0.075),
-          ];
-        }
-      }
-      return bubbleColors;
-    }
 
-    bool showTail = !chat.isGroup();
-    if (!(chat.hasUnreadMessage ?? false)) return Container();
-    Message? lastMessage = chat.latestMessageGetter;
-    bool leftSide = Random(lastMessage?.id).nextBool();
-    bool hide = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
-    bool generate =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
+    final hideInfo = SettingsManager().settings.redactedMode.value
+        && SettingsManager().settings.hideMessageContent.value;
+    final generateContent = SettingsManager().settings.redactedMode.value
+        && SettingsManager().settings.generateFakeMessageContent.value;
 
+    if (hideInfo || !(chat.hasUnreadMessage ?? false)) return const SizedBox.shrink();
+
+    final lastMessage = chat.latestMessageGetter;
     String messageText = lastMessage == null ? '' : MessageHelper.getNotificationText(lastMessage);
-    if (generate) messageText = chat.fakeLatestMessageText ?? "";
-    if (lastMessage?.associatedMessageGuid != null || (lastMessage?.isFromMe ?? false) || isNullOrEmpty(messageText, trimString: true)!) {
-      return Container();
+    if (generateContent) messageText = chat.fakeLatestMessageText ?? "";
+
+    if (lastMessage?.associatedMessageGuid != null
+        || (lastMessage?.isFromMe ?? false)
+        || isNullOrEmpty(messageText, trimString: true)!) {
+      return const SizedBox.shrink();
     }
 
-    Color background = SettingsManager().settings.colorfulBubbles.value && lastMessage != null ? getBubbleColors(lastMessage).first.withOpacity(0.7) : context.theme.colorScheme.bubble(context, chat.isIMessage).withOpacity(0.6);
-
-    TextStyle style = context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onBubble(context, chat.isIMessage).withOpacity(SettingsManager().settings.colorfulBubbles.value ? 1 : 0.85));
-
-    if (hide && !generate) style = style.apply(color: Colors.transparent);
+    final background = SettingsManager().settings.colorfulBubbles.value && lastMessage != null
+        ? getBubbleColors(lastMessage, context).first.withOpacity(0.7)
+        : context.theme.colorScheme.bubble(context, chat.isIMessage).withOpacity(0.6);
 
     return Align(
       alignment: showTail
@@ -94,12 +99,9 @@ class PinnedTileTextBubble extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 borderRadius: BorderRadius.circular(10.0),
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(
-                    sigmaX: 2,
-                    sigmaY: 2,
-                  ),
+                  filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
                   child: Container(
-                    padding: EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       vertical: 3.0,
                       horizontal: 6.0,
                     ),
@@ -112,7 +114,10 @@ class PinnedTileTextBubble extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       maxLines: size ~/ 30,
                       textAlign: TextAlign.center,
-                      style: style,
+                      style: context.theme.textTheme.bodySmall!.copyWith(
+                          color: context.theme.colorScheme.onBubble(context, chat.isIMessage)
+                              .withOpacity(SettingsManager().settings.colorfulBubbles.value ? 1 : 0.85)
+                      ),
                     ),
                   ),
                 ),

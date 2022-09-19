@@ -142,6 +142,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                         return PinnedConversationTile(
                                           key: Key(chats[index * maxOnPage + _index].guid.toString()),
                                           chat: chats[index * maxOnPage + _index],
+                                          controller: controller,
                                         );
                                       },
                                     ),

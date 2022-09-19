@@ -3,428 +3,558 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/indicator.dart';
-import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/message_marker.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/dialogs/conversation_peek_view.dart';
+import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
+import 'package:bluebubbles/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/tile/pinned_tile_text_bubble.dart';
-import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:universal_html/html.dart' as html;
 
-class PinnedConversationTile extends StatefulWidget {
-  final Chat chat;
-  final List<PlatformFile> existingAttachments;
-  final String? existingText;
-
+class PinnedConversationTile extends CustomStateful<ConversationTileController> {
   PinnedConversationTile({
     Key? key,
-    required this.chat,
-    this.existingAttachments = const [],
-    this.existingText,
-  }) : super(key: key);
+    required Chat chat,
+    required ConversationListController controller,
+  }) : super(key: key, parentController: Get.isRegistered<ConversationTileController>(tag: chat.guid)
+      ? Get.find<ConversationTileController>(tag: chat.guid)
+      : Get.put(ConversationTileController(
+      chat: chat,
+      listController: controller,
+    ), tag: "${chat.guid}-pinned")
+  );
 
   @override
   State<PinnedConversationTile> createState() => _PinnedConversationTileState();
 }
 
-class _PinnedConversationTileState extends State<PinnedConversationTile> {
-  // Typing indicator
-  RxBool showTypingIndicator = false.obs;
-  RxBool shouldHighlight = false.obs;
-  RxBool shouldPartialHighlight = false.obs;
-  RxBool hoverHighlight = false.obs;
+class _PinnedConversationTileState extends CustomState<PinnedConversationTile, void, ConversationTileController> {
+  ConversationListController get listController => controller.listController;
+  Offset? longPressPosition;
 
   @override
   void initState() {
     super.initState();
 
+    tag = "${controller.chat.guid}-pinned";
+    // keep controller in memory since the widget is part of a list
+    // (it will be disposed when scrolled out of view)
+    forceDelete = false;
+
     if (kIsDesktop || kIsWeb) {
-      shouldHighlight.value = ChatManager().activeChat?.chat.guid == widget.chat.guid;
+      controller.shouldHighlight.value =
+          ChatManager().activeChat?.chat.guid == controller.chat.guid;
     }
-
-    // Listen for changes in the group
-    MessageManager().stream.listen((NewMessageEvent event) async {
-      // Make sure we have the required data to qualify for this tile
-      if (event.chatGuid != widget.chat.guid) return;
-      if (!event.event.containsKey("message")) return;
-      // Make sure the message is a group event
-      Message message = event.event["message"];
-      if (!message.isGroupEvent()) return;
-
-      // If it's a group event, let's fetch the new information and save it
-      try {
-        await ChatManager().fetchChat(widget.chat.guid);
-      } catch (ex) {
-        Logger.error(ex.toString());
-      }
-
-      setNewChatData(forceUpdate: true);
-    });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'update-highlight' && mounted) {
-        if ((kIsDesktop || kIsWeb) && event['data'] == widget.chat.guid) {
-          shouldHighlight.value = true;
-        } else if (shouldHighlight.value = true) {
-          shouldHighlight.value = false;
+        if ((kIsDesktop || kIsWeb) && event['data'] == controller.chat.guid) {
+          controller.shouldHighlight.value = true;
+        } else if (controller.shouldHighlight.value = true) {
+          controller.shouldHighlight.value = false;
         }
       }
     });
   }
 
-  void setNewChatData({forceUpdate = false}) {
-    // Save the current participant list and get the latest
-    List<Handle> ogParticipants = widget.chat.participants;
-    widget.chat.getParticipants();
-
-    // Save the current title and generate the new one
-    String? ogTitle = widget.chat.title;
-    widget.chat.getTitle();
-
-    // If the original data is different, update the state
-    if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {
-      if (mounted) setState(() {});
-    }
-  }
-
-  void onTapUp(details) {
-    CustomNavigator.pushAndRemoveUntil(
-      context,
-      ConversationView(
-        chat: widget.chat,
-        existingAttachments: widget.existingAttachments,
-        existingText: widget.existingText,
-      ),
-      (route) => route.isFirst,
-    );
-  }
-
-  void onTapUpBypass() {
-    onTapUp(TapUpDetails(kind: PointerDeviceKind.touch));
-  }
-
-  Widget buildSubtitle() {
-    final hideInfo = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
-    final generateNames =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
-
-    TextStyle style = context.theme.textTheme.bodyMedium!.apply(
-        color: shouldHighlight.value
-            ? context.theme.colorScheme.onBubble(context, widget.chat.isIMessage)
-            : context.theme.colorScheme.outline);
-    if (widget.chat.title == null) widget.chat.getTitle();
-    if (widget.chat.title == null || kIsWeb || kIsDesktop) widget.chat.getTitle();
-    String title = widget.chat.title ?? "Fake Person";
-
-    if (generateNames) {
-      title = widget.chat.fakeNames.length == 1 ? widget.chat.fakeNames[0] : "Group Chat";
-    } else if (hideInfo) {
-      style = style.copyWith(color: Colors.transparent);
-    }
-
-    return SizedBox(
-      height: style.height! * style.fontSize! * 2,
-      child: Align(
-        alignment: Alignment.center,
-        child: Text(
-          title,
-          style: style,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-        ),
-      ),
-    );
-  }
-
-  void onTap() {
-    CustomNavigator.pushAndRemoveUntil(
-      context,
-      ConversationView(
-        chat: widget.chat,
-        existingAttachments: widget.existingAttachments,
-        existingText: widget.existingText,
-      ),
-      (route) => route.isFirst,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    late Offset _tapPosition;
-
     return Container(
-      margin: EdgeInsets.only(left: 7, right: 7, top: 1, bottom: 3),
+      margin: const EdgeInsets.only(left: 7, right: 7, top: 1, bottom: 3),
       child: MouseRegion(
-        onEnter: (event) => hoverHighlight.value = true,
-        onExit: (event) => hoverHighlight.value = false,
+        onEnter: (event) => controller.hoverHighlight.value = true,
+        onExit: (event) => controller.hoverHighlight.value = false,
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onLongPressStart: (details) {
-            _tapPosition = details.globalPosition;
+            longPressPosition = details.globalPosition;
           },
-          onTap: onTapUpBypass,
-          onLongPress: () async {
-            if (kIsDesktop || kIsWeb) return;
-            await peekChat(context, widget.chat, _tapPosition);
+          onTap: () => controller.onTap(context),
+          onLongPress: kIsDesktop || kIsWeb ? null : () async {
+            await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
           },
-          onSecondaryTapUp: (details) async {
-            if (kIsWeb) {
-              (await html.document.onContextMenu.first).preventDefault();
-            }
-            shouldPartialHighlight.value = true;
-            await showConversationTileMenu(
-              context,
-              this,
-              widget.chat,
-              details.globalPosition,
-              context.textTheme,
-            );
-            shouldPartialHighlight.value = false;
-          },
-          child: Obx(
-            () => AnimatedContainer(
-              duration: Duration(milliseconds: 100),
-              clipBehavior: Clip.none,
-              padding: EdgeInsets.only(
-                top: 4,
-                left: 8,
-                right: 8,
-                bottom: 2,
-              ),
-              decoration: BoxDecoration(
-                color: shouldPartialHighlight.value
-                    ? context.theme.colorScheme.properSurface.lightenOrDarken(10)
-                    : shouldHighlight.value
-                        ? context.theme.colorScheme.bubble(context, widget.chat.isIMessage)
-                        : hoverHighlight.value
-                            ? context.theme.colorScheme.properSurface
-                            : null,
-                borderRadius: BorderRadius.circular(
-                    shouldPartialHighlight.value || shouldHighlight.value || hoverHighlight.value ? 8 : 0),
-              ),
-              child: LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) {
-                  return Obx(
-                    () {
-                      // Great math right here
-                      double availableWidth = constraints.maxWidth;
-                      int colCount = kIsDesktop
-                          ? SettingsManager().settings.pinColumnsLandscape.value
-                          : SettingsManager().settings.pinColumnsPortrait.value;
-                      double spaceBetween = (colCount - 1) * 30;
-                      double maxWidth = max(((availableWidth - spaceBetween) / colCount).floorToDouble(), 0);
-
-                      MessageMarkers? markers = ChatManager().getChatController(widget.chat)?.messageMarkers;
-                      return ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: maxWidth,
-                        ),
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          alignment: Alignment.center,
-                          children: <Widget>[
-                            Column(
-                              children: [
-                                Stack(
-                                  children: <Widget>[
-                                    ContactAvatarGroupWidget(
-                                      chat: widget.chat,
-                                      size: maxWidth,
-                                      editable: false,
-                                      onTap: onTapUpBypass,
-                                    ),
-                                    if (widget.chat.muteType != "mute" && (widget.chat.hasUnreadMessage ?? false))
-                                      Positioned(
-                                        left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
-                                        top: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
-                                        child: Container(
-                                          width: maxWidth * 0.2,
-                                          height: maxWidth * 0.2,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(maxWidth * 0.1),
-                                            color: context.theme.colorScheme.primary,
-                                          ),
-                                          margin: EdgeInsets.only(right: 3),
-                                        ),
-                                      ),
-                                    if (widget.chat.muteType == "mute")
-                                      Positioned(
-                                        left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
-                                        top: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
-                                        child: Stack(
-                                          alignment: Alignment.center,
-                                          children: <Widget>[
-                                            Container(
-                                              width: maxWidth * 0.2,
-                                              height: maxWidth * 0.2,
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(maxWidth * 0.1),
-                                                color: (widget.chat.hasUnreadMessage ?? false)
-                                                    ? context.theme.colorScheme.primaryContainer
-                                                    : context.theme.colorScheme.tertiaryContainer,
-                                              ),
-                                            ),
-                                            Icon(
-                                              CupertinoIcons.bell_slash_fill,
-                                              size: maxWidth * 0.14,
-                                              color: (widget.chat.hasUnreadMessage ?? false)
-                                                  ? context.theme.colorScheme.onPrimaryContainer
-                                                  : context.theme.colorScheme.onTertiaryContainer,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: maxWidth * 0.075,
-                                  ),
-                                  child: buildSubtitle(),
-                                ),
-                              ],
-                            ),
-                            StreamBuilder<Map<String, dynamic>>(
-                              stream:
-                                  ChatManager().getChatController(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
-                              builder: (BuildContext context, AsyncSnapshot snapshot) {
-                                if (snapshot.connectionState == ConnectionState.active &&
-                                    snapshot.hasData &&
-                                    snapshot.data["type"] == ChatControllerEvent.TypingStatus) {
-                                  showTypingIndicator.value = snapshot.data["data"];
-                                }
-                                return Obx(() {
-                                  if (showTypingIndicator.value) {
-                                    return Positioned(
-                                      top: -sqrt(maxWidth / 2),
-                                      right: -sqrt(maxWidth / 2) - maxWidth * 0.25,
-                                      child: ConstrainedBox(
-                                        constraints: BoxConstraints(maxHeight: 32),
-                                        child: FittedBox(
-                                          child: TypingIndicator(
-                                            visible: true,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  if (SettingsManager().settings.statusIndicatorsOnChats.value &&
-                                      !widget.chat.isGroup() &&
-                                      shouldShow(widget.chat.latestMessageGetter, markers?.myLastMessage.value,
-                                              markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value) !=
-                                          Indicator.NONE) {
-                                    return Positioned(
-                                      left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
-                                      top: maxWidth - maxWidth * 0.13 * 2,
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: <Widget>[
-                                          Container(
-                                            width: maxWidth * 0.27,
-                                            height: maxWidth * 0.27,
-                                            decoration: BoxDecoration(
-                                              border: Border.all(color: context.theme.colorScheme.background, width: 1),
-                                              borderRadius: BorderRadius.circular(30),
-                                              color: context.theme.colorScheme.tertiaryContainer,
-                                            ),
-                                          ),
-                                          Transform.rotate(
-                                            angle: shouldShow(
-                                                        widget.chat.latestMessage,
-                                                        markers?.myLastMessage.value,
-                                                        markers?.lastReadMessage.value,
-                                                        markers?.lastDeliveredMessage.value) !=
-                                                    Indicator.SENT
-                                                ? pi / 2
-                                                : 0,
-                                            child: Icon(
-                                              shouldShow(
-                                                          widget.chat.latestMessage,
-                                                          markers?.myLastMessage.value,
-                                                          markers?.lastReadMessage.value,
-                                                          markers?.lastDeliveredMessage.value) ==
-                                                      Indicator.DELIVERED
-                                                  ? CupertinoIcons.location_north_fill
-                                                  : shouldShow(
-                                                              widget.chat.latestMessage,
-                                                              markers?.myLastMessage.value,
-                                                              markers?.lastReadMessage.value,
-                                                              markers?.lastDeliveredMessage.value) ==
-                                                          Indicator.READ
-                                                      ? CupertinoIcons.location_north
-                                                      : CupertinoIcons.location_fill,
-                                              color: context.theme.colorScheme.onTertiaryContainer,
-                                              size: maxWidth * 0.14,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                  return Container();
-                                });
-                              },
-                            ),
-                            Builder(
-                              builder: (BuildContext context) {
-                                if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
-                                if (showTypingIndicator.value) return Container();
-                                Message? message = widget.chat.latestMessageGetter;
-                                if ([null, ""].contains(message?.associatedMessageGuid) ||
-                                    (message?.isFromMe ?? false)) {
-                                  return Container();
-                                }
-
-                                return Positioned(
-                                  top: -sqrt(maxWidth / 2),
-                                  right: -sqrt(maxWidth / 2) - maxWidth * 0.15,
-                                  child: ReactionsWidget(
-                                    associatedMessages: [message!],
-                                    bigPin: true,
-                                    size: maxWidth * 0.3,
-                                  ),
-                                );
-                              },
-                            ),
-                            Positioned(
-                              bottom: context.textTheme.bodyMedium!.fontSize! * 3,
-                              width: maxWidth,
-                              child: PinnedTileTextBubble(
-                                chat: widget.chat,
-                                size: maxWidth,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
+          onSecondaryTapUp: (details) => controller.onSecondaryTap(context, details),
+          child: Obx(() => AnimatedContainer(
+            duration: Duration(milliseconds: 100),
+            clipBehavior: Clip.none,
+            padding: const EdgeInsets.only(
+              top: 4,
+              left: 8,
+              right: 8,
+              bottom: 2,
+            ),
+            decoration: BoxDecoration(
+              color: controller.shouldPartialHighlight.value
+                  ? context.theme.colorScheme.properSurface.lightenOrDarken(10)
+                  : controller.shouldHighlight.value
+                  ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
+                  : controller.hoverHighlight.value
+                  ? context.theme.colorScheme.properSurface
+                  : null,
+              borderRadius: BorderRadius.circular(
+                  controller.shouldHighlight.value
+                      || controller.shouldPartialHighlight.value
+                      || controller.hoverHighlight.value
+                      ? 8 : 0
               ),
             ),
-          ),
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                // Great math right here
+                final availableWidth = constraints.maxWidth;
+                final colCount = kIsDesktop
+                    ? SettingsManager().settings.pinColumnsLandscape.value
+                    : SettingsManager().settings.pinColumnsPortrait.value;
+                final spaceBetween = (colCount - 1) * 30;
+                final maxWidth = max(((availableWidth - spaceBetween) / colCount).floorToDouble(), 0).toDouble();
+
+                return ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: maxWidth,
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Stack(
+                            children: <Widget>[
+                              ContactAvatarGroupWidget(
+                                chat: controller.chat,
+                                size: maxWidth,
+                                editable: false,
+                                onTap: () => controller.onTap(context),
+                              ),
+                              UnreadIcon(width: maxWidth, parentController: controller),
+                              MuteIcon(width: maxWidth, parentController: controller),
+                            ],
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: maxWidth * 0.075,
+                            ),
+                            child: ChatTitle(parentController: controller),
+                          ),
+                        ],
+                      ),
+                      PinnedIndicators(width: maxWidth, controller: controller),
+                      ReactionIcon(width: maxWidth, parentController: controller),
+                      Positioned(
+                        bottom: context.textTheme.bodyMedium!.fontSize! * 3,
+                        width: maxWidth,
+                        child: PinnedTileTextBubble(
+                          chat: controller.chat,
+                          size: maxWidth,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          )),
         ),
       ),
     );
+  }
+}
+
+class UnreadIcon extends CustomStateful<ConversationTileController> {
+  const UnreadIcon({Key? key, required this.width, required super.parentController});
+  
+  final double width;
+
+  @override
+  State<StatefulWidget> createState() => _UnreadIconState();
+}
+
+class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileController> {
+  bool unread = false;
+  late final StreamSubscription<Query<Chat>> sub;
+
+  @override
+  void initState() {
+    super.initState();
+    tag = "${controller.chat.guid}-pinned";
+    // keep controller in memory since the widget is part of a list
+    // (it will be disposed when scrolled out of view)
+    forceDelete = false;
+    unread = controller.chat.hasUnreadMessage ?? false;
+    updateObx(() {
+      final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)
+          .and(Chat_.muteType.notEquals("mute"))
+          .and(Chat_.guid.equals(controller.chat.guid)))
+          .watch();
+      sub = unreadQuery.listen((Query<Chat> query) {
+        final chat = query.findFirst();
+        if (chat != null && !unread) {
+          setState(() {
+            unread = true;
+          });
+        } else if (chat == null && unread) {
+          setState(() {
+            unread = false;
+          });
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    sub.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return unread ? Positioned(
+      left: sqrt(widget.width) - widget.width * 0.05 * sqrt(2),
+      top: sqrt(widget.width) - widget.width * 0.05 * sqrt(2),
+      child: Container(
+        width: widget.width * 0.2,
+        height: widget.width * 0.2,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: context.theme.colorScheme.primary,
+        ),
+        margin: const EdgeInsets.only(right: 3),
+      ),
+    ) : const SizedBox.shrink();
+  }
+}
+
+class MuteIcon extends CustomStateful<ConversationTileController> {
+  const MuteIcon({Key? key, required this.width, required super.parentController});
+  
+  final double width;
+
+  @override
+  State<StatefulWidget> createState() => _MuteIconState();
+}
+
+class _MuteIconState extends CustomState<MuteIcon, void, ConversationTileController> {
+  bool unread = false;
+  String muteType = "";
+  late final StreamSubscription<Query<Chat>> sub;
+
+  @override
+  void initState() {
+    super.initState();
+    tag = "${controller.chat.guid}-pinned";
+    // keep controller in memory since the widget is part of a list
+    // (it will be disposed when scrolled out of view)
+    forceDelete = false;
+    // run query after render has completed
+    updateObx(() {
+      final unreadQuery = chatBox.query((Chat_.hasUnreadMessage.equals(true)
+          .or(Chat_.muteType.equals("mute")))
+          .and(Chat_.guid.equals(controller.chat.guid)))
+          .watch();
+      sub = unreadQuery.listen((Query<Chat> query) {
+        final chat = query.findFirst();
+        final newUnread = chat?.hasUnreadMessage ?? false;
+        final newMute = chat?.muteType ?? "";
+        if (chat != null && unread != newUnread) {
+          setState(() {
+            unread = newUnread;
+          });
+        } else if (chat == null && unread) {
+          setState(() {
+            unread = false;
+          });
+        } else if (muteType != newMute) {
+          setState(() {
+            muteType = newMute;
+          });
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    sub.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return muteType == "mute" ? Positioned(
+      left: sqrt(widget.width) - widget.width * 0.05 * sqrt(2),
+      top: sqrt(widget.width) - widget.width * 0.05 * sqrt(2),
+      child: Container(
+        width: widget.width * 0.2,
+        height: widget.width * 0.2,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: unread
+              ? context.theme.colorScheme.primaryContainer
+              : context.theme.colorScheme.tertiaryContainer,
+        ),
+        child: Icon(
+          CupertinoIcons.bell_slash_fill,
+          size: widget.width * 0.14,
+          color: unread
+              ? context.theme.colorScheme.onPrimaryContainer
+              : context.theme.colorScheme.onTertiaryContainer,
+        ),
+      ),
+    ) : const SizedBox.shrink();
+  }
+}
+
+class ChatTitle extends CustomStateful<ConversationTileController> {
+  const ChatTitle({Key? key, required super.parentController});
+
+  @override
+  State<StatefulWidget> createState() => _ChatTitleState();
+}
+
+class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileController> {
+  String title = "Unknown";
+  late final StreamSubscription<Query<Chat>> sub;
+  String? cachedDisplayName = "";
+  List<Handle> cachedParticipants = [];
+
+  @override
+  void initState() {
+    super.initState();
+    tag = "${controller.chat.guid}-pinned";
+    // keep controller in memory since the widget is part of a list
+    // (it will be disposed when scrolled out of view)
+    forceDelete = false;
+    cachedDisplayName = controller.chat.displayName;
+    cachedParticipants = controller.chat.handles;
+    title = controller.chat.getTitle() ?? title;
+    // run query after render has completed
+    updateObx(() {
+      final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
+          .watch();
+      sub = titleQuery.listen((Query<Chat> query) {
+        final chat = query.findFirst()!;
+        // check if we really need to update this widget
+        if (chat.displayName != cachedDisplayName
+            || chat.handles.length != cachedParticipants.length) {
+          final newTitle = getFullChatTitle(chat);
+          if (newTitle != title) {
+            setState(() {
+              title = newTitle;
+            });
+          }
+        }
+        cachedDisplayName = chat.displayName;
+        cachedParticipants = chat.handles;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    sub.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final hideInfo = SettingsManager().settings.redactedMode.value
+          && SettingsManager().settings.hideContactInfo.value;
+      final generateNames = SettingsManager().settings.redactedMode.value
+          && SettingsManager().settings.generateFakeContactNames.value;
+      
+      final style = context.theme.textTheme.bodyMedium!.apply(
+          color: controller.shouldHighlight.value
+              ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage)
+              : context.theme.colorScheme.outline
+      );
+
+      if (hideInfo) return const SizedBox.shrink();
+
+      String _title = title;
+      if (generateNames) {
+        _title = controller.chat.fakeNames.length == 1 ? controller.chat.fakeNames[0] : "Group Chat";
+      }
+
+      return SizedBox(
+        height: style.height! * style.fontSize! * 2,
+        child: Align(
+          alignment: Alignment.center,
+          child: RichText(
+            text: TextSpan(
+              children: MessageHelper.buildEmojiText(
+                _title,
+                style,
+              ),
+            ),
+            overflow: TextOverflow.ellipsis,
+          )
+        ),
+      );
+    });
+  }
+}
+
+class PinnedIndicators extends StatelessWidget {
+  final ConversationTileController controller;
+  final double width;
+
+  PinnedIndicators({required this.width, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<Map<String, dynamic>>(
+        stream: ChatManager().getChatController(controller.chat)?.stream as Stream<Map<String, dynamic>>?,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          bool showTypingIndicator = false;
+          if (snapshot.connectionState == ConnectionState.active
+              && snapshot.hasData
+              && snapshot.data["type"] == ChatControllerEvent.TypingStatus) {
+            showTypingIndicator = snapshot.data["data"];
+          }
+          MessageMarkers? markers = ChatManager().getChatController(controller.chat)?.messageMarkers;
+
+          return Obx(() {
+            if (showTypingIndicator) {
+              return Positioned(
+                top: -sqrt(width / 2),
+                right: -sqrt(width / 2) - width * 0.25,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 32),
+                  child: const FittedBox(
+                    child: TypingIndicator(
+                      visible: true,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            final showMarker = shouldShow(
+                controller.chat.latestMessageGetter,
+                markers?.myLastMessage.value,
+                markers?.lastReadMessage.value,
+                markers?.lastDeliveredMessage.value
+            );
+            if (SettingsManager().settings.statusIndicatorsOnChats.value
+                && !controller.chat.isGroup()
+                && showMarker != Indicator.NONE) {
+              return Positioned(
+                left: sqrt(width) - width * 0.05 * sqrt(2),
+                top: width - width * 0.13 * 2,
+                child: Container(
+                  width: width * 0.27,
+                  height: width * 0.27,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: context.theme.colorScheme.background, width: 1),
+                    borderRadius: BorderRadius.circular(30),
+                    color: context.theme.colorScheme.tertiaryContainer,
+                  ),
+                  child: Transform.rotate(
+                    angle: showMarker != Indicator.SENT
+                        ? pi / 2 : 0,
+                    child: Icon(
+                      showMarker == Indicator.DELIVERED
+                          ? CupertinoIcons.location_north_fill
+                          : showMarker == Indicator.READ
+                          ? CupertinoIcons.location_north
+                          : CupertinoIcons.location_fill,
+                      color: context.theme.colorScheme.onTertiaryContainer,
+                      size: width * 0.14,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return const SizedBox.shrink();
+          });
+        }
+    );
+  }
+}
+
+class ReactionIcon extends CustomStateful<ConversationTileController> {
+  const ReactionIcon({Key? key, required this.width, required super.parentController});
+
+  final double width;
+
+  @override
+  State<StatefulWidget> createState() => _ReactionIconState();
+}
+
+class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTileController> {
+  bool unread = false;
+  late Message? latestMessage;
+  late final StreamSubscription<Query<Chat>> sub;
+
+  @override
+  void initState() {
+    super.initState();
+    tag = "${controller.chat.guid}-pinned";
+    // keep controller in memory since the widget is part of a list
+    // (it will be disposed when scrolled out of view)
+    forceDelete = false;
+    unread = controller.chat.hasUnreadMessage ?? false;
+    latestMessage = controller.chat.latestMessageGetter;
+    updateObx(() {
+      final unreadQuery = chatBox.query(Chat_.hasUnreadMessage.equals(true)
+          .and(Chat_.muteType.notEquals("mute"))
+          .and(Chat_.guid.equals(controller.chat.guid)))
+          .watch();
+      sub = unreadQuery.listen((Query<Chat> query) {
+        final chat = query.findFirst();
+        if (chat != null && !unread) {
+          setState(() {
+            unread = true;
+            latestMessage = chat.latestMessageGetter;
+          });
+        } else if (chat == null && unread) {
+          setState(() {
+            unread = false;
+          });
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    sub.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return unread
+        && !isNullOrEmpty(latestMessage?.associatedMessageGuid)!
+        && !(latestMessage?.isFromMe ?? true) ? Positioned(
+      top: -sqrt(widget.width / 2),
+      right: -sqrt(widget.width / 2) - widget.width * 0.15,
+      child: ReactionsWidget(
+        associatedMessages: [latestMessage!],
+        bigPin: true,
+        size: widget.width * 0.3,
+      ),
+    ) : const SizedBox.shrink();
   }
 }

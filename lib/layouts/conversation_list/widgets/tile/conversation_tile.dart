@@ -147,23 +147,6 @@ class _ConversationTileState extends CustomState<ConversationTile, void, Convers
     });
   }
 
-  void onTap() {
-    CustomNavigator.pushAndRemoveUntil(
-      context,
-      ConversationView(
-        chat: controller.chat,
-      ),
-      (route) => route.isFirst,
-    );
-  }
-
-  void onSelect() {
-    if (controller.onSelect != null) {
-      controller.onSelect!(!controller.isSelected);
-      setState(() {});
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return MouseRegion(

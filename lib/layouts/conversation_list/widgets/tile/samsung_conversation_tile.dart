@@ -27,6 +27,15 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
   bool get hoverHighlight => controller.hoverHighlight.value;
 
   @override
+  void initState() {
+    super.initState();
+    tag = controller.chat.guid;
+    // keep controller in memory since the widget is part of a list
+    // (it will be disposed when scrolled out of view)
+    forceDelete = false;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final child = GestureDetector(
       onSecondaryTapUp: (details) => controller.onSecondaryTap(context, details),

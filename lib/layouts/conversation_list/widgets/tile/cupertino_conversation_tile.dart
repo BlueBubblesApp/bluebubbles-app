@@ -28,6 +28,15 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
   Offset? longPressPosition;
 
   @override
+  void initState() {
+    super.initState();
+    tag = controller.chat.guid;
+    // keep controller in memory since the widget is part of a list
+    // (it will be disposed when scrolled out of view)
+    forceDelete = false;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final child = GestureDetector(
       onSecondaryTapUp: (details) => controller.onSecondaryTap(context, details),
@@ -63,9 +72,6 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
             subtitle: controller.subtitle ?? ChatSubtitle(
               parentController: controller,
               style: context.theme.textTheme.bodySmall!.copyWith(
-                fontWeight: controller.shouldHighlight.value
-                    ? FontWeight.w600
-                    : FontWeight.w500,
                 color: controller.shouldHighlight.value
                     ? context.theme.colorScheme.onBubble(context, controller.chat.isIMessage).withOpacity(0.85)
                     : context.theme.colorScheme.outline,
