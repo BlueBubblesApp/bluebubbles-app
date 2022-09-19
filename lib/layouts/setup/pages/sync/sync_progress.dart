@@ -15,7 +15,7 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:simple_animations/stateless_animation/custom_animation.dart';
+import 'package:simple_animations/simple_animations.dart';
 import 'package:tuple/tuple.dart';
 
 class SyncProgress extends StatefulWidget {
@@ -25,7 +25,7 @@ class SyncProgress extends StatefulWidget {
 
 class _SyncProgressState extends OptimizedState<SyncProgress> {
   final confettiController = ConfettiController(duration: Duration(milliseconds: 500));
-  final CustomAnimationControl animationController = CustomAnimationControl.mirror;
+  final Control animationController = Control.mirror;
   final controller = Get.find<SetupViewController>();
   final Tween<double> tween = Tween<double>(begin: 0, end: 5);
   final FullSyncManager syncManager = SocketManager().setup.fullSyncManager;
@@ -153,7 +153,7 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CustomAnimation<double>(
+                    CustomAnimationBuilder<double>(
                       control: animationController,
                       tween: tween,
                       duration: Duration(milliseconds: 600),

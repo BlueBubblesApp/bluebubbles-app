@@ -743,7 +743,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                               });
                             },
                             title:
-                            kIsWeb ? "Upload Font File" : "Download${downloadingFont.value ? "ing" : ""} iOS Emoji Font${downloadingFont.value ? " (${progress.value != null && totalSize.value != null ? getSizeString(progress.value! * totalSize.value! / 1000) : ""} / ${getSizeString((totalSize.value ?? 0).toDouble() / 1000)}) (${((progress.value ?? 0) * 100).floor()}%)" : ""}",
+                            kIsWeb ? "Upload Font File" : "Download${controller.downloadingFont.value ? "ing" : ""} iOS Emoji Font${controller.downloadingFont.value ? " (${controller.progress.value != null && controller.totalSize.value != null ? getSizeString(controller.progress.value! * controller.totalSize.value! / 1000) : ""} / ${getSizeString((controller.totalSize.value ?? 0).toDouble() / 1000)}) (${((controller.progress.value ?? 0) * 100).floor()}%)" : ""}",
                             subtitle: kIsWeb ? "Upload your ttf emoji file into BlueBubbles" : null,
                           );
                         } else {

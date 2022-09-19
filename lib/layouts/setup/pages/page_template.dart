@@ -5,7 +5,7 @@ import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:simple_animations/stateless_animation/custom_animation.dart';
+import 'package:simple_animations/simple_animations.dart';
 
 class SetupPageTemplate extends StatelessWidget {
   SetupPageTemplate({
@@ -175,7 +175,7 @@ class PageButtons extends StatelessWidget {
   final String title;
   final Widget? customButton;
   final FutureOr<bool> Function()? onNextPressed;
-  final CustomAnimationControl animation = CustomAnimationControl.mirror;
+  final Control animation = Control.mirror;
   final Tween<double> tween = Tween<double>(begin: 0, end: 5);
   final SetupViewController controller = Get.find<SetupViewController>();
 
@@ -257,12 +257,12 @@ class PageButtons extends StatelessWidget {
                   ),
                   Positioned(
                     left: 40,
-                    child: CustomAnimation<double>(
+                    child: CustomAnimationBuilder<double>(
                       control: animation,
                       tween: tween,
                       duration: Duration(milliseconds: 600),
                       curve: Curves.easeOut,
-                      builder: (context, _, anim) {
+                      builder: (context, anim, _) {
                         return Padding(
                           padding: EdgeInsets.only(left: anim),
                           child: const Icon(Icons.arrow_forward, color: Colors.white, size: 20),

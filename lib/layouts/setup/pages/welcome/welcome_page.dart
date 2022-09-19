@@ -24,7 +24,7 @@ class _WelcomePageState extends OptimizedState<WelcomePage> with TickerProviderS
   late final AnimationController _subtitleController;
   final confettiController = ConfettiController(duration: Duration(milliseconds: 500));
   final GlobalKey key = GlobalKey();
-  final CustomAnimationControl controller = CustomAnimationControl.mirror;
+  final Control controller = Control.mirror;
   final Tween<double> tween = Tween<double>(begin: 0, end: 5);
   late final Animation<double> opacityTitle;
   late final Animation<double> opacitySubtitle;
