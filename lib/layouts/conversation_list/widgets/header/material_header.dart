@@ -3,7 +3,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/header/header_widgets.dart';
-import 'package:bluebubbles/layouts/search/search_view.dart';
+import 'package:bluebubbles/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';

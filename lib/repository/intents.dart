@@ -6,7 +6,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/search/search_view.dart';
+import 'package:bluebubbles/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';

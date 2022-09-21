@@ -276,6 +276,6 @@ class _UnreadIconState extends CustomState<UnreadIcon, void, ConversationTileCon
       ),
       width: 15,
       height: 15,
-    ) : const SizedBox(width: 10);
+    ) : const SizedBox(width: 10, height: 10);
   }
 }

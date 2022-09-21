@@ -111,7 +111,7 @@ class ConversationTile extends CustomStateful<ConversationTileController> {
         onSelect: onSelect,
         inSelectMode: inSelectMode,
         subtitle: subtitle,
-      ), tag: chat.guid)
+      ), tag: inSelectMode ? randomString(8) : chat.guid)
   );
 
   @override
@@ -405,6 +405,7 @@ class ChatLeading extends StatelessWidget {
                     Positioned(
                       top: 30,
                       right: 20,
+                      height: height,
                       child: FittedBox(
                         alignment: Alignment.centerRight,
                         child: unreadIcon,
