@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:metadata_fetch/metadata_fetch.dart';
+import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
 
@@ -90,7 +91,7 @@ class ChatController {
     }
   }
 
-  ScrollController scrollController = ScrollController();
+  AutoScrollController scrollController = AutoScrollController();
   final RxBool showScrollDown = false.obs;
 
   ChatController(this.chat) {
@@ -115,7 +116,7 @@ class ChatController {
   }
 
   void initScrollController() {
-    scrollController = ScrollController();
+    scrollController = AutoScrollController();
 
     scrollController.addListener(() async {
       if (!scrollController.hasClients) return;

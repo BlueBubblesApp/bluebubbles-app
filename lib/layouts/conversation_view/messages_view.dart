@@ -28,6 +28,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
+import 'package:scroll_to_index/scroll_to_index.dart';
 
 class MessagesView extends StatefulWidget {
   final MessageBloc? messageBloc;
@@ -71,7 +72,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
   late StreamController<List<String>> smartReplyController;
 
-  ScrollController? get scrollController {
+  AutoScrollController? get scrollController {
     if (currentChat == null) return null;
 
     return currentChat!.scrollController;
@@ -126,6 +127,11 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
           ]);
           await rebuild(this);
         }
+      } else if (event["type"] == "scroll-to-message") {
+        final message = event["data"];
+        final index = _messages.indexWhere((element) => element.guid == message.guid);
+        await scrollController?.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
+        scrollController?.highlight(index, highlightDuration: Duration(milliseconds: 500));
       }
     });
 
@@ -419,7 +425,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
   @override
   Widget build(BuildContext context) {
     final _node = FocusScopeNode();
-    final _scrollController = scrollController ?? ScrollController();
+    final _scrollController = scrollController ?? AutoScrollController();
     final Widget child = FocusScope(
       node: _node,
       onFocusChange:
@@ -447,7 +453,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
               }
             },
             child: AnimatedOpacity(
-              opacity: _messages.isEmpty ? 0 : 1,
+              opacity: _messages.isEmpty && widget.initComplete == null ? 0 : 1,
               duration: Duration(milliseconds: 150),
               curve: Curves.easeIn,
               child: ScrollbarWrapper(
@@ -526,6 +532,12 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                             ],
                           ),
                         ),
+                      if (_messages.isEmpty && widget.initComplete != null)
+                        SliverToBoxAdapter(
+                          child: NewMessageLoader(
+                            text: "Loading surrounding message context from your Mac..."
+                          ),
+                        ),
                       _listKey != null
                           ? SliverAnimatedList(
                               initialItemCount: _messages.length + 1,
@@ -561,19 +573,30 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
                                 Widget messageWidget = Padding(
                                     padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                                    child: MessageWidget(
-                                      key: Key(_messages[index].guid!),
-                                      message: _messages[index],
-                                      olderMessage: olderMessage,
-                                      newerMessage: newerMessage,
-                                      showHandle: widget.showHandle,
-                                      isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
-                                      showHero: fullAnimation,
-                                      showReplies: true,
-                                      onUpdate: (event) => onUpdateMessage(event),
-                                      bloc: widget.messageBloc!,
-                                      autoplayEffect: index == 0 && _messages[index].originalROWID != null,
-                                    ));
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        scrollController!.scrollToIndex(2, preferPosition: AutoScrollPosition.begin);
+                                      },
+                                      child: AutoScrollTag(
+                                        key: ValueKey("${_messages[index].guid!}-scrolling"),
+                                        index: index,
+                                        controller: _scrollController,
+                                        highlightColor: context.theme.colorScheme.surface.withOpacity(0.7),
+                                        child: MessageWidget(
+                                          key: Key(_messages[index].guid!),
+                                          message: _messages[index],
+                                          olderMessage: olderMessage,
+                                          newerMessage: newerMessage,
+                                          showHandle: widget.showHandle,
+                                          isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                                          showHero: fullAnimation,
+                                          showReplies: true,
+                                          onUpdate: (event) => onUpdateMessage(event),
+                                          bloc: widget.messageBloc!,
+                                          autoplayEffect: index == 0 && _messages[index].originalROWID != null,
+                                        )),
+                                    )
+                                    );
 
                                 if (fullAnimation) {
                                   return SizeTransition(

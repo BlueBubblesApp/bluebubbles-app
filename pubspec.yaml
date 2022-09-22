@@ -147,6 +147,7 @@ dependencies:
   idb_shim: ^2.0.1+1
   chunked_stream: ^1.4.1
   image_picker: ^0.8.5+3
+  scroll_to_index: ^3.0.1
 
 dependency_overrides:
   rxdart: ^0.27.5

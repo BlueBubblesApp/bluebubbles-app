@@ -140,19 +140,45 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
     int offset = stuff[1];
     int limit = stuff[2];
     bool includeDeleted = stuff[3];
+    int? searchAround = stuff[4];
     return store.runInTransaction(TxMode.read, () {
       /// Get the message IDs for the chat by querying the [cmJoinBox]
-      final query = (messageBox.query(includeDeleted
-              ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
-              : Message_.dateDeleted.isNull())
-            ..link(Message_.chat, Chat_.id.equals(chatId))
-            ..order(Message_.dateCreated, flags: Order.descending))
-          .build();
-      query
-        ..limit = limit
-        ..offset = offset;
-      final messages = query.find();
-      query.close();
+      final messages = <Message>[];
+      if (searchAround == null) {
+        final query = (messageBox.query(includeDeleted
+            ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
+            : Message_.dateDeleted.isNull())
+          ..link(Message_.chat, Chat_.id.equals(chatId))
+          ..order(Message_.dateCreated, flags: Order.descending))
+            .build();
+        query
+          ..limit = limit
+          ..offset = offset;
+        messages.addAll(query.find());
+        query.close();
+      } else {
+        final beforeQuery = (messageBox.query(Message_.dateCreated.lessThan(searchAround)
+            .and(includeDeleted
+            ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
+            : Message_.dateDeleted.isNull()))
+          ..link(Message_.chat, Chat_.id.equals(chatId))
+          ..order(Message_.dateCreated, flags: Order.descending))
+            .build();
+        beforeQuery.limit = limit;
+        final before = beforeQuery.find();
+        beforeQuery.close();
+        final afterQuery = (messageBox.query(Message_.dateCreated.greaterThan(searchAround)
+            .and(includeDeleted
+            ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull())
+            : Message_.dateDeleted.isNull()))
+          ..link(Message_.chat, Chat_.id.equals(chatId))
+          ..order(Message_.dateCreated))
+            .build();
+        afterQuery.limit = limit;
+        final after = afterQuery.find();
+        afterQuery.close();
+        messages..addAll(before)..addAll(after);
+      }
 
       /// Fetch and match handles
       final handles =
@@ -872,10 +898,10 @@ class Chat {
 
   /// Fetch messages asynchronously
   static Future<List<Message>> getMessagesAsync(Chat chat,
-      {int offset = 0, int limit = 25, bool includeDeleted = false}) async {
+      {int offset = 0, int limit = 25, bool includeDeleted = false, int? searchAround}) async {
     if (kIsWeb || chat.id == null) return [];
 
-    final task = GetMessages([chat.id, offset, limit, includeDeleted, prefs.getString("objectbox-reference")]);
+    final task = GetMessages([chat.id, offset, limit, includeDeleted, searchAround]);
     return (await createAsyncTask<List<Message>>(task)) ?? [];
   }
 

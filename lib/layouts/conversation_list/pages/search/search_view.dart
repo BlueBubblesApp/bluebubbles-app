@@ -9,20 +9,24 @@ import 'package:bluebubbles/layouts/conversation_list/widgets/tile/conversation_
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
 
 class SearchResult {
   final String search;
+  final String method;
   final List<Tuple2<Chat, Message>> results;
 
-  SearchResult({required this.search, required this.results});
+  SearchResult({required this.search, required this.method, required this.results});
 }
 
 class SearchView extends StatefulWidget {
@@ -52,6 +56,8 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
   bool noResults = false;
   bool isSearching = false;
   String? currentSearchTerm;
+  bool local = false;
+  bool network = true;
 
   @override
   void initState() {
@@ -72,7 +78,8 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
     currentSearchTerm = newSearch;
 
     // If we've already searched for the results and there are none, set no results and return
-    if (pastSearches.firstWhereOrNull((e) => e.search == newSearch)?.results.isEmpty ?? false) {
+    if (pastSearches.firstWhereOrNull(
+            (e) => e.search == newSearch && e.method == (local ? "local" : "network"))?.results.isEmpty ?? false) {
       return setState(() {
         noResults = true;
       });
@@ -82,31 +89,58 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
       isSearching = true;
     });
 
-    List<dynamic> response = await MessageManager().getMessages(
-      limit: 50,
-      withChats: true,
-      withHandles: true,
-      withAttachments: true,
-      withChatParticipants: true,
-      where: [
-        {
-          'statement': 'message.text LIKE :term',
-          'args': {'term': "%$currentSearchTerm%"}
-        },
-        {'statement': 'message.associated_message_guid IS NULL', 'args': null}
-      ]
-    );
+    List<dynamic> response = [];
+    if (local) {
+      final query = (messageBox.query(Message_.text.contains(currentSearchTerm!)
+          .and(Message_.associatedMessageGuid.isNull())
+          .and(Message_.dateDeleted.isNull()))
+        ..order(Message_.dateCreated, flags: Order.descending)).build();
+      query.limit = 50;
+      final messages = query.find();
+      query.close();
+
+      response = messages.map((e) {
+        // grab attachments and associated messages
+        e.getRealAttachments();
+        e.fetchAssociatedMessages();
+        final map = e.toMap(includeObjects: true);
+        final chat = e.chat.target!;
+        // grab participants
+        chat.getParticipants();
+        map['chats'] = [chat.toMap()];
+        return map;
+      }).toList();
+    } else {
+      response = await MessageManager().getMessages(
+          limit: 50,
+          withChats: true,
+          withHandles: true,
+          withAttachments: true,
+          withChatParticipants: true,
+          where: [
+            {
+              'statement': 'message.text LIKE :term',
+              'args': {'term': "%$currentSearchTerm%"}
+            },
+            {'statement': 'message.associated_message_guid IS NULL', 'args': null}
+          ]
+      );
+    }
 
     final search = SearchResult(
       search: currentSearchTerm!,
+      method: local ? "local" : "network",
       results: [],
     );
 
     for (dynamic item in response) {
       final chat = Chat.fromMap(item['chats'][0]);
+      if (chat.participants.isEmpty) {
+        chat.participants = chatBox.query(Chat_.guid.equals(chat.guid)).build().findFirst()?.handles.toList() ?? [];
+      }
       final message = Message.fromMap(item);
       chat.latestMessage = message;
-      chat.guid = "${chat.guid}/fake";
+      chat.guid = "${chat.guid}/${randomString(6)}";
       search.results.add(Tuple2(chat, message));
     }
 
@@ -213,6 +247,50 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
                 suffixMode: OverlayVisibilityMode.editing,
               ),
             ),
+            if (!kIsWeb)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+                child: ToggleButtons(
+                  constraints: BoxConstraints(minWidth: (context.width - 35) / 2),
+                  children: [
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text("Search Device"),
+                        ),
+                        Icon(Icons.storage_outlined, size: 16),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text("Search Mac"),
+                        ),
+                        Icon(Icons.cloud_outlined, size: 16),
+                      ],
+                    ),
+                  ],
+                  borderRadius: BorderRadius.circular(20),
+                  selectedBorderColor: context.theme.colorScheme.primary,
+                  selectedColor: context.theme.colorScheme.primary,
+                  isSelected: [local, network],
+                  onPressed: (index) {
+                    if (index == 0) {
+                      setState(() {
+                        local = true;
+                        network = false;
+                      });
+                    } else {
+                      setState(() {
+                        local = false;
+                        network = true;
+                      });
+                    }
+                  },
+                ),
+              ),
             Divider(color: context.theme.colorScheme.outline),
             if (!isSearching && noResults)
               Padding(
@@ -242,7 +320,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
                 if (termStart >= 0) {
                   // We only want a snippet of the text, so only get a 50x50 range
                   // of characters from the string, with the search term in the middle
-                  String subText = message.text!.substring(
+                  String subText = message.fullText.substring(
                     (termStart - 50).clamp(0, double.infinity).toInt(),
                     (termEnd + 50).clamp(0, message.fullText.length),
                   );
@@ -285,7 +363,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
                     controller: fakeController,
                     inSelectMode: true,
                     onSelect: (_) {
-                      MessageBloc customBloc = MessageBloc(chat, canLoadMore: false);
+                      MessageBloc customBloc = MessageBloc(chat, canLoadMore: false, loadMethod: local ? "local" : "network");
                       CustomNavigator.push(
                         context,
                         ConversationView(

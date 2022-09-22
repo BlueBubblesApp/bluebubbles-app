@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:get/get.dart';
@@ -37,6 +38,7 @@ class MessageBloc {
   bool showDeleted = false;
   bool _canLoadMore = true;
   bool _isGettingMore = false;
+  String _loadMethod = "network";
 
   Map<String, Message> get messages {
     if (!showDeleted) {
@@ -67,9 +69,10 @@ class MessageBloc {
     return "no sent message found";
   }
 
-  MessageBloc(Chat? chat, {bool canLoadMore = true}) {
+  MessageBloc(Chat? chat, {bool canLoadMore = true, String loadMethod = "network"}) {
     _canLoadMore = canLoadMore;
     _currentChat = chat;
+    _loadMethod = loadMethod;
 
     MessageManager().stream.listen((msgEvent) {
       // Ignore any events that don't have to do with the current chat
@@ -223,44 +226,35 @@ class MessageBloc {
   }
 
   Future<void> loadSearchChunk(Message message) async {
-    // List<int> rowIDs = [message.originalROWID + 1];
-    // if (message.originalROWID - 1 > 0) {
-    //   rowIDs.add(message.originalROWID - 1);
-    // }
-
-    // List<Map<String, dynamic>> params = [
-    //   {"statement": "message.ROWID IN (${rowIDs.join(", ")})", 'args': null},
-    //   {"statement": "message.associated_message_guid IS NULL", 'args': null}
-    // ];
-
-    // List<dynamic> res =
-    //     await SocketManager().fetchMessages(null, limit: 3, where: params);
-    _allMessages = {};
-    if (message.guid != null) {
-      _allMessages.addAll({message.guid!: message});
+    _allMessages.clear();
+    if (_loadMethod == "local") {
+      final messages = await Chat.getMessagesAsync(currentChat!, searchAround: message.dateCreated!.millisecondsSinceEpoch);
+      messages.add(message);
+      messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      _allMessages.addEntries(messages.where((e) => e.associatedMessageGuid == null).map((e) => MapEntry(e.guid!, e)).toList());
+      _reactionMessages.addEntries(messages.where((e) => e.associatedMessageGuid != null).map((e) => MapEntry(e.guid!, e)).toList());
+    } else {
+      final guid = currentChat!.guid.split("/").first;
+      final beforeResponse = await ChatManager().getMessages(
+        guid,
+        limit: 25,
+        before: message.dateCreated!.millisecondsSinceEpoch,
+      );
+      final afterResponse = await ChatManager().getMessages(
+        guid,
+        limit: 25,
+        sort: "ASC",
+        after: message.dateCreated!.millisecondsSinceEpoch,
+      );
+      beforeResponse.addAll(afterResponse);
+      final messages = beforeResponse.map((e) => Message.fromMap(e)).toList();
+      messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      _allMessages.addEntries(messages.where((e) => e.associatedMessageGuid == null).map((e) => MapEntry(e.guid!, e)).toList());
+      _reactionMessages.addEntries(messages.where((e) => e.associatedMessageGuid != null).map((e) => MapEntry(e.guid!, e)).toList());
     }
 
-    // Logger.instance.log("ITEMS OG");
-    // for (var i in _allMessages.values.toList()) {
-    //   Logger.instance.log(i.guid);
-    // }
-
-    // for (var i in res ?? []) {
-    //   Message tmp = Message.fromMap(i);
-    //   Logger.instance.log("ADDING: ${tmp.guid}");
-    //   if (!_allMessages.containsKey(tmp.guid)) {
-    //     _allMessages.addAll({tmp.guid: message});
-    //   }
-    // }
-
-    // Logger.instance.log("ITEMS AFTER");
-    // for (var i in _allMessages.values.toList()) {
-    //   Logger.instance.log("TEXT: ${i.text}");
-    // }
-
-    // Logger.instance.log(_allMessages.length);
-
     emitLoaded();
+    EventDispatcher().emit("scroll-to-message", message);
   }
 
   Future<LoadMessageResult> loadMessageChunk(int offset,

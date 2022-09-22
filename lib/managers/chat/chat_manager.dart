@@ -224,13 +224,13 @@ class ChatManager {
     return chats;
   }
 
-  Future<List<dynamic>> getMessages(String guid, {bool withAttachment = true, bool withHandle = true, int offset = 0, int limit = 25}) async {
+  Future<List<dynamic>> getMessages(String guid, {bool withAttachment = true, bool withHandle = true, int offset = 0, int limit = 25, String sort = "DESC", int? after, int? before}) async {
     Completer<List<dynamic>> completer = Completer();
     final withQuery = <String>["message.attributedbody"];
     if (withAttachment) withQuery.add("attachment");
     if (withHandle) withQuery.add("handle");
 
-    api.chatMessages(guid, withQuery: withQuery.join(","), offset: offset, limit: limit).then((response) {
+    api.chatMessages(guid, withQuery: withQuery.join(","), offset: offset, limit: limit, sort: sort, after: after, before: before).then((response) {
       if (!completer.isCompleted) completer.complete(response.data["data"]);
     }).catchError((err) {
       late final dynamic error;
