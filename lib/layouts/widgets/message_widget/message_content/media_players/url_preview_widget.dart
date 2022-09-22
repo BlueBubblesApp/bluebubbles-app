@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:universal_io/io.dart';
@@ -31,13 +32,15 @@ class UrlPreviewController extends GetxController {
 
   @override
   void onInit() {
-    fetchMissingAttachments();
-    if (MetadataHelper.mapIsNotEmpty(message.metadata)) {
-      data.value = Metadata.fromJson(message.metadata!);
-    } else {
-      fetchPreview();
-    }
     super.onInit();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      fetchMissingAttachments();
+      if (MetadataHelper.mapIsNotEmpty(message.metadata)) {
+        data.value = Metadata.fromJson(message.metadata!);
+      } else {
+        fetchPreview();
+      }
+    });
   }
 
   void fetchMissingAttachments() {
