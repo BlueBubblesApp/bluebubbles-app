@@ -31,7 +31,7 @@ import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
@@ -114,21 +114,18 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                         children: [
                           Obx(() {
                             String? subtitle;
-                            switch (SocketManager().state.value) {
-                              case SocketState.CONNECTED:
+                            switch (socket.state.value) {
+                              case SocketState.connected:
                                 subtitle = "Connected";
                                 break;
-                              case SocketState.DISCONNECTED:
+                              case SocketState.disconnected:
                                 subtitle = "Disconnected";
                                 break;
-                              case SocketState.ERROR:
+                              case SocketState.error:
                                 subtitle = "Error";
                                 break;
-                              case SocketState.CONNECTING:
+                              case SocketState.connecting:
                                 subtitle = "Connecting...";
-                                break;
-                              case SocketState.FAILED:
-                                subtitle = "Failed to connect";
                                 break;
                               default:
                                 subtitle = "Error";
@@ -156,12 +153,12 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                                   Material(
                                     shape: samsung ? SquircleBorder(
                                       side: BorderSide(
-                                          color: getIndicatorColor(SocketManager().state.value),
+                                          color: getIndicatorColor(socket.state.value),
                                           width: 3.0
                                       ),
                                     ) : null,
                                     color: SettingsManager().settings.skin.value != Skins.Material
-                                        ? getIndicatorColor(SocketManager().state.value)
+                                        ? getIndicatorColor(socket.state.value)
                                         : Colors.transparent,
                                     borderRadius: iOS
                                         ? BorderRadius.circular(5) : null,
@@ -184,7 +181,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                                             child: Align(
                                                 alignment: Alignment.bottomRight,
                                                 child:
-                                                getIndicatorIcon(SocketManager().state.value, size: 15, showAlpha: false)),
+                                                getIndicatorIcon(socket.state.value, size: 15, showAlpha: false)),
                                           ),
                                       ]),
                                     ),
@@ -394,8 +391,8 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                               iosIcon: CupertinoIcons.exclamationmark_shield,
                               materialIcon: Icons.gpp_maybe,
                               containerColor: getIndicatorColor(SettingsManager().settings.enablePrivateAPI.value
-                                  ? SocketState.CONNECTED
-                                  : SocketState.CONNECTING),
+                                  ? SocketState.connected
+                                  : SocketState.connecting),
                             ),
                           ),
                           Container(
@@ -422,8 +419,8 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                               iosIcon: CupertinoIcons.wand_stars,
                               materialIcon: Icons.auto_fix_high,
                               containerColor: getIndicatorColor(SettingsManager().settings.redactedMode.value
-                                  ? SocketState.CONNECTED
-                                  : SocketState.CONNECTING),
+                                  ? SocketState.connected
+                                  : SocketState.connecting),
                             ),
                           ),
                         ],

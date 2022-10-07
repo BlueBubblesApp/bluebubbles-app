@@ -11,7 +11,7 @@ import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -265,7 +265,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
 
   void goToNextPage() {
     if (kIsWeb) {
-      SocketManager().setup.startFullSync();
+      socket.setup.startFullSync();
     }
 
     if (controller.currentPage == controller.pageOfNoReturn) {

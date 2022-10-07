@@ -3,7 +3,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -26,11 +26,11 @@ class _MediaFileState extends State<MediaFile> {
   @override
   void initState() {
     super.initState();
-    SocketManager().attachmentSenderCompleter.listen((event) {
+    /*socket.attachmentSenderCompleter.listen((event) {
       if (event == widget.attachment.guid && mounted) {
         setState(() {});
       }
-    });
+    });*/
   }
 
   @override
@@ -39,13 +39,13 @@ class _MediaFileState extends State<MediaFile> {
     final bool hideAttachmentTypes =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
 
-    if (SocketManager().attachmentSenders.containsKey(widget.attachment.guid)) {
+    /*if (socket.attachmentSenders.containsKey(widget.attachment.guid)) {
       return Stack(
         alignment: Alignment.center,
         children: <Widget>[
           widget.child,
           Obx(() {
-            Tuple2<num?, bool> data = SocketManager().attachmentSenders[widget.attachment.guid]!.attachmentData.value;
+            Tuple2<num?, bool> data = socket.attachmentSenders[widget.attachment.guid]!.attachmentData.value;
             if (data.item2) {
               return Text(
                 "Unable to send",
@@ -63,7 +63,7 @@ class _MediaFileState extends State<MediaFile> {
           }),
         ],
       );
-    } else {
+    } else {*/
       return Stack(alignment: Alignment.center, children: [
         widget.child,
         if (widget.attachment.originalROWID == null)
@@ -99,6 +99,6 @@ class _MediaFileState extends State<MediaFile> {
             ),
           ),
       ]);
-    }
+   /* }*/
   }
 }

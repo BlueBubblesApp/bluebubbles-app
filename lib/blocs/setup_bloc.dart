@@ -9,7 +9,7 @@ import 'package:bluebubbles/managers/sync/full_sync_manager.dart';
 import 'package:bluebubbles/managers/sync/incremental_sync_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -64,7 +64,7 @@ class SetupBloc {
     }
 
     String deviceName = await getDeviceName();
-    String? token = SocketManager().token;
+    String? token = socket.token;
     if (token != null && !force) {
       Logger.debug("Already authorized FCM device! Token: $token", tag: 'FCM-Auth');
       await http.addFcmDevice(deviceName, token);

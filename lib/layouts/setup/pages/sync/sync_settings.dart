@@ -2,7 +2,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/setup/pages/page_template.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -104,10 +104,10 @@ class SyncSettings extends StatelessWidget {
             minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
           ),
           onPressed: () {
-            SocketManager().setup.numberOfMessagesPerPage = controller.numberToDownload.clamp(1, double.infinity).toInt();
-            SocketManager().setup.skipEmptyChats = controller.skipEmptyChats;
-            SocketManager().setup.saveToDownloads = controller.saveToDownloads;
-            SocketManager().setup.startFullSync();
+            socket.setup.numberOfMessagesPerPage = controller.numberToDownload.clamp(1, double.infinity).toInt();
+            socket.setup.skipEmptyChats = controller.skipEmptyChats;
+            socket.setup.saveToDownloads = controller.saveToDownloads;
+            socket.setup.startFullSync();
 
             controller.pageController.nextPage(
               duration: Duration(milliseconds: 300),

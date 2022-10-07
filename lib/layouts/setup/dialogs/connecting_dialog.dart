@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/setup/dialogs/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -19,14 +19,14 @@ class _ConnectingDialogState extends OptimizedState<ConnectingDialog> {
   void initState() {
     super.initState();
 
-    if (SocketManager().state.value == SocketState.CONNECTED) {
+    if (socket.state.value == SocketState.connected) {
       widget.onConnect(true);
     } else {
       // Set up a listener to wait for connect events
-      ever(SocketManager().state, (event) {
-        if (event == SocketState.CONNECTED) {
+      ever(socket.state, (event) {
+        if (event == SocketState.connected) {
           widget.onConnect(true);
-        } else if (event == SocketState.ERROR || event == SocketState.DISCONNECTED) {
+        } else if (event == SocketState.error || event == SocketState.disconnected) {
           widget.onConnect(false);
         }
         setState(() {});
@@ -36,7 +36,7 @@ class _ConnectingDialogState extends OptimizedState<ConnectingDialog> {
 
   @override
   Widget build(BuildContext context) {
-    if (SocketManager().state.value == SocketState.FAILED) {
+    if (socket.state.value == SocketState.error) {
       return FailedToConnectDialog(
         onDismiss: () => Navigator.of(context).pop(),
       );

@@ -8,7 +8,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;

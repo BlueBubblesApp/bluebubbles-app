@@ -14,7 +14,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -53,7 +53,7 @@ class ServerManagementPanelController extends StatefulController {
   @override
   void onReady() {
     super.onReady();
-    if (SocketManager().state.value == SocketState.CONNECTED) {
+    if (socket.state.value == SocketState.connected) {
       updateObx(() {
         getServerStats();
       });
@@ -134,22 +134,22 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               TextSpan(
                                   children: [
                                     TextSpan(text: "Connection Status: "),
-                                    TextSpan(text: describeEnum(SocketManager().state.value), style: TextStyle(color: getIndicatorColor(SocketManager().state.value))),
+                                    TextSpan(text: describeEnum(socket.state.value), style: TextStyle(color: getIndicatorColor(socket.state.value))),
                                     TextSpan(text: "\n\n"),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       TextSpan(text: "Private API Status: "),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       TextSpan(text: controller.privateAPIStatus.value ? "ENABLED" : "DISABLED", style: TextStyle(color: getIndicatorColor(controller.privateAPIStatus.value
-                                          ? SocketState.CONNECTED
-                                          : SocketState.DISCONNECTED))),
+                                          ? SocketState.connected
+                                          : SocketState.disconnected))),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       TextSpan(text: "\n\n"),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       TextSpan(text: "Private API Helper Bundle Status: "),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       TextSpan(text: controller.helperBundleStatus.value ? "CONNECTED" : "DISCONNECTED", style: TextStyle(color: getIndicatorColor(controller.helperBundleStatus.value
-                                          ? SocketState.CONNECTED
-                                          : SocketState.DISCONNECTED))),
+                                          ? SocketState.connected
+                                          : SocketState.disconnected))),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       TextSpan(text: "\n\n"),
                                     TextSpan(text: "Server URL: ${redact ? "Redacted" : SettingsManager().settings.serverAddress.value}", recognizer: TapGestureRecognizer()
@@ -172,7 +172,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                   ]
                               ),
                               onTap: () {
-                                if (SocketManager().state.value != SocketState.CONNECTED) return;
+                                if (socket.state.value != SocketState.connected) return;
                                 controller.opacity.value = 0.0;
                                 controller.getServerStats();
                               },
@@ -352,14 +352,14 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         );
                         if (url == null) return;
                       }
-                      var res = await SocketManager().sendMessage("change-proxy-service", {"service": val}, (_) {});
+                      var res = await socket.sendMessage("change-proxy-service", {"service": val}, (_) {});
                       if (res['status'] == 200) {
                         controller.proxyService.value = val;
                         await Future.delayed(Duration(seconds: 2));
-                        await SocketManager().refreshConnection();
+                        await socket.refreshConnection();
                         controller.opacity.value = 0.0;
                         int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                        SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                        socket.sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
                           int later = DateTime.now().toUtc().millisecondsSinceEpoch;
                           controller.latency.value = later - now;
                           controller.macOSVersion.value = res['data']['os_version'];
@@ -395,8 +395,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
                             Get.back();
-                            fcm.registerDevice();
-                            SocketManager().startSocketIO(forceNewConnection: true);
+                            Get.reload<SocketService>();
                           },
                           onClose: () {
                             Get.back();
@@ -410,8 +409,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
                             Get.back();
-                            fcm.registerDevice();
-                            SocketManager().startSocketIO(forceNewConnection: true);
+                            Get.reload<SocketService>();
                           },
                           onClose: () {
                             Get.back();
@@ -462,7 +460,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                   if (!kIsWeb)
                     Obx(() =>SettingsTile(
                       title: "Manually Sync Messages",
-                      subtitle: SocketManager().state.value == SocketState.CONNECTED
+                      subtitle: socket.state.value == SocketState.connected
                           ? "Tap to sync messages" : "Disconnected, cannot sync",
                       backgroundColor: tileColor,
                       leading: SettingsLeadingIcon(
@@ -470,7 +468,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         materialIcon: Icons.sync,
                       ),
                       onTap: () async {
-                        if (SocketManager().state.value != SocketState.CONNECTED) return;
+                        if (socket.state.value != SocketState.connected) return;
                         showDialog(
                           context: context,
                           builder: (context) => SyncDialog(),
@@ -491,7 +489,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                 children: [
                   Obx(() => SettingsTile(
                     title: "Fetch${kIsWeb || kIsDesktop ? "" : " & Share"} Server Logs",
-                    subtitle: controller.fetchStatus.value ?? (SocketManager().state.value == SocketState.CONNECTED
+                    subtitle: controller.fetchStatus.value ?? (socket.state.value == SocketState.connected
                         ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
                     backgroundColor: tileColor,
                     leading: SettingsLeadingIcon(
@@ -499,7 +497,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       materialIcon: Icons.article,
                     ),
                     onTap: () {
-                      if (SocketManager().state.value != SocketState.CONNECTED) return;
+                      if (socket.state.value != SocketState.connected) return;
 
                       controller.fetchStatus.value = "Fetching logs, please wait...";
 
@@ -549,9 +547,9 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                   ),
                   Obx(() => SettingsTile(
                       title: "Restart iMessage",
-                      subtitle: controller.isRestartingMessages.value && SocketManager().state.value == SocketState.CONNECTED
+                      subtitle: controller.isRestartingMessages.value && socket.state.value == SocketState.connected
                           ? "Restart in progress..."
-                          : SocketManager().state.value == SocketState.CONNECTED
+                          : socket.state.value == SocketState.connected
                           ? "Restart the iMessage app"
                           : "Disconnected, cannot restart",
                       backgroundColor: tileColor,
@@ -560,7 +558,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         materialIcon: Icons.sms,
                       ),
                       onTap: () async {
-                        if (SocketManager().state.value != SocketState.CONNECTED || controller.isRestartingMessages.value) return;
+                        if (socket.state.value != SocketState.connected || controller.isRestartingMessages.value) return;
 
                         controller.isRestartingMessages.value = true;
 
@@ -604,9 +602,9 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       children: [
                         SettingsTile(
                           title: "Restart Private API & Services",
-                          subtitle: controller.isRestartingPrivateAPI.value && SocketManager().state.value == SocketState.CONNECTED
+                          subtitle: controller.isRestartingPrivateAPI.value && socket.state.value == SocketState.connected
                               ? "Restart in progress..."
-                              : SocketManager().state.value == SocketState.CONNECTED
+                              : socket.state.value == SocketState.connected
                               ? "Restart the Private API"
                               : "Disconnected, cannot restart",
                           backgroundColor: tileColor,
@@ -615,7 +613,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             materialIcon: Icons.gpp_maybe,
                           ),
                           onTap: () async {
-                            if (SocketManager().state.value != SocketState.CONNECTED || controller.isRestartingPrivateAPI.value) return;
+                            if (socket.state.value != SocketState.connected || controller.isRestartingPrivateAPI.value) return;
 
                             controller.isRestartingPrivateAPI.value = true;
 

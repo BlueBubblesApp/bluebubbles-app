@@ -5,7 +5,7 @@ import 'package:bluebubbles/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -68,7 +68,7 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
     SettingsManager().settings.guidAuthKey.value = password;
     SettingsManager().settings.save();
     try {
-      SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
+      socket.startSocketIO(forceNewConnection: true, catchException: false);
     } catch (e) {
       error = e.toString();
       if (mounted) setState(() {});

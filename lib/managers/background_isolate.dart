@@ -149,6 +149,6 @@ callbackHandler() async {
   await SettingsManager().getSavedSettings(headless: true);
   if (!ContactManager().hasFetchedContacts) await ContactManager().loadContacts(headless: true);
   MethodChannelInterface().init(customChannel: _backgroundChannel);
-  await fdb.fetchNewUrl(connectToSocket: false);
+  await fdb.fetchNewUrl();
   Get.put(AttachmentDownloadService());
 }

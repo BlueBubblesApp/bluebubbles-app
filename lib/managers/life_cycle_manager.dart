@@ -8,7 +8,7 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -33,15 +33,7 @@ class LifeCycleManager {
   final StreamController<bool> _stream = StreamController.broadcast();
   Stream<bool> get stream => _stream.stream;
 
-  LifeCycleManager._internal() {
-    // Listen to the socket processes that are updated
-    SocketManager().socketProcessUpdater.listen((event) {
-      // If there are no more socket processes, then we can safely close the socket
-      if (event.isEmpty && !_isAlive && !kIsDesktop && !kIsWeb) {
-        SocketManager().closeSocket(force: true);
-      }
-    });
-  }
+  LifeCycleManager._internal();
 
   /// Public method called from [Home] when the app is opened or resumed
   opened() {
@@ -58,7 +50,7 @@ class LifeCycleManager {
     // Set the app as open and start the socket
     updateStatus(true);
     if (!kIsDesktop) {
-      SocketManager().startSocketIO();
+      // socket.startSocketIO();
     }
 
     if (kIsDesktop) {
@@ -83,7 +75,7 @@ class LifeCycleManager {
       // If there are socket processes using the socket, then it will not close, and will wait until those tasks are done
       updateStatus(false);
       if (!kIsDesktop && !kIsWeb) {
-        SocketManager().closeSocket();
+        socket.closeSocket();
 
         // Closes the background thread when the app is fully closed
         // This does not necessarily mean that the isolate will be closed (such as if the app is not fully closed), but it will attempt to do so

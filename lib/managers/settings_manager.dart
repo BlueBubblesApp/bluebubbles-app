@@ -8,7 +8,7 @@ import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -94,16 +94,6 @@ class SettingsManager {
     if (!settings.finishedSetup.value) {
       DBProvider.deleteDB();
     }
-
-    // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't
-    if (!headless) {
-      try {
-        if (settings.finishedSetup.value) {
-          SocketManager().startSocketIO();
-          fcm.registerDevice();
-        }
-      } catch (_) {}
-    }
   }
 
   /// Saves a [Settings] instance to disk
@@ -149,8 +139,8 @@ class SettingsManager {
   }
 
   Future<void> resetConnection() async {
-    if (SocketManager().socket != null && SocketManager().socket!.connected) {
-      SocketManager().socket!.disconnect();
+    if (socket.socket.connected) {
+      socket.socket.disconnect();
     }
 
     Settings temp = settings;

@@ -16,7 +16,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/tasks/sync_tasks.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
@@ -1047,7 +1047,7 @@ class Chat {
     this.autoSendTypingIndicators = autoSendTypingIndicators;
     save(updateAutoSendTypingIndicators: true);
     if (!autoSendTypingIndicators) {
-      SocketManager().sendMessage("stopped-typing", {"chatGuid": guid}, (data) {});
+      socket.sendMessage("stopped-typing", {"chatGuid": guid});
     }
     ChatBloc().updateChat(this);
     return this;

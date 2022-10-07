@@ -8,7 +8,7 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 
 class ChatManager {
@@ -162,7 +162,7 @@ class ChatManager {
       }
 
       if (!MethodChannelInterface().headless && SettingsManager().settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
-        SocketManager().sendMessage("update-typing-status", {"chatGuid": chat.guid}, (data) {});
+        socket.sendMessage("update-typing-status", {"chatGuid": chat.guid});
       }
     }
 

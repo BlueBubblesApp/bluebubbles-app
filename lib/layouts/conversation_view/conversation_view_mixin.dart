@@ -26,7 +26,7 @@ import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
@@ -323,7 +323,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     ];
 
     if (SettingsManager().settings.showConnectionIndicator.value) {
-      items.add(Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12)));
+      items.add(Obx(() => getIndicatorIcon(socket.state.value, size: 12)));
     }
 
     return Padding(
@@ -422,7 +422,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
             child: Obx(() {
               if (SettingsManager().settings.showConnectionIndicator.value) {
-                return Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12));
+                return Obx(() => getIndicatorIcon(socket.state.value, size: 12));
               } else {
                 return SizedBox.shrink();
               }

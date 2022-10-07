@@ -15,7 +15,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -74,7 +74,7 @@ class ConnectionIndicator extends StatelessWidget {
         padding: EdgeInsets.only(
           right: SettingsManager().settings.skin.value != Skins.Material ? 10 : 0
         ),
-        child: getIndicatorIcon(SocketManager().state.value, size: 12),
+        child: getIndicatorIcon(socket.state.value, size: 12),
       );
     });
   }

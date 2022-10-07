@@ -16,7 +16,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:mime_type/mime_type.dart';
 import 'package:tuple/tuple.dart';
@@ -114,9 +114,6 @@ class AttachmentSender {
       MessageManager().addMessage(chat, messageWithText!, outgoing: true);
     }
 
-    // add this sender to our list of active senders
-    SocketManager().addAttachmentSender(this);
-
     onSuccess(Response response) async {
       String? tempGuid = _attachmentGuid;
 
@@ -140,7 +137,6 @@ class AttachmentSender {
 
       Logger.info("Message match: [${response.data['data']["text"]}] - ${response.data['data']["guid"]} - $tempGuid", tag: "MessageStatus");
       MessageManager().updateMessage(chat, tempGuid, newMessage);
-      SocketManager().finishSender(_attachmentGuid);
 
       if (messageWithText != null) {
         ActionHandler.sendMessageHelper(chat, messageWithText!);
@@ -193,7 +189,6 @@ class AttachmentSender {
         if (messageWithText != null) {
           await onError.call(err, _attachmentGuid, messageWithText!);
         }
-        SocketManager().finishSender(_attachmentGuid);
         attachmentData.value = Tuple2(null, true);
         attachmentData.close();
       });
@@ -205,7 +200,6 @@ class AttachmentSender {
         if (messageWithText != null) {
           await onError.call(err, _attachmentGuid, messageWithText!);
         }
-        SocketManager().finishSender(_attachmentGuid);
         attachmentData.value = Tuple2(null, true);
         attachmentData.close();
       });

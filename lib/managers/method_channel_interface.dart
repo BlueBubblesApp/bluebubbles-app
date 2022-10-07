@@ -25,7 +25,7 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -100,8 +100,7 @@ class MethodChannelInterface {
         // We remove the brackets from the formatting
         address = sanitizeServerAddress(address: address.substring(1, address.length - 1))!;
 
-        // And then tell the socket to set the new server address
-        await fdb.connectNewAddress(address);
+        // todo connect again
 
         return Future.value("");
       case "new-message":

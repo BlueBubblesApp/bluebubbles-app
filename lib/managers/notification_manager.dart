@@ -99,7 +99,7 @@ class NotificationManager {
 
     // If we couldn't get a chat title, generate placeholder names
     chatTitle ??= isGroup ? 'Group Chat' : 'iMessage Chat';
-    await flutterLocalNotificationsPlugin!.zonedSchedule(
+    await flutterLocalNotificationsPlugin.zonedSchedule(
         Random().nextInt(9998) + 1,
         'Reminder: $chatTitle',
         MessageHelper.getNotificationText(message),

@@ -10,7 +10,7 @@ import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -695,7 +695,7 @@ class ThemeSelector extends StatelessWidget {
   }
 
   void goToNextPage() {
-    SocketManager().toggleSetupFinished(true, applyToDb: true);
+    // socket.toggleSetupFinished(true, applyToDb: true);
   }
 }
 

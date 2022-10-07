@@ -17,7 +17,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -634,17 +634,17 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
 Widget getIndicatorIcon(SocketState socketState, {double size = 24, bool showAlpha = true}) {
   return Obx(() {
     if (SettingsManager().settings.colorblindMode.value) {
-      if (socketState == SocketState.CONNECTING) {
+      if (socketState == SocketState.connecting) {
         return Icon(Icons.cloud_upload, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
-      } else if (socketState == SocketState.CONNECTED) {
+      } else if (socketState == SocketState.connected) {
         return Icon(Icons.cloud_done, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
       } else {
         return Icon(Icons.cloud_off, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
       }
     } else {
-      if (socketState == SocketState.CONNECTING) {
+      if (socketState == SocketState.connecting) {
         return Icon(Icons.fiber_manual_record, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
-      } else if (socketState == SocketState.CONNECTED) {
+      } else if (socketState == SocketState.connected) {
         return Icon(Icons.fiber_manual_record, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
       } else {
         return Icon(Icons.fiber_manual_record, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
@@ -654,9 +654,9 @@ Widget getIndicatorIcon(SocketState socketState, {double size = 24, bool showAlp
 }
 
 Color getIndicatorColor(SocketState socketState) {
-  if (socketState == SocketState.CONNECTING) {
+  if (socketState == SocketState.connecting) {
     return HexColor('ffd500');
-  } else if (socketState == SocketState.CONNECTED) {
+  } else if (socketState == SocketState.connected) {
     return HexColor('32CD32');
   } else {
     return HexColor('DC143C');

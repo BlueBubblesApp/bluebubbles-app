@@ -2,7 +2,7 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 
 class OutgoingQueue extends QueueManager {
   factory OutgoingQueue() {
@@ -26,9 +26,7 @@ class OutgoingQueue extends QueueManager {
         {
           AttachmentSender sender = item.item;
           await sender.send();
-          await SocketManager()
-              .attachmentSenderCompleter
-              .firstWhere((element) => element == (item.item as AttachmentSender).guid, orElse: () => "");
+          // todo wait for send to complete
           break;
         }
       case "send-reaction":

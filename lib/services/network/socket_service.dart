@@ -1,14 +1,15 @@
+import 'dart:convert';
+
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/blocs/setup_bloc.dart';
+import 'package:bluebubbles/helpers/crypto.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/network/network_tasks.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/firebase/database_manager.dart';
-import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:flutter/foundation.dart';
-import 'package:get/get.dart' hide Response, FormData, MultipartFile;
+import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
 SocketService socket = Get.isRegistered<SocketService>() ? Get.find<SocketService>() : Get.put(SocketService());
@@ -20,8 +21,6 @@ enum SocketState {
   connecting,
 }
 
-/// Class that manages foreground network requests from client to server, using
-/// GET or POST requests.
 class SocketService extends GetxService {
   final Rx<SocketState> state = SocketState.disconnected.obs;
   SocketState _lastState = SocketState.disconnected;
@@ -59,25 +58,34 @@ class SocketService extends GetxService {
     socket.onError((data) => handleStatusUpdate(SocketState.error, data));
 
     // custom events
-    /*socket.on("new-message", handleNewMessage);
-    socket.on("group-name-change", handleNewMessage);
-    socket.on("participant-removed", handleNewMessage);
-    socket.on("participant-added", handleNewMessage);
-    socket.on("participant-left", handleNewMessage);
-    socket.on("chat-read-status-changed", handleChatStatusChange);
-    socket.on("typing-indicator", (_data) {
-      if (!SettingsManager().settings.enablePrivateAPI.value) return;
+    socket.on("new-message", (data) => handleCustomEvent("new-message", data));
+    socket.on("group-name-change", (data) => handleCustomEvent("group-name-change", data));
+    socket.on("participant-removed", (data) => handleCustomEvent("participant-removed", data));
+    socket.on("participant-added", (data) => handleCustomEvent("participant-added", data));
+    socket.on("participant-left", (data) => handleCustomEvent("participant-left", data));
+    socket.on("chat-read-status-changed", (data) => handleCustomEvent("chat-read-status-change", data));
+    socket.on("typing-indicator", (data) => handleCustomEvent("typing-indicator", data));
+  }
 
-      Map<String, dynamic> data = _data;
-      ChatController? currentChat = ChatManager().getChatControllerByGuid(
-          data["guid"]);
-      if (currentChat == null) return;
-      if (data["display"]) {
-        currentChat.displayTypingIndicator();
-      } else {
-        currentChat.hideTypingIndicator();
+  void closeSocket() {
+    socket.dispose();
+    state.value = SocketState.disconnected;
+  }
+
+  Future<Map<String, dynamic>> sendMessage(String event, Map<String, dynamic> message) {
+    Completer<Map<String, dynamic>> completer = Completer();
+
+    socket.emitWithAck(event, message, ack: (response) {
+      if (response['encrypted'] == true) {
+        response['data'] = jsonDecode(decryptAESCryptoJS(response['data'], password));
       }
-    });*/
+
+      if (!completer.isCompleted) {
+        completer.complete(response);
+      }
+    });
+
+    return completer.future;
   }
 
   void handleStatusUpdate(SocketState status, dynamic data) {
@@ -107,6 +115,33 @@ class SocketService extends GetxService {
           fdb.fetchNewUrl();
           // todo connect to socket agan
         });
+        return;
+      default:
+        return;
+    }
+  }
+
+  void handleCustomEvent(String event, Map<String, dynamic> data) {
+    // todo once event handlers are written
+    switch (event) {
+      case "new-message":
+        return;
+      case "group-name-change":
+        return;
+      case "participant-removed":
+      case "participant-added":
+      case "participant-left":
+        return;
+      case "chat-read-status-changed":
+        return;
+      case "typing-indicator":
+        ChatController? currentChat = ChatManager().getChatControllerByGuid(data["guid"]);
+        if (currentChat == null) return;
+        if (data["display"]) {
+          currentChat.displayTypingIndicator();
+        } else {
+          currentChat.hideTypingIndicator();
+        }
         return;
       default:
         return;

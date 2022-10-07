@@ -19,7 +19,7 @@ import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -274,11 +274,11 @@ class ActionHandler {
 
     bool isConnected = true;
     if (!SettingsManager().settings.privateAPISend.value) {
-      if ([SocketState.CONNECTING, SocketState.DISCONNECTED].contains(SocketManager().state.value)) {
+      if ([SocketState.connecting, SocketState.disconnected].contains(socket.state.value)) {
         await Future.delayed(Duration(seconds: 3));
       }
 
-      isConnected = SocketManager().state.value == SocketState.CONNECTED;
+      isConnected = socket.state.value == SocketState.connected;
     }
 
     // If we aren't connected (this will only hit with normal sending), 
