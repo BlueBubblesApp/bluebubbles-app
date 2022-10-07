@@ -58,7 +58,7 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
         // Check if the attachment exists
         if (await FileSystemEntity.type(pathName) == FileSystemEntityType.notFound) {
           // Download the attachment and when complete, re-render the UI
-          Get.put(AttachmentDownloadController(attachment: attachment, onComplete: () async {
+          Get.put(AttachmentDownloadController(attachment: attachment, onComplete: (_) async {
             // Make sure it downloaded correctly
             if (await FileSystemEntity.type(pathName) != FileSystemEntityType.notFound) {
               // Check via the image package to make sure this is a valid, render-able image

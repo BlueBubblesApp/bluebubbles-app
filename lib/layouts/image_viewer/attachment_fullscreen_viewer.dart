@@ -47,7 +47,7 @@ class AttachmentFullscreenViewer extends StatefulWidget {
 class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> {
   PageController? controller;
   int? startingIndex;
-  late int currentIndex;
+  int currentIndex = 0;
   late Widget placeHolder;
   ScrollPhysics? physics;
   StreamSubscription<NewMessageEvent>? newMessageEventStream;
@@ -146,7 +146,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                 },
               ),
               leadingWidth: 75,
-              title: Text(kIsWeb || !widget.showInteractions ? "Media" : "${currentIndex + 1} of ${widget.currentChat?.chatAttachments.length}", style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+              title: Text(kIsWeb || !widget.showInteractions || widget.currentChat == null ? "Media" : "${currentIndex + 1} of ${widget.currentChat?.chatAttachments.length}", style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
               centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
               iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
               backgroundColor: context.theme.colorScheme.properSurface,

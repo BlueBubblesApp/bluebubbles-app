@@ -367,6 +367,10 @@ class Chat {
   @Backlink('chat')
   final messages = ToMany<Message>();
 
+  static final List<Function(List<Chat>)> _watcherFunctions = [];
+
+  final List<Function(List<Message>)> _mWatcherFunctions = [];
+
   Chat({
     this.id,
     this.originalROWID,
@@ -485,6 +489,43 @@ class Chat {
     data.id ??= json.containsKey("id") ? json["id"] : null;
 
     return data;
+  }
+
+  static void startWatchingChats() {
+    chatBox.query().watch().listen((event) {
+      final chats = event.find();
+      for (Function f in _watcherFunctions) {
+        f.call(chats);
+      }
+    });
+  }
+
+  static void addChatListener(Function(List<Chat>) listener) {
+    _watcherFunctions.add(listener);
+  }
+
+  static bool removeChatListener(Function(List<Chat>) listener) {
+    return _watcherFunctions.remove(listener);
+  }
+
+  void startWatchingMessages() {
+    (messageBox.query(Message_.dateDeleted.isNull())
+      ..link(Message_.chat, Chat_.guid.equals(guid))
+      ..order(Message_.dateCreated, flags: Order.descending))
+        .watch().listen((event) {
+      final messages = event.find();
+      for (Function f in _mWatcherFunctions) {
+        f.call(messages);
+      }
+    });
+  }
+
+  void addMessageListener(Function(List<Message>) listener) {
+    _mWatcherFunctions.add(listener);
+  }
+
+  bool removeMessageListener(Function(List<Message>) listener) {
+    return _mWatcherFunctions.remove(listener);
   }
 
   /// Save a chat to the DB

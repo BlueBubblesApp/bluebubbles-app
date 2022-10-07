@@ -49,7 +49,7 @@ class UrlPreviewController extends GetxController {
       Get.put(
           AttachmentDownloadController(
               attachment: attachment!,
-              onComplete: () {
+              onComplete: (_) {
                 update();
               }),
           tag: attachment.guid);

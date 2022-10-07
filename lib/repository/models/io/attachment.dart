@@ -299,6 +299,12 @@ class Attachment {
     return pathName;
   }
 
+  String getDirectory() {
+    String appDocPath = SettingsManager().appDocDir.path;
+    String dirName = "$appDocPath/attachments/$guid";
+    return dirName;
+  }
+
   String getHeicToJpgPath() {
     return "${getPath()}.jpg";
   }

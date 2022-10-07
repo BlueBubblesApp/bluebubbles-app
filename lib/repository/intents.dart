@@ -293,17 +293,16 @@ class OpenChatDetailsIntent extends Intent {
 }
 
 class OpenChatDetailsAction extends Action<OpenChatDetailsIntent> {
-  OpenChatDetailsAction(this.context, this.bloc, this.chat);
+  OpenChatDetailsAction(this.context, this.chat);
 
   final BuildContext context;
-  final MessageBloc bloc;
   final Chat chat;
 
   @override
   Object? invoke(covariant OpenChatDetailsIntent intent) {
     CustomNavigator.push(
       context,
-      ConversationDetails(messageBloc: bloc, chat: chat),
+      ConversationDetails(chat: chat),
     );
     return null;
   }

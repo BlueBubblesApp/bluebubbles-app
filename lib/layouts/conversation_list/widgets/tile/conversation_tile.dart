@@ -199,29 +199,28 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
     title = controller.chat.getTitle() ?? title;
     // run query after render has completed
     updateObx(() {
-      final titleQuery = chatBox.query(Chat_.guid.equals(controller.chat.guid))
-          .watch();
-      sub = titleQuery.listen((Query<Chat> query) {
-        final chat = query.findFirst()!;
-        // check if we really need to update this widget
-        if (chat.displayName != cachedDisplayName
-            || chat.handles.length != cachedParticipants.length) {
-          final newTitle = getFullChatTitle(chat);
-          if (newTitle != title) {
-            setState(() {
-              title = newTitle;
-            });
-          }
-        }
-        cachedDisplayName = chat.displayName;
-        cachedParticipants = chat.handles;
-      });
+      Chat.addChatListener(titleWatcher);
     });
+  }
+
+  void titleWatcher(List<Chat> chats) {
+    final chat = chats.firstWhere((e) => e.guid == controller.chat.guid);
+    if (chat.displayName != cachedDisplayName
+        || chat.handles.length != cachedParticipants.length) {
+      final newTitle = getFullChatTitle(chat);
+      if (newTitle != title) {
+        setState(() {
+          title = newTitle;
+        });
+      }
+    }
+    cachedDisplayName = chat.displayName;
+    cachedParticipants = chat.handles;
   }
 
   @override
   void dispose() {
-    sub.cancel();
+    Chat.removeChatListener(titleWatcher);
     super.dispose();
   }
 

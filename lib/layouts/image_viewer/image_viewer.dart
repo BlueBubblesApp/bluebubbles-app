@@ -224,6 +224,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
           child: NavigationBar(
             selectedIndex: 0,
             backgroundColor: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
+            elevation: 0,
             labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
             height: 60,
             destinations: [
@@ -288,6 +289,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
             children: [
               bytes != null
                   ? PhotoView(
+                  gaplessPlayback: true,
                   minScale: PhotoViewComputedScale.contained,
                   maxScale: PhotoViewComputedScale.contained * 13,
                   controller: controller,

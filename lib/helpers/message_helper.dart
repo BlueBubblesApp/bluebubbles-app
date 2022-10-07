@@ -182,7 +182,7 @@ class MessageHelper {
     Get.put(
         AttachmentDownloadController(
             attachment: file,
-            onComplete: () {
+            onComplete: (file) {
               completer.complete();
             },
             onError: () {

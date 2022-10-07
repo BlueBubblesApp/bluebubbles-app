@@ -495,7 +495,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 LaughRecentIntent: LaughRecentAction(messageBloc!, widget.chat!),
                 EmphasizeRecentIntent: EmphasizeRecentAction(messageBloc!, widget.chat!),
                 QuestionRecentIntent: QuestionRecentAction(messageBloc!, widget.chat!),
-                OpenChatDetailsIntent: OpenChatDetailsAction(context, messageBloc!, widget.chat!),
+                OpenChatDetailsIntent: OpenChatDetailsAction(context, widget.chat!),
               },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,

@@ -353,7 +353,7 @@ class AttachmentHelper {
     }
 
     // Redownload the attachment
-    Get.put(AttachmentDownloadController(attachment: attachment, onComplete: onComplete, onError: onError),
+    Get.put(AttachmentDownloadController(attachment: attachment, onComplete: (file) => onComplete?.call(), onError: onError),
         tag: attachment.guid);
   }
 

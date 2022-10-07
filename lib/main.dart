@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:isolate';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -22,6 +21,7 @@ import 'package:bluebubbles/layouts/startup/splash_screen.dart';
 import 'package:bluebubbles/layouts/startup/upgrading_db.dart';
 import 'package:bluebubbles/layouts/startup/testing_mode.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
+import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -42,7 +42,6 @@ import 'package:collection/collection.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_dart/firebase_dart.dart';
-
 // ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:flutter/foundation.dart';
@@ -79,24 +78,13 @@ import 'package:version/version.dart' as ver;
 import 'package:win_toast/win_toast.dart';
 import 'package:window_manager/window_manager.dart';
 
-// final SentryClient _sentry = SentryClient(
-//     dsn:
-//         "https://3123d4f0d82d405190cb599d0e904adc@o373132.ingest.sentry.io/5372783");
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+final RxBool fontExistsOnDisk = false.obs;
 
-bool get isInDebugMode {
-  // Assume you're in production mode.
-  bool inDebugMode = false;
-
-  // Assert expressions are only evaluated during development. They are ignored
-  // in production. Therefore, this code only sets `inDebugMode` to true
-  // in a development environment.
-  assert(inDebugMode = true);
-
-  return inDebugMode;
-}
-
-FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
+PackageInfo? packageInfo;
+Color? windowsAccentColor;
+
 late final FirebaseApp app;
 late final Store store;
 late final Box<Attachment> attachmentBox;
@@ -108,16 +96,11 @@ late final Box<ScheduledMessage> scheduledBox;
 late final Box<ThemeStruct> themeBox;
 late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
-final RxBool fontExistsOnDisk = false.obs;
-late final CorePalette? monetPalette;
-PackageInfo? packageInfo;
-Color? windowsAccentColor;
 late final Database db;
+late final CorePalette? monetPalette;
 
 String? _recentIntent;
-
 String? get recentIntent => _recentIntent;
-
 set recentIntent(String? intent) {
   _recentIntent = intent;
 
@@ -129,61 +112,34 @@ set recentIntent(String? intent) {
   }
 }
 
-class MyHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      // If there is a bad certificate callback, override it if the host is part of
-      // your server URL
-      ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-        String serverUrl = sanitizeServerAddress() ?? "";
-        return serverUrl.contains(host);
-      }; // add your localhost detection logic here if you want
-  }
-}
-
 @pragma('vm:entry-point')
 //ignore: prefer_void_to_null
 Future<Null> main() async {
-  await initApp(false);
+  await initApp();
 }
 
 @pragma('vm:entry-point')
 // ignore: prefer_void_to_null
 Future<Null> bubble() async {
-  await initApp(true);
+  LifeCycleManager().isBubble = true;
+  await initApp();
 }
 
 //ignore: prefer_void_to_null
-Future<Null> initApp(bool isBubble) async {
+Future<Null> initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
+  /* ----- SERVICES INITIALIZATION ----- */
   await Logger.init();
   Logger.startup.value = true;
   Logger.info('Startup Logs');
+  Get.put(AttachmentDownloadService());
 
-  if (kIsDesktop) {
-    await WindowManager.instance.ensureInitialized();
-    await DartVLC.initialize();
-  }
-
-  HttpOverrides.global = MyHttpOverrides();
-  LifeCycleManager().isBubble = isBubble;
-
-  // This captures errors reported by the Flutter framework.
-  FlutterError.onError = (FlutterErrorDetails details) async {
-    Logger.error(details.exceptionAsString());
-    Logger.error(details.stack.toString());
-    if (isInDebugMode) {
-      // In development mode simply print to console.
-      FlutterError.dumpErrorToConsole(details);
-    } else {
-      // In production mode report to the application zone to report to
-      // Sentry.
-      Zone.current.handleUncaughtError(details.exception, details.stack!);
-    }
-  };
+  /* ----- RANDOM STUFF INITIALIZATION ----- */
+  HttpOverrides.global = BadCertOverride();
   dynamic exception;
   StackTrace? stacktrace;
+
+  /* ----- APPDATA MIGRATION ----- */
   if ((Platform.isLinux || Platform.isWindows) && !kIsWeb) {
     //ignore: unnecessary_cast, we need this as a workaround
     Directory appData = (await getApplicationSupportDirectory()) as Directory;
@@ -199,8 +155,12 @@ Future<Null> initApp(bool isBubble) async {
       }
     }
   }
+
   try {
+    /* ----- PREFERENCES INITIALIZATION ----- */
     prefs = await SharedPreferences.getInstance();
+
+    /* ----- OBJECTBOX DB INITIALIZATION ----- */
     if (!kIsWeb) {
       Directory documentsDirectory =
           //ignore: unnecessary_cast, we need this as a workaround
@@ -265,6 +225,7 @@ Future<Null> initApp(bool isBubble) async {
         themeBox = store.box<ThemeStruct>();
         themeEntryBox = store.box<ThemeEntry>();
         themeObjectBox = store.box<ThemeObject>();
+        Chat.startWatchingChats();
         if (themeBox.isEmpty()) {
           prefs.setString("selected-dark", "OLED Dark");
           prefs.setString("selected-light", "Bright White");
@@ -294,6 +255,8 @@ Future<Null> initApp(bool isBubble) async {
         }
       }
     }
+
+    /* ----- DESKTOP/WEB FIREBASE INITIALIZATION ----- */
     FirebaseDart.setup(
       platform: fdu.Platform.web(
         currentUrl: Uri.base.toString(),
@@ -301,23 +264,67 @@ Future<Null> initApp(bool isBubble) async {
         isOnline: true,
       ),
     );
-    var options = FirebaseOptions(
+    final options = FirebaseOptions(
         appId: 'my_app_id',
         apiKey: 'apiKey',
         projectId: 'my_project',
         messagingSenderId: 'ignore',
         authDomain: 'my_project.firebaseapp.com');
     app = await Firebase.initializeApp(options: options);
+
+    /* ----- DATE FORMATTING INITIALIZATION ----- */
     await initializeDateFormatting();
+
+    /* ----- SETTINGS MANAGER INITIALIZATION ----- */
     await SettingsManager().init();
-    await SettingsManager().getSavedSettings(headless: true);
-    if (!ContactManager().hasFetchedContacts && !kIsDesktop && !kIsWeb) {
-      await ContactManager().loadContacts(headless: true);
-    }
+    await SettingsManager().getSavedSettings();
     if (SettingsManager().settings.immersiveMode.value) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
+
+    /* ----- CONTACTS INITIALIZATION ----- */
+    if (!ContactManager().hasFetchedContacts && !kIsDesktop && !kIsWeb) {
+      await ContactManager().loadContacts(headless: true);
+    }
+
+    /* ----- SPLASH SCREEN INITIALIZATION ----- */
+    if (!SettingsManager().settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
+      runApp(MaterialApp(
+          home: SplashScreen(shouldNavigate: false),
+          theme: ThemeData(
+              backgroundColor: SchedulerBinding.instance.window.platformBrightness == Brightness.dark
+                  ? Colors.black
+                  : Colors.white)));
+    }
+
+    /* ----- ANDROID SPECIFIC INITIALIZATION ----- */
+    if (!kIsWeb && !kIsDesktop) {
+      /* ----- NOTIFICATIONS PLUGIN INITIALIZATION ----- */
+      const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
+      final InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
+      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+      /* ----- TIME ZONE INITIALIZATION ----- */
+      tz.initializeTimeZones();
+      try {
+        tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
+      } catch (_) {}
+
+      /* ----- MLKIT INITIALIZATION ----- */
+      if (!await EntityExtractorModelManager().isModelDownloaded(EntityExtractorLanguage.english.name)) {
+        EntityExtractorModelManager().downloadModel(EntityExtractorLanguage.english.name, isWifiRequired: false);
+      }
+
+      /* ----- PHONE NUMBER FORMATTING INITIALIZATION ----- */
+      await FlutterLibphonenumber().init();
+
+      /* ----- MATERIAL YOU COLOR INITIALIZATION ----- */
+      monetPalette = await DynamicColorPlugin.getCorePalette();
+    }
+
+    /* ----- DESKTOP SPECIFIC INITIALIZATION ----- */
     if (kIsDesktop) {
+      /* ----- LAUNCH AT STARTUP INITIALIZATION ----- */
       try {
         packageInfo = await PackageInfo.fromPlatform();
       } catch (_) {
@@ -329,35 +336,12 @@ Future<Null> initApp(bool isBubble) async {
       } else {
         await LaunchAtStartup.disable();
       }
-    }
-    // this is to avoid a fade-in transition between the android native splash screen
-    // and our dummy splash screen
-    if (!SettingsManager().settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
-      runApp(MaterialApp(
-          home: SplashScreen(shouldNavigate: false),
-          theme: ThemeData(
-              backgroundColor: SchedulerBinding.instance.window.platformBrightness == Brightness.dark
-                  ? Colors.black
-                  : Colors.white)));
-    }
-    Get.put(AttachmentDownloadService());
-    if (!kIsWeb && !kIsDesktop) {
-      flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-      const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
-      final InitializationSettings initializationSettings =
-          InitializationSettings(android: initializationSettingsAndroid);
-      await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
-      tz.initializeTimeZones();
-      // it doesn't matter if this errors
-      try {
-        tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
-      } catch (_) {}
-      if (!await EntityExtractorModelManager().isModelDownloaded(EntityExtractorLanguage.english.name)) {
-        EntityExtractorModelManager().downloadModel(EntityExtractorLanguage.english.name, isWifiRequired: false);
-      }
-      await FlutterLibphonenumber().init();
-    }
-    if (kIsDesktop) {
+
+      /* ----- VLC INITIALIZATION ----- */
+      await DartVLC.initialize();
+
+      /* ----- WINDOW INITIALIZATION ----- */
+      await WindowManager.instance.ensureInitialized();
       await WindowManager.instance.setTitle('BlueBubbles');
       await Window.initialize();
       if (Platform.isWindows) {
@@ -393,10 +377,31 @@ Future<Null> initApp(bool isBubble) async {
         await WindowManager.instance.show();
       });
 
+      /* ----- ACCENT COLOR INITIALIZATION ----- */
       if (Platform.isWindows) {
         windowsAccentColor = await DynamicColorPlugin.getAccentColor();
       }
+
+      /* ----- GIPHY API KEY INITIALIZATION ----- */
+      await dotenv.load(fileName: '.env');
+
+      /* ----- NOTIFICATION INITIALIZATION ----- */
+      if (Platform.isWindows) {
+        WinToast.instance().initialize(
+          appName: "BlueBubbles",
+          productName: "BlueBubbles",
+          companyName: "23344BlueBubbles",
+        );
+
+        // Delete temp dir in case any notif icons weren't cleared
+        getApplicationSupportDirectory().then((d) async {
+          Directory temp = Directory(join(d.path, "temp"));
+          if (await temp.exists()) await temp.delete(recursive: true);
+        });
+      }
     }
+
+    /* ----- EMOJI FONT INITIALIZATION ----- */
     if (!kIsWeb) {
       try {
         DynamicCachedFonts.loadCachedFont(
@@ -433,10 +438,6 @@ Future<Null> initApp(bool isBubble) async {
         }
       });
     }
-
-    if (kIsDesktop) {
-      await dotenv.load(fileName: '.env');
-    }
   } catch (e, s) {
     Logger.error(e);
     Logger.error(s);
@@ -444,17 +445,13 @@ Future<Null> initApp(bool isBubble) async {
     stacktrace = s;
   }
 
-  monetPalette = await DynamicColorPlugin.getCorePalette();
-
   if (exception == null) {
-    ThemeData light = ThemeStruct
-        .getLightTheme()
-        .data;
-    ThemeData dark = ThemeStruct
-        .getDarkTheme()
-        .data;
+    /* ----- THEME INITIALIZATION ----- */
+    ThemeData light = ThemeStruct.getLightTheme().data;
+    ThemeData dark = ThemeStruct.getDarkTheme().data;
 
-    final tuple = Platform.isWindows ? applyWindowsAccent(light, dark) : applyMonet(light, dark);
+    final tuple = Platform.isWindows
+        ? applyWindowsAccent(light, dark) : applyMonet(light, dark);
     light = tuple.item1;
     dark = tuple.item2;
 
@@ -468,10 +465,23 @@ Future<Null> initApp(bool isBubble) async {
   }
 }
 
+class BadCertOverride extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+    // If there is a bad certificate callback, override it if the host is part of
+    // your server URL
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) {
+        String serverUrl = sanitizeServerAddress() ?? "";
+        return serverUrl.contains(host);
+      };
+  }
+}
+
 class DesktopWindowListener extends WindowListener {
   @override
   void onWindowFocus() {
-    LifeCycleManager().opened(null);
+    LifeCycleManager().opened();
   }
 
   @override
@@ -492,13 +502,6 @@ class DesktopWindowListener extends WindowListener {
   }
 }
 
-/// The [Main] app.
-///
-/// This is the entry for the whole app (when the app is visible or not fully closed in the background)
-/// This main widget controls
-///     - Theming
-///     - [NavgatorManager]
-///     - [Home] widget
 class Main extends StatelessWidget with WidgetsBindingObserver {
   final ThemeData darkTheme;
   final ThemeData lightTheme;
@@ -508,32 +511,16 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return AdaptiveTheme(
-      /// These are the default white and dark themes.
-      /// These will be changed by [SettingsManager] when you set a custom theme
       light: lightTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: lightTheme.colorScheme.primary)),
       dark: darkTheme.copyWith(textSelectionTheme: TextSelectionThemeData(selectionColor: darkTheme.colorScheme.primary)),
-
-      /// The default is that the dark and light themes will follow the system theme
-      /// This will be changed by [SettingsManager]
       initial: AdaptiveThemeMode.system,
       builder: (theme, darkTheme) => GetMaterialApp(
-        /// Hide the debug banner in debug mode
         debugShowCheckedModeBanner: false,
-
         title: 'BlueBubbles',
-
-        /// Set the light theme from the [AdaptiveTheme]
         theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
-
-        /// Set the dark theme from the [AdaptiveTheme]
         darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
-
-        /// [NavigatorManager] is set as the navigator key so that we can control navigation from anywhere
         navigatorKey: NavigatorManager().navigatorKey,
-
-        /// [Home] is the starting widget for the app
         home: Home(),
-
         shortcuts: {
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
           LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN): const OpenNewChatCreatorIntent(),
@@ -569,66 +556,63 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
           LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
         },
-
-            builder: (context, child) =>
-                SecureApplication(
-                  child: Builder(builder: (context) {
-                    if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
-                      if (SettingsManager().settings.shouldSecure.value) {
-                        SecureApplicationProvider.of(context, listen: false)!.lock();
-                        if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
-                          SecureApplicationProvider.of(context, listen: false)!.secure();
-                        }
-                      }
+        builder: (context, child) =>
+            SecureApplication(
+              child: Builder(builder: (context) {
+                if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
+                  if (SettingsManager().settings.shouldSecure.value) {
+                    SecureApplicationProvider.of(context, listen: false)!.lock();
+                    if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                      SecureApplicationProvider.of(context, listen: false)!.secure();
                     }
-                    return SecureGate(
-                      blurr: 0,
-                      opacity: 1.0,
-                      lockedBuilder: (context, controller) =>
-                          Container(
-                            color: context.theme.colorScheme.background,
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 20.0),
-                                    child: Text(
-                                      "BlueBubbles is currently locked. Please unlock to access your messages.",
-                                      style: context.theme.textTheme.titleLarge,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                  Container(height: 20.0),
-                                  ClipOval(
-                                    child: Material(
-                                      color: context.theme.colorScheme.primary, // button color
-                                      child: InkWell(
-                                        child: SizedBox(
-                                            width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
-                                        onTap: () async {
-                                          var localAuth = LocalAuthentication();
-                                          bool didAuthenticate = await localAuth.authenticate(
-                                              localizedReason: 'Please authenticate to unlock BlueBubbles',
-                                              options: AuthenticationOptions(stickyAuth: true));
-                                          if (didAuthenticate) {
-                                            controller!.authSuccess(unlock: true);
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                  }
+                }
+                return SecureGate(
+                  blurr: 0,
+                  opacity: 1.0,
+                  lockedBuilder: (context, controller) =>
+                      Container(
+                        color: context.theme.colorScheme.background,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                                child: Text(
+                                  "BlueBubbles is currently locked. Please unlock to access your messages.",
+                                  style: context.theme.textTheme.titleLarge,
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
-                            ),
+                              Container(height: 20.0),
+                              ClipOval(
+                                child: Material(
+                                  color: context.theme.colorScheme.primary, // button color
+                                  child: InkWell(
+                                    child: SizedBox(
+                                        width: 60, height: 60, child: Icon(Icons.lock_open, color: context.theme.colorScheme.onPrimary)),
+                                    onTap: () async {
+                                      var localAuth = LocalAuthentication();
+                                      bool didAuthenticate = await localAuth.authenticate(
+                                          localizedReason: 'Please authenticate to unlock BlueBubbles',
+                                          options: AuthenticationOptions(stickyAuth: true));
+                                      if (didAuthenticate) {
+                                        controller!.authSuccess(unlock: true);
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                      child: child ?? Container(),
-                    );
-                  }),
-                ),
-
+                        ),
+                      ),
+                  child: child ?? Container(),
+                );
+              }),
+            ),
         defaultTransition: Transition.cupertino,
-
         getPages: [
           GetPage(page: () => TestingMode(), name: "/testing-mode"),
         ],
@@ -637,12 +621,6 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
   }
 }
 
-/// [Home] widget is responsible for holding the main UI view.
-///
-/// It renders the main view and also initializes a few managers
-///
-/// The [LifeCycleManager] also is binded to the [WidgetsBindingObserver]
-/// so that it can know when the app is closed, paused, or resumed
 class Home extends StatefulWidget {
   Home({Key? key}) : super(key: key);
 
@@ -650,8 +628,8 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> with WidgetsBindingObserver {
-  ReceivePort port = ReceivePort();
+class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
+  final ReceivePort port = ReceivePort();
   bool serverCompatible = true;
   bool fullyLoaded = false;
 
@@ -659,89 +637,73 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
-    if (kIsDesktop) {
-      if (Platform.isWindows) {
-        WinToast.instance().initialize(
-          appName: "BlueBubbles",
-          productName: "BlueBubbles",
-          companyName: "23344BlueBubbles",
-        );
-
-        // Delete temp dir in case any notif icons weren't cleared
-        getApplicationSupportDirectory().then((d) async {
-          Directory temp = Directory(join(d.path, "temp"));
-          if (await temp.exists()) await temp.delete(recursive: true);
-        });
-      }
-      Future.delayed(Duration.zero, () async => await initSystemTray());
-    }
-
     // we want to refresh the page rather than loading a new instance of [Home]
     // to avoid errors
     if (LifeCycleManager().isAlive && kIsWeb) {
       html.window.location.reload();
     }
 
-    // Initalize a bunch of managers
+    /* ----- MANAGER INITIALIZATION ----- */
     MethodChannelInterface().init();
+    LifeCycleManager().opened();
 
-    if (!kIsWeb) {
-      if (!LifeCycleManager().isBubble) {
-        // This initialization sets the function address in the native code to be used later
-        BackgroundIsolateInterface.initialize();
-        // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
-        NotificationManager().createNotificationChannel(
-          NotificationManager.NEW_MESSAGE_CHANNEL,
-          "New Messages",
-          "For new messages retreived",
-        );
-        NotificationManager().createNotificationChannel(
-          NotificationManager.SOCKET_ERROR_CHANNEL,
-          "Socket Connection Error",
-          "Notifications that will appear when the connection to the server has failed",
-        );
-        // create a send port to receive messages from the background isolate when
-        // the UI thread is active
-        final result = IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
-        if (!result) {
-          IsolateNameServer.removePortNameMapping('bg_isolate');
-          IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
-        }
-        port.listen((dynamic data) {
-          Logger.info("SendPort received action ${data['action']}");
-          if (data['action'] == 'new-message') {
-            // Add it to the queue with the data as the item
-            IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
-          } else if (data['action'] == 'update-message') {
-            // Add it to the queue with the data as the item
-            IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
-          }
-        });
+    /* ----- ANDROID BACKGROUND ISOLATE INITIALIZATION ----- */
+    if (!kIsWeb && !kIsDesktop && !LifeCycleManager().isBubble) {
+      // This initialization sets the function address in the native code to be used later
+      BackgroundIsolateInterface.initialize();
+      // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
+      NotificationManager().createNotificationChannel(
+        NotificationManager.NEW_MESSAGE_CHANNEL,
+        "New Messages",
+        "For new messages retreived",
+      );
+      NotificationManager().createNotificationChannel(
+        NotificationManager.SOCKET_ERROR_CHANNEL,
+        "Socket Connection Error",
+        "Notifications that will appear when the connection to the server has failed",
+      );
+      // create a send port to receive messages from the background isolate when
+      // the UI thread is active
+      final result = IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+      if (!result) {
+        IsolateNameServer.removePortNameMapping('bg_isolate');
+        IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
       }
+      port.listen((dynamic data) {
+        Logger.info("SendPort received action ${data['action']}");
+        if (data['action'] == 'new-message') {
+          // Add it to the queue with the data as the item
+          IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+        } else if (data['action'] == 'update-message') {
+          // Add it to the queue with the data as the item
+          IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+        }
+      });
     }
 
-    // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
-    LifeCycleManager().opened(context);
+    /* ----- CACHED ASSETS INITIALIZATION ----- */
+    ChatManager().loadAssets();
 
-    // Listen to a refresh-all event in case the entire ap
+    // Bind the lifecycle events
+    WidgetsBinding.instance.addObserver(this);
+
+    /* ----- APP REFRESH LISTENER INITIALIZATION ----- */
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'refresh-all' && mounted) {
+      if (event["type"] == 'refresh-all') {
         setState(() {});
       }
     });
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      await SettingsManager().getSavedSettings();
-
+      /* ----- COLORS FROM MEDIA LISTENER INITIALIZATION ----- */
       if (SettingsManager().settings.colorsFromMedia.value) {
         try {
           await MethodChannelInterface().invokeMethod("start-notif-listener");
         } catch (_) {}
       }
 
+      /* ----- SERVER VERSION CHECK ----- */
       if (kIsWeb && SettingsManager().settings.finishedSetup.value) {
         String? str = await SettingsManager().getServerVersion();
         ver.Version version = ver.Version.parse(str!);
@@ -752,7 +714,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           });
         }
 
-        // override ctrl-f action in browsers
+        /* ----- CTRL-F OVERRIDE ----- */
         html.document.onKeyDown.listen((e) {
           if (e.keyCode == 114 || (e.ctrlKey && e.keyCode == 70)) {
             e.preventDefault();
@@ -760,7 +722,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         });
       }
 
-      // check for server updates on app launch
+      /* ----- SYSTEM TRAY INITIALIZATION ----- */
+      if (kIsDesktop) {
+        await initSystemTray();
+      }
+
+      /* ----- SERVER UPDATE CHECK ----- */
       if (SettingsManager().settings.finishedSetup.value) {
         api.checkUpdate().then((response) {
           if (response.statusCode == 200) {
@@ -799,6 +766,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       }
 
       if (!kIsWeb && !kIsDesktop) {
+        MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
+          if (!SettingsManager().settings.finishedSetup.value) return;
+          if (value['guid'] != null) {
+            LifeCycleManager().isBubble = value['bubble'] == "true";
+            MethodChannelInterface().openChat(value['guid'].toString());
+          }
+        });
+
         if (!LifeCycleManager().isBubble) {
           // Get sharing media from files shared to the app from cold start
           // This one only handles files, not text
@@ -848,31 +823,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             );
           });
         }
-
-        // Request native code to retreive what the starting intent was
-        //
-        // The starting intent will be set when you click on a notification
-        // This is only really necessary when opening a notification and the app is fully closed
-        MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
-          if (!SettingsManager().settings.finishedSetup.value) return;
-          if (value['guid'] != null) {
-            LifeCycleManager().isBubble = value['bubble'] == "true";
-            MethodChannelInterface().openChat(value['guid'].toString());
-          }
-        });
       }
+
       if (!SettingsManager().settings.finishedSetup.value) {
         setState(() {
           fullyLoaded = true;
         });
       }
     });
-
-    // Load in the pre-cached assets
-    ChatManager().loadAssets();
-
-    // Bind the lifecycle events
-    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -899,7 +857,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       });
       LifeCycleManager().close();
     } else if (state == AppLifecycleState.resumed) {
-      LifeCycleManager().opened(context);
+      LifeCycleManager().opened();
     }
   }
 
@@ -922,7 +880,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+          ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
       systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
       statusBarColor: Colors.transparent, // status bar color
       statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -1041,7 +1000,7 @@ Future<void> initSystemTray() async {
       MenuItemLable(
         label: 'Open App',
         onClicked: (_) async {
-          LifeCycleManager().opened(null);
+          LifeCycleManager().opened();
           await WindowManager.instance.show();
         },
       ),

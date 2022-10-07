@@ -12,6 +12,10 @@ import 'package:get/get.dart';
 import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
+/// Get an instance of our [ApiService]
+AttachmentDownloadService attachmentDownloader = Get.isRegistered<AttachmentDownloadService>()
+    ? Get.find<AttachmentDownloadService>() : Get.put(AttachmentDownloadService());
+
 class AttachmentDownloadService extends GetxService {
   int maxDownloads = 2;
   final RxList<String> downloaders = <String>[].obs;
@@ -41,8 +45,8 @@ class AttachmentDownloadService extends GetxService {
 
 class AttachmentDownloadController extends GetxController {
   final Attachment attachment;
-  final Function? onComplete;
-  final Function? onError;
+  final List<Function(PlatformFile)> completeFuncs = [];
+  final List<Function> errorFuncs = [];
   final RxnNum progress = RxnNum();
   final Rxn<PlatformFile> file = Rxn<PlatformFile>();
   final RxBool error = RxBool(false);
@@ -51,9 +55,12 @@ class AttachmentDownloadController extends GetxController {
 
   AttachmentDownloadController({
     required this.attachment,
-    this.onComplete,
-    this.onError,
-  });
+    Function(PlatformFile)? onComplete,
+    Function? onError,
+  }) {
+    if (onComplete != null) completeFuncs.add(onComplete);
+    if (onError != null) errorFuncs.add(onError);
+  }
 
   @override
   void onInit() {
@@ -74,7 +81,9 @@ class AttachmentDownloadController extends GetxController {
           await file.delete();
         }
       }
-      if (onError != null) onError!.call();
+      for (Function f in errorFuncs) {
+        f.call();
+      }
 
       error.value = true;
       Get.find<AttachmentDownloadService>().removeFromQueue(this);
@@ -104,7 +113,6 @@ class AttachmentDownloadController extends GetxController {
 
     // Finish the downloader
     Get.find<AttachmentDownloadService>().removeFromQueue(this);
-    if (onComplete != null) onComplete!();
     attachment.bytes = response.data;
     // Add attachment to sink based on if we got data
 
@@ -114,6 +122,9 @@ class AttachmentDownloadController extends GetxController {
       size: response.data.length,
       bytes: response.data,
     );
+    for (Function f in completeFuncs) {
+      f.call(file.value);
+    }
     if (kIsDesktop) {
       if (attachment.bytes != null) {
         File _file = await File(attachment.getPath()).create(recursive: true);

@@ -240,7 +240,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           hideInSplitView: true,
           child: ConversationDetails(
             chat: chat!,
-            messageBloc: messageBloc ?? initMessageBloc(),
           ),
         ),
       ),
