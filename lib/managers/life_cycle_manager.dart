@@ -44,7 +44,7 @@ class LifeCycleManager {
   }
 
   /// Public method called from [Home] when the app is opened or resumed
-  opened(BuildContext? context) {
+  opened() {
     ChatController? chat = ChatManager().getActiveDeadController();
 
     // If the app is not alive (was previously closed) and the curent chat is not null (a chat is already open)
