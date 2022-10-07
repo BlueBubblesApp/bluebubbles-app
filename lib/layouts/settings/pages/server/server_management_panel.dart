@@ -395,7 +395,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
                             Get.back();
-                            Get.reload<SocketService>();
+                            Get.reload<SocketService>(force: true);
                           },
                           onClose: () {
                             Get.back();
@@ -409,7 +409,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         builder: (connectContext) => ManualEntryDialog(
                           onConnect: () {
                             Get.back();
-                            Get.reload<SocketService>();
+                            Get.reload<SocketService>(force: true);
                           },
                           onClose: () {
                             Get.back();

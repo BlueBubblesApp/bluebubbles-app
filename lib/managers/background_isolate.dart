@@ -6,7 +6,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/startup/upgrading_db.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/firebase/database_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
@@ -149,6 +148,5 @@ callbackHandler() async {
   await SettingsManager().getSavedSettings(headless: true);
   if (!ContactManager().hasFetchedContacts) await ContactManager().loadContacts(headless: true);
   MethodChannelInterface().init(customChannel: _backgroundChannel);
-  await fdb.fetchNewUrl();
   Get.put(AttachmentDownloadService());
 }

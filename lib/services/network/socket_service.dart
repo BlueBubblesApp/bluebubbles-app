@@ -7,8 +7,8 @@ import 'package:bluebubbles/helpers/network/network_tasks.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/firebase/database_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
@@ -109,11 +109,11 @@ class SocketService extends GetxService {
         Logger.info("Socket connect error, fetching new URL...");
         state.value = SocketState.error;
         // After 5 seconds of an error, we should retry the connection
-        Timer(Duration(seconds: 5), () {
+        Timer(Duration(seconds: 5), () async {
           if (state.value == SocketState.connected) return;
 
-          fdb.fetchNewUrl();
-          // todo connect to socket agan
+          await fdb.fetchNewUrl();
+          Get.reload<SocketService>(force: true);
         });
         return;
       default:
