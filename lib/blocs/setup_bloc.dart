@@ -45,7 +45,7 @@ class SetupBloc {
       messageCount: numberOfMessagesPerPage.toInt(), skipEmptyChats: skipEmptyChats, saveLogs: saveToDownloads);
     await fullSyncManager.start();
     await finishSetup();
-    await startIncrementalSync(SettingsManager().settings);
+    await startIncrementalSync();
   }
 
   Future<void> finishSetup() async {
@@ -67,7 +67,7 @@ class SetupBloc {
     String? token = SocketManager().token;
     if (token != null && !force) {
       Logger.debug("Already authorized FCM device! Token: $token", tag: 'FCM-Auth');
-      await api.addFcmDevice(deviceName, token);
+      await http.addFcmDevice(deviceName, token);
       return;
     }
 
@@ -89,7 +89,7 @@ class SetupBloc {
 
       try {
         // If the first try fails, let's try again, but first, get the FCM data from the server
-        dio.Response fcmResponse = await api.fcmClient();
+        dio.Response fcmResponse = await http.fcmClient();
         Logger.info('Received FCM data from the server. Attempting to re-authenticate', tag: 'FCM-Auth');
 
         // Parse out the new FCM data
@@ -118,15 +118,14 @@ class SetupBloc {
     try {
       token = result;
       Logger.info('Registering device with server...', tag: 'FCM-Auth');
-      await api.addFcmDevice(deviceName, token!);
+      await http.addFcmDevice(deviceName, token!);
     } catch (ex) {
       Logger.error('[FCM Auth] -> Failed to register device with server: ${ex.toString()}');
       throw Exception("Failed to add FCM device to the server! Token: $token");
     }
   }
 
-  Future<void> startIncrementalSync(Settings settings,
-      {String? chatGuid, bool saveDate = true, Function? onConnectionError, Function? onComplete}) async {
+  Future<void> startIncrementalSync({String? chatGuid, bool saveDate = true, Function? onComplete}) async {
     isIncrementalSyncing.value = true;
     try {
       int syncStart = SettingsManager().settings.lastIncrementalSync.value;

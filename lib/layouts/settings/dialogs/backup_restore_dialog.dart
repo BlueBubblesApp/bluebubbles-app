@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/api_manager.dart';
+import 'package:bluebubbles/services/network/http_service.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -52,7 +52,7 @@ class BackupRestoreDialog extends StatelessWidget {
                     DateTime now = DateTime.now().toLocal();
                     String name = "Android_${now.year}-${now.month}-${now.day}_${now.hour}-${now.minute}-${now.second}";
                     Map<String, dynamic> json = SettingsManager().settings.toMap();
-                    var response = await api.setSettings(name, json);
+                    var response = await http.setSettings(name, json);
                     if (response.statusCode != 200) {
                       Get.back();
                       showSnackbar(
@@ -87,7 +87,7 @@ class BackupRestoreDialog extends StatelessWidget {
                     textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                   ),
                   onPressed: () async {
-                    var response = await api.getSettings();
+                    var response = await http.getSettings();
                     if (response.statusCode == 200 && response.data.isNotEmpty) {
                       try {
                         List<dynamic> json = response.data['data'];
@@ -210,7 +210,7 @@ class BackupRestoreDialog extends StatelessWidget {
                         bool errored = false;
                         for (ThemeStruct e in allThemes) {
                           String name = "BlueBubbles Custom Theme - ${e.name}";
-                          var response = await api.setTheme(name, e.toMap());
+                          var response = await http.setTheme(name, e.toMap());
                           if (response.statusCode != 200) {
                             errored = true;
                           }
@@ -253,7 +253,7 @@ class BackupRestoreDialog extends StatelessWidget {
                         textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                       ),
                       onPressed: () async {
-                        var response = await api.getTheme();
+                        var response = await http.getTheme();
                         if (response.statusCode == 200 && response.data.isNotEmpty) {
                           try {
                             List<dynamic> json = response.data['data'];

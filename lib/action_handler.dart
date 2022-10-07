@@ -206,7 +206,7 @@ class ActionHandler {
 
     message.generateTempGuid();
 
-    final response = await api.createChat([address], text.trim()).catchError((err) {
+    final response = await http.createChat([address], text.trim()).catchError((err) {
       // If there is an error, replace the temp value with an error
       message.guid = message.guid!.replaceAll("temp", "error-${err is Response ? (err.data['error']['message'] ?? err.data.toString()) : err.toString()}");
       message.error =
@@ -244,7 +244,7 @@ class ActionHandler {
 
     // Ping the server to see if it responds. This request should return super fast
     try {
-      await api.ping();
+      await http.ping();
       lastConnectionStatus = true;
       return lastConnectionStatus;
     } catch (ex) {
@@ -287,7 +287,7 @@ class ActionHandler {
       completer.complete();
       return completer.future;
     } else {
-      api.sendMessage(
+      http.sendMessage(
           chat.guid,
           message.guid!,
           message.text!,
@@ -376,7 +376,7 @@ class ActionHandler {
 
     // we currently don't supply a "temp" message when a reaction goes through,
     // so we only need to add the successful tapback as a new message
-    api.sendTapback(chat.guid, text, message.guid!, reaction.toLowerCase()).then((response) async {
+    http.sendTapback(chat.guid, text, message.guid!, reaction.toLowerCase()).then((response) async {
       Message newMessage = Message.fromMap(response.data['data']);
 
       await chat.addMessage(newMessage);

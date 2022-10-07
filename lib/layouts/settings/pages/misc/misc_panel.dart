@@ -1,4 +1,4 @@
-import 'package:bluebubbles/api_manager.dart';
+import 'package:bluebubbles/services/network/http_service.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -246,12 +246,12 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                           },
                           onChangeEnd: (double val) {
                             saveSettings();
-                            api.dio = Dio(BaseOptions(
+                            http.dio = Dio(BaseOptions(
                               connectTimeout: 15000,
                               receiveTimeout: SettingsManager().settings.apiTimeout.value,
                               sendTimeout: SettingsManager().settings.apiTimeout.value,
                             ));
-                            api.dio.interceptors.add(ApiInterceptor());
+                            http.dio.interceptors.add(ApiInterceptor());
                           },
                           backgroundColor: tileColor,
                           min: 5,

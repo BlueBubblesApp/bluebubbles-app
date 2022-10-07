@@ -27,7 +27,7 @@ import 'package:socket_io_client/socket_io_client.dart';
 
 import 'managers/event_dispatcher.dart';
 
-export 'package:bluebubbles/api_manager.dart';
+export 'package:bluebubbles/services/network/http_service.dart';
 
 enum SocketState {
   CONNECTED,
@@ -135,10 +135,7 @@ class SocketManager {
 
         // Start an incremental sync
         if (SettingsManager().settings.finishedSetup.value) {
-          setup.startIncrementalSync(SettingsManager().settings, onConnectionError: (String err) {
-            Logger.error("Error performing incremental sync. Not saving last sync date.", tag: "IncrementalSync");
-            Logger.error(err);
-          });
+          setup.startIncrementalSync();
 
           if ((kIsDesktop || kIsWeb) && ContactManager().contacts.isEmpty) {
             // Get contacts whenever we connect if we didn't yet

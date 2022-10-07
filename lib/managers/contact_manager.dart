@@ -245,7 +245,7 @@ class ContactManager {
 
     logger?.call("Fetching contacts (no avatars)...");
     try {
-      final response = await api.contacts();
+      final response = await http.contacts();
 
       if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])!) {
         logger?.call("Found contacts!");
@@ -276,7 +276,7 @@ class ContactManager {
 
     logger?.call("Fetching contacts (with avatars)...");
     try {
-      api.contacts(withAvatars: true).then((response) async {
+      http.contacts(withAvatars: true).then((response) async {
         if (!isNullOrEmpty(response.data['data'])!) {
           logger?.call("Found contacts!");
 

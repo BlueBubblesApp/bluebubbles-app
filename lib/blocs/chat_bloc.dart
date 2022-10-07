@@ -248,7 +248,7 @@ class ChatBloc {
       if (SettingsManager().settings.enablePrivateAPI.value &&
           SettingsManager().settings.privateMarkChatAsRead.value &&
           chat.autoSendReadReceipts!) {
-        await api.markChatRead(chat.guid);
+        await http.markChatRead(chat.guid);
       }
     }
 
@@ -331,7 +331,7 @@ class ChatBloc {
 
   Future<void> getChatBatches({int batchSize = 15, bool headless = false}) async {
     int count = Chat.count() ??
-        (await api.chatCount().catchError((err) {
+        (await http.chatCount().catchError((err) {
           chatRequest!.completeError(err.toString());
         }))
             .data['data']['total'];

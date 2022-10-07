@@ -118,7 +118,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                             ),
                           );
                         });
-                    final response = await api.updateChat(chat.guid, controller.text);
+                    final response = await http.updateChat(chat.guid, controller.text);
                     if (response.statusCode == 200) {
                       Get.back();
                       Get.back();
@@ -616,7 +616,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                                         );
                                       });
                                   final response =
-                                  await api.chatParticipant("add", chat.guid, participantController.text);
+                                  await http.chatParticipant("add", chat.guid, participantController.text);
                                   if (response.statusCode == 200) {
                                     Get.back();
                                     Get.back();

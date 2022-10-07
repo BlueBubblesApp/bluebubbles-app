@@ -21,7 +21,7 @@ class PrivateAPIPanelController extends StatefulController {
   void onReady() {
     super.onReady();
     updateObx(() {
-      api.serverInfo().then((response) {
+      http.serverInfo().then((response) {
         final String serverVersion = response.data['data']['server_version'] ?? "0.0.1";
         Version version = Version.parse(serverVersion);
         serverVersionCode.value = version.major * 100 + version.minor * 21 + version.patch;

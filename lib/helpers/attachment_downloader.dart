@@ -72,7 +72,7 @@ class AttachmentDownloadController extends GetxController {
     if (attachment.guid == null) return;
     isFetching = true;
     stopwatch.start();
-    var response = await api.downloadAttachment(attachment.guid!,
+    var response = await http.downloadAttachment(attachment.guid!,
         onReceiveProgress: (count, total) => setProgress(kIsWeb ? (count / total) : (count / attachment.totalBytes!)));
     if (response.statusCode != 200) {
       if (!kIsWeb) {

@@ -369,7 +369,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
     SettingsManager().settings.save();
 
     // Request data from the API
-    Future<dio.Response> fcmFuture = api.fcmClient();
+    Future<dio.Response> fcmFuture = http.fcmClient();
 
     Get.dialog(AsyncConnectingDialog(
       future: fcmFuture,

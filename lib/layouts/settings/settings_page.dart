@@ -579,7 +579,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                                     var map = c.toMap();
                                     contacts.add(map);
                                   }
-                                  api.createContact(contacts, onSendProgress: (count, total) {
+                                  http.createContact(contacts, onSendProgress: (count, total) {
                                     uploadingContacts.value = true;
                                     progress.value = count / total;
                                     totalSize.value = total;

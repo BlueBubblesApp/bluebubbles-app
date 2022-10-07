@@ -163,7 +163,7 @@ class SettingsManager {
 
   Future<Tuple2<int?, int?>?> getMacOSVersion({bool refresh = false}) async {
     if (refresh) {
-      final response = await api.serverInfo();
+      final response = await http.serverInfo();
       if (response.statusCode == 200) {
         final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
         final minorVersion = int.tryParse(response.data['data']['os_version'].split(".")[1]);
@@ -191,7 +191,7 @@ class SettingsManager {
 
   FutureOr<String?> getServerVersion() async {
     if (_serverVersion == null) {
-      final response = await api.serverInfo();
+      final response = await http.serverInfo();
       if (response.statusCode == 200) {
         _serverVersion = response.data['data']['server_version'];
       }

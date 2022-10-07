@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:dio/dio.dart';
@@ -8,12 +6,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:universal_io/io.dart';
 
-/// Get an instance of our [ApiService]
-ApiService api = Get.isRegistered<ApiService>() ? Get.find<ApiService>() : Get.put(ApiService());
+/// Get an instance of our [HttpService]
+HttpService http = Get.isRegistered<HttpService>() ? Get.find<HttpService>() : Get.put(HttpService());
 
 /// Class that manages foreground network requests from client to server, using
 /// GET or POST requests.
-class ApiService extends GetxService {
+class HttpService extends GetxService {
   late Dio dio;
 
   /// Get the URL origin from the current server address

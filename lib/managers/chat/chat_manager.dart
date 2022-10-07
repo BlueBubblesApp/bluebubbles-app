@@ -158,7 +158,7 @@ class ChatManager {
     // Handle Private API features
     if (SettingsManager().settings.enablePrivateAPI.value) {
       if (SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
-        await api.markChatRead(chat.guid);
+        await http.markChatRead(chat.guid);
       }
 
       if (!MethodChannelInterface().headless && SettingsManager().settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
@@ -181,7 +181,7 @@ class ChatManager {
     if (withParticipants) withQuery.add("participants");
     if (withLastMessage) withQuery.add("lastmessage");
 
-    final response = await api.singleChat(chatGuid, withQuery: withQuery.join(",")).catchError((err) {
+    final response = await http.singleChat(chatGuid, withQuery: withQuery.join(",")).catchError((err) {
       if (err is! Response) {
         Logger.error("Failed to fetch chat metadata! ${err.toString()}", tag: "Fetch-Chat");
       }
@@ -204,7 +204,7 @@ class ChatManager {
     if (withParticipants) withQuery.add("participants");
     if (withLastMessage) withQuery.add("lastmessage");
 
-    final response = await api.chats(withQuery: withQuery, offset: offset, limit: limit).catchError((err) {
+    final response = await http.chats(withQuery: withQuery, offset: offset, limit: limit).catchError((err) {
       if (err is! Response) {
         Logger.error("Failed to fetch chat metadata! ${err.toString()}", tag: "Fetch-Chat");
       }
@@ -230,7 +230,7 @@ class ChatManager {
     if (withAttachment) withQuery.add("attachment");
     if (withHandle) withQuery.add("handle");
 
-    api.chatMessages(guid, withQuery: withQuery.join(","), offset: offset, limit: limit, sort: sort, after: after, before: before).then((response) {
+    http.chatMessages(guid, withQuery: withQuery.join(","), offset: offset, limit: limit, sort: sort, after: after, before: before).then((response) {
       if (!completer.isCompleted) completer.complete(response.data["data"]);
     }).catchError((err) {
       late final dynamic error;

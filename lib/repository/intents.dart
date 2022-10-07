@@ -316,10 +316,7 @@ class StartIncrementalSyncAction extends Action<StartIncrementalSyncIntent> {
   @override
   Object? invoke(covariant StartIncrementalSyncIntent intent) {
     if (SettingsManager().settings.finishedSetup.value) {
-      SetupBloc().startIncrementalSync(SettingsManager().settings, onConnectionError: (String err) {
-        Logger.error("Error performing incremental sync. Not saving last sync date.", tag: "IncrementalSync");
-        Logger.error(err);
-      });
+      SetupBloc().startIncrementalSync();
     }
     return null;
   }

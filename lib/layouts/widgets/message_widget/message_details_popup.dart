@@ -2,7 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/api_manager.dart';
+import 'package:bluebubbles/services/network/http_service.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -635,7 +635,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               try {
                 for (Attachment? element in toDownload) {
                   attachmentObs.value = element;
-                  final response = await api.downloadAttachment(element!.guid!,
+                  final response = await http.downloadAttachment(element!.guid!,
                       original: true,
                       onReceiveProgress: (count, total) =>
                           progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));

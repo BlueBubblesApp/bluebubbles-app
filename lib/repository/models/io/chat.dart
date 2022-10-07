@@ -1036,7 +1036,7 @@ class Chat {
     this.autoSendReadReceipts = autoSendReadReceipts;
     save(updateAutoSendReadReceipts: true);
     if (autoSendReadReceipts) {
-      api.markChatRead(guid);
+      http.markChatRead(guid);
     }
     ChatBloc().updateChat(this);
     return this;

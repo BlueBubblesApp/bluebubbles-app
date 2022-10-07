@@ -79,7 +79,7 @@ class IncrementalSyncManager extends SyncManager {
     bool isBugged = serverVersion < 142; // Server: v1.2.0
 
     // 0: Hit API endpoint to check for updated messages
-    dio.Response<dynamic> uMessageCountRes = await api.messageCount(
+    dio.Response<dynamic> uMessageCountRes = await http.messageCount(
       after: DateTime.fromMillisecondsSinceEpoch(startTimestamp),
       before: DateTime.fromMillisecondsSinceEpoch(syncStart),
     );
@@ -110,7 +110,7 @@ class IncrementalSyncManager extends SyncManager {
     Map<String, Chat> syncedChats = {};
     for (var i = 0; i < pages; i++) {
       addToOutput('Fetching page ${i + 1} of $pages...');
-      dio.Response<dynamic> messages = await api.messages(
+      dio.Response<dynamic> messages = await http.messages(
           after: startTimestamp,
           before: syncStart,
           offset: i * batchSize,

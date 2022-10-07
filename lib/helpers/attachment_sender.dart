@@ -186,7 +186,7 @@ class AttachmentSender {
 
     // on web, we can't send from a file so send from bytes instead
     if (!kIsWeb) {
-      api.sendAttachment(chat.guid, _attachmentGuid, file!,
+      http.sendAttachment(chat.guid, _attachmentGuid, file!,
           onSendProgress: (count, total) => attachmentData.value = Tuple2(count / _attachmentBytes.length, false)
       ).then(onSuccess).catchError((err) async {
         await onError.call(err, _attachmentGuid, sentMessage);
@@ -198,7 +198,7 @@ class AttachmentSender {
         attachmentData.close();
       });
     } else {
-      api.sendAttachmentBytes(chat.guid, _attachmentGuid, _attachmentBytes, _attachmentName,
+      http.sendAttachmentBytes(chat.guid, _attachmentGuid, _attachmentBytes, _attachmentName,
           onSendProgress: (count, total) => attachmentData.value = Tuple2(count / _attachmentBytes.length, false)
       ).then(onSuccess).catchError((err) async {
         await onError.call(err, _attachmentGuid, sentMessage);

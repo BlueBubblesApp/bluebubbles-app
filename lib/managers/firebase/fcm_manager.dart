@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/api_manager.dart';
+import 'package:bluebubbles/services/network/http_service.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -49,7 +49,7 @@ class FcmManager extends GetxService {
     if (!isNullOrEmpty(token)! && !force) {
       Logger.debug("Already authorized FCM device! Token: $token", tag: 'FCM-Auth');
       Logger.info('Registering device with server...', tag: 'FCM-Auth');
-      await api.addFcmDevice(deviceName.trim(), token!.trim()).then((_) {
+      await http.addFcmDevice(deviceName.trim(), token!.trim()).then((_) {
         Logger.info('Device registration successful!', tag: 'FCM-Auth');
         completer?.complete();
       }).catchError((ex) {
@@ -85,7 +85,7 @@ class FcmManager extends GetxService {
 
       // If the first try fails, let's try again with new FCM data from the server
       Logger.info('Fetching FCM data from the server...', tag: 'FCM-Auth');
-      final response = await api.fcmClient();
+      final response = await http.fcmClient();
 
       // If we get valid FCM data, redo the FCM auth, otherwise error out
       if (response.statusCode == 200 && response.data['data'] is Map<String, dynamic>) {
@@ -125,7 +125,7 @@ class FcmManager extends GetxService {
     // Register the FCM device to the server
     token = result;
     Logger.info('Registering device with server...', tag: 'FCM-Auth');
-    await api.addFcmDevice(deviceName.trim(), token!.trim()).then((_) {
+    await http.addFcmDevice(deviceName.trim(), token!.trim()).then((_) {
       Logger.info('Device registration successful!', tag: 'FCM-Auth');
       completer?.complete();
     }).catchError((ex) {

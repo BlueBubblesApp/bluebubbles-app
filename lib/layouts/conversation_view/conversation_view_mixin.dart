@@ -271,7 +271,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // Set that we are
     setProgress(true);
 
-    api.markChatRead(chat!.guid).then((_) {
+    http.markChatRead(chat!.guid).then((_) {
       setProgress(false);
     }).catchError((_) {
       setProgress(false);
@@ -1053,7 +1053,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     if (existingChat == null) {
-      api.createChat(participants, null).then((response) async {
+      http.createChat(participants, null).then((response) async {
         // If everything went well, let's add the chat to the bloc
         Chat newChat = Chat.fromMap(response.data["data"]);
         await returnChat(newChat);

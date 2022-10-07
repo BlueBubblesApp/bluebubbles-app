@@ -191,7 +191,7 @@ class MethodChannelInterface {
         await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
 
         if (SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
-          await api.markChatRead(chat.guid);
+          await http.markChatRead(chat.guid);
         }
 
         // In case this method is called when the app is in a background isolate

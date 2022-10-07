@@ -289,7 +289,7 @@ class ContactTile extends StatelessWidget {
                           );
                         });
 
-                    api.chatParticipant("remove", chat.guid, handle.address).then((response) async {
+                    http.chatParticipant("remove", chat.guid, handle.address).then((response) async {
                       Get.back();
                       Logger.info("Removed participant ${handle.address}");
                       Chat updatedChat = Chat.fromMap(response.data["data"]);

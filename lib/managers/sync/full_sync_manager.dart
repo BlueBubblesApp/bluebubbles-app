@@ -1,5 +1,5 @@
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/api_manager.dart';
+import 'package:bluebubbles/services/network/http_service.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -41,7 +41,7 @@ class FullSyncManager extends SyncManager {
     addToOutput('Fetching chats from the server...');
 
     // Get the total chats so we can properly fetch them all
-    Response chatCountResponse = await api.chatCount();
+    Response chatCountResponse = await http.chatCount();
     Map<String, dynamic> res = chatCountResponse.data;
     int? totalChats;
     if (chatCountResponse.statusCode == 200) {
@@ -147,7 +147,7 @@ class FullSyncManager extends SyncManager {
     for (int i = 0; i < batches; i++) {
       // Fetch the chats and throw an error if we don't get back a good response.
       // Throwing an error should cancel the sync
-      Response chatPage = await api.chats(offset: i * countPerBatch, limit: countPerBatch);
+      Response chatPage = await http.chats(offset: i * countPerBatch, limit: countPerBatch);
       dynamic data = chatPage.data;
       if (chatPage.statusCode != 200) {
         throw ChatRequestException(
@@ -176,7 +176,7 @@ class FullSyncManager extends SyncManager {
     for (int i = 0; i < batches; i++) {
       // Fetch the messages and throw an error if we don't get back a good response.
       // Throwing an error should _not_ cancel the sync
-      Response messagePage = await api.chatMessages(chatGuid,
+      Response messagePage = await http.chatMessages(chatGuid,
           after: 0, before: endTimestamp, offset: i * countPerBatch, limit: countPerBatch, withQuery: "attachments,message.attributedBody");
       dynamic data = messagePage.data;
       if (messagePage.statusCode != 200) {

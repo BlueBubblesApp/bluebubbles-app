@@ -62,7 +62,7 @@ class ServerManagementPanelController extends StatefulController {
 
   void getServerStats() {
     int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    api.serverInfo().then((response) {
+    http.serverInfo().then((response) {
       int later = DateTime.now().toUtc().millisecondsSinceEpoch;
       latency.value = later - now;
       macOSVersion.value = response.data['data']['os_version'];
@@ -74,10 +74,10 @@ class ServerManagementPanelController extends StatefulController {
       proxyService.value = response.data['data']['proxy_service'];
       iCloudAccount.value = response.data['data']['detected_icloud'];
 
-      api.serverStatTotals().then((response) {
+      http.serverStatTotals().then((response) {
         if (response.data['status'] == 200) {
           stats.addAll(response.data['data'] ?? {});
-          api.serverStatMedia().then((response) {
+          http.serverStatMedia().then((response) {
             if (response.data['status'] == 200) {
               stats.addAll(response.data['data'] ?? {});
             }
@@ -503,7 +503,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
 
                       controller.fetchStatus.value = "Fetching logs, please wait...";
 
-                      api.serverLogs().then((response) async {
+                      http.serverLogs().then((response) async {
                         if (kIsDesktop) {
                           String downloadsPath = (await getDownloadsDirectory())!.path;
                           await File(join(downloadsPath, "main.log")).writeAsString(response.data['data']);
@@ -572,7 +572,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         controller.lastRestartMessages = now;
 
                         // Execute the restart
-                        api.restartImessage().then((_) {
+                        http.restartImessage().then((_) {
                           controller.isRestartingMessages.value = false;
                         }).catchError((_) {
                           controller.isRestartingMessages.value = false;
@@ -627,7 +627,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             controller.lastRestartPrivateAPI = now;
 
                             // Execute the restart
-                            api.softRestart().then((_) {
+                            http.softRestart().then((_) {
                               controller.isRestartingPrivateAPI.value = false;
                             }).catchError((_) {
                               controller.isRestartingPrivateAPI.value = false;
@@ -724,7 +724,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             materialIcon: Icons.dvr,
                           ),
                           onTap: () async {
-                            final response = await api.checkUpdate();
+                            final response = await http.checkUpdate();
                             if (response.statusCode == 200) {
                               bool available = response.data['data']['available'] ?? false;
                               Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};

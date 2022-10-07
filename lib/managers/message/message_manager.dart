@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/api_manager.dart';
+import 'package:bluebubbles/services/network/http_service.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:dio/dio.dart';
 
@@ -94,7 +94,7 @@ class MessageManager {
     if (withChatParticipants) withQuery.add("chat.participants");
     withQuery.add("attachment.metadata");
 
-    api.messages(withQuery: withQuery, where: where, sort: sort, before: before, after: after, chatGuid: chatGuid, offset: offset, limit: limit).then((response) {
+    http.messages(withQuery: withQuery, where: where, sort: sort, before: before, after: after, chatGuid: chatGuid, offset: offset, limit: limit).then((response) {
       if (!completer.isCompleted) completer.complete(response.data["data"]);
     }).catchError((err) {
       late final dynamic error;
