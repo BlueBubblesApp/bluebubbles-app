@@ -3,12 +3,12 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/sync/sync_manager.dart';
+import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart' as dio;
 
-import '../../repository/models/models.dart';
+import '../../../repository/models/models.dart';
 
 class IncrementalSyncManager extends SyncManager {
   final tag = 'IncrementalSyncManager';
@@ -196,9 +196,8 @@ class IncrementalSyncManager extends SyncManager {
     if (saveDate) {
       addToOutput("Saving last sync date: $syncStart");
 
-      Settings _settingsCopy = SettingsManager().settings;
-      _settingsCopy.lastIncrementalSync.value = syncStart;
-      await SettingsManager().saveSettings(_settingsCopy);
+      SettingsManager().settings.lastIncrementalSync.value = syncStart;
+      await SettingsManager().saveSettings();
     }
 
     // Call this first so listeners can react before any

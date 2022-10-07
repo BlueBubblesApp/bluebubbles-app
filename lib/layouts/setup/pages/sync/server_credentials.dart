@@ -265,7 +265,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
 
   void goToNextPage() {
     if (kIsWeb) {
-      socket.setup.startFullSync();
+      setup.startSetup(25, true, false);
     }
 
     if (controller.currentPage == controller.pageOfNoReturn) {

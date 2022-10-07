@@ -1,8 +1,6 @@
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/blocs/setup_bloc.dart';
-import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -13,6 +11,7 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/backend/sync/sync_service.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -316,7 +315,7 @@ class StartIncrementalSyncAction extends Action<StartIncrementalSyncIntent> {
   @override
   Object? invoke(covariant StartIncrementalSyncIntent intent) {
     if (SettingsManager().settings.finishedSetup.value) {
-      SetupBloc().startIncrementalSync();
+      sync.startIncrementalSync();
     }
     return null;
   }

@@ -8,8 +8,8 @@ import 'package:bluebubbles/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/layouts/setup/pages/page_template.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/sync/full_sync_manager.dart';
-import 'package:bluebubbles/managers/sync/sync_manager.dart';
+import 'package:bluebubbles/services/backend/sync/full_sync_manager.dart';
+import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +28,7 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
   final Control animationController = Control.mirror;
   final controller = Get.find<SetupViewController>();
   final Tween<double> tween = Tween<double>(begin: 0, end: 5);
-  final FullSyncManager syncManager = socket.setup.fullSyncManager;
+  final FullSyncManager syncManager = sync.fullSyncManager!;
   bool hasPlayed = false;
 
   @override
@@ -136,7 +136,6 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
                 minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
               ),
               onPressed: () {
-                socket.toggleSetupFinished(true, applyToDb: true);
                 Get.offAll(() => ConversationList(
                     showArchivedChats: false,
                     showUnknownSenders: false,

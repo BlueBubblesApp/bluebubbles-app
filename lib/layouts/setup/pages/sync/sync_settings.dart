@@ -104,10 +104,10 @@ class SyncSettings extends StatelessWidget {
             minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
           ),
           onPressed: () {
-            socket.setup.numberOfMessagesPerPage = controller.numberToDownload.clamp(1, double.infinity).toInt();
-            socket.setup.skipEmptyChats = controller.skipEmptyChats;
-            socket.setup.saveToDownloads = controller.saveToDownloads;
-            socket.setup.startFullSync();
+            final numberOfMessagesPerPage = controller.numberToDownload.clamp(1, double.infinity).toInt();
+            final skipEmptyChats = controller.skipEmptyChats;
+            final saveToDownloads = controller.saveToDownloads;
+            setup.startSetup(numberOfMessagesPerPage, skipEmptyChats, saveToDownloads);
 
             controller.pageController.nextPage(
               duration: Duration(milliseconds: 300),

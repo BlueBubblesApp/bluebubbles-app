@@ -1,5 +1,4 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -53,7 +52,7 @@ class SyncIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       if (!SettingsManager().settings.showSyncIndicator.value
-          || !SetupBloc().isIncrementalSyncing.value) {
+          || !sync.isIncrementalSyncing.value) {
         return const SizedBox.shrink();
       }
       return buildProgressIndicator(context, size: 12);
