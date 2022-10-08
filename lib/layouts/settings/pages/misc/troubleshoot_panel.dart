@@ -1,10 +1,10 @@
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -78,7 +78,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> with The
                               content: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: SizedBox(
-                                  width: CustomNavigator.width(context) * 4 / 5,
+                                  width: navigatorService.width(context) * 4 / 5,
                                   height: context.height * 1 / 3,
                                   child: Container(
                                     decoration: BoxDecoration(

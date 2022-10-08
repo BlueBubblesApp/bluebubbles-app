@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -13,6 +12,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
@@ -109,7 +109,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                           children: [
                             !showArchived && !showUnknown ? IconButton(
                               onPressed: () async {
-                                CustomNavigator.pushLeft(
+                                navigatorService.pushLeft(
                                   context,
                                   SearchView(),
                                 );

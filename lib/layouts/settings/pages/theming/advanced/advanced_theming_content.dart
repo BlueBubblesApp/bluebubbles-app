@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/dialogs/create_new_theme_dialog.dart';
@@ -17,6 +16,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -295,7 +295,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
               childCount: length,
             ),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: kIsDesktop ? (CustomNavigator.width(context) / 150).floor() : 2,
+              crossAxisCount: kIsDesktop ? (navigatorService.width(context) / 150).floor() : 2,
             ),
           ),
           SliverPadding(

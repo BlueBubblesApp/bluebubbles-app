@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -11,7 +10,6 @@ import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/emoji_regex.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -755,7 +753,7 @@ extension IsEmoji on String {
 
 extension WidgetLocation on GlobalKey {
   Rect? globalPaintBounds(BuildContext context) {
-    double difference = context.width - CustomNavigator.width(context);
+    double difference = context.width - navigatorService.width(context);
     final renderObject = currentContext?.findRenderObject();
     final translation = renderObject?.getTransformTo(null).getTranslation();
     if (translation != null && renderObject?.paintBounds != null) {

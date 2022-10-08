@@ -2,13 +2,13 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +41,7 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> with ThemeHelpers {
       ChatBloc().chats[widget.index!].customAvatarPath = file.path;
       ChatBloc().chats[widget.index!].save(updateCustomAvatarPath: true);
       Navigator.of(context).pop();
-      CustomNavigator.backSettings(context);
+      navigatorService.backSettings(context);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
       File file = File(widget.chat!.customAvatarPath ?? "$appDocPath/avatars/${widget.chat!.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
@@ -52,7 +52,7 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> with ThemeHelpers {
       widget.chat!.customAvatarPath = file.path;
       widget.chat!.save(updateCustomAvatarPath: true);
       Navigator.of(context).pop();
-      CustomNavigator.backSettings(context);
+      navigatorService.backSettings(context);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     }
   }
@@ -69,7 +69,7 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> with ThemeHelpers {
       child: Scaffold(
           backgroundColor: context.theme.colorScheme.background,
           appBar: PreferredSize(
-            preferredSize: Size(CustomNavigator.width(context), 50),
+            preferredSize: Size(navigatorService.width(context), 50),
             child: AppBar(
               systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
                   ? SystemUiOverlayStyle.light

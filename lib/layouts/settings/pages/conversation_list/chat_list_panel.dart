@@ -2,13 +2,13 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/pages/conversation_list/pinned_order_panel.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -344,9 +344,9 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                 ),
                               ),
                               Obx(() {
-                                CustomNavigator.listener.value;
+                                navigatorService.listener.value;
                                 double width = 108 * context.width / context.height;
-                                if (CustomNavigator.width(context) != context.width) {
+                                if (navigatorService.width(context) != context.width) {
                                   return Container(
                                     width: width,
                                     height: 108,
@@ -378,7 +378,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                                       () => Expanded(
                                                         flex: SettingsManager().settings.pinRowsPortrait.value *
                                                             (width -
-                                                                CustomNavigator.width(context) /
+                                                                navigatorService.width(context) /
                                                                     context.width *
                                                                     width) ~/
                                                             SettingsManager().settings.pinColumnsLandscape.value,
@@ -421,7 +421,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                                     ),
                                                     if (SettingsManager().settings.pinRowsPortrait.value *
                                                             (width -
-                                                                CustomNavigator.width(context) /
+                                                                navigatorService.width(context) /
                                                                     context.width *
                                                                     width) /
                                                             SettingsManager().settings.pinColumnsLandscape.value <
@@ -430,7 +430,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                                         flex: 96 -
                                                             SettingsManager().settings.pinRowsPortrait.value *
                                                                 (width -
-                                                                    CustomNavigator.width(context) /
+                                                                    navigatorService.width(context) /
                                                                         context.width *
                                                                         width) ~/
                                                                 SettingsManager().settings.pinColumnsLandscape.value,
@@ -458,7 +458,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                             height: 108,
                                             color: context.theme.colorScheme.secondary.oppositeLightenOrDarken(40)),
                                         Container(
-                                            width: CustomNavigator.width(context) / context.width * width - 1,
+                                            width: navigatorService.width(context) / context.width * width - 1,
                                             height: 108,
                                             color: context.theme.colorScheme.secondary),
                                       ],
@@ -486,7 +486,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                         title: "Pinned Order",
                         subtitle: "Set the order for your pinned chats",
                         onTap: () {
-                          CustomNavigator.pushSettings(
+                          navigatorService.pushSettings(
                             context,
                             PinnedOrderPanel(),
                           );
@@ -535,7 +535,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                         if (iOS) {
                           return Container(
                             color: tileColor,
-                            constraints: BoxConstraints(maxWidth: CustomNavigator.width(context) - 20),
+                            constraints: BoxConstraints(maxWidth: navigatorService.width(context) - 20),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 15.0),
                               child: Row(
@@ -549,7 +549,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                       opacity: SettingsManager().settings.iosShowPin.value ? 1 : 0.7,
                                       child: Container(
                                         height: 60,
-                                        width: CustomNavigator.width(context) / 5 - 12,
+                                        width: navigatorService.width(context) / 5 - 12,
                                         color: Colors.yellow[800],
                                         child: IconButton(
                                           icon: const Icon(CupertinoIcons.pin, color: Colors.white),
@@ -603,7 +603,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                             child: Container(
                                               height: 60,
                                               color: Colors.purple[700],
-                                              width: CustomNavigator.width(context) / 5 - 12,
+                                              width: navigatorService.width(context) / 5 - 12,
                                               child: IconButton(
                                                 icon: const Icon(CupertinoIcons.bell_slash, color: Colors.white),
                                                 onPressed: () async {
@@ -650,7 +650,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                             child: Container(
                                               height: 60,
                                               color: Colors.red,
-                                              width: CustomNavigator.width(context) / 5 - 12,
+                                              width: navigatorService.width(context) / 5 - 12,
                                               child: IconButton(
                                                 icon: const Icon(CupertinoIcons.trash, color: Colors.white),
                                                 onPressed: () async {
@@ -697,7 +697,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                             child: Container(
                                               height: 60,
                                               color: Colors.blue,
-                                              width: CustomNavigator.width(context) / 5 - 12,
+                                              width: navigatorService.width(context) / 5 - 12,
                                               child: IconButton(
                                                 icon: const Icon(CupertinoIcons.person_crop_circle_badge_exclam,
                                                     color: Colors.white),
@@ -746,7 +746,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                             child: Container(
                                               height: 60,
                                               color: Colors.red,
-                                              width: CustomNavigator.width(context) / 5 - 12,
+                                              width: navigatorService.width(context) / 5 - 12,
                                               child: IconButton(
                                                 icon: const Icon(CupertinoIcons.tray_arrow_down, color: Colors.white),
                                                 onPressed: () {

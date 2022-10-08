@@ -871,12 +871,12 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
                   Center(
                       child: Container(
                         constraints: BoxConstraints(
-                          maxWidth: CustomNavigator.width(context) / 2,
+                          maxWidth: navigatorService.width(context) / 2,
                         ),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           Container(
                             constraints: BoxConstraints(
-                              maxWidth: CustomNavigator.width(context) / 2 - 55,
+                              maxWidth: navigatorService.width(context) / 2 - 55,
                             ),
                             child: RichText(
                               maxLines: 1,

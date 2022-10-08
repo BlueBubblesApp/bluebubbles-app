@@ -111,7 +111,7 @@ class _SchedulePanelState extends OptimizedState<SchedulePanel> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(CustomNavigator.width(context), 80),
+          preferredSize: Size(navigatorService.width(context), 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(

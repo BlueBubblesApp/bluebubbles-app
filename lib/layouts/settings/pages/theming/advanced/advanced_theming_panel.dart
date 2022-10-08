@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/dialogs/old_themes_dialog.dart';
@@ -10,6 +9,7 @@ import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -58,7 +58,7 @@ class _AdvancedThemingPanelState extends OptimizedState<AdvancedThemingPanel> wi
       child: Scaffold(
         backgroundColor: material ? tileColor : headerColor,
         appBar: PreferredSize(
-          preferredSize: Size(CustomNavigator.width(context), 50),
+          preferredSize: Size(navigatorService.width(context), 50),
           child: AppBar(
             systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
                 ? SystemUiOverlayStyle.light

@@ -1,12 +1,10 @@
 import 'dart:math';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
@@ -1069,7 +1067,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                 padding: const EdgeInsets.all(10),
                 sliver: SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: max(2, CustomNavigator.width(context) ~/ 200),
+                    crossAxisCount: max(2, navigatorService.width(context) ~/ 200),
                     mainAxisSpacing: 10,
                     crossAxisSpacing: 10
                   ),

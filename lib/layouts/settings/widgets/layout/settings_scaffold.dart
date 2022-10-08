@@ -1,11 +1,10 @@
 import 'package:bluebubbles/helpers/constants.dart';
-
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -46,7 +45,7 @@ class SettingsScaffold extends StatelessWidget {
         appBar: SettingsManager().settings.skin.value == Skins.Samsung
             ? null
             : PreferredSize(
-          preferredSize: Size(CustomNavigator.width(context), 50),
+          preferredSize: Size(navigatorService.width(context), 50),
           child: AppBar(
             systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
                 ? SystemUiOverlayStyle.light

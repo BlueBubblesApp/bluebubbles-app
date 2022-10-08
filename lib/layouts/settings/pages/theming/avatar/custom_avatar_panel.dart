@@ -1,6 +1,5 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/tile/conversation_tile.dart';
@@ -8,6 +7,7 @@ import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/settings/pages/theming/avatar/avatar_crop.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
@@ -116,7 +116,7 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> with The
                                     child: Text("Set New", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                     onPressed: () {
                                       Navigator.of(context).pop();
-                                      CustomNavigator.pushSettings(
+                                      navigatorService.pushSettings(
                                         context,
                                         AvatarCrop(index: index),
                                       );
@@ -125,7 +125,7 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> with The
                         },
                       );
                     } else {
-                      CustomNavigator.pushSettings(
+                      navigatorService.pushSettings(
                         context,
                         AvatarCrop(index: index),
                       );

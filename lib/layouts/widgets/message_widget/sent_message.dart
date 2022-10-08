@@ -8,7 +8,6 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/pages/unfinished/theme_selector.dart';
@@ -28,6 +27,7 @@ import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
@@ -169,7 +169,7 @@ class SentMessageHelper {
               width: customWidth != null ? constraints.maxWidth : null,
               constraints: customWidth == null
                   ? BoxConstraints(
-                      maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+                      maxWidth: navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
                     )
                   : null,
               margin: EdgeInsets.only(
@@ -366,7 +366,7 @@ class SentMessageHelper {
     final child = Container(
         width: customWidth != null ? customWidth - (showTail ? 20 : 0) : null,
         constraints: BoxConstraints(
-          maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : CustomNavigator.width(context),
+          maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : navigatorService.width(context),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -711,7 +711,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                 final offset = (-(data ?? 0)).clamp(0, 70).toDouble();
                 return AnimatedContainer(
                   duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-                  width: CustomNavigator.width(context) - 10 - offset,
+                  width: navigatorService.width(context) - 10 - offset,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Row(
@@ -745,7 +745,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                                 right: 10,
                               ),
                               constraints: BoxConstraints(
-                                maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
+                                maxWidth: navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
                               ),
                               padding: EdgeInsets.symmetric(
                                 vertical: 8,
@@ -895,15 +895,15 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                 }
                 final offset = (-(data ?? 0)).clamp(0, 70).toDouble();
                 final originalWidth = max(
-                    min(CustomNavigator.width(context) - messageSize!.width - 150, CustomNavigator.width(context) / 3),
+                    min(navigatorService.width(context) - messageSize!.width - 150, navigatorService.width(context) / 3),
                     10);
                 final width = max(
-                    min(CustomNavigator.width(context) - messageSize!.width - 150, CustomNavigator.width(context) / 3) -
+                    min(navigatorService.width(context) - messageSize!.width - 150, navigatorService.width(context) / 3) -
                         offset,
                     10);
                 return AnimatedContainer(
                   duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-                  width: CustomNavigator.width(context) - 10 - offset,
+                  width: navigatorService.width(context) - 10 - offset,
                   padding: EdgeInsets.only(
                     // add extra padding when showing contact avatars
                     left: max(

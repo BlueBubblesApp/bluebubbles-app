@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:chewie/chewie.dart';
 // (needed for custom back button)
 //ignore: implementation_imports
@@ -369,7 +369,7 @@ class _VideoViewerState extends State<VideoViewer> {
         ),
         backgroundColor: context.theme.colorScheme.properSurface,
         content: SizedBox(
-          width: CustomNavigator.width(context) * 3 / 5,
+          width: navigatorService.width(context) * 3 / 5,
           height: context.height * 1 / 4,
           child: Container(
             padding: EdgeInsets.all(10.0),

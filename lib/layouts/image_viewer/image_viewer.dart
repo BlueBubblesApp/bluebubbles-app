@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
@@ -13,6 +12,7 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -86,7 +86,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       duration: Duration(milliseconds: 125),
       child: Container(
         height: kIsDesktop ? 50 : 100.0,
-        width: CustomNavigator.width(context),
+        width: navigatorService.width(context),
         color: context.theme.colorScheme.shadow.withOpacity(SettingsManager().settings.skin.value == Skins.Samsung ? 1 : 0.65),
         child: SafeArea(
           left: false,
@@ -365,7 +365,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         ),
         backgroundColor: context.theme.colorScheme.properSurface,
         content: SizedBox(
-          width: CustomNavigator.width(context) * 3 / 5,
+          width: navigatorService.width(context) * 3 / 5,
           height: context.height * 1 / 4,
           child: Container(
             padding: EdgeInsets.all(10.0),

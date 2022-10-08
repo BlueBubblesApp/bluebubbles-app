@@ -1,12 +1,12 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -45,7 +45,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                   child: InkWell(
                     onTap: () {
                       if (!showArchived && !showUnknown) {
-                        CustomNavigator.pushLeft(
+                        navigatorService.pushLeft(
                           context,
                           SearchView(),
                         );
@@ -63,7 +63,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                               children: [
                                 (!showArchived && !showUnknown) ? IconButton(
                                   onPressed: () async {
-                                    CustomNavigator.pushLeft(
+                                    navigatorService.pushLeft(
                                       context,
                                       SearchView(),
                                     );

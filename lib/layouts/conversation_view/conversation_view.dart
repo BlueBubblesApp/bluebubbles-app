@@ -9,7 +9,6 @@ import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -31,6 +30,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/foundation.dart';
@@ -208,7 +208,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
         if (event.type == MessageBlocEventType.insert && mounted && event.outGoing) {
           final constraints = BoxConstraints(
-            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE,
             minHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
             maxHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
           );
@@ -232,9 +232,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               (!(event.message?.text?.isEmpty ?? true) || !(event.message?.subject?.isEmpty ?? true))) {
             setState(() {
               tween = Tween<double>(
-                  begin: CustomNavigator.width(context) - 30,
+                  begin: navigatorService.width(context) - 30,
                   end: min(max(size.width, size2.width) + 68,
-                      CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
+                      navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
               controller = Control.play;
               message = event.message;
             });

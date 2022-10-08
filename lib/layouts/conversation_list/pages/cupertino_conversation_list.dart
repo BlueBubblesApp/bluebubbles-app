@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -15,6 +14,7 @@ import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -111,7 +111,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                   int _pageCount = (pinCount / maxOnPage).ceil();
                   int _filledPageCount = (pinCount / maxOnPage).floor();
                   double spaceBetween = (colCount - 1) * 30;
-                  double maxWidth = ((CustomNavigator.width(context) - 50 - spaceBetween) / colCount).floorToDouble();
+                  double maxWidth = ((navigatorService.width(context) - 50 - spaceBetween) / colCount).floorToDouble();
                   TextStyle style = context.theme.textTheme.bodyMedium!;
                   double height =
                       usedRowCount * (maxWidth * 1.15 + 10 + style.height! * style.fontSize! * 2);

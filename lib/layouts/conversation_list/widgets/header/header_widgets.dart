@@ -1,7 +1,6 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -95,7 +94,7 @@ class OverflowMenu extends StatelessWidget {
         if (value == 0) {
           ChatBloc().markAllAsRead();
         } else if (value == 1) {
-          CustomNavigator.pushLeft(
+          navigatorService.pushLeft(
             context,
             ConversationList(
               showArchivedChats: true,
@@ -111,7 +110,7 @@ class OverflowMenu extends StatelessWidget {
             ),
           );
         } else if (value == 3) {
-          CustomNavigator.pushLeft(
+          navigatorService.pushLeft(
             context,
             ConversationList(
               showArchivedChats: false,

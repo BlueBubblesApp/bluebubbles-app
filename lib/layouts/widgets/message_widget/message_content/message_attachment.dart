@@ -1,6 +1,5 @@
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
@@ -77,7 +76,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
       borderRadius: BorderRadius.circular(20),
       child: Container(
         constraints: BoxConstraints(
-          maxWidth: CustomNavigator.width(context) * 0.5,
+          maxWidth: navigatorService.width(context) * 0.5,
           maxHeight: context.height * 0.6,
         ),
         child: _buildAttachmentWidget(),

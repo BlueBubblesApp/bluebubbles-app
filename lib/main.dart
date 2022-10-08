@@ -8,7 +8,6 @@ import 'package:bluebubbles/services/network/http_service.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/window_effects.dart';
@@ -28,7 +27,6 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -37,6 +35,7 @@ import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -517,7 +516,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         title: 'BlueBubbles',
         theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
         darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
-        navigatorKey: NavigatorManager().navigatorKey,
+        navigatorKey: navigatorService.key,
         home: Home(),
         shortcuts: {
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
@@ -795,7 +794,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
             if (attachments.isEmpty) return;
 
             // Go to the new chat creator, with all of our attachments
-            CustomNavigator.pushAndRemoveUntil(
+            navigatorService.pushAndRemoveUntil(
               context,
               ConversationView(
                 existingAttachments: attachments,
@@ -811,7 +810,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
             if (text == null) return;
 
             // Go to the new chat creator, with all of our text
-            CustomNavigator.pushAndRemoveUntil(
+            navigatorService.pushAndRemoveUntil(
               context,
               ConversationView(
                 existingText: text,

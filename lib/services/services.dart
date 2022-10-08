@@ -5,6 +5,7 @@ export 'backend/settings/settings_service.dart';
 export 'backend/setup/setup_service.dart';
 export 'backend/sync/full_sync_manager.dart';
 export 'backend/sync/incremental_sync_manager.dart';
+export 'backend/sync/sync_manager_impl.dart' show SyncStatus;
 export 'backend/sync/sync_service.dart';
 export 'backend/action_handler.dart';
 export 'network/firebase/cloud_messaging_service.dart';

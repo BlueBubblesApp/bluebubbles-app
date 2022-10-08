@@ -9,7 +9,6 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -20,6 +19,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as fln;
@@ -30,8 +30,6 @@ import 'package:quick_notify/quick_notify.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as uh;
 import 'package:win_toast/win_toast.dart';
-
-import 'chat/chat_manager.dart';
 
 /// [NotificationManager] holds data relating to the current chat, and manages things such as
 class NotificationManager {
@@ -283,7 +281,7 @@ class NotificationManager {
             if (event.actionIndex == null) {
               WinToast.instance().bringWindowToFront();
               if (ChatManager().activeChat?.chat.guid != chatGuid && Get.context != null) {
-                CustomNavigator.pushAndRemoveUntil(
+                navigatorService.pushAndRemoveUntil(
                   Get.context!,
                   ConversationView(chat: Chat.findOne(guid: chatGuid)),
                   (route) => route.isFirst,

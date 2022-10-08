@@ -14,11 +14,11 @@ import 'package:bluebubbles/layouts/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/cupertino_conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/material_conversation_list.dart';
@@ -102,7 +102,7 @@ class ConversationListController extends StatefulController {
 
   void openNewChatCreator(BuildContext context, {List<PlatformFile>? existing}) async {
     EventDispatcher().emit("update-highlight", null);
-    CustomNavigator.pushAndRemoveUntil(
+    navigatorService.pushAndRemoveUntil(
       context,
       ConversationView(
         isCreator: true,
@@ -143,7 +143,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         ChatManager().activeChat?.chat.guid != prefs.getString('lastOpenedChat') &&
         !LifeCycleManager().isBubble) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        CustomNavigator.pushAndRemoveUntil(
+        navigatorService.pushAndRemoveUntil(
           context,
           ConversationView(
             chat: kIsWeb
@@ -178,7 +178,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         allowResize: true,
         left: !showAltLayout ? child : LayoutBuilder(
           builder: (context, constraints) {
-            CustomNavigator.maxWidthLeft = constraints.maxWidth;
+            navigatorService.maxWidthLeft = constraints.maxWidth;
             return WillPopScope(
               onWillPop: () async {
                 Get.until((route) {
@@ -219,7 +219,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         ),
         right: LayoutBuilder(
           builder: (context, constraints) {
-            CustomNavigator.maxWidthRight = constraints.maxWidth;
+            navigatorService.maxWidthRight = constraints.maxWidth;
             return WillPopScope(
               onWillPop: () async {
                 Get.back(id: 2);

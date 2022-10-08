@@ -4,7 +4,6 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -264,7 +263,7 @@ class UrlPreviewWidget extends StatelessWidget {
                     },
                     child: Container(
                       // The minus 5 here is so the timestamps show OK during swipe
-                      width: (CustomNavigator.width(context) * 2 / 3) - 5,
+                      width: (navigatorService.width(context) * 2 / 3) - 5,
                       child: (hideContent || hideType) ? Stack(children: items) : Column(children: items),
                     ),
                   ),

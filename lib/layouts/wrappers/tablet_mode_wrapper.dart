@@ -1,10 +1,10 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -108,7 +108,7 @@ class _TabletModeWrapperState extends OptimizedState<TabletModeWrapper> with The
                         )),
                     onPanUpdate: (DragUpdateDetails details) {
                       _ratio.value = (_ratio.value + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
-                      CustomNavigator.listener.refresh();
+                      navigatorService.listener.refresh();
                     },
                   ),
                 ) : Container(

@@ -1,7 +1,6 @@
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
@@ -14,6 +13,7 @@ import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -364,7 +364,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
                     inSelectMode: true,
                     onSelect: (_) {
                       MessageBloc customBloc = MessageBloc(chat, canLoadMore: false, loadMethod: local ? "local" : "network");
-                      CustomNavigator.push(
+                      navigatorService.push(
                         context,
                         ConversationView(
                           chat: chat,

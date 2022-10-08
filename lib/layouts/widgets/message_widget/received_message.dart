@@ -6,7 +6,6 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -26,6 +25,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -269,7 +269,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               right: 10,
             ),
             constraints: BoxConstraints(
-              maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
+              maxWidth: navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE,
             ),
             padding: EdgeInsets.symmetric(
               vertical: 8,
@@ -656,15 +656,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               }
               final offset = (-(data ?? 0)).clamp(0, 70).toDouble();
               final originalWidth = max(
-                  min(CustomNavigator.width(context) - messageSize!.width - 125, CustomNavigator.width(context) / 3),
+                  min(navigatorService.width(context) - messageSize!.width - 125, navigatorService.width(context) / 3),
                   10);
               final width = max(
-                  min(CustomNavigator.width(context) - messageSize!.width - 125, CustomNavigator.width(context) / 3) -
+                  min(navigatorService.width(context) - messageSize!.width - 125, navigatorService.width(context) / 3) -
                       offset,
                   10);
               return AnimatedContainer(
                 duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-                width: CustomNavigator.width(context) - 45 - offset,
+                width: navigatorService.width(context) - 45 - offset,
                 padding: EdgeInsets.only(right: max(30 - (width == 10 ? offset - (originalWidth - width) : 0), 0)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -853,7 +853,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               showReplyThread(context, widget.message, widget.messageBloc);
             },
             child: Container(
-              width: CustomNavigator.width(context) - 10,
+              width: navigatorService.width(context) - 10,
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Row(
@@ -887,7 +887,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                             right: 10,
                           ),
                           constraints: BoxConstraints(
-                            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
+                            maxWidth: navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
                           ),
                           padding: EdgeInsets.symmetric(
                             vertical: 8,

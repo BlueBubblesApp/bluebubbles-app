@@ -8,7 +8,6 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
@@ -19,7 +18,6 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
@@ -244,7 +242,7 @@ class MethodChannelInterface {
         }
 
         // Go to the new chat creator with all of these attachments to select a chat in case it wasn't a direct share
-        CustomNavigator.pushAndRemoveUntil(
+        navigatorService.pushAndRemoveUntil(
               Get.context!,
               ConversationView(
                 existingAttachments: attachments,
@@ -283,7 +281,7 @@ class MethodChannelInterface {
           }
         }
         // Navigate to the new chat creator with the specified text
-        CustomNavigator.pushAndRemoveUntil(
+        navigatorService.pushAndRemoveUntil(
               Get.context!,
               ConversationView(
                 existingText: text,
@@ -387,7 +385,7 @@ class MethodChannelInterface {
   Future<void> openChat(String id, {List<PlatformFile> existingAttachments = const [], String? existingText}) async {
     // If the ID is -1, it means the notification grouping header was tapped
     if (id == "-1") {
-      NavigatorManager().navigatorKey.currentState!.popUntil((route) => route.isFirst);
+      navigatorService.key.currentState?.popUntil((route) => route.isFirst);
       return;
     }
 
@@ -427,7 +425,7 @@ class MethodChannelInterface {
 
       // if (!ChatController.isActive(openedChat.guid))
       // Actually navigate to the chat page
-      CustomNavigator.pushAndRemoveUntil(
+      navigatorService.pushAndRemoveUntil(
           Get.context!,
           ConversationView(
             chat: openedChat,

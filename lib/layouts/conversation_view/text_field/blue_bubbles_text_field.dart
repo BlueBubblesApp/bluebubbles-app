@@ -22,7 +22,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:chunked_stream/chunked_stream.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:dio/dio.dart';
@@ -168,12 +168,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
       if (controller!.text.isEmpty && pickedImages.isEmpty && selfTyping) {
         selfTyping = false;
-        SocketManager().sendMessage("stopped-typing", {"chatGuid": widget.chatGuid}, (data) {});
+        socket.sendMessage("stopped-typing", {"chatGuid": widget.chatGuid});
       } else if (!selfTyping && (controller!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
         if (SettingsManager().settings.privateSendTypingIndicators.value &&
             ChatController.forGuid(widget.chatGuid)!.chat.autoSendTypingIndicators!) {
-          SocketManager().sendMessage("started-typing", {"chatGuid": widget.chatGuid}, (data) {});
+          socket.sendMessage("started-typing", {"chatGuid": widget.chatGuid});
         }
       }
 
@@ -191,12 +191,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
       if (subjectController!.text.isEmpty && pickedImages.isEmpty && selfTyping) {
         selfTyping = false;
-        SocketManager().sendMessage("stopped-typing", {"chatGuid": widget.chatGuid}, (data) {});
+        socket.sendMessage("stopped-typing", {"chatGuid": widget.chatGuid});
       } else if (!selfTyping && (subjectController!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
         if (SettingsManager().settings.privateSendTypingIndicators.value &&
             ChatController.forGuid(widget.chatGuid)!.chat.autoSendTypingIndicators!) {
-          SocketManager().sendMessage("started-typing", {"chatGuid": widget.chatGuid}, (data) {});
+          socket.sendMessage("started-typing", {"chatGuid": widget.chatGuid});
         }
       }
 
@@ -816,7 +816,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     tabColor: context.theme.primaryColor,
                   );
                   if (gif?.images?.original != null) {
-                    final response = await api.downloadGiphy(gif!.images!.original!.url);
+                    final response = await http.downloadGiphy(gif!.images!.original!.url);
                     if (response.statusCode == 200) {
                       try {
                         final Uint8List data = response.data;
@@ -1524,7 +1524,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               path: kIsWeb ? null : pathName,
               size: kIsWeb ? 0 : await File(pathName).length(),
               bytes: kIsWeb
-                  ? (await api.dio.get(pathName, options: Options(responseType: ResponseType.bytes))).data
+                  ? (await http.dio.get(pathName, options: Options(responseType: ResponseType.bytes))).data
                   : await File(pathName).readAsBytes(),
             ));
       }

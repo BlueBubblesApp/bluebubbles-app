@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -13,7 +12,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -292,12 +291,12 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                         Obx(
                           () {
                             context.width;
-                            CustomNavigator.listener.value;
-                            double width = min(CustomNavigator.width(context) / 2, 400);
+                            navigatorService.listener.value;
+                            double width = min(navigatorService.width(context) / 2, 400);
                             return Container(
-                              width: CustomNavigator.width(context) > 1500
+                              width: navigatorService.width(context) > 1500
                                   ? 800
-                                  : min(CustomNavigator.width(context) / 2, 400),
+                                  : min(navigatorService.width(context) / 2, 400),
                               child: Wrap(
                                 alignment: WrapAlignment.center,
                                 runAlignment: WrapAlignment.center,
@@ -312,7 +311,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                                     int numActions = actualIndices.length;
                                     bool showMarkRead =
                                         SettingsManager().settings.selectedActionIndices.contains(markReadIndex);
-                                    CustomNavigator.listener.value;
+                                    navigatorService.listener.value;
                                     context.width;
                                     double margin = 20;
                                     double size = width - 2 * margin;
@@ -462,7 +461,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                                     if (numActions <= (showMarkRead ? 1 : 0)) {
                                       return SizedBox.shrink();
                                     }
-                                    CustomNavigator.listener.value;
+                                    navigatorService.listener.value;
                                     context.width;
                                     double margin = 20;
                                     double size = width - 2 * margin;

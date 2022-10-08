@@ -7,7 +7,6 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
@@ -523,7 +522,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // IT KINDA WORKED BUT ULTIMATELY FAILED
 
     // return PreferredSize(
-    //     preferredSize: Size(CustomNavigator.width(context), 80),
+    //     preferredSize: Size(navigatorService.width(context), 80),
     //     child: ClipRect(
     //         child: BackdropFilter(
     //             filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
@@ -612,7 +611,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
         Container(
           constraints: BoxConstraints(
-            maxWidth: CustomNavigator.width(context) / 2 - 55,
+            maxWidth: navigatorService.width(context) / 2 - 55,
             maxHeight: 20.5
           ),
           child: RichText(
@@ -1165,7 +1164,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       );
 
   Widget buildChatSelectorHeader() => PreferredSize(
-    preferredSize: Size(CustomNavigator.width(context), 50),
+    preferredSize: Size(navigatorService.width(context), 50),
     child: ClipRRect(
       child: BackdropFilter(
         child: AppBar(

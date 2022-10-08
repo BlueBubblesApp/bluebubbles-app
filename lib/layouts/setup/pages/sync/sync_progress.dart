@@ -2,14 +2,11 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/layouts/setup/pages/page_template.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/services/backend/sync/full_sync_manager.dart';
-import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
@@ -76,7 +73,7 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
               )),
               const SizedBox(height: 15),
               Obx(() => Padding(
-                padding: EdgeInsets.symmetric(horizontal: CustomNavigator.width(context) / 4),
+                padding: EdgeInsets.symmetric(horizontal: navigatorService.width(context) / 4),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: LinearProgressIndicator(
@@ -88,7 +85,7 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
               )),
               const SizedBox(height: 20),
               SizedBox(
-                width: CustomNavigator.width(context) * 4 / 5,
+                width: navigatorService.width(context) * 4 / 5,
                 height: context.height * 1 / 3,
                 child: Container(
                   decoration: BoxDecoration(

@@ -10,7 +10,6 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -32,6 +31,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
@@ -263,7 +263,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
   Widget buildReactionMenu() {
     double narrowWidth = widget.message.isFromMe! || !SettingsManager().settings.alwaysShowAvatars.value ? 330 : 360;
-    bool narrowScreen = CustomNavigator.width(context) < narrowWidth;
+    bool narrowScreen = navigatorService.width(context) < narrowWidth;
     double reactionIconSize = 50;
     double menuHeight = (reactionIconSize * 2).toDouble();
     if (topMinimum > context.height - 120 - menuHeight) {
@@ -417,7 +417,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   Widget buildDetailsMenu() {
     bool showAltLayout =
         SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !LifeCycleManager().isBubble;
-    double maxMenuWidth = min(max(CustomNavigator.width(context) * 3 / 5, 200), CustomNavigator.width(context) * 4 / 5) * (showAltLayout ? 0.5 : 1);
+    double maxMenuWidth = min(max(navigatorService.width(context) * 3 / 5, 200), navigatorService.width(context) * 4 / 5) * (showAltLayout ? 0.5 : 1);
     double maxHeight = context.height - messageTopOffset - widget.childSize!.height;
 
     List<Widget> allActions = [

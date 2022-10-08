@@ -2,13 +2,13 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
@@ -33,7 +33,7 @@ class PinnedOrderPanel extends StatelessWidget {
       child: Obx(() => Scaffold(
         backgroundColor: _backgroundColor.value,
         appBar: PreferredSize(
-          preferredSize: Size(CustomNavigator.width(context), 80),
+          preferredSize: Size(navigatorService.width(context), 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(

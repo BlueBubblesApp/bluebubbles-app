@@ -6,7 +6,6 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
@@ -16,6 +15,7 @@ import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/chat.dart';
 import 'package:bluebubbles/repository/models/html/handle.dart';
 import 'package:bluebubbles/repository/models/html/objectbox.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:flutter/material.dart';
@@ -507,14 +507,14 @@ class Message {
       return Size(
           attachments
               .map((e) => e!.width)
-              .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble()) + 28),
+              .fold(0, (p, e) => max(p, (e ?? navigatorService.width(context) / 2).toDouble()) + 28),
           attachments
               .map((e) => e!.height)
-              .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble())));
+              .fold(0, (p, e) => max(p, (e ?? navigatorService.width(context) / 2).toDouble())));
     }
     // initialize constraints for text rendering
     final constraints = BoxConstraints(
-      maxWidth: maxWidthOverride ?? CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
+      maxWidth: maxWidthOverride ?? navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
       minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodySmall!.fontSize!,
     );
     final renderParagraph = RichText(
@@ -533,7 +533,7 @@ class Message {
     }
     // if we have a URL preview, extend to the full width
     if (isUrlPreview()) {
-      size = Size(CustomNavigator.width(context) * 2 / 3 - 30, size.height);
+      size = Size(navigatorService.width(context) * 2 / 3 - 30, size.height);
     }
     // if we have reactions, account for the extra height they add
     if (hasReactions) {

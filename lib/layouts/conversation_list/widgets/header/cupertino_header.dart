@@ -1,13 +1,13 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/layouts/widgets/fade_on_scroll.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -72,7 +72,7 @@ class CupertinoHeader extends StatelessWidget {
                               )
                             ),
                             onTap: () {
-                              CustomNavigator.pushLeft(context, SearchView());
+                              navigatorService.pushLeft(context, SearchView());
                             },
                           ),
                         ),
@@ -155,7 +155,7 @@ class CupertinoMiniHeader extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Container(
-              width: CustomNavigator.width(context),
+              width: navigatorService.width(context),
               height: (topMargin - 20).clamp(40, double.infinity),
               color: context.theme.colorScheme.properSurface.withOpacity(0.5),
               alignment: Alignment.bottomCenter,

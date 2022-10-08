@@ -1,7 +1,6 @@
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/search/search_view.dart';
@@ -11,7 +10,7 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/services/backend/sync/sync_service.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -53,7 +52,7 @@ class OpenNewChatCreatorAction extends Action<OpenNewChatCreatorIntent> {
   Object? invoke(covariant OpenNewChatCreatorIntent intent) {
     if (SettingsManager().settings.finishedSetup.value) {
       EventDispatcher().emit("update-highlight", null);
-      CustomNavigator.pushAndRemoveUntil(
+      navigatorService.pushAndRemoveUntil(
         context,
         ConversationView(
           isCreator: true,
@@ -77,7 +76,7 @@ class OpenSearchAction extends Action<OpenSearchIntent> {
   @override
   Object? invoke(covariant OpenSearchIntent intent) async {
     if (SettingsManager().settings.finishedSetup.value) {
-      CustomNavigator.pushLeft(
+      navigatorService.pushLeft(
         context,
         SearchView(),
       );
@@ -241,7 +240,7 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
       final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
       if (index > -1 && index < ChatBloc().chats.length - 1) {
         final _chat = ChatBloc().chats[index + 1];
-        CustomNavigator.pushAndRemoveUntil(
+        navigatorService.pushAndRemoveUntil(
           context,
           ConversationView(
             chat: _chat,
@@ -272,7 +271,7 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
       final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
       if (index > 0 && index < ChatBloc().chats.length) {
         final _chat = ChatBloc().chats[index - 1];
-        CustomNavigator.pushAndRemoveUntil(
+        navigatorService.pushAndRemoveUntil(
           context,
           ConversationView(
             chat: _chat,
@@ -299,7 +298,7 @@ class OpenChatDetailsAction extends Action<OpenChatDetailsIntent> {
 
   @override
   Object? invoke(covariant OpenChatDetailsIntent intent) {
-    CustomNavigator.push(
+    navigatorService.push(
       context,
       ConversationDetails(chat: chat),
     );
@@ -333,7 +332,7 @@ class GoBackAction extends Action<GoBackIntent> {
   @override
   Object? invoke(covariant GoBackIntent intent) {
     if (SettingsManager().settings.finishedSetup.value && !(Get.isDialogOpen ?? true)) {
-      CustomNavigator.backConversationView(context);
+      navigatorService.backConversationView(context);
     }
     return null;
   }

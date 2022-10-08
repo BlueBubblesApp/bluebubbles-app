@@ -5,7 +5,6 @@ import 'package:animations/animations.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
@@ -264,17 +263,17 @@ class ImageDisplay extends StatelessWidget {
             openContainer();
           },
           child: SizedBox(
-            width: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
-            height: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
+            width: navigatorService.width(context) / max(2, navigatorService.width(context) ~/ 200),
+            height: navigatorService.width(context) / max(2, navigatorService.width(context) ~/ 200),
             child: Stack(
               children: [
                 Image.memory(
                   image,
                   fit: BoxFit.cover,
                   alignment: Alignment.center,
-                  cacheWidth: CustomNavigator.width(context) ~/ max(2, CustomNavigator.width(context) ~/ 200) * 2,
-                  width: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
-                  height: CustomNavigator.width(context) / max(2, CustomNavigator.width(context) ~/ 200),
+                  cacheWidth: navigatorService.width(context) ~/ max(2, navigatorService.width(context) ~/ 200) * 2,
+                  width: navigatorService.width(context) / max(2, navigatorService.width(context) ~/ 200),
+                  height: navigatorService.width(context) / max(2, navigatorService.width(context) ~/ 200),
                 ),
                 if ((attachment.mimeType?.contains("video") ?? false) && duration != null)
                   Positioned(

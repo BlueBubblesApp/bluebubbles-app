@@ -4,7 +4,6 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/window_effects.dart';
@@ -19,6 +18,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -520,7 +520,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         title: "Custom Avatar Colors",
                         trailing: nextIcon,
                         onTap: () async {
-                          CustomNavigator.pushSettings(
+                          navigatorService.pushSettings(
                             context,
                             CustomAvatarColorPanel(),
                           );
@@ -540,7 +540,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         title: "Custom Avatars",
                         trailing: nextIcon,
                         onTap: () async {
-                          CustomNavigator.pushSettings(
+                          navigatorService.pushSettings(
                             context,
                             CustomAvatarPanel(),
                           );

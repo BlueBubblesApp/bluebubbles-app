@@ -2,7 +2,6 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -30,7 +29,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:dio/dio.dart';
@@ -65,7 +63,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
 
     if (showAltLayoutContextless) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        CustomNavigator.pushAndRemoveSettingsUntil(
+        navigatorService.pushAndRemoveSettingsUntil(
           context,
           ServerManagementPanel(),
               (route) => route.isFirst,
@@ -137,7 +135,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                               title: "Connection & Server",
                               subtitle: subtitle,
                               onTap: () async {
-                                CustomNavigator.pushAndRemoveSettingsUntil(
+                                navigatorService.pushAndRemoveSettingsUntil(
                                   context,
                                   ServerManagementPanel(),
                                       (route) => route.isFirst,
@@ -207,7 +205,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             title: "Appearance Settings",
                             subtitle: "${SettingsManager().settings.skin.value.toString().split(".").last}   |   ${AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst!} Mode",
                             onTap: () {
-                              CustomNavigator.pushAndRemoveSettingsUntil(
+                              navigatorService.pushAndRemoveSettingsUntil(
                                 context,
                                 ThemingPanel(),
                                     (route) => route.isFirst,
@@ -234,7 +232,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             backgroundColor: tileColor,
                             title: "Media Settings",
                             onTap: () {
-                              CustomNavigator.pushAndRemoveSettingsUntil(
+                              navigatorService.pushAndRemoveSettingsUntil(
                                 context,
                                 AttachmentPanel(),
                                     (route) => route.isFirst,
@@ -257,7 +255,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             backgroundColor: tileColor,
                             title: "Notification Settings",
                             onTap: () {
-                              CustomNavigator.pushAndRemoveSettingsUntil(
+                              navigatorService.pushAndRemoveSettingsUntil(
                                 context,
                                 NotificationPanel(),
                                     (route) => route.isFirst,
@@ -280,7 +278,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             backgroundColor: tileColor,
                             title: "Chat List Settings",
                             onTap: () {
-                              CustomNavigator.pushAndRemoveSettingsUntil(
+                              navigatorService.pushAndRemoveSettingsUntil(
                                 context,
                                 ChatListPanel(),
                                     (route) => route.isFirst,
@@ -303,7 +301,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             backgroundColor: tileColor,
                             title: "Conversation Settings",
                             onTap: () {
-                              CustomNavigator.pushAndRemoveSettingsUntil(
+                              navigatorService.pushAndRemoveSettingsUntil(
                                 context,
                                 ConversationPanel(),
                                     (route) => route.isFirst,
@@ -327,7 +325,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                               backgroundColor: tileColor,
                               title: "Desktop Settings",
                               onTap: () {
-                                CustomNavigator.pushAndRemoveSettingsUntil(
+                                navigatorService.pushAndRemoveSettingsUntil(
                                   context,
                                   DesktopPanel(),
                                       (route) => route.isFirst,
@@ -351,7 +349,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             backgroundColor: tileColor,
                             title: "Misc and Advanced Settings",
                             onTap: () {
-                              CustomNavigator.pushAndRemoveSettingsUntil(
+                              navigatorService.pushAndRemoveSettingsUntil(
                                 context,
                                 MiscPanel(),
                                     (route) => route.isFirst,
@@ -381,7 +379,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             "Private API ${SettingsManager().settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}",
                             trailing: nextIcon,
                             onTap: () async {
-                              CustomNavigator.pushAndRemoveSettingsUntil(
+                              navigatorService.pushAndRemoveSettingsUntil(
                                 context,
                                 PrivateAPIPanel(),
                                     (route) => route.isFirst,
@@ -409,7 +407,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             "Redacted Mode ${SettingsManager().settings.redactedMode.value ? "Enabled" : "Disabled"}",
                             trailing: nextIcon,
                             onTap: () async {
-                              CustomNavigator.pushAndRemoveSettingsUntil(
+                              navigatorService.pushAndRemoveSettingsUntil(
                                 context,
                                 RedactedModePanel(),
                                     (route) => route.isFirst,
@@ -463,7 +461,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             title: "About & Links",
                             subtitle: "Donate, Rate, Changelog, & More",
                             onTap: () {
-                              CustomNavigator.pushAndRemoveSettingsUntil(
+                              navigatorService.pushAndRemoveSettingsUntil(
                                 context,
                                 AboutPanel(),
                                     (route) => route.isFirst,
@@ -684,7 +682,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             SettingsTile(
                               backgroundColor: tileColor,
                               onTap: () async {
-                                CustomNavigator.pushAndRemoveSettingsUntil(
+                                navigatorService.pushAndRemoveSettingsUntil(
                                   context,
                                   TroubleshootPanel(),
                                       (route) => route.isFirst,
@@ -705,7 +703,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
               ]
           ),
           right: LayoutBuilder(builder: (context, constraints) {
-            CustomNavigator.maxWidthSettings = constraints.maxWidth;
+            navigatorService.maxWidthSettings = constraints.maxWidth;
             return WillPopScope(
               onWillPop: () async {
                 Get.until((route) {
