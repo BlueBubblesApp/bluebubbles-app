@@ -4,7 +4,6 @@ import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:bluebubbles/services/network/http_service.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -20,7 +19,6 @@ import 'package:bluebubbles/layouts/startup/upgrading_db.dart';
 import 'package:bluebubbles/layouts/startup/testing_mode.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -647,7 +645,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     /* ----- ANDROID BACKGROUND ISOLATE INITIALIZATION ----- */
     if (!kIsWeb && !kIsDesktop && !LifeCycleManager().isBubble) {
       // This initialization sets the function address in the native code to be used later
-      BackgroundIsolateInterface.initialize();
+      BackgroundIsolate.initialize();
       // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
       NotificationManager().createNotificationChannel(
         NotificationManager.NEW_MESSAGE_CHANNEL,
