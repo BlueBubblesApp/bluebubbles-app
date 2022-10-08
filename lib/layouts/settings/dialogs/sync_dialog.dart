@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';

@@ -1,5 +1,5 @@
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/conversation_list_fab.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/footer/samsung_footer.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/header/material_header.dart';

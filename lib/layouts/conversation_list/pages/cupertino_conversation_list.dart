@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
@@ -12,7 +12,6 @@ import 'package:bluebubbles/layouts/conversation_list/widgets/header/cupertino_h
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -85,7 +84,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
               controller: controller.iosScrollController,
               physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                   ? NeverScrollableScrollPhysics()
-                  : ThemeManager().scrollPhysics,
+                  : themes.scrollPhysics,
               slivers: <Widget>[
                 if (!showArchived && !showUnknown)
                   CupertinoHeader(controller: controller),

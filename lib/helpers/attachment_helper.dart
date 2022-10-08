@@ -3,7 +3,7 @@ import 'dart:io' show File;
 import 'dart:isolate';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
 import 'package:bluebubbles/helpers/utils.dart';

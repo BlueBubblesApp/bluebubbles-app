@@ -2,17 +2,15 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/services/network/http_service.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/darty.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/share.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
@@ -191,7 +189,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                     child: Container(
-                      color: oledDarkTheme.colorScheme.properSurface.withOpacity(0.3),
+                      color: Colors.grey.withOpacity(0.3),
                     ),
                   ),
                 ),

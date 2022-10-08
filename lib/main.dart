@@ -5,9 +5,8 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
@@ -36,7 +35,6 @@ import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 // ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
@@ -55,7 +53,6 @@ import 'package:idb_shim/idb_browser.dart';
 import 'package:idb_shim/idb_shim.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:material_color_utilities/palettes/core_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' show basename, dirname, join;
 import 'package:path/path.dart' as p;
@@ -79,7 +76,6 @@ final RxBool fontExistsOnDisk = false.obs;
 
 late SharedPreferences prefs;
 PackageInfo? packageInfo;
-Color? windowsAccentColor;
 
 late final FirebaseApp app;
 late final Store store;
@@ -93,7 +89,6 @@ late final Box<ThemeStruct> themeBox;
 late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
 late final Database db;
-late final CorePalette? monetPalette;
 
 String? _recentIntent;
 String? get recentIntent => _recentIntent;
@@ -128,6 +123,7 @@ Future<Null> initApp() async {
   await Logger.init();
   Logger.startup.value = true;
   Logger.info('Startup Logs');
+  await themes.init();
 
   /* ----- RANDOM STUFF INITIALIZATION ----- */
   HttpOverrides.global = BadCertOverride();
@@ -224,7 +220,7 @@ Future<Null> initApp() async {
         if (themeBox.isEmpty()) {
           prefs.setString("selected-dark", "OLED Dark");
           prefs.setString("selected-light", "Bright White");
-          themeBox.putMany(Themes.defaultThemes);
+          themeBox.putMany(themes.defaultThemes);
         }
       }
 
@@ -312,9 +308,6 @@ Future<Null> initApp() async {
 
       /* ----- PHONE NUMBER FORMATTING INITIALIZATION ----- */
       await FlutterLibphonenumber().init();
-
-      /* ----- MATERIAL YOU COLOR INITIALIZATION ----- */
-      monetPalette = await DynamicColorPlugin.getCorePalette();
     }
 
     /* ----- DESKTOP SPECIFIC INITIALIZATION ----- */
@@ -371,11 +364,6 @@ Future<Null> initApp() async {
         await WindowManager.instance.setTitle('BlueBubbles');
         await WindowManager.instance.show();
       });
-
-      /* ----- ACCENT COLOR INITIALIZATION ----- */
-      if (Platform.isWindows) {
-        windowsAccentColor = await DynamicColorPlugin.getAccentColor();
-      }
 
       /* ----- GIPHY API KEY INITIALIZATION ----- */
       await dotenv.load(fileName: '.env');
@@ -445,8 +433,7 @@ Future<Null> initApp() async {
     ThemeData light = ThemeStruct.getLightTheme().data;
     ThemeData dark = ThemeStruct.getDarkTheme().data;
 
-    final tuple = Platform.isWindows
-        ? applyWindowsAccent(light, dark) : applyMonet(light, dark);
+    final tuple = themes.getStructsFromData(light, dark);
     light = tuple.item1;
     dark = tuple.item2;
 

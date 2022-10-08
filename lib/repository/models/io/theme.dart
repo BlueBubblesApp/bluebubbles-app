@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:core';
 
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -40,10 +40,10 @@ class ThemeStruct {
     required this.name,
     this.gradientBg = false,
     ThemeData? themeData,
-  }) : data = themeData ?? whiteLightTheme;
+  }) : data = themeData ?? themes.whiteLightTheme;
 
   bool get isPreset =>
-      Themes.defaultThemes.map((e) => e.name).contains(name);
+      themes.defaultThemes.map((e) => e.name).contains(name);
 
   ThemeStruct save({bool updateIfNotAbsent = true}) {
     store.runInTransaction(TxMode.write, () {
@@ -75,7 +75,7 @@ class ThemeStruct {
     query.limit = 1;
     final result = query.findFirst();
     if (result == null) {
-      return Themes.defaultThemes[1];
+      return themes.defaultThemes[1];
     }
     return result;
   }
@@ -86,7 +86,7 @@ class ThemeStruct {
     query.limit = 1;
     final result = query.findFirst();
     if (result == null) {
-      return Themes.defaultThemes[0];
+      return themes.defaultThemes[0];
     }
     return result;
   }
@@ -103,12 +103,12 @@ class ThemeStruct {
   }
 
   static List<ThemeStruct> getThemes() {
-    if (kIsWeb) return Themes.defaultThemes;
-    List<ThemeStruct> themes = themeBox.getAll();
+    if (kIsWeb) return themes.defaultThemes;
+    List<ThemeStruct> allThemes = themeBox.getAll();
     // sometimes the theme box is empty, this ensures it is never empty when queried
-    if (themes.isEmpty) themeBox.putMany(Themes.defaultThemes);
-    themes = themeBox.getAll();
-    return themes;
+    if (allThemes.isEmpty) themeBox.putMany(themes.defaultThemes);
+    allThemes = themeBox.getAll();
+    return allThemes;
   }
 
   Map<String, dynamic> toMap() => {
@@ -285,7 +285,7 @@ class ThemeStruct {
   Map<String, Color> colors(bool dark, {bool returnMaterialYou = true}) {
     ThemeData finalData = data;
     if (returnMaterialYou) {
-      final tuple = Platform.isWindows ? applyWindowsAccent(data, data) : applyMonet(data, data);
+      final tuple = themes.getStructsFromData(data, data);
       if (dark) {
         finalData = tuple.item2;
       } else {

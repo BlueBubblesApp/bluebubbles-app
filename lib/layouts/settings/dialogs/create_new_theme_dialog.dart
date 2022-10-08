@@ -1,10 +1,10 @@
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -33,8 +33,8 @@ class CreateNewThemeDialog extends StatelessWidget {
               showSnackbar("Error", "Please use a unique name for your new theme");
             } else {
               Navigator.of(kIsDesktop ? context : _context).pop();
-              final tuple = applyMonet(currentTheme.data, currentTheme.data);
               ThemeData finalData = currentTheme.data;
+              final tuple = themes.getStructsFromData(finalData, finalData);
               if (isDarkMode) {
                 finalData = tuple.item2;
               } else {

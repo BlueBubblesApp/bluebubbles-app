@@ -1,8 +1,7 @@
 import 'dart:convert';
 
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/dialogs/sync_dialog.dart';

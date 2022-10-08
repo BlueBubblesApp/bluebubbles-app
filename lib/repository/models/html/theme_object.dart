@@ -1,10 +1,11 @@
 import 'dart:core';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/models/html/theme_entry.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
+@Deprecated('Use ThemeStruct instead.')
 class ThemeObject {
   int? id;
   String? name;
@@ -55,11 +56,11 @@ class ThemeObject {
   List<ThemeEntry> fetchData() {
     if (isPreset && !name!.contains("Music")) {
       if (name == "OLED Dark") {
-        data = oledDarkTheme;
+        data = themes.oledDarkTheme;
       } else if (name == "Bright White") {
-        data = whiteLightTheme;
+        data = themes.whiteLightTheme;
       } else if (name == "Nord Theme") {
-        data = nordDarkTheme;
+        data = themes.nordDarkTheme;
       }
 
       entries = toEntries();

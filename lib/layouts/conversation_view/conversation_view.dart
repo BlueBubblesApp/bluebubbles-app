@@ -7,9 +7,8 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
@@ -27,7 +26,6 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -184,8 +182,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void getAdjustBackground() async {
     var lightTheme = ThemeStruct.getLightTheme();
     var darkTheme = ThemeStruct.getDarkTheme();
-    if ((lightTheme.gradientBg && !ThemeManager().inDarkMode(Get.context!)) ||
-        (darkTheme.gradientBg && ThemeManager().inDarkMode(Get.context!))) {
+    if ((lightTheme.gradientBg && !themes.inDarkMode(Get.context!)) ||
+        (darkTheme.gradientBg && themes.inDarkMode(Get.context!))) {
       if (adjustBackground.value != true) adjustBackground.value = true;
     } else {
       if (adjustBackground.value != false) adjustBackground.value = false;

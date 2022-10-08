@@ -1,11 +1,9 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/dialogs/create_new_theme_dialog.dart';
-import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/content/advanced_theming_tile.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
@@ -204,11 +202,11 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                 } else if (currentTheme.name == "Music Theme ☀" ||
                     currentTheme.name == "Music Theme 🌙") {
                   if (!widget.isDarkMode) {
-                    ThemeStruct previousDark = revertToPreviousDarkTheme();
+                    ThemeStruct previousDark = themes.revertToPreviousDarkTheme();
                     SettingsManager().saveSelectedTheme(context,
                         selectedLightTheme: value, selectedDarkTheme: previousDark);
                   } else {
-                    ThemeStruct previousLight = revertToPreviousLightTheme();
+                    ThemeStruct previousLight = themes.revertToPreviousLightTheme();
                     SettingsManager().saveSelectedTheme(context,
                         selectedLightTheme: previousLight, selectedDarkTheme: value);
                   }
@@ -353,7 +351,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                     allThemes.removeWhere((element) => element == currentTheme);
                     currentTheme.delete();
                     currentTheme =
-                      widget.isDarkMode ? revertToPreviousDarkTheme() : revertToPreviousLightTheme();
+                      widget.isDarkMode ? themes.revertToPreviousDarkTheme() : themes.revertToPreviousLightTheme();
                     allThemes = ThemeStruct.getThemes();
                     if (widget.isDarkMode) {
                       SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);

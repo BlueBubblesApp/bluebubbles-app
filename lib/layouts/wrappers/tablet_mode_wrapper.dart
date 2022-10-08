@@ -1,5 +1,4 @@
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/main.dart';

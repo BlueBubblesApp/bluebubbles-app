@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:core';
 
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
@@ -31,10 +31,10 @@ class ThemeStruct {
     required this.name,
     this.gradientBg = false,
     ThemeData? themeData,
-  }) : data = themeData ?? whiteLightTheme;
+  }) : data = themeData ?? themes.whiteLightTheme;
 
   bool get isPreset =>
-      Themes.defaultThemes.map((e) => e.name).contains(name);
+      themes.defaultThemes.map((e) => e.name).contains(name);
 
   ThemeStruct save({bool updateIfNotAbsent = true}) {
     return this;
@@ -46,12 +46,12 @@ class ThemeStruct {
 
   static ThemeStruct getLightTheme() {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    return Themes.defaultThemes[1];
+    return themes.defaultThemes[1];
   }
 
   static ThemeStruct getDarkTheme() {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    return Themes.defaultThemes[0];
+    return themes.defaultThemes[0];
   }
 
   static ThemeStruct? findOne(String name) {
@@ -60,7 +60,7 @@ class ThemeStruct {
 
   static List<ThemeStruct> getThemes() {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    return Themes.defaultThemes;
+    return themes.defaultThemes;
   }
 
   Map<String, dynamic> toMap() => {
@@ -244,7 +244,7 @@ class ThemeStruct {
   Map<String, Color> colors(bool dark, {bool returnMaterialYou = true}) {
     ThemeData finalData = data;
     if (returnMaterialYou) {
-      final tuple = Platform.isWindows ? applyWindowsAccent(data, data) : applyMonet(data, data);
+      final tuple = themes.getStructsFromData(data, data);
       if (dark) {
         finalData = tuple.item2;
       } else {

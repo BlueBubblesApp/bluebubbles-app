@@ -8,8 +8,8 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/emoji_regex.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -464,36 +464,6 @@ String stripHtmlTags(String? htmlString) {
 //   return hash;
 // }
 
-List<Color> toColorGradient(String? str) {
-  if (isNullOrEmpty(str)!) return [HexColor("686868"), HexColor("928E8E")];
-
-  int total = 0;
-  for (int i = 0; i < (str ?? "").length; i++) {
-    total += str!.codeUnitAt(i);
-  }
-
-  Random random = Random(total);
-  int seed = random.nextInt(7);
-
-  // These are my arbitrary weights. It's based on what I found
-  // to be a good amount of each color
-  if (seed == 0) {
-    return [HexColor("fd678d"), HexColor("ff8aa8")]; // Pink
-  } else if (seed == 1) {
-    return [HexColor("6bcff6"), HexColor("94ddfd")]; // Blue
-  } else if (seed == 2) {
-    return [HexColor("fea21c"), HexColor("feb854")]; // Orange
-  } else if (seed == 3) {
-    return [HexColor("5ede79"), HexColor("8de798")]; // Green
-  } else if (seed == 4) {
-    return [HexColor("ffca1c"), HexColor("fcd752")]; // Yellow
-  } else if (seed == 5) {
-    return [HexColor("ff534d"), HexColor("fd726a")]; // Red
-  } else {
-    return [HexColor("a78df3"), HexColor("bcabfc")]; // Purple
-  }
-}
-
 Size getGifDimensions(Uint8List bytes) {
   String hexString = "";
 
@@ -512,12 +482,6 @@ Size getGifDimensions(Uint8List bytes) {
   Logger.debug("GIF height: $height");
   Size size = Size(width.toDouble(), height.toDouble());
   return size;
-}
-
-SystemUiOverlayStyle getBrightness(BuildContext context) {
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark
-      ? SystemUiOverlayStyle.light
-      : SystemUiOverlayStyle.dark;
 }
 
 /// Take the passed [address] or serverAddress from Settings
@@ -775,10 +739,6 @@ extension ConditionlAdd on RxMap {
     this.value[key] = value;
     if (shouldRefresh) refresh();
   }
-}
-
-extension OppositeBrightness on Brightness {
-  Brightness get opposite => this == Brightness.light ? Brightness.dark : Brightness.light;
 }
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;

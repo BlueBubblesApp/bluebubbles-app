@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/startup/upgrading_db.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -59,11 +58,6 @@ backgroundIsolateEntrypoint() async {
     messageBox = store.box<Message>();
     scheduledBox = store.box<ScheduledMessage>();
     themeBox = store.box<ThemeStruct>();
-    if (themeBox.isEmpty()) {
-      prefs.setString("selected-dark", "OLED Dark");
-      prefs.setString("selected-light", "Bright White");
-      themeBox.putMany(Themes.defaultThemes);
-    }
   }
 
   if (!await objectBoxDirectory.exists() && await File(sqlitePath).exists()) {

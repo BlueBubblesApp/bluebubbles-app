@@ -1,11 +1,10 @@
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -25,7 +24,7 @@ class AdvancedThemingTile extends StatefulWidget {
 class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
   @override
   Widget build(BuildContext context) {
-    final textColor = widget.tuple.item2?.value ?? whiteLightTheme.textTheme.titleMedium?.color;
+    final textColor = widget.tuple.item2?.value ?? Colors.black;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: ClipRRect(
@@ -33,7 +32,7 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
         child: Material(
           color: widget.tuple.item1.value,
           child: Container(
-            decoration: widget.tuple.item1.value.computeDifference(ThemeManager().inDarkMode(context)
+            decoration: widget.tuple.item1.value.computeDifference(themes.inDarkMode(context)
                 || SettingsManager().settings.skin.value == Skins.Samsung
                 ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface) < 15 ? BoxDecoration(
               border: Border.all(width: 0.5, color: context.theme.colorScheme.outline),
@@ -121,13 +120,13 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
                   Icon(
                     Icons.color_lens,
                     size: 40,
-                    color: textColor!.computeDifference(widget.tuple.item1.value) < 15 ? widget.tuple.item1.value.lightenOrDarken(50) : textColor,
+                    color: textColor.computeDifference(widget.tuple.item1.value) < 15 ? widget.tuple.item1.value.lightenOrDarken(50) : textColor,
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
                       widget.tuple.item1.key + (widget.tuple.item2 != null ? " / ${widget.tuple.item2!.key}" : ""),
-                      style: whiteLightTheme.textTheme.titleMedium?.copyWith(color: textColor.computeDifference(widget.tuple.item1.value) < 15 ? widget.tuple.item1.value.lightenOrDarken(20) : textColor),
+                      style: context.textTheme.titleMedium?.copyWith(color: textColor.computeDifference(widget.tuple.item1.value) < 15 ? widget.tuple.item1.value.lightenOrDarken(20) : textColor),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -135,7 +134,8 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
               ),
             ),
           )
-        ),),
+        )
+      ),
     );
   }
 

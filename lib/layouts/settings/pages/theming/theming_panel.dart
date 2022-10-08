@@ -1,15 +1,12 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/services/network/http_service.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/settings/pages/theming/avatar/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/layouts/settings/pages/theming/avatar/custom_avatar_panel.dart';
-import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/settings/pages/theming/advanced/advanced_theming_panel.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
@@ -21,7 +18,6 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -356,15 +352,12 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         title: "Use Windows Accent Color",
                         subtitle: "Apply the Windows accent color to your theme",
                         onChanged: (value) async {
-                          if (value) {
-                            windowsAccentColor = await DynamicColorPlugin.getAccentColor();
-                          }
                           SettingsManager().settings.useWindowsAccent.value = value;
                           saveSettings();
-                          loadTheme(context);
+                          await themes.refreshWindowsAccent(context);
                         },
                       )),
-                    if (!kIsWeb && !kIsDesktop && monetPalette != null)
+                    if (!kIsWeb && !kIsDesktop && themes.monetPalette != null)
                       Obx(() {
                         if (iOS) {
                           return SettingsTile(
@@ -380,28 +373,28 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           return const SizedBox.shrink();
                         }
                       }),
-                    if (!kIsWeb && !kIsDesktop && monetPalette != null)
+                    if (!kIsWeb && !kIsDesktop && themes.monetPalette != null)
                       GestureDetector(
                         onTap: () {
                           showMonetDialog(context);
                         },
                         child: SettingsOptions<Monet>(
                           initial: SettingsManager().settings.monetTheming.value,
-                          onChanged: (val) {
+                          onChanged: (val) async {
                             // disable colors from music
                             final currentTheme = ThemeStruct.getLightTheme();
                             if (currentTheme.name == "Music Theme ☀" ||
                                 currentTheme.name == "Music Theme 🌙") {
                               SettingsManager().settings.colorsFromMedia.value = false;
                               SettingsManager().saveSettings(SettingsManager().settings);
-                              ThemeStruct previousDark = revertToPreviousDarkTheme();
-                              ThemeStruct previousLight = revertToPreviousLightTheme();
+                              ThemeStruct previousDark = themes.revertToPreviousDarkTheme();
+                              ThemeStruct previousLight = themes.revertToPreviousLightTheme();
                               SettingsManager().saveSelectedTheme(context,
                                   selectedLightTheme: previousLight, selectedDarkTheme: previousDark);
                             }
                             SettingsManager().settings.monetTheming.value = val ?? Monet.none;
                             saveSettings();
-                            loadTheme(context);
+                            await themes.refreshMonet(context);
                           },
                           options: Monet.values,
                           textProcessing: (val) => val.toString().split(".").last,
@@ -412,7 +405,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           secondaryColor: headerColor,
                         ),
                       ),
-                    if (!kIsWeb && !kIsDesktop && monetPalette != null)
+                    if (!kIsWeb && !kIsDesktop && themes.monetPalette != null)
                       Container(
                         color: tileColor,
                         child: Padding(

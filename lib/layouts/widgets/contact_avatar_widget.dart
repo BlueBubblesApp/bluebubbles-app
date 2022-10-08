@@ -1,13 +1,12 @@
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
@@ -137,7 +136,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Color tileColor = ThemeManager().inDarkMode(context)
+    Color tileColor = themes.inDarkMode(context)
         ? context.theme.colorScheme.properSurface
         : context.theme.colorScheme.background;
 

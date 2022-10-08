@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/setup/pages/page_template.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

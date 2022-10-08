@@ -3,9 +3,8 @@ import 'dart:math';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -224,9 +223,9 @@ class ThemeSelector extends StatelessWidget {
                                               width: MediaQuery.of(context).size.width,
                                               height: MediaQuery.of(context).size.height,
                                               child: Theme(
-                                                data: whiteLightTheme,
+                                                data: themes.whiteLightTheme,
                                                 child: Container(
-                                                  color: whiteLightTheme.backgroundColor,
+                                                  color: themes.whiteLightTheme.backgroundColor,
                                                   child: Padding(
                                                     padding: const EdgeInsets.only(bottom: 28.0),
                                                     child: Skin(
@@ -252,7 +251,7 @@ class ThemeSelector extends StatelessWidget {
                                                                           address: "You"
                                                                       ),
                                                                     ]
-                                                                ), whiteLightTheme) as PreferredSizeWidget?,
+                                                                ), themes.whiteLightTheme) as PreferredSizeWidget?,
                                                                 body: controller.messagesView
                                                             );
                                                           }
@@ -302,9 +301,9 @@ class ThemeSelector extends StatelessWidget {
                                               width: MediaQuery.of(context).size.width,
                                               height: MediaQuery.of(context).size.height,
                                               child: Theme(
-                                                data: oledDarkTheme,
+                                                data: themes.oledDarkTheme,
                                                 child: Container(
-                                                  color: oledDarkTheme.backgroundColor,
+                                                  color: themes.oledDarkTheme.backgroundColor,
                                                   child: Padding(
                                                     padding: const EdgeInsets.only(bottom: 28.0),
                                                     child: Skin(
@@ -312,7 +311,7 @@ class ThemeSelector extends StatelessWidget {
                                                       child: Builder(
                                                           builder: (context) {
                                                             return Scaffold(
-                                                                backgroundColor: oledDarkTheme.backgroundColor,
+                                                                backgroundColor: themes.oledDarkTheme.backgroundColor,
                                                                 appBar: buildConversationViewHeader(context, Chat(
                                                                     id: 69,
                                                                     guid: 'theme-selector',
@@ -331,7 +330,7 @@ class ThemeSelector extends StatelessWidget {
                                                                           address: "You"
                                                                       ),
                                                                     ]
-                                                                ), oledDarkTheme) as PreferredSizeWidget?,
+                                                                ), themes.oledDarkTheme) as PreferredSizeWidget?,
                                                                 body: controller.messagesView
                                                             );
                                                           }
@@ -378,7 +377,7 @@ class ThemeSelector extends StatelessWidget {
                                           Material(
                                             shape: TriangleBorder(section: Section.TOP),
                                             clipBehavior: Clip.antiAlias,
-                                            color: whiteLightTheme.backgroundColor,
+                                            color: themes.whiteLightTheme.backgroundColor,
                                             child: AbsorbPointer(
                                               absorbing: true,
                                               child: SizedBox.expand(
@@ -389,15 +388,15 @@ class ThemeSelector extends StatelessWidget {
                                                         width: MediaQuery.of(context).size.width,
                                                         height: MediaQuery.of(context).size.height,
                                                         child: Theme(
-                                                          data: whiteLightTheme,
+                                                          data: themes.whiteLightTheme,
                                                           child: Container(
-                                                            color: whiteLightTheme.backgroundColor,
+                                                            color: themes.whiteLightTheme.backgroundColor,
                                                             child: Padding(
                                                               padding: const EdgeInsets.only(bottom: 28.0),
                                                               child: Builder(
                                                                   builder: (context) {
                                                                     return Scaffold(
-                                                                        backgroundColor: whiteLightTheme.backgroundColor,
+                                                                        backgroundColor: themes.whiteLightTheme.backgroundColor,
                                                                         appBar: buildConversationViewHeader(context, Chat(
                                                                             id: 69,
                                                                             guid: 'theme-selector',
@@ -416,7 +415,7 @@ class ThemeSelector extends StatelessWidget {
                                                                                   address: "You"
                                                                               ),
                                                                             ]
-                                                                        ), whiteLightTheme) as PreferredSizeWidget?,
+                                                                        ), themes.whiteLightTheme) as PreferredSizeWidget?,
                                                                         body: controller.messagesView
                                                                     );
                                                                   }
@@ -432,7 +431,7 @@ class ThemeSelector extends StatelessWidget {
                                           Material(
                                             shape: TriangleBorder(section: Section.BOTTOM),
                                             clipBehavior: Clip.antiAlias,
-                                            color: oledDarkTheme.backgroundColor,
+                                            color: themes.oledDarkTheme.backgroundColor,
                                             child: AbsorbPointer(
                                               absorbing: true,
                                               child: SizedBox.expand(
@@ -443,15 +442,15 @@ class ThemeSelector extends StatelessWidget {
                                                         width: MediaQuery.of(context).size.width,
                                                         height: MediaQuery.of(context).size.height,
                                                         child: Theme(
-                                                          data: oledDarkTheme,
+                                                          data: themes.oledDarkTheme,
                                                           child: Container(
-                                                            color: oledDarkTheme.backgroundColor,
+                                                            color: themes.oledDarkTheme.backgroundColor,
                                                             child: Padding(
                                                               padding: const EdgeInsets.only(bottom: 28.0),
                                                               child: Builder(
                                                                   builder: (context) {
                                                                     return Scaffold(
-                                                                        backgroundColor: oledDarkTheme.backgroundColor,
+                                                                        backgroundColor: themes.oledDarkTheme.backgroundColor,
                                                                         appBar: buildConversationViewHeader(context, Chat(
                                                                             id: 69,
                                                                             guid: 'theme-selector',
@@ -470,7 +469,7 @@ class ThemeSelector extends StatelessWidget {
                                                                                   address: "You"
                                                                               ),
                                                                             ]
-                                                                        ), oledDarkTheme) as PreferredSizeWidget?,
+                                                                        ), themes.oledDarkTheme) as PreferredSizeWidget?,
                                                                         body: controller.messagesView
                                                                     );
                                                                   }

@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:emojis/emojis.dart';
 import 'package:flutter/foundation.dart';

@@ -1,7 +1,6 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
@@ -146,8 +145,8 @@ class OverflowMenu extends StatelessWidget {
                       FCMData.deleteFcmData();
                       prefs.setString("selected-dark", "OLED Dark");
                       prefs.setString("selected-light", "Bright White");
-                      themeBox.putMany(Themes.defaultThemes);
-                      loadTheme(context);
+                      themeBox.putMany(themes.defaultThemes);
+                      themes.loadTheme(context);
                       Get.offAll(() => WillPopScope(
                         onWillPop: () async => false,
                         child: TitleBarWrapper(child: SetupView()),

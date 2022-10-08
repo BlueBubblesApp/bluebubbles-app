@@ -1,10 +1,10 @@
 import 'dart:core';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/theme_entry.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
 
+@Deprecated('Use ThemeStruct instead')
 @Entity()
 class ThemeObject {
   int? id;
@@ -72,11 +73,11 @@ class ThemeObject {
   List<ThemeEntry> fetchData() {
     if (isPreset && !name!.contains("Music")) {
       if (name == "OLED Dark") {
-        data = oledDarkTheme;
+        data = themes.oledDarkTheme;
       } else if (name == "Bright White") {
-        data = whiteLightTheme;
+        data = themes.whiteLightTheme;
       } else if (name == "Nord Theme") {
-        data = nordDarkTheme;
+        data = themes.nordDarkTheme;
       }
 
       entries = toEntries();
@@ -85,10 +86,10 @@ class ThemeObject {
     if (kIsWeb) return entries;
     final themeEntries = List<ThemeEntry>.from(this.themeEntries);
     if (name == "Music Theme (Light)" && themeEntries.isEmpty) {
-      data = whiteLightTheme;
+      data = themes.whiteLightTheme;
       entries = toEntries();
     } else if (name == "Music Theme (Dark)" && themeEntries.isEmpty) {
-      data = oledDarkTheme;
+      data = themes.oledDarkTheme;
       entries = toEntries();
     } else if (themeEntries.isNotEmpty) {
       entries = themeEntries;

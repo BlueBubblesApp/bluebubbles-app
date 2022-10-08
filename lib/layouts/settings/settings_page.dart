@@ -1,9 +1,7 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/settings/theme_helpers_mixin.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/dialogs/backup_restore_dialog.dart';
 import 'package:bluebubbles/layouts/settings/pages/misc/about_panel.dart';
@@ -652,8 +650,8 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                                             FCMData.deleteFcmData();
                                             prefs.setString("selected-dark", "OLED Dark");
                                             prefs.setString("selected-light", "Bright White");
-                                            themeBox.putMany(Themes.defaultThemes);
-                                            loadTheme(context);
+                                            themeBox.putMany(themes.defaultThemes);
+                                            themes.loadTheme(context);
                                             Get.offAll(() => WillPopScope(
                                               onWillPop: () async => false,
                                               child: TitleBarWrapper(child: SetupView()),

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/database.dart';
@@ -124,7 +123,7 @@ class SettingsManager {
     if (selectedLightTheme != null) prefs.setString("selected-light", selectedLightTheme.name);
     if (selectedDarkTheme != null) prefs.setString("selected-dark", selectedDarkTheme.name);
 
-    loadTheme(context);
+    // todo loadTheme(context);
   }
 
   /// Updates FCM data and saves to disk.
