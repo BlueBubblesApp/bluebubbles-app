@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:animations/animations.dart';
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -17,6 +16,7 @@ import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -50,7 +50,7 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
     super.initState();
 
     // check active downloader otherwise check file exists
-    if (attachmentDownloader.downloaders.contains(attachment.guid)) {
+    if (attachmentDownloader.getController(attachment.guid) != null) {
       controller = attachmentDownloader.getController(attachment.guid);
       controller!.completeFuncs.add((file) {
         setState(() {

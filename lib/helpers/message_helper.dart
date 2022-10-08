@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/emoji_regex.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
@@ -15,6 +14,7 @@ import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
@@ -178,17 +178,16 @@ class MessageHelper {
   }
 
   static Future<void> downloadAttachmentSync(Attachment file) {
-    Completer<void> completer = Completer();
-    Get.put(
-        AttachmentDownloadController(
-            attachment: file,
-            onComplete: (file) {
-              completer.complete();
-            },
-            onError: () {
-              completer.completeError(Error());
-            }),
-        tag: file.guid);
+    Completer<void> completer = Completer<void>();
+    attachmentDownloader.startDownload(
+        file,
+        onComplete: (file) {
+          completer.complete();
+        },
+        onError: () {
+          completer.completeError(Error());
+        }
+    );
 
     return completer.future;
   }

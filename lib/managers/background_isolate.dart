@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/startup/upgrading_db.dart';
@@ -148,5 +147,4 @@ callbackHandler() async {
   await SettingsManager().getSavedSettings(headless: true);
   if (!ContactManager().hasFetchedContacts) await ContactManager().loadContacts(headless: true);
   MethodChannelInterface().init(customChannel: _backgroundChannel);
-  Get.put(AttachmentDownloadService());
 }

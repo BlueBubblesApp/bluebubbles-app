@@ -3,7 +3,6 @@ import 'dart:io' show File;
 import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -12,6 +11,7 @@ import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:exif/exif.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
@@ -267,7 +267,7 @@ class AttachmentHelper {
 
   static dynamic getContent(Attachment attachment, {String? path, bool autoDownload = true}) {
     if (kIsWeb && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment" && autoDownload) {
-      return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
+      return attachmentDownloader.startDownload(attachment);
     } else if (kIsWeb) {
       return PlatformFile(
         name: attachment.transferName!,
@@ -278,8 +278,8 @@ class AttachmentHelper {
     }
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
-    if (Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
-      return Get.find<AttachmentDownloadService>().getController(attachment.guid);
+    if (attachmentDownloader.getController(attachment.guid) != null) {
+      return attachmentDownloader.getController(attachment.guid);
     } else if (!kIsWeb &&
         (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
             attachment.guid == "redacted-mode-demo-attachment" ||

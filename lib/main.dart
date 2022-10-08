@@ -5,7 +5,6 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/services/network/http_service.dart';
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -132,7 +131,6 @@ Future<Null> initApp() async {
   await Logger.init();
   Logger.startup.value = true;
   Logger.info('Startup Logs');
-  Get.put(AttachmentDownloadService());
 
   /* ----- RANDOM STUFF INITIALIZATION ----- */
   HttpOverrides.global = BadCertOverride();

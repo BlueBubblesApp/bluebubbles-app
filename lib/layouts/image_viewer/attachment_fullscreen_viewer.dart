@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -20,6 +19,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import "package:flutter/material.dart";
 import 'package:flutter/services.dart';
@@ -241,8 +241,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                         Random().nextInt(100).toString()),
                                     attachment: attachment,
                                     onPressed: () {
-                                      Get.put(AttachmentDownloadController(attachment: attachment),
-                                          tag: attachment.guid);
+                                      attachmentDownloader.startDownload(attachment);
                                       content = AttachmentHelper.getContent(attachment);
                                       if (mounted) setState(() {});
                                     },

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -10,6 +9,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -46,13 +46,9 @@ class UrlPreviewController extends GetxController {
   void fetchMissingAttachments() {
     for (Attachment? attachment in linkPreviews) {
       if (!kIsWeb && AttachmentHelper.attachmentExists(attachment!)) continue;
-      Get.put(
-          AttachmentDownloadController(
-              attachment: attachment!,
-              onComplete: (_) {
-                update();
-              }),
-          tag: attachment.guid);
+      attachmentDownloader.startDownload(attachment!, onComplete: (_) {
+        update();
+      });
     }
   }
 

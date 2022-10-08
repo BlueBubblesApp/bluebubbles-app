@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:isolate';
 
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -58,7 +58,7 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
         // Check if the attachment exists
         if (await FileSystemEntity.type(pathName) == FileSystemEntityType.notFound) {
           // Download the attachment and when complete, re-render the UI
-          Get.put(AttachmentDownloadController(attachment: attachment, onComplete: (_) async {
+          attachmentDownloader.startDownload(attachment, onComplete: (_) async {
             // Make sure it downloaded correctly
             if (await FileSystemEntity.type(pathName) != FileSystemEntityType.notFound) {
               // Check via the image package to make sure this is a valid, render-able image
@@ -75,7 +75,7 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
               }
               if (mounted) setState(() {});
             }
-          }), tag: attachment.guid);
+          });
         } else {
           // Check via the image package to make sure this is a valid, render-able image
           await Isolate.spawn(

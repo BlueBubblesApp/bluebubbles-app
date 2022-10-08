@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -14,6 +13,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -43,7 +43,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
     super.initState();
     updateContent();
 
-    ever(Get.find<AttachmentDownloadService>().downloaders, (List<String> downloaders) {
+    ever(attachmentDownloader.downloaders, (List<String> downloaders) {
       if (downloaders.contains(widget.attachment.guid)) {
         if (mounted) setState(() {});
       }
@@ -62,7 +62,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
     if (await AttachmentHelper.canAutoDownload() && content is Attachment) {
       if (mounted) {
         setState(() {
-          content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
+          content = attachmentDownloader.startDownload(content);
         });
       }
     }
@@ -157,7 +157,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
     } else if (content is Attachment) {
       return AttachmentDownloaderWidget(
         onPressed: () {
-          content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
+          content = attachmentDownloader.startDownload(content);
           if (mounted) setState(() {});
         },
         attachment: content,
@@ -173,7 +173,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
           content = widget.attachment;
           return AttachmentDownloaderWidget(
             onPressed: () {
-              content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
+              content = attachmentDownloader.startDownload(content);
               if (mounted) setState(() {});
             },
             attachment: content,
