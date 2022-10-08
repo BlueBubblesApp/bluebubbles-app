@@ -1,4 +1,4 @@
-import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
+import 'package:bluebubbles/helpers/network/network_tasks.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/services/backend/sync/sync_service.dart';
 import 'package:get/get.dart';
@@ -12,12 +12,11 @@ class SetupService extends GetxService {
     sync.saveToDownloads = saveToDownloads;
     await sync.startFullSync();
     await _finishSetup();
-    await sync.startIncrementalSync();
   }
 
   Future<void> _finishSetup() async {
     SettingsManager().settings.finishedSetup.value = true;
     await SettingsManager().saveSettings();
-    fcm.registerDevice();
+    await NetworkTasks.onConnect();
   }
 }

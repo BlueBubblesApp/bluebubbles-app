@@ -34,6 +34,12 @@ class SocketService extends GetxService {
     super.onInit();
     startSocket();    
   }
+
+  @override
+  void onClose() {
+    closeSocket();
+    super.onClose();
+  }
   
   void startSocket() {
     OptionBuilder options = OptionBuilder()

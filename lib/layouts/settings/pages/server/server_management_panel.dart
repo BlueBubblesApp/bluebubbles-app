@@ -9,7 +9,6 @@ import 'package:bluebubbles/layouts/settings/dialogs/sync_dialog.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/pages/sync/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/dialogs/manual_entry_dialog.dart';
-import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -443,9 +442,9 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         SettingsManager().settings.guidAuthKey.value = fcmData[0];
                         SettingsManager().settings.serverAddress.value = sanitizeServerAddress(address: fcmData[1])!;
 
-                        SettingsManager().saveSettings(SettingsManager().settings);
+                        SettingsManager().saveSettings();
                         SettingsManager().saveFCMData(data);
-                        fcm.registerDevice();
+                        Get.reload<SocketService>(force: true);
                       }
                     },
                   ),

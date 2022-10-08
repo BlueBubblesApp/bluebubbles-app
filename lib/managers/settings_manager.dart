@@ -4,10 +4,8 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/firebase/fcm_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -129,13 +127,10 @@ class SettingsManager {
     loadTheme(context);
   }
 
-  /// Updates FCM data and saves to disk. It will also run [registerFcmDevice] automatically
-  ///
-  /// @param [data] is the [FCMData] to save
+  /// Updates FCM data and saves to disk.
   void saveFCMData(FCMData data) {
     fcmData = data;
     fcmData!.save();
-    fcm.registerDevice();
   }
 
   Future<void> resetConnection() async {
