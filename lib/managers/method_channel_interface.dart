@@ -13,7 +13,6 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/startup/testing_mode.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/alarm_manager.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
@@ -290,9 +289,6 @@ class MethodChannelInterface {
               (route) => route.isFirst,
             );
         recentIntent = null;
-        return Future.value("");
-      case "alarm-wake":
-        AlarmManager().onReceiveAlarm(call.arguments["id"]);
         return Future.value("");
       case "media-colors":
         if (!SettingsManager().settings.colorsFromMedia.value) return Future.value("");
