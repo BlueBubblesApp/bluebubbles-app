@@ -188,7 +188,6 @@ Future<Null> initApp(bool isBubble) async {
   if ((Platform.isLinux || Platform.isWindows) && kIsDesktop) {
     //ignore: unnecessary_cast, we need this as a workaround
     Directory appData = (await getApplicationSupportDirectory()) as Directory;
-    print(split(appData.absolute.path));
     if (!await Directory(join(appData.path, "objectbox")).exists()) {
       // Migrate to new appdata location if this function returns the new place and we still have the old place
       if (basename(appData.absolute.path) == "bluebubbles") {
