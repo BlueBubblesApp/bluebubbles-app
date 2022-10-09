@@ -62,8 +62,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'package:material_color_utilities/palettes/core_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path/path.dart' show basename, dirname, join;
-import 'package:path/path.dart' as p;
+import 'package:path/path.dart' show basename, dirname, join, split, joinAll;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -186,18 +185,42 @@ Future<Null> initApp(bool isBubble) async {
   };
   dynamic exception;
   StackTrace? stacktrace;
-  if ((Platform.isLinux || Platform.isWindows) && !kIsWeb) {
+  if ((Platform.isLinux || Platform.isWindows) && kIsDesktop) {
     //ignore: unnecessary_cast, we need this as a workaround
     Directory appData = (await getApplicationSupportDirectory()) as Directory;
-
-    // Migrate to new appdata location if this function returns the new place and we still have the old place
-    if (basename(appData.absolute.path) == "bluebubbles") {
-      Directory oldAppData =
-      Platform.isWindows ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app")) : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
-      if (await oldAppData.exists() && !await Directory(join(appData.path, "objectbox")).exists()) {
-        Logger.info("Copying appData to new directory");
-        copyDirectory(oldAppData, appData);
-        Logger.info("Finished migrating appData");
+    print(split(appData.absolute.path));
+    if (!await Directory(join(appData.path, "objectbox")).exists()) {
+      // Migrate to new appdata location if this function returns the new place and we still have the old place
+      if (basename(appData.absolute.path) == "bluebubbles") {
+        Directory oldAppData =
+        Platform.isWindows
+            ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app"))
+            : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
+        bool storeApp = basename(dirname(dirname(appData.absolute.path))) != "Roaming";
+        if (await oldAppData.exists()) {
+          Logger.info("Copying appData to new directory");
+          copyDirectory(oldAppData, appData);
+          Logger.info("Finished migrating appData");
+        } else if (Platform.isWindows) {
+          // Find the other appdata.
+          String appDataRoot = joinAll(split(appData.absolute.path).slice(0,4));
+          if (storeApp) {
+            // If current app is store, we look in the expected non-store location
+            oldAppData = Directory(join(appDataRoot, "Roaming", "com.bluebubbles", "bluebubbles_app"));
+            if (await oldAppData.exists()) {
+              Logger.info("Copying appData from NONSTORE location to new directory");
+              copyDirectory(oldAppData, appData);
+              Logger.info("Finished migrating appData");
+            }
+          } else {
+            oldAppData = Directory(join(appDataRoot, "Local", "Packages", "23344BlueBubbles.BlueBubbles_2fva2ntdzvhtw", "LocalCache", "Roaming", "com.bluebubbles", "bluebubbles_app"));
+            if (await oldAppData.exists()) {
+              Logger.info("Copying appData from STORE location to new directory");
+              copyDirectory(oldAppData, appData);
+              Logger.info("Finished migrating appData");
+            }
+          }
+        }
       }
     }
   }
@@ -1034,11 +1057,11 @@ Future<void> initSystemTray() async {
   final systemTray = SystemTray();
   String path;
   if (Platform.isWindows) {
-    path = p.joinAll([p.dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.ico']);
+    path = joinAll([dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.ico']);
   } else if (Platform.isMacOS) {
-    path = p.joinAll(['AppIcon']);
+    path = joinAll(['AppIcon']);
   } else {
-    path = p.joinAll([p.dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.png']);
+    path = joinAll([dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.png']);
   }
 
   // We first init the systray menu and then add the menu entries

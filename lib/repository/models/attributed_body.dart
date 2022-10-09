@@ -45,7 +45,7 @@ class Attributes {
     this.mention,
   });
 
-  final int messagePart;
+  final int? messagePart;
   final String? attachmentGuid;
   final String? mention;
 

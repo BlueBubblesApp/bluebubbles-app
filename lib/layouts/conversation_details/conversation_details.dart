@@ -424,7 +424,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               )),
                             if (!kIsWeb && !kIsDesktop)
                               SizedBox(width: 10),
-                            ConstrainedBox(constraints: BoxConstraints(maxWidth: (kIsDesktop || kIsWeb) ? 400 : double.infinity), child: Expanded(child: InkWell(
+                            InkWell(
                               onTap: () {
                                 final contact = ContactManager().getContact(chat.participants.first.address);
                                 onPressContact(contact, chat.participants.first, isEmail: true);
@@ -453,7 +453,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                   ],
                                 ),
                               ),
-                            ))),
+                            ),
                             if (!kIsWeb && !kIsDesktop)
                               SizedBox(width: 10),
                             if (!kIsWeb && !kIsDesktop)
