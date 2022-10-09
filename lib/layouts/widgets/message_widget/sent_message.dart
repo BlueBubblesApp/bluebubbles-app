@@ -863,7 +863,9 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
       }
     }
 
-    List<Widget> messagePopupColumn = List<Widget>.from(messageColumn.slice(1));
+    List<Widget> messagePopupColumn = List<Widget>.from(messageColumn.slice(msg != null &&
+        widget.olderMessage?.guid != msg.guid &&
+        widget.olderMessage?.threadOriginatorGuid != widget.message.threadOriginatorGuid ? 1 : 0));
 
     // Fourth, let's add any reactions or stickers to the widget
     if (message != null) {
