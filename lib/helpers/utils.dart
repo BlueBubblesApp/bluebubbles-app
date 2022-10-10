@@ -21,6 +21,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -35,6 +36,7 @@ import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:slugify/slugify.dart';
+import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
@@ -273,7 +275,8 @@ String buildDate(DateTime? dateTime) {
     date = "Yesterday";
   } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
     date = intl.DateFormat(SettingsManager().settings.skin.value != Skins.iOS ? "EEE" : "EEEE").format(dateTime);
-  } else if (SettingsManager().settings.skin.value == Skins.Material && DateTime.now().difference(dateTime.toLocal()).inDays <= 365) {
+  } else if (SettingsManager().settings.skin.value == Skins.Material &&
+      DateTime.now().difference(dateTime.toLocal()).inDays <= 365) {
     date = intl.DateFormat.MMMd().format(dateTime);
   } else if (SettingsManager().settings.skin.value == Skins.Samsung && DateTime.now().year == dateTime.toLocal().year) {
     date = intl.DateFormat.MMMd().format(dateTime);
@@ -381,6 +384,26 @@ String uriToFilename(String? uri, String? mimeType) {
 
   // Rebuild the filename
   return (ext != null && ext.isNotEmpty) ? '$filename.$ext' : filename;
+}
+
+Tuple2<FileType, List<String>?> extensionsHelper(String? mimeType, String? extension) {
+  if (mimeType != null) {
+    if (mimeType == "application/pdf") {
+      return Tuple2(FileType.custom, ["pdf"]);
+    } else if (mimeType == "application/zip") {
+      return Tuple2(FileType.custom, ["zip"]);
+    } else if (mimeType.startsWith("audio")) {
+      return Tuple2(FileType.audio, null);
+    } else if (mimeType.startsWith("image")) {
+      return Tuple2(FileType.image, null);
+    } else if (mimeType.startsWith("video")) {
+      return Tuple2(FileType.video, null);
+    }
+  }
+  if (extension != null) {
+    return Tuple2(FileType.custom, [extension]);
+  }
+  return Tuple2(FileType.any, null);
 }
 
 String getGroupEventText(Message message) {

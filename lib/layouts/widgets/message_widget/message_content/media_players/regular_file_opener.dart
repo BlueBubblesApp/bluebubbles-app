@@ -11,9 +11,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
-import 'package:universal_io/io.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RegularFileOpener extends StatelessWidget {
   RegularFileOpener({
@@ -28,7 +27,9 @@ class RegularFileOpener extends StatelessWidget {
   Widget build(BuildContext context) {
     IconData fileIcon = AttachmentHelper.getIcon(attachment.mimeType ?? "");
 
-    return GestureDetector(
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
       onTap: () async {
         if (kIsWeb || file.path == null) {
           final content = base64.encode(file.bytes!);
@@ -38,49 +39,7 @@ class RegularFileOpener extends StatelessWidget {
             ..click();
         } else {
           if (kIsDesktop) {
-            String? savePath = await FilePicker.platform.saveFile(
-              initialDirectory: (await getDownloadsDirectory())?.path,
-              dialogTitle: 'Choose a location to save this file',
-              fileName: file.name,
-            );
-            Logger.info(savePath);
-            if (savePath != null) {
-              if (await File(savePath).exists()) {
-                await showDialog(
-                  barrierDismissible: false,
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text(
-                        "Confirm save",
-                        style: context.theme.textTheme.titleLarge,
-                      ),
-                      content: Text("This file already exists.\nAre you sure you want to overwrite it?", style: context.theme.textTheme.bodyLarge),
-                      backgroundColor: context.theme.colorScheme.properSurface,
-                      actions: <Widget>[
-                        TextButton(
-                          child: Text("No", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        TextButton(
-                          child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
-                          onPressed: () async {
-                            File(file.path!).copy(savePath);
-                            Navigator.of(context).pop();
-                            showSnackbar('Success', 'Saved attachment to $savePath!');
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-              } else {
-                File(file.path!).copy(savePath);
-                showSnackbar('Success', 'Saved attachment to $savePath!');
-              }
-            }
+            launchUrl(Uri.file(file.path!));
             return;
           }
           try {
@@ -132,6 +91,6 @@ class RegularFileOpener extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }
