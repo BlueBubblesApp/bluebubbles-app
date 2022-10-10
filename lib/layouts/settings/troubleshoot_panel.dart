@@ -45,7 +45,15 @@ class TroubleshootPanel extends StatelessWidget {
     RxList<File>? savedLogs;
     if (kIsDesktop) {
       savedLogsDir = Directory(join(Logger.logFile.parent.path, "Saved Logs"));
-      savedLogs = RxList.from(savedLogsDir.listSync().whereType<File>().toList().reversed);
+      if (savedLogsDir.existsSync()) {
+        savedLogs = RxList.from(savedLogsDir
+            .listSync()
+            .whereType<File>()
+            .toList()
+            .reversed);
+      } else {
+        savedLogs = RxList();
+      }
     }
 
     return SettingsScaffold(
