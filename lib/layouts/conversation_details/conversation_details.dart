@@ -1168,14 +1168,14 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, int index) {
-                          return Container(
+                          return Obx(() => Container(
                             decoration: BoxDecoration(
-                              border: Border.all(color: context.theme.colorScheme.background, width: 10),
+                              border: Border.all(color: _backgroundColor.value, width: 10),
                             ),
                             child: AttachmentDetailsCard(
                               attachment: attachmentsForChat[index],
                             ),
-                          );
+                          ));
                         },
                         childCount: attachmentsForChat.length,
                       ),
