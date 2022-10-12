@@ -10,7 +10,6 @@ import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tuple/tuple.dart';
-import 'package:universal_io/io.dart';
 import 'package:version/version.dart';
 
 SettingsService settings = Get.isRegistered<SettingsService>() ? Get.find<SettingsService>() : Get.put(SettingsService());
@@ -31,7 +30,7 @@ class SettingsService extends GetxService {
         try {
           canAuthenticate = !kIsWeb && !kIsDesktop && await LocalAuthentication().isDeviceSupported();
           final mode = await settings.getDisplayMode();
-          if (mode != null) {
+          if (mode != DisplayMode.auto) {
             FlutterDisplayMode.setPreferredMode(mode);
           }
         } catch (_) {}
@@ -66,9 +65,7 @@ class SettingsService extends GetxService {
     if (updateDisplayMode && !kIsWeb && !kIsDesktop) {
       try {
         final mode = await settings.getDisplayMode();
-        if (mode != null) {
-          FlutterDisplayMode.setPreferredMode(mode);
-        }
+        FlutterDisplayMode.setPreferredMode(mode);
       } catch (_) {}
     }
   }
@@ -77,19 +74,6 @@ class SettingsService extends GetxService {
     fcmData = data;
     fcmData.save();
   }
-
-  /*Future<void> resetConnection() async {
-    if (socket.socket.connected) {
-      socket.socket.disconnect();
-    }
-
-    Settings temp = settings;
-    temp.finishedSetup.value = false;
-    temp.guidAuthKey.value = "";
-    temp.serverAddress.value = "";
-    temp.lastIncrementalSync.value = 0;
-    await saveSettings(temp);
-  }*/
 
   Future<Tuple4<int, int, String, int>> getServerDetails({bool refresh = false}) async {
     if (refresh) {
@@ -115,12 +99,12 @@ class SettingsService extends GetxService {
 
   Future<bool> get isMinSierra async {
     final val = await getServerDetails();
-    return (val.item1 ?? 0) > 10 || ((val.item1 ?? 0) == 10 && (val.item2 ?? 0) > 11);
+    return val.item1 > 10 || (val.item1 == 10 && val.item2 > 11);
   }
 
   Future<bool> get isMinBigSur async {
     final val = await getServerDetails();
-    return (val.item1 ?? 0) >= 11;
+    return val.item1 >= 11;
   }
 
   int get compressionQuality => settings.lowMemoryMode.value ? 10 : settings.previewCompressionQuality.value;
