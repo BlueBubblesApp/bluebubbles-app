@@ -1,6 +1,6 @@
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -66,7 +66,7 @@ class SettingsTextField extends StatelessWidget {
                   placeholder: placeholder ?? "Enter your text here",
                   padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.labelLarge,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
+                  autofocus: settings.settings.autoOpenKeyboard.value,
                   decoration: BoxDecoration(
                     color: Theme.of(context).backgroundColor,
                     border: Border.all(

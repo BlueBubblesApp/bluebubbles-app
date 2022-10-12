@@ -99,7 +99,7 @@ class _SchedulePanelState extends OptimizedState<SchedulePanel> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+        systemNavigationBarColor: settings.settings.immersiveMode.value
             ? Colors.transparent
             : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
@@ -134,7 +134,7 @@ class _SchedulePanelState extends OptimizedState<SchedulePanel> {
           child: Obx(
             () => CustomScrollView(
               controller: scrollController,
-              physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+              physics: (settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                   ? NeverScrollableScrollPhysics()
                   : ThemeSwitcher.getScrollPhysics(),
               slivers: <Widget>[

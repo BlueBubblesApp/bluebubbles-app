@@ -6,7 +6,6 @@ import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.da
 import 'package:bluebubbles/layouts/conversation_list/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/layouts/widgets/fade_on_scroll.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +20,7 @@ class CupertinoHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final double topMargin = context.orientation == Orientation.landscape && context.isPhone
         ? 20
-        : SettingsManager().settings.reducedForehead.value
+        : settings.settings.reducedForehead.value
         ? 20
         : kIsDesktop
         ? 40
@@ -78,7 +77,7 @@ class CupertinoHeader extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 10.0),
-                      if (SettingsManager().settings.moveChatCreatorToHeader.value)
+                      if (settings.settings.moveChatCreatorToHeader.value)
                         ClipOval(
                           child: Material(
                             color: context.theme.colorScheme.properSurface, // button color
@@ -96,11 +95,11 @@ class CupertinoHeader extends StatelessWidget {
                             ),
                           ),
                         ),
-                      if (SettingsManager().settings.moveChatCreatorToHeader.value
-                          && SettingsManager().settings.cameraFAB.value)
+                      if (settings.settings.moveChatCreatorToHeader.value
+                          && settings.settings.cameraFAB.value)
                         const SizedBox(width: 10.0),
-                      if (SettingsManager().settings.moveChatCreatorToHeader.value
-                          && SettingsManager().settings.cameraFAB.value)
+                      if (settings.settings.moveChatCreatorToHeader.value
+                          && settings.settings.cameraFAB.value)
                         ClipOval(
                           child: Material(
                             color: context.theme.colorScheme.properSurface, // button color
@@ -118,7 +117,7 @@ class CupertinoHeader extends StatelessWidget {
                             ),
                           ),
                         ),
-                      if (SettingsManager().settings.moveChatCreatorToHeader.value)
+                      if (settings.settings.moveChatCreatorToHeader.value)
                         const SizedBox(width: 10.0),
                       const OverflowMenu(),
                     ],
@@ -142,7 +141,7 @@ class CupertinoMiniHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final double topMargin = context.orientation == Orientation.landscape && context.isPhone
         ? 20
-        : SettingsManager().settings.reducedForehead.value
+        : settings.settings.reducedForehead.value
         ? 20
         : kIsDesktop
         ? 40

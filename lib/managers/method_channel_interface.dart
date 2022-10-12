@@ -18,7 +18,6 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -86,7 +85,7 @@ class MethodChannelInterface {
     // call.method is the name of the call from native code
     switch (call.method) {
       case "new-server":
-        if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
+        if (!settings.settings.finishedSetup.value) return Future.value("");
 
         // The arguments for a new server are formatted with the new server address inside square brackets
         // As such: [https://alksdjfoaehg.ngrok.io]
@@ -184,7 +183,7 @@ class MethodChannelInterface {
         // Remove the notification from that chat
         await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
 
-        if (SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
+        if (settings.settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
           await http.markChatRead(chat.guid);
         }
 
@@ -200,7 +199,7 @@ class MethodChannelInterface {
 
         return Future.value("");
       case "shareAttachments":
-        if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
+        if (!settings.settings.finishedSetup.value) return Future.value("");
         recentIntent = call.arguments["id"];
         List<PlatformFile> attachments = [];
 
@@ -253,7 +252,7 @@ class MethodChannelInterface {
         return Future.value("");
 
       case "shareText":
-        if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
+        if (!settings.settings.finishedSetup.value) return Future.value("");
         recentIntent = call.arguments["id"];
         // Get the text that was shared to the app
         String? text = call.arguments["text"];
@@ -290,7 +289,7 @@ class MethodChannelInterface {
         recentIntent = null;
         return Future.value("");
       case "media-colors":
-        if (!SettingsManager().settings.colorsFromMedia.value) return Future.value("");
+        if (!settings.settings.colorsFromMedia.value) return Future.value("");
         final Color primary = Color(call.arguments['primary']);
         final Color lightBg = Color(call.arguments['lightBg']);
         final Color darkBg = Color(call.arguments['darkBg']);
@@ -353,7 +352,7 @@ class MethodChannelInterface {
                   .tween("color2", Tween<double>(begin: 0.8, end: 1));
             }
           }
-          SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
+          themes.changeTheme(Get.context!, light: lightTheme, dark: darkTheme);
           isRunning = false;
         }
         return Future.value("");

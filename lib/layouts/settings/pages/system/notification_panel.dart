@@ -10,7 +10,6 @@ import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -42,7 +41,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
       SliverList(
         delegate: SliverChildListDelegate(
           <Widget>[
-            if (SettingsManager().settings.skin.value != Skins.Samsung)
+            if (settings.settings.skin.value != Skins.Samsung)
               Container(
                   height: 50,
                   alignment: Alignment.bottomLeft,
@@ -58,10 +57,10 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
               if (!kIsWeb)
                 Obx(() => SettingsSwitch(
                   onChanged: (bool val) {
-                    SettingsManager().settings.notifyOnChatList.value = val;
+                    settings.settings.notifyOnChatList.value = val;
                     saveSettings();
                   },
-                  initialVal: SettingsManager().settings.notifyOnChatList.value,
+                  initialVal: settings.settings.notifyOnChatList.value,
                   title: "Send Notifications on Chat List",
                   subtitle:
                   "Sends notifications for new messages while in the chat list or chat creator",
@@ -91,10 +90,10 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
               ),
               Obx(() => SettingsSwitch(
                 onChanged: (bool val) {
-                  SettingsManager().settings.notifyReactions.value = val;
+                  settings.settings.notifyReactions.value = val;
                   saveSettings();
                 },
-                initialVal: SettingsManager().settings.notifyReactions.value,
+                initialVal: settings.settings.notifyReactions.value,
                 title: "Notify for Reactions",
                 subtitle: "Sends notifications for incoming reactions",
                 backgroundColor: tileColor,
@@ -120,10 +119,10 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                                     }),
                                   if (!kIsWeb)
                                     Obx(() => SettingsOptions<String>(
-                                      initial: SettingsManager().settings.notificationSound.value,
+                                      initial: settings.settings.notificationSound.value,
                                       onChanged: (val) {
                                         if (val == null) return;
-                                        SettingsManager().settings.notificationSound.value = val;
+                                        settings.settings.notificationSound.value = val;
                                         saveSettings();
                                       },
                                       options: ["default", "twig.wav", "walrus.wav", "sugarfree.wav", "raspberry.wav"],
@@ -146,12 +145,12 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                 title: "Text Detection",
                 onTap: () async {
                   final TextEditingController controller = TextEditingController();
-                  controller.text = SettingsManager().settings.globalTextDetection.value;
+                  controller.text = settings.settings.globalTextDetection.value;
                   showDialog(
                     context: context,
                     builder: (context) => TextDetectionDialog(controller),
                   );
-                  SettingsManager().settings.globalTextDetection.value = controller.text;
+                  settings.settings.globalTextDetection.value = controller.text;
                   saveSettings();
                 },
                 backgroundColor: tileColor,
@@ -169,10 +168,10 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
               children: [
                 Obx(() => SettingsSwitch(
                   onChanged: (bool val) {
-                    SettingsManager().settings.hideTextPreviews.value = val;
+                    settings.settings.hideTextPreviews.value = val;
                     saveSettings();
                   },
-                  initialVal: SettingsManager().settings.hideTextPreviews.value,
+                  initialVal: settings.settings.hideTextPreviews.value,
                   title: "Hide Message Text",
                   subtitle: "Replaces message text with 'iMessage' in notifications",
                   backgroundColor: tileColor,
@@ -186,10 +185,10 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                 ),
                 Obx(() => SettingsSwitch(
                   onChanged: (bool val) {
-                    SettingsManager().settings.showIncrementalSync.value = val;
+                    settings.settings.showIncrementalSync.value = val;
                     saveSettings();
                   },
-                  initialVal: SettingsManager().settings.showIncrementalSync.value,
+                  initialVal: settings.settings.showIncrementalSync.value,
                   title: "Notify When Incremental Sync Complete",
                   subtitle: "Show a snackbar whenever a message sync is completed",
                   backgroundColor: tileColor,
@@ -204,7 +203,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -238,7 +237,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
           children: <Widget>[
             NotificationListener<ScrollEndNotification>(
               onNotification: (_) {
-                if (SettingsManager().settings.skin.value != Skins.Samsung) return false;
+                if (settings.settings.skin.value != Skins.Samsung) return false;
                 final scrollDistance = context.height / 3 - 57;
 
                 if (controller1.offset > 0 && controller1.offset < scrollDistance) {
@@ -320,9 +319,9 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                             },
                           ),
                         ),
-                      if (SettingsManager().settings.skin.value != Skins.Samsung)
+                      if (settings.settings.skin.value != Skins.Samsung)
                         ...bodySlivers,
-                      if (SettingsManager().settings.skin.value == Skins.Samsung)
+                      if (settings.settings.skin.value == Skins.Samsung)
                         SliverToBoxAdapter(
                           child: ConstrainedBox(
                             constraints: BoxConstraints(minHeight: context.height - 50 - context.mediaQueryPadding.top - context.mediaQueryViewPadding.top),
@@ -368,7 +367,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings();
+    settings.saveSettings();
   }
 }
 
@@ -456,7 +455,7 @@ class ChatListState extends OptimizedState<ChatList> with ThemeHelpers {
                   child: ScrollbarWrapper(
                     controller: _controller,
                     child: ListView.builder(
-                      physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                      physics: (settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                           ? NeverScrollableScrollPhysics()
                           : ThemeSwitcher.getScrollPhysics(),
                       shrinkWrap: true,

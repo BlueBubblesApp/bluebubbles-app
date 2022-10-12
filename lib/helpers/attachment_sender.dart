@@ -8,14 +8,12 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
-import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:mime_type/mime_type.dart';
@@ -97,8 +95,7 @@ class AttachmentSender {
     // Save the attachment to device
     File? file;
     if (!kIsWeb) {
-      String appDocPath = SettingsManager().appDocDir.path;
-      String pathName = "$appDocPath/attachments/$_attachmentGuid/$_attachmentName";
+      String pathName = "${fs.appDocDir.path}/attachments/$_attachmentGuid/$_attachmentName";
       file = await File(pathName).create(recursive: true);
       file = await file.writeAsBytes(_attachmentBytes);
     }

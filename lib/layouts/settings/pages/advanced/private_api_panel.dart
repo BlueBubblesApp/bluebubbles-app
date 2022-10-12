@@ -4,7 +4,6 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -100,17 +99,17 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                     ),
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        SettingsManager().settings.enablePrivateAPI.value = val;
+                        settings.settings.enablePrivateAPI.value = val;
                         saveSettings();
                       },
-                      initialVal: SettingsManager().settings.enablePrivateAPI.value,
+                      initialVal: settings.settings.enablePrivateAPI.value,
                       title: "Enable Private API Features",
                       backgroundColor: tileColor,
                     )),
                   ],
                 ),
                 Obx(() => AnimatedSizeAndFade.showHide(
-                  show: SettingsManager().settings.enablePrivateAPI.value,
+                  show: settings.settings.enablePrivateAPI.value,
                   child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -125,16 +124,16 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                           children: [
                             SettingsSwitch(
                               onChanged: (bool val) {
-                                SettingsManager().settings.privateSendTypingIndicators.value = val;
+                                settings.settings.privateSendTypingIndicators.value = val;
                                 saveSettings();
                               },
-                              initialVal: SettingsManager().settings.privateSendTypingIndicators.value,
+                              initialVal: settings.settings.privateSendTypingIndicators.value,
                               title: "Send Typing Indicators",
                               subtitle: "Sends typing indicators to other iMessage users",
                               backgroundColor: tileColor,
                             ),
                             AnimatedSizeAndFade(
-                              child: !SettingsManager().settings.privateManualMarkAsRead.value ? Column(
+                              child: !settings.settings.privateManualMarkAsRead.value ? Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Container(
@@ -146,13 +145,13 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   ),
                                   SettingsSwitch(
                                     onChanged: (bool val) {
-                                      SettingsManager().settings.privateMarkChatAsRead.value = val;
+                                      settings.settings.privateMarkChatAsRead.value = val;
                                       if (val) {
-                                        SettingsManager().settings.privateManualMarkAsRead.value = false;
+                                        settings.settings.privateManualMarkAsRead.value = false;
                                       }
                                       saveSettings();
                                     },
-                                    initialVal: SettingsManager().settings.privateMarkChatAsRead.value,
+                                    initialVal: settings.settings.privateMarkChatAsRead.value,
                                     title: "Automatic Mark Read / Send Read Receipts",
                                     subtitle:
                                     "Marks chats read in the iMessage app on your server and sends read receipts to other iMessage users",
@@ -163,7 +162,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                               ) : const SizedBox.shrink(),
                             ),
                             AnimatedSizeAndFade.showHide(
-                              show: !SettingsManager().settings.privateMarkChatAsRead.value,
+                              show: !settings.settings.privateMarkChatAsRead.value,
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -176,10 +175,10 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   ),
                                   SettingsSwitch(
                                     onChanged: (bool val) {
-                                      SettingsManager().settings.privateManualMarkAsRead.value = val;
+                                      settings.settings.privateManualMarkAsRead.value = val;
                                       saveSettings();
                                     },
-                                    initialVal: SettingsManager().settings.privateManualMarkAsRead.value,
+                                    initialVal: settings.settings.privateManualMarkAsRead.value,
                                     title: "Manual Mark Read / Send Read Receipts",
                                     subtitle: "Only mark a chat read when pressing the manual mark read button",
                                     backgroundColor: tileColor,
@@ -197,11 +196,11 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             ),
                             SettingsSwitch(
                               title: "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Quick Tapback",
-                              initialVal: SettingsManager().settings.enableQuickTapback.value,
+                              initialVal: settings.settings.enableQuickTapback.value,
                               onChanged: (bool val) {
-                                SettingsManager().settings.enableQuickTapback.value = val;
-                                if (val && SettingsManager().settings.doubleTapForDetails.value) {
-                                  SettingsManager().settings.doubleTapForDetails.value = false;
+                                settings.settings.enableQuickTapback.value = val;
+                                if (val && settings.settings.doubleTapForDetails.value) {
+                                  settings.settings.doubleTapForDetails.value = false;
                                 }
                                 saveSettings();
                               },
@@ -210,7 +209,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                               isThreeLine: true,
                             ),
                             AnimatedSizeAndFade.showHide(
-                              show: SettingsManager().settings.enableQuickTapback.value,
+                              show: settings.settings.enableQuickTapback.value,
                               child: SettingsOptions<String>(
                                 title: "Quick Tapback",
                                 options: ReactionTypes.toList(),
@@ -218,39 +217,39 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8),
                                     child: Reaction(reactionType: ReactionTypes.LOVE).getSmallWidget(context,
-                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: SettingsManager().settings.quickTapbackType.value == ReactionTypes.LOVE)!,
+                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: settings.settings.quickTapbackType.value == ReactionTypes.LOVE)!,
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8),
                                     child: Reaction(reactionType: ReactionTypes.LIKE).getSmallWidget(context,
-                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: SettingsManager().settings.quickTapbackType.value == ReactionTypes.LIKE)!,
+                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: settings.settings.quickTapbackType.value == ReactionTypes.LIKE)!,
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8),
                                     child: Reaction(reactionType: ReactionTypes.DISLIKE).getSmallWidget(context,
-                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: SettingsManager().settings.quickTapbackType.value == ReactionTypes.DISLIKE)!,
+                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: settings.settings.quickTapbackType.value == ReactionTypes.DISLIKE)!,
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8),
                                     child: Reaction(reactionType: ReactionTypes.LAUGH).getSmallWidget(context,
-                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: SettingsManager().settings.quickTapbackType.value == ReactionTypes.LAUGH)!,
+                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: settings.settings.quickTapbackType.value == ReactionTypes.LAUGH)!,
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8),
                                     child: Reaction(reactionType: ReactionTypes.EMPHASIZE).getSmallWidget(context,
-                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: SettingsManager().settings.quickTapbackType.value == ReactionTypes.EMPHASIZE)!,
+                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: settings.settings.quickTapbackType.value == ReactionTypes.EMPHASIZE)!,
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8),
                                     child: Reaction(reactionType: ReactionTypes.QUESTION).getSmallWidget(context,
-                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: SettingsManager().settings.quickTapbackType.value == ReactionTypes.QUESTION)!,
+                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: settings.settings.quickTapbackType.value == ReactionTypes.QUESTION)!,
                                   ),
                                 ],
-                                initial: SettingsManager().settings.quickTapbackType.value,
+                                initial: settings.settings.quickTapbackType.value,
                                 textProcessing: (val) => val,
                                 onChanged: (val) {
                                   if (val == null) return;
-                                  SettingsManager().settings.quickTapbackType.value = val;
+                                  settings.settings.quickTapbackType.value = val;
                                   saveSettings();
                                 },
                                 backgroundColor: tileColor,
@@ -271,10 +270,10 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   ),
                                   SettingsSwitch(
                                     onChanged: (bool val) {
-                                      SettingsManager().settings.privateSubjectLine.value = val;
+                                      settings.settings.privateSubjectLine.value = val;
                                       saveSettings();
                                     },
-                                    initialVal: SettingsManager().settings.privateSubjectLine.value,
+                                    initialVal: settings.settings.privateSubjectLine.value,
                                     title: "Send Subject Lines",
                                     backgroundColor: tileColor,
                                   ),
@@ -287,7 +286,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   ),
                                   FutureBuilder(
                                       initialData: false,
-                                      future: SettingsManager().isMinBigSur,
+                                      future: settings.isMinBigSur,
                                       builder: (context, snapshot) {
                                         if (snapshot.data as bool) {
                                           return Column(
@@ -301,10 +300,10 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                               ),
                                               Obx(() => SettingsSwitch(
                                                 onChanged: (bool val) {
-                                                  SettingsManager().settings.swipeToReply.value = val;
+                                                  settings.settings.swipeToReply.value = val;
                                                   saveSettings();
                                                 },
-                                                initialVal: SettingsManager().settings.swipeToReply.value,
+                                                initialVal: settings.settings.swipeToReply.value,
                                                 title: "Swipe Messages to Reply",
                                                 backgroundColor: tileColor,
                                               )),
@@ -331,10 +330,10 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   ),
                                   SettingsSwitch(
                                     onChanged: (bool val) {
-                                      SettingsManager().settings.privateAPISend.value = val;
+                                      settings.settings.privateAPISend.value = val;
                                       saveSettings();
                                     },
-                                    initialVal: SettingsManager().settings.privateAPISend.value,
+                                    initialVal: settings.settings.privateAPISend.value,
                                     title: "Private API Send",
                                     subtitle: "Send regular iMessages using the Private API for much faster speed",
                                     backgroundColor: tileColor,
@@ -355,6 +354,6 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
   }
 
   void saveSettings() async {
-    await SettingsManager().saveSettings();
+    await settings.saveSettings();
   }
 }

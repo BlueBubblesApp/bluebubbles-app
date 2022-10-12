@@ -24,7 +24,6 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -64,11 +63,11 @@ class SentMessageHelper {
         ? context.theme.primaryColor.darkenAmount(0.2)
         : context.theme.primaryColor;
 
-    final bool hideEmoji = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
+    final bool hideEmoji = settings.settings.redactedMode.value && settings.settings.hideEmojis.value;
     final bool generateContent =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
-    final bool hideContent = (SettingsManager().settings.redactedMode.value &&
-        SettingsManager().settings.hideMessageContent.value &&
+        settings.settings.redactedMode.value && settings.settings.generateFakeMessageContent.value;
+    final bool hideContent = (settings.settings.redactedMode.value &&
+        settings.settings.hideMessageContent.value &&
         !generateContent);
     final subject =
         generateContent ? faker.lorem.words(message?.subject?.split(" ").length ?? 0).join(" ") : message?.subject;
@@ -76,7 +75,7 @@ class SentMessageHelper {
 
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).isNotEmpty;
-    Skins currentSkin = Skin.of(context)?.skin ?? SettingsManager().settings.skin.value;
+    Skins currentSkin = Skin.of(context)?.skin ?? settings.settings.skin.value;
     Size bubbleSize = Size(0, 0);
 
     // If we haven't played the effect, we should apply it from the start.
@@ -499,7 +498,7 @@ class SentMessageHelper {
         child: KeyboardVisibilityBuilder(builder: (context, isVisible) {
           return GestureDetector(
             onTap: () {
-              if (!SettingsManager().settings.autoOpenKeyboard.value && !isVisible && !kIsWeb && !kIsDesktop) {
+              if (!settings.settings.autoOpenKeyboard.value && !isVisible && !kIsWeb && !kIsDesktop) {
                 EventDispatcher().emit('unfocus-keyboard', null);
               }
               showDialog(
@@ -562,7 +561,7 @@ class SentMessageHelper {
               );
             },
             child: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS
+                settings.settings.skin.value == Skins.iOS
                     ? CupertinoIcons.exclamationmark_circle
                     : Icons.error_outline,
                 color: context.theme.colorScheme.error),
@@ -621,7 +620,7 @@ class SentMessage extends StatefulWidget {
 }
 
 class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, WidgetsBindingObserver {
-  final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
+  final Rx<Skins> skin = Rx<Skins>(settings.settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message);
   Size? threadOriginatorSize;
   Size? messageSize;
@@ -717,7 +716,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                       children: [
-                        if ((SettingsManager().settings.alwaysShowAvatars.value ||
+                        if ((settings.settings.alwaysShowAvatars.value ||
                                 (ChatController.of(context)?.chat.isGroup() ?? false)) &&
                             !msg.isFromMe!)
                           Padding(
@@ -907,7 +906,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                     // add extra padding when showing contact avatars
                     left: max(
                         ((ChatManager().activeChat?.chat.isGroup() ?? false) ||
-                                    SettingsManager().settings.alwaysShowAvatars.value
+                                    settings.settings.alwaysShowAvatars.value
                                 ? 75
                                 : 40) -
                             (width == 10 ? offset - (originalWidth - width) : 0),

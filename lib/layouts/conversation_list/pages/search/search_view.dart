@@ -9,7 +9,6 @@ import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -171,7 +170,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info_outline,
+                    settings.settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info_outline,
                     size: 20,
                     color: context.theme.colorScheme.primary,
                   ),
@@ -209,7 +208,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
                 prefix: Padding(
                   padding: const EdgeInsets.only(left: 15),
                   child: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search,
+                    settings.settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search,
                     color: context.theme.colorScheme.outline
                   ),
                 ),
@@ -222,7 +221,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
                       }
                     ) : Padding(
                       padding: const EdgeInsets.all(12.0),
-                      child: SettingsManager().settings.skin.value == Skins.iOS
+                      child: settings.settings.skin.value == Skins.iOS
                         ? Theme(
                             data: ThemeData(
                               cupertinoOverrideTheme: CupertinoThemeData(
@@ -304,7 +303,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
               (context, index) {
                 TextStyle subtitleStyle = context.theme.textTheme.bodySmall!
                     .copyWith(color: context.theme.colorScheme.outline, height: 1.5)
-                    .apply(fontSizeFactor: SettingsManager().settings.skin.value == Skins.Material ? 1.05 : 1.0);
+                    .apply(fontSizeFactor: settings.settings.skin.value == Skins.Material ? 1.05 : 1.0);
 
                 final chat = currentSearch!.results[index].item1;
                 final message = currentSearch!.results[index].item2;
@@ -347,7 +346,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
 
                 return Container(
                   decoration: BoxDecoration(
-                    border: !SettingsManager().settings.hideDividers.value ? Border(
+                    border: !settings.settings.hideDividers.value ? Border(
                       bottom: BorderSide(
                         color: context.theme.colorScheme.background.lightenOrDarken(15),
                         width: 0.5,

@@ -2,7 +2,6 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chewie_audio/chewie_audio.dart';
@@ -105,11 +104,11 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     return Container(
       alignment: Alignment.center,
       color: context.theme.colorScheme.properSurface,
-      height: SettingsManager().settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop ? 75 : 48,
+      height: settings.settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop ? 75 : 48,
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Theme(
         data: context.theme.copyWith(
-            platform: SettingsManager().settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop ? TargetPlatform.iOS : TargetPlatform.android,
+            platform: settings.settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop ? TargetPlatform.iOS : TargetPlatform.android,
             dialogBackgroundColor: context.theme.colorScheme.properSurface,
             iconTheme: context.theme.iconTheme.copyWith(color: context.theme.colorScheme.properOnSurface)),
         child: ChewieAudio(

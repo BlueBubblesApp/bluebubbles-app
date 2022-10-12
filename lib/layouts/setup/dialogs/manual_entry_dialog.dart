@@ -3,7 +3,6 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/setup/dialogs/connecting_dialog.dart';
 import 'package:bluebubbles/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
@@ -64,11 +63,11 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
       return;
     }
 
-    SettingsManager().settings.serverAddress.value = addr;
-    SettingsManager().settings.guidAuthKey.value = password;
-    SettingsManager().settings.save();
+    settings.settings.serverAddress.value = addr;
+    settings.settings.guidAuthKey.value = password;
+    settings.settings.save();
     try {
-      socket.startSocketIO(forceNewConnection: true, catchException: false);
+      Get.reload<SocketService>(force: true);
     } catch (e) {
       error = e.toString();
       if (mounted) setState(() {});
@@ -83,7 +82,7 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
       Map<String, dynamic>? data = response.data["data"];
       if (!isNullOrEmpty(data)!) {
         FCMData newData = FCMData.fromMap(data!);
-        SettingsManager().saveFCMData(newData);
+        settings.saveFCMData(newData);
       }
 
       widget.onConnect();

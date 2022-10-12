@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -26,7 +27,6 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/dart_vlc.dart';
@@ -34,7 +34,6 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
-import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 // ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
@@ -49,33 +48,24 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart' hi
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
-import 'package:idb_shim/idb_browser.dart';
 import 'package:idb_shim/idb_shim.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' show basename, dirname, join;
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:secure_application/secure_application.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:system_tray/system_tray.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
-import 'package:version/version.dart' as ver;
 import 'package:win_toast/win_toast.dart';
 import 'package:window_manager/window_manager.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-final RxBool fontExistsOnDisk = false.obs;
-
-late SharedPreferences prefs;
-PackageInfo? packageInfo;
 
 late final FirebaseApp app;
 late final Store store;
@@ -120,9 +110,11 @@ Future<Null> bubble() async {
 Future<Null> initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   /* ----- SERVICES INITIALIZATION ----- */
+  await fs.init();
   await Logger.init();
   Logger.startup.value = true;
   Logger.info('Startup Logs');
+  await settings.init();
   await themes.init();
 
   /* ----- RANDOM STUFF INITIALIZATION ----- */
@@ -132,73 +124,56 @@ Future<Null> initApp() async {
 
   /* ----- APPDATA MIGRATION ----- */
   if ((Platform.isLinux || Platform.isWindows) && !kIsWeb) {
-    //ignore: unnecessary_cast, we need this as a workaround
-    Directory appData = (await getApplicationSupportDirectory()) as Directory;
-
     // Migrate to new appdata location if this function returns the new place and we still have the old place
-    if (basename(appData.absolute.path) == "bluebubbles") {
-      Directory oldAppData =
-      Platform.isWindows ? Directory(join(dirname(dirname(appData.absolute.path)), "com.bluebubbles\\bluebubbles_app")) : Directory(join(dirname(appData.absolute.path), "bluebubbles_app"));
-      if (await oldAppData.exists() && !await Directory(join(appData.path, "objectbox")).exists()) {
+    if (basename(fs.appDocDir.absolute.path) == "bluebubbles") {
+      Directory oldAppData = Platform.isWindows
+          ? Directory(join(dirname(dirname(fs.appDocDir.absolute.path)), "com.bluebubbles\\bluebubbles_app"))
+          : Directory(join(dirname(fs.appDocDir.absolute.path), "bluebubbles_app"));
+      if (await oldAppData.exists() && !await Directory(join(fs.appDocDir.path, "objectbox")).exists()) {
         Logger.info("Copying appData to new directory");
-        await copyDirectory(oldAppData, appData);
+        await copyDirectory(oldAppData, fs.appDocDir);
         Logger.info("Finished migrating appData");
       }
     }
   }
 
   try {
-    /* ----- PREFERENCES INITIALIZATION ----- */
-    prefs = await SharedPreferences.getInstance();
-
     /* ----- OBJECTBOX DB INITIALIZATION ----- */
     if (!kIsWeb) {
-      Directory documentsDirectory =
-          //ignore: unnecessary_cast, we need this as a workaround
-          (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
-      Directory objectBoxDirectory = Directory(join(documentsDirectory.path, 'objectbox'));
-      final sqlitePath = join(documentsDirectory.path, "chat.db");
+      Directory objectBoxDirectory = Directory(join(fs.appDocDir.path, 'objectbox'));
+      final sqlitePath = join(fs.appDocDir.path, "chat.db");
 
       Future<void> initStore() async {
-        bool? useCustomPath = prefs.getBool("use-custom-path");
-        String? customStorePath = prefs.getString("custom-path");
         if (!kIsDesktop) {
           Logger.info("Trying to attach to an existing ObjectBox store");
           try {
-            store = Store.attach(getObjectBoxModel(), join(documentsDirectory.path, 'objectbox'));
+            store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
           } catch (e, s) {
             Logger.error(e);
             Logger.error(s);
             Logger.info("Failed to attach to existing store, opening from path");
             try {
-              store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
+              store = await openStore(directory: objectBoxDirectory.path);
             } catch (e, s) {
               Logger.error(e);
               Logger.error(s);
             }
           }
-        } else if (useCustomPath == true && Platform.isWindows) {
-          customStorePath ??= "C:\\bluebubbles_app";
-          objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
-          if (kIsDesktop) {
-            await objectBoxDirectory.create(recursive: true);
-          }
-          Logger.info("Opening ObjectBox store from custom path: ${join(customStorePath, 'objectbox')}");
-          store = await openStore(directory: join(customStorePath, "objectbox"));
         } else {
           try {
             if (kIsDesktop) {
-              await Directory(join(documentsDirectory.path, 'objectbox')).create(recursive: true);
+              await objectBoxDirectory.create(recursive: true);
             }
-            Logger.info("Opening ObjectBox store from path: ${join(documentsDirectory.path, 'objectbox')}");
-            store = await openStore(directory: join(documentsDirectory.path, 'objectbox'));
+            Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
+            store = await openStore(directory: objectBoxDirectory.path);
           } catch (e, s) {
             Logger.error(e);
             Logger.error(s);
             if (Platform.isWindows) {
               Logger.info("Failed to open store from default path. Using custom path");
-              customStorePath ??= "C:\\bluebubbles_app";
-              prefs.setBool("use-custom-path", true);
+              final customStorePath = "C:\\bluebubbles_app";
+              settings.prefs.setBool("use-custom-path", true);
+              settings.prefs.setString("custom-path", customStorePath);
               objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
               await objectBoxDirectory.create(recursive: true);
               Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
@@ -218,8 +193,8 @@ Future<Null> initApp() async {
         themeObjectBox = store.box<ThemeObject>();
         Chat.startWatchingChats();
         if (themeBox.isEmpty()) {
-          prefs.setString("selected-dark", "OLED Dark");
-          prefs.setString("selected-light", "Bright White");
+          settings.prefs.setString("selected-dark", "OLED Dark");
+          settings.prefs.setString("selected-light", "Bright White");
           themeBox.putMany(themes.defaultThemes);
         }
       }
@@ -233,7 +208,7 @@ Future<Null> initApp() async {
         s.stop();
         Logger.info("Migrated in ${s.elapsedMilliseconds} ms");
       } else {
-        if (await File(sqlitePath).exists() && prefs.getBool('objectbox-migration') != true) {
+        if (await File(sqlitePath).exists() && settings.prefs.getBool('objectbox-migration') != true) {
           runApp(UpgradingDB());
           print("Converting sqflite to ObjectBox...");
           Stopwatch s = Stopwatch();
@@ -266,26 +241,21 @@ Future<Null> initApp() async {
     /* ----- DATE FORMATTING INITIALIZATION ----- */
     await initializeDateFormatting();
 
-    /* ----- SETTINGS MANAGER INITIALIZATION ----- */
-    await SettingsManager().init();
-    await SettingsManager().getSavedSettings();
-    if (SettingsManager().settings.immersiveMode.value) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    }
-
     /* ----- CONTACTS INITIALIZATION ----- */
     if (!ContactManager().hasFetchedContacts && !kIsDesktop && !kIsWeb) {
       await ContactManager().loadContacts(headless: true);
     }
 
     /* ----- SPLASH SCREEN INITIALIZATION ----- */
-    if (!SettingsManager().settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
+    if (!settings.settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
       runApp(MaterialApp(
           home: SplashScreen(shouldNavigate: false),
           theme: ThemeData(
               backgroundColor: SchedulerBinding.instance.window.platformBrightness == Brightness.dark
                   ? Colors.black
-                  : Colors.white)));
+                  : Colors.white
+          )
+      ));
     }
 
     /* ----- ANDROID SPECIFIC INITIALIZATION ----- */
@@ -312,19 +282,6 @@ Future<Null> initApp() async {
 
     /* ----- DESKTOP SPECIFIC INITIALIZATION ----- */
     if (kIsDesktop) {
-      /* ----- LAUNCH AT STARTUP INITIALIZATION ----- */
-      try {
-        packageInfo = await PackageInfo.fromPlatform();
-      } catch (_) {
-        Logger.error("Getting packageInfo failed, using bluebubbles_app");
-      }
-      LaunchAtStartup.setup(packageInfo?.appName ?? "bluebubbles_app");
-      if (SettingsManager().settings.launchAtStartup.value) {
-        await LaunchAtStartup.enable();
-      } else {
-        await LaunchAtStartup.disable();
-      }
-
       /* ----- VLC INITIALIZATION ----- */
       await DartVLC.initialize();
 
@@ -342,16 +299,16 @@ Future<Null> initApp() async {
         Size size = primary.size;
         Rect bounds = Rect.fromLTWH(0, 0, size.width, size.height);
 
-        double? width = prefs.getDouble("window-width");
-        double? height = prefs.getDouble("window-height");
+        double? width = settings.prefs.getDouble("window-width");
+        double? height = settings.prefs.getDouble("window-height");
         if (width != null && height != null) {
           if ((width == width.clamp(300, bounds.width)) && (height == height.clamp(300, bounds.height))) {
             await WindowManager.instance.setSize(Size(width, height));
           }
         }
 
-        double? posX = prefs.getDouble("window-x");
-        double? posY = prefs.getDouble("window-y");
+        double? posX = settings.prefs.getDouble("window-x");
+        double? posY = settings.prefs.getDouble("window-y");
         if (posX != null && posY != null && width != null && height != null) {
           if ((posX == posX.clamp(bounds.left, bounds.right - width)) &&
               (posY == posY.clamp(bounds.top, bounds.bottom - height))) {
@@ -377,50 +334,13 @@ Future<Null> initApp() async {
         );
 
         // Delete temp dir in case any notif icons weren't cleared
-        getApplicationSupportDirectory().then((d) async {
-          Directory temp = Directory(join(d.path, "temp"));
-          if (await temp.exists()) await temp.delete(recursive: true);
-        });
+        Directory temp = Directory(join(fs.appDocDir.path, "temp"));
+        if (await temp.exists()) await temp.delete(recursive: true);
       }
     }
 
     /* ----- EMOJI FONT INITIALIZATION ----- */
-    if (!kIsWeb) {
-      try {
-        DynamicCachedFonts.loadCachedFont(
-                "https://github.com/tneotia/tneotia/releases/download/ios-font-2/AppleColorEmoji.ttf",
-                fontFamily: "Apple Color Emoji")
-            .then((_) {
-          fontExistsOnDisk.value = true;
-        });
-      } on StateError catch (_) {
-        fontExistsOnDisk.value = false;
-      }
-    } else if (kIsWeb) {
-      final idbFactory = idbFactoryBrowser;
-      idbFactory.open("BlueBubbles.db", version: 1, onUpgradeNeeded: (VersionChangeEvent e) {
-        final db = (e.target as OpenDBRequest).result;
-        if (!db.objectStoreNames.contains("BBStore")) {
-          db.createObjectStore("BBStore");
-        }
-      }).then((_db) async {
-        db = _db;
-        final txn = db.transaction("BBStore", idbModeReadOnly);
-        final store = txn.objectStore("BBStore");
-        Uint8List? bytes = await store.getObject("iosFont") as Uint8List?;
-        await txn.completed;
-
-        if (!isNullOrEmpty(bytes)!) {
-          fontExistsOnDisk.value = true;
-          final fontLoader = FontLoader("Apple Color Emoji");
-          final cachedFontBytes = ByteData.view(bytes!.buffer);
-          fontLoader.addFont(
-            Future<ByteData>.value(cachedFontBytes),
-          );
-          await fontLoader.load();
-        }
-      });
-    }
+    fs.checkFont();
   } catch (e, s) {
     Logger.error(e);
     Logger.error(s);
@@ -473,14 +393,14 @@ class DesktopWindowListener extends WindowListener {
 
   @override
   void onWindowResized() async {
-    prefs.setDouble("window-width", (await WindowManager.instance.getSize()).width);
-    prefs.setDouble("window-height", (await WindowManager.instance.getSize()).height);
+    settings.prefs.setDouble("window-width", (await WindowManager.instance.getSize()).width);
+    settings.prefs.setDouble("window-height", (await WindowManager.instance.getSize()).height);
   }
 
   @override
   void onWindowMoved() async {
-    prefs.setDouble("window-x", (await WindowManager.instance.getPosition()).dx);
-    prefs.setDouble("window-y", (await WindowManager.instance.getPosition()).dy);
+    settings.prefs.setDouble("window-x", (await WindowManager.instance.getPosition()).dx);
+    settings.prefs.setDouble("window-y", (await WindowManager.instance.getPosition()).dy);
   }
 }
 
@@ -541,10 +461,10 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         builder: (context, child) =>
             SecureApplication(
               child: Builder(builder: (context) {
-                if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
-                  if (SettingsManager().settings.shouldSecure.value) {
+                if (settings.canAuthenticate && !LifeCycleManager().isAlive) {
+                  if (settings.settings.shouldSecure.value) {
                     SecureApplicationProvider.of(context, listen: false)!.lock();
-                    if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                    if (settings.settings.securityLevel.value == SecurityLevel.locked_and_secured) {
                       SecureApplicationProvider.of(context, listen: false)!.secure();
                     }
                   }
@@ -679,18 +599,17 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       /* ----- COLORS FROM MEDIA LISTENER INITIALIZATION ----- */
-      if (SettingsManager().settings.colorsFromMedia.value) {
+      // todo move to method channel initialization
+      if (settings.settings.colorsFromMedia.value) {
         try {
           await MethodChannelInterface().invokeMethod("start-notif-listener");
         } catch (_) {}
       }
 
       /* ----- SERVER VERSION CHECK ----- */
-      if (kIsWeb && SettingsManager().settings.finishedSetup.value) {
-        String? str = await SettingsManager().getServerVersion();
-        ver.Version version = ver.Version.parse(str!);
-        int sum = version.major * 100 + version.minor * 21 + version.patch;
-        if (sum < 42) {
+      if (kIsWeb && settings.settings.finishedSetup.value) {
+        int version = (await settings.getServerDetails()).item4 ?? 0;
+        if (version < 42) {
           setState(() {
             serverCompatible = false;
           });
@@ -709,47 +628,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         await initSystemTray();
       }
 
-      /* ----- SERVER UPDATE CHECK ----- */
-      if (SettingsManager().settings.finishedSetup.value) {
-        http.checkUpdate().then((response) {
-          if (response.statusCode == 200) {
-            bool available = response.data['data']['available'] ?? false;
-            Map<String, dynamic> metadata = response.data['data']['metadata'] ?? {};
-            if (!available || prefs.getString("update-check") == metadata['version']) return;
-            Get.defaultDialog(
-              title: "Server Update Check",
-              titleStyle: context.theme.textTheme.headlineMedium,
-              textConfirm: "OK",
-              cancel: Container(height: 0, width: 0),
-              content: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    SizedBox(
-                      height: 15.0,
-                    ),
-                    Text("Updates available:", style: context.theme.textTheme.bodyMedium),
-                    SizedBox(
-                      height: 15.0,
-                    ),
-                    if (metadata.isNotEmpty)
-                      Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
-                  ]
-              ),
-              onConfirm: () {
-                if (metadata['version'] != null) {
-                  prefs.setString("update-check", metadata['version']);
-                }
-                Navigator.of(context).pop();
-              },
-              backgroundColor: context.theme.colorScheme.properSurface,
-            );
-          }
-        });
-      }
-
-      if (!kIsWeb && !kIsDesktop) {
+      if (!kIsWeb && !kIsDesktop && settings.settings.finishedSetup.value) {
         MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
-          if (!SettingsManager().settings.finishedSetup.value) return;
           if (value['guid'] != null) {
             LifeCycleManager().isBubble = value['bubble'] == "true";
             MethodChannelInterface().openChat(value['guid'].toString());
@@ -760,7 +640,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           // Get sharing media from files shared to the app from cold start
           // This one only handles files, not text
           ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
-            if (!SettingsManager().settings.finishedSetup.value) return;
             if (value.isEmpty) return;
 
             // If we don't have storage permission, we can't do anything
@@ -791,7 +670,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
           // Same thing as [getInitialMedia] except for text
           ReceiveSharingIntent.getInitialText().then((String? text) {
-            if (!SettingsManager().settings.finishedSetup.value) return;
             if (text == null) return;
 
             // Go to the new chat creator, with all of our text
@@ -807,7 +685,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         }
       }
 
-      if (!SettingsManager().settings.finishedSetup.value) {
+      if (!settings.settings.finishedSetup.value) {
         setState(() {
           fullyLoaded = true;
         });
@@ -818,7 +696,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
   @override
   void didChangeDependencies() async {
     Locale myLocale = Localizations.localeOf(context);
-    SettingsManager().countryCode = myLocale.countryCode;
+    countryCode = myLocale.countryCode;
     super.didChangeDependencies();
   }
 
@@ -862,7 +740,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+      systemNavigationBarColor: settings.settings.immersiveMode.value
           ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
       systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
       statusBarColor: Colors.transparent, // status bar color
@@ -882,19 +760,19 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           if (event["type"] == 'popup-pushed') {
             bool popup = event["data"] as bool;
             if (popup) {
-              SettingsManager().settings.windowEffect.value = WindowEffect.disabled;
+              settings.settings.windowEffect.value = WindowEffect.disabled;
             } else {
-              SettingsManager().settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((effect) => effect.toString() == prefs.getString('window-effect')) ?? WindowEffect.aero;
+              settings.settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((effect) => effect.toString() == settings.prefs.getString('window-effect')) ?? WindowEffect.aero;
             }
           }
         });
       });
     }
 
-    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
+    final Rx<Color> _backgroundColor = (settings.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
 
     if (kIsDesktop) {
-      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+      settings.settings.windowEffect.listen((WindowEffect effect) {
         if (mounted) {
           _backgroundColor.value =
           effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
@@ -904,7 +782,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -923,15 +801,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           backgroundColor: _backgroundColor.value,
           body: Builder(
             builder: (BuildContext context) {
-              if (SettingsManager().settings.finishedSetup.value) {
+              if (settings.settings.finishedSetup.value) {
                 Logger.startup.value = false;
-                SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.landscapeRight,
-                  DeviceOrientation.landscapeLeft,
-                  DeviceOrientation.portraitUp,
-                  if (SettingsManager().settings.allowUpsideDownRotation.value)
-                    DeviceOrientation.portraitDown,
-                ]);
                 if (!serverCompatible && kIsWeb) {
                   return FailureToStart(
                     otherTitle: "Server version too low, please upgrade!",
@@ -943,11 +814,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
                   showUnknownSenders: false,
                 );
               } else {
-                if (context.isPhone) {
-                  SystemChrome.setPreferredOrientations([
-                    DeviceOrientation.portraitUp,
-                  ]);
-                }
                 return WillPopScope(
                   onWillPop: () async => false,
                   child: TitleBarWrapper(

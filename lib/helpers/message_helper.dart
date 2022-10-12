@@ -12,7 +12,6 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -214,19 +213,19 @@ class MessageHelper {
     // Add the message to the "processed" list
     NotificationManager().addProcessed(message.guid!);
     // Handle all the cases that would mean we don't show the notification
-    if (!SettingsManager().settings.finishedSetup.value) return; // Don't notify if not fully setup
+    if (!settings.settings.finishedSetup.value) return; // Don't notify if not fully setup
     if (existingMessage != null) return;
     if (chat.shouldMuteNotification(message)) return; // Don''t notify if the chat is muted
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
     // Don't notify if window focused in desktop and chat list notifs off
-    if (!SettingsManager().settings.notifyOnChatList.value && kIsDesktop && LifeCycleManager().isAlive) return;
+    if (!settings.settings.notifyOnChatList.value && kIsDesktop && LifeCycleManager().isAlive) return;
     ChatController? currChat = ChatManager().activeChat;
 
     // add unread icon as long as it isn't the active chat
     if (currChat?.chat.guid != chat.guid) ChatBloc().toggleChatUnread(chat, true, clearNotifications: false);
 
     if ((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) {
-      if (!SettingsManager().settings.notifyOnChatList.value &&
+      if (!settings.settings.notifyOnChatList.value &&
           currChat == null &&
           !Get.currentRoute.contains("settings")) return;
       if (currChat?.chat.guid == chat.guid && !LifeCycleManager().isBubble) return;
@@ -418,7 +417,7 @@ class MessageHelper {
   }
 
   static List<TextSpan> buildEmojiText(String text, TextStyle style) {
-    if (!fontExistsOnDisk.value) {
+    if (!fs.fontExistsOnDisk.value) {
       return [
         TextSpan(
           text: text,

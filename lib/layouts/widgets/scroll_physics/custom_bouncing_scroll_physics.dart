@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
 /// Scroll physics for environments that allow the scroll offset to go beyond
@@ -91,7 +91,7 @@ class CustomBouncingScrollPhysics extends ScrollPhysics {
       return BouncingScrollSimulation(
         spring: spring,
         position: position.pixels,
-        velocity: velocity * SettingsManager().settings.scrollVelocity.value,
+        velocity: velocity * settings.settings.scrollVelocity.value,
         // 0.90 is the default
         leadingExtent: position.minScrollExtent,
         trailingExtent: position.maxScrollExtent,

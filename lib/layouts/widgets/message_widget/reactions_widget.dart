@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
 class ReactionsWidget extends StatefulWidget {
@@ -28,7 +28,7 @@ class _ReactionsWidgetState extends State<ReactionsWidget> {
 
 
     final bool hideReactions =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
+        settings.settings.redactedMode.value && settings.settings.hideReactions.value;
 
     // If the reactions are empty, return nothing
     if (reactions.isEmpty || hideReactions || Reaction.getUniqueReactionMessages(reactions).isEmpty) {

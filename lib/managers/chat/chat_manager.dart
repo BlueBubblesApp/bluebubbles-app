@@ -6,7 +6,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
@@ -156,12 +155,12 @@ class ChatManager {
     chat.toggleHasUnread(false);
 
     // Handle Private API features
-    if (SettingsManager().settings.enablePrivateAPI.value) {
-      if (SettingsManager().settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
+    if (settings.settings.enablePrivateAPI.value) {
+      if (settings.settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
         await http.markChatRead(chat.guid);
       }
 
-      if (!MethodChannelInterface().headless && SettingsManager().settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
+      if (!MethodChannelInterface().headless && settings.settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
         socket.sendMessage("update-typing-status", {"chatGuid": chat.guid});
       }
     }

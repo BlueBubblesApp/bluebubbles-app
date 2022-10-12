@@ -1,7 +1,6 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,8 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 Map<String, IconData> iconMap = {
-  'com.apple.Handwriting.HandwritingProvider': SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.square_pencil : Icons.brush,
-  'com.apple.DigitalTouchBalloonProvider': SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.app_badge : Icons.touch_app
+  'com.apple.Handwriting.HandwritingProvider': settings.settings.skin.value == Skins.iOS ? CupertinoIcons.square_pencil : Icons.brush,
+  'com.apple.DigitalTouchBalloonProvider': settings.settings.skin.value == Skins.iOS ? CupertinoIcons.app_badge : Icons.touch_app
 };
 
 class BalloonBundleWidget extends StatefulWidget {
@@ -53,16 +52,16 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
 
     String val = widget.message!.balloonBundleId!.toLowerCase();
     if (val.contains("gamepigeon")) {
-      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.gamecontroller : Icons.games;
+      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.gamecontroller : Icons.games;
     } else if (val.contains("contextoptional")) {
-      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.device_phone_portrait : Icons.phone_android;
+      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.device_phone_portrait : Icons.phone_android;
     } else if (val.contains("mobileslideshow")) {
-      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play_rectangle : Icons.slideshow;
+      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.play_rectangle : Icons.slideshow;
     } else if (val.contains("peerpayment")) {
-      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.money_dollar_circle : Icons.monetization_on;
+      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.money_dollar_circle : Icons.monetization_on;
     }
 
-    return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.square_grid_3x2 : Icons.apps;
+    return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.square_grid_3x2 : Icons.apps;
   }
 
   @override

@@ -6,7 +6,6 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -49,11 +48,8 @@ class ContactManager {
 
   Future<bool> canAccessContacts({headless = false}) async {
     if (kIsWeb || kIsDesktop) {
-      String? str = await SettingsManager().getServerVersion();
-      if (str == null) return false;
-      Version version = Version.parse(str);
-      int sum = version.major * 100 + version.minor * 21 + version.patch;
-      return sum >= 42;
+      int versionCode = (await settings.getServerDetails()).item4 ?? 0;
+      return versionCode >= 42;
     }
 
     try {

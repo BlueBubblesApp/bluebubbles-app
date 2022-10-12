@@ -8,7 +8,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,15 +17,15 @@ import 'package:get/get.dart';
 class PinnedOrderPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
+    final Rx<Color> _backgroundColor = (settings.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
 
     if (kIsDesktop) {
-      SettingsManager().settings.windowEffect.listen((WindowEffect effect) =>
+      settings.settings.windowEffect.listen((WindowEffect effect) =>
       _backgroundColor.value = effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background);
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -46,7 +45,7 @@ class PinnedOrderPanel extends StatelessWidget {
                 surfaceTintColor: context.theme.colorScheme.primary,
                 leading: buildBackButton(context),
                 backgroundColor: context.theme.colorScheme.background,
-                centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
+                centerTitle: settings.settings.skin.value == Skins.iOS,
                 title: Text(
                   "Pinned Chat Order",
                   style: context.theme.textTheme.titleLarge,

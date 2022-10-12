@@ -9,10 +9,8 @@ import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -57,9 +55,9 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
           allThemes.add(newTheme);
           currentTheme = newTheme;
           if (widget.isDarkMode) {
-            SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: currentTheme);
+            themes.changeTheme(_context, dark: currentTheme);
           } else {
-            SettingsManager().saveSelectedTheme(_context, selectedLightTheme: currentTheme);
+            themes.changeTheme(_context, light: currentTheme);
           }
         })
       );
@@ -68,7 +66,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
 
   @override
   Widget build(BuildContext context) {
-    editable = !currentTheme.isPreset && SettingsManager().settings.monetTheming.value == Monet.none;
+    editable = !currentTheme.isPreset && settings.settings.monetTheming.value == Monet.none;
     final length = currentTheme
         .colors(widget.isDarkMode, returnMaterialYou: false).keys
         .where((e) => e != "outline").length ~/ 2 + 1;
@@ -171,49 +169,47 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
 
                 if (value.name == "Music Theme ☀" || value.name == "Music Theme 🌙") {
                   // disable monet theming if music theme enabled
-                  SettingsManager().settings.monetTheming.value = Monet.none;
-                  SettingsManager().saveSettings(SettingsManager().settings);
+                  settings.settings.monetTheming.value = Monet.none;
+                  settings.saveSettings(settings.settings);
                   await MethodChannelInterface().invokeMethod("request-notif-permission");
                   try {
                     await MethodChannelInterface().invokeMethod("start-notif-listener");
-                    SettingsManager().settings.colorsFromMedia.value = true;
-                    SettingsManager().saveSettings(SettingsManager().settings);
+                    settings.settings.colorsFromMedia.value = true;
+                    settings.saveSettings(settings.settings);
                   } catch (e) {
                     showSnackbar("Error",
                         "Something went wrong, please ensure you granted the permission correctly!");
                     return;
                   }
                 } else {
-                  SettingsManager().settings.colorsFromMedia.value = false;
-                  SettingsManager().saveSettings(SettingsManager().settings);
+                  settings.settings.colorsFromMedia.value = false;
+                  settings.saveSettings(settings.settings);
                 }
 
                 if (value.name == "Music Theme ☀" || value.name == "Music Theme 🌙") {
                   var allThemes = ThemeStruct.getThemes();
                   var currentLight = ThemeStruct.getLightTheme();
                   var currentDark = ThemeStruct.getDarkTheme();
-                  prefs.setString("previous-light", currentLight.name);
-                  prefs.setString("previous-dark", currentDark.name);
-                  SettingsManager().saveSelectedTheme(context,
-                      selectedLightTheme:
-                      allThemes.firstWhere((element) => element.name == "Music Theme ☀"),
-                      selectedDarkTheme:
-                      allThemes.firstWhere((element) => element.name == "Music Theme 🌙"));
+                  settings.prefs.setString("previous-light", currentLight.name);
+                  settings.prefs.setString("previous-dark", currentDark.name);
+                  themes.changeTheme(
+                      context,
+                      light: allThemes.firstWhere((element) => element.name == "Music Theme ☀"),
+                      dark: allThemes.firstWhere((element) => element.name == "Music Theme 🌙")
+                  );
                 } else if (currentTheme.name == "Music Theme ☀" ||
                     currentTheme.name == "Music Theme 🌙") {
                   if (!widget.isDarkMode) {
                     ThemeStruct previousDark = themes.revertToPreviousDarkTheme();
-                    SettingsManager().saveSelectedTheme(context,
-                        selectedLightTheme: value, selectedDarkTheme: previousDark);
+                    themes.changeTheme(context, light: value, dark: previousDark);
                   } else {
                     ThemeStruct previousLight = themes.revertToPreviousLightTheme();
-                    SettingsManager().saveSelectedTheme(context,
-                        selectedLightTheme: previousLight, selectedDarkTheme: value);
+                    themes.changeTheme(context, light: previousLight, dark: value);
                   }
                 } else if (widget.isDarkMode) {
-                  SettingsManager().saveSelectedTheme(context, selectedDarkTheme: value);
+                  themes.changeTheme(context, dark: value);
                 } else {
-                  SettingsManager().saveSelectedTheme(context, selectedLightTheme: value);
+                  themes.changeTheme(context, light: value);
                 }
                 currentTheme = value;
                 editable = !currentTheme.isPreset;
@@ -229,9 +225,9 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
               currentTheme.gradientBg = val;
               currentTheme.save();
               if (widget.isDarkMode) {
-                SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
+                themes.changeTheme(context, dark: currentTheme);
               } else {
-                SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
+                themes.changeTheme(context, light: currentTheme);
               }
             },
             initialVal: currentTheme.gradientBg,
@@ -247,7 +243,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
               unlimitedSpace: true,
             )
           ),
-          if (SettingsManager().settings.monetTheming.value != Monet.none)
+          if (settings.settings.monetTheming.value != Monet.none)
             SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 8.0),
@@ -319,10 +315,10 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                     map["data"]["textTheme"][currentTheme.textSizes.keys.toList()[index]]['fontSize'] = ThemeStruct.defaultTextSizes.values.toList()[index] * val;
                     currentTheme.data = ThemeStruct.fromMap(map).data;
                     currentTheme.save();
-                    if (currentTheme.name == prefs.getString("selected-dark")) {
-                      SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
-                    } else if (currentTheme.name == prefs.getString("selected-light")) {
-                      SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
+                    if (currentTheme.name == settings.prefs.getString("selected-dark")) {
+                      themes.changeTheme(context, dark: currentTheme);
+                    } else if (currentTheme.name == settings.prefs.getString("selected-light")) {
+                      themes.changeTheme(context, light: currentTheme);
                     }
                   },
                   backgroundColor: tileColor,
@@ -354,9 +350,9 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                       widget.isDarkMode ? themes.revertToPreviousDarkTheme() : themes.revertToPreviousLightTheme();
                     allThemes = ThemeStruct.getThemes();
                     if (widget.isDarkMode) {
-                      SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
+                      themes.changeTheme(context, dark: currentTheme);
                     } else {
-                      SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
+                      themes.changeTheme(context, light: currentTheme);
                     }
                     setState(() {});
                   },

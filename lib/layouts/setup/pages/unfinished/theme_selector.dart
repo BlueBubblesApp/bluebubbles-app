@@ -7,7 +7,6 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:faker/faker.dart';
@@ -27,7 +26,7 @@ class ThemeSelectorController extends GetxController {
       AdaptiveTheme.of(Get.context!).setThemeMode(AdaptiveThemeMode.values[selectedTheme.value - 1]);
     });
     ever(selectedSkin, (_) {
-      SettingsManager().settings.skin.value = Skins.values[selectedSkin.value - 1];
+      settings.settings.skin.value = Skins.values[selectedSkin.value - 1];
       setMessagesView();
       update();
     });
@@ -170,7 +169,7 @@ class ThemeSelector extends StatelessWidget {
       builder: (_) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
-            systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+            systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
             systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
             statusBarColor: Colors.transparent, // status bar color
             statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,

@@ -7,8 +7,8 @@ import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -56,7 +56,7 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
     if (participants.isEmpty) {
       return ContactAvatarWidget(
         handle: Handle(address: ''),
-        size: widget.size * SettingsManager().settings.avatarScale.value,
+        size: widget.size * settings.settings.avatarScale.value,
         editable: false,
         onTap: widget.onTap,
         scaleSize: false,
@@ -64,11 +64,11 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
     }
 
     return Obx(() {
-        final avatarSize = widget.size * SettingsManager().settings.avatarScale.value;
-        final maxAvatars = SettingsManager().settings.maxAvatarsInGroupWidget.value;
+        final avatarSize = widget.size * settings.settings.avatarScale.value;
+        final maxAvatars = settings.settings.maxAvatarsInGroupWidget.value;
 
         if (widget.chat.customAvatarPath != null
-            && !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value)) {
+            && !(settings.settings.redactedMode.value && settings.settings.hideContactPhotos.value)) {
           dynamic file = File(widget.chat.customAvatarPath!);
           return CircleAvatar(
             key: Key("${participants.first.address}-avatar"),
@@ -127,7 +127,7 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                                       border: Border.all(color: context.theme.colorScheme.background, width: avatarSize * 0.01)
                                     ),
                                     child: Icon(
-                                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.group_solid : Icons.people,
+                                      settings.settings.skin.value == Skins.iOS ? CupertinoIcons.group_solid : Icons.people,
                                       size: size * 0.65,
                                       color: context.theme.colorScheme.properOnSurface.withOpacity(0.8),
                                     ),

@@ -8,7 +8,6 @@ import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.da
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -30,7 +29,7 @@ class VideoWidgetController extends GetxController {
   VideoPlayerController? controller;
   Uint8List? thumbnail;
   late final RxBool showPlayPauseOverlay;
-  final RxBool muted = SettingsManager().settings.startVideosMuted;
+  final RxBool muted = settings.settings.startVideosMuted;
   final PlatformFile file;
   final Attachment attachment;
   final BuildContext context;
@@ -215,11 +214,11 @@ class VideoWidget extends StatelessWidget {
                   ),
                   padding: EdgeInsets.all(10),
                   child: Padding(
-                    padding: EdgeInsets.only(left: SettingsManager().settings.skin.value == Skins.iOS && !controller.controller!.value.isPlaying ? 7 : 0,
-                        top: SettingsManager().settings.skin.value == Skins.iOS ? 3 : 0),
+                    padding: EdgeInsets.only(left: settings.settings.skin.value == Skins.iOS && !controller.controller!.value.isPlaying ? 7 : 0,
+                        top: settings.settings.skin.value == Skins.iOS ? 3 : 0),
                     child: controller.controller!.value.isPlaying ? GestureDetector(
                       child: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pause : Icons.pause,
+                        settings.settings.skin.value == Skins.iOS ? CupertinoIcons.pause : Icons.pause,
                         color: Colors.white,
                         size: 45,
                       ),
@@ -229,7 +228,7 @@ class VideoWidget extends StatelessWidget {
                       },
                     ) : GestureDetector(
                       child: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS
+                        settings.settings.skin.value == Skins.iOS
                             ? CupertinoIcons.play
                             : Icons.play_arrow,
                         color: Colors.white,
@@ -266,10 +265,10 @@ class VideoWidget extends StatelessWidget {
                           padding: EdgeInsets.all(5),
                           child: Obx(() => Icon(
                             controller.muted.value
-                                ? SettingsManager().settings.skin.value == Skins.iOS
+                                ? settings.settings.skin.value == Skins.iOS
                                 ? CupertinoIcons.volume_mute
                                 : Icons.volume_mute
-                                : SettingsManager().settings.skin.value == Skins.iOS
+                                : settings.settings.skin.value == Skins.iOS
                                 ? CupertinoIcons.volume_up
                                 : Icons.volume_up,
                             color: Colors.white,
@@ -329,10 +328,10 @@ class VideoWidget extends StatelessWidget {
           ),
           padding: EdgeInsets.all(10),
           child: Padding(
-            padding: EdgeInsets.only(left: SettingsManager().settings.skin.value == Skins.iOS ? 7 : 0,
-                top: SettingsManager().settings.skin.value == Skins.iOS ? 3 : 0),
+            padding: EdgeInsets.only(left: settings.settings.skin.value == Skins.iOS ? 7 : 0,
+                top: settings.settings.skin.value == Skins.iOS ? 3 : 0),
             child: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS
+              settings.settings.skin.value == Skins.iOS
                   ? CupertinoIcons.play
                   : Icons.play_arrow,
               color: Colors.white,
@@ -358,10 +357,10 @@ class VideoWidget extends StatelessWidget {
                 padding: EdgeInsets.all(5),
                 child: Obx(() => Icon(
                   controller.muted.value
-                      ? SettingsManager().settings.skin.value == Skins.iOS
+                      ? settings.settings.skin.value == Skins.iOS
                       ? CupertinoIcons.volume_mute
                       : Icons.volume_mute
-                      : SettingsManager().settings.skin.value == Skins.iOS
+                      : settings.settings.skin.value == Skins.iOS
                       ? CupertinoIcons.volume_up
                       : Icons.volume_up,
                   color: Colors.white,

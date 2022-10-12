@@ -15,7 +15,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -128,17 +127,17 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
     return TitleBarWrapper(
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
-          systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+          systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
           systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
           statusBarColor: Colors.transparent, // status bar color
-          statusBarIconBrightness: SettingsManager().settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
+          statusBarIconBrightness: settings.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
         ),
         child: Actions(
           actions: {
             GoBackIntent: GoBackAction(context),
           },
           child: Scaffold(
-            appBar: SettingsManager().settings.skin.value != Skins.iOS ? null : AppBar(
+            appBar: settings.settings.skin.value != Skins.iOS ? null : AppBar(
               leading: TextButton(
                 child: Text("Done", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                 onPressed: () {
@@ -147,7 +146,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
               ),
               leadingWidth: 75,
               title: Text(kIsWeb || !widget.showInteractions || widget.currentChat == null ? "Media" : "${currentIndex + 1} of ${widget.currentChat?.chatAttachments.length}", style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
-              centerTitle: SettingsManager().settings.skin.value == Skins.iOS,
+              centerTitle: settings.settings.skin.value == Skins.iOS,
               iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
               backgroundColor: context.theme.colorScheme.properSurface,
               systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
@@ -165,13 +164,13 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                             "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
                             tag: "RawKeyboardListener");
                         if (event.data.physicalKey.debugName == "Arrow Right") {
-                          if (SettingsManager().settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT) {
+                          if (settings.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT) {
                             controller!.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
                           } else {
                             controller!.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
                           }
                         } else if (event.data.physicalKey.debugName == "Arrow Left") {
-                          if (SettingsManager().settings.fullscreenViewerSwipeDir.value == SwipeDirection.LEFT) {
+                          if (settings.settings.fullscreenViewerSwipeDir.value == SwipeDirection.LEFT) {
                             controller!.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
                           } else {
                             controller!.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
@@ -181,7 +180,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                       },
                       child: PageView.builder(
                         physics: physics ?? ThemeSwitcher.getScrollPhysics(),
-                        reverse: SettingsManager().settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
+                        reverse: settings.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
                         itemCount: kIsWeb ? 1 : widget.currentChat?.chatAttachments.length ?? 1,
                         itemBuilder: (BuildContext context, int index) {
                           Logger.info("Showing index: $index");

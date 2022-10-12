@@ -12,7 +12,6 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/tasks/sync_tasks.dart';
@@ -22,7 +21,6 @@ import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
-
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
@@ -616,14 +614,14 @@ class Chat {
   /// Return whether or not the notification should be muted
   bool shouldMuteNotification(Message? message) {
     /// Filter unknown senders & sender doesn't have a contact, then don't notify
-    if (SettingsManager().settings.filterUnknownSenders.value &&
+    if (settings.settings.filterUnknownSenders.value &&
         participants.length == 1 &&
         ContactManager().getContact(participants[0].address) == null) {
       return true;
 
       /// Check if global text detection is on and notify accordingly
-    } else if (SettingsManager().settings.globalTextDetection.value.isNotEmpty) {
-      List<String> text = SettingsManager().settings.globalTextDetection.value.split(",");
+    } else if (settings.settings.globalTextDetection.value.isNotEmpty) {
+      List<String> text = settings.settings.globalTextDetection.value.split(",");
       for (String s in text) {
         if (message?.text?.toLowerCase().contains(s.toLowerCase()) ?? false) {
           return false;
@@ -661,7 +659,7 @@ class Chat {
     }
 
     /// If reaction and notify reactions off, then don't notify, otherwise notify
-    return !SettingsManager().settings.notifyReactions.value &&
+    return !settings.settings.notifyReactions.value &&
         ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
   }
 
@@ -711,7 +709,7 @@ class Chat {
         message.metadata = meta!.toJson();
 
         // If pre-caching is enabled, fetch the image and save it
-        if (SettingsManager().settings.preCachePreviewImages.value &&
+        if (settings.settings.preCachePreviewImages.value &&
             message.metadata!.containsKey("image") &&
             !isNullOrEmpty(message.metadata!["image"])!) {
           // Save from URL
@@ -807,7 +805,7 @@ class Chat {
       m.metadata = meta!.toJson();
 
       // If pre-caching is enabled, fetch the image and save it
-      if (SettingsManager().settings.preCachePreviewImages.value &&
+      if (settings.settings.preCachePreviewImages.value &&
           m.metadata!.containsKey("image") &&
           !isNullOrEmpty(m.metadata!["image"])!) {
         // Save from URL
@@ -884,7 +882,7 @@ class Chat {
   Future<List<Attachment>> getAttachmentsAsync() async {
     if (kIsWeb || id == null) return [];
 
-    final task = GetChatAttachments([id!, prefs.getString("objectbox-reference")]);
+    final task = GetChatAttachments([id!]);
     return (await createAsyncTask<List<Attachment>>(task)) ?? [];
   }
 

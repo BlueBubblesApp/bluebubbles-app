@@ -1,5 +1,5 @@
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,7 +15,7 @@ class HttpService extends GetxService {
   late Dio dio;
 
   /// Get the URL origin from the current server address
-  String get origin => "${Uri.parse(SettingsManager().settings.serverAddress.value).origin}/api/v1";
+  String get origin => "${Uri.parse(settings.settings.serverAddress.value).origin}/api/v1";
 
   /// Helper function to build query params, this way we only need to add the
   /// required guid auth param in one place
@@ -24,13 +24,13 @@ class HttpService extends GetxService {
     if (params.isEmpty) {
       params = {};
     }
-    params['guid'] = SettingsManager().settings.guidAuthKey;
+    params['guid'] = settings.settings.guidAuthKey;
     return params;
   }
 
   /// Global try-catch function
   Future<Response> runApiGuarded(Future<Response> Function() func) async {
-    if (SettingsManager().settings.serverAddress.value.isEmpty) {
+    if (settings.settings.serverAddress.value.isEmpty) {
       return Future.error("No server URL!");
     }
     try {
@@ -54,8 +54,8 @@ class HttpService extends GetxService {
   void onInit() {
     dio = Dio(BaseOptions(
         connectTimeout: 15000,
-        receiveTimeout: SettingsManager().settings.apiTimeout.value,
-        sendTimeout: SettingsManager().settings.apiTimeout.value,
+        receiveTimeout: settings.settings.apiTimeout.value,
+        sendTimeout: settings.settings.apiTimeout.value,
     ));
     dio.interceptors.add(ApiInterceptor());
     // Uncomment to run tests on most API requests

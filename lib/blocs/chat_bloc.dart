@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -10,7 +8,6 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -48,12 +45,6 @@ class ChatBloc {
 
   factory ChatBloc() {
     return _chatBloc;
-  }
-
-  int get pageSize {
-    return (SettingsManager().settings.denseChatTiles.value || SettingsManager().settings.skin.value != Skins.iOS)
-        ? 14
-        : 12;
   }
 
   Future<Chat?> getChat(String? guid) async {
@@ -245,8 +236,8 @@ class ChatBloc {
     // Remove from notification shade
     if (clearNotifications && !isUnread) {
       await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
-      if (SettingsManager().settings.enablePrivateAPI.value &&
-          SettingsManager().settings.privateMarkChatAsRead.value &&
+      if (settings.settings.enablePrivateAPI.value &&
+          settings.settings.privateMarkChatAsRead.value &&
           chat.autoSendReadReceipts!) {
         await http.markChatRead(chat.guid);
       }
@@ -541,7 +532,7 @@ extension Helpers on RxList<Chat> {
   }
 
   RxList<Chat> unknownSendersHelper(bool unknown) {
-    if (!SettingsManager().settings.filterUnknownSenders.value) return this;
+    if (!settings.settings.filterUnknownSenders.value) return this;
     if (unknown) {
       return where((e) => e.participants.length == 1 && ContactManager().getContact(e.participants[0].address) == null)
           .toList()

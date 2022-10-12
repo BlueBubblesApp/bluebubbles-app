@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/html/message.dart';
 import 'package:bluebubbles/repository/models/html/objectbox.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:mime_type/mime_type.dart';
 
 class Attachment {
@@ -158,8 +158,7 @@ class Attachment {
 
   String getPath() {
     String? fileName = transferName;
-    String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = "$appDocPath/attachments/$guid/$fileName";
+    String pathName = "${fs.appDocDir.path}/attachments/$guid/$fileName";
     return pathName;
   }
 
@@ -168,7 +167,7 @@ class Attachment {
   }
 
   String getCompressedPath() {
-    return "${getPath()}.${SettingsManager().compressionQuality}.compressed";
+    return "${getPath()}.${settings.compressionQuality}.compressed";
   }
 
   Map<String, dynamic> toMap() => {

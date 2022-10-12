@@ -7,7 +7,6 @@ import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chewie/chewie.dart';
@@ -60,7 +59,7 @@ class _VideoViewerState extends State<VideoViewer> {
       dynamic file = File(widget.file.path!);
       controller = VideoPlayerController.file(file);
     }
-    controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
+    controller.setVolume(settings.settings.startVideosMutedFullscreen.value ? 0 : 1);
     await controller.initialize();
     chewieController = ChewieController(
       videoPlayerController: controller,
@@ -77,7 +76,7 @@ class _VideoViewerState extends State<VideoViewer> {
           handleColor: Theme.of(context).colorScheme.primary,
           bufferedColor: Theme.of(context).colorScheme.primaryContainer,
           backgroundColor: Theme.of(context).colorScheme.properSurface),
-      customControls: SettingsManager().settings.skin.value == Skins.iOS ? null : Stack(
+      customControls: settings.settings.skin.value == Skins.iOS ? null : Stack(
         children: [
           Positioned.fill(child: MaterialControls()),
           Positioned(
@@ -100,7 +99,7 @@ class _VideoViewerState extends State<VideoViewer> {
                         Navigator.pop(context);
                       },
                       child: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.back : Icons.arrow_back,
+                        settings.settings.skin.value == Skins.iOS ? CupertinoIcons.back : Icons.arrow_back,
                         color: Colors.white,
                       ),
                     ),
@@ -109,7 +108,7 @@ class _VideoViewerState extends State<VideoViewer> {
           ),
         ]
       ),
-      additionalOptions: (context) => SettingsManager().settings.skin.value == Skins.iOS || !widget.showInteractions ? [] : [
+      additionalOptions: (context) => settings.settings.skin.value == Skins.iOS || !widget.showInteractions ? [] : [
         OptionItem(
           onTap: () async {
             showMetadataDialog();
@@ -199,49 +198,49 @@ class _VideoViewerState extends State<VideoViewer> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: SettingsManager().settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
+        statusBarIconBrightness: settings.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
         backgroundColor: Colors.black,
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-        bottomNavigationBar: SettingsManager().settings.skin.value != Skins.iOS || !widget.showInteractions ? null : Theme(
+        bottomNavigationBar: settings.settings.skin.value != Skins.iOS || !widget.showInteractions ? null : Theme(
           data: context.theme.copyWith(navigationBarTheme: context.theme.navigationBarTheme.copyWith(
-            indicatorColor: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
+            indicatorColor: settings.settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
           )),
           child: NavigationBar(
             selectedIndex: 0,
-            backgroundColor: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
+            backgroundColor: settings.settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
             labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
             height: 60,
             destinations: [
               NavigationDestination(
                   icon: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
-                    color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
+                    settings.settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
+                    color: settings.settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
                   ),
                   label: 'Download'
               ),
               if (!kIsDesktop && !kIsWeb)
                 NavigationDestination(
                     icon: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
-                      color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
+                      settings.settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
+                      color: settings.settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
                     ),
                     label: 'Share'
                 ),
               NavigationDestination(
                   icon: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
+                    settings.settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
                     color: context.theme.colorScheme.primary,
                   ),
                   label: 'Metadata'
               ),
               NavigationDestination(
                   icon: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
+                    settings.settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
                     color: context.theme.colorScheme.primary,
                   ),
                   label: 'Refresh'
@@ -249,10 +248,10 @@ class _VideoViewerState extends State<VideoViewer> {
               NavigationDestination(
                   icon: Icon(
                     controller.value.volume == 0.0
-                        ? SettingsManager().settings.skin.value == Skins.iOS
+                        ? settings.settings.skin.value == Skins.iOS
                         ? CupertinoIcons.volume_mute
                         : Icons.volume_mute
-                        : SettingsManager().settings.skin.value == Skins.iOS
+                        : settings.settings.skin.value == Skins.iOS
                         ? CupertinoIcons.volume_up
                         : Icons.volume_up,
                     color: context.theme.colorScheme.primary,
@@ -283,7 +282,7 @@ class _VideoViewerState extends State<VideoViewer> {
         ),
         body: Listener(
             onPointerUp: (_) async {
-              if (SettingsManager().settings.skin.value == Skins.iOS) {
+              if (settings.settings.skin.value == Skins.iOS) {
                 setState(() {
                   showPlayPauseOverlay = true;
                 });
@@ -299,7 +298,7 @@ class _VideoViewerState extends State<VideoViewer> {
                       child: Center(
                         child: Theme(
                           data: context.theme.copyWith(
-                              platform: SettingsManager().settings.skin.value == Skins.iOS
+                              platform: settings.settings.skin.value == Skins.iOS
                                   ? TargetPlatform.iOS
                                   : TargetPlatform.android,
                               dialogBackgroundColor: context.theme.colorScheme.properSurface,
@@ -414,7 +413,7 @@ class _VideoViewerState extends State<VideoViewer> {
       }
       await controller.initialize();
       isReloading.value = false;
-      controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
+      controller.setVolume(settings.settings.startVideosMutedFullscreen.value ? 0 : 1);
       chewieController = ChewieController(
         videoPlayerController: controller,
         aspectRatio: controller.value.aspectRatio,

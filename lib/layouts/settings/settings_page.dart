@@ -23,7 +23,6 @@ import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -72,15 +71,15 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
 
   @override
   Widget build(BuildContext context) {
-    final Widget nextIcon = Obx(() => SettingsManager().settings.skin.value != Skins.Material ? Icon(
-      SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+    final Widget nextIcon = Obx(() => settings.settings.skin.value != Skins.Material ? Icon(
+      settings.settings.skin.value != Skins.Material ? CupertinoIcons.chevron_right : Icons.arrow_forward,
       color: context.theme.colorScheme.outline,
       size: iOS ? 18 : 24,
     ) : const SizedBox.shrink());
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -140,7 +139,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                                 );
                               },
                               onLongPress: () {
-                                Clipboard.setData(ClipboardData(text: SettingsManager().settings.serverAddress.value));
+                                Clipboard.setData(ClipboardData(text: settings.settings.serverAddress.value));
                                 showSnackbar('Copied', "Address copied to clipboard");
                               },
                               leading: Column(
@@ -153,7 +152,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                                           width: 3.0
                                       ),
                                     ) : null,
-                                    color: SettingsManager().settings.skin.value != Skins.Material
+                                    color: settings.settings.skin.value != Skins.Material
                                         ? getIndicatorColor(socket.state.value)
                                         : Colors.transparent,
                                     borderRadius: iOS
@@ -169,8 +168,8 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                                               ? CupertinoIcons.antenna_radiowaves_left_right
                                               : Icons.router,
                                           color:
-                                          SettingsManager().settings.skin.value != Skins.Material ? Colors.white : Colors.grey,
-                                          size: SettingsManager().settings.skin.value != Skins.Material ? 23 : 30,
+                                          settings.settings.skin.value != Skins.Material ? Colors.white : Colors.grey,
+                                          size: settings.settings.skin.value != Skins.Material ? 23 : 30,
                                         ),
                                         if (material)
                                           Positioned.fill(
@@ -201,7 +200,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                           SettingsTile(
                             backgroundColor: tileColor,
                             title: "Appearance Settings",
-                            subtitle: "${SettingsManager().settings.skin.value.toString().split(".").last}   |   ${AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst!} Mode",
+                            subtitle: "${settings.settings.skin.value.toString().split(".").last}   |   ${AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst!} Mode",
                             onTap: () {
                               navigatorService.pushAndRemoveSettingsUntil(
                                 context,
@@ -374,7 +373,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             backgroundColor: tileColor,
                             title: "Private API Features",
                             subtitle:
-                            "Private API ${SettingsManager().settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}",
+                            "Private API ${settings.settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}",
                             trailing: nextIcon,
                             onTap: () async {
                               navigatorService.pushAndRemoveSettingsUntil(
@@ -386,7 +385,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             leading: SettingsLeadingIcon(
                               iosIcon: CupertinoIcons.exclamationmark_shield,
                               materialIcon: Icons.gpp_maybe,
-                              containerColor: getIndicatorColor(SettingsManager().settings.enablePrivateAPI.value
+                              containerColor: getIndicatorColor(settings.settings.enablePrivateAPI.value
                                   ? SocketState.connected
                                   : SocketState.connecting),
                             ),
@@ -402,7 +401,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             backgroundColor: tileColor,
                             title: "Redacted Mode",
                             subtitle:
-                            "Redacted Mode ${SettingsManager().settings.redactedMode.value ? "Enabled" : "Disabled"}",
+                            "Redacted Mode ${settings.settings.redactedMode.value ? "Enabled" : "Disabled"}",
                             trailing: nextIcon,
                             onTap: () async {
                               navigatorService.pushAndRemoveSettingsUntil(
@@ -414,7 +413,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                             leading: SettingsLeadingIcon(
                               iosIcon: CupertinoIcons.wand_stars,
                               materialIcon: Icons.auto_fix_high,
-                              containerColor: getIndicatorColor(SettingsManager().settings.redactedMode.value
+                              containerColor: getIndicatorColor(settings.settings.redactedMode.value
                                   ? SocketState.connected
                                   : SocketState.connecting),
                             ),
@@ -628,7 +627,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                                           TextButton(
                                             child: Text("Remove Attachments", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                             onPressed: () async {
-                                              final dir = Directory("${SettingsManager().appDocDir.path}/attachments");
+                                              final dir = Directory("${fs.appDocDir.path}/attachments");
                                               await dir.delete(recursive: true);
                                               showSnackbar("Success", "Deleted cached attachments");
                                             },
@@ -643,15 +642,14 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                                           child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                           onPressed: () async {
                                             await DBProvider.deleteDB();
-                                            await SettingsManager().resetConnection();
-                                            SettingsManager().settings = Settings();
-                                            SettingsManager().settings.save();
-                                            SettingsManager().fcmData = null;
-                                            FCMData.deleteFcmData();
-                                            prefs.setString("selected-dark", "OLED Dark");
-                                            prefs.setString("selected-light", "Bright White");
+                                            socket.forgetConnection();
+                                            settings.settings = Settings();
+                                            settings.fcmData = FCMData();
+                                            await settings.prefs.clear();
+                                            await settings.prefs.setString("selected-dark", "OLED Dark");
+                                            await settings.prefs.setString("selected-light", "Bright White");
                                             themeBox.putMany(themes.defaultThemes);
-                                            themes.loadTheme(context);
+                                            themes.changeTheme(context);
                                             Get.offAll(() => WillPopScope(
                                               onWillPop: () async => false,
                                               child: TitleBarWrapper(child: SetupView()),
@@ -724,7 +722,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                   CupertinoPage(
                       name: "initial",
                       child: Scaffold(
-                          backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
+                          backgroundColor: settings.settings.skin.value != Skins.iOS ? tileColor : headerColor,
                           body: Center(
                             child: Text("Select a settings page from the list",
                                 style: context.theme.textTheme.bodyLarge),

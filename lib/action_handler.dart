@@ -16,7 +16,6 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -46,7 +45,7 @@ class ActionHandler {
     if (chat == null) return;
     if (isNullOrEmpty(text, trimString: true)! && isNullOrEmpty(subject ?? "", trimString: true)!) return;
 
-    if (!(await SettingsManager().isMinBigSur)) {
+    if (!(await settings.isMinBigSur)) {
       List<Message> messages = <Message>[];
 
       // Check for URLs
@@ -272,7 +271,7 @@ class ActionHandler {
     }
 
     bool isConnected = true;
-    if (!SettingsManager().settings.privateAPISend.value) {
+    if (!settings.settings.privateAPISend.value) {
       if ([SocketState.connecting, SocketState.disconnected].contains(socket.state.value)) {
         await Future.delayed(Duration(seconds: 3));
       }
@@ -291,8 +290,8 @@ class ActionHandler {
           message.guid!,
           message.text!,
           subject: message.subject,
-          method: (SettingsManager().settings.enablePrivateAPI.value
-              && SettingsManager().settings.privateAPISend.value
+          method: (settings.settings.enablePrivateAPI.value
+              && settings.settings.privateAPISend.value
               && (message.text?.isNotEmpty ?? false))
               || (message.subject?.isNotEmpty ?? false)
               || message.threadOriginatorGuid != null
@@ -409,9 +408,8 @@ class ActionHandler {
 
     message.fetchAttachments();
     for (int i = 0; i < message.attachments.length; i++) {
-      String appDocPath = SettingsManager().appDocDir.path;
       String pathName =
-          "$appDocPath/attachments/${message.attachments[i]!.guid}/${message.attachments[i]!.transferName}";
+          "${fs.appDocDir.path}/attachments/${message.attachments[i]!.guid}/${message.attachments[i]!.transferName}";
       File file = File(pathName);
 
       OutgoingQueue().add(

@@ -5,7 +5,7 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -37,10 +37,10 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHe
                   children: [
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.autoDownload.value = val;
+                            settings.settings.autoDownload.value = val;
                             saveSettings();
                           },
-                          initialVal: SettingsManager().settings.autoDownload.value,
+                          initialVal: settings.settings.autoDownload.value,
                           title: "Auto-download Attachments",
                           subtitle:
                               "Automatically downloads new attachments from the server and caches them internally",
@@ -56,10 +56,10 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHe
                     ),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.onlyWifiDownload.value = val;
+                            settings.settings.onlyWifiDownload.value = val;
                             saveSettings();
                           },
-                          initialVal: SettingsManager().settings.onlyWifiDownload.value,
+                          initialVal: settings.settings.onlyWifiDownload.value,
                           title: "Only Auto-download Attachments on WiFi",
                           backgroundColor: tileColor,
                         )),
@@ -74,10 +74,10 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHe
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
-                              SettingsManager().settings.autoSave.value = val;
+                              settings.settings.autoSave.value = val;
                               saveSettings();
                             },
-                            initialVal: SettingsManager().settings.autoSave.value,
+                            initialVal: settings.settings.autoSave.value,
                             title: "Auto-save Attachments",
                             subtitle: "Automatically saves all attachments to gallery or downloads folder",
                             backgroundColor: tileColor,
@@ -94,10 +94,10 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHe
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
-                              SettingsManager().settings.askWhereToSave.value = val;
+                              settings.settings.askWhereToSave.value = val;
                               saveSettings();
                             },
-                            initialVal: SettingsManager().settings.askWhereToSave.value,
+                            initialVal: settings.settings.askWhereToSave.value,
                             title: "Ask Where to Save Attachments",
                             subtitle: "Ask where to save attachments when manually downloading",
                             backgroundColor: tileColor,
@@ -118,10 +118,10 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHe
                     children: [
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
-                              SettingsManager().settings.startVideosMuted.value = val;
+                              settings.settings.startVideosMuted.value = val;
                               saveSettings();
                             },
-                            initialVal: SettingsManager().settings.startVideosMuted.value,
+                            initialVal: settings.settings.startVideosMuted.value,
                             title: "Mute Videos by Default in Attachment Preview",
                             backgroundColor: tileColor,
                           )),
@@ -134,10 +134,10 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHe
                       ),
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
-                              SettingsManager().settings.startVideosMutedFullscreen.value = val;
+                              settings.settings.startVideosMutedFullscreen.value = val;
                               saveSettings();
                             },
-                            initialVal: SettingsManager().settings.startVideosMutedFullscreen.value,
+                            initialVal: settings.settings.startVideosMutedFullscreen.value,
                             title: "Mute Videos by Default in Fullscreen Player",
                             backgroundColor: tileColor,
                           )),
@@ -154,9 +154,9 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHe
                   SettingsSection(backgroundColor: tileColor, children: [
                     if (!kIsWeb)
                       Obx(() => SettingsSlider(
-                          startingVal: SettingsManager().settings.previewCompressionQuality.value.toDouble(),
+                          startingVal: settings.settings.previewCompressionQuality.value.toDouble(),
                           update: (double val) {
-                            SettingsManager().settings.previewCompressionQuality.value = val.toInt();
+                            settings.settings.previewCompressionQuality.value = val.toInt();
                           },
                           onChangeEnd: (double val) {
                             saveSettings();
@@ -170,8 +170,8 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHe
                                     borderRadius: BorderRadius.circular(5),
                                     child: ImageFiltered(
                                       imageFilter: ImageFilter.blur(
-                                        sigmaX: (1 - SettingsManager().settings.previewCompressionQuality.value / 100),
-                                        sigmaY: (1 - SettingsManager().settings.previewCompressionQuality.value / 100),
+                                        sigmaX: (1 - settings.settings.previewCompressionQuality.value / 100),
+                                        sigmaY: (1 - settings.settings.previewCompressionQuality.value / 100),
                                       ),
                                       child: Container(
                                         width: 32,
@@ -228,10 +228,10 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHe
                         }
                       }),
                       Obx(() => SettingsOptions<SwipeDirection>(
-                            initial: SettingsManager().settings.fullscreenViewerSwipeDir.value,
+                            initial: settings.settings.fullscreenViewerSwipeDir.value,
                             onChanged: (val) {
                               if (val == null) return;
-                              SettingsManager().settings.fullscreenViewerSwipeDir.value = val;
+                              settings.settings.fullscreenViewerSwipeDir.value = val;
                               saveSettings();
                             },
                             options: SwipeDirection.values,
@@ -257,10 +257,10 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHe
                     children: [
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
-                              SettingsManager().settings.preCachePreviewImages.value = val;
+                              settings.settings.preCachePreviewImages.value = val;
                               saveSettings();
                             },
-                            initialVal: SettingsManager().settings.preCachePreviewImages.value,
+                            initialVal: settings.settings.preCachePreviewImages.value,
                             title: "Cache Preview Images",
                             subtitle: "Caches URL preview images for faster load times",
                             backgroundColor: tileColor,
@@ -274,6 +274,6 @@ class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHe
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings();
+    settings.saveSettings();
   }
 }

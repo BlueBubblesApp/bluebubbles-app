@@ -1,8 +1,6 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
@@ -33,7 +31,7 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
           color: widget.tuple.item1.value,
           child: Container(
             decoration: widget.tuple.item1.value.computeDifference(themes.inDarkMode(context)
-                || SettingsManager().settings.skin.value == Skins.Samsung
+                || settings.settings.skin.value == Skins.Samsung
                 ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface) < 15 ? BoxDecoration(
               border: Border.all(width: 0.5, color: context.theme.colorScheme.outline),
               borderRadius: BorderRadius.circular(20)
@@ -48,14 +46,14 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
                     map["data"]["colorScheme"][widget.tuple.item1.key] = result.value;
                     widget.currentTheme.data = ThemeStruct.fromMap(map).data;
                     widget.currentTheme.save();
-                    if (widget.currentTheme.name == prefs.getString("selected-dark")) {
-                      SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
-                    } else if (widget.currentTheme.name == prefs.getString("selected-light")) {
-                      SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
+                    if (widget.currentTheme.name == settings.prefs.getString("selected-dark")) {
+                      themes.changeTheme(_context, dark: widget.currentTheme);
+                    } else if (widget.currentTheme.name == settings.prefs.getString("selected-light")) {
+                      themes.changeTheme(_context, light: widget.currentTheme);
                     }
                   }
                 } else {
-                  if (SettingsManager().settings.monetTheming.value != Monet.none) {
+                  if (settings.settings.monetTheming.value != Monet.none) {
                     showSnackbar('Notice', "Turn off Material You to start customizing!");
                   } else {
                     showSnackbar('Notice', "Create a new theme to start customizing!");
@@ -71,14 +69,14 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
                     map["data"]["colorScheme"][widget.tuple.item2!.key] = result.value;
                     widget.currentTheme.data = ThemeStruct.fromMap(map).data;
                     widget.currentTheme.save();
-                    if (widget.currentTheme.name == prefs.getString("selected-dark")) {
-                      SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
-                    } else if (widget.currentTheme.name == prefs.getString("selected-light")) {
-                      SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
+                    if (widget.currentTheme.name == settings.prefs.getString("selected-dark")) {
+                      themes.changeTheme(_context, dark: widget.currentTheme);
+                    } else if (widget.currentTheme.name == settings.prefs.getString("selected-light")) {
+                      themes.changeTheme(_context, light: widget.currentTheme);
                     }
                   }
                 } else {
-                  if (SettingsManager().settings.monetTheming.value != Monet.none) {
+                  if (settings.settings.monetTheming.value != Monet.none) {
                     showSnackbar('Notice', "Turn off Material You to start customizing!");
                   } else {
                     showSnackbar('Notice', "Create a new theme to start customizing!");

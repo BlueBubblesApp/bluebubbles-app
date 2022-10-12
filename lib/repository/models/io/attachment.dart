@@ -5,9 +5,9 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/message.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mime_type/mime_type.dart';
@@ -233,7 +233,7 @@ class Attachment {
     existing.webUrl = newAttachment.webUrl;
     existing.save(null);
     // change the directory path
-    String appDocPath = SettingsManager().appDocDir.path;
+    String appDocPath = fs.appDocDir.path;
     String pathName = "$appDocPath/attachments/$oldGuid";
     Directory directory = Directory(pathName);
     directory.renameSync("$appDocPath/attachments/${newAttachment.guid}");
@@ -294,14 +294,12 @@ class Attachment {
 
   String getPath() {
     String? fileName = transferName;
-    String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = "$appDocPath/attachments/$guid/$fileName";
+    String pathName = "${fs.appDocDir.path}/attachments/$guid/$fileName";
     return pathName;
   }
 
   String getDirectory() {
-    String appDocPath = SettingsManager().appDocDir.path;
-    String dirName = "$appDocPath/attachments/$guid";
+    String dirName = "${fs.appDocDir.path}/attachments/$guid";
     return dirName;
   }
 

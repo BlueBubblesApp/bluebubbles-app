@@ -10,7 +10,6 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
@@ -79,7 +78,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+        systemNavigationBarColor: settings.settings.immersiveMode.value
             ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
@@ -92,10 +91,10 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
           colorScheme: context.theme.colorScheme.copyWith(
             primary: context.theme.colorScheme.bubble(context, widget.chat.isIMessage),
             onPrimary: context.theme.colorScheme.onBubble(context, widget.chat.isIMessage),
-            surface: SettingsManager().settings.monetTheming.value == Monet.full
+            surface: settings.settings.monetTheming.value == Monet.full
                 ? null
                 : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-            onSurface: SettingsManager().settings.monetTheming.value == Monet.full
+            onSurface: settings.settings.monetTheming.value == Monet.full
                 ? null
                 : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
           ),
@@ -205,7 +204,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
 
   Widget buildDetailsMenu(BuildContext context) {
     double maxMenuWidth = min(max(context.width * 3 / 5, 200), context.width * 4 / 5);
-    bool ios = SettingsManager().settings.skin.value == Skins.iOS;
+    bool ios = settings.settings.skin.value == Skins.iOS;
 
     List<Widget> allActions = [
       Material(

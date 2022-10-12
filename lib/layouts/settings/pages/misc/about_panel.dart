@@ -7,7 +7,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -472,7 +472,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> with ThemeHelpers {
                                                           style: context.theme.textTheme.bodyLarge),
                                                     if (kIsDesktop)
                                                       Text(
-                                                        "${packageInfo?.version ?? "Unknown Version"}_${Platform.operatingSystem.capitalizeFirst!}",
+                                                        "${fs.packageInfo.version ?? "Unknown Version"}_${Platform.operatingSystem.capitalizeFirst!}",
                                                         style: context.theme.textTheme.bodyLarge,
                                                       ),
                                                   ],

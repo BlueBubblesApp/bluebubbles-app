@@ -8,9 +8,9 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:chewie_audio/chewie_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -124,7 +124,7 @@ class ChatController {
       // Check and see if we need to unfocus the keyboard
       // The +100 is relatively arbitrary. It was the threshold I thought was good
       if (keyboardOpen &&
-          SettingsManager().settings.hideKeyboardOnScroll.value &&
+          settings.settings.hideKeyboardOnScroll.value &&
           scrollController.offset > keyboardOpenOffset + 100) {
         EventDispatcher().emit("unfocus-keyboard", null);
       }
@@ -377,7 +377,7 @@ class ChatController {
       );
     }
 
-    if (SettingsManager().settings.openKeyboardOnSTB.value) {
+    if (settings.settings.openKeyboardOnSTB.value) {
       EventDispatcher().emit("focus-keyboard", null);
       keyboardOpenOffset = 0;
     }

@@ -26,8 +26,6 @@ import 'package:bluebubbles/layouts/conversation_list/pages/samsung_conversation
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -46,10 +44,10 @@ class ConversationListController extends StatefulController {
   ConversationListController({required this.showArchivedChats, required this.showUnknownSenders});
 
   void updateSelectedChats() {
-    if (SettingsManager().settings.skin.value == Skins.Material) {
+    if (settings.settings.skin.value == Skins.Material) {
       updateWidgetFunctions[MaterialHeader]?.call(null);
       updateMaterialFAB();
-    } else if (SettingsManager().settings.skin.value == Skins.Samsung) {
+    } else if (settings.settings.skin.value == Skins.Samsung) {
       updateWidgetFunctions[SamsungFooter]?.call(null);
       updateWidgetFunctions[ExpandedHeaderText]?.call(null);
     }
@@ -79,8 +77,7 @@ class ConversationListController extends StatefulController {
       }
     }
 
-    String appDocPath = SettingsManager().appDocDir.path;
-    File file = File("$appDocPath/attachments/${randomString(16)}.png");
+    File file = File("${fs.appDocDir.path}/attachments/${randomString(16)}.png");
     await file.create(recursive: true);
     await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
 
@@ -138,17 +135,17 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         ? "Unknown"
         : "Messages";
 
-    if (prefs.getString('lastOpenedChat') != null &&
+    if (settings.prefs.getString('lastOpenedChat') != null &&
         showAltLayoutContextless &&
-        ChatManager().activeChat?.chat.guid != prefs.getString('lastOpenedChat') &&
+        ChatManager().activeChat?.chat.guid != settings.prefs.getString('lastOpenedChat') &&
         !LifeCycleManager().isBubble) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         navigatorService.pushAndRemoveUntil(
           context,
           ConversationView(
             chat: kIsWeb
-                ? await Chat.findOneWeb(guid: prefs.getString('lastOpenedChat'))
-                : Chat.findOne(guid: prefs.getString('lastOpenedChat'))),
+                ? await Chat.findOneWeb(guid: settings.prefs.getString('lastOpenedChat'))
+                : Chat.findOne(guid: settings.prefs.getString('lastOpenedChat'))),
           (route) => route.isFirst,
         );
       });
@@ -165,7 +162,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+        systemNavigationBarColor: settings.settings.immersiveMode.value
             ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: brightness,
         statusBarColor: Colors.transparent, // status bar color

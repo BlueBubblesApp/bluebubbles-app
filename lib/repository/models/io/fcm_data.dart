@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:objectbox/objectbox.dart';
@@ -68,12 +69,13 @@ class FCMData {
   }
 
   static void deleteFcmData() {
-    prefs.remove('projectID');
-    prefs.remove('storageBucket');
-    prefs.remove('apiKey');
-    prefs.remove('firebaseURL');
-    prefs.remove('clientID');
-    prefs.remove('applicationID');
+    fcmDataBox.removeAll();
+    settings.prefs.remove('projectID');
+    settings.prefs.remove('storageBucket');
+    settings.prefs.remove('apiKey');
+    settings.prefs.remove('firebaseURL');
+    settings.prefs.remove('clientID');
+    settings.prefs.remove('applicationID');
   }
 
   static Future<void> initializeFirebase(FCMData data) async {
@@ -92,12 +94,12 @@ class FCMData {
     final result = fcmDataBox.getAll();
     if (result.isEmpty) {
       return FCMData(
-        projectID: prefs.getString('projectID'),
-        storageBucket: prefs.getString('storageBucket'),
-        apiKey: prefs.getString('apiKey'),
-        firebaseURL: prefs.getString('firebaseURL'),
-        clientID: prefs.getString('clientID'),
-        applicationID: prefs.getString('applicationID'),
+        projectID: settings.prefs.getString('projectID'),
+        storageBucket: settings.prefs.getString('storageBucket'),
+        apiKey: settings.prefs.getString('apiKey'),
+        firebaseURL: settings.prefs.getString('firebaseURL'),
+        clientID: settings.prefs.getString('clientID'),
+        applicationID: settings.prefs.getString('applicationID'),
       );
     }
     return result.first;

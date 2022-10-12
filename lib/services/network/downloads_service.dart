@@ -3,7 +3,6 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -139,7 +138,7 @@ class AttachmentDownloadController extends GetxController {
         _file.writeAsBytesSync(attachment.bytes!.toList());
       }
     }
-    if (SettingsManager().settings.autoSave.value
+    if (settings.settings.autoSave.value
         && !kIsWeb
         && !kIsDesktop
         && !(attachment.isOutgoing ?? false)

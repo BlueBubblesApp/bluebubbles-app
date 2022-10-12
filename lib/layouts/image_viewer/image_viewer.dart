@@ -10,7 +10,6 @@ import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.da
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -87,7 +86,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       child: Container(
         height: kIsDesktop ? 50 : 100.0,
         width: navigatorService.width(context),
-        color: context.theme.colorScheme.shadow.withOpacity(SettingsManager().settings.skin.value == Skins.Samsung ? 1 : 0.65),
+        color: context.theme.colorScheme.shadow.withOpacity(settings.settings.skin.value == Skins.Samsung ? 1 : 0.65),
         child: SafeArea(
           left: false,
           right: false,
@@ -122,8 +121,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                           if (widget.attachment.message.target?.dateCreated != null)
                             Padding(
                               padding: const EdgeInsets.only(top: 2.0),
-                              child: Text(SettingsManager().settings.skin.value == Skins.Samsung ? intl.DateFormat.jm().add_MMMd().format(widget.attachment.message.target!.dateCreated!) : intl.DateFormat('EEE').add_jm().format(widget.attachment.message.target!.dateCreated!),
-                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.grey : Colors.white)),
+                              child: Text(settings.settings.skin.value == Skins.Samsung ? intl.DateFormat.jm().add_MMMd().format(widget.attachment.message.target!.dateCreated!) : intl.DateFormat('EEE').add_jm().format(widget.attachment.message.target!.dateCreated!),
+                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: settings.settings.skin.value == Skins.Samsung ? Colors.grey : Colors.white)),
                             ),
                         ],
                       ),
@@ -176,15 +175,15 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: SettingsManager().settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
+        statusBarIconBrightness: settings.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
         backgroundColor: Colors.black,
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-        floatingActionButton: widget.showInteractions && showOverlay && SettingsManager().settings.skin.value == Skins.Material ? Row(
+        floatingActionButton: widget.showInteractions && showOverlay && settings.settings.skin.value == Skins.Material ? Row(
           children: [
             FloatingActionButton(
               backgroundColor: context.theme.colorScheme.secondary,
@@ -216,45 +215,45 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
               ),
           ],
         ) : null,
-        bottomNavigationBar: !widget.showInteractions || SettingsManager().settings.skin.value == Skins.Material
-            || (SettingsManager().settings.skin.value == Skins.Samsung && !showOverlay) ? null : Theme(
+        bottomNavigationBar: !widget.showInteractions || settings.settings.skin.value == Skins.Material
+            || (settings.settings.skin.value == Skins.Samsung && !showOverlay) ? null : Theme(
           data: context.theme.copyWith(navigationBarTheme: context.theme.navigationBarTheme.copyWith(
-              indicatorColor: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
+              indicatorColor: settings.settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
           )),
           child: NavigationBar(
             selectedIndex: 0,
-            backgroundColor: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
+            backgroundColor: settings.settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
             elevation: 0,
             labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
             height: 60,
             destinations: [
               NavigationDestination(
                 icon: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
-                  color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
+                  settings.settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
+                  color: settings.settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
                 ),
                 label: 'Download'
               ),
               if (!kIsWeb && !kIsDesktop)
                 NavigationDestination(
                   icon: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
-                    color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
+                    settings.settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
+                    color: settings.settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
                   ),
                   label: 'Share'
                 ),
-              if (SettingsManager().settings.skin.value == Skins.iOS)
+              if (settings.settings.skin.value == Skins.iOS)
                 NavigationDestination(
                     icon: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
+                      settings.settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
                       color: context.theme.colorScheme.primary,
                     ),
                     label: 'Metadata'
                 ),
-              if (SettingsManager().settings.skin.value == Skins.iOS)
+              if (settings.settings.skin.value == Skins.iOS)
                 NavigationDestination(
                     icon: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
+                      settings.settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
                       color: context.theme.colorScheme.primary,
                     ),
                     label: 'Refresh'
@@ -321,7 +320,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   errorBuilder: (context, object, stacktrace) => Center(
                       child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge)))
                   : loader,
-              if (SettingsManager().settings.skin.value != Skins.iOS) overlay
+              if (settings.settings.skin.value != Skins.iOS) overlay
             ],
           ),
         ),

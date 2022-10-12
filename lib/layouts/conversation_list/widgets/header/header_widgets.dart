@@ -9,7 +9,6 @@ import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -49,7 +48,7 @@ class SyncIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (!SettingsManager().settings.showSyncIndicator.value
+      if (!settings.settings.showSyncIndicator.value
           || !sync.isIncrementalSyncing.value) {
         return const SizedBox.shrink();
       }
@@ -64,12 +63,12 @@ class ConnectionIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (!SettingsManager().settings.showConnectionIndicator.value) {
+      if (!settings.settings.showConnectionIndicator.value) {
         return const SizedBox.shrink();
       }
       return Padding(
         padding: EdgeInsets.only(
-          right: SettingsManager().settings.skin.value != Skins.Material ? 10 : 0
+          right: settings.settings.skin.value != Skins.Material ? 10 : 0
         ),
         child: getIndicatorIcon(socket.state.value, size: 12),
       );
@@ -84,7 +83,7 @@ class OverflowMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() => PopupMenuButton<int>(
       color: context.theme.colorScheme.properSurface,
-      shape: SettingsManager().settings.skin.value != Skins.Material ? RoundedRectangleBorder(
+      shape: settings.settings.skin.value != Skins.Material ? RoundedRectangleBorder(
         borderRadius: BorderRadius.all(
           Radius.circular(20.0),
         ),
@@ -138,15 +137,14 @@ class OverflowMenu extends StatelessWidget {
                     child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                     onPressed: () async {
                       await DBProvider.deleteDB();
-                      await SettingsManager().resetConnection();
-                      SettingsManager().settings = Settings();
-                      SettingsManager().settings.save();
-                      SettingsManager().fcmData = null;
-                      FCMData.deleteFcmData();
-                      prefs.setString("selected-dark", "OLED Dark");
-                      prefs.setString("selected-light", "Bright White");
+                      socket.forgetConnection();
+                      settings.settings = Settings();
+                      settings.fcmData = FCMData();
+                      await settings.prefs.clear();
+                      await settings.prefs.setString("selected-dark", "OLED Dark");
+                      await settings.prefs.setString("selected-light", "Bright White");
                       themeBox.putMany(themes.defaultThemes);
-                      themes.loadTheme(context);
+                      themes.changeTheme(context);
                       Get.offAll(() => WillPopScope(
                         onWillPop: () async => false,
                         child: TitleBarWrapper(child: SetupView()),
@@ -175,7 +173,7 @@ class OverflowMenu extends StatelessWidget {
               style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
             ),
           ),
-          if (SettingsManager().settings.filterUnknownSenders.value)
+          if (settings.settings.filterUnknownSenders.value)
             PopupMenuItem(
               value: 3,
               child: Text(
@@ -199,12 +197,12 @@ class OverflowMenu extends StatelessWidget {
                 ))
         ];
       },
-      icon: SettingsManager().settings.skin.value == Skins.Material ? Icon(
+      icon: settings.settings.skin.value == Skins.Material ? Icon(
         Icons.more_vert,
         color: context.theme.colorScheme.onBackground,
         size: 25,
       ) : null,
-      child: SettingsManager().settings.skin.value == Skins.Material
+      child: settings.settings.skin.value == Skins.Material
         ? null
         : ThemeSwitcher(
             iOSSkin: Container(

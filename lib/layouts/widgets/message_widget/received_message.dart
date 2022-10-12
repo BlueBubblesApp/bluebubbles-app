@@ -22,7 +22,6 @@ import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -91,7 +90,7 @@ class ReceivedMessage extends StatefulWidget {
 class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMixin, WidgetsBindingObserver {
   bool checkedHandle = false;
   late String contactTitle;
-  final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
+  final Rx<Skins> skin = Rx<Skins>(settings.settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message,
       colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null,
       fakeSubject: widget.fakeSubject,
@@ -159,7 +158,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
   List<Color> getBubbleColors(Message message) {
     List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
-    if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
+    if (settings.settings.colorfulBubbles.value && !message.isFromMe!) {
       if (message.handle?.color == null) {
         bubbleColors = toColorGradient(message.handle?.address);
       } else {
@@ -223,7 +222,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     late final Widget child;
     if (message.isBigEmoji()) {
       final bool hideContent =
-          SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
+          settings.settings.redactedMode.value && settings.settings.hideEmojis.value;
 
       bool hasReactions = message.getReactions().isNotEmpty;
       child = Padding(
@@ -378,7 +377,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                       });
                     })
                 : FutureBuilder<List<InlineSpan>>(
-                    future: SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape)
+                    future: settings.settings.tabletMode.value && (!context.isPhone || context.isLandscape)
                         ? MessageWidgetMixin.buildMessageSpansAsync(context, widget.message,
                             colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null,
                             fakeSubject: widget.fakeSubject,
@@ -558,7 +557,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     // First, add the message sender (if applicable)
     bool isGroup = ChatManager().activeChat?.chat.isGroup() ?? false;
     bool addedSender = false;
-    bool showSender = SettingsManager().settings.alwaysShowAvatars.value ||
+    bool showSender = settings.settings.alwaysShowAvatars.value ||
         isGroup ||
         widget.message.guid == "redacted-mode-demo" ||
         widget.message.guid!.contains("theme-selector") ||
@@ -859,7 +858,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                   children: [
-                    if ((SettingsManager().settings.alwaysShowAvatars.value ||
+                    if ((settings.settings.alwaysShowAvatars.value ||
                             (ChatManager().activeChat?.chat.isGroup() ?? false)) &&
                         !msg.isFromMe!)
                       Padding(

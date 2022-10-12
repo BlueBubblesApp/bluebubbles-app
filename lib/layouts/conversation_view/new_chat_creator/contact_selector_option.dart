@@ -5,8 +5,8 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.da
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -68,9 +68,9 @@ class ContactSelectorOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool redactedMode = SettingsManager().settings.redactedMode.value;
-    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo.value;
-    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
+    final bool redactedMode = settings.settings.redactedMode.value;
+    final bool hideInfo = redactedMode && settings.settings.hideContactInfo.value;
+    final bool generateName = redactedMode && settings.settings.generateFakeContactNames.value;
     String title = "";
     if (generateName) {
       if (item.isChat) {
@@ -160,7 +160,7 @@ class ContactSelectorOption extends StatelessWidget {
                   ),
                 ),
               Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
+                  settings.settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
                   color: shouldShowChatType ? context.theme.colorScheme.bubble(context, item.chat?.isIMessage ?? true) : context.theme.colorScheme.primary,
                 ),
             ],

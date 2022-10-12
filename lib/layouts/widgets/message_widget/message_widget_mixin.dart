@@ -3,8 +3,8 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -50,15 +50,15 @@ abstract class MessageWidgetMixin {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
+        settings.settings.redactedMode.value && settings.settings.generateFakeMessageContent.value;
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
-        (SettingsManager().settings.redactedMode.value &&
-            SettingsManager().settings.hideMessageContent.value &&
+        (settings.settings.redactedMode.value &&
+            settings.settings.hideMessageContent.value &&
             !generateContent);
 
     TextStyle? textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText;
     if (!message!.isFromMe!) {
-      if (SettingsManager().settings.colorfulBubbles.value) {
+      if (settings.settings.colorfulBubbles.value) {
         if (!isNullOrEmpty(colors)!) {
           bool dark = colors![0].computeLuminance() < 0.179;
           if (!dark) {
@@ -183,16 +183,16 @@ abstract class MessageWidgetMixin {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
+        settings.settings.redactedMode.value && settings.settings.generateFakeMessageContent.value;
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
-        (SettingsManager().settings.redactedMode.value &&
-            SettingsManager().settings.hideMessageContent.value &&
+        (settings.settings.redactedMode.value &&
+            settings.settings.hideMessageContent.value &&
             !generateContent);
 
     TextStyle? textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText;
     if (message == null) return [];
     if (!message.isFromMe!) {
-      if (SettingsManager().settings.colorfulBubbles.value) {
+      if (settings.settings.colorfulBubbles.value) {
         if (!isNullOrEmpty(colors)!) {
           bool dark = colors![0].computeLuminance() < 0.179;
           if (!dark) {

@@ -2,13 +2,10 @@ import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart' as dio;
-
-import '../../../repository/models/models.dart';
 
 class IncrementalSyncManager extends SyncManager {
   final tag = 'IncrementalSyncManager';
@@ -75,7 +72,7 @@ class IncrementalSyncManager extends SyncManager {
     // the count can be slightly lower than the real count. To account
     // for this, we just multiple the count by 2. This way, even if all
     // the messages have a null text, we can still account for them when we fetch.
-    int serverVersion = await SettingsManager().getServerVersionCode();
+    int serverVersion = (await settings.getServerDetails()).item4 ?? 0;
     bool isBugged = serverVersion < 142; // Server: v1.2.0
 
     // 0: Hit API endpoint to check for updated messages
@@ -196,15 +193,15 @@ class IncrementalSyncManager extends SyncManager {
     if (saveDate) {
       addToOutput("Saving last sync date: $syncStart");
 
-      SettingsManager().settings.lastIncrementalSync.value = syncStart;
-      await SettingsManager().saveSettings();
+      settings.settings.lastIncrementalSync.value = syncStart;
+      await settings.saveSettings();
     }
 
     // Call this first so listeners can react before any
     // "heavier" calls are made
     await super.complete();
 
-    if (SettingsManager().settings.showIncrementalSync.value) {
+    if (settings.settings.showIncrementalSync.value) {
       showSnackbar('Success', '🔄 Incremental sync complete 🔄');
     }
 

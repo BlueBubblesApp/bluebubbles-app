@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -107,7 +106,7 @@ class BubbleText extends ThemeExtension<BubbleText> {
 mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
   // Samsung theme should always use the background color as the "header" color
   bool get reverseMapping =>
-      SettingsManager().settings.skin.value == Skins.Material
+      settings.settings.skin.value == Skins.Material
           && themes.inDarkMode(context);
 
   /// iOS skin [ListTile] subtitle [TextStyle]s
@@ -135,19 +134,19 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
   Color get tileColor => reverseMapping ? _headerColor : _tileColor;
 
   /// Whether or not to use tablet mode
-  bool get showAltLayout => SettingsManager().settings.tabletMode.value
+  bool get showAltLayout => settings.settings.tabletMode.value
       && (!context.isPhone || context.isLandscape)
       && context.width > 600;
 
-  bool get showAltLayoutContextless => SettingsManager().settings.tabletMode.value
+  bool get showAltLayoutContextless => settings.settings.tabletMode.value
       && (!Get.context!.isPhone || Get.context!.isLandscape)
       && Get.context!.width > 600;
 
-  bool get iOS => SettingsManager().settings.skin.value == Skins.iOS;
+  bool get iOS => settings.settings.skin.value == Skins.iOS;
 
-  bool get material => SettingsManager().settings.skin.value == Skins.Material;
+  bool get material => settings.settings.skin.value == Skins.Material;
 
-  bool get samsung => SettingsManager().settings.skin.value == Skins.Samsung;
+  bool get samsung => settings.settings.skin.value == Skins.Samsung;
 
   Brightness get brightness => context.theme.colorScheme.brightness;
 }
@@ -165,13 +164,13 @@ extension ColorSchemeHelpers on ColorScheme {
 
   Color get onSmsBubble => iMessageBubble == primary ? onPrimary : onPrimaryContainer;
 
-  Color bubble(BuildContext context, bool iMessage) => SettingsManager().settings.monetTheming.value != Monet.none
+  Color bubble(BuildContext context, bool iMessage) => settings.settings.monetTheming.value != Monet.none
       ? (iMessage ? iMessageBubble : smsBubble)
       : iMessage
       ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.iMessageBubbleColor ?? iMessageBubble
       : (context.theme.extensions[BubbleColors] as BubbleColors?)?.smsBubbleColor ?? smsBubble;
 
-  Color onBubble(BuildContext context, bool iMessage) => SettingsManager().settings.monetTheming.value != Monet.none
+  Color onBubble(BuildContext context, bool iMessage) => settings.settings.monetTheming.value != Monet.none
       ? (iMessage ? oniMessageBubble : onSmsBubble)
       : iMessage
       ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.oniMessageBubbleColor ?? oniMessageBubble

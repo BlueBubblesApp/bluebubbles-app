@@ -5,8 +5,8 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -94,17 +94,17 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                 children: [
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      SettingsManager().settings.redactedMode.value = val;
+                      settings.settings.redactedMode.value = val;
                       saveSettings();
                     },
-                    initialVal: SettingsManager().settings.redactedMode.value,
+                    initialVal: settings.settings.redactedMode.value,
                     title: "Enable Redacted Mode",
                     backgroundColor: tileColor,
                   )),
                 ],
               ),
               Obx(() => AnimatedSizeAndFade.showHide(
-                show: SettingsManager().settings.redactedMode.value,
+                show: settings.settings.redactedMode.value,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -120,10 +120,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                       children: [
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.hideMessageContent.value = val;
+                            settings.settings.hideMessageContent.value = val;
                             saveSettings();
                           },
-                          initialVal: SettingsManager().settings.hideMessageContent.value,
+                          initialVal: settings.settings.hideMessageContent.value,
                           title: "Hide Message Content",
                           backgroundColor: tileColor,
                           subtitle: "Removes any trace of message text",
@@ -137,10 +137,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.hideReactions.value = val;
+                            settings.settings.hideReactions.value = val;
                             saveSettings();
                           },
-                          initialVal: SettingsManager().settings.hideReactions.value,
+                          initialVal: settings.settings.hideReactions.value,
                           title: "Hide Reactions",
                           backgroundColor: tileColor,
                           subtitle: "Removes any trace of reactions from messages",
@@ -159,10 +159,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                       children: [
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.hideEmojis.value = val;
+                            settings.settings.hideEmojis.value = val;
                             saveSettings();
                           },
-                          initialVal: SettingsManager().settings.hideEmojis.value,
+                          initialVal: settings.settings.hideEmojis.value,
                           title: "Hide Big Emojis",
                           backgroundColor: tileColor,
                           subtitle: "Replaces large emojis with placeholder boxes",
@@ -176,10 +176,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.hideAttachments.value = val;
+                            settings.settings.hideAttachments.value = val;
                             saveSettings();
                           },
-                          initialVal: SettingsManager().settings.hideAttachments.value,
+                          initialVal: settings.settings.hideAttachments.value,
                           title: "Hide Attachments",
                           backgroundColor: tileColor,
                           subtitle: "Replaces attachments with placeholder boxes",
@@ -193,10 +193,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.hideAttachmentTypes.value = val;
+                            settings.settings.hideAttachmentTypes.value = val;
                             saveSettings();
                           },
-                          initialVal: SettingsManager().settings.hideAttachmentTypes.value,
+                          initialVal: settings.settings.hideAttachmentTypes.value,
                           title: "Hide Attachment Types",
                           backgroundColor: tileColor,
                           subtitle: "Removes the attachment file type text from the placeholder box",
@@ -216,10 +216,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                       children: [
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.hideContactPhotos.value = val;
+                            settings.settings.hideContactPhotos.value = val;
                             saveSettings();
                           },
-                          initialVal: SettingsManager().settings.hideContactPhotos.value,
+                          initialVal: settings.settings.hideContactPhotos.value,
                           title: "Hide Contact Photos",
                           backgroundColor: tileColor,
                           subtitle: "Replaces message bubbles with empty bubbles",
@@ -233,10 +233,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.hideContactInfo.value = val;
+                            settings.settings.hideContactInfo.value = val;
                             saveSettings();
                           },
-                          initialVal: SettingsManager().settings.hideContactInfo.value,
+                          initialVal: settings.settings.hideContactInfo.value,
                           title: "Hide Contact Info",
                           backgroundColor: tileColor,
                           subtitle: "Removes any trace of contact names, numbers, and emails",
@@ -251,10 +251,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.removeLetterAvatars.value = val;
+                            settings.settings.removeLetterAvatars.value = val;
                             saveSettings();
                           },
-                          initialVal: SettingsManager().settings.removeLetterAvatars.value,
+                          initialVal: settings.settings.removeLetterAvatars.value,
                           title: "Remove Letter Avatars",
                           backgroundColor: tileColor,
                           subtitle: "Replaces letter avatars with generic person avatars",
@@ -273,10 +273,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                       children: [
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.generateFakeContactNames.value = val;
+                            settings.settings.generateFakeContactNames.value = val;
                             saveSettings();
                           },
-                          initialVal: SettingsManager().settings.generateFakeContactNames.value,
+                          initialVal: settings.settings.generateFakeContactNames.value,
                           title: "Generate Fake Contact Names",
                           backgroundColor: tileColor,
                           subtitle: "Replaces contact names, numbers, and emails with auto-generated fake names",
@@ -291,10 +291,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.generateFakeMessageContent.value = val;
+                            settings.settings.generateFakeMessageContent.value = val;
                             saveSettings();
                           },
-                          initialVal: SettingsManager().settings.generateFakeMessageContent.value,
+                          initialVal: settings.settings.generateFakeMessageContent.value,
                           title: "Generate Fake Message Content",
                           backgroundColor: tileColor,
                           subtitle: "Replaces message text with lorem-ipsum text",
@@ -312,6 +312,6 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings();
+    settings.saveSettings();
   }
 }

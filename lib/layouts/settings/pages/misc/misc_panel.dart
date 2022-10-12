@@ -1,4 +1,4 @@
-import 'package:bluebubbles/services/network/http_service.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -6,7 +6,6 @@ import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +28,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
   Widget build(BuildContext context) {
     return SettingsScaffold(
       title: "Miscellaneous & Advanced",
-      initialHeader: SettingsManager().canAuthenticate ? "Security" : "Speed & Responsiveness",
+      initialHeader: settings.canAuthenticate ? "Security" : "Speed & Responsiveness",
       iosSubtitle: iosSubtitle,
       materialSubtitle: materialSubtitle,
       tileColor: tileColor,
@@ -38,7 +37,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
         SliverList(
           delegate: SliverChildListDelegate(
             <Widget>[
-              if (SettingsManager().canAuthenticate)
+              if (settings.canAuthenticate)
                 SettingsSection(
                   backgroundColor: tileColor,
                   children: [
@@ -51,23 +50,23 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                                 'Please authenticate to ${val == true ? "enable" : "disable"} security',
                                 options: AuthenticationOptions(stickyAuth: true));
                             if (didAuthenticate) {
-                              SettingsManager().settings.shouldSecure.value = val;
+                              settings.settings.shouldSecure.value = val;
                               if (val == false) {
                                 SecureApplicationProvider.of(context, listen: false)!.open();
-                              } else if (SettingsManager().settings.securityLevel.value ==
+                              } else if (settings.settings.securityLevel.value ==
                                   SecurityLevel.locked_and_secured) {
                                 SecureApplicationProvider.of(context, listen: false)!.secure();
                               }
                               saveSettings();
                             }
                           },
-                          initialVal: SettingsManager().settings.shouldSecure.value,
+                          initialVal: settings.settings.shouldSecure.value,
                           title: "Secure App",
                           subtitle: "Secure app with a fingerprint or pin",
                           backgroundColor: tileColor,
                         )),
                     Obx(() {
-                      if (SettingsManager().settings.shouldSecure.value) {
+                      if (settings.settings.shouldSecure.value) {
                         return Container(
                             color: tileColor,
                             child: Padding(
@@ -99,18 +98,18 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                         return const SizedBox.shrink();
                       }
                     }),
-                    if (SettingsManager().canAuthenticate)
+                    if (settings.canAuthenticate)
                       Obx(() {
-                        if (SettingsManager().settings.shouldSecure.value) {
+                        if (settings.settings.shouldSecure.value) {
                           return SettingsOptions<SecurityLevel>(
-                            initial: SettingsManager().settings.securityLevel.value,
+                            initial: settings.settings.securityLevel.value,
                             onChanged: (val) async {
                               var localAuth = LocalAuthentication();
                               bool didAuthenticate = await localAuth.authenticate(
                                   localizedReason: 'Please authenticate to change your security level', options: AuthenticationOptions(stickyAuth: true));
                               if (didAuthenticate) {
                                 if (val != null) {
-                                  SettingsManager().settings.securityLevel.value = val;
+                                  settings.settings.securityLevel.value = val;
                                   if (val == SecurityLevel.locked_and_secured) {
                                     SecureApplicationProvider.of(context, listen: false)!.secure();
                                   } else {
@@ -133,7 +132,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                           return const SizedBox.shrink();
                         }
                       }),
-                    if (SettingsManager().canAuthenticate)
+                    if (settings.canAuthenticate)
                       Container(
                         color: tileColor,
                         child: Padding(
@@ -144,10 +143,10 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                         onChanged: (bool val) async {
-                          SettingsManager().settings.incognitoKeyboard.value = val;
+                          settings.settings.incognitoKeyboard.value = val;
                           saveSettings();
                         },
-                        initialVal: SettingsManager().settings.incognitoKeyboard.value,
+                        initialVal: settings.settings.incognitoKeyboard.value,
                         title: "Incognito Keyboard",
                         subtitle: "Disables keyboard suggestions and prevents the keyboard from learning or storing any words you type in the message text field",
                         isThreeLine: true,
@@ -155,7 +154,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                       )),
                   ],
                 ),
-              if (SettingsManager().canAuthenticate)
+              if (settings.canAuthenticate)
                 SettingsHeader(
                     headerColor: headerColor,
                     tileColor: tileColor,
@@ -168,10 +167,10 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                   Obx(() =>
                       SettingsSwitch(
                         onChanged: (bool val) {
-                          SettingsManager().settings.lowMemoryMode.value = val;
+                          settings.settings.lowMemoryMode.value = val;
                           saveSettings();
                         },
-                        initialVal: SettingsManager().settings.lowMemoryMode.value,
+                        initialVal: settings.settings.lowMemoryMode.value,
                         title: "Low Memory Mode",
                         subtitle:
                         "Reduces background processes and deletes cached storage items to improve performance on lower-end devices",
@@ -204,9 +203,9 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                   Obx(() {
                     if (iOS) {
                       return SettingsSlider(
-                          startingVal: SettingsManager().settings.scrollVelocity.value,
+                          startingVal: settings.settings.scrollVelocity.value,
                           update: (double val) {
-                            SettingsManager().settings.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
+                            settings.settings.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
                           },
                           onChangeEnd: (double val) {
                             saveSettings();
@@ -238,16 +237,16 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                   ),
                   Obx(() =>
                       SettingsSlider(
-                          startingVal: SettingsManager().settings.apiTimeout.value / 1000,
+                          startingVal: settings.settings.apiTimeout.value / 1000,
                           update: (double val) {
-                            SettingsManager().settings.apiTimeout.value = val.toInt() * 1000;
+                            settings.settings.apiTimeout.value = val.toInt() * 1000;
                           },
                           onChangeEnd: (double val) {
                             saveSettings();
                             http.dio = Dio(BaseOptions(
                               connectTimeout: 15000,
-                              receiveTimeout: SettingsManager().settings.apiTimeout.value,
-                              sendTimeout: SettingsManager().settings.apiTimeout.value,
+                              receiveTimeout: settings.settings.apiTimeout.value,
+                              sendTimeout: settings.settings.apiTimeout.value,
                             ));
                             http.dio.interceptors.add(ApiInterceptor());
                           },
@@ -258,7 +257,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                   Padding(
                     padding: const EdgeInsets.all(15),
                     child: Obx(() => Text(
-                      "Note: Attachment uploads will timeout after ${SettingsManager().settings.apiTimeout.value ~/ 1000 * 12} seconds",
+                      "Note: Attachment uploads will timeout after ${settings.settings.apiTimeout.value ~/ 1000 * 12} seconds",
                       style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
                     )),
                   )
@@ -276,19 +275,19 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                   Obx(() =>
                       SettingsSwitch(
                         onChanged: (bool val) {
-                          SettingsManager().settings.sendDelay.value = val ? 3 : 0;
+                          settings.settings.sendDelay.value = val ? 3 : 0;
                           saveSettings();
                         },
-                        initialVal: !isNullOrZero(SettingsManager().settings.sendDelay.value),
+                        initialVal: !isNullOrZero(settings.settings.sendDelay.value),
                         title: "Send Delay",
                         backgroundColor: tileColor,
                       )),
                   Obx(() {
-                    if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
+                    if (!isNullOrZero(settings.settings.sendDelay.value)) {
                       return SettingsSlider(
-                          startingVal: SettingsManager().settings.sendDelay.toDouble(),
+                          startingVal: settings.settings.sendDelay.toDouble(),
                           update: (double val) {
-                            SettingsManager().settings.sendDelay.value = val.toInt();
+                            settings.settings.sendDelay.value = val.toInt();
                           },
                           onChangeEnd: (double val) {
                             saveSettings();
@@ -312,10 +311,10 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                   Obx(() =>
                       SettingsSwitch(
                         onChanged: (bool val) {
-                          SettingsManager().settings.use24HrFormat.value = val;
+                          settings.settings.use24HrFormat.value = val;
                           saveSettings();
                         },
-                        initialVal: SettingsManager().settings.use24HrFormat.value,
+                        initialVal: settings.settings.use24HrFormat.value,
                         title: "Use 24 Hour Format for Times",
                         backgroundColor: tileColor,
                       )),
@@ -330,17 +329,17 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                     Obx(() =>
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            SettingsManager().settings.allowUpsideDownRotation.value = val;
+                            settings.settings.allowUpsideDownRotation.value = val;
                             saveSettings();
                             SystemChrome.setPreferredOrientations([
                               DeviceOrientation.landscapeRight,
                               DeviceOrientation.landscapeLeft,
                               DeviceOrientation.portraitUp,
-                              if (SettingsManager().settings.allowUpsideDownRotation.value)
+                              if (settings.settings.allowUpsideDownRotation.value)
                                 DeviceOrientation.portraitDown,
                             ]);
                           },
-                          initialVal: SettingsManager().settings.allowUpsideDownRotation.value,
+                          initialVal: settings.settings.allowUpsideDownRotation.value,
                           title: "Alllow Upside-Down Rotation",
                           backgroundColor: tileColor,
                         )),
@@ -370,9 +369,9 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                           divisions: 3,
                           max: 5,
                           min: 3,
-                          startingVal: SettingsManager().settings.maxAvatarsInGroupWidget.value.toDouble(),
+                          startingVal: settings.settings.maxAvatarsInGroupWidget.value.toDouble(),
                           update: (double val) {
-                            SettingsManager().settings.maxAvatarsInGroupWidget.value = val.toInt();
+                            settings.settings.maxAvatarsInGroupWidget.value = val.toInt();
                           },
                           onChangeEnd: (double val) {
                             saveSettings();
@@ -422,6 +421,6 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings(SettingsManager().settings);
+    settings.saveSettings(settings.settings);
   }
 }

@@ -7,7 +7,6 @@ import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -58,7 +57,7 @@ class LifeCycleManager {
     }
 
     // Refresh all the chats assuming that the app has already finished setup
-    if (SettingsManager().settings.finishedSetup.value && !kIsDesktop) {
+    if (settings.settings.finishedSetup.value && !kIsDesktop) {
       ChatBloc().resumeRefresh();
     }
   }
@@ -68,7 +67,7 @@ class LifeCycleManager {
     // When we close we want to set the currently active chat to be un-alive
     ChatManager().setActiveToDead();
 
-    if (SettingsManager().settings.finishedSetup.value) {
+    if (settings.settings.finishedSetup.value) {
       // Close the socket and set the isAlive to false
       //
       // NOTE: [closeSocket] does not necessarily close the socket, it simply requests the SocketManager to attempt to do so

@@ -19,7 +19,6 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chunked_stream/chunked_stream.dart';
@@ -160,8 +159,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       if (!mounted || ChatController.forGuid(widget.chatGuid)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
-      if (!SettingsManager().settings.enablePrivateAPI.value ||
-          !SettingsManager().settings.privateSendTypingIndicators.value) {
+      if (!settings.settings.enablePrivateAPI.value ||
+          !settings.settings.privateSendTypingIndicators.value) {
         return;
       }
 
@@ -170,7 +169,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         socket.sendMessage("stopped-typing", {"chatGuid": widget.chatGuid});
       } else if (!selfTyping && (controller!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
-        if (SettingsManager().settings.privateSendTypingIndicators.value &&
+        if (settings.settings.privateSendTypingIndicators.value &&
             ChatController.forGuid(widget.chatGuid)!.chat.autoSendTypingIndicators!) {
           socket.sendMessage("started-typing", {"chatGuid": widget.chatGuid});
         }
@@ -183,8 +182,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       if (!mounted || ChatController.forGuid(widget.chatGuid)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
-      if (!SettingsManager().settings.enablePrivateAPI.value ||
-          !SettingsManager().settings.privateSendTypingIndicators.value) {
+      if (!settings.settings.enablePrivateAPI.value ||
+          !settings.settings.privateSendTypingIndicators.value) {
         return;
       }
 
@@ -193,7 +192,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         socket.sendMessage("stopped-typing", {"chatGuid": widget.chatGuid});
       } else if (!selfTyping && (subjectController!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
-        if (SettingsManager().settings.privateSendTypingIndicators.value &&
+        if (settings.settings.privateSendTypingIndicators.value &&
             ChatController.forGuid(widget.chatGuid)!.chat.autoSendTypingIndicators!) {
           socket.sendMessage("started-typing", {"chatGuid": widget.chatGuid});
         }
@@ -382,8 +381,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (safeChat?.chat == null) subjectController!.dispose();
 
     if (!kIsWeb) {
-      String dir = SettingsManager().appDocDir.path;
-      Directory tempAssets = Directory("$dir/tempAssets");
+      Directory tempAssets = Directory("${fs.appDocDir.path}/tempAssets");
       tempAssets.exists().then((value) {
         if (value) {
           tempAssets.delete(recursive: true);
@@ -636,8 +634,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   height: min(emojiMatches.value.length * 48, context.height ~/ 144 * 48),
                   bottom: 48 +
                       (replyToMessage.value != null ? 40 : 0) +
-                      (SettingsManager().settings.enablePrivateAPI.value &&
-                              SettingsManager().settings.privateSubjectLine.value
+                      (settings.settings.enablePrivateAPI.value &&
+                              settings.settings.privateSubjectLine.value
                           ? 40
                           : 0),
                   child: Container(
@@ -715,24 +713,24 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             ],
           ),
         ),
-        if (SettingsManager().settings.skin.value == Skins.Material ||
-            SettingsManager().settings.skin.value == Skins.Samsung)
+        if (settings.settings.skin.value == Skins.Material ||
+            settings.settings.skin.value == Skins.Samsung)
           buildSendButton(),
       ],
     );
   }
 
   Widget buildShareButton() {
-    double size = SettingsManager().settings.skin.value == Skins.iOS ? 37 : 40;
+    double size = settings.settings.skin.value == Skins.iOS ? 37 : 40;
     return AnimatedSize(
       duration: Duration(milliseconds: 300),
       child: Container(
         height: size,
         width: fileDragged ? size * 3 : size,
         margin: EdgeInsets.only(
-            left: 5.0, right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
+            left: 5.0, right: 5.0, bottom: settings.settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
         decoration: BoxDecoration(
-          color: SettingsManager().settings.skin.value == Skins.Samsung ? null : context.theme.colorScheme.primary,
+          color: settings.settings.skin.value == Skins.Samsung ? null : context.theme.colorScheme.primary,
           borderRadius: BorderRadius.circular(fileDragged ? 5 : 40),
         ),
         child: Stack(
@@ -759,20 +757,20 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   onTap: toggleShareMenu,
                   child: Padding(
                     padding: EdgeInsets.only(
-                        right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1,
-                        left: SettingsManager().settings.skin.value == Skins.iOS ? 0.5 : 0),
+                        right: settings.settings.skin.value == Skins.iOS ? 0 : 1,
+                        left: settings.settings.skin.value == Skins.iOS ? 0.5 : 0),
                     child: fileDragged
                         ? Center(child: Text("Drop file here"))
                         : Icon(
-                            SettingsManager().settings.skin.value == Skins.iOS
+                            settings.settings.skin.value == Skins.iOS
                                 ? CupertinoIcons.share
-                                : kIsDesktop ? Icons.file_upload : SettingsManager().settings.skin.value == Skins.Samsung
+                                : kIsDesktop ? Icons.file_upload : settings.settings.skin.value == Skins.Samsung
                                     ? Icons.add
                                     : Icons.share,
-                            color: SettingsManager().settings.skin.value == Skins.Samsung
+                            color: settings.settings.skin.value == Skins.Samsung
                                 ? context.theme.colorScheme.onBackground
                                 : context.theme.colorScheme.onPrimary,
-                            size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
+                            size: settings.settings.skin.value == Skins.Samsung ? 26 : 20,
                           ),
                   ),
                 ),
@@ -785,15 +783,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Widget buildGIFButton() {
-    double size = SettingsManager().settings.skin.value == Skins.iOS ? 37 : 40;
+    double size = settings.settings.skin.value == Skins.iOS ? 37 : 40;
     return Container(
       height: size,
       width: size,
       margin: EdgeInsets.only(
-          right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
+          right: 5.0, bottom: settings.settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
       child: ClipOval(
         child: Material(
-          color: SettingsManager().settings.skin.value == Skins.Samsung
+          color: settings.settings.skin.value == Skins.Samsung
               ? Colors.transparent
               : context.theme.colorScheme.primary,
           child: Theme(
@@ -835,11 +833,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 },
                 child: Padding(
                   padding: EdgeInsets.only(
-                      right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1,
-                      left: SettingsManager().settings.skin.value == Skins.iOS ? 0.5 : 0),
+                      right: settings.settings.skin.value == Skins.iOS ? 0 : 1,
+                      left: settings.settings.skin.value == Skins.iOS ? 0.5 : 0),
                   child: Icon(
                     Icons.gif,
-                    color: SettingsManager().settings.skin.value == Skins.Samsung
+                    color: settings.settings.skin.value == Skins.Samsung
                         ? context.theme.colorScheme.onBackground
                         : context.theme.colorScheme.onPrimary,
                     size: 26,
@@ -854,15 +852,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Widget buildLocationButton() {
-    double size = SettingsManager().settings.skin.value == Skins.iOS ? 37 : 40;
+    double size = settings.settings.skin.value == Skins.iOS ? 37 : 40;
     return Container(
       height: size,
       width: size,
       margin: EdgeInsets.only(
-          right: 5.0, bottom: SettingsManager().settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
+          right: 5.0, bottom: settings.settings.skin.value == Skins.iOS && kIsDesktop ? 4.5 : 0),
       child: ClipOval(
         child: Material(
-          color: SettingsManager().settings.skin.value == Skins.Samsung
+          color: settings.settings.skin.value == Skins.Samsung
               ? Colors.transparent
               : context.theme.colorScheme.primary,
           child: InkWell(
@@ -871,12 +869,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             },
             child: Padding(
               padding: EdgeInsets.only(
-                  top: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 0,
-                  right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1,
-                  left: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 2),
+                  top: settings.settings.skin.value == Skins.iOS ? 1 : 0,
+                  right: settings.settings.skin.value == Skins.iOS ? 0 : 1,
+                  left: settings.settings.skin.value == Skins.iOS ? 1 : 2),
               child: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined,
-                color: SettingsManager().settings.skin.value == Skins.Samsung
+                settings.settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined,
+                color: settings.settings.skin.value == Skins.Samsung
                     ? context.theme.colorScheme.onBackground
                     : context.theme.colorScheme.onPrimary,
                 size: 20,
@@ -893,12 +891,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     try {
       // Don't do anything if this setting isn't enabled
-      if (SettingsManager().settings.recipientAsPlaceholder.value) {
+      if (settings.settings.recipientAsPlaceholder.value) {
         // Redacted mode stuff
         final bool hideInfo =
-            SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
+            settings.settings.redactedMode.value && settings.settings.hideContactInfo.value;
         final bool generateNames =
-            SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
+            settings.settings.redactedMode.value && settings.settings.generateFakeContactNames.value;
 
         // If it's a group chat, get the title of the chat
         if (ChatController.forGuid(widget.chatGuid)?.chat.isGroup() ?? false) {
@@ -941,14 +939,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   Widget buildActualTextField() {
     final bool generateContent =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
-    final bool hideContent = (SettingsManager().settings.redactedMode.value &&
-        SettingsManager().settings.hideMessageContent.value &&
+        settings.settings.redactedMode.value && settings.settings.generateFakeMessageContent.value;
+    final bool hideContent = (settings.settings.redactedMode.value &&
+        settings.settings.hideMessageContent.value &&
         !generateContent);
     final bool generateContactInfo =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
-    final bool hideContactInfo = SettingsManager().settings.redactedMode.value &&
-        SettingsManager().settings.hideContactInfo.value &&
+        settings.settings.redactedMode.value && settings.settings.generateFakeContactNames.value;
+    final bool hideContactInfo = settings.settings.redactedMode.value &&
+        settings.settings.hideContactInfo.value &&
         !generateContactInfo;
     return AnimatedSize(
       duration: Duration(milliseconds: 100),
@@ -1090,7 +1088,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               return KeyEventResult.ignored;
             }
             if (kIsDesktop || kIsWeb) return KeyEventResult.ignored;
-            if (event.physicalKey == PhysicalKeyboardKey.enter && SettingsManager().settings.sendWithReturn.value) {
+            if (event.physicalKey == PhysicalKeyboardKey.enter && settings.settings.sendWithReturn.value) {
               if (!isNullOrEmpty(controller!.text)!) {
                 sendMessage();
                 focusNode!.previousFocus(); // I genuinely don't know why this works
@@ -1103,7 +1101,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             }
             // 99% sure this isn't necessary but keeping it for now
             if (event.isKeyPressed(LogicalKeyboardKey.enter) &&
-                SettingsManager().settings.sendWithReturn.value &&
+                settings.settings.sendWithReturn.value &&
                 !isNullOrEmpty(controller!.text)!) {
               sendMessage();
               focusNode!.requestFocus();
@@ -1115,8 +1113,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             iOSSkin: Obx(
               () => Container(
                 decoration: BoxDecoration(
-                  border: Border.fromBorderSide((SettingsManager().settings.enablePrivateAPI.value &&
-                              SettingsManager().settings.privateSubjectLine.value &&
+                  border: Border.fromBorderSide((settings.settings.enablePrivateAPI.value &&
+                              settings.settings.privateSubjectLine.value &&
                               (chat?.isIMessage ?? true)) ||
                           replyToMessage.value != null
                       ? BorderSide(
@@ -1189,12 +1187,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             : Container(),
                       );
                     }),
-                    if (SettingsManager().settings.enablePrivateAPI.value &&
-                        SettingsManager().settings.privateSubjectLine.value &&
+                    if (settings.settings.enablePrivateAPI.value &&
+                        settings.settings.privateSubjectLine.value &&
                         (chat?.isIMessage ?? true))
                       CustomCupertinoTextField(
-                        enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
-                        textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                        enableIMEPersonalizedLearning: !settings.settings.incognitoKeyboard.value,
+                        textInputAction: settings.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                             ? TextInputAction.next
                             : TextInputAction.newline,
                         cursorColor: context.theme.colorScheme.primary,
@@ -1224,8 +1222,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           borderRadius: BorderRadius.circular(20),
                         ),
                       ),
-                    if (SettingsManager().settings.enablePrivateAPI.value &&
-                        SettingsManager().settings.privateSubjectLine.value &&
+                    if (settings.settings.enablePrivateAPI.value &&
+                        settings.settings.privateSubjectLine.value &&
                         (chat?.isIMessage ?? true))
                       Divider(
                           height: 1.5,
@@ -1237,9 +1235,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       alignment: Alignment.centerRight,
                       children: [
                         CustomCupertinoTextField(
-                          enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                          enableIMEPersonalizedLearning: !settings.settings.incognitoKeyboard.value,
                           enabled: sendCountdown == null,
-                          textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                          textInputAction: settings.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                               ? TextInputAction.send
                               : TextInputAction.newline,
                           cursorColor: context.theme.colorScheme.primary,
@@ -1265,19 +1263,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           keyboardType: TextInputType.multiline,
                           maxLines: 14,
                           minLines: 1,
-                          placeholder: SettingsManager().settings.recipientAsPlaceholder.value == true
+                          placeholder: settings.settings.recipientAsPlaceholder.value == true
                               ? placeholder.value
                               : chat?.isTextForwarding ?? false
                                   ? "Text Forwarding"
                                   : "iMessage",
                           padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                           placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
-                          autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
+                          autofocus: (settings.settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
                               !widget.isCreator!,
                           decoration: BoxDecoration(
                             border: Border.fromBorderSide(
-                              (SettingsManager().settings.enablePrivateAPI.value &&
-                                          SettingsManager().settings.privateSubjectLine.value &&
+                              (settings.settings.enablePrivateAPI.value &&
+                                          settings.settings.privateSubjectLine.value &&
                                           (chat?.isIMessage ?? true)) ||
                                       replyToMessage.value != null
                                   ? BorderSide.none
@@ -1366,16 +1364,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           indent: 10,
                           endIndent: 10,
                           color: context.theme.colorScheme.outline) : SizedBox.shrink()),
-                    if (SettingsManager().settings.enablePrivateAPI.value &&
-                        SettingsManager().settings.privateSubjectLine.value &&
+                    if (settings.settings.enablePrivateAPI.value &&
+                        settings.settings.privateSubjectLine.value &&
                         (chat?.isIMessage ?? true))
                       TextField(
-                        enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                        enableIMEPersonalizedLearning: !settings.settings.incognitoKeyboard.value,
                         controller: subjectController,
                         focusNode: subjectFocusNode,
                         textCapitalization: TextCapitalization.sentences,
                         autocorrect: true,
-                        textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                        textInputAction: settings.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                             ? TextInputAction.next
                             : TextInputAction.newline,
                         autofocus: false,
@@ -1406,8 +1404,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         maxLines: 14,
                         minLines: 1,
                       ),
-                    if (SettingsManager().settings.enablePrivateAPI.value &&
-                        SettingsManager().settings.privateSubjectLine.value &&
+                    if (settings.settings.enablePrivateAPI.value &&
+                        settings.settings.privateSubjectLine.value &&
                         (chat?.isIMessage ?? true))
                       Divider(
                           height: 1.5,
@@ -1416,15 +1414,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           endIndent: 10,
                           color: context.theme.colorScheme.outline),
                     TextField(
-                      enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                      enableIMEPersonalizedLearning: !settings.settings.incognitoKeyboard.value,
                       controller: controller,
                       focusNode: focusNode,
                       textCapitalization: TextCapitalization.sentences,
                       autocorrect: true,
-                      textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                      textInputAction: settings.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                           ? TextInputAction.send
                           : TextInputAction.newline,
-                      autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
+                      autofocus: (settings.settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
                           !widget.isCreator!,
                       cursorColor: context.theme.colorScheme.primary,
                       key: _searchFormKey,
@@ -1449,7 +1447,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           borderSide: BorderSide.none,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
+                        hintText: settings.settings.recipientAsPlaceholder.value == true
                             ? placeholder.value
                             : chat?.isTextForwarding ?? false
                                 ? "Text Forwarding"
@@ -1481,12 +1479,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     HapticFeedback.lightImpact();
     String? pathName;
     if (!kIsWeb) {
-      String appDocPath = SettingsManager().appDocDir.path;
-      Directory directory = Directory("$appDocPath/attachments/");
+      Directory directory = Directory("${fs.appDocDir.path}/attachments/");
       if (!await directory.exists()) {
         directory.createSync();
       }
-      pathName = "$appDocPath/attachments/OutgoingAudioMessage.m4a";
+      pathName = "${fs.appDocDir.path}/attachments/OutgoingAudioMessage.m4a";
       File file = File(pathName);
       if (file.existsSync()) file.deleteSync();
     }
@@ -1542,15 +1539,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
 
     // If send delay is enabled, delay the sending
-    if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
+    if (!isNullOrZero(settings.settings.sendDelay.value)) {
       // Break the delay into 1 second intervals
-      for (var i = 0; i < SettingsManager().settings.sendDelay.value; i++) {
+      for (var i = 0; i < settings.settings.sendDelay.value; i++) {
         if (i != 0 && sendCountdown == null) break;
 
         // Update UI with new state information
         if (mounted) {
           setState(() {
-            sendCountdown = SettingsManager().settings.sendDelay.value - i;
+            sendCountdown = settings.settings.sendDelay.value - i;
           });
         }
 
@@ -1602,10 +1599,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         alignment: Alignment.centerRight,
         child: Row(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.center, children: [
           if (sendCountdown != null) Text(sendCountdown.toString()),
-          (SettingsManager().settings.skin.value == Skins.iOS)
+          (settings.settings.skin.value == Skins.iOS)
               ? Container(
-                  height: SettingsManager().settings.skin.value == Skins.iOS ? 35 : 40,
-                  width: SettingsManager().settings.skin.value == Skins.iOS ? 35 : 40,
+                  height: settings.settings.skin.value == Skins.iOS ? 35 : 40,
+                  width: settings.settings.skin.value == Skins.iOS ? 35 : 40,
                   padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),
                   child: GestureDetector(
                     onSecondaryTapUp: (_) async {
@@ -1701,7 +1698,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     margin: EdgeInsets.only(left: 5.0),
                     child: ClipOval(
                       child: Material(
-                        color: SettingsManager().settings.skin.value == Skins.Samsung
+                        color: settings.settings.skin.value == Skins.Samsung
                             ? Colors.transparent
                             : context.theme.colorScheme.primary,
                         child: GestureDetector(
@@ -1741,15 +1738,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
                                       duration: Duration(milliseconds: 150),
                                       child: Icon(
-                                        SettingsManager().settings.skin.value == Skins.Samsung
+                                        settings.settings.skin.value == Skins.Samsung
                                             ? CupertinoIcons.waveform
                                             : Icons.mic,
                                         color: (isRecording.value)
                                             ? Colors.red
-                                            : SettingsManager().settings.skin.value == Skins.Samsung
+                                            : settings.settings.skin.value == Skins.Samsung
                                                 ? context.theme.colorScheme.onBackground
                                                 : context.theme.colorScheme.onPrimary,
-                                        size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
+                                        size: settings.settings.skin.value == Skins.Samsung ? 26 : 20,
                                       ),
                                     )),
                                 Obx(() => AnimatedOpacity(
@@ -1760,10 +1757,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       duration: Duration(milliseconds: 150),
                                       child: Icon(
                                         Icons.send,
-                                        color: SettingsManager().settings.skin.value == Skins.Samsung
+                                        color: settings.settings.skin.value == Skins.Samsung
                                             ? context.theme.colorScheme.onBackground
                                             : context.theme.colorScheme.onPrimary,
-                                        size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
+                                        size: settings.settings.skin.value == Skins.Samsung ? 26 : 20,
                                       ),
                                     )),
                                 AnimatedOpacity(

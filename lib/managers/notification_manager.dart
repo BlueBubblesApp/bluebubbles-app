@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -17,7 +16,6 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -160,7 +158,7 @@ class NotificationManager {
 
     // Build the message text for the notification
     String? messageText = MessageHelper.getNotificationText(message);
-    if (SettingsManager().settings.hideTextPreviews.value) messageText = "iMessage";
+    if (settings.settings.hideTextPreviews.value) messageText = "iMessage";
 
     // Try to load in an avatar for the person
     try {
@@ -245,17 +243,17 @@ class NotificationManager {
             isGroup: chatIsGroup, handle: handle, participants: participants, chatGuid: chatGuid, quality: 256);
 
         // Create a temp file with the avatar
-        String path = join((await getApplicationSupportDirectory()).path, "temp", "${randomString(8)}.png");
+        String path = join(fs.appDocDir.path, "temp", "${randomString(8)}.png");
         File(path).createSync(recursive: true);
         File(path).writeAsBytesSync(avatar);
 
-        List<int> selectedIndices = SettingsManager().settings.selectedActionIndices;
-        List<String> _actions = SettingsManager().settings.actionList;
+        List<int> selectedIndices = settings.settings.selectedActionIndices;
+        List<String> _actions = settings.settings.actionList;
 
         List<String> actions = _actions.whereIndexed((index, element) => selectedIndices.contains(index))
                 .map((action) => action == "Mark Read"
                     ? action
-                    : !isReaction && SettingsManager().settings.enablePrivateAPI.value
+                    : !isReaction && settings.settings.enablePrivateAPI.value
                         ? ReactionTypes.reactionToEmoji[action]!
                         : null)
                 .whereNotNull()
@@ -290,7 +288,7 @@ class NotificationManager {
             } else if (actions[event.actionIndex!] == "Mark Read") {
               await ChatBloc().toggleChatUnread(chat, false);
               EventDispatcher().emit('refresh', null);
-            } else if (SettingsManager().settings.enablePrivateAPI.value) {
+            } else if (settings.settings.enablePrivateAPI.value) {
               Message? message = Message.findOne(guid: messageGuid);
               await ActionHandler.sendReaction(chat, message, ReactionTypes.emojiToReaction[actions[event.actionIndex!]]!);
             }
@@ -303,9 +301,9 @@ class NotificationManager {
     }
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
       "CHANNEL_ID": NEW_MESSAGE_CHANNEL +
-          (SettingsManager().settings.notificationSound.value == "default"
+          (settings.settings.notificationSound.value == "default"
               ? ""
-              : ("_${SettingsManager().settings.notificationSound.value}")),
+              : ("_${settings.settings.notificationSound.value}")),
       "CHANNEL_NAME": "New Messages",
       "notificationId": Random().nextInt(9998) + 1,
       "summaryId": summaryId,
@@ -319,7 +317,7 @@ class NotificationManager {
       "messageText": messageText,
       "messageDate": messageDate.millisecondsSinceEpoch,
       "messageIsFromMe": messageIsFromMe,
-      "sound": SettingsManager().settings.notificationSound.value,
+      "sound": settings.settings.notificationSound.value,
     });
   }
 

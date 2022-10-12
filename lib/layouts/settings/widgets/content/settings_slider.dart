@@ -1,5 +1,5 @@
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -38,7 +38,7 @@ class SettingsSlider extends StatelessWidget {
     return ListTile(
       leading: leading,
       trailing: Text(value, style: context.theme.textTheme.bodyLarge),
-      title: SettingsManager().settings.skin.value == Skins.iOS
+      title: settings.settings.skin.value == Skins.iOS
           ? CupertinoSlider(
         activeColor: context.theme.colorScheme.primary.withOpacity(0.6),
         thumbColor: context.theme.colorScheme.primary,

@@ -1,5 +1,7 @@
 import 'package:collection/collection.dart';
 
+String? countryCode;
+
 List<CountryCode> countryCodes = [];
 
 List<Map<String, String>> codes = [

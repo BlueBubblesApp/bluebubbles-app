@@ -10,7 +10,7 @@ import 'package:bluebubbles/layouts/conversation_list/widgets/tile/list_item.dar
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
@@ -28,10 +28,10 @@ class SamsungConversationList extends StatefulWidget {
 class _SamsungConversationListState extends OptimizedState<SamsungConversationList> with ThemeHelpers {
   bool get showArchived => widget.parentController.showArchivedChats;
   bool get showUnknown => widget.parentController.showUnknownSenders;
-  Color get backgroundColor => SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+  Color get backgroundColor => settings.settings.windowEffect.value == WindowEffect.disabled
       ? headerColor
       : Colors.transparent;
-  Color get _tileColor => SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+  Color get _tileColor => settings.settings.windowEffect.value == WindowEffect.disabled
       ? tileColor
       : Colors.transparent;
   ConversationListController get controller => widget.parentController;
@@ -41,7 +41,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
     super.initState();
     // update widget when background color changes
     if (kIsDesktop) {
-      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+      settings.settings.windowEffect.listen((WindowEffect effect) {
         setState(() {});
       });
     }
@@ -59,7 +59,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
       },
       child: Scaffold(
         backgroundColor: backgroundColor,
-        floatingActionButton: !SettingsManager().settings.moveChatCreatorToHeader.value
+        floatingActionButton: !settings.settings.moveChatCreatorToHeader.value
             && !showArchived && !showUnknown
             ? ConversationListFAB(parentController: controller)
             : null,
@@ -86,7 +86,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                       .unknownSendersHelper(controller.showUnknownSenders);
 
                   return CustomScrollView(
-                    physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                    physics: (settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                         ? NeverScrollableScrollPhysics()
                         : ThemeSwitcher.getScrollPhysics(),
                     controller: controller.samsungScrollController,

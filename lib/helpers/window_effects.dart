@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:tuple/tuple.dart';
@@ -70,18 +70,18 @@ class WindowEffects {
     bool dark = isDark(color: color);
 
     if (dark) {
-      return SettingsManager().settings.windowEffectCustomOpacityDark.value;
+      return settings.settings.windowEffectCustomOpacityDark.value;
     }
-    return SettingsManager().settings.windowEffectCustomOpacityLight.value;
+    return settings.settings.windowEffectCustomOpacityLight.value;
   }
 
   static double defaultOpacity({required bool dark}) {
-    WindowEffect effect = SettingsManager().settings.windowEffect.value;
+    WindowEffect effect = settings.settings.windowEffect.value;
     return dark ? _opacities[effect]!.item1 : _opacities[effect]!.item2;
   }
 
   static bool dependsOnColor() {
-    WindowEffect effect = SettingsManager().settings.windowEffect.value;
+    WindowEffect effect = settings.settings.windowEffect.value;
     return _dependencies[effect]!.contains(EffectDependencies.color);
   }
 
@@ -95,12 +95,12 @@ class WindowEffects {
 
   static Future<void> setEffect({required Color color}) async {
     if (!kIsDesktop || !Platform.isWindows) return;
-    WindowEffect effect = SettingsManager().settings.windowEffect.value;
-    if (!effects.contains(effect)) SettingsManager().settings.windowEffect.value = WindowEffect.disabled;
-    SettingsManager().saveSettings(SettingsManager().settings);
+    WindowEffect effect = settings.settings.windowEffect.value;
+    if (!effects.contains(effect)) settings.settings.windowEffect.value = WindowEffect.disabled;
+    settings.saveSettings(settings.settings);
 
     bool supportsTransparentAcrylic = parsedWindowsVersion() >= 22000;
-    bool addOpacity = SettingsManager().settings.windowEffect.value == WindowEffect.acrylic && !supportsTransparentAcrylic;
+    bool addOpacity = settings.settings.windowEffect.value == WindowEffect.acrylic && !supportsTransparentAcrylic;
 
     // withOpacity uses withAlpha((255.0 * opacity).round());
     // so, the minimum nonzero alpha can be made with opacity 1 / 255

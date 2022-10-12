@@ -1,17 +1,15 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 //ignore: implementation_imports
 import 'package:objectbox/src/transaction.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:universal_io/io.dart';
@@ -132,11 +130,7 @@ class DBProvider {
       // Change the default factory
       databaseFactory = databaseFactoryFfi;
     }
-    //ignore: unnecessary_cast, we need this as a workaround
-    Directory documentsDirectory = (await getApplicationDocumentsDirectory()) as Directory;
-    //ignore: unnecessary_cast, we need this as a workaround
-    if (kIsDesktop) documentsDirectory = (await getApplicationSupportDirectory()) as Directory;
-    String path = join(documentsDirectory.path, "chat.db");
+    String path = join(fs.appDocDir.path, "chat.db");
     return await openDatabase(path, version: currentVersion, onUpgrade: _onUpgrade, onOpen: (Database db) async {
       Logger.info("Database Opened");
       await migrateToObjectBox(db, initStore);
@@ -454,7 +448,7 @@ class DBProvider {
       Logger.info("Parsed FCM data from SQLite", tag: "OB Migration");
       fcm.save();
       Logger.info("Inserted FCM data into ObjectBox", tag: "OB Migration");
-      prefs.setBool('objectbox-migration', true);
+      settings.prefs.setBool('objectbox-migration', true);
       Logger.info("Migration to ObjectBox complete!", tag: "OB Migration");
     }
   }

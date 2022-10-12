@@ -1,7 +1,7 @@
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -24,7 +24,7 @@ class NavigatorService extends GetxService {
   set maxWidthSettings(double w) => _widthSettings = w;
 
   bool isTabletMode(BuildContext context) => (!context.isPhone || context.isLandscape) &&
-      SettingsManager().settings.tabletMode.value;
+      settings.settings.tabletMode.value;
 
   /// grab the available screen width, returning the split screen width if applicable
   /// this should *always* be used in place of context.width or similar

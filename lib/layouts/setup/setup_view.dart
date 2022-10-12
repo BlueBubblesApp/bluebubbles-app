@@ -9,7 +9,6 @@ import 'package:bluebubbles/layouts/setup/pages/setup_checks/mac_setup_check.dar
 import 'package:bluebubbles/layouts/setup/pages/sync/sync_progress.dart';
 import 'package:bluebubbles/layouts/setup/pages/welcome/welcome_page.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 import 'package:flutter/foundation.dart';
@@ -60,7 +59,7 @@ class _SetupViewState extends OptimizedState<SetupView> {
 
     ever(socket.state, (event) {
       if (event == SocketState.error
-          && !SettingsManager().settings.finishedSetup.value
+          && !settings.settings.finishedSetup.value
           && controller.pageController.hasClients
           && controller.currentPage > controller.pageOfNoReturn) {
         showDialog(

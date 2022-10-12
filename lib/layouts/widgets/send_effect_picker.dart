@@ -19,7 +19,6 @@ import 'package:bluebubbles/layouts/animations/spotlight_rendering.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:confetti/confetti.dart';
@@ -38,7 +37,7 @@ void sendEffectAction(
     String? chatGuid,
     Future<void> Function({String? effect}) sendMessage,
     ) {
-  if (!SettingsManager().settings.enablePrivateAPI.value) return;
+  if (!settings.settings.enablePrivateAPI.value) return;
   String typeSelected = "bubble";
   final bubbleEffects = ["slam", "loud", "gentle", "invisible ink"];
   final screenEffects = ["echo", "spotlight", "balloons", "confetti", "love", "lasers", "fireworks", "celebration"];
@@ -76,7 +75,7 @@ void sendEffectAction(
               },
               child: AnnotatedRegion<SystemUiOverlayStyle>(
                 value: SystemUiOverlayStyle(
-                  systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+                  systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
                   systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
                   statusBarColor: Colors.transparent, // status bar color
                   statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,

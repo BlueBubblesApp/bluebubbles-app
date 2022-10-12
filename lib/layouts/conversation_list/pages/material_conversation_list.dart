@@ -9,7 +9,7 @@ import 'package:bluebubbles/layouts/conversation_list/widgets/tile/list_item.dar
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
@@ -27,7 +27,7 @@ class MaterialConversationList extends StatefulWidget {
 class _MaterialConversationListState extends OptimizedState<MaterialConversationList> with ThemeHelpers {
   bool get showArchived => widget.parentController.showArchivedChats;
   bool get showUnknown => widget.parentController.showUnknownSenders;
-  Color get backgroundColor => SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+  Color get backgroundColor => settings.settings.windowEffect.value == WindowEffect.disabled
       ? context.theme.colorScheme.background
       : Colors.transparent;
   ConversationListController get controller => widget.parentController;
@@ -37,7 +37,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
     super.initState();
     // update widget when background color changes
     if (kIsDesktop) {
-      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+      settings.settings.windowEffect.listen((WindowEffect effect) {
         setState(() {});
       });
     }
@@ -63,7 +63,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
           ),
           backgroundColor: backgroundColor,
           extendBodyBehindAppBar: true,
-          floatingActionButton: !SettingsManager().settings.moveChatCreatorToHeader.value
+          floatingActionButton: !settings.settings.moveChatCreatorToHeader.value
               && !showArchived && !showUnknown
               ? ConversationListFAB(parentController: controller)
               : null,
@@ -111,13 +111,13 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                 controller: controller.materialScrollController,
                 child: Obx(() => ListView.builder(
                   controller: controller.materialScrollController,
-                  physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                  physics: (settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                       ? NeverScrollableScrollPhysics()
                       : ThemeSwitcher.getScrollPhysics(),
                   itemBuilder: (context, index) {
                     final chat = chats[index];
                     final child = ListItem(chat: chat, controller: controller);
-                    final separator = Obx(() => !SettingsManager().settings.hideDividers.value ? Padding(
+                    final separator = Obx(() => !settings.settings.hideDividers.value ? Padding(
                       padding: const EdgeInsets.only(left: 20),
                       child: Divider(
                         color: context.theme.colorScheme.outline.withOpacity(0.5),

@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
@@ -13,7 +13,7 @@ class InitialWidgetRight extends StatefulWidget {
 }
 
 class _InitialWidgetRightState extends OptimizedState<InitialWidgetRight> {
-  Color get backgroundColor => SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+  Color get backgroundColor => settings.settings.windowEffect.value == WindowEffect.disabled
       ? context.theme.colorScheme.background
       : Colors.transparent;
 
@@ -22,7 +22,7 @@ class _InitialWidgetRightState extends OptimizedState<InitialWidgetRight> {
     super.initState();
     // update widget when background color changes
     if (kIsDesktop) {
-      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+      settings.settings.windowEffect.listen((WindowEffect effect) {
         setState(() {});
       });
     }

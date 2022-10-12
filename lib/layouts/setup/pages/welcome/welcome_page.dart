@@ -5,7 +5,6 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/setup/pages/page_template.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
@@ -68,8 +67,8 @@ class _WelcomePageState extends OptimizedState<WelcomePage> with TickerProviderS
           colorScheme: context.theme.colorScheme.copyWith(
             primary: context.theme.colorScheme.bubble(context, true),
             onPrimary: context.theme.colorScheme.onBubble(context, true),
-            surface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-            onSurface: SettingsManager().settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+            surface: (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+            onSurface: (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
           ),
         ),
         child: FadeTransition(

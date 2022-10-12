@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -96,7 +96,7 @@ class _LocationWidgetState extends State<LocationWidget> {
                                   point: LatLng(location!.longitude!, location!.latitude!),
                                   anchorPos: AnchorPos.align(AnchorAlign.top),
                                   builder: (ctx) => Container(
-                                    child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on, color: Colors.red, size: 40),
+                                    child: Icon(settings.settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on, color: Colors.red, size: 40),
                                   ),
                                 ),
                               ],

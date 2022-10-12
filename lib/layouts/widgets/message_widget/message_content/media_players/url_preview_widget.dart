@@ -6,7 +6,6 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -73,7 +72,7 @@ class UrlPreviewController extends GetxController {
     // If the data isn't empty, save/update it in the DB
     if (MetadataHelper.isNotEmpty(meta)) {
       // If pre-caching is enabled, fetch the image and save it
-      if (SettingsManager().settings.preCachePreviewImages.value && !isNullOrEmpty(meta!.image)!) {
+      if (settings.settings.preCachePreviewImages.value && !isNullOrEmpty(meta!.image)!) {
         // Save from URL
         File? newFile = await saveImageFromUrl(message.guid!, meta.image!);
 
@@ -103,8 +102,7 @@ class UrlPreviewWidget extends StatelessWidget {
 
   /// Returns a File object representing the [attachment]
   dynamic attachmentFile(Attachment attachment) {
-    String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
+    String pathName = "${fs.appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}";
     return File(pathName);
   }
 
@@ -119,9 +117,9 @@ class UrlPreviewWidget extends StatelessWidget {
         ),
         builder: (controller) {
           final bool hideContent =
-              SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
+              settings.settings.redactedMode.value && settings.settings.hideMessageContent.value;
           final bool hideType =
-              SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
+              settings.settings.redactedMode.value && settings.settings.hideAttachmentTypes.value;
 
           List<Widget> items = [
             if (!kIsWeb)

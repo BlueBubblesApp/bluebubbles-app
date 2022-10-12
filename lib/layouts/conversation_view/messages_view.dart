@@ -18,8 +18,8 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/foundation.dart';
@@ -78,10 +78,10 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
   }
 
   bool get showSmartReplies =>
-      SettingsManager().settings.smartReply.value &&
+      settings.settings.smartReply.value &&
       !kIsWeb &&
       !kIsDesktop &&
-      (!SettingsManager().settings.redactedMode.value || !SettingsManager().settings.hideMessageContent.value);
+      (!settings.settings.redactedMode.value || !settings.settings.hideMessageContent.value);
 
   @override
   void initState() {
@@ -437,17 +437,17 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
             onPanDown: kIsDesktop || kIsWeb ? (details) => _node.requestFocus() : null,
             onHorizontalDragStart: (details) {},
             onHorizontalDragUpdate: (details) {
-              if (SettingsManager().settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
+              if (settings.settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
                 ChatManager().activeChat!.timeStampOffset += details.delta.dx * 0.3;
               }
             },
             onHorizontalDragEnd: (details) {
-              if (SettingsManager().settings.skin.value != Skins.Samsung) {
+              if (settings.settings.skin.value != Skins.Samsung) {
                 ChatManager().activeChat!.timeStampOffset = 0;
               }
             },
             onHorizontalDragCancel: () {
-              if (SettingsManager().settings.skin.value != Skins.Samsung) {
+              if (settings.settings.skin.value != Skins.Samsung) {
                 ChatManager().activeChat!.timeStampOffset = 0;
               }
             },
@@ -463,7 +463,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                   () => CustomScrollView(
                     controller: _scrollController,
                     reverse: true,
-                    physics: (SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                    physics: (settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                         ? NeverScrollableScrollPhysics()
                         : ThemeSwitcher.getScrollPhysics(),
                     slivers: <Widget>[
@@ -474,7 +474,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                             return SliverToBoxAdapter(
                               child: Padding(
                                 padding: EdgeInsets.only(
-                                    top: SettingsManager().settings.skin.value != Skins.iOS ? 8.0 : 0.0, right: 5),
+                                    top: settings.settings.skin.value != Skins.iOS ? 8.0 : 0.0, right: 5),
                                 child: AnimatedSize(
                                   duration: Duration(milliseconds: 400),
                                   child: internalSmartReplies.isEmpty && replies.isNotEmpty
@@ -503,14 +503,14 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                             );
                           },
                         ),
-                      if (SettingsManager().settings.enablePrivateAPI.value || widget.chat?.guid == "theme-selector")
+                      if (settings.settings.enablePrivateAPI.value || widget.chat?.guid == "theme-selector")
                         SliverToBoxAdapter(
                           child: Row(
                             children: <Widget>[
                               if (widget.chat?.guid == "theme-selector" ||
                                   (currentChat!.showTypingIndicator &&
-                                      (SettingsManager().settings.skin.value == Skins.Samsung ||
-                                          SettingsManager().settings.alwaysShowAvatars.value)))
+                                      (settings.settings.skin.value == Skins.Samsung ||
+                                          settings.settings.alwaysShowAvatars.value)))
                                 Padding(
                                   padding: EdgeInsets.only(left: 10.0),
                                   child: ContactAvatarWidget(

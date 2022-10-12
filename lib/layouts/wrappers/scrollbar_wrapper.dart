@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
@@ -30,9 +30,9 @@ class ScrollbarWrapper extends StatelessWidget {
         borderColor: context.textTheme.headlineMedium!.color!,
       ),
     ),
-    enableCustomMouseWheelScrolling: SettingsManager().settings.betterScrolling.value && (kIsDesktop || kIsWeb),
+    enableCustomMouseWheelScrolling: settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb),
     customMouseWheelScrollConfig: CustomMouseWheelScrollConfig(
-      scrollAmountMultiplier: (reverse ? -1 : 1) * SettingsManager().settings.betterScrollingMultiplier.value,
+      scrollAmountMultiplier: (reverse ? -1 : 1) * settings.settings.betterScrollingMultiplier.value,
       scrollDuration: Duration(milliseconds: 140),
       mouseWheelTurnsThrottleTimeMs: 35,
     ),

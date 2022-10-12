@@ -18,9 +18,9 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -120,8 +120,8 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                 // Great math right here
                 final availableWidth = constraints.maxWidth;
                 final colCount = kIsDesktop
-                    ? SettingsManager().settings.pinColumnsLandscape.value
-                    : SettingsManager().settings.pinColumnsPortrait.value;
+                    ? settings.settings.pinColumnsLandscape.value
+                    : settings.settings.pinColumnsPortrait.value;
                 final spaceBetween = (colCount - 1) * 30;
                 final maxWidth = max(((availableWidth - spaceBetween) / colCount).floorToDouble(), 0).toDouble();
 
@@ -371,10 +371,10 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final hideInfo = SettingsManager().settings.redactedMode.value
-          && SettingsManager().settings.hideContactInfo.value;
-      final generateNames = SettingsManager().settings.redactedMode.value
-          && SettingsManager().settings.generateFakeContactNames.value;
+      final hideInfo = settings.settings.redactedMode.value
+          && settings.settings.hideContactInfo.value;
+      final generateNames = settings.settings.redactedMode.value
+          && settings.settings.generateFakeContactNames.value;
       
       final style = context.theme.textTheme.bodyMedium!.apply(
           color: controller.shouldHighlight.value
@@ -449,7 +449,7 @@ class PinnedIndicators extends StatelessWidget {
                 markers?.lastReadMessage.value,
                 markers?.lastDeliveredMessage.value
             );
-            if (SettingsManager().settings.statusIndicatorsOnChats.value
+            if (settings.settings.statusIndicatorsOnChats.value
                 && !controller.chat.isGroup()
                 && showMarker != Indicator.NONE) {
               return Positioned(

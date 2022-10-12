@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -12,8 +12,8 @@ class DatabaseService extends GetxService {
   /// Fetch the new server URL from the Firebase Database
   Future<String?> fetchNewUrl() async {
     // Make sure setup is complete and we have valid data
-    if (!SettingsManager().settings.finishedSetup.value) return null;
-    if (SettingsManager().fcmData?.isNull ?? true) {
+    if (!settings.settings.finishedSetup.value) return null;
+    if (settings.fcmData.isNull) {
       Logger.error("Firebase Data was null!");
       return null;
     }
@@ -24,7 +24,7 @@ class DatabaseService extends GetxService {
       // Use firebase_dart on web and desktop
       if (kIsWeb || kIsDesktop) {
         // Instantiate the FirebaseDatabase, and try to access the serverUrl field
-        final db = FirebaseDatabase(databaseURL: SettingsManager().fcmData?.firebaseURL);
+        final db = FirebaseDatabase(databaseURL: settings.fcmData.firebaseURL);
         final ref = db.reference().child('config').child('serverUrl');
 
         ref.onValue.listen((event) {
@@ -34,8 +34,8 @@ class DatabaseService extends GetxService {
         url = sanitizeServerAddress(address: await MethodChannelInterface().invokeMethod("get-server-url"));
       }
       // Update the address of the copied settings
-      SettingsManager().settings.serverAddress.value = url ?? SettingsManager().settings.serverAddress.value;
-      await SettingsManager().saveSettings();
+      settings.settings.serverAddress.value = url ?? settings.settings.serverAddress.value;
+      await settings.saveSettings();
       return url;
     } catch (e, s) {
       Logger.error("Failed to fetch URL: $e\n${s.toString()}");

@@ -70,7 +70,7 @@ class ThemeStruct {
   }
 
   static ThemeStruct getLightTheme() {
-    final name = prefs.getString("selected-light");
+    final name = settings.prefs.getString("selected-light");
     final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
     query.limit = 1;
     final result = query.findFirst();
@@ -81,7 +81,7 @@ class ThemeStruct {
   }
 
   static ThemeStruct getDarkTheme() {
-    final name = prefs.getString("selected-dark");
+    final name = settings.prefs.getString("selected-dark");
     final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
     query.limit = 1;
     final result = query.findFirst();

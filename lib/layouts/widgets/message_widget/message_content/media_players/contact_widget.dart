@@ -5,8 +5,8 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -122,7 +122,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                         child: Container(
                           child: initials == null
                             ? Icon(
-                                SettingsManager().settings.skin.value == Skins.iOS
+                                settings.settings.skin.value == Skins.iOS
                                     ? CupertinoIcons.person_fill
                                     : Icons.person,
                                 color: context.theme.colorScheme.properOnSurface)
@@ -136,7 +136,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                       Padding(
                         padding: EdgeInsets.only(left: 5.0),
                         child: Icon(
-                          SettingsManager().settings.skin.value == Skins.iOS
+                          settings.settings.skin.value == Skins.iOS
                               ? CupertinoIcons.forward
                               : Icons.arrow_forward,
                           color: context.theme.colorScheme.outline,

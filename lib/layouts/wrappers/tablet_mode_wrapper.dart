@@ -1,7 +1,6 @@
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
@@ -44,17 +43,17 @@ class _TabletModeWrapperState extends OptimizedState<TabletModeWrapper> with The
   @override
   void initState() {
     super.initState();
-    _ratio = RxDouble(prefs.getDouble('splitRatio') ?? widget.initialRatio);
+    _ratio = RxDouble(settings.prefs.getDouble('splitRatio') ?? widget.initialRatio);
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'split-refresh') {
-        _ratio.value = prefs.getDouble('splitRatio') ?? _ratio.value;
+        _ratio.value = settings.prefs.getDouble('splitRatio') ?? _ratio.value;
         setState(() {});
       }
     });
     debounce<double>(_ratio, (val) {
-      prefs.setDouble('splitRatio', val);
+      settings.prefs.setDouble('splitRatio', val);
       EventDispatcher().emit('split-refresh', null);
     });
   }

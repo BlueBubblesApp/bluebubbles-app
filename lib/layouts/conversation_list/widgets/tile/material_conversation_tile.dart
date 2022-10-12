@@ -7,9 +7,9 @@ import 'package:bluebubbles/layouts/conversation_list/widgets/tile/conversation_
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -55,7 +55,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
           ),
           child: ListTile(
             mouseCursor: MouseCursor.defer,
-            dense: SettingsManager().settings.denseChatTiles.value,
+            dense: settings.settings.denseChatTiles.value,
             title: ChatTitle(
               parentController: controller,
               style: context.theme.textTheme.bodyMedium!.copyWith(
@@ -213,7 +213,7 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
             children: [
               Obx(() {
                 String indicatorText = "";
-                if (SettingsManager().settings.statusIndicatorsOnChats.value && markers != null) {
+                if (settings.settings.statusIndicatorsOnChats.value && markers != null) {
                   Indicator show = shouldShow(
                       cachedLatestMessage,
                       markers!.myLastMessage.value,

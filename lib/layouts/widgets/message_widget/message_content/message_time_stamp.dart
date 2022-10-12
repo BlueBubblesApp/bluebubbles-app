@@ -1,8 +1,8 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -31,8 +31,8 @@ class MessageTimeStamp extends StatelessWidget {
           return AnimatedContainer(
             duration: Duration(milliseconds: offset == 0 ? 150 : 0),
             width: (!shownByTap &&
-                (SettingsManager().settings.skin.value == Skins.iOS ||
-                    SettingsManager().settings.skin.value == Skins.Material))
+                (settings.settings.skin.value == Skins.iOS ||
+                    settings.settings.skin.value == Skins.Material))
                 ? (-offset).clamp(0, 70).toDouble()
                 : (singleLine)
                     ? 100
@@ -48,7 +48,7 @@ class MessageTimeStamp extends StatelessWidget {
                   duration: Duration(milliseconds: offset == 0 ? 150 : 0),
                   child: Text(
                     text,
-                    textAlign: (message.isFromMe! && SettingsManager().settings.skin.value == Skins.Samsung)
+                    textAlign: (message.isFromMe! && settings.settings.skin.value == Skins.Samsung)
                         ? TextAlign.right
                         : TextAlign.left,
                     style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),

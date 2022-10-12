@@ -19,13 +19,11 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/screen_effects_widget.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -117,7 +115,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     previousChat = widget.previousChat;
 
     if (chat != null) {
-      prefs.setString('lastOpenedChat', chat!.guid);
+      settings.prefs.setString('lastOpenedChat', chat!.guid);
     }
 
     if (widget.selected.isEmpty) {
@@ -191,7 +189,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   void getShowAlert() async {
-    shouldShowAlert = widget.isCreator && (await SettingsManager().isMinBigSur);
+    shouldShowAlert = widget.isCreator && (await settings.isMinBigSur);
   }
 
   void initListener() {
@@ -289,7 +287,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         } catch (_) {}
       }
 
-      if (chat == null && (await SettingsManager().isMinBigSur)) {
+      if (chat == null && (await settings.isMinBigSur)) {
         if (searchQuery.isNotEmpty) {
           selected.add(UniqueContact(address: searchQuery, displayName: searchQuery));
           resetCursor();
@@ -319,7 +317,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       // If the chat is still null, return false
       if (chat == null) return false;
 
-      prefs.setString('lastOpenedChat', chat!.guid);
+      settings.prefs.setString('lastOpenedChat', chat!.guid);
 
       // If the current chat is null, set it
       if (isDifferentChat) {
@@ -408,8 +406,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   Widget buildScrollToBottomFAB(BuildContext context) {
     if (currentChat != null &&
         currentChat!.showScrollDown.value &&
-        (SettingsManager().settings.skin.value == Skins.Material ||
-            SettingsManager().settings.skin.value == Skins.Samsung)) {
+        (settings.settings.skin.value == Skins.Material ||
+            settings.settings.skin.value == Skins.Samsung)) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 15.0),
         child: FloatingActionButton(
@@ -423,7 +421,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       );
     } else if (currentChat != null &&
         currentChat!.showScrollDown.value &&
-        SettingsManager().settings.skin.value == Skins.iOS) {
+        settings.settings.skin.value == Skins.iOS) {
       return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Padding(
           padding: EdgeInsets.only(left: 25.0, bottom: 15),
@@ -483,7 +481,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     );
 
     final Widget child = Actions(
-        actions: isCreator! || !SettingsManager().settings.enablePrivateAPI.value || widget.chat == null
+        actions: isCreator! || !settings.settings.enablePrivateAPI.value || widget.chat == null
             ? {}
             : {
                 ReplyRecentIntent: ReplyRecentAction(messageBloc!),
@@ -593,15 +591,15 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                     ),
                     if (widget.onSelect == null)
                       Obx(() {
-                        if (SettingsManager().settings.swipeToCloseKeyboard.value ||
-                            SettingsManager().settings.swipeToOpenKeyboard.value) {
+                        if (settings.settings.swipeToCloseKeyboard.value ||
+                            settings.settings.swipeToOpenKeyboard.value) {
                           return GestureDetector(
                               onPanUpdate: (details) {
-                                if (SettingsManager().settings.swipeToCloseKeyboard.value &&
+                                if (settings.settings.swipeToCloseKeyboard.value &&
                                     details.delta.dy > 0 &&
                                     (currentChat?.keyboardOpen ?? false)) {
                                   EventDispatcher().emit("unfocus-keyboard", null);
-                                } else if (SettingsManager().settings.swipeToOpenKeyboard.value &&
+                                } else if (settings.settings.swipeToOpenKeyboard.value &&
                                     details.delta.dy < 0 &&
                                     !(currentChat?.keyboardOpen ?? false)) {
                                   EventDispatcher().emit("focus-keyboard", null);
@@ -676,7 +674,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         ));
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value
+        systemNavigationBarColor: settings.settings.immersiveMode.value
             ? Colors.transparent
             : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
@@ -690,10 +688,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             colorScheme: context.theme.colorScheme.copyWith(
               primary: context.theme.colorScheme.bubble(context, chat?.isIMessage ?? true),
               onPrimary: context.theme.colorScheme.onBubble(context, chat?.isIMessage ?? true),
-              surface: SettingsManager().settings.monetTheming.value == Monet.full
+              surface: settings.settings.monetTheming.value == Monet.full
                   ? null
                   : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-              onSurface: SettingsManager().settings.monetTheming.value == Monet.full
+              onSurface: settings.settings.monetTheming.value == Monet.full
                   ? null
                   : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
             ),
@@ -709,13 +707,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             child: Obx(
               () {
                 final Rx<Color> _backgroundColor =
-                    (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+                    (settings.settings.windowEffect.value == WindowEffect.disabled
                             ? context.theme.colorScheme.background
                             : Colors.transparent)
                         .obs;
 
                 if (kIsDesktop) {
-                  SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+                  settings.settings.windowEffect.listen((WindowEffect effect) {
                     if (mounted) {
                       _backgroundColor.value =
                           effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;

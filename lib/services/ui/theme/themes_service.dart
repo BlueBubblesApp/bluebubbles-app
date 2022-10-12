@@ -2,9 +2,8 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
@@ -150,10 +149,10 @@ class ThemesService extends GetxService {
     ]).flattened,
   ];
 
-  Skins get skin => SettingsManager().settings.skin.value;
+  Skins get skin => settings.settings.skin.value;
 
   ScrollPhysics get scrollPhysics {
-    if (SettingsManager().settings.skin.value == Skins.iOS) {
+    if (settings.settings.skin.value == Skins.iOS) {
       return AlwaysScrollableScrollPhysics(
         parent: CustomBouncingScrollPhysics(),
       );
@@ -164,6 +163,8 @@ class ThemesService extends GetxService {
     }
   }
 
+  bool get isFullMonet => settings.settings.monetTheming.value == Monet.full;
+
   bool inDarkMode(BuildContext context) =>
       (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ||
         (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.system &&
@@ -171,15 +172,15 @@ class ThemesService extends GetxService {
 
   Future<void> refreshMonet(BuildContext context) async {
     monetPalette = await DynamicColorPlugin.getCorePalette();
-    loadTheme(context);
+    _loadTheme(context);
   }
 
   Future<void> refreshWindowsAccent(BuildContext context) async {
     windowsAccentColor = await DynamicColorPlugin.getAccentColor();
-    loadTheme(context);
+    _loadTheme(context);
   }
 
-  void loadTheme(BuildContext context, {ThemeStruct? lightOverride, ThemeStruct? darkOverride}) {
+  void _loadTheme(BuildContext context, {ThemeStruct? lightOverride, ThemeStruct? darkOverride}) {
     // Set the theme to match those of the settings
     ThemeData light = (lightOverride ?? ThemeStruct.getLightTheme()).data;
     ThemeData dark = (darkOverride ?? ThemeStruct.getDarkTheme()).data;
@@ -200,32 +201,41 @@ class ThemesService extends GetxService {
 
   ThemeStruct revertToPreviousDarkTheme() {
     List<ThemeStruct> allThemes = ThemeStruct.getThemes();
-    final darkName = prefs.getString("previous-dark");
+    final darkName = settings.prefs.getString("previous-dark");
     ThemeStruct? previous = allThemes.firstWhereOrNull((e) => e.name == darkName);
 
     previous ??= defaultThemes.firstWhere((element) => element.name == "OLED Dark");
 
     // Remove the previous flags
-    prefs.remove("previous-dark");
+    settings.prefs.remove("previous-dark");
 
     return previous;
   }
 
   ThemeStruct revertToPreviousLightTheme() {
     List<ThemeStruct> allThemes = ThemeStruct.getThemes();
-    final lightName = prefs.getString("previous-light");
+    final lightName = settings.prefs.getString("previous-light");
     ThemeStruct? previous = allThemes.firstWhereOrNull((e) => e.name == lightName);
 
     previous ??= defaultThemes.firstWhere((element) => element.name == "Bright White");
 
     // Remove the previous flags
-    prefs.remove("previous-light");
+    settings.prefs.remove("previous-light");
 
     return previous;
   }
 
+  changeTheme(BuildContext context, {ThemeStruct? light, ThemeStruct? dark}) {
+    light?.save();
+    dark?.save();
+    if (light != null) settings.prefs.setString("selected-light", light.name);
+    if (dark != null) settings.prefs.setString("selected-dark", dark.name);
+
+    _loadTheme(context);
+  }
+
   Tuple2<ThemeData, ThemeData> _applyMonet(ThemeData light, ThemeData dark) {
-    if (SettingsManager().settings.monetTheming.value == Monet.harmonize && monetPalette != null) {
+    if (settings.settings.monetTheming.value == Monet.harmonize && monetPalette != null) {
       light = light.copyWith(
         colorScheme: light.colorScheme.copyWith(
           primary: Color(monetPalette!.primary.get(40)),
@@ -288,7 +298,7 @@ class ThemesService extends GetxService {
           inversePrimary: dark.colorScheme.inversePrimary.harmonizeWith(Color(monetPalette!.primary.get(40))),
         ),
       );
-    } else if (SettingsManager().isFullMonet && monetPalette != null) {
+    } else if (isFullMonet && monetPalette != null) {
       light = light.copyWith(
         colorScheme: light.colorScheme.copyWith(
           primary: Color(monetPalette!.primary.get(40)),
@@ -356,7 +366,7 @@ class ThemesService extends GetxService {
   }
 
   Tuple2<ThemeData, ThemeData> _applyWindowsAccent(ThemeData light, ThemeData dark) {
-    if (windowsAccentColor == null || !SettingsManager().settings.useWindowsAccent.value) {
+    if (windowsAccentColor == null || !settings.settings.useWindowsAccent.value) {
       return Tuple2(light, dark);
     }
 

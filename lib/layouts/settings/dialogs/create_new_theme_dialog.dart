@@ -2,7 +2,6 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -56,7 +55,7 @@ class CreateNewThemeDialog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS
+                  settings.settings.skin.value == Skins.iOS
                       ? CupertinoIcons.info
                       : Icons.info_outline,
                   size: 20,

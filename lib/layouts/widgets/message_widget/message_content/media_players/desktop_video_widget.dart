@@ -6,7 +6,6 @@ import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.da
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -27,7 +26,7 @@ class DesktopVideoWidgetController extends GetxController {
   Uint8List? thumbnail;
   late final RxBool showPlayPauseOverlay;
   final RxBool initComplete = false.obs;
-  final RxBool muted = SettingsManager().settings.startVideosMuted;
+  final RxBool muted = settings.settings.startVideosMuted;
   final PlatformFile file;
   final Attachment attachment;
   final BuildContext context;
@@ -214,10 +213,10 @@ class DesktopVideoWidget extends StatelessWidget {
                       padding: EdgeInsets.all(10),
                       child: Padding(
                         padding: EdgeInsets.only(
-                            left: SettingsManager().settings.skin.value == Skins.iOS ? 7 : 0,
-                            top: SettingsManager().settings.skin.value == Skins.iOS ? 3 : 0),
+                            left: settings.settings.skin.value == Skins.iOS ? 7 : 0,
+                            top: settings.settings.skin.value == Skins.iOS ? 3 : 0),
                         child: Icon(
-                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
+                          settings.settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
                           color: Colors.white,
                           size: 45,
                         ),
@@ -246,10 +245,10 @@ class DesktopVideoWidget extends StatelessWidget {
                             child: Obx(
                               () => Icon(
                                 controller.muted.value
-                                    ? SettingsManager().settings.skin.value == Skins.iOS
+                                    ? settings.settings.skin.value == Skins.iOS
                                         ? CupertinoIcons.volume_mute
                                         : Icons.volume_mute
-                                    : SettingsManager().settings.skin.value == Skins.iOS
+                                    : settings.settings.skin.value == Skins.iOS
                                         ? CupertinoIcons.volume_up
                                         : Icons.volume_up,
                                 color: Colors.white,

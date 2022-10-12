@@ -3,8 +3,8 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,8 +14,8 @@ class ListItem extends StatelessWidget {
   final ConversationListController controller;
   ListItem({required this.chat, required this.controller});
 
-  MaterialSwipeAction get leftAction => SettingsManager().settings.materialLeftAction.value;
-  MaterialSwipeAction get rightAction => SettingsManager().settings.materialRightAction.value;
+  MaterialSwipeAction get leftAction => settings.settings.materialLeftAction.value;
+  MaterialSwipeAction get rightAction => settings.settings.materialRightAction.value;
 
   Widget slideBackground(Chat chat, bool left) {
     MaterialSwipeAction action;
@@ -95,7 +95,7 @@ class ListItem extends StatelessWidget {
         },
       );
 
-      if (SettingsManager().settings.swipableConversationTiles.value) {
+      if (settings.settings.swipableConversationTiles.value) {
         return Dismissible(
           background: (kIsDesktop || kIsWeb)
               ? null

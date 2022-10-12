@@ -3,8 +3,8 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_custom_cupertino_textfield.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -49,9 +49,9 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [];
-    final bool redactedMode = SettingsManager().settings.redactedMode.value;
-    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo.value;
-    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
+    final bool redactedMode = settings.settings.redactedMode.value;
+    final bool hideInfo = redactedMode && settings.settings.hideContactInfo.value;
+    final bool generateName = redactedMode && settings.settings.generateFakeContactNames.value;
     widget.selectedContacts.forEachIndexed((index, contact) {
       items.add(
         GestureDetector(
@@ -81,7 +81,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                     ),
                     InkWell(
                         child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
+                      settings.settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
                       size: 15.0,
                     ))
                   ],

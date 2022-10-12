@@ -1,12 +1,10 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/services/network/http_service.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -51,7 +49,7 @@ class BackupRestoreDialog extends StatelessWidget {
                   onPressed: () async {
                     DateTime now = DateTime.now().toLocal();
                     String name = "Android_${now.year}-${now.month}-${now.day}_${now.hour}-${now.minute}-${now.second}";
-                    Map<String, dynamic> json = SettingsManager().settings.toMap();
+                    Map<String, dynamic> json = settings.settings.toMap();
                     var response = await http.setSettings(name, json);
                     if (response.statusCode != 200) {
                       Get.back();
@@ -133,7 +131,7 @@ class BackupRestoreDialog extends StatelessWidget {
                                                     String min = time.split("-")[1];
                                                     String sec = time.split("-")[2];
                                                     String timeType = "";
-                                                    if(!SettingsManager().settings.use24HrFormat.value){
+                                                    if(!settings.settings.use24HrFormat.value){
                                                       if(int.parse(hour) >= 12 && int.parse(hour) < 24){
                                                         timeType = "PM";
                                                       } else{
@@ -146,7 +144,7 @@ class BackupRestoreDialog extends StatelessWidget {
                                                     if(int.parse(sec) < 10){
                                                       sec = "0$sec";
                                                     }
-                                                    if(int.parse(hour) > 12 && !SettingsManager().settings.use24HrFormat.value){
+                                                    if(int.parse(hour) > 12 && !settings.settings.use24HrFormat.value){
                                                       hour = (int.parse(hour) -12).toString();
                                                     }
                                                     finalName = "$month/$day/$year at $hour:$min:$sec $timeType";
@@ -353,7 +351,7 @@ class BackupRestoreDialog extends StatelessWidget {
                     String directoryPath = "/storage/emulated/0/Download/BlueBubbles-settings-";
                     DateTime now = DateTime.now().toLocal();
                     String filePath = "$directoryPath${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.json";
-                    Map<String, dynamic> json = SettingsManager().settings.toMap();
+                    Map<String, dynamic> json = settings.settings.toMap();
                     if (kIsWeb) {
                       final bytes = utf8.encode(jsonEncode(json));
                       final content = base64.encode(bytes);

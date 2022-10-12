@@ -8,7 +8,6 @@ import 'package:bluebubbles/layouts/conversation_list/widgets/header/header_widg
 import 'package:bluebubbles/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -24,7 +23,7 @@ class SamsungHeader extends CustomStateful<ConversationListController> {
 }
 
 class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationListController> with ThemeHelpers {
-  Color get backgroundColor => SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+  Color get backgroundColor => settings.settings.windowEffect.value == WindowEffect.disabled
       ? headerColor
       : Colors.transparent;
   bool get showArchived => controller.showArchivedChats;
@@ -118,10 +117,10 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                                 color: context.theme.colorScheme.properOnSurface,
                               ),
                             ) : const SizedBox.shrink(),
-                            SettingsManager().settings.moveChatCreatorToHeader.value
+                            settings.settings.moveChatCreatorToHeader.value
                                 && !showArchived
                                 && !showUnknown ? InkWell(
-                              onLongPress: SettingsManager().settings.cameraFAB.value
+                              onLongPress: settings.settings.cameraFAB.value
                                   ? () => controller.openCamera(context) : null,
                               child: IconButton(
                                 onPressed: () => controller.openNewChatCreator(context),

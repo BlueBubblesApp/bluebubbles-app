@@ -13,7 +13,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -145,9 +144,9 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
     super.build(context);
 
     final bool hideAttachments =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
+        settings.settings.redactedMode.value && settings.settings.hideAttachments.value;
     final bool hideAttachmentTypes =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
+        settings.settings.redactedMode.value && settings.settings.hideAttachmentTypes.value;
 
     late Widget child;
     bool addPadding = true;
@@ -180,7 +179,7 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             const SizedBox(height: 5),
-            Icon(SettingsManager().settings.skin.value == Skins.iOS
+            Icon(settings.settings.skin.value == Skins.iOS
                 ? CupertinoIcons.cloud_download
                 : Icons.cloud_download,
               size: 28.0,

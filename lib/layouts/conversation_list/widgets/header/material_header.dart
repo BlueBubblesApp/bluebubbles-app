@@ -4,7 +4,6 @@ import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.da
 import 'package:bluebubbles/layouts/conversation_list/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
@@ -99,10 +98,10 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                               mainAxisAlignment: MainAxisAlignment.end,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                SettingsManager().settings.moveChatCreatorToHeader.value
+                                settings.settings.moveChatCreatorToHeader.value
                                     && !showArchived
                                     && !showUnknown ? GestureDetector(
-                                  onLongPress: SettingsManager().settings.cameraFAB.value
+                                  onLongPress: settings.settings.cameraFAB.value
                                       ? () => controller.openCamera(context) : null,
                                   child: IconButton(
                                     onPressed: () => controller.openNewChatCreator(context),

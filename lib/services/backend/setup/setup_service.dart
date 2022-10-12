@@ -1,6 +1,5 @@
 import 'package:bluebubbles/helpers/network/network_tasks.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/services/backend/sync/sync_service.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart';
 
 SetupService setup = Get.isRegistered<SetupService>() ? Get.find<SetupService>() : Get.put(SetupService());
@@ -15,8 +14,8 @@ class SetupService extends GetxService {
   }
 
   Future<void> _finishSetup() async {
-    SettingsManager().settings.finishedSetup.value = true;
-    await SettingsManager().saveSettings();
+    settings.settings.finishedSetup.value = true;
+    await settings.saveSettings();
     await NetworkTasks.onConnect();
   }
 }

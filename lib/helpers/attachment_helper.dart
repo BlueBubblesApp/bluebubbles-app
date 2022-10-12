@@ -7,7 +7,6 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -213,7 +212,7 @@ class AttachmentHelper {
       return showDeniedSnackbar(err: "BlueBubbles does not have the required permissions!");
     }
 
-    if (SettingsManager().settings.askWhereToSave.value && showAlert) {
+    if (settings.settings.askWhereToSave.value && showAlert) {
       dynamic dir = Directory("/storage/emulated/0/");
       String? path = await FilesystemPicker.open(
         title: 'Save to folder',
@@ -247,8 +246,7 @@ class AttachmentHelper {
   }
 
   static String getBaseAttachmentsPath() {
-    String appDocPath = SettingsManager().appDocDir.path;
-    return "$appDocPath/attachments";
+    return "${fs.appDocDir.path}/attachments";
   }
 
   static String getAttachmentPath(Attachment attachment) {
@@ -274,8 +272,7 @@ class AttachmentHelper {
         bytes: attachment.bytes,
       );
     }
-    String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
+    String pathName = path ?? "${fs.appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}";
     if (attachmentDownloader.getController(attachment.guid) != null) {
       return attachmentDownloader.getController(attachment.guid);
     } else if (!kIsWeb &&
@@ -296,24 +293,24 @@ class AttachmentHelper {
 
   static IconData getIcon(String mimeType) {
     if (mimeType.isEmpty) {
-      return SettingsManager().settings.skin.value == Skins.iOS
+      return settings.settings.skin.value == Skins.iOS
           ? CupertinoIcons.arrow_up_right_square
           : Icons.open_in_new;
     }
     if (mimeType == "application/pdf") {
-      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf;
+      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf;
     } else if (mimeType == "application/zip") {
-      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.folder : Icons.folder;
+      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.folder : Icons.folder;
     } else if (mimeType.startsWith("audio")) {
-      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.music_note : Icons.music_note;
+      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.music_note : Icons.music_note;
     } else if (mimeType.startsWith("image")) {
-      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.photo : Icons.photo;
+      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.photo : Icons.photo;
     } else if (mimeType.startsWith("video")) {
-      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam;
+      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam;
     } else if (mimeType.startsWith("text")) {
-      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note;
+      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note;
     }
-    return SettingsManager().settings.skin.value == Skins.iOS
+    return settings.settings.skin.value == Skins.iOS
         ? CupertinoIcons.arrow_up_right_square
         : Icons.open_in_new;
   }
@@ -324,9 +321,9 @@ class AttachmentHelper {
     // If auto-download is enabled
     // and (only wifi download is disabled or
     // only wifi download enabled, and we have wifi)
-    return (SettingsManager().settings.autoDownload.value &&
-        (!SettingsManager().settings.onlyWifiDownload.value ||
-            (SettingsManager().settings.onlyWifiDownload.value && status == ConnectivityResult.wifi)));
+    return (settings.settings.autoDownload.value &&
+        (!settings.settings.onlyWifiDownload.value ||
+            (settings.settings.onlyWifiDownload.value && status == ConnectivityResult.wifi)));
   }
 
   static void redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) {
@@ -366,7 +363,7 @@ class AttachmentHelper {
     Uint8List? thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
       imageFormat: ImageFormat.JPEG,
-      quality: SettingsManager().compressionQuality,
+      quality: settings.compressionQuality,
     );
 
     if (thumbnail == null || thumbnail.isEmpty || thumbnail.lengthInBytes == 0) {
@@ -416,8 +413,7 @@ class AttachmentHelper {
   }
 
   static String getTempPath() {
-    String dir = SettingsManager().appDocDir.path;
-    Directory tempAssets = Directory("$dir/tempAssets");
+    Directory tempAssets = Directory("${fs.appDocDir.path}/tempAssets");
     if (!tempAssets.existsSync()) {
       tempAssets.createSync();
     }

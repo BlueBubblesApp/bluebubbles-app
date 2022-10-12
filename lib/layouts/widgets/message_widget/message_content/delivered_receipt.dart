@@ -1,8 +1,8 @@
 import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -69,9 +69,9 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> {
     } else if (widget.message.dateRead != null) {
       text = "Read ${buildDate(widget.message.dateRead)}";
     } else if (widget.message.dateDelivered != null) {
-      text = "Delivered${SettingsManager().settings.showDeliveryTimestamps.value
+      text = "Delivered${settings.settings.showDeliveryTimestamps.value
               ? " ${buildDate(widget.message.dateDelivered)}" : ""}";
-    } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateCreated != null) {
+    } else if (settings.settings.showDeliveryTimestamps.value && widget.message.dateCreated != null) {
       text = "Sent ${buildDate(widget.message.dateCreated)}";
     }
 

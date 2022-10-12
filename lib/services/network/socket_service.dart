@@ -7,7 +7,6 @@ import 'package:bluebubbles/helpers/network/network_tasks.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart';
@@ -26,8 +25,8 @@ class SocketService extends GetxService {
   SocketState _lastState = SocketState.disconnected;
   late final Socket socket;
   
-  String? get serverAddress => SettingsManager().settings.serverAddress.value;
-  String get password => SettingsManager().settings.guidAuthKey.value;
+  String? get serverAddress => settings.settings.serverAddress.value;
+  String get password => settings.settings.guidAuthKey.value;
 
   @override
   void onInit() {
@@ -76,6 +75,13 @@ class SocketService extends GetxService {
   void closeSocket() {
     socket.dispose();
     state.value = SocketState.disconnected;
+  }
+
+  void forgetConnection() {
+    closeSocket();
+    settings.settings.guidAuthKey.value = "";
+    settings.settings.serverAddress.value = "";
+    settings.saveSettings();
   }
 
   Future<Map<String, dynamic>> sendMessage(String event, Map<String, dynamic> message) {

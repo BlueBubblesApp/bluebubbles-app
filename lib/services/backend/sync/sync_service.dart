@@ -1,7 +1,5 @@
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/services/backend/sync/full_sync_manager.dart';
-import 'package:bluebubbles/services/backend/sync/incremental_sync_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart';
 
 SyncService sync = Get.isRegistered<SyncService>() ? Get.find<SyncService>() : Get.put(SyncService());
@@ -18,8 +16,8 @@ class SyncService extends GetxService {
   Future<void> startFullSync() async {
     // Set the last sync date (for incremental, even though this isn't incremental)
     // We won't try an incremental sync until the last (full) sync date is set
-    SettingsManager().settings.lastIncrementalSync.value = DateTime.now().millisecondsSinceEpoch;
-    await SettingsManager().saveSettings();
+    settings.settings.lastIncrementalSync.value = DateTime.now().millisecondsSinceEpoch;
+    await settings.saveSettings();
 
     _manager = FullSyncManager(
         messageCount: numberOfMessagesPerPage.toInt(),
@@ -32,7 +30,7 @@ class SyncService extends GetxService {
   Future<void> startIncrementalSync({String? chatGuid, bool saveDate = true, Function? onComplete}) async {
     isIncrementalSyncing.value = true;
     try {
-      int syncStart = SettingsManager().settings.lastIncrementalSync.value;
+      int syncStart = settings.settings.lastIncrementalSync.value;
       final incrementalSyncManager = IncrementalSyncManager(syncStart, chatGuid: chatGuid, saveDate: saveDate, onComplete: () {
         onComplete?.call();
         isIncrementalSyncing.value = false;

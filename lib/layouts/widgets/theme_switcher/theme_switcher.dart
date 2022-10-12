@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_page_transition.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -13,7 +13,7 @@ class ThemeSwitcher extends StatefulWidget {
   final Widget? samsungSkin;
 
   static PageRoute buildPageRoute({required Widget Function(BuildContext context) builder}) {
-    switch (SettingsManager().settings.skin.value) {
+    switch (settings.settings.skin.value) {
       case Skins.iOS:
         return PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) => builder.call(context),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -32,7 +32,7 @@ class ThemeSwitcher extends StatefulWidget {
   }
 
   static ScrollPhysics getScrollPhysics() {
-    switch (SettingsManager().settings.skin.value) {
+    switch (settings.settings.skin.value) {
       case Skins.iOS:
         return AlwaysScrollableScrollPhysics(
           parent: CustomBouncingScrollPhysics(),
@@ -66,7 +66,7 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      switch (SettingsManager().settings.skin.value) {
+      switch (settings.settings.skin.value) {
         case Skins.iOS:
           return widget.iOSSkin;
         case Skins.Material:

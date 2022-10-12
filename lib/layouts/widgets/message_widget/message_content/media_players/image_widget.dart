@@ -6,8 +6,8 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -118,7 +118,7 @@ class ImageWidget extends StatelessWidget {
       builder: (controller) => VisibilityDetector(
         key: Key(controller.attachment.guid!),
         onVisibilityChanged: (info) {
-          if (!SettingsManager().settings.lowMemoryMode.value) return;
+          if (!settings.settings.lowMemoryMode.value) return;
           if (info.visibleFraction == 0 && controller.visible && !controller.navigated) {
             controller.visible = false;
             ChatManager().activeChat?.clearImageData(controller.attachment);

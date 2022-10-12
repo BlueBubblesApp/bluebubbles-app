@@ -19,8 +19,8 @@ import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
@@ -245,7 +245,7 @@ class _MessageState extends State<MessageWidget> {
     if (_newerMessage != null) {
       if (_newerMessage!.isGroupEvent()) {
         showTail = true;
-      } else if (SettingsManager().settings.skin.value == Skins.Samsung) {
+      } else if (settings.settings.skin.value == Skins.Samsung) {
         showTail = MessageHelper.getShowTail(context, _message, _olderMessage);
       } else {
         showTail = MessageHelper.getShowTail(context, _message, _newerMessage);
@@ -342,13 +342,13 @@ class _MessageState extends State<MessageWidget> {
           () => GestureDetector(
             behavior: HitTestBehavior.deferToChild,
             onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
-            onHorizontalDragStart: !SettingsManager().settings.enablePrivateAPI.value
-                || !SettingsManager().settings.swipeToReply.value
+            onHorizontalDragStart: !settings.settings.enablePrivateAPI.value
+                || !settings.settings.swipeToReply.value
                 || !(chat?.isIMessage ?? true) ? null : (details) {
               baseOffset = details.localPosition.dx;
             },
-            onHorizontalDragUpdate: !SettingsManager().settings.enablePrivateAPI.value
-                || !SettingsManager().settings.swipeToReply.value
+            onHorizontalDragUpdate: !settings.settings.enablePrivateAPI.value
+                || !settings.settings.swipeToReply.value
                 || !(chat?.isIMessage ?? true) ? null : (details) {
               offset.value = min(max((details.localPosition.dx - baseOffset) * (_message.isFromMe! ? -1 : 1), 0),
                   replyThreshold * 1.5);
@@ -360,8 +360,8 @@ class _MessageState extends State<MessageWidget> {
               }
               ChatController.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
             },
-            onHorizontalDragEnd: !SettingsManager().settings.enablePrivateAPI.value
-                || !SettingsManager().settings.swipeToReply.value
+            onHorizontalDragEnd: !settings.settings.enablePrivateAPI.value
+                || !settings.settings.swipeToReply.value
                 || !(chat?.isIMessage ?? true) ? null : (details) {
               if (offset.value >= replyThreshold) {
                 EventDispatcher().emit("focus-keyboard", _message);
@@ -407,7 +407,7 @@ class _MessageState extends State<MessageWidget> {
                         child: AnimatedSize(
                           duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
                           child: Icon(
-                            SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
+                            settings.settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
                             size: min(replyThreshold, offset.value) * (offset.value >= replyThreshold ? 0.5 : 0.4),
                             color: context.theme.colorScheme.properOnSurface,
                           ),

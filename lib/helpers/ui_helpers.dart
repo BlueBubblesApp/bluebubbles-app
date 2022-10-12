@@ -3,8 +3,8 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -19,10 +19,10 @@ Widget buildBackButton(BuildContext context,
       padding: padding,
       width: 25,
       child: IconButton(
-        iconSize: iconSize ?? (SettingsManager().settings.skin.value != Skins.Material ? 30 : 24),
+        iconSize: iconSize ?? (settings.settings.skin.value != Skins.Material ? 30 : 24),
         icon: skin != null
             ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: context.theme.colorScheme.primary)
-            : Obx(() => Icon(SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
+            : Obx(() => Icon(settings.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
                 color: context.theme.colorScheme.primary)),
         onPressed: () {
           final result = callback?.call() ?? true;
@@ -39,7 +39,7 @@ Widget buildBackButton(BuildContext context,
 }
 
 Widget buildProgressIndicator(BuildContext context, {double size = 20, double strokeWidth = 2}) {
-  return SettingsManager().settings.skin.value == Skins.iOS
+  return settings.settings.skin.value == Skins.iOS
       ? Theme(
           data: ThemeData(
             cupertinoOverrideTheme:
@@ -83,7 +83,7 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
 }
 
 Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat chat, Offset tapPosition, TextTheme textTheme) async {
-  bool ios = SettingsManager().settings.skin.value == Skins.iOS;
+  bool ios = settings.settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   await showMenu(
     color: context.theme.colorScheme.properSurface,

@@ -1,5 +1,5 @@
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -20,24 +20,24 @@ class SettingsLeadingIcon extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Obx(() => Material(
-          shape: SettingsManager().settings.skin.value == Skins.Samsung ? SquircleBorder(
+          shape: settings.settings.skin.value == Skins.Samsung ? SquircleBorder(
             side: BorderSide(
                 color: containerColor ?? context.theme.colorScheme.outline,
                 width: 3.0
             ),
           ) : null,
-          color: SettingsManager().settings.skin.value != Skins.Material
+          color: settings.settings.skin.value != Skins.Material
               ? containerColor ?? context.theme.colorScheme.outline
               : Colors.transparent,
-          borderRadius: SettingsManager().settings.skin.value == Skins.iOS
+          borderRadius: settings.settings.skin.value == Skins.iOS
               ? BorderRadius.circular(5) : null,
           child: SizedBox(
             width: 32,
             height: 32,
             child: Center(
-              child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? iosIcon : materialIcon,
-                  color: SettingsManager().settings.skin.value != Skins.Material ? Colors.white : context.theme.colorScheme.outline,
-                  size: SettingsManager().settings.skin.value != Skins.Material ? 23 : 30),
+              child: Icon(settings.settings.skin.value == Skins.iOS ? iosIcon : materialIcon,
+                  color: settings.settings.skin.value != Skins.Material ? Colors.white : context.theme.colorScheme.outline,
+                  size: settings.settings.skin.value != Skins.Material ? 23 : 30),
             ),
           ),
         )),

@@ -5,8 +5,8 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -68,9 +68,9 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
   Widget build(BuildContext context) {
     super.build(context);
     final bool hideAttachments =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
+        settings.settings.redactedMode.value && settings.settings.hideAttachments.value;
     final bool hideAttachmentTypes =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
+        settings.settings.redactedMode.value && settings.settings.hideAttachmentTypes.value;
     return AnimatedContainer(
       duration: Duration(milliseconds: 250),
       padding: EdgeInsets.all(containsThis ? 20 : 5),
@@ -138,7 +138,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
                     child: Padding(
                       padding: const EdgeInsets.all(5.0),
                       child: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.check_mark : Icons.check,
+                        settings.settings.skin.value == Skins.iOS ? CupertinoIcons.check_mark : Icons.check,
                         color: context.theme.colorScheme.onPrimary,
                         size: 18,
                       ),
@@ -154,7 +154,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
               child: InkWell(
                 child: widget.data.type == AssetType.video
                     ? Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play_circle_fill : Icons.play_circle_filled,
+                  settings.settings.skin.value == Skins.iOS ? CupertinoIcons.play_circle_fill : Icons.play_circle_filled,
                   color: Colors.white.withOpacity(0.5),
                   size: 50,
                 )

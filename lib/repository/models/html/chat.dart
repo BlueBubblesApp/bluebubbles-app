@@ -10,11 +10,11 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/handle.dart';
 import 'package:bluebubbles/repository/models/html/message.dart';
 import 'package:bluebubbles/repository/models/models.dart' show Contact;
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
@@ -219,12 +219,12 @@ class Chat {
   }
 
   bool shouldMuteNotification(Message? message) {
-    if (SettingsManager().settings.filterUnknownSenders.value &&
+    if (settings.settings.filterUnknownSenders.value &&
         participants.length == 1 &&
         ContactManager().getContact(participants[0].address) == null) {
       return true;
-    } else if (SettingsManager().settings.globalTextDetection.value.isNotEmpty) {
-      List<String> text = SettingsManager().settings.globalTextDetection.value.split(",");
+    } else if (settings.settings.globalTextDetection.value.isNotEmpty) {
+      List<String> text = settings.settings.globalTextDetection.value.split(",");
       for (String s in text) {
         if (message?.text?.toLowerCase().contains(s.toLowerCase()) ?? false) {
           return false;
@@ -255,7 +255,7 @@ class Chat {
       }
       return true;
     }
-    return !SettingsManager().settings.notifyReactions.value &&
+    return !settings.settings.notifyReactions.value &&
         ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
   }
 
@@ -365,7 +365,7 @@ class Chat {
         message.metadata = meta!.toJson();
 
         // If pre-caching is enabled, fetch the image and save it
-        if (SettingsManager().settings.preCachePreviewImages.value &&
+        if (settings.settings.preCachePreviewImages.value &&
             message.metadata!.containsKey("image") &&
             !isNullOrEmpty(message.metadata!["image"])!) {
           // Save from URL

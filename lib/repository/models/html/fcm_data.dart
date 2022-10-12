@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 
 class FCMData {
@@ -59,22 +60,22 @@ class FCMData {
 
   FCMData save() {
     if (isNull) return this;
-    prefs.setString('projectID', projectID!);
-    prefs.setString('storageBucket', storageBucket!);
-    prefs.setString('apiKey', apiKey!);
-    prefs.setString('firebaseURL', firebaseURL!);
-    prefs.setString('clientID', clientID!);
-    prefs.setString('applicationID', applicationID!);
+    settings.prefs.setString('projectID', projectID!);
+    settings.prefs.setString('storageBucket', storageBucket!);
+    settings.prefs.setString('apiKey', apiKey!);
+    settings.prefs.setString('firebaseURL', firebaseURL!);
+    settings.prefs.setString('clientID', clientID!);
+    settings.prefs.setString('applicationID', applicationID!);
     return this;
   }
 
   static void deleteFcmData() {
-    prefs.remove('projectID');
-    prefs.remove('storageBucket');
-    prefs.remove('apiKey');
-    prefs.remove('firebaseURL');
-    prefs.remove('clientID');
-    prefs.remove('applicationID');
+    settings.prefs.remove('projectID');
+    settings.prefs.remove('storageBucket');
+    settings.prefs.remove('apiKey');
+    settings.prefs.remove('firebaseURL');
+    settings.prefs.remove('clientID');
+    settings.prefs.remove('applicationID');
   }
 
   static Future<void> initializeFirebase(FCMData data) async {
@@ -91,12 +92,12 @@ class FCMData {
 
   static FCMData getFCM() {
     return FCMData(
-      projectID: prefs.getString('projectID'),
-      storageBucket: prefs.getString('storageBucket'),
-      apiKey: prefs.getString('apiKey'),
-      firebaseURL: prefs.getString('firebaseURL'),
-      clientID: prefs.getString('clientID'),
-      applicationID: prefs.getString('applicationID'),
+      projectID: settings.prefs.getString('projectID'),
+      storageBucket: settings.prefs.getString('storageBucket'),
+      apiKey: settings.prefs.getString('apiKey'),
+      firebaseURL: settings.prefs.getString('firebaseURL'),
+      clientID: settings.prefs.getString('clientID'),
+      applicationID: settings.prefs.getString('applicationID'),
     );
   }
 

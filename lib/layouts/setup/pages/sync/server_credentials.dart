@@ -9,7 +9,6 @@ import 'package:bluebubbles/layouts/setup/pages/page_template.dart';
 import 'package:bluebubbles/layouts/setup/pages/sync/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart' as dio;
@@ -364,9 +363,9 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
       return;
     }
 
-    SettingsManager().settings.serverAddress.value = addr;
-    SettingsManager().settings.guidAuthKey.value = password;
-    SettingsManager().settings.save();
+    settings.settings.serverAddress.value = addr;
+    settings.settings.guidAuthKey.value = password;
+    settings.settings.save();
 
     // Request data from the API
     Future<dio.Response> fcmFuture = http.fcmClient();
@@ -398,7 +397,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           } else {
             try {
               FCMData fcmData = FCMData.fromMap(data["data"]);
-              SettingsManager().saveFCMData(fcmData);
+              settings.saveFCMData(fcmData);
             } catch (_) {
               if (Platform.isAndroid) {
                 showSnackbar("Warning", "No Firebase project detected! You will not receive notifications for new messages!");

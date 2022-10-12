@@ -13,7 +13,6 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -51,9 +50,9 @@ class ContactTile extends StatelessWidget {
   }
 
   Widget _buildContactTile(BuildContext context) {
-    final bool redactedMode = SettingsManager().settings.redactedMode.value;
-    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo.value;
-    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
+    final bool redactedMode = settings.settings.redactedMode.value;
+    final bool hideInfo = redactedMode && settings.settings.hideContactInfo.value;
+    final bool generateName = redactedMode && settings.settings.generateFakeContactNames.value;
     final bool isEmail = handle.address.isEmail;
     return InkWell(
       onLongPress: () {
@@ -134,7 +133,7 @@ class ContactTile extends StatelessWidget {
                           onLongPress: () => onPressContact(context, isLongPressed: true),
                           onPressed: () => onPressContact(context),
                           child: Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email,
+                              settings.settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email,
                               color: context.theme.colorScheme.onSecondary,
                               size: 20),
                         ),
@@ -150,7 +149,7 @@ class ContactTile extends StatelessWidget {
                               onLongPress: () => onPressContact(context, isLongPressed: true),
                               onPressed: () => onPressContact(context),
                               child: Icon(
-                                  SettingsManager().settings.skin.value == Skins.iOS
+                                  settings.settings.skin.value == Skins.iOS
                                       ? CupertinoIcons.phone
                                       : Icons.call,
                                   color: context.theme.colorScheme.onSecondary,
@@ -266,7 +265,7 @@ class ContactTile extends StatelessWidget {
                 SlidableAction(
                   label: 'Remove',
                   backgroundColor: Colors.red,
-                  icon: SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete,
+                  icon: settings.settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete,
                   onPressed: (_) async {
                     showDialog(
                         context: context,

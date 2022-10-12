@@ -1,13 +1,10 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tuple/tuple.dart';
 
 class MediaFile extends StatefulWidget {
   MediaFile({
@@ -35,9 +32,9 @@ class _MediaFileState extends State<MediaFile> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hideAttachments = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
+    final bool hideAttachments = settings.settings.redactedMode.value && settings.settings.hideAttachments.value;
     final bool hideAttachmentTypes =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
+        settings.settings.redactedMode.value && settings.settings.hideAttachmentTypes.value;
 
     /*if (socket.attachmentSenders.containsKey(widget.attachment.guid)) {
       return Stack(
@@ -68,7 +65,7 @@ class _MediaFileState extends State<MediaFile> {
         widget.child,
         if (widget.attachment.originalROWID == null)
           Container(
-            child: SettingsManager().settings.skin.value == Skins.iOS ? Theme(
+            child: settings.settings.skin.value == Skins.iOS ? Theme(
               data: ThemeData(
                 cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark),
               ),

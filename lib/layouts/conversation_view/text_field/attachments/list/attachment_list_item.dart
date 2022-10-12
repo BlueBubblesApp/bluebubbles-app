@@ -6,8 +6,8 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -69,9 +69,9 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
   Widget getThumbnail() {
     if (preview != null) {
       final bool hideAttachments =
-          SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
+          settings.settings.redactedMode.value && settings.settings.hideAttachments.value;
       final bool hideAttachmentTypes =
-          SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
+          settings.settings.redactedMode.value && settings.settings.hideAttachmentTypes.value;
 
       final mimeType = mime(widget.file.name);
 
@@ -177,7 +177,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
               Align(
                 alignment: Alignment.bottomRight,
                 child: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
+                  settings.settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
                   color: Colors.white,
                 ),
               ),
@@ -193,7 +193,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                   width: 25,
                   height: 25,
                   child: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
+                    settings.settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
                     color: context.theme.colorScheme.onBackground,
                     size: 15,
                   ),

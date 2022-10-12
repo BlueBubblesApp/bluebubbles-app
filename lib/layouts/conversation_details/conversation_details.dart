@@ -19,9 +19,7 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
@@ -150,17 +148,17 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
 
   @override
   Widget build(BuildContext context) {
-    final bool redactedMode = SettingsManager().settings.redactedMode.value;
-    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo.value;
-    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
+    final bool redactedMode = settings.settings.redactedMode.value;
+    final bool hideInfo = redactedMode && settings.settings.hideContactInfo.value;
+    final bool generateName = redactedMode && settings.settings.generateFakeContactNames.value;
     if (generateName) controller.text = "Group Chat";
-    final Rx<Color> _backgroundColor = (SettingsManager().settings.windowEffect.value == WindowEffect.disabled
+    final Rx<Color> _backgroundColor = (settings.settings.windowEffect.value == WindowEffect.disabled
             ? context.theme.colorScheme.background
             : Colors.transparent)
         .obs;
 
     if (kIsDesktop) {
-      SettingsManager().settings.windowEffect.listen((WindowEffect effect) {
+      settings.settings.windowEffect.listen((WindowEffect effect) {
         if (mounted) {
           _backgroundColor.value =
               effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
@@ -170,7 +168,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -182,10 +180,10 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
           colorScheme: context.theme.colorScheme.copyWith(
             primary: context.theme.colorScheme.bubble(context, chat.isIMessage),
             onPrimary: context.theme.colorScheme.onBubble(context, chat.isIMessage),
-            surface: SettingsManager().settings.monetTheming.value == Monet.full
+            surface: settings.settings.monetTheming.value == Monet.full
                 ? null
                 : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-            onSurface: SettingsManager().settings.monetTheming.value == Monet.full
+            onSurface: settings.settings.monetTheming.value == Monet.full
                 ? null
                 : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
           ),
@@ -234,7 +232,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                             textScaleFactor: 1.15,
                           ),
                           onPressed: () {
-                            if (!SettingsManager().settings.enablePrivateAPI.value || !chat.isIMessage) {
+                            if (!settings.settings.enablePrivateAPI.value || !chat.isIMessage) {
                               showChangeName("local");
                             } else {
                               showChangeName("private-api");
@@ -247,7 +245,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                         Container(
                           child: IconButton(
                             icon: Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS
+                              settings.settings.skin.value == Skins.iOS
                                   ? CupertinoIcons.info
                                   : Icons.info_outline,
                               size: 15,
@@ -268,12 +266,12 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                                       mainAxisSize: MainAxisSize.min,
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        if (!SettingsManager().settings.enablePrivateAPI.value || !chat.isIMessage)
+                                        if (!settings.settings.enablePrivateAPI.value || !chat.isIMessage)
                                           Text(
                                             "${!chat.isIMessage ? "This chat is SMS" : "You have Private API disabled"}, so changing the name here will only change it locally for you. You will not see these changes on other devices, and the other members of this chat will not see these changes.",
                                             style: context.theme.textTheme.bodyLarge
                                           ),
-                                        if (SettingsManager().settings.enablePrivateAPI.value && chat.isIMessage)
+                                        if (settings.settings.enablePrivateAPI.value && chat.isIMessage)
                                           Text(
                                             "You have Private API enabled, so changing the name here will change the name for everyone in this chat. If you only want to change it locally, you can tap and hold the \"Change Name\" button.",
                                             style: context.theme.textTheme.bodyLarge
@@ -325,7 +323,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                        SettingsManager().settings.skin.value == Skins.iOS
+                                        settings.settings.skin.value == Skins.iOS
                                             ? CupertinoIcons.phone
                                             : Icons.call,
                                         color: context.theme.colorScheme.primary,
@@ -360,7 +358,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email,
+                                      settings.settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email,
                                       color: context.theme.colorScheme.primary,
                                       size: 20),
                                   const SizedBox(height: 7.5),
@@ -396,7 +394,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
+                                      settings.settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
                                       color: context.theme.colorScheme.primary,
                                       size: 20
                                     ),
@@ -435,8 +433,8 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                         style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary),
                       ),
                       leading: Container(
-                        width: 40 * SettingsManager().settings.avatarScale.value,
-                        height: 40 * SettingsManager().settings.avatarScale.value,
+                        width: 40 * settings.settings.avatarScale.value,
+                        height: 40 * settings.settings.avatarScale.value,
                         decoration: BoxDecoration(
                           color: context.theme.colorScheme.properSurface,
                           shape: BoxShape.circle,
@@ -461,18 +459,18 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       setState(() {});
                     },
                     canBeRemoved: chat.participants.length > 1
-                        && SettingsManager().settings.enablePrivateAPI.value
+                        && settings.settings.enablePrivateAPI.value
                         && chat.isIMessage,
                   );
                 }, childCount: clippedParticipants.length + 1),
               ),
-            if (SettingsManager().settings.enablePrivateAPI.value && chat.isIMessage && chat.isGroup())
+            if (settings.settings.enablePrivateAPI.value && chat.isIMessage && chat.isGroup())
               SliverToBoxAdapter(
                 child: ListTile(
                   title: Text("Add Member", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                   leading: Container(
-                    width: 40 * SettingsManager().settings.avatarScale.value,
-                    height: 40 * SettingsManager().settings.avatarScale.value,
+                    width: 40 * settings.settings.avatarScale.value,
+                    height: 40 * settings.settings.avatarScale.value,
                     decoration: BoxDecoration(
                       color: context.theme.colorScheme.properSurface, // border color
                       shape: BoxShape.circle,
@@ -652,7 +650,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       trailing: Padding(
                         padding: const EdgeInsets.only(right: 15.0),
                         child: Icon(
-                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.person : Icons.person_outlined,
+                          settings.settings.skin.value == Skins.iOS ? CupertinoIcons.person : Icons.person_outlined,
                         ),
                       ),
                       onTap: () {
@@ -722,7 +720,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                     trailing: Padding(
                       padding: const EdgeInsets.only(right: 15.0),
                       child: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS
+                        settings.settings.skin.value == Skins.iOS
                             ? CupertinoIcons.cloud_download
                             : Icons.file_download,
                       ),
@@ -743,7 +741,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                     trailing: Padding(
                       padding: const EdgeInsets.only(right: 15.0),
                       child: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS
+                        settings.settings.skin.value == Skins.iOS
                             ? CupertinoIcons.arrow_counterclockwise
                             : Icons.replay,
                       ),
@@ -758,8 +756,8 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   ),
                   if (!kIsWeb &&
                       !widget.chat.isGroup() &&
-                      SettingsManager().settings.enablePrivateAPI.value &&
-                      SettingsManager().settings.privateMarkChatAsRead.value)
+                      settings.settings.enablePrivateAPI.value &&
+                      settings.settings.privateMarkChatAsRead.value)
                     SettingsSwitch(
                       title: "Send Read Receipts",
                       initialVal: widget.chat.autoSendReadReceipts!,
@@ -772,8 +770,8 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                     ),
                   if (!kIsWeb &&
                       !widget.chat.isGroup() &&
-                      SettingsManager().settings.enablePrivateAPI.value &&
-                      SettingsManager().settings.privateSendTypingIndicators.value)
+                      settings.settings.enablePrivateAPI.value &&
+                      settings.settings.privateSendTypingIndicators.value)
                     SettingsSwitch(
                       title: "Send Typing Indicators",
                       initialVal: widget.chat.autoSendTypingIndicators!,
@@ -828,7 +826,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       trailing: Padding(
                         padding: const EdgeInsets.only(right: 15.0),
                         child: Icon(
-                          SettingsManager().settings.skin.value == Skins.iOS
+                          settings.settings.skin.value == Skins.iOS
                               ? CupertinoIcons.trash
                               : Icons.delete_outlined,
                         ),
@@ -873,7 +871,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       trailing: Padding(
                         padding: const EdgeInsets.only(right: 15.0),
                         child: Icon(
-                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note_outlined,
+                          settings.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note_outlined,
                         ),
                       ),
                       onTap: () async {

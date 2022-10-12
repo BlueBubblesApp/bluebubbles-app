@@ -17,7 +17,6 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -85,10 +84,10 @@ class ConversationTileController extends StatefulController {
   }
   
   void onSelected() {
-    if (SettingsManager().settings.skin.value == Skins.Material) {
+    if (settings.settings.skin.value == Skins.Material) {
       updateWidgetFunctions[MaterialConversationTile]?.call(null);
     }
-    if (SettingsManager().settings.skin.value == Skins.Samsung) {
+    if (settings.settings.skin.value == Skins.Samsung) {
       updateWidgetFunctions[SamsungConversationTile]?.call(null);
     }
     onSelect!.call(!isSelected);
@@ -227,10 +226,10 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final hideInfo = SettingsManager().settings.redactedMode.value
-          && SettingsManager().settings.hideContactInfo.value;
-      final generateNames = SettingsManager().settings.redactedMode.value
-          && SettingsManager().settings.generateFakeContactNames.value;
+      final hideInfo = settings.settings.redactedMode.value
+          && settings.settings.hideContactInfo.value;
+      final generateNames = settings.settings.redactedMode.value
+          && settings.settings.generateFakeContactNames.value;
 
       if (hideInfo) return const SizedBox.shrink();
 
@@ -311,10 +310,10 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final hideContent = SettingsManager().settings.redactedMode.value
-          && SettingsManager().settings.hideMessageContent.value;
-      final generateContent = SettingsManager().settings.redactedMode.value
-          && SettingsManager().settings.generateFakeMessageContent.value;
+      final hideContent = settings.settings.redactedMode.value
+          && settings.settings.hideMessageContent.value;
+      final generateContent = settings.settings.redactedMode.value
+          && settings.settings.generateFakeMessageContent.value;
 
       if (hideContent) return const SizedBox.shrink();
 
@@ -331,7 +330,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
           ),
         ),
         overflow: TextOverflow.ellipsis,
-        maxLines: SettingsManager().settings.skin.value == Skins.Material 
+        maxLines: settings.settings.skin.value == Skins.Material 
             ? 3 : 2,
       );
     });
@@ -349,7 +348,7 @@ class ChatLeading extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (unreadIcon != null && SettingsManager().settings.skin.value == Skins.iOS)
+        if (unreadIcon != null && settings.settings.skin.value == Skins.iOS)
           unreadIcon!,
         StreamBuilder<Map<String, dynamic>>(
             stream: ChatManager().getChatController(controller.chat)?.stream as Stream<Map<String, dynamic>>?,
@@ -400,7 +399,7 @@ class ChatLeading extends StatelessWidget {
                         ),
                       ),
                     ),
-                  if (unreadIcon != null && SettingsManager().settings.skin.value == Skins.Samsung)
+                  if (unreadIcon != null && settings.settings.skin.value == Skins.Samsung)
                     Positioned(
                       top: 30,
                       right: 20,

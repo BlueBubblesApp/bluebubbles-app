@@ -6,7 +6,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
@@ -70,7 +69,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
     }
 
     if (!widget.editable
-        || !SettingsManager().settings.colorfulAvatars.value
+        || !settings.settings.colorfulAvatars.value
         || widget.handle == null) return;
 
     bool didReset = false;
@@ -141,7 +140,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
         : context.theme.colorScheme.background;
 
     final size = (widget.size ?? 40) *
-        (widget.scaleSize ? SettingsManager().settings.avatarScale.value : 1);
+        (widget.scaleSize ? settings.settings.avatarScale.value : 1);
     List<Color> colors = [];
     if (widget.handle?.color == null) {
       colors = toColorGradient(widget.handle?.address);
@@ -154,7 +153,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
 
     return MouseRegion(
       cursor: !widget.editable
-          || !SettingsManager().settings.colorfulAvatars.value
+          || !settings.settings.colorfulAvatars.value
           || widget.handle == null ? MouseCursor.defer : SystemMouseCursors.click,
       child: GestureDetector(
         onTap: onAvatarTap,
@@ -166,16 +165,16 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
             gradient: LinearGradient(
               begin: AlignmentDirectional.topStart,
               colors: [
-                !SettingsManager().settings.colorfulAvatars.value
+                !settings.settings.colorfulAvatars.value
                     ? HexColor("928E8E")
                     : colors[1],
-                !SettingsManager().settings.colorfulAvatars.value
+                !settings.settings.colorfulAvatars.value
                     ? HexColor("686868")
                     : colors[0]
               ],
             ),
             border: Border.all(
-              color: SettingsManager().settings.skin.value == Skins.Samsung
+              color: settings.settings.skin.value == Skins.Samsung
                 ? tileColor
                 : context.theme.colorScheme.background,
               width: widget.borderThickness,
@@ -213,7 +212,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                 );
               } else {
                 return Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS
+                  settings.settings.skin.value == Skins.iOS
                       ? CupertinoIcons.person_fill
                       : Icons.person,
                   color: Colors.white,
