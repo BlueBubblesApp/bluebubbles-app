@@ -64,6 +64,8 @@ class SocketService extends GetxService {
 
     // custom events
     socket.on("new-message", (data) => handleCustomEvent("new-message", data));
+    socket.on("updated-message", (data) => handleCustomEvent("updated-message", data));
+    socket.on("message-send-errors", (data) => handleCustomEvent("message-send-errors", data));
     socket.on("group-name-change", (data) => handleCustomEvent("group-name-change", data));
     socket.on("participant-removed", (data) => handleCustomEvent("participant-removed", data));
     socket.on("participant-added", (data) => handleCustomEvent("participant-added", data));
@@ -137,6 +139,10 @@ class SocketService extends GetxService {
     // todo once event handlers are written
     switch (event) {
       case "new-message":
+        return;
+      case "updated-message":
+        return;
+      case "message-send-errors":
         return;
       case "group-name-change":
         return;
