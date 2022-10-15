@@ -18,7 +18,6 @@ class Contact {
     this.phones = const [],
     this.emails = const [],
     this.structuredName,
-    required this.fakeName,
     this.avatar,
     this.avatarHiRes,
   });
@@ -31,7 +30,6 @@ class Contact {
   List<String> phones;
   List<String> emails;
   StructuredName? structuredName;
-  String fakeName;
   Uint8List? avatar;
   Uint8List? avatarHiRes;
   
@@ -56,7 +54,6 @@ class Contact {
       'displayName': displayName,
       'phoneNumbers': getUniqueNumbers(phones),
       'emails': getUniqueEmails(emails),
-      'fakeName': fakeName,
       'avatar': avatarHiRes != null || avatar != null ? base64Encode(avatarHiRes ?? avatar!) : null,
     };
   }

@@ -86,7 +86,6 @@ class Chat {
   String? title;
   String? displayName;
   List<Handle> participants = [];
-  List<Contact?> fakeParticipants = [];
   Message? latestMessage;
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
@@ -115,7 +114,6 @@ class Chat {
     String? customAvatar,
     int? pinnedIndex,
     this.participants = const [],
-    this.fakeParticipants = const [],
     this.latestMessage,
     this.latestMessageDate,
     this.latestMessageText,
@@ -129,11 +127,9 @@ class Chat {
 
   factory Chat.fromMap(Map<String, dynamic> json) {
     List<Handle> participants = [];
-    List<String> fakeParticipants = [];
     if (json.containsKey('participants')) {
       for (dynamic item in (json['participants'] as List<dynamic>)) {
         participants.add(Handle.fromMap(item));
-        fakeParticipants.add(ContactManager().getContact(participants.last.address)?.fakeName ?? "Unknown");
       }
     }
     Message? message;
@@ -181,7 +177,6 @@ class Chat {
       customAvatar: json['_customAvatarPath'],
       pinnedIndex: json['_pinIndex'],
       participants: participants,
-      fakeParticipants: [],
     );
 
     // Adds fallback getter for the ID
@@ -547,17 +542,6 @@ class Chat {
   bool get isSMS => false;
 
   bool get isIMessage => !isTextForwarding && !isSMS;
-
-  List<String> get fakeNames {
-    if (fakeParticipants.whereNotNull().length == fakeParticipants.length) {
-      return fakeParticipants.map((p) => p!.fakeName ?? "Unknown").toList();
-    }
-
-    fakeParticipants =
-        participants.mapIndexed((i, e) => fakeParticipants[i] ?? ContactManager().getContact(e.address)).toList();
-
-    return fakeParticipants.map((p) => p?.fakeName ?? "Unknown").toList();
-  }
 
   Message? get latestMessageGetter {
     if (latestMessage != null) return latestMessage!;

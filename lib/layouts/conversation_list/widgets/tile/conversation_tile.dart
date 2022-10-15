@@ -235,7 +235,7 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
 
       String _title = title;
       if (generateNames) {
-        _title = controller.chat.fakeNames.length == 1 ? controller.chat.fakeNames[0] : "Group Chat";
+        _title = controller.chat.participants.length > 1 ? "Group Chat" : controller.chat.participants[0].fakeName;
       }
 
       return RichText(

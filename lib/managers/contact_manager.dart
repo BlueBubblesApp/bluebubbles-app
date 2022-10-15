@@ -184,7 +184,6 @@ class ContactManager {
                   nameSuffix: e.structuredName!.nameSuffix,
                 ),
                 id: e.id,
-                fakeName: faker.person.name(),
               ))
           .toList();
 
@@ -194,7 +193,7 @@ class ContactManager {
       await fetchContactsDesktop(logger: print);
     }
 
-    loadFakeInfo();
+    /*loadFakeInfo();*/
 
     Logger.info("Finished fetching contacts (${contacts.length})", tag: tag);
     Logger.info("Contacts map size: ${_emailToContactMap.length + _phoneToContactMap.length}", tag: tag);
@@ -263,7 +262,6 @@ class ContactManager {
             displayName: displayName,
             emails: emails,
             phones: phones,
-            fakeName: faker.person.name(),
           ));
         }
       } else {
@@ -329,11 +327,11 @@ class ContactManager {
     }
   }
 
-  void loadFakeInfo() {
+  /*void loadFakeInfo() {
     for (Contact c in contacts) {
       c.fakeName ??= faker.person.name();
     }
-  }
+  }*/
 
   Future<void> getAvatars() async {
     if (getAvatarsFuture != null && !getAvatarsFuture!.isCompleted) {

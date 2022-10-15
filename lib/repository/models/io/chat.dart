@@ -342,8 +342,6 @@ class Chat {
   String? title;
   String? displayName;
   List<Handle> participants = [];
-  @Transient()
-  List<Contact?> fakeParticipants = [];
   Message? latestMessage;
   bool? autoSendReadReceipts = true;
   bool? autoSendTypingIndicators = true;
@@ -385,7 +383,6 @@ class Chat {
     String? customAvatar,
     int? pinnedIndex,
     this.participants = const [],
-    this.fakeParticipants = const [],
     this.latestMessage,
     this.latestMessageDate,
     this.latestMessageText,
@@ -395,9 +392,6 @@ class Chat {
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
-
-    // Map the participant fake names
-    fakeParticipants = participants.map((e) => ContactManager().getContact(e.address)).toList();
   }
 
   bool get isTextForwarding => guid.startsWith("SMS");
@@ -405,17 +399,6 @@ class Chat {
   bool get isSMS => false;
 
   bool get isIMessage => !isTextForwarding && !isSMS;
-
-  List<String> get fakeNames {
-    if (fakeParticipants.whereNotNull().length == fakeParticipants.length) {
-      return fakeParticipants.map((p) => p!.fakeName ?? "Unknown").toList();
-    }
-
-    fakeParticipants =
-        participants.mapIndexed((i, e) => fakeParticipants[i] ?? ContactManager().getContact(e.address)).toList();
-
-    return fakeParticipants.map((p) => p?.fakeName ?? "Unknown").toList();
-  }
 
   factory Chat.fromMap(Map<String, dynamic> json) {
     List<Handle> participants = [];
@@ -470,7 +453,6 @@ class Chat {
       customAvatar: json['_customAvatarPath'],
       pinnedIndex: json['_pinIndex'],
       participants: participants,
-      fakeParticipants: fakeParticipants,
       autoSendReadReceipts: json.containsKey("autoSendReadReceipts")
           ? (json["autoSendReadReceipts"] is bool)
               ? json['autoSendReadReceipts']
@@ -951,9 +933,7 @@ class Chat {
       participants = List<Handle>.from(handles);
     });
 
-    /// Deduplicate and generate fake participants for redacted mode
     _deduplicateParticipants();
-    fakeParticipants = participants.map((p) => ContactManager().getContact(p.address)).toList();
     return this;
   }
 
@@ -1146,10 +1126,6 @@ class Chat {
     chat1.chatIdentifier ??= chat2.chatIdentifier;
     chat1.displayName ??= chat2.displayName;
     chat1.fakeLatestMessageText ??= chat2.fakeLatestMessageText;
-    if (chat1.fakeParticipants.isEmpty) {
-      chat1.fakeParticipants = chat2.fakeParticipants;
-    }
-    
     if (chat1.handles.isEmpty) {
       chat1.handles.addAll(chat2.handles);
     }

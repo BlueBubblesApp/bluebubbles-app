@@ -49,7 +49,7 @@ class _ContactWidgetState extends State<ContactWidget> {
     try {
       contact = AttachmentHelper.parseAppleContact(appleContact);
     } catch (ex) {
-      contact = Contact(displayName: "Invalid Contact", id: randomString(8), fakeName: "Invalid Contact");
+      contact = Contact(displayName: "Invalid Contact", id: randomString(8));
     }
 
     if (!kIsWeb && widget.file.path != null && mounted) setState(() {});

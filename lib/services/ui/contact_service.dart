@@ -29,10 +29,12 @@ class ContactsService extends GetxService {
   final tag = "ContactsService";
   /// The master list of contact objects
   List<Contact> contacts = [];
+  List<Handle> handles = [];
 
   Future<void> init() async {
     if (!kIsWeb) {
       contacts = Contact.getContacts();
+      handles = Handle.find();
     } else {
       await fetchNetworkContacts();
     }
@@ -42,34 +44,35 @@ class ContactsService extends GetxService {
     if (kIsWeb || kIsDesktop) {
       int versionCode = (await settings.getServerDetails()).item4;
       return versionCode >= 42;
+    } else {
+      return (await Permission.contacts.status).isGranted;
     }
-
-    try {
-      PermissionStatus status = await Permission.contacts.status;
-      if (status.isGranted) return true;
-      Logger.info("Contacts Permission Status: ${status.toString()}", tag: tag);
-
-      // If it's not permanently denied, request access
-      if (!status.isPermanentlyDenied) {
-        if (!isUiThread) {
-          Logger.warn('Unable to prompt for contact access since headless = true');
-        } else {
-          return (await Permission.contacts.request()).isGranted;
-        }
-      } else {
-        Logger.info("Contacts permissions are permanently denied...", tag: tag);
-      }
-    } catch (ex) {
-      Logger.error("Error getting access to contacts!", tag: tag);
-      Logger.error(ex.toString(), tag: tag);
-    }
-
-    return false;
   }
 
-  Future<void> fetchNetworkContacts({Function(String)? logger}) async {
-    contacts.clear();
+  Future<void> refreshContacts() async {
+    final contacts = [];
+    if (kIsWeb || kIsDesktop) {
+      contacts.addAll(await fetchNetworkContacts());
+    } else {
+      contacts.addAll((await FastContacts.allContacts)
+          .map((e) => Contact(
+        displayName: e.displayName,
+        emails: e.emails,
+        phones: e.phones,
+        structuredName: e.structuredName == null ? null : StructuredName(
+          namePrefix: e.structuredName!.namePrefix,
+          givenName: e.structuredName!.givenName,
+          middleName: e.structuredName!.middleName,
+          familyName: e.structuredName!.familyName,
+          nameSuffix: e.structuredName!.nameSuffix,
+        ),
+        id: e.id,
+      )));
+    }
+  }
 
+  Future<List<Contact>> fetchNetworkContacts({Function(String)? logger}) async {
+    final contacts = <Contact>[];
     logger?.call("Fetching contacts (no avatars)...");
     try {
       final response = await http.contacts();
@@ -87,7 +90,6 @@ class ContactsService extends GetxService {
             displayName: displayName,
             emails: emails,
             phones: phones,
-            fakeName: faker.person.name(),
           ));
         }
       } else {
@@ -99,8 +101,8 @@ class ContactsService extends GetxService {
       logger?.call(s.toString());
     }
 
-    await buildCacheMap();
-    EventDispatcher().emit('update-contacts', null);
+    /*await buildCacheMap();
+    EventDispatcher().emit('update-contacts', null);*/
 
     logger?.call("Fetching contacts (with avatars)...");
     try {
@@ -151,5 +153,6 @@ class ContactsService extends GetxService {
       logger?.call("Got exception: $e");
       logger?.call(s.toString());
     }
+    return contacts;
   }
 }

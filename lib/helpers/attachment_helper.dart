@@ -100,7 +100,7 @@ class AttachmentHelper {
     VCard _contact = VCard(appleContact);
     _contact.printLines();
 
-    Contact contact = Contact(displayName: _contact.formattedName ?? "Unknown", id: randomString(8), fakeName: "Fake");
+    Contact contact = Contact(displayName: _contact.formattedName ?? "Unknown", id: randomString(8));
 
     List<String> emails = <String>[];
     List<String> phones = <String>[];

@@ -71,7 +71,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   children: <Widget>[
                     Text(
                         generateName
-                            ? ContactManager().getContact(contact.address)?.fakeName ?? "Person ${index + 1}"
+                            ? /*ContactManager().getContact(contact.address)?.fakeName ?? */"Person ${index + 1}"
                             : hideInfo
                                 ? "          "
                                 : contact.displayName!.trim(),

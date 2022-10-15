@@ -912,7 +912,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           }
         } else if (!isNullOrEmpty(ChatController.forGuid(widget.chatGuid)?.chat.participants)!) {
           if (generateNames) {
-            placeholder = ChatController.forGuid(widget.chatGuid)!.chat.fakeNames[0];
+            placeholder = chat!.participants.length > 1 ? "Group Chat" : chat!.participants[0].fakeName;
           } else if (hideInfo) {
             placeholder = chat?.isTextForwarding ?? false ? "Text Forwarding" : "iMessage";
           } else {
@@ -1158,7 +1158,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                           text: reply.isFromMe!
                                               ? "You"
                                               : generateContactInfo
-                                                  ? ContactManager().getContact(reply.handle?.address)?.fakeName ??
+                                                  ? reply.handle?.fakeName ??
                                                       "You"
                                                   : ContactManager()
                                                           .getContact(reply.handle?.address ?? "")

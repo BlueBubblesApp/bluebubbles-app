@@ -765,11 +765,6 @@ final _entities = <ModelEntity>[
             type: 30,
             flags: 0),
         ModelProperty(
-            id: const IdUid(7, 5176315239890900498),
-            name: 'fakeName',
-            type: 9,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(8, 765867408744391809),
             name: 'avatar',
             type: 23,
@@ -880,7 +875,8 @@ ModelDefinition getObjectBoxModel() {
         2649653758394363860,
         1439376349402210172,
         8308083337629235136,
-        790519381961958997
+        790519381961958997,
+        5176315239890900498
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -1586,7 +1582,6 @@ ModelDefinition getObjectBoxModel() {
               object.phones.map(fbb.writeString).toList(growable: false));
           final emailsOffset = fbb.writeList(
               object.emails.map(fbb.writeString).toList(growable: false));
-          final fakeNameOffset = fbb.writeString(object.fakeName);
           final avatarOffset =
               object.avatar == null ? null : fbb.writeListInt8(object.avatar!);
           final avatarHiResOffset = object.avatarHiRes == null
@@ -1598,7 +1593,6 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(2, displayNameOffset);
           fbb.addOffset(3, phonesOffset);
           fbb.addOffset(5, emailsOffset);
-          fbb.addOffset(6, fakeNameOffset);
           fbb.addOffset(7, avatarOffset);
           fbb.addOffset(8, avatarHiResOffset);
           fbb.finish(fbb.endTable());
@@ -1617,14 +1611,13 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGet(buffer, rootOffset, 8, ''),
               phones: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
                   .vTableGet(buffer, rootOffset, 10, []),
-              emails: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
-                  .vTableGet(buffer, rootOffset, 14, []),
-              fakeName: const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 16, ''),
+              emails:
+                  const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
+                      .vTableGet(buffer, rootOffset, 14, []),
               avatar: const fb.Uint8ListReader(lazy: false)
                   .vTableGetNullable(buffer, rootOffset, 18) as Uint8List?,
-              avatarHiRes:
-                  const fb.Uint8ListReader(lazy: false).vTableGetNullable(buffer, rootOffset, 20) as Uint8List?);
+              avatarHiRes: const fb.Uint8ListReader(lazy: false)
+                  .vTableGetNullable(buffer, rootOffset, 20) as Uint8List?);
 
           return object;
         })
@@ -2148,15 +2141,11 @@ class Contact_ {
   static final emails =
       QueryStringVectorProperty<Contact>(_entities[9].properties[4]);
 
-  /// see [Contact.fakeName]
-  static final fakeName =
-      QueryStringProperty<Contact>(_entities[9].properties[5]);
-
   /// see [Contact.avatar]
   static final avatar =
-      QueryByteVectorProperty<Contact>(_entities[9].properties[6]);
+      QueryByteVectorProperty<Contact>(_entities[9].properties[5]);
 
   /// see [Contact.avatarHiRes]
   static final avatarHiRes =
-      QueryByteVectorProperty<Contact>(_entities[9].properties[7]);
+      QueryByteVectorProperty<Contact>(_entities[9].properties[6]);
 }

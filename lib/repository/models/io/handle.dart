@@ -2,6 +2,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Condition;
 // (needed when generating objectbox model code)
@@ -19,6 +20,8 @@ class Handle {
   String? defaultEmail;
   String? defaultPhone;
   String? uncanonicalizedId;
+  @Transient()
+  final String fakeName = faker.person.name();
 
   final RxnString _color = RxnString();
   String? get color => _color.value;
