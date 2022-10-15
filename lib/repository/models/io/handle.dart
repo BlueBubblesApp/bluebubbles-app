@@ -41,10 +41,11 @@ class Handle {
   }
 
   factory Handle.fromMap(Map<String, dynamic> json) {
-    var data = Handle(
+    final data = Handle(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       address: json["address"],
+      formattedAddress: json["formattedAddress"],
       country: json.containsKey("country") ? json["country"] : null,
       handleColor: json.containsKey("color") ? json["color"] : null,
       defaultPhone: json['defaultPhone'],
@@ -172,6 +173,7 @@ class Handle {
         "ROWID": id,
         "originalROWID": originalROWID,
         "address": address,
+        "formattedAddress": formattedAddress,
         "country": country,
         "color": color,
         "defaultPhone": defaultPhone,
