@@ -15,6 +15,7 @@ import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
 import 'repository/models/io/attachment.dart';
 import 'repository/models/io/chat.dart';
+import 'repository/models/io/contact.dart';
 import 'repository/models/io/fcm_data.dart';
 import 'repository/models/io/handle.dart';
 import 'repository/models/io/message.dart';
@@ -718,6 +719,61 @@ final _entities = <ModelEntity>[
             flags: 0)
       ],
       relations: <ModelRelation>[],
+      backlinks: <ModelBacklink>[]),
+  ModelEntity(
+      id: const IdUid(17, 2547083341603323785),
+      name: 'Contact',
+      lastPropertyId: const IdUid(9, 4255445772578528269),
+      flags: 0,
+      properties: <ModelProperty>[
+        ModelProperty(
+            id: const IdUid(1, 755766469677376751),
+            name: 'dbId',
+            type: 6,
+            flags: 1),
+        ModelProperty(
+            id: const IdUid(2, 708918913606465689),
+            name: 'id',
+            type: 9,
+            flags: 2048,
+            indexId: const IdUid(12, 8665353868334070555)),
+        ModelProperty(
+            id: const IdUid(3, 3572501485957552445),
+            name: 'displayName',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(4, 4938259396546143140),
+            name: 'phones',
+            type: 30,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(5, 790519381961958997),
+            name: 'formattedPhones',
+            type: 30,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(6, 2909427687923431080),
+            name: 'emails',
+            type: 30,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(7, 5176315239890900498),
+            name: 'fakeName',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(8, 765867408744391809),
+            name: 'avatar',
+            type: 23,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(9, 4255445772578528269),
+            name: 'avatarHiRes',
+            type: 23,
+            flags: 0)
+      ],
+      relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[])
 ];
 
@@ -741,8 +797,8 @@ Future<Store> openStore(
 ModelDefinition getObjectBoxModel() {
   final model = ModelInfo(
       entities: _entities,
-      lastEntityId: const IdUid(16, 1815690088052698449),
-      lastIndexId: const IdUid(11, 8452066780532720626),
+      lastEntityId: const IdUid(17, 2547083341603323785),
+      lastIndexId: const IdUid(12, 8665353868334070555),
       lastRelationId: const IdUid(1, 7492985733214117623),
       lastSequenceId: const IdUid(0, 0),
       retiredEntityUids: const [
@@ -1497,6 +1553,69 @@ ModelDefinition getObjectBoxModel() {
                 .vTableGet(buffer, rootOffset, 10, '');
 
           return object;
+        }),
+    Contact: EntityDefinition<Contact>(
+        model: _entities[9],
+        toOneRelations: (Contact object) => [],
+        toManyRelations: (Contact object) => {},
+        getId: (Contact object) => object.dbId,
+        setId: (Contact object, int id) {
+          object.dbId = id;
+        },
+        objectToFB: (Contact object, fb.Builder fbb) {
+          final idOffset = fbb.writeString(object.id);
+          final displayNameOffset = fbb.writeString(object.displayName);
+          final phonesOffset = fbb.writeList(
+              object.phones.map(fbb.writeString).toList(growable: false));
+          final formattedPhonesOffset = fbb.writeList(object.formattedPhones
+              .map(fbb.writeString)
+              .toList(growable: false));
+          final emailsOffset = fbb.writeList(
+              object.emails.map(fbb.writeString).toList(growable: false));
+          final fakeNameOffset = fbb.writeString(object.fakeName);
+          final avatarOffset =
+              object.avatar == null ? null : fbb.writeListInt8(object.avatar!);
+          final avatarHiResOffset = object.avatarHiRes == null
+              ? null
+              : fbb.writeListInt8(object.avatarHiRes!);
+          fbb.startTable(10);
+          fbb.addInt64(0, object.dbId ?? 0);
+          fbb.addOffset(1, idOffset);
+          fbb.addOffset(2, displayNameOffset);
+          fbb.addOffset(3, phonesOffset);
+          fbb.addOffset(4, formattedPhonesOffset);
+          fbb.addOffset(5, emailsOffset);
+          fbb.addOffset(6, fakeNameOffset);
+          fbb.addOffset(7, avatarOffset);
+          fbb.addOffset(8, avatarHiResOffset);
+          fbb.finish(fbb.endTable());
+          return object.dbId ?? 0;
+        },
+        objectFromFB: (Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+
+          final object = Contact(
+              dbId: const fb.Int64Reader()
+                  .vTableGetNullable(buffer, rootOffset, 4),
+              id: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 6, ''),
+              displayName: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 8, ''),
+              phones: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
+                  .vTableGet(buffer, rootOffset, 10, []),
+              formattedPhones:
+                  const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
+                      .vTableGet(buffer, rootOffset, 12, []),
+              emails:
+                  const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
+                      .vTableGet(buffer, rootOffset, 14, []),
+              fakeName: const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 16, ''),
+              avatar: const fb.Uint8ListReader(lazy: false).vTableGetNullable(buffer, rootOffset, 18) as Uint8List?,
+              avatarHiRes: const fb.Uint8ListReader(lazy: false).vTableGetNullable(buffer, rootOffset, 20) as Uint8List?);
+
+          return object;
         })
   };
 
@@ -1988,4 +2107,41 @@ class ThemeStruct_ {
   /// see [ThemeStruct.dbThemeData]
   static final dbThemeData =
       QueryStringProperty<ThemeStruct>(_entities[8].properties[3]);
+}
+
+/// [Contact] entity fields to define ObjectBox queries.
+class Contact_ {
+  /// see [Contact.dbId]
+  static final dbId = QueryIntegerProperty<Contact>(_entities[9].properties[0]);
+
+  /// see [Contact.id]
+  static final id = QueryStringProperty<Contact>(_entities[9].properties[1]);
+
+  /// see [Contact.displayName]
+  static final displayName =
+      QueryStringProperty<Contact>(_entities[9].properties[2]);
+
+  /// see [Contact.phones]
+  static final phones =
+      QueryStringVectorProperty<Contact>(_entities[9].properties[3]);
+
+  /// see [Contact.formattedPhones]
+  static final formattedPhones =
+      QueryStringVectorProperty<Contact>(_entities[9].properties[4]);
+
+  /// see [Contact.emails]
+  static final emails =
+      QueryStringVectorProperty<Contact>(_entities[9].properties[5]);
+
+  /// see [Contact.fakeName]
+  static final fakeName =
+      QueryStringProperty<Contact>(_entities[9].properties[6]);
+
+  /// see [Contact.avatar]
+  static final avatar =
+      QueryByteVectorProperty<Contact>(_entities[9].properties[7]);
+
+  /// see [Contact.avatarHiRes]
+  static final avatarHiRes =
+      QueryByteVectorProperty<Contact>(_entities[9].properties[8]);
 }

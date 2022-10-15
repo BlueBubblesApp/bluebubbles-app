@@ -79,6 +79,7 @@ late final Box<ThemeStruct> themeBox;
 late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
 late final Database db;
+late final bool isUiThread;
 
 String? _recentIntent;
 String? get recentIntent => _recentIntent;
@@ -119,6 +120,7 @@ Future<Null> initApp() async {
 
   /* ----- RANDOM STUFF INITIALIZATION ----- */
   HttpOverrides.global = BadCertOverride();
+  isUiThread = true;
   dynamic exception;
   StackTrace? stacktrace;
 

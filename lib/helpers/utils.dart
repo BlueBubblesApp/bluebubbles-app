@@ -873,9 +873,9 @@ Future<void> paintAvatar(
   }
 
   Contact? contact = ContactManager().getContact(handle?.address);
-  if (contact?.hasAvatar ?? false) {
-    Uint8List? contactAvatar =
-        await circularize(contact!.avatarHiRes.value ?? contact.avatar.value!, size: size.toInt());
+  final avatar = contact?.getAvatar(prioritizeHiRes: true);
+  if (avatar != null) {
+    Uint8List? contactAvatar = await circularize(avatar, size: size.toInt());
     if (contactAvatar != null) {
       canvas.drawImage(await loadImage(contactAvatar), offset, Paint());
       return;

@@ -262,9 +262,9 @@ class ChatBloc {
         chat.participants.length == 1 ? ContactManager().getContact(chat.participants.first.address) : null;
     try {
       if (contact != null) {
-        if (!contact.hasAvatar) {
+        /*if (!contact.hasAvatar) {
           await ContactManager().loadContactAvatar(contact);
-        }
+        }*/
 
         icon = contact.getAvatar(prioritizeHiRes: true);
       }

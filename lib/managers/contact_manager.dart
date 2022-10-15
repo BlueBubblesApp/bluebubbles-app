@@ -10,7 +10,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
-import 'package:fast_contacts/fast_contacts.dart' hide Contact;
+import 'package:fast_contacts/fast_contacts.dart' hide Contact, StructuredName;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -176,8 +176,15 @@ class ContactManager {
                 displayName: e.displayName,
                 emails: e.emails,
                 phones: e.phones,
-                structuredName: e.structuredName,
+                structuredName: e.structuredName == null ? null : StructuredName(
+                  namePrefix: e.structuredName!.namePrefix,
+                  givenName: e.structuredName!.givenName,
+                  middleName: e.structuredName!.middleName,
+                  familyName: e.structuredName!.familyName,
+                  nameSuffix: e.structuredName!.nameSuffix,
+                ),
                 id: e.id,
+                fakeName: faker.person.name(),
               ))
           .toList();
 
@@ -256,6 +263,7 @@ class ContactManager {
             displayName: displayName,
             emails: emails,
             phones: phones,
+            fakeName: faker.person.name(),
           ));
         }
       } else {
@@ -304,9 +312,9 @@ class ContactManager {
                 }
               }
 
-              if (match && !contact.hasAvatar) {
-                contact.avatar.value = base64Decode(map['avatar'].toString());
-                contact.avatarHiRes.value = base64Decode(map['avatar'].toString());
+              if (match && contact.getAvatar() == null) {
+                contact.avatar = base64Decode(map['avatar'].toString());
+                contact.avatarHiRes = base64Decode(map['avatar'].toString());
               }
             }
           }
@@ -324,13 +332,6 @@ class ContactManager {
   void loadFakeInfo() {
     for (Contact c in contacts) {
       c.fakeName ??= faker.person.name();
-
-      if (c.phones.isNotEmpty || c.emails.isEmpty) {
-        c.fakeAddress ??=
-            faker.phoneNumber.random.fromPattern(["+###########", "+# ###-###-####", "+# (###) ###-####"]);
-      } else if (c.emails.isNotEmpty) {
-        c.fakeAddress ??= faker.internet.email();
-      }
     }
   }
 
@@ -373,10 +374,10 @@ class ContactManager {
   /// Fetch a contact's avatar, first trying the full size image, then the thumbnail if unavailable
   Future<void> loadContactAvatar(Contact contact) async {
     if (kIsDesktop || kIsWeb) return;
-    contact.avatar.value ??= await FastContacts.getContactImage(contact.id);
-    if (contact.avatarHiRes.value == null) {
+    contact.avatar ??= await FastContacts.getContactImage(contact.id);
+    if (contact.avatarHiRes == null) {
       FastContacts.getContactImage(contact.id, size: ContactImageSize.fullSize).then((value) {
-        contact.avatarHiRes.value = value;
+        contact.avatarHiRes = value;
       }).onError((error, stackTrace) => null);
     }
   }

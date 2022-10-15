@@ -43,8 +43,8 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
   void initState() {
     super.initState();
     participants.sort((a, b) {
-      bool avatarA = ContactManager().getContact(a.address)?.avatar.value?.isNotEmpty ?? false;
-      bool avatarB = ContactManager().getContact(b.address)?.avatar.value?.isNotEmpty ?? false;
+      bool avatarA = ContactManager().getContact(a.address)?.avatar?.isNotEmpty ?? false;
+      bool avatarB = ContactManager().getContact(b.address)?.avatar?.isNotEmpty ?? false;
       if (!avatarA && avatarB) return 1;
       if (avatarA && !avatarB) return -1;
       return 0;

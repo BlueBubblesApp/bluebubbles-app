@@ -382,7 +382,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     (chat!.isGroup() || (!title.isPhoneNumber && !title.isEmail)))
                   Text(
                     generateTitle
-                        ? ContactManager().getContact(chat!.handles.first.address)?.fakeAddress ?? ""
+                        ? ""
                         : chat!.isGroup()
                             ? "${chat!.participants.length} recipients"
                             : chat!.participants[0].address,

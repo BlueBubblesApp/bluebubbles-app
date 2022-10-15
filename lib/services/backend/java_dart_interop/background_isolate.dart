@@ -24,6 +24,7 @@ class BackgroundIsolate {
 backgroundIsolateEntrypoint() async {
   // can't use logger here
   debugPrint("(ISOLATE) Starting up...");
+  isUiThread = false;
   MethodChannel _backgroundChannel = MethodChannel("com.bluebubbles.messaging");
   WidgetsFlutterBinding.ensureInitialized();
   await fs.init();

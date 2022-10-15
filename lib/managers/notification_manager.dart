@@ -163,15 +163,15 @@ class NotificationManager {
     // Try to load in an avatar for the person
     try {
       // If there is a contact specified, we can use it's avatar
-      if (contact != null && (contact.avatar.value?.isNotEmpty ?? false)) {
-        if (contact.avatar.value!.isNotEmpty) contactIcon = contact.avatar.value!;
+      if (contact != null && (contact.avatar?.isNotEmpty ?? false)) {
+        if (contact.avatar!.isNotEmpty) contactIcon = contact.avatar!;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         if (contact != null) {
           await ContactManager().loadContactAvatar(contact);
         }
         // If [defaultAvatar] is not loaded, load it from assets
-        if ((contact?.avatar.value == null || contact!.avatar.value!.isEmpty) && defaultAvatar == null) {
+        if ((contact?.avatar == null || contact!.avatar!.isEmpty) && defaultAvatar == null) {
           ByteData file = await loadAsset("assets/images/person64.png");
           defaultAvatar = file.buffer.asUint8List();
         }

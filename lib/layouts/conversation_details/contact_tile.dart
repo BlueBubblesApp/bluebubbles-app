@@ -91,10 +91,7 @@ class ContactTile extends StatelessWidget {
                               snapshot.data ?? "Unknown contact details", Theme.of(context).textTheme.bodyLarge!)));
                 }),
         subtitle: (contact == null || hideInfo || generateName)
-            ? Text(
-                generateName ? ContactManager().getContact(handle.address)?.fakeAddress ?? "" : "",
-                style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline),
-              )
+            ? null
             : FutureBuilder<String>(
                 future: formatPhoneNumber(handle),
                 builder: (context, snapshot) {

@@ -695,10 +695,66 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "17:2547083341603323785",
+      "lastPropertyId": "9:4255445772578528269",
+      "name": "Contact",
+      "properties": [
+        {
+          "id": "1:755766469677376751",
+          "name": "dbId",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:708918913606465689",
+          "name": "id",
+          "type": 9,
+          "flags": 2048,
+          "indexId": "12:8665353868334070555"
+        },
+        {
+          "id": "3:3572501485957552445",
+          "name": "displayName",
+          "type": 9
+        },
+        {
+          "id": "4:4938259396546143140",
+          "name": "phones",
+          "type": 30
+        },
+        {
+          "id": "5:790519381961958997",
+          "name": "formattedPhones",
+          "type": 30
+        },
+        {
+          "id": "6:2909427687923431080",
+          "name": "emails",
+          "type": 30
+        },
+        {
+          "id": "7:5176315239890900498",
+          "name": "fakeName",
+          "type": 9
+        },
+        {
+          "id": "8:765867408744391809",
+          "name": "avatar",
+          "type": 23
+        },
+        {
+          "id": "9:4255445772578528269",
+          "name": "avatarHiRes",
+          "type": 23
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "16:1815690088052698449",
-  "lastIndexId": "11:8452066780532720626",
+  "lastEntityId": "17:2547083341603323785",
+  "lastIndexId": "12:8665353868334070555",
   "lastRelationId": "1:7492985733214117623",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

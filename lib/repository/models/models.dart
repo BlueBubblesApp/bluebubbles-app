@@ -1,15 +1,11 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:fast_contacts/fast_contacts.dart';
-import 'package:get/get.dart';
 import 'package:image_size_getter/image_size_getter.dart';
 
 export 'package:bluebubbles/repository/models/io/attachment.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/attachment.dart';
 export 'package:bluebubbles/repository/models/io/chat.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/chat.dart';
+export 'package:bluebubbles/repository/models/io/contact.dart'
+  if (dart.library.html) 'package:bluebubbles/repository/models/html/contact.dart';
 export 'package:bluebubbles/repository/models/io/fcm_data.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/fcm_data.dart';
 export 'package:bluebubbles/repository/models/io/handle.dart'
@@ -35,78 +31,7 @@ export 'package:bluebubbles/repository/models/io/giphy.dart'
 export 'package:bluebubbles/repository/models/platform_file.dart';
 export 'package:bluebubbles/repository/models/settings.dart';
 export 'package:bluebubbles/repository/models/attributed_body.dart';
-
-class Contact {
-  Contact({
-    required this.id,
-    required this.displayName,
-    this.phones = const [],
-    this.emails = const [],
-    this.structuredName,
-    this.fakeName,
-    this.fakeAddress,
-    Uint8List? avatarBytes,
-    Uint8List? avatarHiResBytes,
-  }) {
-    avatar.value = avatarBytes;
-    avatarHiRes.value = avatarHiResBytes;
-  }
-
-  String id;
-  String displayName;
-  List<String> phones;
-  List<String> emails;
-  StructuredName? structuredName;
-  String? fakeName;
-  String? fakeAddress;
-  final Rxn<Uint8List> avatar = Rxn<Uint8List>();
-  final Rxn<Uint8List> avatarHiRes = Rxn<Uint8List>();
-
-  bool get hasAvatar {
-    bool hasNormal = avatar.value != null && avatar.value!.isNotEmpty;
-    bool hasHiRes = avatarHiRes.value != null && avatarHiRes.value!.isNotEmpty;
-    return hasNormal || hasHiRes;
-  }
-
-  Uint8List? getAvatar({prioritizeHiRes = false}) {
-    if (!hasAvatar) return null;
-
-    if (prioritizeHiRes) {
-      return avatarHiRes.value ?? avatar.value;
-    } else {
-      return avatar.value ?? avatarHiRes.value;
-    }
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'displayName': displayName,
-      'phoneNumbers': getUniqueNumbers(phones),
-      'emails': getUniqueEmails(emails),
-      'fakeName': fakeName,
-      'fakeAddress': fakeAddress,
-      'avatar': avatarHiRes.value != null || avatar.value != null ? base64Encode(avatarHiRes.value ?? avatar.value!) : null,
-    };
-  }
-
-  factory Contact.fromMap(Map<String, dynamic> map) {
-    // backwards compatibility with old contacts plugin
-    if (map['phones'].isNotEmpty && map['phones'][0] is Map<String, dynamic>) {
-      map['phones'] = map['phones'].map((e) => e['value'] ?? "").toList();
-    }
-    if (map['emails'].isNotEmpty && map['emails'][0] is Map<String, dynamic>) {
-      map['emails'] = map['emails'].map((e) => e['value'] ?? "").toList();
-    }
-    return Contact(
-        id: (map['id'] ?? map['identifier']) as String,
-        displayName: map['displayName'] as String,
-        phones: map['phones'].cast<String>(),
-        emails: map['emails'].cast<String>(),
-        fakeName: map['fakeName'],
-        fakeAddress: map['fakeAddress']);
-  }
-}
+export 'package:bluebubbles/repository/models/structured_name.dart';
 
 class AsyncInput extends AsyncImageInput {
   AsyncInput(this._input);
