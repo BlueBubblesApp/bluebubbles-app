@@ -1,6 +1,7 @@
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
@@ -63,6 +64,17 @@ class Handle {
 
   static int count() {
     return handleBox.count();
+  }
+
+  String getAddress() {
+    if (settings.settings.redactedMode.value) {
+      if (settings.settings.generateFakeContactNames.value) {
+        return fakeName;
+      } else if (settings.settings.hideContactInfo.value) {
+        return "";
+      }
+    }
+    return contact.target?.displayName ?? formattedAddress ?? address;
   }
 
   /// Save a single handle - prefer [bulkSave] for multiple handles rather
