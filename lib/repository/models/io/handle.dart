@@ -1,5 +1,6 @@
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Condition;
@@ -13,6 +14,7 @@ class Handle {
   int? originalROWID;
   @Unique()
   String address;
+  String? formattedAddress;
   String? country;
   String? defaultEmail;
   String? defaultPhone;
@@ -22,10 +24,13 @@ class Handle {
   String? get color => _color.value;
   set color(String? val) => _color.value = val;
 
+  final contact = ToOne<Contact>();
+
   Handle({
     this.id,
     this.originalROWID,
     this.address = "",
+    this.formattedAddress,
     this.country,
     String? handleColor,
     this.defaultEmail,

@@ -159,6 +159,7 @@ class DBProvider {
     if (kIsWeb) return;
     attachmentBox.removeAll();
     chatBox.removeAll();
+    contactBox.removeAll();
     fcmDataBox.removeAll();
     handleBox.removeAll();
     messageBox.removeAll();
@@ -180,6 +181,7 @@ class DBProvider {
       await initStore.call();
       attachmentBox.removeAll();
       chatBox.removeAll();
+      contactBox.removeAll();
       fcmDataBox.removeAll();
       handleBox.removeAll();
       messageBox.removeAll();

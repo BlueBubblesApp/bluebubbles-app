@@ -293,7 +293,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(7, 1716592500251888002),
       name: 'Handle',
-      lastPropertyId: const IdUid(8, 9192015144235467286),
+      lastPropertyId: const IdUid(10, 4403726864971073396),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -336,7 +336,19 @@ final _entities = <ModelEntity>[
             id: const IdUid(8, 9192015144235467286),
             name: 'defaultEmail',
             type: 9,
-            flags: 0)
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(9, 7485620678567449081),
+            name: 'formattedAddress',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(10, 4403726864971073396),
+            name: 'contactId',
+            type: 11,
+            flags: 520,
+            indexId: const IdUid(13, 8277667704777683261),
+            relationTarget: 'Contact')
       ],
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
@@ -748,11 +760,6 @@ final _entities = <ModelEntity>[
             type: 30,
             flags: 0),
         ModelProperty(
-            id: const IdUid(5, 790519381961958997),
-            name: 'formattedPhones',
-            type: 30,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(6, 2909427687923431080),
             name: 'emails',
             type: 30,
@@ -798,7 +805,7 @@ ModelDefinition getObjectBoxModel() {
   final model = ModelInfo(
       entities: _entities,
       lastEntityId: const IdUid(17, 2547083341603323785),
-      lastIndexId: const IdUid(12, 8665353868334070555),
+      lastIndexId: const IdUid(13, 8277667704777683261),
       lastRelationId: const IdUid(1, 7492985733214117623),
       lastSequenceId: const IdUid(0, 0),
       retiredEntityUids: const [
@@ -872,7 +879,8 @@ ModelDefinition getObjectBoxModel() {
         5203631054946486128,
         2649653758394363860,
         1439376349402210172,
-        8308083337629235136
+        8308083337629235136,
+        790519381961958997
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -1140,7 +1148,7 @@ ModelDefinition getObjectBoxModel() {
         }),
     Handle: EntityDefinition<Handle>(
         model: _entities[3],
-        toOneRelations: (Handle object) => [],
+        toOneRelations: (Handle object) => [object.contact],
         toManyRelations: (Handle object) => {},
         getId: (Handle object) => object.id,
         setId: (Handle object, int id) {
@@ -1161,7 +1169,10 @@ ModelDefinition getObjectBoxModel() {
           final defaultEmailOffset = object.defaultEmail == null
               ? null
               : fbb.writeString(object.defaultEmail!);
-          fbb.startTable(9);
+          final formattedAddressOffset = object.formattedAddress == null
+              ? null
+              : fbb.writeString(object.formattedAddress!);
+          fbb.startTable(11);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, addressOffset);
@@ -1170,6 +1181,8 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(5, defaultPhoneOffset);
           fbb.addOffset(6, uncanonicalizedIdOffset);
           fbb.addOffset(7, defaultEmailOffset);
+          fbb.addOffset(8, formattedAddressOffset);
+          fbb.addInt64(9, object.contact.targetId);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1184,6 +1197,8 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 6),
               address: const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 8, ''),
+              formattedAddress: const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 20),
               country: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 10),
               defaultEmail: const fb.StringReader(asciiOptimization: true)
@@ -1192,9 +1207,11 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 14),
               uncanonicalizedId: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 16))
-            ..color = const fb.StringReader(asciiOptimization: true)
-                .vTableGetNullable(buffer, rootOffset, 12);
-
+            ..color =
+                const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 12);
+          object.contact.targetId =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 22, 0);
+          object.contact.attach(store);
           return object;
         }),
     ThemeEntry: EntityDefinition<ThemeEntry>(
@@ -1567,9 +1584,6 @@ ModelDefinition getObjectBoxModel() {
           final displayNameOffset = fbb.writeString(object.displayName);
           final phonesOffset = fbb.writeList(
               object.phones.map(fbb.writeString).toList(growable: false));
-          final formattedPhonesOffset = fbb.writeList(object.formattedPhones
-              .map(fbb.writeString)
-              .toList(growable: false));
           final emailsOffset = fbb.writeList(
               object.emails.map(fbb.writeString).toList(growable: false));
           final fakeNameOffset = fbb.writeString(object.fakeName);
@@ -1583,7 +1597,6 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(1, idOffset);
           fbb.addOffset(2, displayNameOffset);
           fbb.addOffset(3, phonesOffset);
-          fbb.addOffset(4, formattedPhonesOffset);
           fbb.addOffset(5, emailsOffset);
           fbb.addOffset(6, fakeNameOffset);
           fbb.addOffset(7, avatarOffset);
@@ -1604,16 +1617,14 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGet(buffer, rootOffset, 8, ''),
               phones: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
                   .vTableGet(buffer, rootOffset, 10, []),
-              formattedPhones:
-                  const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
-                      .vTableGet(buffer, rootOffset, 12, []),
-              emails:
-                  const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
-                      .vTableGet(buffer, rootOffset, 14, []),
+              emails: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
+                  .vTableGet(buffer, rootOffset, 14, []),
               fakeName: const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 16, ''),
-              avatar: const fb.Uint8ListReader(lazy: false).vTableGetNullable(buffer, rootOffset, 18) as Uint8List?,
-              avatarHiRes: const fb.Uint8ListReader(lazy: false).vTableGetNullable(buffer, rootOffset, 20) as Uint8List?);
+              avatar: const fb.Uint8ListReader(lazy: false)
+                  .vTableGetNullable(buffer, rootOffset, 18) as Uint8List?,
+              avatarHiRes:
+                  const fb.Uint8ListReader(lazy: false).vTableGetNullable(buffer, rootOffset, 20) as Uint8List?);
 
           return object;
         })
@@ -1839,6 +1850,14 @@ class Handle_ {
   /// see [Handle.defaultEmail]
   static final defaultEmail =
       QueryStringProperty<Handle>(_entities[3].properties[7]);
+
+  /// see [Handle.formattedAddress]
+  static final formattedAddress =
+      QueryStringProperty<Handle>(_entities[3].properties[8]);
+
+  /// see [Handle.contact]
+  static final contact =
+      QueryRelationToOne<Handle, Contact>(_entities[3].properties[9]);
 }
 
 /// [ThemeEntry] entity fields to define ObjectBox queries.
@@ -2125,23 +2144,19 @@ class Contact_ {
   static final phones =
       QueryStringVectorProperty<Contact>(_entities[9].properties[3]);
 
-  /// see [Contact.formattedPhones]
-  static final formattedPhones =
-      QueryStringVectorProperty<Contact>(_entities[9].properties[4]);
-
   /// see [Contact.emails]
   static final emails =
-      QueryStringVectorProperty<Contact>(_entities[9].properties[5]);
+      QueryStringVectorProperty<Contact>(_entities[9].properties[4]);
 
   /// see [Contact.fakeName]
   static final fakeName =
-      QueryStringProperty<Contact>(_entities[9].properties[6]);
+      QueryStringProperty<Contact>(_entities[9].properties[5]);
 
   /// see [Contact.avatar]
   static final avatar =
-      QueryByteVectorProperty<Contact>(_entities[9].properties[7]);
+      QueryByteVectorProperty<Contact>(_entities[9].properties[6]);
 
   /// see [Contact.avatarHiRes]
   static final avatarHiRes =
-      QueryByteVectorProperty<Contact>(_entities[9].properties[8]);
+      QueryByteVectorProperty<Contact>(_entities[9].properties[7]);
 }

@@ -71,6 +71,7 @@ late final FirebaseApp app;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
+late final Box<Contact> contactBox;
 late final Box<FCMData> fcmDataBox;
 late final Box<Handle> handleBox;
 late final Box<Message> messageBox;
@@ -186,6 +187,7 @@ Future<Null> initApp() async {
         }
         attachmentBox = store.box<Attachment>();
         chatBox = store.box<Chat>();
+        contactBox = store.box<Contact>();
         fcmDataBox = store.box<FCMData>();
         handleBox = store.box<Handle>();
         messageBox = store.box<Message>();

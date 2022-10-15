@@ -50,6 +50,7 @@ backgroundIsolateEntrypoint() async {
     debugPrint("Opening boxes");
     attachmentBox = store.box<Attachment>();
     chatBox = store.box<Chat>();
+    contactBox = store.box<Contact>();
     fcmDataBox = store.box<FCMData>();
     handleBox = store.box<Handle>();
     messageBox = store.box<Message>();

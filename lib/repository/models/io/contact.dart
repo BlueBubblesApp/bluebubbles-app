@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -15,17 +16,12 @@ class Contact {
     required this.id,
     required this.displayName,
     this.phones = const [],
-    this.formattedPhones = const [],
     this.emails = const [],
     this.structuredName,
     required this.fakeName,
     this.avatar,
     this.avatarHiRes,
-  }) {
-    if (formattedPhones.isEmpty) {
-      formattedPhones = List<String>.from(phones);
-    }
-  }
+  });
 
   @Id()
   int? dbId;
@@ -33,7 +29,6 @@ class Contact {
   String id;
   String displayName;
   List<String> phones;
-  List<String> formattedPhones;
   List<String> emails;
   StructuredName? structuredName;
   String fakeName;
@@ -49,6 +44,10 @@ class Contact {
     } else {
       return avatar ?? avatarHiRes;
     }
+  }
+
+  static List<Contact> getContacts() {
+    return contactBox.getAll();
   }
 
   Map<String, dynamic> toMap() {
