@@ -86,6 +86,34 @@ class ContactsService extends GetxService {
     return handle;
   }
 
+  Contact? matchHandleToContact(Handle h) {
+    Contact? contact;
+    final numericAddress = h.address.numericOnly();
+    for (Contact c in contacts) {
+      final numericPhones = c.phones.map((e) => e.numericOnly()).toList();
+      if (h.address.contains("@") && c.emails.contains(h.address)) {
+        contact = c;
+        break;
+      } else {
+        // if address is direct match
+        if (c.phones.contains(numericAddress)) {
+          contact = c;
+          break;
+        }
+        // try to match last 10 - 7 digits
+        for (String p in numericPhones) {
+          final matchLengths = [10, 9, 8, 7];
+          if (matchLengths.contains(p.length) && numericAddress.endsWith(p)) {
+            contact = c;
+            break;
+          }
+        }
+        if (contact != null) break;
+      }
+    }
+    return contact;
+  }
+
   Future<List<Contact>> fetchNetworkContacts({Function(String)? logger}) async {
     final networkContacts = <Contact>[];
     // refresh UI on web without waiting for avatars
@@ -249,6 +277,12 @@ Future<List<Contact>> refreshContactsIsolate(String dir) async {
     final store = Store.attach(getObjectBoxModel(), dir);
     final handleBox = store.box<Handle>();
     handles.addAll(handleBox.getAll());
+  }
+  // get formatted addresses
+  for (Handle h in handles) {
+    if (!h.address.contains("@") && h.formattedAddress == null) {
+      h.formattedAddress = await formatPhoneNumber(h.address);
+    }
   }
   // match handles to contacts and save match
   final handlesToSearch = List<Handle>.from(handles);
