@@ -266,7 +266,7 @@ class ChatBloc {
           await ContactManager().loadContactAvatar(contact);
         }*/
 
-        icon = contact.getAvatar(prioritizeHiRes: true);
+        icon = contact.avatar;
       }
 
       if (icon == null) {

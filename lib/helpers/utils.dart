@@ -873,7 +873,7 @@ Future<void> paintAvatar(
   }
 
   Contact? contact = ContactManager().getContact(handle?.address);
-  final avatar = contact?.getAvatar(prioritizeHiRes: true);
+  final avatar = contact?.avatar;
   if (avatar != null) {
     Uint8List? contactAvatar = await circularize(avatar, size: size.toInt());
     if (contactAvatar != null) {

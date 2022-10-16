@@ -293,7 +293,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(7, 1716592500251888002),
       name: 'Handle',
-      lastPropertyId: const IdUid(10, 4403726864971073396),
+      lastPropertyId: const IdUid(11, 6784884866959942259),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -343,11 +343,11 @@ final _entities = <ModelEntity>[
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(10, 4403726864971073396),
-            name: 'contactId',
+            id: const IdUid(11, 6784884866959942259),
+            name: 'contactRelationId',
             type: 11,
             flags: 520,
-            indexId: const IdUid(13, 8277667704777683261),
+            indexId: const IdUid(14, 1213475652575340910),
             relationTarget: 'Contact')
       ],
       relations: <ModelRelation>[],
@@ -768,11 +768,6 @@ final _entities = <ModelEntity>[
             id: const IdUid(8, 765867408744391809),
             name: 'avatar',
             type: 23,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(9, 4255445772578528269),
-            name: 'avatarHiRes',
-            type: 23,
             flags: 0)
       ],
       relations: <ModelRelation>[],
@@ -800,7 +795,7 @@ ModelDefinition getObjectBoxModel() {
   final model = ModelInfo(
       entities: _entities,
       lastEntityId: const IdUid(17, 2547083341603323785),
-      lastIndexId: const IdUid(13, 8277667704777683261),
+      lastIndexId: const IdUid(14, 1213475652575340910),
       lastRelationId: const IdUid(1, 7492985733214117623),
       lastSequenceId: const IdUid(0, 0),
       retiredEntityUids: const [
@@ -812,7 +807,7 @@ ModelDefinition getObjectBoxModel() {
         1700370751061310153,
         3483028772414651169
       ],
-      retiredIndexUids: const [],
+      retiredIndexUids: const [8277667704777683261],
       retiredPropertyUids: const [
         8075530627827069587,
         614139107975861462,
@@ -876,7 +871,9 @@ ModelDefinition getObjectBoxModel() {
         1439376349402210172,
         8308083337629235136,
         790519381961958997,
-        5176315239890900498
+        5176315239890900498,
+        4255445772578528269,
+        4403726864971073396
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -1144,7 +1141,7 @@ ModelDefinition getObjectBoxModel() {
         }),
     Handle: EntityDefinition<Handle>(
         model: _entities[3],
-        toOneRelations: (Handle object) => [object.contact],
+        toOneRelations: (Handle object) => [object.contactRelation],
         toManyRelations: (Handle object) => {},
         getId: (Handle object) => object.id,
         setId: (Handle object, int id) {
@@ -1168,7 +1165,7 @@ ModelDefinition getObjectBoxModel() {
           final formattedAddressOffset = object.formattedAddress == null
               ? null
               : fbb.writeString(object.formattedAddress!);
-          fbb.startTable(11);
+          fbb.startTable(12);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, addressOffset);
@@ -1178,7 +1175,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(6, uncanonicalizedIdOffset);
           fbb.addOffset(7, defaultEmailOffset);
           fbb.addOffset(8, formattedAddressOffset);
-          fbb.addInt64(9, object.contact.targetId);
+          fbb.addInt64(10, object.contactRelation.targetId);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1205,9 +1202,9 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 16))
             ..color =
                 const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 12);
-          object.contact.targetId =
-              const fb.Int64Reader().vTableGet(buffer, rootOffset, 22, 0);
-          object.contact.attach(store);
+          object.contactRelation.targetId =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 24, 0);
+          object.contactRelation.attach(store);
           return object;
         }),
     ThemeEntry: EntityDefinition<ThemeEntry>(
@@ -1584,9 +1581,6 @@ ModelDefinition getObjectBoxModel() {
               object.emails.map(fbb.writeString).toList(growable: false));
           final avatarOffset =
               object.avatar == null ? null : fbb.writeListInt8(object.avatar!);
-          final avatarHiResOffset = object.avatarHiRes == null
-              ? null
-              : fbb.writeListInt8(object.avatarHiRes!);
           fbb.startTable(10);
           fbb.addInt64(0, object.dbId ?? 0);
           fbb.addOffset(1, idOffset);
@@ -1594,7 +1588,6 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(3, phonesOffset);
           fbb.addOffset(5, emailsOffset);
           fbb.addOffset(7, avatarOffset);
-          fbb.addOffset(8, avatarHiResOffset);
           fbb.finish(fbb.endTable());
           return object.dbId ?? 0;
         },
@@ -1609,15 +1602,15 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGet(buffer, rootOffset, 6, ''),
               displayName: const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 8, ''),
-              phones: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
+              phones: const fb.ListReader<String>(
+                      fb.StringReader(asciiOptimization: true),
+                      lazy: false)
                   .vTableGet(buffer, rootOffset, 10, []),
               emails:
                   const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false)
                       .vTableGet(buffer, rootOffset, 14, []),
               avatar: const fb.Uint8ListReader(lazy: false)
-                  .vTableGetNullable(buffer, rootOffset, 18) as Uint8List?,
-              avatarHiRes: const fb.Uint8ListReader(lazy: false)
-                  .vTableGetNullable(buffer, rootOffset, 20) as Uint8List?);
+                  .vTableGetNullable(buffer, rootOffset, 18) as Uint8List?);
 
           return object;
         })
@@ -1848,8 +1841,8 @@ class Handle_ {
   static final formattedAddress =
       QueryStringProperty<Handle>(_entities[3].properties[8]);
 
-  /// see [Handle.contact]
-  static final contact =
+  /// see [Handle.contactRelation]
+  static final contactRelation =
       QueryRelationToOne<Handle, Contact>(_entities[3].properties[9]);
 }
 
@@ -2144,8 +2137,4 @@ class Contact_ {
   /// see [Contact.avatar]
   static final avatar =
       QueryByteVectorProperty<Contact>(_entities[9].properties[5]);
-
-  /// see [Contact.avatarHiRes]
-  static final avatarHiRes =
-      QueryByteVectorProperty<Contact>(_entities[9].properties[6]);
 }

@@ -5,6 +5,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flutter/foundation.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
@@ -19,7 +20,6 @@ class Contact {
     this.emails = const [],
     this.structuredName,
     this.avatar,
-    this.avatarHiRes,
   });
 
   @Id()
@@ -31,21 +31,44 @@ class Contact {
   List<String> emails;
   StructuredName? structuredName;
   Uint8List? avatar;
-  Uint8List? avatarHiRes;
   
   Map<String, String>? get dbStructuredName => structuredName?.toMap();
   set dbStructuredName(Map<String, String>? map) => StructuredName.fromMap(map);
 
-  Uint8List? getAvatar({prioritizeHiRes = false}) {
-    if (prioritizeHiRes) {
-      return avatarHiRes ?? avatar;
-    } else {
-      return avatar ?? avatarHiRes;
-    }
-  }
-
   static List<Contact> getContacts() {
     return contactBox.getAll();
+  }
+
+  Contact save() {
+    if (kIsWeb) return this;
+    store.runInTransaction(TxMode.write, () {
+      Contact? existing = Contact.findOne(id: id);
+      if (existing != null) {
+        dbId = existing.dbId;
+      }
+      try {
+        dbId = contactBox.put(this);
+      } on UniqueViolationException catch (_) {}
+    });
+    return this;
+  }
+
+  static Contact? findOne({String? id, String? address}) {
+    if (kIsWeb) return null;
+    if (id != null) {
+      final query = contactBox.query(Contact_.id.equals(id)).build();
+      query.limit = 1;
+      final result = query.findFirst();
+      query.close();
+      return result;
+    } else if (address != null) {
+      final query = contactBox.query(Contact_.phones.contains(address) | Contact_.emails.contains(address)).build();
+      query.limit = 1;
+      final result = query.findFirst();
+      query.close();
+      return result;
+    }
+    return null;
   }
 
   Map<String, dynamic> toMap() {
@@ -54,7 +77,21 @@ class Contact {
       'displayName': displayName,
       'phoneNumbers': getUniqueNumbers(phones),
       'emails': getUniqueEmails(emails),
-      'avatar': avatarHiRes != null || avatar != null ? base64Encode(avatarHiRes ?? avatar!) : null,
+      'avatar': avatar == null ? null : base64Encode(avatar!),
     };
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Contact &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          displayName == other.displayName &&
+          phones == other.phones &&
+          emails == other.emails &&
+          avatar?.length == other.avatar?.length;
+
+  @override
+  int get hashCode => id.hashCode;
 }

@@ -28,7 +28,11 @@ class Handle {
   String? get color => _color.value;
   set color(String? val) => _color.value = val;
 
-  final contact = ToOne<Contact>();
+  final contactRelation = ToOne<Contact>();
+  @Transient()
+  Contact? webContact;
+
+  Contact? get contact => kIsWeb ? webContact : contactRelation.target;
 
   Handle({
     this.id,
@@ -74,7 +78,7 @@ class Handle {
         return "";
       }
     }
-    return contact.target?.displayName ?? formattedAddress ?? address;
+    return contact?.displayName ?? formattedAddress ?? address;
   }
 
   /// Save a single handle - prefer [bulkSave] for multiple handles rather

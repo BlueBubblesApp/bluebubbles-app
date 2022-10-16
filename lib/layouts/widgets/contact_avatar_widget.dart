@@ -189,7 +189,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
             // improper use of GetX
             // ignore: unused_local_variable
             final placeholderVar = null.obs.value;
-            final avatar = contact?.getAvatar(prioritizeHiRes: widget.preferHighResAvatar);
+            final avatar = contact?.avatar;
 
             if (isNullOrEmpty(avatar)!) {
               String? initials = ContactManager().getContactInitials(widget.handle);

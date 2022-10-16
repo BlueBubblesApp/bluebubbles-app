@@ -310,9 +310,8 @@ class ContactManager {
                 }
               }
 
-              if (match && contact.getAvatar() == null) {
+              if (match && contact.avatar == null) {
                 contact.avatar = base64Decode(map['avatar'].toString());
-                contact.avatarHiRes = base64Decode(map['avatar'].toString());
               }
             }
           }
@@ -373,11 +372,6 @@ class ContactManager {
   Future<void> loadContactAvatar(Contact contact) async {
     if (kIsDesktop || kIsWeb) return;
     contact.avatar ??= await FastContacts.getContactImage(contact.id);
-    if (contact.avatarHiRes == null) {
-      FastContacts.getContactImage(contact.id, size: ContactImageSize.fullSize).then((value) {
-        contact.avatarHiRes = value;
-      }).onError((error, stackTrace) => null);
-    }
   }
 
   String getContactTitle(Handle? handle) {
