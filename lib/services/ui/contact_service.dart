@@ -34,7 +34,7 @@ class ContactsService extends GetxService {
 
   Future<bool> canAccessContacts() async {
     if (kIsWeb || kIsDesktop) {
-      int versionCode = (await settings.getServerDetails()).item4;
+      int versionCode = (await ss.getServerDetails()).item4;
       return versionCode >= 42;
     } else {
       return (await Permission.contacts.status).isGranted;

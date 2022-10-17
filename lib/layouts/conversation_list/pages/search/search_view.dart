@@ -170,7 +170,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(
-                    settings.settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info_outline,
+                    ss.settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info_outline,
                     size: 20,
                     color: context.theme.colorScheme.primary,
                   ),
@@ -208,7 +208,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
                 prefix: Padding(
                   padding: const EdgeInsets.only(left: 15),
                   child: Icon(
-                    settings.settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search,
+                    ss.settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search,
                     color: context.theme.colorScheme.outline
                   ),
                 ),
@@ -221,7 +221,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
                       }
                     ) : Padding(
                       padding: const EdgeInsets.all(12.0),
-                      child: settings.settings.skin.value == Skins.iOS
+                      child: ss.settings.skin.value == Skins.iOS
                         ? Theme(
                             data: ThemeData(
                               cupertinoOverrideTheme: CupertinoThemeData(
@@ -303,7 +303,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
               (context, index) {
                 TextStyle subtitleStyle = context.theme.textTheme.bodySmall!
                     .copyWith(color: context.theme.colorScheme.outline, height: 1.5)
-                    .apply(fontSizeFactor: settings.settings.skin.value == Skins.Material ? 1.05 : 1.0);
+                    .apply(fontSizeFactor: ss.settings.skin.value == Skins.Material ? 1.05 : 1.0);
 
                 final chat = currentSearch!.results[index].item1;
                 final message = currentSearch!.results[index].item2;
@@ -346,7 +346,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
 
                 return Container(
                   decoration: BoxDecoration(
-                    border: !settings.settings.hideDividers.value ? Border(
+                    border: !ss.settings.hideDividers.value ? Border(
                       bottom: BorderSide(
                         color: context.theme.colorScheme.background.lightenOrDarken(15),
                         width: 0.5,
@@ -362,7 +362,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
                     inSelectMode: true,
                     onSelect: (_) {
                       MessageBloc customBloc = MessageBloc(chat, canLoadMore: false, loadMethod: local ? "local" : "network");
-                      navigatorService.push(
+                      ns.push(
                         context,
                         ConversationView(
                           chat: chat,

@@ -966,15 +966,15 @@ class Message {
       return Size(
           attachments
               .map((e) => e!.width)
-              .fold(0, (p, e) => max(p, (e ?? navigatorService.width(context) / 2).toDouble()) + 28),
+              .fold(0, (p, e) => max(p, (e ?? ns.width(context) / 2).toDouble()) + 28),
           attachments
               .map((e) => e!.height)
-              .fold(0, (p, e) => max(p, (e ?? navigatorService.width(context) / 2).toDouble())));
+              .fold(0, (p, e) => max(p, (e ?? ns.width(context) / 2).toDouble())));
     }
     // initialize constraints for text rendering
     final fontSizeFactor = isBigEmoji() ? bigEmojiScaleFactor : 1.0;
     final constraints = BoxConstraints(
-      maxWidth: maxWidthOverride ?? navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
+      maxWidth: maxWidthOverride ?? ns.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
       minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodySmall!.fontSize! * fontSizeFactor,
     );
     final renderParagraph = RichText(
@@ -993,7 +993,7 @@ class Message {
     }
     // if we have a URL preview, extend to the full width
     if (isUrlPreview()) {
-      size = Size(navigatorService.width(context) * 2 / 3 - 30, size.height);
+      size = Size(ns.width(context) * 2 / 3 - 30, size.height);
     }
     // if we have reactions, account for the extra height they add
     if (hasReactions) {

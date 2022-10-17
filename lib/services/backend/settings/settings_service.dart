@@ -12,7 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tuple/tuple.dart';
 import 'package:version/version.dart';
 
-SettingsService settings = Get.isRegistered<SettingsService>() ? Get.find<SettingsService>() : Get.put(SettingsService());
+SettingsService ss = Get.isRegistered<SettingsService>() ? Get.find<SettingsService>() : Get.put(SettingsService());
 
 class SettingsService extends GetxService {
   late Settings settings;

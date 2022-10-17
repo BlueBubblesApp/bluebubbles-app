@@ -44,7 +44,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                   child: InkWell(
                     onTap: () {
                       if (!showArchived && !showUnknown) {
-                        navigatorService.pushLeft(
+                        ns.pushLeft(
                           context,
                           SearchView(),
                         );
@@ -62,7 +62,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                               children: [
                                 (!showArchived && !showUnknown) ? IconButton(
                                   onPressed: () async {
-                                    navigatorService.pushLeft(
+                                    ns.pushLeft(
                                       context,
                                       SearchView(),
                                     );
@@ -98,10 +98,10 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                               mainAxisAlignment: MainAxisAlignment.end,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                settings.settings.moveChatCreatorToHeader.value
+                                ss.settings.moveChatCreatorToHeader.value
                                     && !showArchived
                                     && !showUnknown ? GestureDetector(
-                                  onLongPress: settings.settings.cameraFAB.value
+                                  onLongPress: ss.settings.cameraFAB.value
                                       ? () => controller.openCamera(context) : null,
                                   child: IconButton(
                                     onPressed: () => controller.openNewChatCreator(context),

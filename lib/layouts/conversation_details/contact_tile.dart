@@ -48,9 +48,9 @@ class ContactTile extends StatelessWidget {
   }
 
   Widget _buildContactTile(BuildContext context) {
-    final bool redactedMode = settings.settings.redactedMode.value;
-    final bool hideInfo = redactedMode && settings.settings.hideContactInfo.value;
-    final bool generateName = redactedMode && settings.settings.generateFakeContactNames.value;
+    final bool redactedMode = ss.settings.redactedMode.value;
+    final bool hideInfo = redactedMode && ss.settings.hideContactInfo.value;
+    final bool generateName = redactedMode && ss.settings.generateFakeContactNames.value;
     final bool isEmail = handle.address.isEmail;
     return InkWell(
       onLongPress: () {
@@ -128,7 +128,7 @@ class ContactTile extends StatelessWidget {
                           onLongPress: () => onPressContact(context, isLongPressed: true),
                           onPressed: () => onPressContact(context),
                           child: Icon(
-                              settings.settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email,
+                              ss.settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email,
                               color: context.theme.colorScheme.onSecondary,
                               size: 20),
                         ),
@@ -144,7 +144,7 @@ class ContactTile extends StatelessWidget {
                               onLongPress: () => onPressContact(context, isLongPressed: true),
                               onPressed: () => onPressContact(context),
                               child: Icon(
-                                  settings.settings.skin.value == Skins.iOS
+                                  ss.settings.skin.value == Skins.iOS
                                       ? CupertinoIcons.phone
                                       : Icons.call,
                                   color: context.theme.colorScheme.onSecondary,
@@ -260,7 +260,7 @@ class ContactTile extends StatelessWidget {
                 SlidableAction(
                   label: 'Remove',
                   backgroundColor: Colors.red,
-                  icon: settings.settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete,
+                  icon: ss.settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete,
                   onPressed: (_) async {
                     showDialog(
                         context: context,

@@ -47,7 +47,7 @@ class _SamsungConversationTileState extends CustomState<SamsungConversationTile,
           onLongPress: controller.onLongPress,
           child: ListTile(
             mouseCursor: MouseCursor.defer,
-            dense: settings.settings.denseChatTiles.value,
+            dense: ss.settings.denseChatTiles.value,
             title: ChatTitle(
               parentController: controller,
               style: context.theme.textTheme.bodyMedium!.copyWith(
@@ -197,7 +197,7 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
             ),
           Obx(() {
             String indicatorText = "";
-            if (settings.settings.statusIndicatorsOnChats.value && markers != null) {
+            if (ss.settings.statusIndicatorsOnChats.value && markers != null) {
               Indicator show = shouldShow(
                   cachedLatestMessage,
                   markers!.myLastMessage.value,

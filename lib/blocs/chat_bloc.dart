@@ -227,8 +227,8 @@ class ChatBloc {
     // Remove from notification shade
     if (clearNotifications && !isUnread) {
       await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
-      if (settings.settings.enablePrivateAPI.value &&
-          settings.settings.privateMarkChatAsRead.value &&
+      if (ss.settings.enablePrivateAPI.value &&
+          ss.settings.privateMarkChatAsRead.value &&
           chat.autoSendReadReceipts!) {
         await http.markChatRead(chat.guid);
       }
@@ -513,7 +513,7 @@ extension Helpers on RxList<Chat> {
   }
 
   RxList<Chat> unknownSendersHelper(bool unknown) {
-    if (!settings.settings.filterUnknownSenders.value) return this;
+    if (!ss.settings.filterUnknownSenders.value) return this;
     if (unknown) {
       return where((e) => e.participants.length == 1 && e.participants[0].contact == null)
           .toList()

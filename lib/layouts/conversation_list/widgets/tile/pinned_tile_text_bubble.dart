@@ -24,7 +24,7 @@ class PinnedTileTextBubble extends StatelessWidget {
 
   List<Color> getBubbleColors(Message message, BuildContext context) {
     List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
-    if (settings.settings.colorfulBubbles.value && !message.isFromMe!) {
+    if (ss.settings.colorfulBubbles.value && !message.isFromMe!) {
       if (message.handle?.color == null) {
         bubbleColors = toColorGradient(message.handle?.address);
       } else {
@@ -40,10 +40,10 @@ class PinnedTileTextBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final hideInfo = settings.settings.redactedMode.value
-        && settings.settings.hideMessageContent.value;
-    final generateContent = settings.settings.redactedMode.value
-        && settings.settings.generateFakeMessageContent.value;
+    final hideInfo = ss.settings.redactedMode.value
+        && ss.settings.hideMessageContent.value;
+    final generateContent = ss.settings.redactedMode.value
+        && ss.settings.generateFakeMessageContent.value;
 
     if (hideInfo || !(chat.hasUnreadMessage ?? false)) return const SizedBox.shrink();
 
@@ -57,7 +57,7 @@ class PinnedTileTextBubble extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final background = settings.settings.colorfulBubbles.value && lastMessage != null
+    final background = ss.settings.colorfulBubbles.value && lastMessage != null
         ? getBubbleColors(lastMessage, context).first.withOpacity(0.7)
         : context.theme.colorScheme.bubble(context, chat.isIMessage).withOpacity(0.6);
 
@@ -116,7 +116,7 @@ class PinnedTileTextBubble extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: context.theme.textTheme.bodySmall!.copyWith(
                           color: context.theme.colorScheme.onBubble(context, chat.isIMessage)
-                              .withOpacity(settings.settings.colorfulBubbles.value ? 1 : 0.85)
+                              .withOpacity(ss.settings.colorfulBubbles.value ? 1 : 0.85)
                       ),
                     ),
                   ),

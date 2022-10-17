@@ -118,7 +118,7 @@ class ImageWidget extends StatelessWidget {
       builder: (controller) => VisibilityDetector(
         key: Key(controller.attachment.guid!),
         onVisibilityChanged: (info) {
-          if (!settings.settings.lowMemoryMode.value) return;
+          if (!ss.settings.lowMemoryMode.value) return;
           if (info.visibleFraction == 0 && controller.visible && !controller.navigated) {
             controller.visible = false;
             ChatManager().activeChat?.clearImageData(controller.attachment);

@@ -115,7 +115,7 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> with The
                                     child: Text("Set New", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                     onPressed: () {
                                       Navigator.of(context).pop();
-                                      navigatorService.pushSettings(
+                                      ns.pushSettings(
                                         context,
                                         AvatarCrop(index: index),
                                       );
@@ -124,7 +124,7 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> with The
                         },
                       );
                     } else {
-                      navigatorService.pushSettings(
+                      ns.pushSettings(
                         context,
                         AvatarCrop(index: index),
                       );

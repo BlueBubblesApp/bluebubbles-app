@@ -16,8 +16,8 @@ class SyncService extends GetxService {
   Future<void> startFullSync() async {
     // Set the last sync date (for incremental, even though this isn't incremental)
     // We won't try an incremental sync until the last (full) sync date is set
-    settings.settings.lastIncrementalSync.value = DateTime.now().millisecondsSinceEpoch;
-    await settings.saveSettings();
+    ss.settings.lastIncrementalSync.value = DateTime.now().millisecondsSinceEpoch;
+    await ss.saveSettings();
 
     _manager = FullSyncManager(
         messageCount: numberOfMessagesPerPage.toInt(),
@@ -30,7 +30,7 @@ class SyncService extends GetxService {
   Future<void> startIncrementalSync() async {
     isIncrementalSyncing.value = true;
     try {
-      int syncStart = settings.settings.lastIncrementalSync.value;
+      int syncStart = ss.settings.lastIncrementalSync.value;
       final incrementalSyncManager = IncrementalSyncManager(syncStart, onComplete: () async {
         await cs.refreshContacts();
         isIncrementalSyncing.value = false;

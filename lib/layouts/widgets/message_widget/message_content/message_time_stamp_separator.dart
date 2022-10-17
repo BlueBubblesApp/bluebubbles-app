@@ -20,12 +20,12 @@ class MessageTimeStampSeparator extends StatelessWidget {
   }
 
   Map<String, String> buildTimeStamp() {
-    if (settings.settings.skin.value == Skins.Samsung
+    if (ss.settings.skin.value == Skins.Samsung
         && newerMessage != null &&
         (!isEmptyString(message.fullText) || message.hasAttachments) &&
         newerMessage!.dateCreated!.isTomorrow(otherDate: message.dateCreated)) {
         return {"time": buildSeparatorDateSamsung(newerMessage!.dateCreated!)};
-    } else if (settings.settings.skin.value != Skins.Samsung
+    } else if (ss.settings.skin.value != Skins.Samsung
         && newerMessage != null &&
         (!isEmptyString(message.fullText) || message.hasAttachments) &&
         withinTimeThreshold(message, newerMessage, threshold: 30)) {

@@ -56,7 +56,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     Size size = renderBox.size;
     Offset offset = renderBox.localToGlobal(Offset.zero);
     bool increaseWidth = !MessageHelper.getShowTail(context, widget.message, widget.newerMessage) &&
-        (settings.settings.alwaysShowAvatars.value || (ChatManager().activeChat?.chat.isGroup() ?? false));
+        (ss.settings.alwaysShowAvatars.value || (ChatManager().activeChat?.chat.isGroup() ?? false));
     bool doNotIncreaseHeight = ((widget.message.isFromMe ?? false) ||
         !(ChatManager().activeChat?.chat.isGroup() ?? false) ||
         !sameSender(widget.message, widget.olderMessage) ||
@@ -106,8 +106,8 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
                 colorScheme: context.theme.colorScheme.copyWith(
                   primary: context.theme.colorScheme.bubble(context, true),
                   onPrimary: context.theme.colorScheme.onBubble(context, true),
-                  surface: settings.settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-                  onSurface: settings.settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+                  surface: ss.settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                  onSurface: ss.settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
                 ),
               ),
               child: buildForDevice(),
@@ -135,7 +135,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
 
   Widget buildForDevice() {
     bool showAltLayout =
-        settings.settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !LifeCycleManager().isBubble;
+        ss.settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !LifeCycleManager().isBubble;
 
     ChatController? currentChat = ChatManager().activeChat;
     Widget popup = MessageDetailsPopup(
@@ -165,9 +165,9 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     return KeyboardVisibilityBuilder(builder: (context, isVisible) {
       return GestureDetector(
         key: containerKey,
-        onDoubleTap: settings.settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
+        onDoubleTap: ss.settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
             ? () => openMessageDetails(isVisible)
-            : settings.settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
+            : ss.settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
                 ? () {
                     if (widget.message.guid!.startsWith('temp')) return;
                     if (kIsDesktop &&
@@ -180,16 +180,16 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
                       return;
                     }
                     HapticFeedback.lightImpact();
-                    sendReaction(settings.settings.quickTapbackType.value);
+                    sendReaction(ss.settings.quickTapbackType.value);
                   }
                 : null,
-        onLongPress: settings.settings.doubleTapForDetails.value &&
-                settings.settings.enableQuickTapback.value &&
+        onLongPress: ss.settings.doubleTapForDetails.value &&
+                ss.settings.enableQuickTapback.value &&
                 (ChatManager().activeChat?.chat.isIMessage ?? true)
             ? () {
                 if (widget.message.guid!.startsWith('temp')) return;
                 HapticFeedback.lightImpact();
-                sendReaction(settings.settings.quickTapbackType.value);
+                sendReaction(ss.settings.quickTapbackType.value);
               }
             : () => openMessageDetails(isVisible),
         onSecondaryTapUp: (details) async {

@@ -41,10 +41,10 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                   children: [
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.showConnectionIndicator.value = val;
+                            ss.settings.showConnectionIndicator.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.showConnectionIndicator.value,
+                          initialVal: ss.settings.showConnectionIndicator.value,
                           title: "Show Connection Indicator",
                           subtitle: "Enables a connection status indicator at the top left",
                           backgroundColor: tileColor,
@@ -58,10 +58,10 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                     ),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.showSyncIndicator.value = val;
+                            ss.settings.showSyncIndicator.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.showSyncIndicator.value,
+                          initialVal: ss.settings.showSyncIndicator.value,
                           title: "Show Sync Indicator in Chat List",
                           subtitle:
                               "Enables a small indicator at the top left to show when the app is syncing messages",
@@ -77,10 +77,10 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                     ),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.colorblindMode.value = val;
+                            ss.settings.colorblindMode.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.colorblindMode.value,
+                          initialVal: ss.settings.colorblindMode.value,
                           title: "Colorblind Mode",
                           subtitle: "Replaces the colored connection indicator with icons to aid accessibility",
                           backgroundColor: tileColor,
@@ -95,10 +95,10 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                     ),
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        settings.settings.statusIndicatorsOnChats.value = val;
+                        ss.settings.statusIndicatorsOnChats.value = val;
                         saveSettings();
                       },
-                      initialVal: settings.settings.statusIndicatorsOnChats.value,
+                      initialVal: ss.settings.statusIndicatorsOnChats.value,
                       title: "Message Status Indicators",
                       subtitle: "Adds status indicators to the chat list for the sent / delivered / read status of your most recent message",
                       backgroundColor: tileColor,
@@ -117,10 +117,10 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                   children: [
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.filteredChatList.value = val;
+                            ss.settings.filteredChatList.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.filteredChatList.value,
+                          initialVal: ss.settings.filteredChatList.value,
                           title: "Filtered Chat List",
                           subtitle:
                               "Filters the chat list based on parameters set in iMessage (usually this removes old, inactive chats)",
@@ -136,10 +136,10 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                     ),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.filterUnknownSenders.value = val;
+                            ss.settings.filterUnknownSenders.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.filterUnknownSenders.value,
+                          initialVal: ss.settings.filterUnknownSenders.value,
                           title: "Filter Unknown Senders",
                           subtitle:
                               "Turn off notifications for senders who aren't in your contacts and sort them into a separate chat list",
@@ -159,10 +159,10 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                   children: [
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        settings.settings.hideDividers.value = val;
+                        ss.settings.hideDividers.value = val;
                         saveSettings();
                       },
-                      initialVal: settings.settings.hideDividers.value,
+                      initialVal: ss.settings.hideDividers.value,
                       title: "Hide Dividers",
                       backgroundColor: tileColor,
                       subtitle: "Hides dividers between tiles",
@@ -176,10 +176,10 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                     ),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.denseChatTiles.value = val;
+                            ss.settings.denseChatTiles.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.denseChatTiles.value,
+                          initialVal: ss.settings.denseChatTiles.value,
                           title: "Dense Conversation Tiles",
                           backgroundColor: tileColor,
                           subtitle: "Compresses chat tile size on the conversation list page",
@@ -202,10 +202,10 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                       if (iOS) {
                         return SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.reducedForehead.value = val;
+                            ss.settings.reducedForehead.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.reducedForehead.value,
+                          initialVal: ss.settings.reducedForehead.value,
                           title: "Reduced Forehead",
                           backgroundColor: tileColor,
                           subtitle: "Reduces the appbar size on conversation pages",
@@ -245,17 +245,17 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                   max: 4,
                                   divisions: 3,
                                   update: (double val) {
-                                    settings.settings.pinRowsPortrait.value = val.toInt();
+                                    ss.settings.pinRowsPortrait.value = val.toInt();
                                   },
                                   onChangeEnd: (double val) {
                                     saveSettings();
                                   },
-                                  startingVal: settings.settings.pinRowsPortrait.value.toDouble(),
+                                  startingVal: ss.settings.pinRowsPortrait.value.toDouble(),
                                   backgroundColor: tileColor,
                                   formatValue: (val) =>
-                                      "${settings.settings.pinRowsPortrait.value} row${settings.settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${kIsDesktop
-                                          ? settings.settings.pinColumnsLandscape.value.toString()
-                                          : settings.settings.pinColumnsPortrait.value.toString()}",
+                                      "${ss.settings.pinRowsPortrait.value} row${ss.settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${kIsDesktop
+                                          ? ss.settings.pinColumnsLandscape.value.toString()
+                                          : ss.settings.pinColumnsPortrait.value.toString()}",
                                 ),
                               ),
                               const SizedBox(width: 20),
@@ -270,7 +270,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                         if (iOS) {
                           return SettingsTile(
                             title:
-                                "Pinned Chat Configuration (${settings.settings.pinRowsPortrait.value} row${settings.settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${settings.settings.pinColumnsLandscape})",
+                                "Pinned Chat Configuration (${ss.settings.pinRowsPortrait.value} row${ss.settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${ss.settings.pinColumnsLandscape})",
                             subtitle:
                                 "Pinned chats will overflow onto multiple pages if they do not fit in this configuration. Keep in mind that you cannot access different pages of the pinned chats without a touchscreen or horizontal scrolling capability.",
                           );
@@ -297,11 +297,11 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                         ),
                                         Flexible(
                                           child: SettingsOptions<int>(
-                                            initial: settings.settings.pinRowsPortrait.value,
+                                            initial: ss.settings.pinRowsPortrait.value,
                                             options: List.generate(4, (index) => index + 1),
                                             onChanged: (int? val) {
                                               if (val == null) return;
-                                              settings.settings.pinRowsPortrait.value = val;
+                                              ss.settings.pinRowsPortrait.value = val;
                                               saveSettings();
                                             },
                                             title: "Pin Rows",
@@ -323,11 +323,11 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                         ),
                                         Flexible(
                                           child: SettingsOptions<int>(
-                                            initial: settings.settings.pinColumnsLandscape.value,
+                                            initial: ss.settings.pinColumnsLandscape.value,
                                             options: List.generate(5, (index) => index + 2),
                                             onChanged: (int? val) {
                                               if (val == null) return;
-                                              settings.settings.pinColumnsLandscape.value = val;
+                                              ss.settings.pinColumnsLandscape.value = val;
                                               saveSettings();
                                             },
                                             title: "Pins Per Row",
@@ -342,9 +342,9 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                 ),
                               ),
                               Obx(() {
-                                navigatorService.listener.value;
+                                ns.listener.value;
                                 double width = 108 * context.width / context.height;
-                                if (navigatorService.width(context) != context.width) {
+                                if (ns.width(context) != context.width) {
                                   return Container(
                                     width: width,
                                     height: 108,
@@ -374,36 +374,36 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                                         )),
                                                     Obx(
                                                       () => Expanded(
-                                                        flex: settings.settings.pinRowsPortrait.value *
+                                                        flex: ss.settings.pinRowsPortrait.value *
                                                             (width -
-                                                                navigatorService.width(context) /
+                                                                ns.width(context) /
                                                                     context.width *
                                                                     width) ~/
-                                                            settings.settings.pinColumnsLandscape.value,
+                                                            ss.settings.pinColumnsLandscape.value,
                                                         child: GridView.custom(
                                                           shrinkWrap: true,
                                                           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                                             crossAxisCount:
-                                                                settings.settings.pinColumnsLandscape.value,
+                                                                ss.settings.pinColumnsLandscape.value,
                                                           ),
                                                           physics: NeverScrollableScrollPhysics(),
                                                           childrenDelegate: SliverChildBuilderDelegate(
                                                             (context, index) => Container(
                                                               margin: EdgeInsets.all(2 /
                                                                   max(
-                                                                      settings.settings.pinRowsPortrait.value,
-                                                                      settings
+                                                                      ss.settings.pinRowsPortrait.value,
+                                                                      ss
                                                                           .settings
                                                                           .pinColumnsLandscape
                                                                           .value)),
                                                               decoration: BoxDecoration(
                                                                   borderRadius: BorderRadius.circular(50 /
                                                                       max(
-                                                                          settings
+                                                                          ss
                                                                               .settings
                                                                               .pinRowsPortrait
                                                                               .value,
-                                                                          settings
+                                                                          ss
                                                                               .settings
                                                                               .pinColumnsLandscape
                                                                               .value)),
@@ -411,27 +411,27 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                                                       .lightenOrDarken(10)),
                                                             ),
                                                             childCount:
-                                                                settings.settings.pinColumnsLandscape.value *
-                                                                    settings.settings.pinRowsPortrait.value,
+                                                                ss.settings.pinColumnsLandscape.value *
+                                                                    ss.settings.pinRowsPortrait.value,
                                                           ),
                                                         ),
                                                       ),
                                                     ),
-                                                    if (settings.settings.pinRowsPortrait.value *
+                                                    if (ss.settings.pinRowsPortrait.value *
                                                             (width -
-                                                                navigatorService.width(context) /
+                                                                ns.width(context) /
                                                                     context.width *
                                                                     width) /
-                                                            settings.settings.pinColumnsLandscape.value <
+                                                            ss.settings.pinColumnsLandscape.value <
                                                         96)
                                                       Expanded(
                                                         flex: 96 -
-                                                            settings.settings.pinRowsPortrait.value *
+                                                            ss.settings.pinRowsPortrait.value *
                                                                 (width -
-                                                                    navigatorService.width(context) /
+                                                                    ns.width(context) /
                                                                         context.width *
                                                                         width) ~/
-                                                                settings.settings.pinColumnsLandscape.value,
+                                                                ss.settings.pinColumnsLandscape.value,
                                                         child: ListView.builder(
                                                             padding: EdgeInsets.only(top: 2),
                                                             physics: NeverScrollableScrollPhysics(),
@@ -456,7 +456,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                             height: 108,
                                             color: context.theme.colorScheme.secondary.oppositeLightenOrDarken(40)),
                                         Container(
-                                            width: navigatorService.width(context) / context.width * width - 1,
+                                            width: ns.width(context) / context.width * width - 1,
                                             height: 108,
                                             color: context.theme.colorScheme.secondary),
                                       ],
@@ -484,7 +484,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                         title: "Pinned Order",
                         subtitle: "Set the order for your pinned chats",
                         onTap: () {
-                          navigatorService.pushSettings(
+                          ns.pushSettings(
                             context,
                             PinnedOrderPanel(),
                           );
@@ -512,10 +512,10 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                             material) {
                           return SettingsSwitch(
                             onChanged: (bool val) {
-                              settings.settings.swipableConversationTiles.value = val;
+                              ss.settings.swipableConversationTiles.value = val;
                               saveSettings();
                             },
-                            initialVal: settings.settings.swipableConversationTiles.value,
+                            initialVal: ss.settings.swipableConversationTiles.value,
                             title: "Swipe Actions for Conversation Tiles",
                             subtitle: "Enables swipe actions for conversation tiles when using Material theme",
                             backgroundColor: tileColor,
@@ -533,7 +533,7 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                         if (iOS) {
                           return Container(
                             color: tileColor,
-                            constraints: BoxConstraints(maxWidth: navigatorService.width(context) - 20),
+                            constraints: BoxConstraints(maxWidth: ns.width(context) - 20),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 15.0),
                               child: Row(
@@ -544,16 +544,16 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                       child: Text("Right", style: context.theme.textTheme.bodyLarge),
                                     ),
                                     Opacity(
-                                      opacity: settings.settings.iosShowPin.value ? 1 : 0.7,
+                                      opacity: ss.settings.iosShowPin.value ? 1 : 0.7,
                                       child: Container(
                                         height: 60,
-                                        width: navigatorService.width(context) / 5 - 12,
+                                        width: ns.width(context) / 5 - 12,
                                         color: Colors.yellow[800],
                                         child: IconButton(
                                           icon: const Icon(CupertinoIcons.pin, color: Colors.white),
                                           onPressed: () async {
-                                            settings.settings.iosShowPin.value =
-                                                !settings.settings.iosShowPin.value;
+                                            ss.settings.iosShowPin.value =
+                                                !ss.settings.iosShowPin.value;
                                             saveSettings();
                                           },
                                         ),
@@ -562,11 +562,11 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                     CupertinoButton(
                                         child: Container(
                                           decoration: BoxDecoration(
-                                              color: settings.settings.iosShowPin.value
+                                              color: ss.settings.iosShowPin.value
                                                   ? context.theme.colorScheme.primary
                                                   : tileColor,
                                               border: Border.all(
-                                                  color: settings.settings.iosShowPin.value
+                                                  color: ss.settings.iosShowPin.value
                                                       ? context.theme.colorScheme.primary
                                                       : inactiveCheckColor,
                                                   style: BorderStyle.solid,
@@ -576,14 +576,14 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                             padding: const EdgeInsets.all(3.0),
                                             child: Icon(CupertinoIcons.check_mark,
                                                 size: 18,
-                                                color: settings.settings.iosShowPin.value
+                                                color: ss.settings.iosShowPin.value
                                                     ? context.theme.colorScheme.onPrimary
                                                     : inactiveCheckColor),
                                           ),
                                         ),
                                         onPressed: () {
-                                          settings.settings.iosShowPin.value =
-                                              !settings.settings.iosShowPin.value;
+                                          ss.settings.iosShowPin.value =
+                                              !ss.settings.iosShowPin.value;
                                           saveSettings();
                                         }),
                                   ]),
@@ -597,16 +597,16 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                       Column(
                                         children: [
                                           Opacity(
-                                            opacity: settings.settings.iosShowAlert.value ? 1 : 0.7,
+                                            opacity: ss.settings.iosShowAlert.value ? 1 : 0.7,
                                             child: Container(
                                               height: 60,
                                               color: Colors.purple[700],
-                                              width: navigatorService.width(context) / 5 - 12,
+                                              width: ns.width(context) / 5 - 12,
                                               child: IconButton(
                                                 icon: const Icon(CupertinoIcons.bell_slash, color: Colors.white),
                                                 onPressed: () async {
-                                                  settings.settings.iosShowAlert.value =
-                                                      !settings.settings.iosShowAlert.value;
+                                                  ss.settings.iosShowAlert.value =
+                                                      !ss.settings.iosShowAlert.value;
                                                   saveSettings();
                                                 },
                                               ),
@@ -615,11 +615,11 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                           CupertinoButton(
                                               child: Container(
                                                 decoration: BoxDecoration(
-                                                    color: settings.settings.iosShowAlert.value
+                                                    color: ss.settings.iosShowAlert.value
                                                         ? context.theme.colorScheme.primary
                                                         : tileColor,
                                                     border: Border.all(
-                                                        color: settings.settings.iosShowAlert.value
+                                                        color: ss.settings.iosShowAlert.value
                                                             ? context.theme.colorScheme.primary
                                                             : inactiveCheckColor,
                                                         style: BorderStyle.solid,
@@ -629,14 +629,14 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                                   padding: const EdgeInsets.all(3.0),
                                                   child: Icon(CupertinoIcons.check_mark,
                                                       size: 18,
-                                                      color: settings.settings.iosShowAlert.value
+                                                      color: ss.settings.iosShowAlert.value
                                                           ? context.theme.colorScheme.onPrimary
                                                           : inactiveCheckColor),
                                                 ),
                                               ),
                                               onPressed: () {
-                                                settings.settings.iosShowAlert.value =
-                                                    !settings.settings.iosShowAlert.value;
+                                                ss.settings.iosShowAlert.value =
+                                                    !ss.settings.iosShowAlert.value;
                                                 saveSettings();
                                               }),
                                         ],
@@ -644,16 +644,16 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                       Column(
                                         children: [
                                           Opacity(
-                                            opacity: settings.settings.iosShowDelete.value ? 1 : 0.7,
+                                            opacity: ss.settings.iosShowDelete.value ? 1 : 0.7,
                                             child: Container(
                                               height: 60,
                                               color: Colors.red,
-                                              width: navigatorService.width(context) / 5 - 12,
+                                              width: ns.width(context) / 5 - 12,
                                               child: IconButton(
                                                 icon: const Icon(CupertinoIcons.trash, color: Colors.white),
                                                 onPressed: () async {
-                                                  settings.settings.iosShowDelete.value =
-                                                      !settings.settings.iosShowDelete.value;
+                                                  ss.settings.iosShowDelete.value =
+                                                      !ss.settings.iosShowDelete.value;
                                                   saveSettings();
                                                 },
                                               ),
@@ -662,11 +662,11 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                           CupertinoButton(
                                               child: Container(
                                                 decoration: BoxDecoration(
-                                                    color: settings.settings.iosShowDelete.value
+                                                    color: ss.settings.iosShowDelete.value
                                                         ? context.theme.colorScheme.primary
                                                         : tileColor,
                                                     border: Border.all(
-                                                        color: settings.settings.iosShowDelete.value
+                                                        color: ss.settings.iosShowDelete.value
                                                             ? context.theme.colorScheme.primary
                                                             : inactiveCheckColor,
                                                         style: BorderStyle.solid,
@@ -676,14 +676,14 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                                   padding: const EdgeInsets.all(3.0),
                                                   child: Icon(CupertinoIcons.check_mark,
                                                       size: 18,
-                                                      color: settings.settings.iosShowDelete.value
+                                                      color: ss.settings.iosShowDelete.value
                                                           ? context.theme.colorScheme.onPrimary
                                                           : inactiveCheckColor),
                                                 ),
                                               ),
                                               onPressed: () {
-                                                settings.settings.iosShowDelete.value =
-                                                    !settings.settings.iosShowDelete.value;
+                                                ss.settings.iosShowDelete.value =
+                                                    !ss.settings.iosShowDelete.value;
                                                 saveSettings();
                                               }),
                                         ],
@@ -691,17 +691,17 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                       Column(
                                         children: [
                                           Opacity(
-                                            opacity: settings.settings.iosShowMarkRead.value ? 1 : 0.7,
+                                            opacity: ss.settings.iosShowMarkRead.value ? 1 : 0.7,
                                             child: Container(
                                               height: 60,
                                               color: Colors.blue,
-                                              width: navigatorService.width(context) / 5 - 12,
+                                              width: ns.width(context) / 5 - 12,
                                               child: IconButton(
                                                 icon: const Icon(CupertinoIcons.person_crop_circle_badge_exclam,
                                                     color: Colors.white),
                                                 onPressed: () {
-                                                  settings.settings.iosShowMarkRead.value =
-                                                      !settings.settings.iosShowMarkRead.value;
+                                                  ss.settings.iosShowMarkRead.value =
+                                                      !ss.settings.iosShowMarkRead.value;
                                                   saveSettings();
                                                   saveSettings();
                                                 },
@@ -711,11 +711,11 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                           CupertinoButton(
                                               child: Container(
                                                 decoration: BoxDecoration(
-                                                    color: settings.settings.iosShowMarkRead.value
+                                                    color: ss.settings.iosShowMarkRead.value
                                                         ? context.theme.colorScheme.primary
                                                         : tileColor,
                                                     border: Border.all(
-                                                        color: settings.settings.iosShowMarkRead.value
+                                                        color: ss.settings.iosShowMarkRead.value
                                                             ? context.theme.colorScheme.primary
                                                             : inactiveCheckColor,
                                                         style: BorderStyle.solid,
@@ -725,14 +725,14 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                                   padding: const EdgeInsets.all(3.0),
                                                   child: Icon(CupertinoIcons.check_mark,
                                                       size: 18,
-                                                      color: settings.settings.iosShowMarkRead.value
+                                                      color: ss.settings.iosShowMarkRead.value
                                                           ? context.theme.colorScheme.onPrimary
                                                           : inactiveCheckColor),
                                                 ),
                                               ),
                                               onPressed: () {
-                                                settings.settings.iosShowMarkRead.value =
-                                                    !settings.settings.iosShowMarkRead.value;
+                                                ss.settings.iosShowMarkRead.value =
+                                                    !ss.settings.iosShowMarkRead.value;
                                                 saveSettings();
                                               }),
                                         ],
@@ -740,16 +740,16 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                       Column(
                                         children: [
                                           Opacity(
-                                            opacity: settings.settings.iosShowArchive.value ? 1 : 0.7,
+                                            opacity: ss.settings.iosShowArchive.value ? 1 : 0.7,
                                             child: Container(
                                               height: 60,
                                               color: Colors.red,
-                                              width: navigatorService.width(context) / 5 - 12,
+                                              width: ns.width(context) / 5 - 12,
                                               child: IconButton(
                                                 icon: const Icon(CupertinoIcons.tray_arrow_down, color: Colors.white),
                                                 onPressed: () {
-                                                  settings.settings.iosShowArchive.value =
-                                                      !settings.settings.iosShowArchive.value;
+                                                  ss.settings.iosShowArchive.value =
+                                                      !ss.settings.iosShowArchive.value;
                                                   saveSettings();
                                                 },
                                               ),
@@ -758,11 +758,11 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                           CupertinoButton(
                                               child: Container(
                                                 decoration: BoxDecoration(
-                                                    color: settings.settings.iosShowArchive.value
+                                                    color: ss.settings.iosShowArchive.value
                                                         ? context.theme.colorScheme.primary
                                                         : tileColor,
                                                     border: Border.all(
-                                                        color: settings.settings.iosShowArchive.value
+                                                        color: ss.settings.iosShowArchive.value
                                                             ? context.theme.colorScheme.primary
                                                             : inactiveCheckColor,
                                                         style: BorderStyle.solid,
@@ -772,14 +772,14 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                                   padding: const EdgeInsets.all(3.0),
                                                   child: Icon(CupertinoIcons.check_mark,
                                                       size: 18,
-                                                      color: settings.settings.iosShowArchive.value
+                                                      color: ss.settings.iosShowArchive.value
                                                           ? context.theme.colorScheme.onPrimary
                                                           : inactiveCheckColor),
                                                 ),
                                               ),
                                               onPressed: () {
-                                                settings.settings.iosShowArchive.value =
-                                                    !settings.settings.iosShowArchive.value;
+                                                ss.settings.iosShowArchive.value =
+                                                    !ss.settings.iosShowArchive.value;
                                                 saveSettings();
                                               }),
                                         ],
@@ -790,16 +790,16 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                               ),
                             ),
                           );
-                        } else if (settings.settings.swipableConversationTiles.value) {
+                        } else if (ss.settings.swipableConversationTiles.value) {
                           return Container(
                             color: tileColor,
                             child: Column(
                               children: [
                                 SettingsOptions<MaterialSwipeAction>(
-                                  initial: settings.settings.materialRightAction.value,
+                                  initial: ss.settings.materialRightAction.value,
                                   onChanged: (val) {
                                     if (val != null) {
-                                      settings.settings.materialRightAction.value = val;
+                                      ss.settings.materialRightAction.value = val;
                                       saveSettings();
                                     }
                                   },
@@ -811,10 +811,10 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                                   secondaryColor: headerColor,
                                 ),
                                 SettingsOptions<MaterialSwipeAction>(
-                                  initial: settings.settings.materialLeftAction.value,
+                                  initial: ss.settings.materialLeftAction.value,
                                   onChanged: (val) {
                                     if (val != null) {
-                                      settings.settings.materialLeftAction.value = val;
+                                      ss.settings.materialLeftAction.value = val;
                                       saveSettings();
                                     }
                                   },
@@ -845,10 +845,10 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                   children: [
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.moveChatCreatorToHeader.value = val;
+                            ss.settings.moveChatCreatorToHeader.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.moveChatCreatorToHeader.value,
+                          initialVal: ss.settings.moveChatCreatorToHeader.value,
                           title: "Move Chat Creator Button to Header",
                           subtitle: "Replaces the floating button at the bottom to a fixed button at the top",
                           backgroundColor: tileColor,
@@ -865,14 +865,14 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() => SettingsSwitch(
                             onChanged: (bool val) {
-                              settings.settings.cameraFAB.value = val;
+                              ss.settings.cameraFAB.value = val;
                               saveSettings();
                             },
-                            initialVal: settings.settings.cameraFAB.value,
-                            title: settings.settings.skin.value != Skins.iOS
+                            initialVal: ss.settings.cameraFAB.value,
+                            title: ss.settings.skin.value != Skins.iOS
                                 ? "Long Press for Camera"
                                 : "Add Camera Button",
-                            subtitle: settings.settings.skin.value != Skins.iOS
+                            subtitle: ss.settings.skin.value != Skins.iOS
                                 ? "Long press the start chat button to easily send a picture to a chat"
                                 : "Adds a dedicated camera button near the new chat creator button to easily send pictures",
                             backgroundColor: tileColor,
@@ -887,6 +887,6 @@ class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelper
   }
 
   void saveSettings() {
-    settings.saveSettings(settings.settings);
+    ss.saveSettings(ss.settings);
   }
 }

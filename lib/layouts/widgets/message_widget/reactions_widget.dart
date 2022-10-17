@@ -28,7 +28,7 @@ class _ReactionsWidgetState extends State<ReactionsWidget> {
 
 
     final bool hideReactions =
-        settings.settings.redactedMode.value && settings.settings.hideReactions.value;
+        ss.settings.redactedMode.value && ss.settings.hideReactions.value;
 
     // If the reactions are empty, return nothing
     if (reactions.isEmpty || hideReactions || Reaction.getUniqueReactionMessages(reactions).isEmpty) {

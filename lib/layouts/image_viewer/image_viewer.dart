@@ -84,8 +84,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       duration: Duration(milliseconds: 125),
       child: Container(
         height: kIsDesktop ? 50 : 100.0,
-        width: navigatorService.width(context),
-        color: context.theme.colorScheme.shadow.withOpacity(settings.settings.skin.value == Skins.Samsung ? 1 : 0.65),
+        width: ns.width(context),
+        color: context.theme.colorScheme.shadow.withOpacity(ss.settings.skin.value == Skins.Samsung ? 1 : 0.65),
         child: SafeArea(
           left: false,
           right: false,
@@ -120,8 +120,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                           if (widget.attachment.message.target?.dateCreated != null)
                             Padding(
                               padding: const EdgeInsets.only(top: 2.0),
-                              child: Text(settings.settings.skin.value == Skins.Samsung ? intl.DateFormat.jm().add_MMMd().format(widget.attachment.message.target!.dateCreated!) : intl.DateFormat('EEE').add_jm().format(widget.attachment.message.target!.dateCreated!),
-                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: settings.settings.skin.value == Skins.Samsung ? Colors.grey : Colors.white)),
+                              child: Text(ss.settings.skin.value == Skins.Samsung ? intl.DateFormat.jm().add_MMMd().format(widget.attachment.message.target!.dateCreated!) : intl.DateFormat('EEE').add_jm().format(widget.attachment.message.target!.dateCreated!),
+                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: ss.settings.skin.value == Skins.Samsung ? Colors.grey : Colors.white)),
                             ),
                         ],
                       ),
@@ -174,15 +174,15 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
-        statusBarIconBrightness: settings.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
+        statusBarIconBrightness: ss.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
         backgroundColor: Colors.black,
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-        floatingActionButton: widget.showInteractions && showOverlay && settings.settings.skin.value == Skins.Material ? Row(
+        floatingActionButton: widget.showInteractions && showOverlay && ss.settings.skin.value == Skins.Material ? Row(
           children: [
             FloatingActionButton(
               backgroundColor: context.theme.colorScheme.secondary,
@@ -214,45 +214,45 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
               ),
           ],
         ) : null,
-        bottomNavigationBar: !widget.showInteractions || settings.settings.skin.value == Skins.Material
-            || (settings.settings.skin.value == Skins.Samsung && !showOverlay) ? null : Theme(
+        bottomNavigationBar: !widget.showInteractions || ss.settings.skin.value == Skins.Material
+            || (ss.settings.skin.value == Skins.Samsung && !showOverlay) ? null : Theme(
           data: context.theme.copyWith(navigationBarTheme: context.theme.navigationBarTheme.copyWith(
-              indicatorColor: settings.settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
+              indicatorColor: ss.settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
           )),
           child: NavigationBar(
             selectedIndex: 0,
-            backgroundColor: settings.settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
+            backgroundColor: ss.settings.skin.value == Skins.Samsung ? Colors.black : context.theme.colorScheme.properSurface,
             elevation: 0,
             labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
             height: 60,
             destinations: [
               NavigationDestination(
                 icon: Icon(
-                  settings.settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
-                  color: settings.settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
+                  ss.settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
+                  color: ss.settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
                 ),
                 label: 'Download'
               ),
               if (!kIsWeb && !kIsDesktop)
                 NavigationDestination(
                   icon: Icon(
-                    settings.settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
-                    color: settings.settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
+                    ss.settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
+                    color: ss.settings.skin.value == Skins.Samsung ? Colors.white : context.theme.colorScheme.primary,
                   ),
                   label: 'Share'
                 ),
-              if (settings.settings.skin.value == Skins.iOS)
+              if (ss.settings.skin.value == Skins.iOS)
                 NavigationDestination(
                     icon: Icon(
-                      settings.settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
+                      ss.settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
                       color: context.theme.colorScheme.primary,
                     ),
                     label: 'Metadata'
                 ),
-              if (settings.settings.skin.value == Skins.iOS)
+              if (ss.settings.skin.value == Skins.iOS)
                 NavigationDestination(
                     icon: Icon(
-                      settings.settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
+                      ss.settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
                       color: context.theme.colorScheme.primary,
                     ),
                     label: 'Refresh'
@@ -319,7 +319,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   errorBuilder: (context, object, stacktrace) => Center(
                       child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge)))
                   : loader,
-              if (settings.settings.skin.value != Skins.iOS) overlay
+              if (ss.settings.skin.value != Skins.iOS) overlay
             ],
           ),
         ),
@@ -363,7 +363,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         ),
         backgroundColor: context.theme.colorScheme.properSurface,
         content: SizedBox(
-          width: navigatorService.width(context) * 3 / 5,
+          width: ns.width(context) * 3 / 5,
           height: context.height * 1 / 4,
           child: Container(
             padding: EdgeInsets.all(10.0),

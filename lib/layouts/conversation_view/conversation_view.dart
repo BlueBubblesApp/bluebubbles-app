@@ -115,7 +115,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     previousChat = widget.previousChat;
 
     if (chat != null) {
-      settings.prefs.setString('lastOpenedChat', chat!.guid);
+      ss.prefs.setString('lastOpenedChat', chat!.guid);
     }
 
     if (widget.selected.isEmpty) {
@@ -180,8 +180,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void getAdjustBackground() async {
     var lightTheme = ThemeStruct.getLightTheme();
     var darkTheme = ThemeStruct.getDarkTheme();
-    if ((lightTheme.gradientBg && !themes.inDarkMode(Get.context!)) ||
-        (darkTheme.gradientBg && themes.inDarkMode(Get.context!))) {
+    if ((lightTheme.gradientBg && !ts.inDarkMode(Get.context!)) ||
+        (darkTheme.gradientBg && ts.inDarkMode(Get.context!))) {
       if (adjustBackground.value != true) adjustBackground.value = true;
     } else {
       if (adjustBackground.value != false) adjustBackground.value = false;
@@ -189,7 +189,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   void getShowAlert() async {
-    shouldShowAlert = widget.isCreator && (await settings.isMinBigSur);
+    shouldShowAlert = widget.isCreator && (await ss.isMinBigSur);
   }
 
   void initListener() {
@@ -204,7 +204,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
         if (event.type == MessageBlocEventType.insert && mounted && event.outGoing) {
           final constraints = BoxConstraints(
-            maxWidth: navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: ns.width(context) * MessageWidgetMixin.MAX_SIZE,
             minHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
             maxHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
           );
@@ -228,9 +228,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               (!(event.message?.text?.isEmpty ?? true) || !(event.message?.subject?.isEmpty ?? true))) {
             setState(() {
               tween = Tween<double>(
-                  begin: navigatorService.width(context) - 30,
+                  begin: ns.width(context) - 30,
                   end: min(max(size.width, size2.width) + 68,
-                      navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
+                      ns.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
               controller = Control.play;
               message = event.message;
             });
@@ -287,7 +287,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         } catch (_) {}
       }
 
-      if (chat == null && (await settings.isMinBigSur)) {
+      if (chat == null && (await ss.isMinBigSur)) {
         if (searchQuery.isNotEmpty) {
           selected.add(UniqueContact(address: searchQuery, displayName: searchQuery));
           resetCursor();
@@ -317,7 +317,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       // If the chat is still null, return false
       if (chat == null) return false;
 
-      settings.prefs.setString('lastOpenedChat', chat!.guid);
+      ss.prefs.setString('lastOpenedChat', chat!.guid);
 
       // If the current chat is null, set it
       if (isDifferentChat) {
@@ -406,8 +406,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   Widget buildScrollToBottomFAB(BuildContext context) {
     if (currentChat != null &&
         currentChat!.showScrollDown.value &&
-        (settings.settings.skin.value == Skins.Material ||
-            settings.settings.skin.value == Skins.Samsung)) {
+        (ss.settings.skin.value == Skins.Material ||
+            ss.settings.skin.value == Skins.Samsung)) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 15.0),
         child: FloatingActionButton(
@@ -421,7 +421,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       );
     } else if (currentChat != null &&
         currentChat!.showScrollDown.value &&
-        settings.settings.skin.value == Skins.iOS) {
+        ss.settings.skin.value == Skins.iOS) {
       return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Padding(
           padding: EdgeInsets.only(left: 25.0, bottom: 15),
@@ -481,7 +481,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     );
 
     final Widget child = Actions(
-        actions: isCreator! || !settings.settings.enablePrivateAPI.value || widget.chat == null
+        actions: isCreator! || !ss.settings.enablePrivateAPI.value || widget.chat == null
             ? {}
             : {
                 ReplyRecentIntent: ReplyRecentAction(messageBloc!),
@@ -591,15 +591,15 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                     ),
                     if (widget.onSelect == null)
                       Obx(() {
-                        if (settings.settings.swipeToCloseKeyboard.value ||
-                            settings.settings.swipeToOpenKeyboard.value) {
+                        if (ss.settings.swipeToCloseKeyboard.value ||
+                            ss.settings.swipeToOpenKeyboard.value) {
                           return GestureDetector(
                               onPanUpdate: (details) {
-                                if (settings.settings.swipeToCloseKeyboard.value &&
+                                if (ss.settings.swipeToCloseKeyboard.value &&
                                     details.delta.dy > 0 &&
                                     (currentChat?.keyboardOpen ?? false)) {
                                   EventDispatcher().emit("unfocus-keyboard", null);
-                                } else if (settings.settings.swipeToOpenKeyboard.value &&
+                                } else if (ss.settings.swipeToOpenKeyboard.value &&
                                     details.delta.dy < 0 &&
                                     !(currentChat?.keyboardOpen ?? false)) {
                                   EventDispatcher().emit("focus-keyboard", null);
@@ -674,7 +674,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         ));
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: settings.settings.immersiveMode.value
+        systemNavigationBarColor: ss.settings.immersiveMode.value
             ? Colors.transparent
             : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
@@ -688,10 +688,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             colorScheme: context.theme.colorScheme.copyWith(
               primary: context.theme.colorScheme.bubble(context, chat?.isIMessage ?? true),
               onPrimary: context.theme.colorScheme.onBubble(context, chat?.isIMessage ?? true),
-              surface: settings.settings.monetTheming.value == Monet.full
+              surface: ss.settings.monetTheming.value == Monet.full
                   ? null
                   : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-              onSurface: settings.settings.monetTheming.value == Monet.full
+              onSurface: ss.settings.monetTheming.value == Monet.full
                   ? null
                   : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
             ),
@@ -707,13 +707,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             child: Obx(
               () {
                 final Rx<Color> _backgroundColor =
-                    (settings.settings.windowEffect.value == WindowEffect.disabled
+                    (ss.settings.windowEffect.value == WindowEffect.disabled
                             ? context.theme.colorScheme.background
                             : Colors.transparent)
                         .obs;
 
                 if (kIsDesktop) {
-                  settings.settings.windowEffect.listen((WindowEffect effect) {
+                  ss.settings.windowEffect.listen((WindowEffect effect) {
                     if (mounted) {
                       _backgroundColor.value =
                           effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;

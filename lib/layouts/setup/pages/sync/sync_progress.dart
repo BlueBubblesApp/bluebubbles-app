@@ -73,7 +73,7 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
               )),
               const SizedBox(height: 15),
               Obx(() => Padding(
-                padding: EdgeInsets.symmetric(horizontal: navigatorService.width(context) / 4),
+                padding: EdgeInsets.symmetric(horizontal: ns.width(context) / 4),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: LinearProgressIndicator(
@@ -85,7 +85,7 @@ class _SyncProgressState extends OptimizedState<SyncProgress> {
               )),
               const SizedBox(height: 20),
               SizedBox(
-                width: navigatorService.width(context) * 4 / 5,
+                width: ns.width(context) * 4 / 5,
                 height: context.height * 1 / 3,
                 child: Container(
                   decoration: BoxDecoration(

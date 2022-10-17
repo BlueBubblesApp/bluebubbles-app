@@ -55,7 +55,7 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
     if (participants.isEmpty) {
       return ContactAvatarWidget(
         handle: Handle(address: ''),
-        size: widget.size * settings.settings.avatarScale.value,
+        size: widget.size * ss.settings.avatarScale.value,
         editable: false,
         onTap: widget.onTap,
         scaleSize: false,
@@ -63,11 +63,11 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
     }
 
     return Obx(() {
-        final avatarSize = widget.size * settings.settings.avatarScale.value;
-        final maxAvatars = settings.settings.maxAvatarsInGroupWidget.value;
+        final avatarSize = widget.size * ss.settings.avatarScale.value;
+        final maxAvatars = ss.settings.maxAvatarsInGroupWidget.value;
 
         if (widget.chat.customAvatarPath != null
-            && !(settings.settings.redactedMode.value && settings.settings.hideContactPhotos.value)) {
+            && !(ss.settings.redactedMode.value && ss.settings.hideContactPhotos.value)) {
           dynamic file = File(widget.chat.customAvatarPath!);
           return CircleAvatar(
             key: Key("${participants.first.address}-avatar"),
@@ -126,7 +126,7 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
                                       border: Border.all(color: context.theme.colorScheme.background, width: avatarSize * 0.01)
                                     ),
                                     child: Icon(
-                                      settings.settings.skin.value == Skins.iOS ? CupertinoIcons.group_solid : Icons.people,
+                                      ss.settings.skin.value == Skins.iOS ? CupertinoIcons.group_solid : Icons.people,
                                       size: size * 0.65,
                                       color: context.theme.colorScheme.properOnSurface.withOpacity(0.8),
                                     ),

@@ -278,13 +278,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Widget buildCupertinoTrailing() {
     Color? fontColor = context.theme.colorScheme.onBackground;
     bool manualMark =
-        settings.settings.enablePrivateAPI.value && settings.settings.privateManualMarkAsRead.value;
-    bool showManual = !settings.settings.privateMarkChatAsRead.value && !(widget.chat?.isGroup() ?? false);
+        ss.settings.enablePrivateAPI.value && ss.settings.privateManualMarkAsRead.value;
+    bool showManual = !ss.settings.privateMarkChatAsRead.value && !(widget.chat?.isGroup() ?? false);
     List<Widget> items = [
       if (showManual && manualMark && markingAsRead)
         Padding(
-            padding: EdgeInsets.only(right: settings.settings.colorblindMode.value ? 15.0 : 10.0),
-            child: settings.settings.skin.value == Skins.iOS
+            padding: EdgeInsets.only(right: ss.settings.colorblindMode.value ? 15.0 : 10.0),
+            child: ss.settings.skin.value == Skins.iOS
                 ? Theme(
                     data: ThemeData(
                       cupertinoOverrideTheme: CupertinoThemeData(
@@ -306,7 +306,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     )))),
       if (showManual && manualMark && !markingAsRead)
         Padding(
-          padding: EdgeInsets.only(right: settings.settings.colorblindMode.value ? 10.0 : 5.0),
+          padding: EdgeInsets.only(right: ss.settings.colorblindMode.value ? 10.0 : 5.0),
           child: GestureDetector(
             child: Icon(
               (markedAsRead)
@@ -319,7 +319,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
     ];
 
-    if (settings.settings.showConnectionIndicator.value) {
+    if (ss.settings.showConnectionIndicator.value) {
       items.add(Obx(() => getIndicatorIcon(socket.state.value, size: 12)));
     }
 
@@ -338,9 +338,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     Color? fontColor2 = context.theme.colorScheme.outline;
     String? title = chat!.title;
 
-    final hideTitle = settings.settings.redactedMode.value && settings.settings.hideContactInfo.value;
+    final hideTitle = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
     final generateTitle =
-        settings.settings.redactedMode.value && settings.settings.generateFakeContactNames.value;
+        ss.settings.redactedMode.value && ss.settings.generateFakeContactNames.value;
 
     if (generateTitle) {
       title = chat!.participants.length > 1 ? "Group Chat" : chat!.participants[0].fakeName;
@@ -349,8 +349,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       fontColor2 = Colors.transparent;
     }
 
-    if (settings.settings.skin.value == Skins.Material ||
-        settings.settings.skin.value == Skins.Samsung) {
+    if (ss.settings.skin.value == Skins.Material ||
+        ss.settings.skin.value == Skins.Samsung) {
       return AppBar(
         toolbarHeight: kIsDesktop ? 70 : null,
         systemOverlayStyle:
@@ -377,7 +377,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   title!,
                   style: context.theme.textTheme.titleLarge!.apply(color: fontColor),
                 ),
-                if (settings.settings.skin.value == Skins.Samsung &&
+                if (ss.settings.skin.value == Skins.Samsung &&
                     (chat!.isGroup() || (!title.isPhoneNumber && !title.isEmail)))
                   Text(
                     generateTitle
@@ -418,7 +418,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           Padding(
             padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
             child: Obx(() {
-              if (settings.settings.showConnectionIndicator.value) {
+              if (ss.settings.showConnectionIndicator.value) {
                 return Obx(() => getIndicatorIcon(socket.state.value, size: 12));
               } else {
                 return SizedBox.shrink();
@@ -428,7 +428,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           Padding(
             padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
             child: Obx(() {
-              if (settings.settings.privateManualMarkAsRead.value && markingAsRead) {
+              if (ss.settings.privateManualMarkAsRead.value && markingAsRead) {
                 return Padding(
                     padding: const EdgeInsets.only(right: 8.0),
                     child: Center(
@@ -447,18 +447,18 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           Padding(
             padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
             child: Obx(() {
-              if (settings.settings.enablePrivateAPI.value &&
-                  settings.settings.privateManualMarkAsRead.value &&
+              if (ss.settings.enablePrivateAPI.value &&
+                  ss.settings.privateManualMarkAsRead.value &&
                   !markingAsRead) {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: GestureDetector(
                     child: Icon(
                       (markedAsRead)
-                          ? settings.settings.skin.value == Skins.iOS
+                          ? ss.settings.skin.value == Skins.iOS
                               ? CupertinoIcons.check_mark_circled_solid
                               : Icons.check_circle
-                          : settings.settings.skin.value == Skins.iOS
+                          : ss.settings.skin.value == Skins.iOS
                               ? CupertinoIcons.check_mark_circled
                               : Icons.check_circle_outline,
                       color: (markedAsRead) ? HexColor('43CC47').withAlpha(200) : fontColor,
@@ -500,7 +500,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               padding: const EdgeInsets.only(right: 8.0),
               child: GestureDetector(
                 child: Icon(
-                  settings.settings.skin.value == Skins.iOS
+                  ss.settings.skin.value == Skins.iOS
                       ? CupertinoIcons.ellipsis
                       : Icons.more_vert,
                   color: fontColor,
@@ -609,7 +609,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
         Container(
           constraints: BoxConstraints(
-            maxWidth: navigatorService.width(context) / 2 - 55,
+            maxWidth: ns.width(context) / 2 - 55,
             maxHeight: 20.5
           ),
           child: RichText(
@@ -1131,7 +1131,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildChatSelectorBody() => ClipRRect(
-        borderRadius: settings.settings.skin.value == Skins.Samsung
+        borderRadius: ss.settings.skin.value == Skins.Samsung
             ? BorderRadius.circular(25)
             : BorderRadius.circular(0),
         child: StreamBuilder(
@@ -1144,7 +1144,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               child: Obx(
                 () => ListView.builder(
                   controller: _scrollController,
-                  physics: (settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                  physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                       ? NeverScrollableScrollPhysics()
                       : ThemeSwitcher.getScrollPhysics(),
                   itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
@@ -1163,7 +1163,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       );
 
   Widget buildChatSelectorHeader() => PreferredSize(
-    preferredSize: Size(navigatorService.width(context), 50),
+    preferredSize: Size(ns.width(context), 50),
     child: ClipRRect(
       child: BackdropFilter(
         child: AppBar(
@@ -1179,12 +1179,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             widget.customHeading ?? "New Message",
             style: context.theme.textTheme.titleLarge,
           ),
-          centerTitle: settings.settings.skin.value == Skins.iOS,
+          centerTitle: ss.settings.skin.value == Skins.iOS,
           actions: [
             if (shouldShowAlert)
              IconButton(
               icon: Icon(
-                settings.settings.skin.value == Skins.iOS
+                ss.settings.skin.value == Skins.iOS
                     ? CupertinoIcons.exclamationmark_circle
                     : Icons.error_outline,
                 size: 20,

@@ -25,8 +25,8 @@ class DesktopPanel extends StatefulWidget {
 
 class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers {
   final RxList<bool> showButtons = RxList<bool>.filled(ReactionTypes.toList().length + 1, false);
-  final RxnBool useCustomPath = RxnBool(settings.prefs.getBool("use-custom-path"));
-  final RxnString customPath = RxnString(settings.prefs.getString("custom-path"));
+  final RxnBool useCustomPath = RxnBool(ss.prefs.getBool("use-custom-path"));
+  final RxnString customPath = RxnString(ss.prefs.getString("custom-path"));
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +46,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                 children: [
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) async {
-                      settings.settings.launchAtStartup.value = val;
+                      ss.settings.launchAtStartup.value = val;
                       saveSettings();
                       if (val) {
                         await LaunchAtStartup.enable();
@@ -54,7 +54,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                         await LaunchAtStartup.disable();
                       }
                     },
-                    initialVal: settings.settings.launchAtStartup.value,
+                    initialVal: ss.settings.launchAtStartup.value,
                     title: "Launch on Startup",
                     subtitle: "Automatically open the desktop app on startup.",
                     backgroundColor: tileColor,
@@ -62,23 +62,23 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                   if (Platform.isLinux)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) async {
-                        settings.settings.useCustomTitleBar.value = val;
+                        ss.settings.useCustomTitleBar.value = val;
                         saveSettings();
                       },
-                      initialVal: settings.settings.useCustomTitleBar.value,
+                      initialVal: ss.settings.useCustomTitleBar.value,
                       title: "Use Custom TitleBar",
                       subtitle:
                           "Enable the custom titlebar. This is necessary on non-GNOME systems, and will not look good on GNOME systems. This is also necessary for 'Close to Tray' and 'Minimize to Tray' to work correctly.",
                       backgroundColor: tileColor,
                     )),
                   Obx(() {
-                    if (settings.settings.useCustomTitleBar.value || !Platform.isLinux) {
+                    if (ss.settings.useCustomTitleBar.value || !Platform.isLinux) {
                       return SettingsSwitch(
                         onChanged: (bool val) async {
-                          settings.settings.minimizeToTray.value = val;
+                          ss.settings.minimizeToTray.value = val;
                           saveSettings();
                         },
-                        initialVal: settings.settings.minimizeToTray.value,
+                        initialVal: ss.settings.minimizeToTray.value,
                         title: "Minimize to Tray",
                         subtitle:
                             "When enabled, clicking the minimize button will minimize the app to the system tray",
@@ -88,13 +88,13 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                     return const SizedBox.shrink();
                   }),
                   Obx(() {
-                    if (settings.settings.useCustomTitleBar.value || !Platform.isLinux) {
+                    if (ss.settings.useCustomTitleBar.value || !Platform.isLinux) {
                       return SettingsSwitch(
                         onChanged: (bool val) async {
-                          settings.settings.closeToTray.value = val;
+                          ss.settings.closeToTray.value = val;
                           saveSettings();
                         },
-                        initialVal: settings.settings.closeToTray.value,
+                        initialVal: ss.settings.closeToTray.value,
                         title: "Close to Tray",
                         subtitle: "When enabled, clicking the close button will minimize the app to the system tray",
                         backgroundColor: tileColor,
@@ -115,23 +115,23 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                 backgroundColor: tileColor,
                 children: [
                   SettingsSwitch(
-                    initialVal: settings.settings.betterScrolling.value,
+                    initialVal: ss.settings.betterScrolling.value,
                     onChanged: (bool val) async {
-                      settings.settings.betterScrolling.value = val;
+                      ss.settings.betterScrolling.value = val;
                       saveSettings();
                     },
                     title: "Improve Mouse Wheel Scrolling",
                     subtitle: "Enabling this setting will break touch scrolling and degrade trackpad scrolling.",
                   ),
-                  if (settings.settings.betterScrolling.value)
+                  if (ss.settings.betterScrolling.value)
                     SettingsSlider(
                       leading: Text("Multiplier"),
                       max: 14.0,
                       min: 4.0,
                       divisions: 20,
-                      startingVal: settings.settings.betterScrollingMultiplier.value,
+                      startingVal: ss.settings.betterScrollingMultiplier.value,
                       update: (double val) {
-                        settings.settings.betterScrollingMultiplier.value = val;
+                        ss.settings.betterScrollingMultiplier.value = val;
                       },
                       onChangeEnd: (double val) {
                         saveSettings();
@@ -175,28 +175,28 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                                       buildDraggableFeedback: (context, constraints, child) => AnimatedScale(
                                           duration: Duration(milliseconds: 250), scale: 1.1, child: child),
                                       onReorder: (int oldIndex, int newIndex) {
-                                        List<String> selected = settings
+                                        List<String> selected = ss
                                             .settings
                                             .selectedActionIndices
-                                            .map((index) => settings.settings.actionList[index])
+                                            .map((index) => ss.settings.actionList[index])
                                             .toList();
-                                        String? temp = settings.settings.actionList[oldIndex];
+                                        String? temp = ss.settings.actionList[oldIndex];
                                         // If dragging to the right
                                         for (int i = oldIndex; i <= newIndex - 1; i++) {
-                                          settings.settings.actionList[i] =
-                                              settings.settings.actionList[i + 1];
+                                          ss.settings.actionList[i] =
+                                              ss.settings.actionList[i + 1];
                                         }
                                         // If dragging to the left
                                         for (int i = oldIndex; i >= newIndex + 1; i--) {
-                                          settings.settings.actionList[i] =
-                                              settings.settings.actionList[i - 1];
+                                          ss.settings.actionList[i] =
+                                              ss.settings.actionList[i - 1];
                                         }
-                                        settings.settings.actionList[newIndex] = temp;
+                                        ss.settings.actionList[newIndex] = temp;
 
                                         List<int> selectedIndices = selected
-                                            .map((s) => settings.settings.actionList.indexOf(s))
+                                            .map((s) => ss.settings.actionList.indexOf(s))
                                             .toList();
-                                        settings.settings.selectedActionIndices.value = selectedIndices;
+                                        ss.settings.selectedActionIndices.value = selectedIndices;
                                       },
                                       children: List.generate(
                                         ReactionTypes.toList().length + 1,
@@ -207,15 +207,15 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                                           child: Obx(
                                             () {
                                               bool selected =
-                                                  settings.settings.selectedActionIndices.contains(index);
+                                                  ss.settings.selectedActionIndices.contains(index);
 
-                                              String value = settings.settings.actionList[index];
+                                              String value = ss.settings.actionList[index];
 
-                                              bool disabled = (!settings.settings.enablePrivateAPI.value &&
+                                              bool disabled = (!ss.settings.enablePrivateAPI.value &&
                                                   value != "Mark Read");
 
                                               bool hardDisabled = (!selected &&
-                                                  (settings.settings.selectedActionIndices.length == 5));
+                                                  (ss.settings.selectedActionIndices.length == 5));
 
                                               Color color = selected
                                                   ? context.theme.colorScheme.primary
@@ -228,11 +228,11 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                                                   behavior: HitTestBehavior.translucent,
                                                   onTap: () {
                                                     if (hardDisabled) return;
-                                                    if (!settings
+                                                    if (!ss
                                                         .settings
                                                         .selectedActionIndices
                                                         .remove(index)) {
-                                                      settings.settings.selectedActionIndices.add(index);
+                                                      ss.settings.selectedActionIndices.add(index);
                                                     }
                                                   },
                                                   child: AnimatedContainer(
@@ -288,27 +288,27 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                         Obx(
                           () {
                             context.width;
-                            navigatorService.listener.value;
-                            double width = min(navigatorService.width(context) / 2, 400);
+                            ns.listener.value;
+                            double width = min(ns.width(context) / 2, 400);
                             return Container(
-                              width: navigatorService.width(context) > 1500
+                              width: ns.width(context) > 1500
                                   ? 800
-                                  : min(navigatorService.width(context) / 2, 400),
+                                  : min(ns.width(context) / 2, 400),
                               child: Wrap(
                                 alignment: WrapAlignment.center,
                                 runAlignment: WrapAlignment.center,
                                 children: [
                                   Obx(() {
-                                    int markReadIndex = settings.settings.actionList.indexOf("Mark Read");
-                                    Iterable<int> actualIndices = settings
+                                    int markReadIndex = ss.settings.actionList.indexOf("Mark Read");
+                                    Iterable<int> actualIndices = ss
                                         .settings
                                         .selectedActionIndices
                                         .where((s) =>
-                                            settings.settings.enablePrivateAPI.value || s == markReadIndex);
+                                            ss.settings.enablePrivateAPI.value || s == markReadIndex);
                                     int numActions = actualIndices.length;
                                     bool showMarkRead =
-                                        settings.settings.selectedActionIndices.contains(markReadIndex);
-                                    navigatorService.listener.value;
+                                        ss.settings.selectedActionIndices.contains(markReadIndex);
+                                    ns.listener.value;
                                     context.width;
                                     double margin = 20;
                                     double size = width - 2 * margin;
@@ -388,19 +388,19 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                                             ),
                                           ),
                                           ...List.generate(
-                                            settings.settings.actionList.length,
+                                            ss.settings.actionList.length,
                                             (index) => (!actualIndices.contains(index))
                                                 ? null
                                                 : Obx(
                                                     () {
                                                       context.width;
-                                                      int _index = settings
+                                                      int _index = ss
                                                           .settings
                                                           .actionList
                                                           .whereIndexed(
                                                               (index, element) => actualIndices.contains(index))
                                                           .toList()
-                                                          .indexOf(settings.settings.actionList[index]);
+                                                          .indexOf(ss.settings.actionList[index]);
                                                       return Positioned(
                                                         bottom: size * 0.04,
                                                         left: size * 0.04 +
@@ -428,9 +428,9 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                                                           child: Center(
                                                             child: Text(
                                                               index == markReadIndex
-                                                                  ? settings.settings.actionList[index]
+                                                                  ? ss.settings.actionList[index]
                                                                   : ReactionTypes.reactionToEmoji[
-                                                                      settings.settings.actionList[index]]!,
+                                                                      ss.settings.actionList[index]]!,
                                                               style: context.textTheme.bodyMedium!
                                                                   .copyWith(fontSize: size * 0.037),
                                                               textAlign: TextAlign.center,
@@ -446,19 +446,19 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                                     );
                                   }),
                                   Obx(() {
-                                    int markReadIndex = settings.settings.actionList.indexOf("Mark Read");
-                                    Iterable<int> actualIndices = settings
+                                    int markReadIndex = ss.settings.actionList.indexOf("Mark Read");
+                                    Iterable<int> actualIndices = ss
                                         .settings
                                         .selectedActionIndices
                                         .where((s) =>
-                                            settings.settings.enablePrivateAPI.value || s == markReadIndex);
+                                            ss.settings.enablePrivateAPI.value || s == markReadIndex);
                                     int numActions = actualIndices.length;
                                     bool showMarkRead =
-                                        settings.settings.selectedActionIndices.contains(markReadIndex);
+                                        ss.settings.selectedActionIndices.contains(markReadIndex);
                                     if (numActions <= (showMarkRead ? 1 : 0)) {
                                       return SizedBox.shrink();
                                     }
-                                    navigatorService.listener.value;
+                                    ns.listener.value;
                                     context.width;
                                     double margin = 20;
                                     double size = width - 2 * margin;
@@ -581,8 +581,8 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) async {
                       useCustomPath.value = val;
-                      if ((!val && settings.prefs.getString("custom-path") != customPath.value) ||
-                          settings.prefs.getBool("use-custom-path") == true) {
+                      if ((!val && ss.prefs.getString("custom-path") != customPath.value) ||
+                          ss.prefs.getBool("use-custom-path") == true) {
                         await showDialog(
                           barrierDismissible: false,
                           context: context,
@@ -608,12 +608,12 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                                   onPressed: () async {
                                     await DBProvider.deleteDB();
                                     socket.forgetConnection();
-                                    settings.settings = Settings();
-                                    settings.fcmData = FCMData();
-                                    await settings.prefs.clear();
-                                    await settings.prefs.setString("selected-dark", "OLED Dark");
-                                    await settings.prefs.setString("selected-light", "Bright White");
-                                    await settings.prefs.setBool("use-custom-path", val);
+                                    ss.settings = Settings();
+                                    ss.fcmData = FCMData();
+                                    await ss.prefs.clear();
+                                    await ss.prefs.setString("selected-dark", "OLED Dark");
+                                    await ss.prefs.setString("selected-light", "Bright White");
+                                    await ss.prefs.setBool("use-custom-path", val);
                                     await WindowManager.instance.close();
                                   },
                                 ),
@@ -631,7 +631,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                     ? SettingsTile(
                         title: "Set Custom Path",
                         subtitle:
-                            "Custom Path: ${settings.prefs.getBool('use-custom-path') == true ? customPath.value ?? "" : ""}",
+                            "Custom Path: ${ss.prefs.getBool('use-custom-path') == true ? customPath.value ?? "" : ""}",
                         trailing: TextButton(
                           onPressed: () async {
                             String? path = await FilePicker.platform
@@ -640,7 +640,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                               showSnackbar("Notice", "You did not select a folder!");
                               return;
                             }
-                            if (settings.prefs.getBool("use-custom-path") == true && path == customPath.value) {
+                            if (ss.prefs.getBool("use-custom-path") == true && path == customPath.value) {
                               return;
                             }
                             await showDialog(
@@ -668,13 +668,13 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                                         customPath.value = path;
                                         await DBProvider.deleteDB();
                                         socket.forgetConnection();
-                                        settings.settings = Settings();
-                                        settings.fcmData = FCMData();
-                                        await settings.prefs.clear();
-                                        await settings.prefs.setString("selected-dark", "OLED Dark");
-                                        await settings.prefs.setString("selected-light", "Bright White");
-                                        await settings.prefs.setBool("use-custom-path", true);
-                                        await settings.prefs.setString("custom-path", path);
+                                        ss.settings = Settings();
+                                        ss.fcmData = FCMData();
+                                        await ss.prefs.clear();
+                                        await ss.prefs.setString("selected-dark", "OLED Dark");
+                                        await ss.prefs.setString("selected-light", "Bright White");
+                                        await ss.prefs.setBool("use-custom-path", true);
+                                        await ss.prefs.setString("custom-path", path);
                                         await WindowManager.instance.close();
                                       },
                                     ),
@@ -699,6 +699,6 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
   }
 
   void saveSettings() {
-    settings.saveSettings();
+    ss.saveSettings();
   }
 }

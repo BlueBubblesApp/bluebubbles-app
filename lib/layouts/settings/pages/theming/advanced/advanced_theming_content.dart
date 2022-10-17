@@ -55,9 +55,9 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
           allThemes.add(newTheme);
           currentTheme = newTheme;
           if (widget.isDarkMode) {
-            themes.changeTheme(_context, dark: currentTheme);
+            ts.changeTheme(_context, dark: currentTheme);
           } else {
-            themes.changeTheme(_context, light: currentTheme);
+            ts.changeTheme(_context, light: currentTheme);
           }
         })
       );
@@ -66,7 +66,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
 
   @override
   Widget build(BuildContext context) {
-    editable = !currentTheme.isPreset && settings.settings.monetTheming.value == Monet.none;
+    editable = !currentTheme.isPreset && ss.settings.monetTheming.value == Monet.none;
     final length = currentTheme
         .colors(widget.isDarkMode, returnMaterialYou: false).keys
         .where((e) => e != "outline").length ~/ 2 + 1;
@@ -169,30 +169,30 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
 
                 if (value.name == "Music Theme ☀" || value.name == "Music Theme 🌙") {
                   // disable monet theming if music theme enabled
-                  settings.settings.monetTheming.value = Monet.none;
-                  settings.saveSettings(settings.settings);
+                  ss.settings.monetTheming.value = Monet.none;
+                  ss.saveSettings(ss.settings);
                   await MethodChannelInterface().invokeMethod("request-notif-permission");
                   try {
                     await MethodChannelInterface().invokeMethod("start-notif-listener");
-                    settings.settings.colorsFromMedia.value = true;
-                    settings.saveSettings(settings.settings);
+                    ss.settings.colorsFromMedia.value = true;
+                    ss.saveSettings(ss.settings);
                   } catch (e) {
                     showSnackbar("Error",
                         "Something went wrong, please ensure you granted the permission correctly!");
                     return;
                   }
                 } else {
-                  settings.settings.colorsFromMedia.value = false;
-                  settings.saveSettings(settings.settings);
+                  ss.settings.colorsFromMedia.value = false;
+                  ss.saveSettings(ss.settings);
                 }
 
                 if (value.name == "Music Theme ☀" || value.name == "Music Theme 🌙") {
                   var allThemes = ThemeStruct.getThemes();
                   var currentLight = ThemeStruct.getLightTheme();
                   var currentDark = ThemeStruct.getDarkTheme();
-                  settings.prefs.setString("previous-light", currentLight.name);
-                  settings.prefs.setString("previous-dark", currentDark.name);
-                  themes.changeTheme(
+                  ss.prefs.setString("previous-light", currentLight.name);
+                  ss.prefs.setString("previous-dark", currentDark.name);
+                  ts.changeTheme(
                       context,
                       light: allThemes.firstWhere((element) => element.name == "Music Theme ☀"),
                       dark: allThemes.firstWhere((element) => element.name == "Music Theme 🌙")
@@ -200,16 +200,16 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                 } else if (currentTheme.name == "Music Theme ☀" ||
                     currentTheme.name == "Music Theme 🌙") {
                   if (!widget.isDarkMode) {
-                    ThemeStruct previousDark = themes.revertToPreviousDarkTheme();
-                    themes.changeTheme(context, light: value, dark: previousDark);
+                    ThemeStruct previousDark = ts.revertToPreviousDarkTheme();
+                    ts.changeTheme(context, light: value, dark: previousDark);
                   } else {
-                    ThemeStruct previousLight = themes.revertToPreviousLightTheme();
-                    themes.changeTheme(context, light: previousLight, dark: value);
+                    ThemeStruct previousLight = ts.revertToPreviousLightTheme();
+                    ts.changeTheme(context, light: previousLight, dark: value);
                   }
                 } else if (widget.isDarkMode) {
-                  themes.changeTheme(context, dark: value);
+                  ts.changeTheme(context, dark: value);
                 } else {
-                  themes.changeTheme(context, light: value);
+                  ts.changeTheme(context, light: value);
                 }
                 currentTheme = value;
                 editable = !currentTheme.isPreset;
@@ -225,9 +225,9 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
               currentTheme.gradientBg = val;
               currentTheme.save();
               if (widget.isDarkMode) {
-                themes.changeTheme(context, dark: currentTheme);
+                ts.changeTheme(context, dark: currentTheme);
               } else {
-                themes.changeTheme(context, light: currentTheme);
+                ts.changeTheme(context, light: currentTheme);
               }
             },
             initialVal: currentTheme.gradientBg,
@@ -243,7 +243,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
               unlimitedSpace: true,
             )
           ),
-          if (settings.settings.monetTheming.value != Monet.none)
+          if (ss.settings.monetTheming.value != Monet.none)
             SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 8.0),
@@ -289,7 +289,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
               childCount: length,
             ),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: kIsDesktop ? (navigatorService.width(context) / 150).floor() : 2,
+              crossAxisCount: kIsDesktop ? (ns.width(context) / 150).floor() : 2,
             ),
           ),
           SliverPadding(
@@ -315,10 +315,10 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                     map["data"]["textTheme"][currentTheme.textSizes.keys.toList()[index]]['fontSize'] = ThemeStruct.defaultTextSizes.values.toList()[index] * val;
                     currentTheme.data = ThemeStruct.fromMap(map).data;
                     currentTheme.save();
-                    if (currentTheme.name == settings.prefs.getString("selected-dark")) {
-                      themes.changeTheme(context, dark: currentTheme);
-                    } else if (currentTheme.name == settings.prefs.getString("selected-light")) {
-                      themes.changeTheme(context, light: currentTheme);
+                    if (currentTheme.name == ss.prefs.getString("selected-dark")) {
+                      ts.changeTheme(context, dark: currentTheme);
+                    } else if (currentTheme.name == ss.prefs.getString("selected-light")) {
+                      ts.changeTheme(context, light: currentTheme);
                     }
                   },
                   backgroundColor: tileColor,
@@ -347,12 +347,12 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                     allThemes.removeWhere((element) => element == currentTheme);
                     currentTheme.delete();
                     currentTheme =
-                      widget.isDarkMode ? themes.revertToPreviousDarkTheme() : themes.revertToPreviousLightTheme();
+                      widget.isDarkMode ? ts.revertToPreviousDarkTheme() : ts.revertToPreviousLightTheme();
                     allThemes = ThemeStruct.getThemes();
                     if (widget.isDarkMode) {
-                      themes.changeTheme(context, dark: currentTheme);
+                      ts.changeTheme(context, dark: currentTheme);
                     } else {
-                      themes.changeTheme(context, light: currentTheme);
+                      ts.changeTheme(context, light: currentTheme);
                     }
                     setState(() {});
                   },

@@ -12,16 +12,16 @@ class SettingsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: settings.settings.skin.value == Skins.iOS
+      padding: ss.settings.skin.value == Skins.iOS
           ? const EdgeInsets.symmetric(horizontal: 10)
-          : settings.settings.skin.value == Skins.Samsung
+          : ss.settings.skin.value == Skins.Samsung
           ? const EdgeInsets.symmetric(vertical: 5)
           : EdgeInsets.zero,
       child: ClipRRect(
         borderRadius:
-        settings.settings.skin.value == Skins.Samsung ? BorderRadius.circular(25) :
-        settings.settings.skin.value == Skins.iOS ? BorderRadius.circular(10) : BorderRadius.circular(0),
-        clipBehavior: settings.settings.skin.value != Skins.Material ? Clip.antiAlias : Clip.none,
+        ss.settings.skin.value == Skins.Samsung ? BorderRadius.circular(25) :
+        ss.settings.skin.value == Skins.iOS ? BorderRadius.circular(10) : BorderRadius.circular(0),
+        clipBehavior: ss.settings.skin.value != Skins.Material ? Clip.antiAlias : Clip.none,
         child: Container(
           color: backgroundColor,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: children),

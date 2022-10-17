@@ -37,7 +37,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
 
   @override
   Widget build(BuildContext context) {
-    bool hide = settings.settings.redactedMode.value && settings.settings.hideReactions.value;
+    bool hide = ss.settings.redactedMode.value && ss.settings.hideReactions.value;
     if (hide) return Container();
 
     return Column(

@@ -70,12 +70,12 @@ class FCMData {
 
   static void deleteFcmData() {
     fcmDataBox.removeAll();
-    settings.prefs.remove('projectID');
-    settings.prefs.remove('storageBucket');
-    settings.prefs.remove('apiKey');
-    settings.prefs.remove('firebaseURL');
-    settings.prefs.remove('clientID');
-    settings.prefs.remove('applicationID');
+    ss.prefs.remove('projectID');
+    ss.prefs.remove('storageBucket');
+    ss.prefs.remove('apiKey');
+    ss.prefs.remove('firebaseURL');
+    ss.prefs.remove('clientID');
+    ss.prefs.remove('applicationID');
   }
 
   static Future<void> initializeFirebase(FCMData data) async {
@@ -94,12 +94,12 @@ class FCMData {
     final result = fcmDataBox.getAll();
     if (result.isEmpty) {
       return FCMData(
-        projectID: settings.prefs.getString('projectID'),
-        storageBucket: settings.prefs.getString('storageBucket'),
-        apiKey: settings.prefs.getString('apiKey'),
-        firebaseURL: settings.prefs.getString('firebaseURL'),
-        clientID: settings.prefs.getString('clientID'),
-        applicationID: settings.prefs.getString('applicationID'),
+        projectID: ss.prefs.getString('projectID'),
+        storageBucket: ss.prefs.getString('storageBucket'),
+        apiKey: ss.prefs.getString('apiKey'),
+        firebaseURL: ss.prefs.getString('firebaseURL'),
+        clientID: ss.prefs.getString('clientID'),
+        applicationID: ss.prefs.getString('applicationID'),
       );
     }
     return result.first;

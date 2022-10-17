@@ -60,22 +60,22 @@ class FCMData {
 
   FCMData save() {
     if (isNull) return this;
-    settings.prefs.setString('projectID', projectID!);
-    settings.prefs.setString('storageBucket', storageBucket!);
-    settings.prefs.setString('apiKey', apiKey!);
-    settings.prefs.setString('firebaseURL', firebaseURL!);
-    settings.prefs.setString('clientID', clientID!);
-    settings.prefs.setString('applicationID', applicationID!);
+    ss.prefs.setString('projectID', projectID!);
+    ss.prefs.setString('storageBucket', storageBucket!);
+    ss.prefs.setString('apiKey', apiKey!);
+    ss.prefs.setString('firebaseURL', firebaseURL!);
+    ss.prefs.setString('clientID', clientID!);
+    ss.prefs.setString('applicationID', applicationID!);
     return this;
   }
 
   static void deleteFcmData() {
-    settings.prefs.remove('projectID');
-    settings.prefs.remove('storageBucket');
-    settings.prefs.remove('apiKey');
-    settings.prefs.remove('firebaseURL');
-    settings.prefs.remove('clientID');
-    settings.prefs.remove('applicationID');
+    ss.prefs.remove('projectID');
+    ss.prefs.remove('storageBucket');
+    ss.prefs.remove('apiKey');
+    ss.prefs.remove('firebaseURL');
+    ss.prefs.remove('clientID');
+    ss.prefs.remove('applicationID');
   }
 
   static Future<void> initializeFirebase(FCMData data) async {
@@ -92,12 +92,12 @@ class FCMData {
 
   static FCMData getFCM() {
     return FCMData(
-      projectID: settings.prefs.getString('projectID'),
-      storageBucket: settings.prefs.getString('storageBucket'),
-      apiKey: settings.prefs.getString('apiKey'),
-      firebaseURL: settings.prefs.getString('firebaseURL'),
-      clientID: settings.prefs.getString('clientID'),
-      applicationID: settings.prefs.getString('applicationID'),
+      projectID: ss.prefs.getString('projectID'),
+      storageBucket: ss.prefs.getString('storageBucket'),
+      apiKey: ss.prefs.getString('apiKey'),
+      firebaseURL: ss.prefs.getString('firebaseURL'),
+      clientID: ss.prefs.getString('clientID'),
+      applicationID: ss.prefs.getString('applicationID'),
     );
   }
 

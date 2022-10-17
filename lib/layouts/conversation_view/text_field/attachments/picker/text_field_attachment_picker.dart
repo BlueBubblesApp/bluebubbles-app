@@ -169,7 +169,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
-                                              settings.settings.skin.value == Skins.iOS ? CupertinoIcons.folder_open : Icons.folder_open,
+                                              ss.settings.skin.value == Skins.iOS ? CupertinoIcons.folder_open : Icons.folder_open,
                                               color: context.theme.colorScheme.properOnSurface,
                                             ),
                                           ),
@@ -208,7 +208,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
-                                              settings.settings.skin.value == Skins.iOS ? CupertinoIcons.location : Icons.location_on,
+                                              ss.settings.skin.value == Skins.iOS ? CupertinoIcons.location : Icons.location_on,
                                               color: context.theme.colorScheme.properOnSurface,
                                             ),
                                           ),
@@ -256,7 +256,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
-                                              settings.settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
+                                              ss.settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
                                               color: context.theme.colorScheme.properOnSurface,
                                             ),
                                           ),
@@ -295,7 +295,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
-                                              settings.settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam,
+                                              ss.settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam,
                                               color: context.theme.colorScheme.properOnSurface,
                                             ),
                                           ),

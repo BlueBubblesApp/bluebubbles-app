@@ -49,37 +49,37 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
         });
         final rect = event['data']['size'];
         if (screenSelected == "fireworks" && !fireworkController.isPlaying) {
-          fireworkController.windowSize = Size(navigatorService.width(context), context.height);
+          fireworkController.windowSize = Size(ns.width(context), context.height);
           fireworkController.start();
           await Future.delayed(Duration(seconds: 1));
           fireworkController.stop();
         } else if (screenSelected == "celebration" && !celebrationController.isPlaying) {
-          celebrationController.windowSize = Size(navigatorService.width(context), context.height);
+          celebrationController.windowSize = Size(ns.width(context), context.height);
           celebrationController.start();
           await Future.delayed(Duration(seconds: 1));
           celebrationController.stop();
         } else if (screenSelected == "balloons" && !balloonController.isPlaying) {
-          balloonController.windowSize = Size(navigatorService.width(context), context.height);
+          balloonController.windowSize = Size(ns.width(context), context.height);
           balloonController.start();
           await Future.delayed(Duration(seconds: 1));
           balloonController.stop();
         } else if (screenSelected == "love" && !loveController.isPlaying) {
           if (rect != null) {
-            loveController.windowSize = Size(navigatorService.width(context), context.height);
+            loveController.windowSize = Size(ns.width(context), context.height);
             loveController.start(Point((rect!.left + rect!.right) / 2, (rect!.top + rect!.bottom) / 2));
             await Future.delayed(Duration(seconds: 1));
             loveController.stop();
           }
         } else if (screenSelected == "spotlight" && !spotlightController.isPlaying) {
           if (rect != null) {
-            spotlightController.windowSize = Size(navigatorService.width(context), context.height);
+            spotlightController.windowSize = Size(ns.width(context), context.height);
             spotlightController.start(rect!);
             await Future.delayed(Duration(seconds: 1));
             spotlightController.stop();
           }
         } else if (screenSelected == "lasers" && !laserController.isPlaying) {
           if (rect != null) {
-            laserController.windowSize = Size(navigatorService.width(context), context.height);
+            laserController.windowSize = Size(ns.width(context), context.height);
             laserController.start(rect!);
             await Future.delayed(Duration(seconds: 1));
             laserController.stop();
@@ -96,13 +96,13 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
   Widget build(BuildContext context) {
     Future.delayed(Duration.zero, () {
       if (!createdControllers) {
-        fireworkController = FireworkController(vsync: this, windowSize: Size(navigatorService.width(context), context.height));
-        celebrationController = CelebrationController(vsync: this, windowSize: Size(navigatorService.width(context), context.height));
+        fireworkController = FireworkController(vsync: this, windowSize: Size(ns.width(context), context.height));
+        celebrationController = CelebrationController(vsync: this, windowSize: Size(ns.width(context), context.height));
         confettiController = ConfettiController(duration: Duration(seconds: 1));
-        balloonController = BalloonController(vsync: this, windowSize: Size(navigatorService.width(context), context.height));
-        loveController = LoveController(vsync: this, windowSize: Size(navigatorService.width(context), context.height));
-        spotlightController = SpotlightController(vsync: this, windowSize: Size(navigatorService.width(context), context.height));
-        laserController = LaserController(vsync: this, windowSize: Size(navigatorService.width(context), context.height));
+        balloonController = BalloonController(vsync: this, windowSize: Size(ns.width(context), context.height));
+        loveController = LoveController(vsync: this, windowSize: Size(ns.width(context), context.height));
+        spotlightController = SpotlightController(vsync: this, windowSize: Size(ns.width(context), context.height));
+        laserController = LaserController(vsync: this, windowSize: Size(ns.width(context), context.height));
         createdControllers = true;
       }
     });

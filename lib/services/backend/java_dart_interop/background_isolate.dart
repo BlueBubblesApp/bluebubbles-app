@@ -27,7 +27,7 @@ backgroundIsolateEntrypoint() async {
   MethodChannel _backgroundChannel = MethodChannel("com.bluebubbles.messaging");
   WidgetsFlutterBinding.ensureInitialized();
   await fs.init();
-  await settings.init(headless: true);
+  await ss.init(headless: true);
   Directory objectBoxDirectory = Directory(join(fs.appDocDir.path, 'objectbox'));
   final sqlitePath = join(fs.appDocDir.path, "chat.db");
 
@@ -66,7 +66,7 @@ backgroundIsolateEntrypoint() async {
     s.stop();
     debugPrint("Migrated in ${s.elapsedMilliseconds} ms");
   } else {
-    if (await File(sqlitePath).exists() && settings.prefs.getBool('objectbox-migration') != true) {
+    if (await File(sqlitePath).exists() && ss.prefs.getBool('objectbox-migration') != true) {
       runApp(UpgradingDB());
       debugPrint("Converting sqflite to ObjectBox...");
       Stopwatch s = Stopwatch();

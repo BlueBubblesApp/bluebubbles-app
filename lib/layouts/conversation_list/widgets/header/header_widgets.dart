@@ -48,7 +48,7 @@ class SyncIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (!settings.settings.showSyncIndicator.value
+      if (!ss.settings.showSyncIndicator.value
           || !sync.isIncrementalSyncing.value) {
         return const SizedBox.shrink();
       }
@@ -63,12 +63,12 @@ class ConnectionIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (!settings.settings.showConnectionIndicator.value) {
+      if (!ss.settings.showConnectionIndicator.value) {
         return const SizedBox.shrink();
       }
       return Padding(
         padding: EdgeInsets.only(
-          right: settings.settings.skin.value != Skins.Material ? 10 : 0
+          right: ss.settings.skin.value != Skins.Material ? 10 : 0
         ),
         child: getIndicatorIcon(socket.state.value, size: 12),
       );
@@ -83,7 +83,7 @@ class OverflowMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() => PopupMenuButton<int>(
       color: context.theme.colorScheme.properSurface,
-      shape: settings.settings.skin.value != Skins.Material ? RoundedRectangleBorder(
+      shape: ss.settings.skin.value != Skins.Material ? RoundedRectangleBorder(
         borderRadius: BorderRadius.all(
           Radius.circular(20.0),
         ),
@@ -92,7 +92,7 @@ class OverflowMenu extends StatelessWidget {
         if (value == 0) {
           ChatBloc().markAllAsRead();
         } else if (value == 1) {
-          navigatorService.pushLeft(
+          ns.pushLeft(
             context,
             ConversationList(
               showArchivedChats: true,
@@ -108,7 +108,7 @@ class OverflowMenu extends StatelessWidget {
             ),
           );
         } else if (value == 3) {
-          navigatorService.pushLeft(
+          ns.pushLeft(
             context,
             ConversationList(
               showArchivedChats: false,
@@ -138,13 +138,13 @@ class OverflowMenu extends StatelessWidget {
                     onPressed: () async {
                       await DBProvider.deleteDB();
                       socket.forgetConnection();
-                      settings.settings = Settings();
-                      settings.fcmData = FCMData();
-                      await settings.prefs.clear();
-                      await settings.prefs.setString("selected-dark", "OLED Dark");
-                      await settings.prefs.setString("selected-light", "Bright White");
-                      themeBox.putMany(themes.defaultThemes);
-                      themes.changeTheme(context);
+                      ss.settings = Settings();
+                      ss.fcmData = FCMData();
+                      await ss.prefs.clear();
+                      await ss.prefs.setString("selected-dark", "OLED Dark");
+                      await ss.prefs.setString("selected-light", "Bright White");
+                      themeBox.putMany(ts.defaultThemes);
+                      ts.changeTheme(context);
                       Get.offAll(() => WillPopScope(
                         onWillPop: () async => false,
                         child: TitleBarWrapper(child: SetupView()),
@@ -173,7 +173,7 @@ class OverflowMenu extends StatelessWidget {
               style: context.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
             ),
           ),
-          if (settings.settings.filterUnknownSenders.value)
+          if (ss.settings.filterUnknownSenders.value)
             PopupMenuItem(
               value: 3,
               child: Text(
@@ -197,12 +197,12 @@ class OverflowMenu extends StatelessWidget {
                 ))
         ];
       },
-      icon: settings.settings.skin.value == Skins.Material ? Icon(
+      icon: ss.settings.skin.value == Skins.Material ? Icon(
         Icons.more_vert,
         color: context.theme.colorScheme.onBackground,
         size: 25,
       ) : null,
-      child: settings.settings.skin.value == Skins.Material
+      child: ss.settings.skin.value == Skins.Material
         ? null
         : ThemeSwitcher(
             iOSSkin: Container(

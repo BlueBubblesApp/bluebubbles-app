@@ -30,9 +30,9 @@ class ScrollbarWrapper extends StatelessWidget {
         borderColor: context.textTheme.headlineMedium!.color!,
       ),
     ),
-    enableCustomMouseWheelScrolling: settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb),
+    enableCustomMouseWheelScrolling: ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb),
     customMouseWheelScrollConfig: CustomMouseWheelScrollConfig(
-      scrollAmountMultiplier: (reverse ? -1 : 1) * settings.settings.betterScrollingMultiplier.value,
+      scrollAmountMultiplier: (reverse ? -1 : 1) * ss.settings.betterScrollingMultiplier.value,
       scrollDuration: Duration(milliseconds: 140),
       mouseWheelTurnsThrottleTimeMs: 35,
     ),

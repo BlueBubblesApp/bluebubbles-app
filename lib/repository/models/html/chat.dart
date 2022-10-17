@@ -212,12 +212,12 @@ class Chat {
   }
 
   bool shouldMuteNotification(Message? message) {
-    if (settings.settings.filterUnknownSenders.value &&
+    if (ss.settings.filterUnknownSenders.value &&
         participants.length == 1 &&
         participants[0].contact == null) {
       return true;
-    } else if (settings.settings.globalTextDetection.value.isNotEmpty) {
-      List<String> text = settings.settings.globalTextDetection.value.split(",");
+    } else if (ss.settings.globalTextDetection.value.isNotEmpty) {
+      List<String> text = ss.settings.globalTextDetection.value.split(",");
       for (String s in text) {
         if (message?.text?.toLowerCase().contains(s.toLowerCase()) ?? false) {
           return false;
@@ -248,7 +248,7 @@ class Chat {
       }
       return true;
     }
-    return !settings.settings.notifyReactions.value &&
+    return !ss.settings.notifyReactions.value &&
         ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
   }
 
@@ -358,7 +358,7 @@ class Chat {
         message.metadata = meta!.toJson();
 
         // If pre-caching is enabled, fetch the image and save it
-        if (settings.settings.preCachePreviewImages.value &&
+        if (ss.settings.preCachePreviewImages.value &&
             message.metadata!.containsKey("image") &&
             !isNullOrEmpty(message.metadata!["image"])!) {
           // Save from URL

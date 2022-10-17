@@ -106,12 +106,12 @@ class BubbleText extends ThemeExtension<BubbleText> {
 mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
   // Samsung theme should always use the background color as the "header" color
   bool get reverseMapping =>
-      settings.settings.skin.value == Skins.Material
-          && themes.inDarkMode(context);
+      ss.settings.skin.value == Skins.Material
+          && ts.inDarkMode(context);
 
   /// iOS skin [ListTile] subtitle [TextStyle]s
   TextStyle get iosSubtitle => context.theme.textTheme.labelLarge!.copyWith(
-      color: themes.inDarkMode(context)
+      color: ts.inDarkMode(context)
           ? context.theme.colorScheme.onBackground
           : context.theme.colorScheme.properOnSurface,
       fontWeight: FontWeight.w300
@@ -122,9 +122,9 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
       color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold
   );
 
-  Color get _headerColor => themes.inDarkMode(context)
+  Color get _headerColor => ts.inDarkMode(context)
       ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface;
-  Color get _tileColor => themes.inDarkMode(context)
+  Color get _tileColor => ts.inDarkMode(context)
       ? context.theme.colorScheme.properSurface : context.theme.colorScheme.background;
 
   /// Header / background color on settings pages
@@ -134,19 +134,19 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
   Color get tileColor => reverseMapping ? _headerColor : _tileColor;
 
   /// Whether or not to use tablet mode
-  bool get showAltLayout => settings.settings.tabletMode.value
+  bool get showAltLayout => ss.settings.tabletMode.value
       && (!context.isPhone || context.isLandscape)
       && context.width > 600;
 
-  bool get showAltLayoutContextless => settings.settings.tabletMode.value
+  bool get showAltLayoutContextless => ss.settings.tabletMode.value
       && (!Get.context!.isPhone || Get.context!.isLandscape)
       && Get.context!.width > 600;
 
-  bool get iOS => settings.settings.skin.value == Skins.iOS;
+  bool get iOS => ss.settings.skin.value == Skins.iOS;
 
-  bool get material => settings.settings.skin.value == Skins.Material;
+  bool get material => ss.settings.skin.value == Skins.Material;
 
-  bool get samsung => settings.settings.skin.value == Skins.Samsung;
+  bool get samsung => ss.settings.skin.value == Skins.Samsung;
 
   Brightness get brightness => context.theme.colorScheme.brightness;
 }
@@ -164,13 +164,13 @@ extension ColorSchemeHelpers on ColorScheme {
 
   Color get onSmsBubble => iMessageBubble == primary ? onPrimary : onPrimaryContainer;
 
-  Color bubble(BuildContext context, bool iMessage) => settings.settings.monetTheming.value != Monet.none
+  Color bubble(BuildContext context, bool iMessage) => ss.settings.monetTheming.value != Monet.none
       ? (iMessage ? iMessageBubble : smsBubble)
       : iMessage
       ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.iMessageBubbleColor ?? iMessageBubble
       : (context.theme.extensions[BubbleColors] as BubbleColors?)?.smsBubbleColor ?? smsBubble;
 
-  Color onBubble(BuildContext context, bool iMessage) => settings.settings.monetTheming.value != Monet.none
+  Color onBubble(BuildContext context, bool iMessage) => ss.settings.monetTheming.value != Monet.none
       ? (iMessage ? oniMessageBubble : onSmsBubble)
       : iMessage
       ? (context.theme.extensions[BubbleColors] as BubbleColors?)?.oniMessageBubbleColor ?? oniMessageBubble

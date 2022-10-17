@@ -152,7 +152,7 @@ class NotificationManager {
 
     // Build the message text for the notification
     String? messageText = MessageHelper.getNotificationText(message);
-    if (settings.settings.hideTextPreviews.value) messageText = "iMessage";
+    if (ss.settings.hideTextPreviews.value) messageText = "iMessage";
 
     // Try to load in an avatar for the person
     try {
@@ -238,13 +238,13 @@ class NotificationManager {
         File(path).createSync(recursive: true);
         File(path).writeAsBytesSync(avatar);
 
-        List<int> selectedIndices = settings.settings.selectedActionIndices;
-        List<String> _actions = settings.settings.actionList;
+        List<int> selectedIndices = ss.settings.selectedActionIndices;
+        List<String> _actions = ss.settings.actionList;
 
         List<String> actions = _actions.whereIndexed((index, element) => selectedIndices.contains(index))
                 .map((action) => action == "Mark Read"
                     ? action
-                    : !isReaction && settings.settings.enablePrivateAPI.value
+                    : !isReaction && ss.settings.enablePrivateAPI.value
                         ? ReactionTypes.reactionToEmoji[action]!
                         : null)
                 .whereNotNull()
@@ -270,7 +270,7 @@ class NotificationManager {
             if (event.actionIndex == null) {
               WinToast.instance().bringWindowToFront();
               if (ChatManager().activeChat?.chat.guid != chatGuid && Get.context != null) {
-                navigatorService.pushAndRemoveUntil(
+                ns.pushAndRemoveUntil(
                   Get.context!,
                   ConversationView(chat: Chat.findOne(guid: chatGuid)),
                   (route) => route.isFirst,
@@ -279,7 +279,7 @@ class NotificationManager {
             } else if (actions[event.actionIndex!] == "Mark Read") {
               await ChatBloc().toggleChatUnread(chat, false);
               EventDispatcher().emit('refresh', null);
-            } else if (settings.settings.enablePrivateAPI.value) {
+            } else if (ss.settings.enablePrivateAPI.value) {
               Message? message = Message.findOne(guid: messageGuid);
               await ActionHandler.sendReaction(chat, message, ReactionTypes.emojiToReaction[actions[event.actionIndex!]]!);
             }
@@ -292,9 +292,9 @@ class NotificationManager {
     }
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
       "CHANNEL_ID": NEW_MESSAGE_CHANNEL +
-          (settings.settings.notificationSound.value == "default"
+          (ss.settings.notificationSound.value == "default"
               ? ""
-              : ("_${settings.settings.notificationSound.value}")),
+              : ("_${ss.settings.notificationSound.value}")),
       "CHANNEL_NAME": "New Messages",
       "notificationId": Random().nextInt(9998) + 1,
       "summaryId": summaryId,
@@ -308,7 +308,7 @@ class NotificationManager {
       "messageText": messageText,
       "messageDate": messageDate.millisecondsSinceEpoch,
       "messageIsFromMe": messageIsFromMe,
-      "sound": settings.settings.notificationSound.value,
+      "sound": ss.settings.notificationSound.value,
     });
   }
 

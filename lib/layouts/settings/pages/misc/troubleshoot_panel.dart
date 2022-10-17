@@ -77,7 +77,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> with The
                               content: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: SizedBox(
-                                  width: navigatorService.width(context) * 4 / 5,
+                                  width: ns.width(context) * 4 / 5,
                                   height: context.height * 1 / 3,
                                   child: Container(
                                     decoration: BoxDecoration(

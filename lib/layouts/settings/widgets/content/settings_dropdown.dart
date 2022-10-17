@@ -38,7 +38,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (settings.settings.skin.value == Skins.iOS && useCupertino) {
+    if (ss.settings.skin.value == Skins.iOS && useCupertino) {
       final texts = options.map((e) => Text(capitalize ? textProcessing!(e).capitalize! : textProcessing!(e), style: context.theme.textTheme.bodyLarge!.copyWith(color: e == initial ? context.theme.colorScheme.onPrimary : null)));
       final map = Map<T, Widget>.fromIterables(options, cupertinoCustomWidgets ?? texts);
       return Container(
@@ -57,7 +57,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
       );
     }
     Color surfaceColor = context.theme.colorScheme.properSurface;
-    if (settings.settings.skin.value == Skins.Material
+    if (ss.settings.skin.value == Skins.Material
         && surfaceColor.computeDifference(context.theme.colorScheme.background) < 15) {
       surfaceColor = context.theme.colorScheme.surfaceVariant;
     }

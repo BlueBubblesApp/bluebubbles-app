@@ -245,7 +245,7 @@ class _MessageState extends State<MessageWidget> {
     if (_newerMessage != null) {
       if (_newerMessage!.isGroupEvent()) {
         showTail = true;
-      } else if (settings.settings.skin.value == Skins.Samsung) {
+      } else if (ss.settings.skin.value == Skins.Samsung) {
         showTail = MessageHelper.getShowTail(context, _message, _olderMessage);
       } else {
         showTail = MessageHelper.getShowTail(context, _message, _newerMessage);
@@ -342,13 +342,13 @@ class _MessageState extends State<MessageWidget> {
           () => GestureDetector(
             behavior: HitTestBehavior.deferToChild,
             onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
-            onHorizontalDragStart: !settings.settings.enablePrivateAPI.value
-                || !settings.settings.swipeToReply.value
+            onHorizontalDragStart: !ss.settings.enablePrivateAPI.value
+                || !ss.settings.swipeToReply.value
                 || !(chat?.isIMessage ?? true) ? null : (details) {
               baseOffset = details.localPosition.dx;
             },
-            onHorizontalDragUpdate: !settings.settings.enablePrivateAPI.value
-                || !settings.settings.swipeToReply.value
+            onHorizontalDragUpdate: !ss.settings.enablePrivateAPI.value
+                || !ss.settings.swipeToReply.value
                 || !(chat?.isIMessage ?? true) ? null : (details) {
               offset.value = min(max((details.localPosition.dx - baseOffset) * (_message.isFromMe! ? -1 : 1), 0),
                   replyThreshold * 1.5);
@@ -360,8 +360,8 @@ class _MessageState extends State<MessageWidget> {
               }
               ChatController.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
             },
-            onHorizontalDragEnd: !settings.settings.enablePrivateAPI.value
-                || !settings.settings.swipeToReply.value
+            onHorizontalDragEnd: !ss.settings.enablePrivateAPI.value
+                || !ss.settings.swipeToReply.value
                 || !(chat?.isIMessage ?? true) ? null : (details) {
               if (offset.value >= replyThreshold) {
                 EventDispatcher().emit("focus-keyboard", _message);
@@ -407,7 +407,7 @@ class _MessageState extends State<MessageWidget> {
                         child: AnimatedSize(
                           duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
                           child: Icon(
-                            settings.settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
+                            ss.settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
                             size: min(replyThreshold, offset.value) * (offset.value >= replyThreshold ? 0.5 : 0.4),
                             color: context.theme.colorScheme.properOnSurface,
                           ),

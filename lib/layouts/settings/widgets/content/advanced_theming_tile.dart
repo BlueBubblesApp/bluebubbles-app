@@ -30,8 +30,8 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
         child: Material(
           color: widget.tuple.item1.value,
           child: Container(
-            decoration: widget.tuple.item1.value.computeDifference(themes.inDarkMode(context)
-                || settings.settings.skin.value == Skins.Samsung
+            decoration: widget.tuple.item1.value.computeDifference(ts.inDarkMode(context)
+                || ss.settings.skin.value == Skins.Samsung
                 ? context.theme.colorScheme.background : context.theme.colorScheme.properSurface) < 15 ? BoxDecoration(
               border: Border.all(width: 0.5, color: context.theme.colorScheme.outline),
               borderRadius: BorderRadius.circular(20)
@@ -46,14 +46,14 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
                     map["data"]["colorScheme"][widget.tuple.item1.key] = result.value;
                     widget.currentTheme.data = ThemeStruct.fromMap(map).data;
                     widget.currentTheme.save();
-                    if (widget.currentTheme.name == settings.prefs.getString("selected-dark")) {
-                      themes.changeTheme(_context, dark: widget.currentTheme);
-                    } else if (widget.currentTheme.name == settings.prefs.getString("selected-light")) {
-                      themes.changeTheme(_context, light: widget.currentTheme);
+                    if (widget.currentTheme.name == ss.prefs.getString("selected-dark")) {
+                      ts.changeTheme(_context, dark: widget.currentTheme);
+                    } else if (widget.currentTheme.name == ss.prefs.getString("selected-light")) {
+                      ts.changeTheme(_context, light: widget.currentTheme);
                     }
                   }
                 } else {
-                  if (settings.settings.monetTheming.value != Monet.none) {
+                  if (ss.settings.monetTheming.value != Monet.none) {
                     showSnackbar('Notice', "Turn off Material You to start customizing!");
                   } else {
                     showSnackbar('Notice', "Create a new theme to start customizing!");
@@ -69,14 +69,14 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
                     map["data"]["colorScheme"][widget.tuple.item2!.key] = result.value;
                     widget.currentTheme.data = ThemeStruct.fromMap(map).data;
                     widget.currentTheme.save();
-                    if (widget.currentTheme.name == settings.prefs.getString("selected-dark")) {
-                      themes.changeTheme(_context, dark: widget.currentTheme);
-                    } else if (widget.currentTheme.name == settings.prefs.getString("selected-light")) {
-                      themes.changeTheme(_context, light: widget.currentTheme);
+                    if (widget.currentTheme.name == ss.prefs.getString("selected-dark")) {
+                      ts.changeTheme(_context, dark: widget.currentTheme);
+                    } else if (widget.currentTheme.name == ss.prefs.getString("selected-light")) {
+                      ts.changeTheme(_context, light: widget.currentTheme);
                     }
                   }
                 } else {
-                  if (settings.settings.monetTheming.value != Monet.none) {
+                  if (ss.settings.monetTheming.value != Monet.none) {
                     showSnackbar('Notice', "Turn off Material You to start customizing!");
                   } else {
                     showSnackbar('Notice', "Create a new theme to start customizing!");

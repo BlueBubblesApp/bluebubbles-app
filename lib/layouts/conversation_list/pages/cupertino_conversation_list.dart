@@ -36,7 +36,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
 
   bool get showArchived => widget.parentController.showArchivedChats;
   bool get showUnknown => widget.parentController.showUnknownSenders;
-  Color get backgroundColor => settings.settings.windowEffect.value == WindowEffect.disabled
+  Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled
       ? context.theme.colorScheme.background
       : Colors.transparent;
   ConversationListController get controller => widget.parentController;
@@ -46,7 +46,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
     super.initState();
     // update widget when background color changes
     if (kIsDesktop) {
-      settings.settings.windowEffect.listen((WindowEffect effect) {
+      ss.settings.windowEffect.listen((WindowEffect effect) {
         setState(() {});
       });
     }
@@ -57,7 +57,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
     return Scaffold(
       backgroundColor: backgroundColor,
       extendBodyBehindAppBar: !showArchived && !showUnknown,
-      floatingActionButton: !settings.settings.moveChatCreatorToHeader.value
+      floatingActionButton: !ss.settings.moveChatCreatorToHeader.value
           && !showArchived
           && !showUnknown
           ? ConversationListFAB(parentController: controller)
@@ -81,9 +81,9 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
             controller: controller.iosScrollController,
             child: Obx(() => CustomScrollView(
               controller: controller.iosScrollController,
-              physics: (settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+              physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                   ? NeverScrollableScrollPhysics()
-                  : themes.scrollPhysics,
+                  : ts.scrollPhysics,
               slivers: <Widget>[
                 if (!showArchived && !showUnknown)
                   CupertinoHeader(controller: controller),
@@ -98,18 +98,18 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                   }
 
                   int rowCount = context.mediaQuery.orientation == Orientation.portrait || kIsDesktop
-                      ? settings.settings.pinRowsPortrait.value
-                      : settings.settings.pinRowsLandscape.value;
+                      ? ss.settings.pinRowsPortrait.value
+                      : ss.settings.pinRowsLandscape.value;
                   int colCount = kIsDesktop
-                      ? settings.settings.pinColumnsLandscape.value
-                      : settings.settings.pinColumnsPortrait.value;
+                      ? ss.settings.pinColumnsLandscape.value
+                      : ss.settings.pinColumnsPortrait.value;
                   int pinCount = chats.length;
                   int usedRowCount = min((pinCount / colCount).ceil(), rowCount);
                   int maxOnPage = rowCount * colCount;
                   int _pageCount = (pinCount / maxOnPage).ceil();
                   int _filledPageCount = (pinCount / maxOnPage).floor();
                   double spaceBetween = (colCount - 1) * 30;
-                  double maxWidth = ((navigatorService.width(context) - 50 - spaceBetween) / colCount).floorToDouble();
+                  double maxWidth = ((ns.width(context) - 50 - spaceBetween) / colCount).floorToDouble();
                   TextStyle style = context.theme.textTheme.bodyMedium!;
                   double height =
                       usedRowCount * (maxWidth * 1.15 + 10 + style.height! * style.fontSize! * 2);
@@ -223,7 +223,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                           chat: chat,
                           controller: controller,
                         );
-                        final separator = Obx(() => !settings.settings.hideDividers.value ? Padding(
+                        final separator = Obx(() => !ss.settings.hideDividers.value ? Padding(
                           padding: const EdgeInsets.only(left: 20),
                           child: Divider(
                             color: context.theme.colorScheme.outline.withOpacity(0.5),
@@ -250,7 +250,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                 motion: StretchMotion(),
                                 extentRatio: 0.2,
                                 children: [
-                                  if (settings.settings.iosShowPin.value)
+                                  if (ss.settings.iosShowPin.value)
                                     SlidableAction(
                                       label: chat.isPinned! ? 'Unpin' : 'Pin',
                                       backgroundColor: Colors.yellow[800]!,
@@ -266,7 +266,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                 motion: StretchMotion(),
                                 extentRatio: 0.9,
                                 children: [
-                                  if (!chat.isArchived! && settings.settings.iosShowAlert.value)
+                                  if (!chat.isArchived! && ss.settings.iosShowAlert.value)
                                     SlidableAction(
                                       label: chat.muteType == "mute" ? 'Unmute' : 'Mute',
                                       backgroundColor: Colors.purple[700]!,
@@ -276,7 +276,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                         chat.toggleMute(chat.muteType != "mute");
                                       },
                                     ),
-                                  if (settings.settings.iosShowDelete.value)
+                                  if (ss.settings.iosShowDelete.value)
                                     SlidableAction(
                                       label: "Delete",
                                       backgroundColor: Colors.red,
@@ -287,7 +287,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                         Chat.deleteChat(chat);
                                       },
                                     ),
-                                  if (settings.settings.iosShowMarkRead.value)
+                                  if (ss.settings.iosShowMarkRead.value)
                                     SlidableAction(
                                       label: chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
                                       backgroundColor: Colors.blue,
@@ -299,7 +299,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                         ChatBloc().toggleChatUnread(chat, !chat.hasUnreadMessage!);
                                       },
                                     ),
-                                  if (settings.settings.iosShowArchive.value)
+                                  if (ss.settings.iosShowArchive.value)
                                     SlidableAction(
                                       label: chat.isArchived! ? 'UnArchive' : 'Archive',
                                       backgroundColor: chat.isArchived! ? Colors.blue : Colors.red,

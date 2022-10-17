@@ -69,9 +69,9 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
   Widget getThumbnail() {
     if (preview != null) {
       final bool hideAttachments =
-          settings.settings.redactedMode.value && settings.settings.hideAttachments.value;
+          ss.settings.redactedMode.value && ss.settings.hideAttachments.value;
       final bool hideAttachmentTypes =
-          settings.settings.redactedMode.value && settings.settings.hideAttachmentTypes.value;
+          ss.settings.redactedMode.value && ss.settings.hideAttachmentTypes.value;
 
       final mimeType = mime(widget.file.name);
 
@@ -177,7 +177,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
               Align(
                 alignment: Alignment.bottomRight,
                 child: Icon(
-                  settings.settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
+                  ss.settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
                   color: Colors.white,
                 ),
               ),
@@ -193,7 +193,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                   width: 25,
                   height: 25,
                   child: Icon(
-                    settings.settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
+                    ss.settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
                     color: context.theme.colorScheme.onBackground,
                     size: 15,
                   ),

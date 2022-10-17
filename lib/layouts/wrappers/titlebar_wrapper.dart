@@ -26,7 +26,7 @@ class TitleBarWrapper extends StatelessWidget {
       return child;
     }
 
-    bool showAltLayout = settings.settings.tabletMode.value
+    bool showAltLayout = ss.settings.tabletMode.value
         && (!context.isPhone || context.isLandscape)
         && context.width > 600;
 
@@ -34,7 +34,7 @@ class TitleBarWrapper extends StatelessWidget {
       return child;
     }
 
-    return Obx(() => (settings.settings.useCustomTitleBar.value && Platform.isLinux) || (kIsDesktop && !Platform.isLinux)
+    return Obx(() => (ss.settings.useCustomTitleBar.value && Platform.isLinux) || (kIsDesktop && !Platform.isLinux)
       ? WindowBorder(
           color: Colors.transparent,
           width: 0,
@@ -91,7 +91,7 @@ class WindowButtons extends StatelessWidget {
       children: [
         MinimizeWindowButton(
           colors: buttonColors,
-          onPressed: () async => settings.settings.minimizeToTray.value
+          onPressed: () async => ss.settings.minimizeToTray.value
               ? await WindowManager.instance.hide()
               : await WindowManager.instance.minimize(),
           animate: true,
@@ -102,7 +102,7 @@ class WindowButtons extends StatelessWidget {
         ),
         CloseWindowButton(
           colors: closeButtonColors,
-          onPressed: () async => settings.settings.closeToTray.value
+          onPressed: () async => ss.settings.closeToTray.value
               ? await WindowManager.instance.hide()
               : await WindowManager.instance.close(),
           animate: true,

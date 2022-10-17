@@ -63,11 +63,11 @@ class SentMessageHelper {
         ? context.theme.primaryColor.darkenAmount(0.2)
         : context.theme.primaryColor;
 
-    final bool hideEmoji = settings.settings.redactedMode.value && settings.settings.hideEmojis.value;
+    final bool hideEmoji = ss.settings.redactedMode.value && ss.settings.hideEmojis.value;
     final bool generateContent =
-        settings.settings.redactedMode.value && settings.settings.generateFakeMessageContent.value;
-    final bool hideContent = (settings.settings.redactedMode.value &&
-        settings.settings.hideMessageContent.value &&
+        ss.settings.redactedMode.value && ss.settings.generateFakeMessageContent.value;
+    final bool hideContent = (ss.settings.redactedMode.value &&
+        ss.settings.hideMessageContent.value &&
         !generateContent);
     final subject =
         generateContent ? faker.lorem.words(message?.subject?.split(" ").length ?? 0).join(" ") : message?.subject;
@@ -75,7 +75,7 @@ class SentMessageHelper {
 
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).isNotEmpty;
-    Skins currentSkin = Skin.of(context)?.skin ?? settings.settings.skin.value;
+    Skins currentSkin = Skin.of(context)?.skin ?? ss.settings.skin.value;
     Size bubbleSize = Size(0, 0);
 
     // If we haven't played the effect, we should apply it from the start.
@@ -167,7 +167,7 @@ class SentMessageHelper {
               width: customWidth != null ? constraints.maxWidth : null,
               constraints: customWidth == null
                   ? BoxConstraints(
-                      maxWidth: navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+                      maxWidth: ns.width(context) * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
                     )
                   : null,
               margin: EdgeInsets.only(
@@ -364,7 +364,7 @@ class SentMessageHelper {
     final child = Container(
         width: customWidth != null ? customWidth - (showTail ? 20 : 0) : null,
         constraints: BoxConstraints(
-          maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : navigatorService.width(context),
+          maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : ns.width(context),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -498,7 +498,7 @@ class SentMessageHelper {
         child: KeyboardVisibilityBuilder(builder: (context, isVisible) {
           return GestureDetector(
             onTap: () {
-              if (!settings.settings.autoOpenKeyboard.value && !isVisible && !kIsWeb && !kIsDesktop) {
+              if (!ss.settings.autoOpenKeyboard.value && !isVisible && !kIsWeb && !kIsDesktop) {
                 EventDispatcher().emit('unfocus-keyboard', null);
               }
               showDialog(
@@ -561,7 +561,7 @@ class SentMessageHelper {
               );
             },
             child: Icon(
-                settings.settings.skin.value == Skins.iOS
+                ss.settings.skin.value == Skins.iOS
                     ? CupertinoIcons.exclamationmark_circle
                     : Icons.error_outline,
                 color: context.theme.colorScheme.error),
@@ -620,7 +620,7 @@ class SentMessage extends StatefulWidget {
 }
 
 class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, WidgetsBindingObserver {
-  final Rx<Skins> skin = Rx<Skins>(settings.settings.skin.value);
+  final Rx<Skins> skin = Rx<Skins>(ss.settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message);
   Size? threadOriginatorSize;
   Size? messageSize;
@@ -709,14 +709,14 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                 final offset = (-(data ?? 0)).clamp(0, 70).toDouble();
                 return AnimatedContainer(
                   duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-                  width: navigatorService.width(context) - 10 - offset,
+                  width: ns.width(context) - 10 - offset,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                       children: [
-                        if ((settings.settings.alwaysShowAvatars.value ||
+                        if ((ss.settings.alwaysShowAvatars.value ||
                                 (ChatController.of(context)?.chat.isGroup() ?? false)) &&
                             !msg.isFromMe!)
                           Padding(
@@ -743,7 +743,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                                 right: 10,
                               ),
                               constraints: BoxConstraints(
-                                maxWidth: navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
+                                maxWidth: ns.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
                               ),
                               padding: EdgeInsets.symmetric(
                                 vertical: 8,
@@ -893,20 +893,20 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                 }
                 final offset = (-(data ?? 0)).clamp(0, 70).toDouble();
                 final originalWidth = max(
-                    min(navigatorService.width(context) - messageSize!.width - 150, navigatorService.width(context) / 3),
+                    min(ns.width(context) - messageSize!.width - 150, ns.width(context) / 3),
                     10);
                 final width = max(
-                    min(navigatorService.width(context) - messageSize!.width - 150, navigatorService.width(context) / 3) -
+                    min(ns.width(context) - messageSize!.width - 150, ns.width(context) / 3) -
                         offset,
                     10);
                 return AnimatedContainer(
                   duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-                  width: navigatorService.width(context) - 10 - offset,
+                  width: ns.width(context) - 10 - offset,
                   padding: EdgeInsets.only(
                     // add extra padding when showing contact avatars
                     left: max(
                         ((ChatManager().activeChat?.chat.isGroup() ?? false) ||
-                                    settings.settings.alwaysShowAvatars.value
+                                    ss.settings.alwaysShowAvatars.value
                                 ? 75
                                 : 40) -
                             (width == 10 ? offset - (originalWidth - width) : 0),

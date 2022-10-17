@@ -138,7 +138,7 @@ class AttachmentDownloadController extends GetxController {
         _file.writeAsBytesSync(attachment.bytes!.toList());
       }
     }
-    if (settings.settings.autoSave.value
+    if (ss.settings.autoSave.value
         && !kIsWeb
         && !kIsDesktop
         && !(attachment.isOutgoing ?? false)

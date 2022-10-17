@@ -32,9 +32,9 @@ class _MediaFileState extends State<MediaFile> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hideAttachments = settings.settings.redactedMode.value && settings.settings.hideAttachments.value;
+    final bool hideAttachments = ss.settings.redactedMode.value && ss.settings.hideAttachments.value;
     final bool hideAttachmentTypes =
-        settings.settings.redactedMode.value && settings.settings.hideAttachmentTypes.value;
+        ss.settings.redactedMode.value && ss.settings.hideAttachmentTypes.value;
 
     /*if (socket.attachmentSenders.containsKey(widget.attachment.guid)) {
       return Stack(
@@ -65,7 +65,7 @@ class _MediaFileState extends State<MediaFile> {
         widget.child,
         if (widget.attachment.originalROWID == null)
           Container(
-            child: settings.settings.skin.value == Skins.iOS ? Theme(
+            child: ss.settings.skin.value == Skins.iOS ? Theme(
               data: ThemeData(
                 cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark),
               ),

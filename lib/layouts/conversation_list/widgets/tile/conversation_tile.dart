@@ -53,7 +53,7 @@ class ConversationTileController extends StatefulController {
     if ((inSelectMode || listController.selectedChats.isNotEmpty) && onSelect != null) {
       onLongPress();
     } else {
-      navigatorService.pushAndRemoveUntil(
+      ns.pushAndRemoveUntil(
         context,
         ConversationView(
           chat: chat,
@@ -84,10 +84,10 @@ class ConversationTileController extends StatefulController {
   }
   
   void onSelected() {
-    if (settings.settings.skin.value == Skins.Material) {
+    if (ss.settings.skin.value == Skins.Material) {
       updateWidgetFunctions[MaterialConversationTile]?.call(null);
     }
-    if (settings.settings.skin.value == Skins.Samsung) {
+    if (ss.settings.skin.value == Skins.Samsung) {
       updateWidgetFunctions[SamsungConversationTile]?.call(null);
     }
     onSelect!.call(!isSelected);
@@ -226,10 +226,10 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final hideInfo = settings.settings.redactedMode.value
-          && settings.settings.hideContactInfo.value;
-      final generateNames = settings.settings.redactedMode.value
-          && settings.settings.generateFakeContactNames.value;
+      final hideInfo = ss.settings.redactedMode.value
+          && ss.settings.hideContactInfo.value;
+      final generateNames = ss.settings.redactedMode.value
+          && ss.settings.generateFakeContactNames.value;
 
       if (hideInfo) return const SizedBox.shrink();
 
@@ -310,10 +310,10 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final hideContent = settings.settings.redactedMode.value
-          && settings.settings.hideMessageContent.value;
-      final generateContent = settings.settings.redactedMode.value
-          && settings.settings.generateFakeMessageContent.value;
+      final hideContent = ss.settings.redactedMode.value
+          && ss.settings.hideMessageContent.value;
+      final generateContent = ss.settings.redactedMode.value
+          && ss.settings.generateFakeMessageContent.value;
 
       if (hideContent) return const SizedBox.shrink();
 
@@ -330,7 +330,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
           ),
         ),
         overflow: TextOverflow.ellipsis,
-        maxLines: settings.settings.skin.value == Skins.Material 
+        maxLines: ss.settings.skin.value == Skins.Material
             ? 3 : 2,
       );
     });
@@ -348,7 +348,7 @@ class ChatLeading extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (unreadIcon != null && settings.settings.skin.value == Skins.iOS)
+        if (unreadIcon != null && ss.settings.skin.value == Skins.iOS)
           unreadIcon!,
         StreamBuilder<Map<String, dynamic>>(
             stream: ChatManager().getChatController(controller.chat)?.stream as Stream<Map<String, dynamic>>?,
@@ -399,7 +399,7 @@ class ChatLeading extends StatelessWidget {
                         ),
                       ),
                     ),
-                  if (unreadIcon != null && settings.settings.skin.value == Skins.Samsung)
+                  if (unreadIcon != null && ss.settings.skin.value == Skins.Samsung)
                     Positioned(
                       top: 30,
                       right: 20,

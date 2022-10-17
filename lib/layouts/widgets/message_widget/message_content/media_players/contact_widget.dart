@@ -122,7 +122,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                         child: Container(
                           child: initials == null
                             ? Icon(
-                                settings.settings.skin.value == Skins.iOS
+                                ss.settings.skin.value == Skins.iOS
                                     ? CupertinoIcons.person_fill
                                     : Icons.person,
                                 color: context.theme.colorScheme.properOnSurface)
@@ -136,7 +136,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                       Padding(
                         padding: EdgeInsets.only(left: 5.0),
                         child: Icon(
-                          settings.settings.skin.value == Skins.iOS
+                          ss.settings.skin.value == Skins.iOS
                               ? CupertinoIcons.forward
                               : Icons.arrow_forward,
                           color: context.theme.colorScheme.outline,

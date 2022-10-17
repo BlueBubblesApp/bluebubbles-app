@@ -97,18 +97,18 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    double maxWidth = widget.width ?? navigatorService.width(context) - 20;
+    double maxWidth = widget.width ?? ns.width(context) - 20;
     if (!(ModalRoute.of(context)?.isCurrent ?? false)) {
       controller.pause();
     }
     return Container(
       alignment: Alignment.center,
       color: context.theme.colorScheme.properSurface,
-      height: settings.settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop ? 75 : 48,
+      height: ss.settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop ? 75 : 48,
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Theme(
         data: context.theme.copyWith(
-            platform: settings.settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop ? TargetPlatform.iOS : TargetPlatform.android,
+            platform: ss.settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop ? TargetPlatform.iOS : TargetPlatform.android,
             dialogBackgroundColor: context.theme.colorScheme.properSurface,
             iconTheme: context.theme.iconTheme.copyWith(color: context.theme.colorScheme.properOnSurface)),
         child: ChewieAudio(

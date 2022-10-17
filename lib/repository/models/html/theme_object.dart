@@ -56,11 +56,11 @@ class ThemeObject {
   List<ThemeEntry> fetchData() {
     if (isPreset && !name!.contains("Music")) {
       if (name == "OLED Dark") {
-        data = themes.oledDarkTheme;
+        data = ts.oledDarkTheme;
       } else if (name == "Bright White") {
-        data = themes.whiteLightTheme;
+        data = ts.whiteLightTheme;
       } else if (name == "Nord Theme") {
-        data = themes.nordDarkTheme;
+        data = ts.nordDarkTheme;
       }
 
       entries = toEntries();

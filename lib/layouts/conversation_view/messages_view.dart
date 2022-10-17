@@ -78,10 +78,10 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
   }
 
   bool get showSmartReplies =>
-      settings.settings.smartReply.value &&
+      ss.settings.smartReply.value &&
       !kIsWeb &&
       !kIsDesktop &&
-      (!settings.settings.redactedMode.value || !settings.settings.hideMessageContent.value);
+      (!ss.settings.redactedMode.value || !ss.settings.hideMessageContent.value);
 
   @override
   void initState() {
@@ -437,17 +437,17 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
             onPanDown: kIsDesktop || kIsWeb ? (details) => _node.requestFocus() : null,
             onHorizontalDragStart: (details) {},
             onHorizontalDragUpdate: (details) {
-              if (settings.settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
+              if (ss.settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
                 ChatManager().activeChat!.timeStampOffset += details.delta.dx * 0.3;
               }
             },
             onHorizontalDragEnd: (details) {
-              if (settings.settings.skin.value != Skins.Samsung) {
+              if (ss.settings.skin.value != Skins.Samsung) {
                 ChatManager().activeChat!.timeStampOffset = 0;
               }
             },
             onHorizontalDragCancel: () {
-              if (settings.settings.skin.value != Skins.Samsung) {
+              if (ss.settings.skin.value != Skins.Samsung) {
                 ChatManager().activeChat!.timeStampOffset = 0;
               }
             },
@@ -463,7 +463,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                   () => CustomScrollView(
                     controller: _scrollController,
                     reverse: true,
-                    physics: (settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                    physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                         ? NeverScrollableScrollPhysics()
                         : ThemeSwitcher.getScrollPhysics(),
                     slivers: <Widget>[
@@ -474,7 +474,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                             return SliverToBoxAdapter(
                               child: Padding(
                                 padding: EdgeInsets.only(
-                                    top: settings.settings.skin.value != Skins.iOS ? 8.0 : 0.0, right: 5),
+                                    top: ss.settings.skin.value != Skins.iOS ? 8.0 : 0.0, right: 5),
                                 child: AnimatedSize(
                                   duration: Duration(milliseconds: 400),
                                   child: internalSmartReplies.isEmpty && replies.isNotEmpty
@@ -503,14 +503,14 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                             );
                           },
                         ),
-                      if (settings.settings.enablePrivateAPI.value || widget.chat?.guid == "theme-selector")
+                      if (ss.settings.enablePrivateAPI.value || widget.chat?.guid == "theme-selector")
                         SliverToBoxAdapter(
                           child: Row(
                             children: <Widget>[
                               if (widget.chat?.guid == "theme-selector" ||
                                   (currentChat!.showTypingIndicator &&
-                                      (settings.settings.skin.value == Skins.Samsung ||
-                                          settings.settings.alwaysShowAvatars.value)))
+                                      (ss.settings.skin.value == Skins.Samsung ||
+                                          ss.settings.alwaysShowAvatars.value)))
                                 Padding(
                                   padding: EdgeInsets.only(left: 10.0),
                                   child: ContactAvatarWidget(

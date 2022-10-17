@@ -54,7 +54,7 @@ class _CupertinoConversationTileState extends CustomState<CupertinoConversationT
           child: Obx(() => ListTile(
             mouseCursor: MouseCursor.defer,
             enableFeedback: true,
-            dense: settings.settings.denseChatTiles.value,
+            dense: ss.settings.denseChatTiles.value,
             contentPadding: const EdgeInsets.only(left: 0),
             minVerticalPadding: 10,
             horizontalTitleGap: 10,
@@ -181,7 +181,7 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
         children: <Widget>[
           Obx(() {
             String indicatorText = "";
-            if (settings.settings.statusIndicatorsOnChats.value && markers != null) {
+            if (ss.settings.statusIndicatorsOnChats.value && markers != null) {
               Indicator show = shouldShow(
                   cachedLatestMessage,
                   markers!.myLastMessage.value,

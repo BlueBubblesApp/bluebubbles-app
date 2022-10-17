@@ -45,7 +45,7 @@ class ActionHandler {
     if (chat == null) return;
     if (isNullOrEmpty(text, trimString: true)! && isNullOrEmpty(subject ?? "", trimString: true)!) return;
 
-    if (!(await settings.isMinBigSur)) {
+    if (!(await ss.isMinBigSur)) {
       List<Message> messages = <Message>[];
 
       // Check for URLs
@@ -271,7 +271,7 @@ class ActionHandler {
     }
 
     bool isConnected = true;
-    if (!settings.settings.privateAPISend.value) {
+    if (!ss.settings.privateAPISend.value) {
       if ([SocketState.connecting, SocketState.disconnected].contains(socket.state.value)) {
         await Future.delayed(Duration(seconds: 3));
       }
@@ -290,8 +290,8 @@ class ActionHandler {
           message.guid!,
           message.text!,
           subject: message.subject,
-          method: (settings.settings.enablePrivateAPI.value
-              && settings.settings.privateAPISend.value
+          method: (ss.settings.enablePrivateAPI.value
+              && ss.settings.privateAPISend.value
               && (message.text?.isNotEmpty ?? false))
               || (message.subject?.isNotEmpty ?? false)
               || message.threadOriginatorGuid != null

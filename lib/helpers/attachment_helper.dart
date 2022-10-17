@@ -131,7 +131,7 @@ class AttachmentHelper {
     double width = attachment.width?.toDouble() ?? 0.0;
     double factor = attachment.height?.toDouble() ?? 0.0;
     if (attachment.width == null || attachment.width == 0 || attachment.height == null || attachment.height == 0) {
-      width = navigatorService.width(context);
+      width = ns.width(context);
       factor = 2;
     }
 
@@ -212,7 +212,7 @@ class AttachmentHelper {
       return showDeniedSnackbar(err: "BlueBubbles does not have the required permissions!");
     }
 
-    if (settings.settings.askWhereToSave.value && showAlert) {
+    if (ss.settings.askWhereToSave.value && showAlert) {
       dynamic dir = Directory("/storage/emulated/0/");
       String? path = await FilesystemPicker.open(
         title: 'Save to folder',
@@ -293,24 +293,24 @@ class AttachmentHelper {
 
   static IconData getIcon(String mimeType) {
     if (mimeType.isEmpty) {
-      return settings.settings.skin.value == Skins.iOS
+      return ss.settings.skin.value == Skins.iOS
           ? CupertinoIcons.arrow_up_right_square
           : Icons.open_in_new;
     }
     if (mimeType == "application/pdf") {
-      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf;
+      return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf;
     } else if (mimeType == "application/zip") {
-      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.folder : Icons.folder;
+      return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.folder : Icons.folder;
     } else if (mimeType.startsWith("audio")) {
-      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.music_note : Icons.music_note;
+      return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.music_note : Icons.music_note;
     } else if (mimeType.startsWith("image")) {
-      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.photo : Icons.photo;
+      return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.photo : Icons.photo;
     } else if (mimeType.startsWith("video")) {
-      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam;
+      return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam;
     } else if (mimeType.startsWith("text")) {
-      return settings.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note;
+      return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note;
     }
-    return settings.settings.skin.value == Skins.iOS
+    return ss.settings.skin.value == Skins.iOS
         ? CupertinoIcons.arrow_up_right_square
         : Icons.open_in_new;
   }
@@ -321,9 +321,9 @@ class AttachmentHelper {
     // If auto-download is enabled
     // and (only wifi download is disabled or
     // only wifi download enabled, and we have wifi)
-    return (settings.settings.autoDownload.value &&
-        (!settings.settings.onlyWifiDownload.value ||
-            (settings.settings.onlyWifiDownload.value && status == ConnectivityResult.wifi)));
+    return (ss.settings.autoDownload.value &&
+        (!ss.settings.onlyWifiDownload.value ||
+            (ss.settings.onlyWifiDownload.value && status == ConnectivityResult.wifi)));
   }
 
   static void redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) {
@@ -363,7 +363,7 @@ class AttachmentHelper {
     Uint8List? thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
       imageFormat: ImageFormat.JPEG,
-      quality: settings.compressionQuality,
+      quality: ss.compressionQuality,
     );
 
     if (thumbnail == null || thumbnail.isEmpty || thumbnail.lengthInBytes == 0) {

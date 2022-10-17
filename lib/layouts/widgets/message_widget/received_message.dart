@@ -89,7 +89,7 @@ class ReceivedMessage extends StatefulWidget {
 class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMixin, WidgetsBindingObserver {
   bool checkedHandle = false;
   late String contactTitle;
-  final Rx<Skins> skin = Rx<Skins>(settings.settings.skin.value);
+  final Rx<Skins> skin = Rx<Skins>(ss.settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message,
       colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null,
       fakeSubject: widget.fakeSubject,
@@ -157,7 +157,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
   List<Color> getBubbleColors(Message message) {
     List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
-    if (settings.settings.colorfulBubbles.value && !message.isFromMe!) {
+    if (ss.settings.colorfulBubbles.value && !message.isFromMe!) {
       if (message.handle?.color == null) {
         bubbleColors = toColorGradient(message.handle?.address);
       } else {
@@ -221,7 +221,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     late final Widget child;
     if (message.isBigEmoji()) {
       final bool hideContent =
-          settings.settings.redactedMode.value && settings.settings.hideEmojis.value;
+          ss.settings.redactedMode.value && ss.settings.hideEmojis.value;
 
       bool hasReactions = message.getReactions().isNotEmpty;
       child = Padding(
@@ -266,7 +266,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               right: 10,
             ),
             constraints: BoxConstraints(
-              maxWidth: navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE,
+              maxWidth: ns.width(context) * MessageWidgetMixin.MAX_SIZE,
             ),
             padding: EdgeInsets.symmetric(
               vertical: 8,
@@ -376,7 +376,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                       });
                     })
                 : FutureBuilder<List<InlineSpan>>(
-                    future: settings.settings.tabletMode.value && (!context.isPhone || context.isLandscape)
+                    future: ss.settings.tabletMode.value && (!context.isPhone || context.isLandscape)
                         ? MessageWidgetMixin.buildMessageSpansAsync(context, widget.message,
                             colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null,
                             fakeSubject: widget.fakeSubject,
@@ -556,7 +556,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     // First, add the message sender (if applicable)
     bool isGroup = ChatManager().activeChat?.chat.isGroup() ?? false;
     bool addedSender = false;
-    bool showSender = settings.settings.alwaysShowAvatars.value ||
+    bool showSender = ss.settings.alwaysShowAvatars.value ||
         isGroup ||
         widget.message.guid == "redacted-mode-demo" ||
         widget.message.guid!.contains("theme-selector") ||
@@ -653,15 +653,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               }
               final offset = (-(data ?? 0)).clamp(0, 70).toDouble();
               final originalWidth = max(
-                  min(navigatorService.width(context) - messageSize!.width - 125, navigatorService.width(context) / 3),
+                  min(ns.width(context) - messageSize!.width - 125, ns.width(context) / 3),
                   10);
               final width = max(
-                  min(navigatorService.width(context) - messageSize!.width - 125, navigatorService.width(context) / 3) -
+                  min(ns.width(context) - messageSize!.width - 125, ns.width(context) / 3) -
                       offset,
                   10);
               return AnimatedContainer(
                 duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-                width: navigatorService.width(context) - 45 - offset,
+                width: ns.width(context) - 45 - offset,
                 padding: EdgeInsets.only(right: max(30 - (width == 10 ? offset - (originalWidth - width) : 0), 0)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -850,14 +850,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               showReplyThread(context, widget.message, widget.messageBloc);
             },
             child: Container(
-              width: navigatorService.width(context) - 10,
+              width: ns.width(context) - 10,
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                   children: [
-                    if ((settings.settings.alwaysShowAvatars.value ||
+                    if ((ss.settings.alwaysShowAvatars.value ||
                             (ChatManager().activeChat?.chat.isGroup() ?? false)) &&
                         !msg.isFromMe!)
                       Padding(
@@ -884,7 +884,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                             right: 10,
                           ),
                           constraints: BoxConstraints(
-                            maxWidth: navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
+                            maxWidth: ns.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
                           ),
                           padding: EdgeInsets.symmetric(
                             vertical: 8,

@@ -96,7 +96,7 @@ class _LocationWidgetState extends State<LocationWidget> {
                                   point: LatLng(location!.longitude!, location!.latitude!),
                                   anchorPos: AnchorPos.align(AnchorAlign.top),
                                   builder: (ctx) => Container(
-                                    child: Icon(settings.settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on, color: Colors.red, size: 40),
+                                    child: Icon(ss.settings.skin.value == Skins.iOS ? CupertinoIcons.location_solid : Icons.location_on, color: Colors.red, size: 40),
                                   ),
                                 ),
                               ],

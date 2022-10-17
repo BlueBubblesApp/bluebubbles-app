@@ -29,7 +29,7 @@ class VideoWidgetController extends GetxController {
   VideoPlayerController? controller;
   Uint8List? thumbnail;
   late final RxBool showPlayPauseOverlay;
-  final RxBool muted = settings.settings.startVideosMuted;
+  final RxBool muted = ss.settings.startVideosMuted;
   final PlatformFile file;
   final Attachment attachment;
   final BuildContext context;
@@ -190,7 +190,7 @@ class VideoWidget extends StatelessWidget {
     },
     child: Container(
       constraints: BoxConstraints(
-        maxWidth: navigatorService.width(context) / 2,
+        maxWidth: ns.width(context) / 2,
         maxHeight: context.height / 2,
       ),
       child: Hero(
@@ -214,11 +214,11 @@ class VideoWidget extends StatelessWidget {
                   ),
                   padding: EdgeInsets.all(10),
                   child: Padding(
-                    padding: EdgeInsets.only(left: settings.settings.skin.value == Skins.iOS && !controller.controller!.value.isPlaying ? 7 : 0,
-                        top: settings.settings.skin.value == Skins.iOS ? 3 : 0),
+                    padding: EdgeInsets.only(left: ss.settings.skin.value == Skins.iOS && !controller.controller!.value.isPlaying ? 7 : 0,
+                        top: ss.settings.skin.value == Skins.iOS ? 3 : 0),
                     child: controller.controller!.value.isPlaying ? GestureDetector(
                       child: Icon(
-                        settings.settings.skin.value == Skins.iOS ? CupertinoIcons.pause : Icons.pause,
+                        ss.settings.skin.value == Skins.iOS ? CupertinoIcons.pause : Icons.pause,
                         color: Colors.white,
                         size: 45,
                       ),
@@ -228,7 +228,7 @@ class VideoWidget extends StatelessWidget {
                       },
                     ) : GestureDetector(
                       child: Icon(
-                        settings.settings.skin.value == Skins.iOS
+                        ss.settings.skin.value == Skins.iOS
                             ? CupertinoIcons.play
                             : Icons.play_arrow,
                         color: Colors.white,
@@ -265,10 +265,10 @@ class VideoWidget extends StatelessWidget {
                           padding: EdgeInsets.all(5),
                           child: Obx(() => Icon(
                             controller.muted.value
-                                ? settings.settings.skin.value == Skins.iOS
+                                ? ss.settings.skin.value == Skins.iOS
                                 ? CupertinoIcons.volume_mute
                                 : Icons.volume_mute
-                                : settings.settings.skin.value == Skins.iOS
+                                : ss.settings.skin.value == Skins.iOS
                                 ? CupertinoIcons.volume_up
                                 : Icons.volume_up,
                             color: Colors.white,
@@ -328,10 +328,10 @@ class VideoWidget extends StatelessWidget {
           ),
           padding: EdgeInsets.all(10),
           child: Padding(
-            padding: EdgeInsets.only(left: settings.settings.skin.value == Skins.iOS ? 7 : 0,
-                top: settings.settings.skin.value == Skins.iOS ? 3 : 0),
+            padding: EdgeInsets.only(left: ss.settings.skin.value == Skins.iOS ? 7 : 0,
+                top: ss.settings.skin.value == Skins.iOS ? 3 : 0),
             child: Icon(
-              settings.settings.skin.value == Skins.iOS
+              ss.settings.skin.value == Skins.iOS
                   ? CupertinoIcons.play
                   : Icons.play_arrow,
               color: Colors.white,
@@ -357,10 +357,10 @@ class VideoWidget extends StatelessWidget {
                 padding: EdgeInsets.all(5),
                 child: Obx(() => Icon(
                   controller.muted.value
-                      ? settings.settings.skin.value == Skins.iOS
+                      ? ss.settings.skin.value == Skins.iOS
                       ? CupertinoIcons.volume_mute
                       : Icons.volume_mute
-                      : settings.settings.skin.value == Skins.iOS
+                      : ss.settings.skin.value == Skins.iOS
                       ? CupertinoIcons.volume_up
                       : Icons.volume_up,
                   color: Colors.white,

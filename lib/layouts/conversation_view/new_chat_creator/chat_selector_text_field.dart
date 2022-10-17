@@ -48,9 +48,9 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [];
-    final bool redactedMode = settings.settings.redactedMode.value;
-    final bool hideInfo = redactedMode && settings.settings.hideContactInfo.value;
-    final bool generateName = redactedMode && settings.settings.generateFakeContactNames.value;
+    final bool redactedMode = ss.settings.redactedMode.value;
+    final bool hideInfo = redactedMode && ss.settings.hideContactInfo.value;
+    final bool generateName = redactedMode && ss.settings.generateFakeContactNames.value;
     widget.selectedContacts.forEachIndexed((index, contact) {
       items.add(
         GestureDetector(
@@ -80,7 +80,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                     ),
                     InkWell(
                         child: Icon(
-                      settings.settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
+                      ss.settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
                       size: 15.0,
                     ))
                   ],

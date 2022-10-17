@@ -28,7 +28,7 @@ class CloudMessagingService extends GetxService {
   /// Register this device with FCM
   Future<void> registerDevice() async {
     // Make sure setup is complete, and that we aren't currently registering with FCM
-    if (!settings.settings.finishedSetup.value) return;
+    if (!ss.settings.finishedSetup.value) return;
 
     if (completer != null && !completer!.isCompleted) {
       return completer!.future;
@@ -41,7 +41,7 @@ class CloudMessagingService extends GetxService {
     bool closeCompleter = false;
 
     // Make sure FCM data is available
-    if (settings.fcmData.isNull) {
+    if (ss.fcmData.isNull) {
       Logger.warn("No FCM Auth data found. Skipping FCM authentication", tag: 'FCM-Auth');
       closeCompleter = true;
     }
@@ -80,7 +80,7 @@ class CloudMessagingService extends GetxService {
     try {
       // First, try to auth with FCM with the current data
       Logger.info('Authenticating with FCM', tag: 'FCM-Auth');
-      result = await MethodChannelInterface().invokeMethod('auth', settings.fcmData.toMap());
+      result = await MethodChannelInterface().invokeMethod('auth', ss.fcmData.toMap());
     } on PlatformException catch (ex) {
       Logger.error('Failed to perform initial FCM authentication: ${ex.toString()}', tag: 'FCM-Auth');
 
@@ -96,7 +96,7 @@ class CloudMessagingService extends GetxService {
         try {
           // Parse and save new FCM data, then retry auth with FCM
           FCMData fcmData = parseFcmJson(fcmMeta);
-          settings.saveFCMData(fcmData);
+          ss.saveFCMData(fcmData);
           result = await MethodChannelInterface().invokeMethod('auth', fcmData.toMap());
         } on PlatformException catch (e) {
           // If we fail a second time, error out

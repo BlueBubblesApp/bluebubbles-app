@@ -34,8 +34,8 @@ void showReplyThread(BuildContext context, Message message, MessageBloc? message
                 colorScheme: context.theme.colorScheme.copyWith(
                   primary: context.theme.colorScheme.bubble(context, true),
                   onPrimary: context.theme.colorScheme.onBubble(context, true),
-                  surface: settings.settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-                  onSurface: settings.settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+                  surface: ss.settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+                  onSurface: ss.settings.monetTheming.value == Monet.full ? null : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
                 ),
               ),
               child: GestureDetector(
@@ -44,7 +44,7 @@ void showReplyThread(BuildContext context, Message message, MessageBloc? message
                 },
                 child: AnnotatedRegion<SystemUiOverlayStyle>(
                   value: SystemUiOverlayStyle(
-                    systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+                    systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
                     systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
                     statusBarColor: Colors.transparent, // status bar color
                     statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,

@@ -65,9 +65,9 @@ class ContactSelectorOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool redactedMode = settings.settings.redactedMode.value;
-    final bool hideInfo = redactedMode && settings.settings.hideContactInfo.value;
-    final bool generateName = redactedMode && settings.settings.generateFakeContactNames.value;
+    final bool redactedMode = ss.settings.redactedMode.value;
+    final bool hideInfo = redactedMode && ss.settings.hideContactInfo.value;
+    final bool generateName = redactedMode && ss.settings.generateFakeContactNames.value;
     String title = "";
     if (generateName) {
       if (item.isChat) {
@@ -157,7 +157,7 @@ class ContactSelectorOption extends StatelessWidget {
                   ),
                 ),
               Icon(
-                  settings.settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
+                  ss.settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
                   color: shouldShowChatType ? context.theme.colorScheme.bubble(context, item.chat?.isIMessage ?? true) : context.theme.colorScheme.primary,
                 ),
             ],

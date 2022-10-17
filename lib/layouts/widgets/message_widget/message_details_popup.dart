@@ -92,11 +92,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
     fetchReactions();
 
-    settings.getServerDetails().then((tuple) async {
+    ss.getServerDetails().then((tuple) async {
       final version = tuple.item4;
       if (mounted) {
-        final minSierra = await settings.isMinSierra;
-        final minBigSur = await settings.isMinBigSur;
+        final minSierra = await ss.isMinSierra;
+        final minBigSur = await ss.isMinBigSur;
         setState(() {
           isSierra = minSierra;
           isBigSur = minBigSur;
@@ -165,11 +165,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   Widget build(BuildContext context) {
     bool isSent = !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
     bool hideReactions =
-        (settings.settings.redactedMode.value && settings.settings.hideReactions.value) || !isSierra;
+        (ss.settings.redactedMode.value && ss.settings.hideReactions.value) || !isSierra;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -244,7 +244,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   ),
                 ),
                 // Only show the reaction menu if it's enabled and the message isn't temporary
-                if (settings.settings.enablePrivateAPI.value &&
+                if (ss.settings.enablePrivateAPI.value &&
                     isSent &&
                     !hideReactions &&
                     (currentChat?.chat.isIMessage ?? true))
@@ -259,14 +259,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   }
 
   Widget buildReactionMenu() {
-    double narrowWidth = widget.message.isFromMe! || !settings.settings.alwaysShowAvatars.value ? 330 : 360;
-    bool narrowScreen = navigatorService.width(context) < narrowWidth;
+    double narrowWidth = widget.message.isFromMe! || !ss.settings.alwaysShowAvatars.value ? 330 : 360;
+    bool narrowScreen = ns.width(context) < narrowWidth;
     double reactionIconSize = 50;
     double menuHeight = (reactionIconSize * 2).toDouble();
     if (topMinimum > context.height - 120 - menuHeight) {
       topMinimum = context.height - 120 - menuHeight;
     }
-    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup() || settings.settings.alwaysShowAvatars.value);
+    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup() || ss.settings.alwaysShowAvatars.value);
 
     double offset = 20 + (shiftRight ? 35 : 0);
 
@@ -413,12 +413,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
   Widget buildDetailsMenu() {
     bool showAltLayout =
-        settings.settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !LifeCycleManager().isBubble;
-    double maxMenuWidth = min(max(navigatorService.width(context) * 3 / 5, 200), navigatorService.width(context) * 4 / 5) * (showAltLayout ? 0.5 : 1);
+        ss.settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !LifeCycleManager().isBubble;
+    double maxMenuWidth = min(max(ns.width(context) * 3 / 5, 200), ns.width(context) * 4 / 5) * (showAltLayout ? 0.5 : 1);
     double maxHeight = context.height - messageTopOffset - widget.childSize!.height;
 
     List<Widget> allActions = [
-      if (settings.settings.enablePrivateAPI.value &&
+      if (ss.settings.enablePrivateAPI.value &&
           isBigSur &&
           (currentChat?.chat.isIMessage ?? true) &&
           !widget.message.guid!.startsWith("temp"))
@@ -437,7 +437,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.reply : Icons.reply,
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.reply : Icons.reply,
                 color: context.theme.colorScheme.properOnSurface,
               ),
             ),
@@ -471,7 +471,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS
+                ss.settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.cloud_download
                     : Icons.file_download,
                 color: context.theme.colorScheme.properOnSurface,
@@ -498,7 +498,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS
+                ss.settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.macwindow
                     : Icons.open_in_browser,
                 color: context.theme.colorScheme.properOnSurface,
@@ -512,7 +512,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           child: InkWell(
             onTap: () async {
               await launchUrlString(
-                  "${widget.message.attachments.first!.webUrl!}?guid=${settings.settings.guidAuthKey}");
+                  "${widget.message.attachments.first!.webUrl!}?guid=${ss.settings.guidAuthKey}");
               popDetails();
             },
             child: ListTile(
@@ -522,7 +522,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS
+                ss.settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.macwindow
                     : Icons.open_in_browser,
                 color: context.theme.colorScheme.properOnSurface,
@@ -544,7 +544,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               dense: !kIsDesktop && !kIsWeb,
               title: Text("Copy", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS
+                ss.settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.doc_on_clipboard
                     : Icons.content_copy,
                 color: context.theme.colorScheme.properOnSurface,
@@ -660,7 +660,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS
+                ss.settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.cloud_download
                     : Icons.file_download,
                 color: context.theme.colorScheme.properOnSurface,
@@ -696,7 +696,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS
+                ss.settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.arrow_up_right_square
                     : Icons.open_in_new,
                 color: context.theme.colorScheme.properOnSurface,
@@ -722,7 +722,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS
+                ss.settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.bubble_left_bubble_right
                     : Icons.forum,
                 color: context.theme.colorScheme.properOnSurface,
@@ -771,7 +771,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS
+                ss.settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.chat_bubble
                     : Icons.message,
                 color: context.theme.colorScheme.properOnSurface,
@@ -819,7 +819,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS
+                ss.settings.skin.value == Skins.iOS
                     ? cupertino.CupertinoIcons.arrow_right
                     : Icons.forward,
                 color: context.theme.colorScheme.properOnSurface,
@@ -847,7 +847,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.refresh : Icons.refresh,
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.refresh : Icons.refresh,
                 color: context.theme.colorScheme.properOnSurface,
               ),
             ),
@@ -881,7 +881,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.share : Icons.share,
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.share : Icons.share,
                 color: context.theme.colorScheme.properOnSurface,
               ),
             ),
@@ -975,7 +975,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
-                settings.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.alarm : Icons.alarm,
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.alarm : Icons.alarm,
                 color: context.theme.colorScheme.properOnSurface,
               ),
             ),
@@ -997,7 +997,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
               style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
             ),
             trailing: Icon(
-              settings.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
+              ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
               color: context.theme.colorScheme.properOnSurface,
             ),
           ),
@@ -1022,7 +1022,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     }
     if (showDownload && kIsWeb && widget.message.attachments.first?.webUrl != null) maxToShow++;
     if (showDownload) maxToShow++;
-    if (settings.settings.enablePrivateAPI.value &&
+    if (ss.settings.enablePrivateAPI.value &&
         isBigSur &&
         (currentChat?.chat.isIMessage ?? true) &&
         !widget.message.guid!.startsWith("temp")) {
@@ -1064,7 +1064,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                         children: moreActions,
                       );
                       Get.dialog(
-                          settings.settings.skin.value == Skins.iOS
+                          ss.settings.skin.value == Skins.iOS
                               ? CupertinoAlertDialog(
                                   backgroundColor: context.theme.colorScheme.properSurface,
                                   content: content,
@@ -1080,7 +1080,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                       dense: !kIsDesktop && !kIsWeb,
                       title: Text("More...", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
                       trailing: Icon(
-                        settings.settings.skin.value == Skins.iOS
+                        ss.settings.skin.value == Skins.iOS
                             ? cupertino.CupertinoIcons.ellipsis
                             : Icons.more_vert,
                         color: context.theme.colorScheme.properOnSurface,
@@ -1100,7 +1100,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     }
 
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
-    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup() || settings.settings.alwaysShowAvatars.value);
+    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup() || ss.settings.alwaysShowAvatars.value);
 
     double offset = 20 + (shiftRight ? 35 : 0);
     return Positioned(

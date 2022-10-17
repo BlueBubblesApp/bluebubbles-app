@@ -28,10 +28,10 @@ class SamsungConversationList extends StatefulWidget {
 class _SamsungConversationListState extends OptimizedState<SamsungConversationList> with ThemeHelpers {
   bool get showArchived => widget.parentController.showArchivedChats;
   bool get showUnknown => widget.parentController.showUnknownSenders;
-  Color get backgroundColor => settings.settings.windowEffect.value == WindowEffect.disabled
+  Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled
       ? headerColor
       : Colors.transparent;
-  Color get _tileColor => settings.settings.windowEffect.value == WindowEffect.disabled
+  Color get _tileColor => ss.settings.windowEffect.value == WindowEffect.disabled
       ? tileColor
       : Colors.transparent;
   ConversationListController get controller => widget.parentController;
@@ -41,7 +41,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
     super.initState();
     // update widget when background color changes
     if (kIsDesktop) {
-      settings.settings.windowEffect.listen((WindowEffect effect) {
+      ss.settings.windowEffect.listen((WindowEffect effect) {
         setState(() {});
       });
     }
@@ -59,7 +59,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
       },
       child: Scaffold(
         backgroundColor: backgroundColor,
-        floatingActionButton: !settings.settings.moveChatCreatorToHeader.value
+        floatingActionButton: !ss.settings.moveChatCreatorToHeader.value
             && !showArchived && !showUnknown
             ? ConversationListFAB(parentController: controller)
             : null,
@@ -86,7 +86,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                       .unknownSendersHelper(controller.showUnknownSenders);
 
                   return CustomScrollView(
-                    physics: (settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                    physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                         ? NeverScrollableScrollPhysics()
                         : ThemeSwitcher.getScrollPhysics(),
                     controller: controller.samsungScrollController,

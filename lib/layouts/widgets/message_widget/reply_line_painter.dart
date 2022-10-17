@@ -53,7 +53,7 @@ class LinePainter extends CustomPainter {
     if (lineType == LineType.meToMe) {
       // the upper portion can have a different width if the message is bigger
       // or smaller
-      final topMaxWidth = min(navigatorService.width(context) - upperSize.width - 125, 150).toDouble() - offset;
+      final topMaxWidth = min(ns.width(context) - upperSize.width - 125, 150).toDouble() - offset;
       // if we are drawing to an originator bubble
       if (upperIsOriginator) {
         // draw the top line of the C
@@ -101,7 +101,7 @@ class LinePainter extends CustomPainter {
       // draws a flipped C shape, same general method as the above but with
       // slightly different coordinates
     } else if (lineType == LineType.otherToOther) {
-      final topMaxWidth = min(navigatorService.width(context) - upperSize.width - 125, 150).toDouble() - offset;
+      final topMaxWidth = min(ns.width(context) - upperSize.width - 125, 150).toDouble() - offset;
       if (upperIsOriginator) {
         path.moveTo(size.width - topMaxWidth, -upperSize.height / 2 - 8 - (extendPastSender ? 20 : 0));
         path.lineTo(size.width - size.height / 2, -upperSize.height / 2 - 8 - (extendPastSender ? 20 : 0));

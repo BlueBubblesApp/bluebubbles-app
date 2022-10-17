@@ -50,15 +50,15 @@ abstract class MessageWidgetMixin {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
-        settings.settings.redactedMode.value && settings.settings.generateFakeMessageContent.value;
+        ss.settings.redactedMode.value && ss.settings.generateFakeMessageContent.value;
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
-        (settings.settings.redactedMode.value &&
-            settings.settings.hideMessageContent.value &&
+        (ss.settings.redactedMode.value &&
+            ss.settings.hideMessageContent.value &&
             !generateContent);
 
     TextStyle? textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText;
     if (!message!.isFromMe!) {
-      if (settings.settings.colorfulBubbles.value) {
+      if (ss.settings.colorfulBubbles.value) {
         if (!isNullOrEmpty(colors)!) {
           bool dark = colors![0].computeLuminance() < 0.179;
           if (!dark) {
@@ -183,16 +183,16 @@ abstract class MessageWidgetMixin {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
-        settings.settings.redactedMode.value && settings.settings.generateFakeMessageContent.value;
+        ss.settings.redactedMode.value && ss.settings.generateFakeMessageContent.value;
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
-        (settings.settings.redactedMode.value &&
-            settings.settings.hideMessageContent.value &&
+        (ss.settings.redactedMode.value &&
+            ss.settings.hideMessageContent.value &&
             !generateContent);
 
     TextStyle? textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText;
     if (message == null) return [];
     if (!message.isFromMe!) {
-      if (settings.settings.colorfulBubbles.value) {
+      if (ss.settings.colorfulBubbles.value) {
         if (!isNullOrEmpty(colors)!) {
           bool dark = colors![0].computeLuminance() < 0.179;
           if (!dark) {

@@ -14,7 +14,7 @@ class SettingsDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (settings.settings.skin.value == Skins.iOS) {
+    if (ss.settings.skin.value == Skins.iOS) {
       return Divider(
         color: color ?? context.theme.colorScheme.outline.withOpacity(0.5),
         thickness: 0.5,

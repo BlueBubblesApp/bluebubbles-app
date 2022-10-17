@@ -119,7 +119,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                 backgroundColor: tileColor,
                 children: [
                   Obx(() {
-                    bool redact = settings.settings.redactedMode.value;
+                    bool redact = ss.settings.redactedMode.value;
                     return Container(
                         color: tileColor,
                         child: Padding(
@@ -149,9 +149,9 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                                           : SocketState.disconnected))),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : settings.settings.serverAddress.value}", recognizer: TapGestureRecognizer()
+                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : ss.settings.serverAddress.value}", recognizer: TapGestureRecognizer()
                                       ..onTap = () {
-                                        Clipboard.setData(ClipboardData(text: settings.settings.serverAddress.value));
+                                        Clipboard.setData(ClipboardData(text: ss.settings.serverAddress.value));
                                         showSnackbar('Copied', "Address copied to clipboard");
                                       }),
                                     TextSpan(text: "\n\n"),
@@ -228,7 +228,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                       ],
                     )
                   )),
-                  if (!settings.fcmData.isNull)
+                  if (!ss.fcmData.isNull)
                   SettingsTile(
                     title: "Show QR Code",
                     subtitle: "Generate QR Code to screenshot or sync other devices",
@@ -238,14 +238,14 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     ),
                     onTap: () {
                       List<dynamic> json = [
-                        settings.settings.guidAuthKey.value,
-                        settings.settings.serverAddress.value,
-                        settings.fcmData.projectID,
-                        settings.fcmData.storageBucket,
-                        settings.fcmData.apiKey,
-                        settings.fcmData.firebaseURL,
-                        settings.fcmData.clientID,
-                        settings.fcmData.applicationID,
+                        ss.settings.guidAuthKey.value,
+                        ss.settings.serverAddress.value,
+                        ss.fcmData.projectID,
+                        ss.fcmData.storageBucket,
+                        ss.fcmData.apiKey,
+                        ss.fcmData.firebaseURL,
+                        ss.fcmData.clientID,
+                        ss.fcmData.applicationID,
                       ];
                       String qrtext = jsonEncode(json);
                       showDialog(
@@ -437,11 +437,11 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                           clientID: fcmData[6],
                           applicationID: fcmData[7],
                         );
-                        settings.settings.guidAuthKey.value = fcmData[0];
-                        settings.settings.serverAddress.value = sanitizeServerAddress(address: fcmData[1])!;
+                        ss.settings.guidAuthKey.value = fcmData[0];
+                        ss.settings.serverAddress.value = sanitizeServerAddress(address: fcmData[1])!;
 
-                        settings.saveSettings();
-                        settings.saveFCMData(data);
+                        ss.saveSettings();
+                        ss.saveFCMData(data);
                         Get.reload<SocketService>(force: true);
                       }
                     },
@@ -591,7 +591,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                     ),
                   ),
                   Obx(() => AnimatedSizeAndFade.showHide(
-                    show: settings.settings.enablePrivateAPI.value
+                    show: ss.settings.enablePrivateAPI.value
                         && (controller.serverVersionCode.value ?? 0) >= 41,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -672,7 +672,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                         // Perform the restart
                         try {
                           if (kIsDesktop || kIsWeb) {
-                            var db = FirebaseDatabase(databaseURL: settings.fcmData.firebaseURL);
+                            var db = FirebaseDatabase(databaseURL: ss.fcmData.firebaseURL);
                             var ref = db.reference().child('config').child('nextRestart');
                             await ref.set(DateTime.now().toUtc().millisecondsSinceEpoch);
                           } else {

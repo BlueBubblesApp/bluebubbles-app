@@ -4,9 +4,9 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/widgets.dart';
 
 String getContactName(BuildContext context, String? contactTitle, String? contactAddress, {Chat? currentChat}) {
-  final bool redactedMode = settings.settings.redactedMode.value;
-  final bool hideInfo = redactedMode && settings.settings.hideContactInfo.value;
-  final bool generateName = redactedMode && settings.settings.generateFakeContactNames.value;
+  final bool redactedMode = ss.settings.redactedMode.value;
+  final bool hideInfo = redactedMode && ss.settings.hideContactInfo.value;
+  final bool generateName = redactedMode && ss.settings.generateFakeContactNames.value;
 
   String contactName = contactTitle ?? "";
   if (hideInfo || generateName) {

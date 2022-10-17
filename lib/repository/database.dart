@@ -450,7 +450,7 @@ class DBProvider {
       Logger.info("Parsed FCM data from SQLite", tag: "OB Migration");
       fcm.save();
       Logger.info("Inserted FCM data into ObjectBox", tag: "OB Migration");
-      settings.prefs.setBool('objectbox-migration', true);
+      ss.prefs.setBool('objectbox-migration', true);
       Logger.info("Migration to ObjectBox complete!", tag: "OB Migration");
     }
   }

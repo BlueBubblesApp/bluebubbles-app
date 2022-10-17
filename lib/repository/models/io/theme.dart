@@ -40,10 +40,10 @@ class ThemeStruct {
     required this.name,
     this.gradientBg = false,
     ThemeData? themeData,
-  }) : data = themeData ?? themes.whiteLightTheme;
+  }) : data = themeData ?? ts.whiteLightTheme;
 
   bool get isPreset =>
-      themes.defaultThemes.map((e) => e.name).contains(name);
+      ts.defaultThemes.map((e) => e.name).contains(name);
 
   ThemeStruct save({bool updateIfNotAbsent = true}) {
     store.runInTransaction(TxMode.write, () {
@@ -70,23 +70,23 @@ class ThemeStruct {
   }
 
   static ThemeStruct getLightTheme() {
-    final name = settings.prefs.getString("selected-light");
+    final name = ss.prefs.getString("selected-light");
     final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
     query.limit = 1;
     final result = query.findFirst();
     if (result == null) {
-      return themes.defaultThemes[1];
+      return ts.defaultThemes[1];
     }
     return result;
   }
 
   static ThemeStruct getDarkTheme() {
-    final name = settings.prefs.getString("selected-dark");
+    final name = ss.prefs.getString("selected-dark");
     final query = themeBox.query(ThemeStruct_.name.equals(name!)).build();
     query.limit = 1;
     final result = query.findFirst();
     if (result == null) {
-      return themes.defaultThemes[0];
+      return ts.defaultThemes[0];
     }
     return result;
   }
@@ -103,10 +103,10 @@ class ThemeStruct {
   }
 
   static List<ThemeStruct> getThemes() {
-    if (kIsWeb) return themes.defaultThemes;
+    if (kIsWeb) return ts.defaultThemes;
     List<ThemeStruct> allThemes = themeBox.getAll();
     // sometimes the theme box is empty, this ensures it is never empty when queried
-    if (allThemes.isEmpty) themeBox.putMany(themes.defaultThemes);
+    if (allThemes.isEmpty) themeBox.putMany(ts.defaultThemes);
     allThemes = themeBox.getAll();
     return allThemes;
   }
@@ -285,7 +285,7 @@ class ThemeStruct {
   Map<String, Color> colors(bool dark, {bool returnMaterialYou = true}) {
     ThemeData finalData = data;
     if (returnMaterialYou) {
-      final tuple = themes.getStructsFromData(data, data);
+      final tuple = ts.getStructsFromData(data, data);
       if (dark) {
         finalData = tuple.item2;
       } else {

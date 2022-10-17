@@ -78,7 +78,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: settings.settings.immersiveMode.value
+        systemNavigationBarColor: ss.settings.immersiveMode.value
             ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
@@ -91,10 +91,10 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
           colorScheme: context.theme.colorScheme.copyWith(
             primary: context.theme.colorScheme.bubble(context, widget.chat.isIMessage),
             onPrimary: context.theme.colorScheme.onBubble(context, widget.chat.isIMessage),
-            surface: settings.settings.monetTheming.value == Monet.full
+            surface: ss.settings.monetTheming.value == Monet.full
                 ? null
                 : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-            onSurface: settings.settings.monetTheming.value == Monet.full
+            onSurface: ss.settings.monetTheming.value == Monet.full
                 ? null
                 : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
           ),
@@ -134,7 +134,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                           GestureDetector(
                             onTap: () {
                               Navigator.of(context).pop();
-                              navigatorService.pushAndRemoveUntil(
+                              ns.pushAndRemoveUntil(
                                 context,
                                 ConversationView(
                                   chat: widget.chat,
@@ -204,7 +204,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
 
   Widget buildDetailsMenu(BuildContext context) {
     double maxMenuWidth = min(max(context.width * 3 / 5, 200), context.width * 4 / 5);
-    bool ios = settings.settings.skin.value == Skins.iOS;
+    bool ios = ss.settings.skin.value == Skins.iOS;
 
     List<Widget> allActions = [
       Material(

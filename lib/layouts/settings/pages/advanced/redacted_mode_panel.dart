@@ -94,17 +94,17 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                 children: [
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      settings.settings.redactedMode.value = val;
+                      ss.settings.redactedMode.value = val;
                       saveSettings();
                     },
-                    initialVal: settings.settings.redactedMode.value,
+                    initialVal: ss.settings.redactedMode.value,
                     title: "Enable Redacted Mode",
                     backgroundColor: tileColor,
                   )),
                 ],
               ),
               Obx(() => AnimatedSizeAndFade.showHide(
-                show: settings.settings.redactedMode.value,
+                show: ss.settings.redactedMode.value,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -120,10 +120,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                       children: [
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.hideMessageContent.value = val;
+                            ss.settings.hideMessageContent.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.hideMessageContent.value,
+                          initialVal: ss.settings.hideMessageContent.value,
                           title: "Hide Message Content",
                           backgroundColor: tileColor,
                           subtitle: "Removes any trace of message text",
@@ -137,10 +137,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.hideReactions.value = val;
+                            ss.settings.hideReactions.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.hideReactions.value,
+                          initialVal: ss.settings.hideReactions.value,
                           title: "Hide Reactions",
                           backgroundColor: tileColor,
                           subtitle: "Removes any trace of reactions from messages",
@@ -159,10 +159,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                       children: [
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.hideEmojis.value = val;
+                            ss.settings.hideEmojis.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.hideEmojis.value,
+                          initialVal: ss.settings.hideEmojis.value,
                           title: "Hide Big Emojis",
                           backgroundColor: tileColor,
                           subtitle: "Replaces large emojis with placeholder boxes",
@@ -176,10 +176,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.hideAttachments.value = val;
+                            ss.settings.hideAttachments.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.hideAttachments.value,
+                          initialVal: ss.settings.hideAttachments.value,
                           title: "Hide Attachments",
                           backgroundColor: tileColor,
                           subtitle: "Replaces attachments with placeholder boxes",
@@ -193,10 +193,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.hideAttachmentTypes.value = val;
+                            ss.settings.hideAttachmentTypes.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.hideAttachmentTypes.value,
+                          initialVal: ss.settings.hideAttachmentTypes.value,
                           title: "Hide Attachment Types",
                           backgroundColor: tileColor,
                           subtitle: "Removes the attachment file type text from the placeholder box",
@@ -216,10 +216,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                       children: [
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.hideContactPhotos.value = val;
+                            ss.settings.hideContactPhotos.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.hideContactPhotos.value,
+                          initialVal: ss.settings.hideContactPhotos.value,
                           title: "Hide Contact Photos",
                           backgroundColor: tileColor,
                           subtitle: "Replaces message bubbles with empty bubbles",
@@ -233,10 +233,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.hideContactInfo.value = val;
+                            ss.settings.hideContactInfo.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.hideContactInfo.value,
+                          initialVal: ss.settings.hideContactInfo.value,
                           title: "Hide Contact Info",
                           backgroundColor: tileColor,
                           subtitle: "Removes any trace of contact names, numbers, and emails",
@@ -251,10 +251,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.removeLetterAvatars.value = val;
+                            ss.settings.removeLetterAvatars.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.removeLetterAvatars.value,
+                          initialVal: ss.settings.removeLetterAvatars.value,
                           title: "Remove Letter Avatars",
                           backgroundColor: tileColor,
                           subtitle: "Replaces letter avatars with generic person avatars",
@@ -273,10 +273,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                       children: [
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.generateFakeContactNames.value = val;
+                            ss.settings.generateFakeContactNames.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.generateFakeContactNames.value,
+                          initialVal: ss.settings.generateFakeContactNames.value,
                           title: "Generate Fake Contact Names",
                           backgroundColor: tileColor,
                           subtitle: "Replaces contact names, numbers, and emails with auto-generated fake names",
@@ -291,10 +291,10 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                         ),
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            settings.settings.generateFakeMessageContent.value = val;
+                            ss.settings.generateFakeMessageContent.value = val;
                             saveSettings();
                           },
-                          initialVal: settings.settings.generateFakeMessageContent.value,
+                          initialVal: ss.settings.generateFakeMessageContent.value,
                           title: "Generate Fake Message Content",
                           backgroundColor: tileColor,
                           subtitle: "Replaces message text with lorem-ipsum text",
@@ -312,6 +312,6 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
   }
 
   void saveSettings() {
-    settings.saveSettings();
+    ss.saveSettings();
   }
 }

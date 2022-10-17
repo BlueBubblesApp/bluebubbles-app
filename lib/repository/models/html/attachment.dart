@@ -167,7 +167,7 @@ class Attachment {
   }
 
   String getCompressedPath() {
-    return "${getPath()}.${settings.compressionQuality}.compressed";
+    return "${getPath()}.${ss.compressionQuality}.compressed";
   }
 
   Map<String, dynamic> toMap() => {

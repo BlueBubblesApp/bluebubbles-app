@@ -41,7 +41,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
       SliverList(
         delegate: SliverChildListDelegate(
           <Widget>[
-            if (settings.settings.skin.value != Skins.Samsung)
+            if (ss.settings.skin.value != Skins.Samsung)
               Container(
                   height: 50,
                   alignment: Alignment.bottomLeft,
@@ -57,10 +57,10 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
               if (!kIsWeb)
                 Obx(() => SettingsSwitch(
                   onChanged: (bool val) {
-                    settings.settings.notifyOnChatList.value = val;
+                    ss.settings.notifyOnChatList.value = val;
                     saveSettings();
                   },
-                  initialVal: settings.settings.notifyOnChatList.value,
+                  initialVal: ss.settings.notifyOnChatList.value,
                   title: "Send Notifications on Chat List",
                   subtitle:
                   "Sends notifications for new messages while in the chat list or chat creator",
@@ -90,10 +90,10 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
               ),
               Obx(() => SettingsSwitch(
                 onChanged: (bool val) {
-                  settings.settings.notifyReactions.value = val;
+                  ss.settings.notifyReactions.value = val;
                   saveSettings();
                 },
-                initialVal: settings.settings.notifyReactions.value,
+                initialVal: ss.settings.notifyReactions.value,
                 title: "Notify for Reactions",
                 subtitle: "Sends notifications for incoming reactions",
                 backgroundColor: tileColor,
@@ -145,12 +145,12 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                 title: "Text Detection",
                 onTap: () async {
                   final TextEditingController controller = TextEditingController();
-                  controller.text = settings.settings.globalTextDetection.value;
+                  controller.text = ss.settings.globalTextDetection.value;
                   showDialog(
                     context: context,
                     builder: (context) => TextDetectionDialog(controller),
                   );
-                  settings.settings.globalTextDetection.value = controller.text;
+                  ss.settings.globalTextDetection.value = controller.text;
                   saveSettings();
                 },
                 backgroundColor: tileColor,
@@ -168,10 +168,10 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
               children: [
                 Obx(() => SettingsSwitch(
                   onChanged: (bool val) {
-                    settings.settings.hideTextPreviews.value = val;
+                    ss.settings.hideTextPreviews.value = val;
                     saveSettings();
                   },
-                  initialVal: settings.settings.hideTextPreviews.value,
+                  initialVal: ss.settings.hideTextPreviews.value,
                   title: "Hide Message Text",
                   subtitle: "Replaces message text with 'iMessage' in notifications",
                   backgroundColor: tileColor,
@@ -185,10 +185,10 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                 ),
                 Obx(() => SettingsSwitch(
                   onChanged: (bool val) {
-                    settings.settings.showIncrementalSync.value = val;
+                    ss.settings.showIncrementalSync.value = val;
                     saveSettings();
                   },
-                  initialVal: settings.settings.showIncrementalSync.value,
+                  initialVal: ss.settings.showIncrementalSync.value,
                   title: "Notify When Incremental Sync Complete",
                   subtitle: "Show a snackbar whenever a message sync is completed",
                   backgroundColor: tileColor,
@@ -203,7 +203,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -213,7 +213,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
         appBar: samsung && index.value == 0
             ? null
             : PreferredSize(
-          preferredSize: Size(navigatorService.width(context), 50),
+          preferredSize: Size(ns.width(context), 50),
           child: AppBar(
             systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
                 ? SystemUiOverlayStyle.light
@@ -237,7 +237,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
           children: <Widget>[
             NotificationListener<ScrollEndNotification>(
               onNotification: (_) {
-                if (settings.settings.skin.value != Skins.Samsung) return false;
+                if (ss.settings.skin.value != Skins.Samsung) return false;
                 final scrollDistance = context.height / 3 - 57;
 
                 if (controller1.offset > 0 && controller1.offset < scrollDistance) {
@@ -319,9 +319,9 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
                             },
                           ),
                         ),
-                      if (settings.settings.skin.value != Skins.Samsung)
+                      if (ss.settings.skin.value != Skins.Samsung)
                         ...bodySlivers,
-                      if (settings.settings.skin.value == Skins.Samsung)
+                      if (ss.settings.skin.value == Skins.Samsung)
                         SliverToBoxAdapter(
                           child: ConstrainedBox(
                             constraints: BoxConstraints(minHeight: context.height - 50 - context.mediaQueryPadding.top - context.mediaQueryViewPadding.top),
@@ -367,7 +367,7 @@ class _NotificationPanelState extends OptimizedState<NotificationPanel> with Sin
   }
 
   void saveSettings() {
-    settings.saveSettings();
+    ss.saveSettings();
   }
 }
 
@@ -455,7 +455,7 @@ class ChatListState extends OptimizedState<ChatList> with ThemeHelpers {
                   child: ScrollbarWrapper(
                     controller: _controller,
                     child: ListView.builder(
-                      physics: (settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                      physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                           ? NeverScrollableScrollPhysics()
                           : ThemeSwitcher.getScrollPhysics(),
                       shrinkWrap: true,

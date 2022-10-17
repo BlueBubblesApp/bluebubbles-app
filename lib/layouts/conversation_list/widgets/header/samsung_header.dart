@@ -23,7 +23,7 @@ class SamsungHeader extends CustomStateful<ConversationListController> {
 }
 
 class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationListController> with ThemeHelpers {
-  Color get backgroundColor => settings.settings.windowEffect.value == WindowEffect.disabled
+  Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled
       ? headerColor
       : Colors.transparent;
   bool get showArchived => controller.showArchivedChats;
@@ -107,7 +107,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                           children: [
                             !showArchived && !showUnknown ? IconButton(
                               onPressed: () async {
-                                navigatorService.pushLeft(
+                                ns.pushLeft(
                                   context,
                                   SearchView(),
                                 );
@@ -117,10 +117,10 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                                 color: context.theme.colorScheme.properOnSurface,
                               ),
                             ) : const SizedBox.shrink(),
-                            settings.settings.moveChatCreatorToHeader.value
+                            ss.settings.moveChatCreatorToHeader.value
                                 && !showArchived
                                 && !showUnknown ? InkWell(
-                              onLongPress: settings.settings.cameraFAB.value
+                              onLongPress: ss.settings.cameraFAB.value
                                   ? () => controller.openCamera(context) : null,
                               child: IconButton(
                                 onPressed: () => controller.openNewChatCreator(context),

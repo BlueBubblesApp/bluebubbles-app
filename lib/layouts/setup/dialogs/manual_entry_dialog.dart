@@ -63,9 +63,9 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
       return;
     }
 
-    settings.settings.serverAddress.value = addr;
-    settings.settings.guidAuthKey.value = password;
-    settings.settings.save();
+    ss.settings.serverAddress.value = addr;
+    ss.settings.guidAuthKey.value = password;
+    ss.settings.save();
     try {
       Get.reload<SocketService>(force: true);
     } catch (e) {
@@ -82,7 +82,7 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
       Map<String, dynamic>? data = response.data["data"];
       if (!isNullOrEmpty(data)!) {
         FCMData newData = FCMData.fromMap(data!);
-        settings.saveFCMData(newData);
+        ss.saveFCMData(newData);
       }
 
       widget.onConnect();

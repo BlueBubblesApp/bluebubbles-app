@@ -127,17 +127,17 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
     return TitleBarWrapper(
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
-          systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+          systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
           systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
           statusBarColor: Colors.transparent, // status bar color
-          statusBarIconBrightness: settings.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
+          statusBarIconBrightness: ss.settings.skin.value != Skins.iOS ? Brightness.light : context.theme.colorScheme.brightness.opposite,
         ),
         child: Actions(
           actions: {
             GoBackIntent: GoBackAction(context),
           },
           child: Scaffold(
-            appBar: settings.settings.skin.value != Skins.iOS ? null : AppBar(
+            appBar: ss.settings.skin.value != Skins.iOS ? null : AppBar(
               leading: TextButton(
                 child: Text("Done", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                 onPressed: () {
@@ -146,7 +146,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
               ),
               leadingWidth: 75,
               title: Text(kIsWeb || !widget.showInteractions || widget.currentChat == null ? "Media" : "${currentIndex + 1} of ${widget.currentChat?.chatAttachments.length}", style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
-              centerTitle: settings.settings.skin.value == Skins.iOS,
+              centerTitle: ss.settings.skin.value == Skins.iOS,
               iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
               backgroundColor: context.theme.colorScheme.properSurface,
               systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
@@ -164,13 +164,13 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                             "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
                             tag: "RawKeyboardListener");
                         if (event.data.physicalKey.debugName == "Arrow Right") {
-                          if (settings.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT) {
+                          if (ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT) {
                             controller!.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
                           } else {
                             controller!.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
                           }
                         } else if (event.data.physicalKey.debugName == "Arrow Left") {
-                          if (settings.settings.fullscreenViewerSwipeDir.value == SwipeDirection.LEFT) {
+                          if (ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.LEFT) {
                             controller!.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
                           } else {
                             controller!.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
@@ -180,7 +180,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                       },
                       child: PageView.builder(
                         physics: physics ?? ThemeSwitcher.getScrollPhysics(),
-                        reverse: settings.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
+                        reverse: ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
                         itemCount: kIsWeb ? 1 : widget.currentChat?.chatAttachments.length ?? 1,
                         itemBuilder: (BuildContext context, int index) {
                           Logger.info("Showing index: $index");

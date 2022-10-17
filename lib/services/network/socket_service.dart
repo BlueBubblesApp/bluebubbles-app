@@ -25,8 +25,8 @@ class SocketService extends GetxService {
   SocketState _lastState = SocketState.disconnected;
   late final Socket socket;
   
-  String? get serverAddress => settings.settings.serverAddress.value;
-  String get password => settings.settings.guidAuthKey.value;
+  String? get serverAddress => ss.settings.serverAddress.value;
+  String get password => ss.settings.guidAuthKey.value;
 
   @override
   void onInit() {
@@ -81,9 +81,9 @@ class SocketService extends GetxService {
 
   void forgetConnection() {
     closeSocket();
-    settings.settings.guidAuthKey.value = "";
-    settings.settings.serverAddress.value = "";
-    settings.saveSettings();
+    ss.settings.guidAuthKey.value = "";
+    ss.settings.serverAddress.value = "";
+    ss.saveSettings();
   }
 
   Future<Map<String, dynamic>> sendMessage(String event, Map<String, dynamic> message) {

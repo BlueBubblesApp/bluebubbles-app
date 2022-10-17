@@ -6,7 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-NavigatorService navigatorService = Get.isRegistered<NavigatorService>() ? Get.find<NavigatorService>() : Get.put(NavigatorService());
+NavigatorService ns = Get.isRegistered<NavigatorService>() ? Get.find<NavigatorService>() : Get.put(NavigatorService());
 
 /// Handles navigation for the app
 class NavigatorService extends GetxService {
@@ -24,7 +24,7 @@ class NavigatorService extends GetxService {
   set maxWidthSettings(double w) => _widthSettings = w;
 
   bool isTabletMode(BuildContext context) => (!context.isPhone || context.isLandscape) &&
-      settings.settings.tabletMode.value;
+      ss.settings.tabletMode.value;
 
   /// grab the available screen width, returning the split screen width if applicable
   /// this should *always* be used in place of context.width or similar

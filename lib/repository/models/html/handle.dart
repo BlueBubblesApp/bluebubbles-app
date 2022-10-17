@@ -23,10 +23,10 @@ class Handle {
 
   Contact? get contact => webContact;
   String get displayName {
-    if (settings.settings.redactedMode.value) {
-      if (settings.settings.generateFakeContactNames.value) {
+    if (ss.settings.redactedMode.value) {
+      if (ss.settings.generateFakeContactNames.value) {
         return fakeName;
-      } else if (settings.settings.hideContactInfo.value) {
+      } else if (ss.settings.hideContactInfo.value) {
         return "";
       }
     }

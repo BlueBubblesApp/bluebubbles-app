@@ -76,7 +76,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
       borderRadius: BorderRadius.circular(20),
       child: Container(
         constraints: BoxConstraints(
-          maxWidth: navigatorService.width(context) * 0.5,
+          maxWidth: ns.width(context) * 0.5,
           maxHeight: context.height * 0.6,
         ),
         child: _buildAttachmentWidget(),

@@ -115,8 +115,11 @@ Future<Null> initApp() async {
   await Logger.init();
   Logger.startup.value = true;
   Logger.info('Startup Logs');
-  await settings.init();
-  await themes.init();
+  await ss.init();
+  await ts.init();
+  if (!kIsWeb) {
+    await cs.init();
+  }
 
   /* ----- RANDOM STUFF INITIALIZATION ----- */
   HttpOverrides.global = BadCertOverride();
@@ -174,8 +177,8 @@ Future<Null> initApp() async {
             if (Platform.isWindows) {
               Logger.info("Failed to open store from default path. Using custom path");
               final customStorePath = "C:\\bluebubbles_app";
-              settings.prefs.setBool("use-custom-path", true);
-              settings.prefs.setString("custom-path", customStorePath);
+              ss.prefs.setBool("use-custom-path", true);
+              ss.prefs.setString("custom-path", customStorePath);
               objectBoxDirectory = Directory(join(customStorePath, "objectbox"));
               await objectBoxDirectory.create(recursive: true);
               Logger.info("Opening ObjectBox store from custom path: ${objectBoxDirectory.path}");
@@ -196,9 +199,9 @@ Future<Null> initApp() async {
         themeObjectBox = store.box<ThemeObject>();
         Chat.startWatchingChats();
         if (themeBox.isEmpty()) {
-          settings.prefs.setString("selected-dark", "OLED Dark");
-          settings.prefs.setString("selected-light", "Bright White");
-          themeBox.putMany(themes.defaultThemes);
+          ss.prefs.setString("selected-dark", "OLED Dark");
+          ss.prefs.setString("selected-light", "Bright White");
+          themeBox.putMany(ts.defaultThemes);
         }
       }
 
@@ -211,7 +214,7 @@ Future<Null> initApp() async {
         s.stop();
         Logger.info("Migrated in ${s.elapsedMilliseconds} ms");
       } else {
-        if (await File(sqlitePath).exists() && settings.prefs.getBool('objectbox-migration') != true) {
+        if (await File(sqlitePath).exists() && ss.prefs.getBool('objectbox-migration') != true) {
           runApp(UpgradingDB());
           print("Converting sqflite to ObjectBox...");
           Stopwatch s = Stopwatch();
@@ -244,13 +247,8 @@ Future<Null> initApp() async {
     /* ----- DATE FORMATTING INITIALIZATION ----- */
     await initializeDateFormatting();
 
-    /* ----- CONTACTS INITIALIZATION ----- */
-    if (!kIsWeb) {
-      await cs.init();
-    }
-
     /* ----- SPLASH SCREEN INITIALIZATION ----- */
-    if (!settings.settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
+    if (!ss.settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
       runApp(MaterialApp(
           home: SplashScreen(shouldNavigate: false),
           theme: ThemeData(
@@ -302,16 +300,16 @@ Future<Null> initApp() async {
         Size size = primary.size;
         Rect bounds = Rect.fromLTWH(0, 0, size.width, size.height);
 
-        double? width = settings.prefs.getDouble("window-width");
-        double? height = settings.prefs.getDouble("window-height");
+        double? width = ss.prefs.getDouble("window-width");
+        double? height = ss.prefs.getDouble("window-height");
         if (width != null && height != null) {
           if ((width == width.clamp(300, bounds.width)) && (height == height.clamp(300, bounds.height))) {
             await WindowManager.instance.setSize(Size(width, height));
           }
         }
 
-        double? posX = settings.prefs.getDouble("window-x");
-        double? posY = settings.prefs.getDouble("window-y");
+        double? posX = ss.prefs.getDouble("window-x");
+        double? posY = ss.prefs.getDouble("window-y");
         if (posX != null && posY != null && width != null && height != null) {
           if ((posX == posX.clamp(bounds.left, bounds.right - width)) &&
               (posY == posY.clamp(bounds.top, bounds.bottom - height))) {
@@ -356,7 +354,7 @@ Future<Null> initApp() async {
     ThemeData light = ThemeStruct.getLightTheme().data;
     ThemeData dark = ThemeStruct.getDarkTheme().data;
 
-    final tuple = themes.getStructsFromData(light, dark);
+    final tuple = ts.getStructsFromData(light, dark);
     light = tuple.item1;
     dark = tuple.item2;
 
@@ -396,14 +394,14 @@ class DesktopWindowListener extends WindowListener {
 
   @override
   void onWindowResized() async {
-    settings.prefs.setDouble("window-width", (await WindowManager.instance.getSize()).width);
-    settings.prefs.setDouble("window-height", (await WindowManager.instance.getSize()).height);
+    ss.prefs.setDouble("window-width", (await WindowManager.instance.getSize()).width);
+    ss.prefs.setDouble("window-height", (await WindowManager.instance.getSize()).height);
   }
 
   @override
   void onWindowMoved() async {
-    settings.prefs.setDouble("window-x", (await WindowManager.instance.getPosition()).dx);
-    settings.prefs.setDouble("window-y", (await WindowManager.instance.getPosition()).dy);
+    ss.prefs.setDouble("window-x", (await WindowManager.instance.getPosition()).dx);
+    ss.prefs.setDouble("window-y", (await WindowManager.instance.getPosition()).dy);
   }
 }
 
@@ -424,7 +422,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         title: 'BlueBubbles',
         theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
         darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
-        navigatorKey: navigatorService.key,
+        navigatorKey: ns.key,
         home: Home(),
         shortcuts: {
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.comma): const OpenSettingsIntent(),
@@ -464,10 +462,10 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         builder: (context, child) =>
             SecureApplication(
               child: Builder(builder: (context) {
-                if (settings.canAuthenticate && !LifeCycleManager().isAlive) {
-                  if (settings.settings.shouldSecure.value) {
+                if (ss.canAuthenticate && !LifeCycleManager().isAlive) {
+                  if (ss.settings.shouldSecure.value) {
                     SecureApplicationProvider.of(context, listen: false)!.lock();
-                    if (settings.settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                    if (ss.settings.securityLevel.value == SecurityLevel.locked_and_secured) {
                       SecureApplicationProvider.of(context, listen: false)!.secure();
                     }
                   }
@@ -603,15 +601,15 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       /* ----- COLORS FROM MEDIA LISTENER INITIALIZATION ----- */
       // todo move to method channel initialization
-      if (settings.settings.colorsFromMedia.value) {
+      if (ss.settings.colorsFromMedia.value) {
         try {
           await MethodChannelInterface().invokeMethod("start-notif-listener");
         } catch (_) {}
       }
 
       /* ----- SERVER VERSION CHECK ----- */
-      if (kIsWeb && settings.settings.finishedSetup.value) {
-        int version = (await settings.getServerDetails()).item4;
+      if (kIsWeb && ss.settings.finishedSetup.value) {
+        int version = (await ss.getServerDetails()).item4;
         if (version < 42) {
           setState(() {
             serverCompatible = false;
@@ -631,7 +629,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         await initSystemTray();
       }
 
-      if (!kIsWeb && !kIsDesktop && settings.settings.finishedSetup.value) {
+      if (!kIsWeb && !kIsDesktop && ss.settings.finishedSetup.value) {
         MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
           if (value['guid'] != null) {
             LifeCycleManager().isBubble = value['bubble'] == "true";
@@ -661,7 +659,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
             if (attachments.isEmpty) return;
 
             // Go to the new chat creator, with all of our attachments
-            navigatorService.pushAndRemoveUntil(
+            ns.pushAndRemoveUntil(
               context,
               ConversationView(
                 existingAttachments: attachments,
@@ -676,7 +674,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
             if (text == null) return;
 
             // Go to the new chat creator, with all of our text
-            navigatorService.pushAndRemoveUntil(
+            ns.pushAndRemoveUntil(
               context,
               ConversationView(
                 existingText: text,
@@ -688,7 +686,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         }
       }
 
-      if (!settings.settings.finishedSetup.value) {
+      if (!ss.settings.finishedSetup.value) {
         setState(() {
           fullyLoaded = true;
         });
@@ -743,7 +741,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: settings.settings.immersiveMode.value
+      systemNavigationBarColor: ss.settings.immersiveMode.value
           ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
       systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
       statusBarColor: Colors.transparent, // status bar color
@@ -763,19 +761,19 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           if (event["type"] == 'popup-pushed') {
             bool popup = event["data"] as bool;
             if (popup) {
-              settings.settings.windowEffect.value = WindowEffect.disabled;
+              ss.settings.windowEffect.value = WindowEffect.disabled;
             } else {
-              settings.settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((effect) => effect.toString() == settings.prefs.getString('window-effect')) ?? WindowEffect.aero;
+              ss.settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((effect) => effect.toString() == ss.prefs.getString('window-effect')) ?? WindowEffect.aero;
             }
           }
         });
       });
     }
 
-    final Rx<Color> _backgroundColor = (settings.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
+    final Rx<Color> _backgroundColor = (ss.settings.windowEffect.value == WindowEffect.disabled ? context.theme.colorScheme.background : Colors.transparent).obs;
 
     if (kIsDesktop) {
-      settings.settings.windowEffect.listen((WindowEffect effect) {
+      ss.settings.windowEffect.listen((WindowEffect effect) {
         if (mounted) {
           _backgroundColor.value =
           effect != WindowEffect.disabled ? Colors.transparent : context.theme.colorScheme.background;
@@ -785,7 +783,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -804,7 +802,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
           backgroundColor: _backgroundColor.value,
           body: Builder(
             builder: (BuildContext context) {
-              if (settings.settings.finishedSetup.value) {
+              if (ss.settings.finishedSetup.value) {
                 Logger.startup.value = false;
                 if (!serverCompatible && kIsWeb) {
                   return FailureToStart(

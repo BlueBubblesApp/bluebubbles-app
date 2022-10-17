@@ -26,7 +26,7 @@ class TypingIndicator extends StatefulWidget {
 class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation animation;
-  final Rx<Skins> skin = Rx<Skins>(settings.settings.skin.value);
+  final Rx<Skins> skin = Rx<Skins>(ss.settings.skin.value);
 
   @override
   void initState() {
@@ -98,7 +98,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                         bottom: !widget.chatList && skin.value == Skins.iOS ? 13 : 5,
                       ),
                       constraints: BoxConstraints(
-                        maxWidth: navigatorService.width(context) * MessageWidgetMixin.MAX_SIZE,
+                        maxWidth: ns.width(context) * MessageWidgetMixin.MAX_SIZE,
                       ),
                       padding: EdgeInsets.symmetric(
                         vertical: 8,

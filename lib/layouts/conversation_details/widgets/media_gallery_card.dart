@@ -144,9 +144,9 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
     super.build(context);
 
     final bool hideAttachments =
-        settings.settings.redactedMode.value && settings.settings.hideAttachments.value;
+        ss.settings.redactedMode.value && ss.settings.hideAttachments.value;
     final bool hideAttachmentTypes =
-        settings.settings.redactedMode.value && settings.settings.hideAttachmentTypes.value;
+        ss.settings.redactedMode.value && ss.settings.hideAttachmentTypes.value;
 
     late Widget child;
     bool addPadding = true;
@@ -179,7 +179,7 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             const SizedBox(height: 5),
-            Icon(settings.settings.skin.value == Skins.iOS
+            Icon(ss.settings.skin.value == Skins.iOS
                 ? CupertinoIcons.cloud_download
                 : Icons.cloud_download,
               size: 28.0,
@@ -262,17 +262,17 @@ class ImageDisplay extends StatelessWidget {
             openContainer();
           },
           child: SizedBox(
-            width: navigatorService.width(context) / max(2, navigatorService.width(context) ~/ 200),
-            height: navigatorService.width(context) / max(2, navigatorService.width(context) ~/ 200),
+            width: ns.width(context) / max(2, ns.width(context) ~/ 200),
+            height: ns.width(context) / max(2, ns.width(context) ~/ 200),
             child: Stack(
               children: [
                 Image.memory(
                   image,
                   fit: BoxFit.cover,
                   alignment: Alignment.center,
-                  cacheWidth: navigatorService.width(context) ~/ max(2, navigatorService.width(context) ~/ 200) * 2,
-                  width: navigatorService.width(context) / max(2, navigatorService.width(context) ~/ 200),
-                  height: navigatorService.width(context) / max(2, navigatorService.width(context) ~/ 200),
+                  cacheWidth: ns.width(context) ~/ max(2, ns.width(context) ~/ 200) * 2,
+                  width: ns.width(context) / max(2, ns.width(context) ~/ 200),
+                  height: ns.width(context) / max(2, ns.width(context) ~/ 200),
                 ),
                 if ((attachment.mimeType?.contains("video") ?? false) && duration != null)
                   Positioned(

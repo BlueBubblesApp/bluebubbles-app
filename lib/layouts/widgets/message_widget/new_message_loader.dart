@@ -22,7 +22,7 @@ class NewMessageLoader extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: settings.settings.skin.value == Skins.iOS ? Theme(
+          child: ss.settings.skin.value == Skins.iOS ? Theme(
             data: ThemeData(
               cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark),
             ),

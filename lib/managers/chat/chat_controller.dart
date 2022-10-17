@@ -124,7 +124,7 @@ class ChatController {
       // Check and see if we need to unfocus the keyboard
       // The +100 is relatively arbitrary. It was the threshold I thought was good
       if (keyboardOpen &&
-          settings.settings.hideKeyboardOnScroll.value &&
+          ss.settings.hideKeyboardOnScroll.value &&
           scrollController.offset > keyboardOpenOffset + 100) {
         EventDispatcher().emit("unfocus-keyboard", null);
       }
@@ -377,7 +377,7 @@ class ChatController {
       );
     }
 
-    if (settings.settings.openKeyboardOnSTB.value) {
+    if (ss.settings.openKeyboardOnSTB.value) {
       EventDispatcher().emit("focus-keyboard", null);
       keyboardOpenOffset = 0;
     }

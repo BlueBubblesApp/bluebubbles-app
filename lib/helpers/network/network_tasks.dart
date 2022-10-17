@@ -6,11 +6,11 @@ import 'package:get/get.dart';
 
 class NetworkTasks {
   static Future<void> onConnect() async {
-    if (settings.settings.finishedSetup.value) {
+    if (ss.settings.finishedSetup.value) {
       await fcm.registerDevice();
       await sync.startIncrementalSync();
-      await settings.getServerDetails(refresh: true);
-      settings.checkServerUpdate(context: Get.context!);
+      await ss.getServerDetails(refresh: true);
+      ss.checkServerUpdate(context: Get.context!);
 
       if (kIsWeb && ChatBloc().chats.isEmpty) {
         await ChatBloc().refreshChats(force: true);

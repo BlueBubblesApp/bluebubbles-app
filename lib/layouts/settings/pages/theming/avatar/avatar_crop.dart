@@ -39,7 +39,7 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> with ThemeHelpers {
       ChatBloc().chats[widget.index!].customAvatarPath = file.path;
       ChatBloc().chats[widget.index!].save(updateCustomAvatarPath: true);
       Navigator.of(context).pop();
-      navigatorService.backSettings(context);
+      ns.backSettings(context);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
       File file = File(widget.chat!.customAvatarPath ?? "$appDocPath/avatars/${widget.chat!.guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
@@ -50,7 +50,7 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> with ThemeHelpers {
       widget.chat!.customAvatarPath = file.path;
       widget.chat!.save(updateCustomAvatarPath: true);
       Navigator.of(context).pop();
-      navigatorService.backSettings(context);
+      ns.backSettings(context);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     }
   }
@@ -59,7 +59,7 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> with ThemeHelpers {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -67,7 +67,7 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> with ThemeHelpers {
       child: Scaffold(
           backgroundColor: context.theme.colorScheme.background,
           appBar: PreferredSize(
-            preferredSize: Size(navigatorService.width(context), 50),
+            preferredSize: Size(ns.width(context), 50),
             child: AppBar(
               systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
                   ? SystemUiOverlayStyle.light

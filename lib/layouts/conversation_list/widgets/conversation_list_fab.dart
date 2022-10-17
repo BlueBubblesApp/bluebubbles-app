@@ -44,7 +44,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
     final widget = Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        if (settings.settings.cameraFAB.value && iOS)
+        if (ss.settings.cameraFAB.value && iOS)
           ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: 45,
@@ -61,12 +61,12 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
               backgroundColor: context.theme.colorScheme.primaryContainer,
             ),
           ),
-        if (settings.settings.cameraFAB.value && iOS)
+        if (ss.settings.cameraFAB.value && iOS)
           const SizedBox(
             height: 10,
           ),
         InkWell(
-          onLongPress: iOS || !settings.settings.cameraFAB.value
+          onLongPress: iOS || !ss.settings.cameraFAB.value
             ? null : () => controller.openCamera(context),
           child: FloatingActionButton(
             backgroundColor: context.theme.colorScheme.primary,
@@ -90,7 +90,7 @@ class _ConversationListFABState extends CustomState<ConversationListFAB, void, C
         duration: const Duration(milliseconds: 300),
         secondChild: const SizedBox.shrink(),
         firstChild: InkWell(
-          onLongPress: settings.settings.cameraFAB.value
+          onLongPress: ss.settings.cameraFAB.value
               ? () => controller.openCamera(context) : null,
           child: Container(
             height: 65,

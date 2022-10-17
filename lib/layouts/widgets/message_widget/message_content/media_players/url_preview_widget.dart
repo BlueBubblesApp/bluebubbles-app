@@ -72,7 +72,7 @@ class UrlPreviewController extends GetxController {
     // If the data isn't empty, save/update it in the DB
     if (MetadataHelper.isNotEmpty(meta)) {
       // If pre-caching is enabled, fetch the image and save it
-      if (settings.settings.preCachePreviewImages.value && !isNullOrEmpty(meta!.image)!) {
+      if (ss.settings.preCachePreviewImages.value && !isNullOrEmpty(meta!.image)!) {
         // Save from URL
         File? newFile = await saveImageFromUrl(message.guid!, meta.image!);
 
@@ -117,9 +117,9 @@ class UrlPreviewWidget extends StatelessWidget {
         ),
         builder: (controller) {
           final bool hideContent =
-              settings.settings.redactedMode.value && settings.settings.hideMessageContent.value;
+              ss.settings.redactedMode.value && ss.settings.hideMessageContent.value;
           final bool hideType =
-              settings.settings.redactedMode.value && settings.settings.hideAttachmentTypes.value;
+              ss.settings.redactedMode.value && ss.settings.hideAttachmentTypes.value;
 
           List<Widget> items = [
             if (!kIsWeb)
@@ -261,7 +261,7 @@ class UrlPreviewWidget extends StatelessWidget {
                     },
                     child: Container(
                       // The minus 5 here is so the timestamps show OK during swipe
-                      width: (navigatorService.width(context) * 2 / 3) - 5,
+                      width: (ns.width(context) * 2 / 3) - 5,
                       child: (hideContent || hideType) ? Stack(children: items) : Column(children: items),
                     ),
                   ),

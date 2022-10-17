@@ -155,12 +155,12 @@ class ChatManager {
     chat.toggleHasUnread(false);
 
     // Handle Private API features
-    if (settings.settings.enablePrivateAPI.value) {
-      if (settings.settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
+    if (ss.settings.enablePrivateAPI.value) {
+      if (ss.settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
         await http.markChatRead(chat.guid);
       }
 
-      if (!MethodChannelInterface().headless && settings.settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
+      if (!MethodChannelInterface().headless && ss.settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
         socket.sendMessage("update-typing-status", {"chatGuid": chat.guid});
       }
     }

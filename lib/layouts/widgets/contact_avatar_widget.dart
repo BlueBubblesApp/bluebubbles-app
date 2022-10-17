@@ -68,7 +68,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
     }
 
     if (!widget.editable
-        || !settings.settings.colorfulAvatars.value
+        || !ss.settings.colorfulAvatars.value
         || widget.handle == null) return;
 
     bool didReset = false;
@@ -76,7 +76,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
       context,
       widget.handle?.color != null ? HexColor(widget.handle!.color!) : toColorGradient(widget.handle!.address)[0],
       title: Container(
-        width: navigatorService.width(context) - 112,
+        width: ns.width(context) - 112,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -113,7 +113,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
         dialogActionButtons: true,
       ),
       constraints: BoxConstraints(
-          minHeight: 480, minWidth: navigatorService.width(context) - 70, maxWidth: navigatorService.width(context) - 70),
+          minHeight: 480, minWidth: ns.width(context) - 70, maxWidth: ns.width(context) - 70),
     );
 
     if (didReset) return;
@@ -134,12 +134,12 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Color tileColor = themes.inDarkMode(context)
+    Color tileColor = ts.inDarkMode(context)
         ? context.theme.colorScheme.properSurface
         : context.theme.colorScheme.background;
 
     final size = (widget.size ?? 40) *
-        (widget.scaleSize ? settings.settings.avatarScale.value : 1);
+        (widget.scaleSize ? ss.settings.avatarScale.value : 1);
     List<Color> colors = [];
     if (widget.handle?.color == null) {
       colors = toColorGradient(widget.handle?.address);
@@ -152,7 +152,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
 
     return MouseRegion(
       cursor: !widget.editable
-          || !settings.settings.colorfulAvatars.value
+          || !ss.settings.colorfulAvatars.value
           || widget.handle == null ? MouseCursor.defer : SystemMouseCursors.click,
       child: GestureDetector(
         onTap: onAvatarTap,
@@ -164,16 +164,16 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
             gradient: LinearGradient(
               begin: AlignmentDirectional.topStart,
               colors: [
-                !settings.settings.colorfulAvatars.value
+                !ss.settings.colorfulAvatars.value
                     ? HexColor("928E8E")
                     : colors[1],
-                !settings.settings.colorfulAvatars.value
+                !ss.settings.colorfulAvatars.value
                     ? HexColor("686868")
                     : colors[0]
               ],
             ),
             border: Border.all(
-              color: settings.settings.skin.value == Skins.Samsung
+              color: ss.settings.skin.value == Skins.Samsung
                 ? tileColor
                 : context.theme.colorScheme.background,
               width: widget.borderThickness,
@@ -204,7 +204,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                 );
               } else {
                 return Icon(
-                  settings.settings.skin.value == Skins.iOS
+                  ss.settings.skin.value == Skins.iOS
                       ? CupertinoIcons.person_fill
                       : Icons.person,
                   color: Colors.white,

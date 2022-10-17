@@ -27,7 +27,7 @@ class MaterialConversationList extends StatefulWidget {
 class _MaterialConversationListState extends OptimizedState<MaterialConversationList> with ThemeHelpers {
   bool get showArchived => widget.parentController.showArchivedChats;
   bool get showUnknown => widget.parentController.showUnknownSenders;
-  Color get backgroundColor => settings.settings.windowEffect.value == WindowEffect.disabled
+  Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled
       ? context.theme.colorScheme.background
       : Colors.transparent;
   ConversationListController get controller => widget.parentController;
@@ -37,7 +37,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
     super.initState();
     // update widget when background color changes
     if (kIsDesktop) {
-      settings.settings.windowEffect.listen((WindowEffect effect) {
+      ss.settings.windowEffect.listen((WindowEffect effect) {
         setState(() {});
       });
     }
@@ -63,7 +63,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
           ),
           backgroundColor: backgroundColor,
           extendBodyBehindAppBar: true,
-          floatingActionButton: !settings.settings.moveChatCreatorToHeader.value
+          floatingActionButton: !ss.settings.moveChatCreatorToHeader.value
               && !showArchived && !showUnknown
               ? ConversationListFAB(parentController: controller)
               : null,
@@ -111,13 +111,13 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                 controller: controller.materialScrollController,
                 child: Obx(() => ListView.builder(
                   controller: controller.materialScrollController,
-                  physics: (settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                  physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                       ? NeverScrollableScrollPhysics()
                       : ThemeSwitcher.getScrollPhysics(),
                   itemBuilder: (context, index) {
                     final chat = chats[index];
                     final child = ListItem(chat: chat, controller: controller);
-                    final separator = Obx(() => !settings.settings.hideDividers.value ? Padding(
+                    final separator = Obx(() => !ss.settings.hideDividers.value ? Padding(
                       padding: const EdgeInsets.only(left: 20),
                       child: Divider(
                         color: context.theme.colorScheme.outline.withOpacity(0.5),

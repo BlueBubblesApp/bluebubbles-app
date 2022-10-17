@@ -37,7 +37,7 @@ void sendEffectAction(
     String? chatGuid,
     Future<void> Function({String? effect}) sendMessage,
     ) {
-  if (!settings.settings.enablePrivateAPI.value) return;
+  if (!ss.settings.enablePrivateAPI.value) return;
   String typeSelected = "bubble";
   final bubbleEffects = ["slam", "loud", "gentle", "invisible ink"];
   final screenEffects = ["echo", "spotlight", "balloons", "confetti", "love", "lasers", "fireworks", "celebration"];
@@ -55,13 +55,13 @@ void sendEffectAction(
   message.generateTempGuid();
   final GlobalKey key = GlobalKey();
   Control animController = Control.stop;
-  final FireworkController fireworkController = FireworkController(vsync: provider, windowSize: Size(navigatorService.width(context), context.height));
-  final CelebrationController celebrationController = CelebrationController(vsync: provider, windowSize: Size(navigatorService.width(context), context.height));
+  final FireworkController fireworkController = FireworkController(vsync: provider, windowSize: Size(ns.width(context), context.height));
+  final CelebrationController celebrationController = CelebrationController(vsync: provider, windowSize: Size(ns.width(context), context.height));
   final ConfettiController confettiController = ConfettiController(duration: Duration(seconds: 1));
-  final BalloonController balloonController = BalloonController(vsync: provider, windowSize: Size(navigatorService.width(context), context.height));
-  final LoveController loveController = LoveController(vsync: provider, windowSize: Size(navigatorService.width(context), context.height));
-  final SpotlightController spotlightController = SpotlightController(vsync: provider, windowSize: Size(navigatorService.width(context), context.height));
-  final LaserController laserController = LaserController(vsync: provider, windowSize: Size(navigatorService.width(context), context.height));
+  final BalloonController balloonController = BalloonController(vsync: provider, windowSize: Size(ns.width(context), context.height));
+  final LoveController loveController = LoveController(vsync: provider, windowSize: Size(ns.width(context), context.height));
+  final SpotlightController spotlightController = SpotlightController(vsync: provider, windowSize: Size(ns.width(context), context.height));
+  final LaserController laserController = LaserController(vsync: provider, windowSize: Size(ns.width(context), context.height));
   Navigator.push(
     context,
     PageRouteBuilder(
@@ -75,7 +75,7 @@ void sendEffectAction(
               },
               child: AnnotatedRegion<SystemUiOverlayStyle>(
                 value: SystemUiOverlayStyle(
-                  systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+                  systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
                   systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
                   statusBarColor: Colors.transparent, // status bar color
                   statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
@@ -123,7 +123,7 @@ void sendEffectAction(
                                           padding: const EdgeInsets.symmetric(vertical: 20.0),
                                           child: Container(
                                             height: 50,
-                                            width: navigatorService.width(context) / 2,
+                                            width: ns.width(context) / 2,
                                             child: CupertinoSlidingSegmentedControl<String>(
                                               children: {
                                                 "bubble": Text("Bubble"),
@@ -147,7 +147,7 @@ void sendEffectAction(
                                             child: ConstrainedBox(
                                                 constraints: BoxConstraints(
                                                   maxHeight: 250,
-                                                  maxWidth: navigatorService.width(context),
+                                                  maxWidth: ns.width(context),
                                                 ),
                                                 child: SingleChildScrollView(
                                                   child: Wrap(
@@ -163,7 +163,7 @@ void sendEffectAction(
                                                             animController = Control.playFromStart;
                                                           },
                                                           child: Container(
-                                                            width: navigatorService.width(context) / 3,
+                                                            width: ns.width(context) / 3,
                                                             height: 50,
                                                             decoration: BoxDecoration(
                                                               color: CupertinoColors.tertiarySystemFill,
@@ -195,7 +195,7 @@ void sendEffectAction(
                                             child: ConstrainedBox(
                                                 constraints: BoxConstraints(
                                                   maxHeight: 350,
-                                                  maxWidth: navigatorService.width(context),
+                                                  maxWidth: ns.width(context),
                                                 ),
                                                 child: SingleChildScrollView(
                                                   child: Wrap(
@@ -209,37 +209,37 @@ void sendEffectAction(
                                                               screenSelected = screenEffects[index];
                                                             });
                                                             if (screenSelected == "fireworks" && !fireworkController.isPlaying) {
-                                                              fireworkController.windowSize = Size(navigatorService.width(context), context.height);
+                                                              fireworkController.windowSize = Size(ns.width(context), context.height);
                                                               fireworkController.start();
                                                               await Future.delayed(Duration(seconds: 1));
                                                               fireworkController.stop();
                                                             } else if (screenSelected == "celebration" && !celebrationController.isPlaying) {
-                                                              celebrationController.windowSize = Size(navigatorService.width(context), context.height);
+                                                              celebrationController.windowSize = Size(ns.width(context), context.height);
                                                               celebrationController.start();
                                                               await Future.delayed(Duration(seconds: 1));
                                                               celebrationController.stop();
                                                             } else if (screenSelected == "balloons" && !balloonController.isPlaying) {
-                                                              balloonController.windowSize = Size(navigatorService.width(context), context.height);
+                                                              balloonController.windowSize = Size(ns.width(context), context.height);
                                                               balloonController.start();
                                                               await Future.delayed(Duration(seconds: 1));
                                                               balloonController.stop();
                                                             } else if (screenSelected == "love" && !loveController.isPlaying) {
                                                               if (key.globalPaintBounds(context) != null) {
-                                                                loveController.windowSize = Size(navigatorService.width(context), context.height);
+                                                                loveController.windowSize = Size(ns.width(context), context.height);
                                                                 loveController.start(Point((key.globalPaintBounds(context)!.left + key.globalPaintBounds(context)!.right) / 2, (key.globalPaintBounds(context)!.top + key.globalPaintBounds(context)!.bottom) / 2));
                                                                 await Future.delayed(Duration(seconds: 1));
                                                                 loveController.stop();
                                                               }
                                                             } else if (screenSelected == "spotlight" && !spotlightController.isPlaying) {
                                                               if (key.globalPaintBounds(context) != null) {
-                                                                spotlightController.windowSize = Size(navigatorService.width(context), context.height);
+                                                                spotlightController.windowSize = Size(ns.width(context), context.height);
                                                                 spotlightController.start(key.globalPaintBounds(context)!);
                                                                 await Future.delayed(Duration(seconds: 1));
                                                                 spotlightController.stop();
                                                               }
                                                             } else if (screenSelected == "lasers" && !laserController.isPlaying) {
                                                               if (key.globalPaintBounds(context) != null) {
-                                                                laserController.windowSize = Size(navigatorService.width(context), context.height);
+                                                                laserController.windowSize = Size(ns.width(context), context.height);
                                                                 laserController.start(key.globalPaintBounds(context)!);
                                                                 await Future.delayed(Duration(seconds: 1));
                                                                 laserController.stop();
@@ -249,7 +249,7 @@ void sendEffectAction(
                                                             }
                                                           },
                                                           child: Container(
-                                                            width: navigatorService.width(context) / 3,
+                                                            width: ns.width(context) / 3,
                                                             height: 50,
                                                             decoration: BoxDecoration(
                                                               color: CupertinoColors.tertiarySystemFill,

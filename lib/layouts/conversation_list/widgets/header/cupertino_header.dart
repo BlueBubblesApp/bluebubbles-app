@@ -20,7 +20,7 @@ class CupertinoHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final double topMargin = context.orientation == Orientation.landscape && context.isPhone
         ? 20
-        : settings.settings.reducedForehead.value
+        : ss.settings.reducedForehead.value
         ? 20
         : kIsDesktop
         ? 40
@@ -71,13 +71,13 @@ class CupertinoHeader extends StatelessWidget {
                               )
                             ),
                             onTap: () {
-                              navigatorService.pushLeft(context, SearchView());
+                              ns.pushLeft(context, SearchView());
                             },
                           ),
                         ),
                       ),
                       const SizedBox(width: 10.0),
-                      if (settings.settings.moveChatCreatorToHeader.value)
+                      if (ss.settings.moveChatCreatorToHeader.value)
                         ClipOval(
                           child: Material(
                             color: context.theme.colorScheme.properSurface, // button color
@@ -95,11 +95,11 @@ class CupertinoHeader extends StatelessWidget {
                             ),
                           ),
                         ),
-                      if (settings.settings.moveChatCreatorToHeader.value
-                          && settings.settings.cameraFAB.value)
+                      if (ss.settings.moveChatCreatorToHeader.value
+                          && ss.settings.cameraFAB.value)
                         const SizedBox(width: 10.0),
-                      if (settings.settings.moveChatCreatorToHeader.value
-                          && settings.settings.cameraFAB.value)
+                      if (ss.settings.moveChatCreatorToHeader.value
+                          && ss.settings.cameraFAB.value)
                         ClipOval(
                           child: Material(
                             color: context.theme.colorScheme.properSurface, // button color
@@ -117,7 +117,7 @@ class CupertinoHeader extends StatelessWidget {
                             ),
                           ),
                         ),
-                      if (settings.settings.moveChatCreatorToHeader.value)
+                      if (ss.settings.moveChatCreatorToHeader.value)
                         const SizedBox(width: 10.0),
                       const OverflowMenu(),
                     ],
@@ -141,7 +141,7 @@ class CupertinoMiniHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final double topMargin = context.orientation == Orientation.landscape && context.isPhone
         ? 20
-        : settings.settings.reducedForehead.value
+        : ss.settings.reducedForehead.value
         ? 20
         : kIsDesktop
         ? 40
@@ -154,7 +154,7 @@ class CupertinoMiniHeader extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Container(
-              width: navigatorService.width(context),
+              width: ns.width(context),
               height: (topMargin - 20).clamp(40, double.infinity),
               color: context.theme.colorScheme.properSurface.withOpacity(0.5),
               alignment: Alignment.bottomCenter,

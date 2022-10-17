@@ -25,7 +25,7 @@ class OpenSettingsAction extends Action<OpenSettingsIntent> {
 
   @override
   Object? invoke(covariant OpenSettingsIntent intent) {
-    if (settings.settings.finishedSetup.value) {
+    if (ss.settings.finishedSetup.value) {
       Navigator.of(context).push(
         ThemeSwitcher.buildPageRoute(
           builder: (BuildContext context) {
@@ -49,9 +49,9 @@ class OpenNewChatCreatorAction extends Action<OpenNewChatCreatorIntent> {
 
   @override
   Object? invoke(covariant OpenNewChatCreatorIntent intent) {
-    if (settings.settings.finishedSetup.value) {
+    if (ss.settings.finishedSetup.value) {
       EventDispatcher().emit("update-highlight", null);
-      navigatorService.pushAndRemoveUntil(
+      ns.pushAndRemoveUntil(
         context,
         ConversationView(
           isCreator: true,
@@ -74,8 +74,8 @@ class OpenSearchAction extends Action<OpenSearchIntent> {
 
   @override
   Object? invoke(covariant OpenSearchIntent intent) async {
-    if (settings.settings.finishedSetup.value) {
-      navigatorService.pushLeft(
+    if (ss.settings.finishedSetup.value) {
+      ns.pushLeft(
         context,
         SearchView(),
       );
@@ -96,7 +96,7 @@ class ReplyRecentAction extends Action<ReplyRecentIntent> {
   @override
   Object? invoke(covariant ReplyRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
-    if (message != null && settings.settings.enablePrivateAPI.value) {
+    if (message != null && ss.settings.enablePrivateAPI.value) {
       EventDispatcher().emit("focus-keyboard", message);
     }
     return null;
@@ -116,7 +116,7 @@ class HeartRecentAction extends Action<HeartRecentIntent> {
   @override
   Object? invoke(covariant HeartRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
-    if (message != null && settings.settings.enablePrivateAPI.value) {
+    if (message != null && ss.settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "love");
     }
     return null;
@@ -136,7 +136,7 @@ class LikeRecentAction extends Action<LikeRecentIntent> {
   @override
   Object? invoke(covariant LikeRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
-    if (message != null && settings.settings.enablePrivateAPI.value) {
+    if (message != null && ss.settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "like");
     }
     return null;
@@ -156,7 +156,7 @@ class DislikeRecentAction extends Action<DislikeRecentIntent> {
   @override
   Object? invoke(covariant DislikeRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
-    if (message != null && settings.settings.enablePrivateAPI.value) {
+    if (message != null && ss.settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "dislike");
     }
     return null;
@@ -176,7 +176,7 @@ class LaughRecentAction extends Action<LaughRecentIntent> {
   @override
   Object? invoke(covariant LaughRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
-    if (message != null && settings.settings.enablePrivateAPI.value) {
+    if (message != null && ss.settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "laugh");
     }
     return null;
@@ -196,7 +196,7 @@ class EmphasizeRecentAction extends Action<EmphasizeRecentIntent> {
   @override
   Object? invoke(covariant EmphasizeRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
-    if (message != null && settings.settings.enablePrivateAPI.value) {
+    if (message != null && ss.settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "emphasize");
     }
     return null;
@@ -216,7 +216,7 @@ class QuestionRecentAction extends Action<QuestionRecentIntent> {
   @override
   Object? invoke(covariant QuestionRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
-    if (message != null && settings.settings.enablePrivateAPI.value) {
+    if (message != null && ss.settings.enablePrivateAPI.value) {
       ActionHandler.sendReaction(chat, message, "question");
     }
     return null;
@@ -239,7 +239,7 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
       final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
       if (index > -1 && index < ChatBloc().chats.length - 1) {
         final _chat = ChatBloc().chats[index + 1];
-        navigatorService.pushAndRemoveUntil(
+        ns.pushAndRemoveUntil(
           context,
           ConversationView(
             chat: _chat,
@@ -270,7 +270,7 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
       final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
       if (index > 0 && index < ChatBloc().chats.length) {
         final _chat = ChatBloc().chats[index - 1];
-        navigatorService.pushAndRemoveUntil(
+        ns.pushAndRemoveUntil(
           context,
           ConversationView(
             chat: _chat,
@@ -297,7 +297,7 @@ class OpenChatDetailsAction extends Action<OpenChatDetailsIntent> {
 
   @override
   Object? invoke(covariant OpenChatDetailsIntent intent) {
-    navigatorService.push(
+    ns.push(
       context,
       ConversationDetails(chat: chat),
     );
@@ -312,7 +312,7 @@ class StartIncrementalSyncIntent extends Intent {
 class StartIncrementalSyncAction extends Action<StartIncrementalSyncIntent> {
   @override
   Object? invoke(covariant StartIncrementalSyncIntent intent) {
-    if (settings.settings.finishedSetup.value) {
+    if (ss.settings.finishedSetup.value) {
       sync.startIncrementalSync();
     }
     return null;
@@ -330,8 +330,8 @@ class GoBackAction extends Action<GoBackIntent> {
 
   @override
   Object? invoke(covariant GoBackIntent intent) {
-    if (settings.settings.finishedSetup.value && !(Get.isDialogOpen ?? true)) {
-      navigatorService.backConversationView(context);
+    if (ss.settings.finishedSetup.value && !(Get.isDialogOpen ?? true)) {
+      ns.backConversationView(context);
     }
     return null;
   }

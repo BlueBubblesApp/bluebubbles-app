@@ -12,8 +12,8 @@ class DatabaseService extends GetxService {
   /// Fetch the new server URL from the Firebase Database
   Future<String?> fetchNewUrl() async {
     // Make sure setup is complete and we have valid data
-    if (!settings.settings.finishedSetup.value) return null;
-    if (settings.fcmData.isNull) {
+    if (!ss.settings.finishedSetup.value) return null;
+    if (ss.fcmData.isNull) {
       Logger.error("Firebase Data was null!");
       return null;
     }
@@ -24,7 +24,7 @@ class DatabaseService extends GetxService {
       // Use firebase_dart on web and desktop
       if (kIsWeb || kIsDesktop) {
         // Instantiate the FirebaseDatabase, and try to access the serverUrl field
-        final db = FirebaseDatabase(databaseURL: settings.fcmData.firebaseURL);
+        final db = FirebaseDatabase(databaseURL: ss.fcmData.firebaseURL);
         final ref = db.reference().child('config').child('serverUrl');
 
         ref.onValue.listen((event) {
@@ -34,8 +34,8 @@ class DatabaseService extends GetxService {
         url = sanitizeServerAddress(address: await MethodChannelInterface().invokeMethod("get-server-url"));
       }
       // Update the address of the copied settings
-      settings.settings.serverAddress.value = url ?? settings.settings.serverAddress.value;
-      await settings.saveSettings();
+      ss.settings.serverAddress.value = url ?? ss.settings.serverAddress.value;
+      await ss.saveSettings();
       return url;
     } catch (e, s) {
       Logger.error("Failed to fetch URL: $e\n${s.toString()}");

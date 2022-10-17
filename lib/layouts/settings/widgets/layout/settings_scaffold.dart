@@ -36,17 +36,17 @@ class SettingsScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: settings.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarColor: ss.settings.immersiveMode.value ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
         statusBarColor: Colors.transparent, // status bar color
         statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
       ),
       child: Scaffold(
-        backgroundColor: settings.settings.skin.value == Skins.Material ? tileColor : headerColor,
-        appBar: settings.settings.skin.value == Skins.Samsung
+        backgroundColor: ss.settings.skin.value == Skins.Material ? tileColor : headerColor,
+        appBar: ss.settings.skin.value == Skins.Samsung
             ? null
             : PreferredSize(
-          preferredSize: Size(navigatorService.width(context), 50),
+          preferredSize: Size(ns.width(context), 50),
           child: AppBar(
             systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
                 ? SystemUiOverlayStyle.light
@@ -57,7 +57,7 @@ class SettingsScaffold extends StatelessWidget {
             surfaceTintColor: context.theme.colorScheme.primary,
             leading: buildBackButton(context),
             backgroundColor: headerColor,
-            centerTitle: settings.settings.skin.value == Skins.iOS,
+            centerTitle: ss.settings.skin.value == Skins.iOS,
             title: Text(
               title,
               style: context.theme.textTheme.titleLarge,
@@ -66,7 +66,7 @@ class SettingsScaffold extends StatelessWidget {
         ),
         body: NotificationListener<ScrollEndNotification>(
           onNotification: (_) {
-            if (settings.settings.skin.value != Skins.Samsung) return false;
+            if (ss.settings.skin.value != Skins.Samsung) return false;
             final scrollDistance = context.height / 3 - 57;
             if (controller.offset > 0 &&
                 controller.offset < scrollDistance &&
@@ -85,11 +85,11 @@ class SettingsScaffold extends StatelessWidget {
                   () => CustomScrollView(
                 controller: controller,
                 shrinkWrap: true,
-                physics: (settings.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
+                physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                     ? NeverScrollableScrollPhysics()
                     : ThemeSwitcher.getScrollPhysics(),
                 slivers: <Widget>[
-                  if (settings.settings.skin.value == Skins.Samsung)
+                  if (ss.settings.skin.value == Skins.Samsung)
                     SliverAppBar(
                       backgroundColor: headerColor,
                       pinned: true,
@@ -164,23 +164,23 @@ class SettingsScaffold extends StatelessWidget {
                         },
                       ),
                     ),
-                  if (settings.settings.skin.value != Skins.Samsung && initialHeader != null)
+                  if (ss.settings.skin.value != Skins.Samsung && initialHeader != null)
                     SliverToBoxAdapter(
                       child: Container(
                           height: 50,
                           alignment: Alignment.bottomLeft,
-                          color: settings.settings.skin.value == Skins.iOS ? headerColor : tileColor,
+                          color: ss.settings.skin.value == Skins.iOS ? headerColor : tileColor,
                           child: Padding(
-                            padding: EdgeInsets.only(bottom: 8.0, left: settings.settings.skin.value == Skins.iOS ? 30 : 15),
+                            padding: EdgeInsets.only(bottom: 8.0, left: ss.settings.skin.value == Skins.iOS ? 30 : 15),
                             child: Text(initialHeader!.psCapitalize,
-                                style: settings.settings.skin.value == Skins.iOS
+                                style: ss.settings.skin.value == Skins.iOS
                                     ? iosSubtitle
                                     : materialSubtitle),
                           )),
                     ),
-                  if (settings.settings.skin.value != Skins.Samsung)
+                  if (ss.settings.skin.value != Skins.Samsung)
                     ...bodySlivers,
-                  if (settings.settings.skin.value == Skins.Samsung)
+                  if (ss.settings.skin.value == Skins.Samsung)
                     SliverToBoxAdapter(
                       child: ConstrainedBox(
                         constraints: BoxConstraints(minHeight: context.height - 50 - context.mediaQueryPadding.top - context.mediaQueryViewPadding.top),
@@ -194,7 +194,7 @@ class SettingsScaffold extends StatelessWidget {
                   SliverToBoxAdapter(
                     child: Container(
                       height: 30,
-                      color: settings.settings.skin.value != Skins.Material ? headerColor : tileColor,
+                      color: ss.settings.skin.value != Skins.Material ? headerColor : tileColor,
                     ),
                   ),
                 ],

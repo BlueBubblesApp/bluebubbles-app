@@ -33,10 +33,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
                 children: [
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      settings.settings.showDeliveryTimestamps.value = val;
+                      ss.settings.showDeliveryTimestamps.value = val;
                       saveSettings();
                     },
-                    initialVal: settings.settings.showDeliveryTimestamps.value,
+                    initialVal: ss.settings.showDeliveryTimestamps.value,
                     title: "Show Delivery Timestamps",
                     backgroundColor: tileColor,
                   )),
@@ -49,10 +49,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      settings.settings.recipientAsPlaceholder.value = val;
+                      ss.settings.recipientAsPlaceholder.value = val;
                       saveSettings();
                     },
-                    initialVal: settings.settings.recipientAsPlaceholder.value,
+                    initialVal: ss.settings.recipientAsPlaceholder.value,
                     title: "Show Chat Name as Placeholder",
                     subtitle: "Changes the default hint text in the message box to display the recipient name",
                     backgroundColor: tileColor,
@@ -67,10 +67,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      settings.settings.alwaysShowAvatars.value = val;
+                      ss.settings.alwaysShowAvatars.value = val;
                       saveSettings();
                     },
-                    initialVal: settings.settings.alwaysShowAvatars.value,
+                    initialVal: ss.settings.alwaysShowAvatars.value,
                     title: "Show Avatars in DM Chats",
                     subtitle: "Shows contact avatars in direct messages rather than just in group messages",
                     backgroundColor: tileColor,
@@ -87,10 +87,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        settings.settings.smartReply.value = val;
+                        ss.settings.smartReply.value = val;
                         saveSettings();
                       },
-                      initialVal: settings.settings.smartReply.value,
+                      initialVal: ss.settings.smartReply.value,
                       title: "Show Smart Replies",
                       subtitle: "Shows smart reply suggestions above the message text field",
                       backgroundColor: tileColor,
@@ -110,10 +110,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        settings.settings.autoOpenKeyboard.value = val;
+                        ss.settings.autoOpenKeyboard.value = val;
                         saveSettings();
                       },
-                      initialVal: settings.settings.autoOpenKeyboard.value,
+                      initialVal: ss.settings.autoOpenKeyboard.value,
                       title: "Auto-open Keyboard",
                       subtitle: "Automatically open the keyboard when entering a chat",
                       backgroundColor: tileColor,
@@ -129,10 +129,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        settings.settings.swipeToCloseKeyboard.value = val;
+                        ss.settings.swipeToCloseKeyboard.value = val;
                         saveSettings();
                       },
-                      initialVal: settings.settings.swipeToCloseKeyboard.value,
+                      initialVal: ss.settings.swipeToCloseKeyboard.value,
                       title: "Swipe Message Box to Close Keyboard",
                       subtitle: "Swipe down on the message box to hide the keyboard",
                       backgroundColor: tileColor,
@@ -148,10 +148,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        settings.settings.swipeToOpenKeyboard.value = val;
+                        ss.settings.swipeToOpenKeyboard.value = val;
                         saveSettings();
                       },
-                      initialVal: settings.settings.swipeToOpenKeyboard.value,
+                      initialVal: ss.settings.swipeToOpenKeyboard.value,
                       title: "Swipe Message Box to Open Keyboard",
                       subtitle: "Swipe up on the message box to show the keyboard",
                       backgroundColor: tileColor,
@@ -167,10 +167,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        settings.settings.hideKeyboardOnScroll.value = val;
+                        ss.settings.hideKeyboardOnScroll.value = val;
                         saveSettings();
                       },
-                      initialVal: settings.settings.hideKeyboardOnScroll.value,
+                      initialVal: ss.settings.hideKeyboardOnScroll.value,
                       title: "Hide Keyboard When Scrolling",
                       backgroundColor: tileColor,
                     )),
@@ -185,10 +185,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        settings.settings.openKeyboardOnSTB.value = val;
+                        ss.settings.openKeyboardOnSTB.value = val;
                         saveSettings();
                       },
-                      initialVal: settings.settings.openKeyboardOnSTB.value,
+                      initialVal: ss.settings.openKeyboardOnSTB.value,
                       title: "Open Keyboard After Tapping Scroll To Bottom",
                       backgroundColor: tileColor,
                     )),
@@ -202,13 +202,13 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
                     ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      settings.settings.doubleTapForDetails.value = val;
-                      if (val && settings.settings.enableQuickTapback.value) {
-                        settings.settings.enableQuickTapback.value = false;
+                      ss.settings.doubleTapForDetails.value = val;
+                      if (val && ss.settings.enableQuickTapback.value) {
+                        ss.settings.enableQuickTapback.value = false;
                       }
                       saveSettings();
                     },
-                    initialVal: settings.settings.doubleTapForDetails.value,
+                    initialVal: ss.settings.doubleTapForDetails.value,
                     title: "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Details",
                     subtitle: "Opens the message details popup when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
                     backgroundColor: tileColor,
@@ -225,10 +225,10 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
                   if (!kIsDesktop && !kIsWeb)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
-                        settings.settings.sendWithReturn.value = val;
+                        ss.settings.sendWithReturn.value = val;
                         saveSettings();
                       },
-                      initialVal: settings.settings.sendWithReturn.value,
+                      initialVal: ss.settings.sendWithReturn.value,
                       title: "Send Message with Enter",
                       backgroundColor: tileColor,
                     )),
@@ -242,6 +242,6 @@ class _ConversationPanelState extends OptimizedState<ConversationPanel> with The
   }
 
   void saveSettings() {
-    settings.saveSettings();
+    ss.saveSettings();
   }
 }

@@ -55,7 +55,7 @@ class _MaterialConversationTileState extends CustomState<MaterialConversationTil
           ),
           child: ListTile(
             mouseCursor: MouseCursor.defer,
-            dense: settings.settings.denseChatTiles.value,
+            dense: ss.settings.denseChatTiles.value,
             title: ChatTitle(
               parentController: controller,
               style: context.theme.textTheme.bodyMedium!.copyWith(
@@ -213,7 +213,7 @@ class _MaterialTrailingState extends CustomState<MaterialTrailing, void, Convers
             children: [
               Obx(() {
                 String indicatorText = "";
-                if (settings.settings.statusIndicatorsOnChats.value && markers != null) {
+                if (ss.settings.statusIndicatorsOnChats.value && markers != null) {
                   Indicator show = shouldShow(
                       cachedLatestMessage,
                       markers!.myLastMessage.value,

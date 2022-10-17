@@ -363,9 +363,9 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
       return;
     }
 
-    settings.settings.serverAddress.value = addr;
-    settings.settings.guidAuthKey.value = password;
-    settings.settings.save();
+    ss.settings.serverAddress.value = addr;
+    ss.settings.guidAuthKey.value = password;
+    ss.settings.save();
 
     // Request data from the API
     Future<dio.Response> fcmFuture = http.fcmClient();
@@ -397,7 +397,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
           } else {
             try {
               FCMData fcmData = FCMData.fromMap(data["data"]);
-              settings.saveFCMData(fcmData);
+              ss.saveFCMData(fcmData);
             } catch (_) {
               if (Platform.isAndroid) {
                 showSnackbar("Warning", "No Firebase project detected! You will not receive notifications for new messages!");

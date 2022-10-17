@@ -211,19 +211,19 @@ class MessageHelper {
     // Add the message to the "processed" list
     NotificationManager().addProcessed(message.guid!);
     // Handle all the cases that would mean we don't show the notification
-    if (!settings.settings.finishedSetup.value) return; // Don't notify if not fully setup
+    if (!ss.settings.finishedSetup.value) return; // Don't notify if not fully setup
     if (existingMessage != null) return;
     if (chat.shouldMuteNotification(message)) return; // Don''t notify if the chat is muted
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
     // Don't notify if window focused in desktop and chat list notifs off
-    if (!settings.settings.notifyOnChatList.value && kIsDesktop && LifeCycleManager().isAlive) return;
+    if (!ss.settings.notifyOnChatList.value && kIsDesktop && LifeCycleManager().isAlive) return;
     ChatController? currChat = ChatManager().activeChat;
 
     // add unread icon as long as it isn't the active chat
     if (currChat?.chat.guid != chat.guid) ChatBloc().toggleChatUnread(chat, true, clearNotifications: false);
 
     if ((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) {
-      if (!settings.settings.notifyOnChatList.value &&
+      if (!ss.settings.notifyOnChatList.value &&
           currChat == null &&
           !Get.currentRoute.contains("settings")) return;
       if (currChat?.chat.guid == chat.guid && !LifeCycleManager().isBubble) return;

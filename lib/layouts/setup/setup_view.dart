@@ -59,7 +59,7 @@ class _SetupViewState extends OptimizedState<SetupView> {
 
     ever(socket.state, (event) {
       if (event == SocketState.error
-          && !settings.settings.finishedSetup.value
+          && !ss.settings.finishedSetup.value
           && controller.pageController.hasClients
           && controller.currentPage > controller.pageOfNoReturn) {
         showDialog(

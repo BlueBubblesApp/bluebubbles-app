@@ -44,10 +44,10 @@ class ConversationListController extends StatefulController {
   ConversationListController({required this.showArchivedChats, required this.showUnknownSenders});
 
   void updateSelectedChats() {
-    if (settings.settings.skin.value == Skins.Material) {
+    if (ss.settings.skin.value == Skins.Material) {
       updateWidgetFunctions[MaterialHeader]?.call(null);
       updateMaterialFAB();
-    } else if (settings.settings.skin.value == Skins.Samsung) {
+    } else if (ss.settings.skin.value == Skins.Samsung) {
       updateWidgetFunctions[SamsungFooter]?.call(null);
       updateWidgetFunctions[ExpandedHeaderText]?.call(null);
     }
@@ -99,7 +99,7 @@ class ConversationListController extends StatefulController {
 
   void openNewChatCreator(BuildContext context, {List<PlatformFile>? existing}) async {
     EventDispatcher().emit("update-highlight", null);
-    navigatorService.pushAndRemoveUntil(
+    ns.pushAndRemoveUntil(
       context,
       ConversationView(
         isCreator: true,
@@ -135,17 +135,17 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         ? "Unknown"
         : "Messages";
 
-    if (settings.prefs.getString('lastOpenedChat') != null &&
+    if (ss.prefs.getString('lastOpenedChat') != null &&
         showAltLayoutContextless &&
-        ChatManager().activeChat?.chat.guid != settings.prefs.getString('lastOpenedChat') &&
+        ChatManager().activeChat?.chat.guid != ss.prefs.getString('lastOpenedChat') &&
         !LifeCycleManager().isBubble) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        navigatorService.pushAndRemoveUntil(
+        ns.pushAndRemoveUntil(
           context,
           ConversationView(
             chat: kIsWeb
-                ? await Chat.findOneWeb(guid: settings.prefs.getString('lastOpenedChat'))
-                : Chat.findOne(guid: settings.prefs.getString('lastOpenedChat'))),
+                ? await Chat.findOneWeb(guid: ss.prefs.getString('lastOpenedChat'))
+                : Chat.findOne(guid: ss.prefs.getString('lastOpenedChat'))),
           (route) => route.isFirst,
         );
       });
@@ -162,7 +162,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: settings.settings.immersiveMode.value
+        systemNavigationBarColor: ss.settings.immersiveMode.value
             ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
         systemNavigationBarIconBrightness: brightness,
         statusBarColor: Colors.transparent, // status bar color
@@ -175,7 +175,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         allowResize: true,
         left: !showAltLayout ? child : LayoutBuilder(
           builder: (context, constraints) {
-            navigatorService.maxWidthLeft = constraints.maxWidth;
+            ns.maxWidthLeft = constraints.maxWidth;
             return WillPopScope(
               onWillPop: () async {
                 Get.until((route) {
@@ -216,7 +216,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         ),
         right: LayoutBuilder(
           builder: (context, constraints) {
-            navigatorService.maxWidthRight = constraints.maxWidth;
+            ns.maxWidthRight = constraints.maxWidth;
             return WillPopScope(
               onWillPop: () async {
                 Get.back(id: 2);

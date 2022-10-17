@@ -20,15 +20,15 @@ class SettingsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (settings.settings.skin.value == Skins.Samsung) return const SizedBox(height: 15);
+    if (ss.settings.skin.value == Skins.Samsung) return const SizedBox(height: 15);
     return Container(
-      height: settings.settings.skin.value == Skins.iOS ? 60 : 40,
+      height: ss.settings.skin.value == Skins.iOS ? 60 : 40,
       alignment: Alignment.bottomLeft,
-      color: settings.settings.skin.value == Skins.iOS ? headerColor : tileColor,
+      color: ss.settings.skin.value == Skins.iOS ? headerColor : tileColor,
       child: Padding(
-        padding: EdgeInsets.only(bottom: 8.0, left: settings.settings.skin.value == Skins.iOS ? 30 : 15),
+        padding: EdgeInsets.only(bottom: 8.0, left: ss.settings.skin.value == Skins.iOS ? 30 : 15),
         child: Text(text.psCapitalize,
-            style: settings.settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle
+            style: ss.settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle
         ),
       )
     );

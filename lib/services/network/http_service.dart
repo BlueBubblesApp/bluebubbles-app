@@ -15,7 +15,7 @@ class HttpService extends GetxService {
   late Dio dio;
 
   /// Get the URL origin from the current server address
-  String get origin => "${Uri.parse(settings.settings.serverAddress.value).origin}/api/v1";
+  String get origin => "${Uri.parse(ss.settings.serverAddress.value).origin}/api/v1";
 
   /// Helper function to build query params, this way we only need to add the
   /// required guid auth param in one place
@@ -24,13 +24,13 @@ class HttpService extends GetxService {
     if (params.isEmpty) {
       params = {};
     }
-    params['guid'] = settings.settings.guidAuthKey;
+    params['guid'] = ss.settings.guidAuthKey;
     return params;
   }
 
   /// Global try-catch function
   Future<Response> runApiGuarded(Future<Response> Function() func) async {
-    if (settings.settings.serverAddress.value.isEmpty) {
+    if (ss.settings.serverAddress.value.isEmpty) {
       return Future.error("No server URL!");
     }
     try {
@@ -54,8 +54,8 @@ class HttpService extends GetxService {
   void onInit() {
     dio = Dio(BaseOptions(
         connectTimeout: 15000,
-        receiveTimeout: settings.settings.apiTimeout.value,
-        sendTimeout: settings.settings.apiTimeout.value,
+        receiveTimeout: ss.settings.apiTimeout.value,
+        sendTimeout: ss.settings.apiTimeout.value,
     ));
     dio.interceptors.add(ApiInterceptor());
     // Uncomment to run tests on most API requests

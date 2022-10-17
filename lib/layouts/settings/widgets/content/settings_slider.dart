@@ -38,7 +38,7 @@ class SettingsSlider extends StatelessWidget {
     return ListTile(
       leading: leading,
       trailing: Text(value, style: context.theme.textTheme.bodyLarge),
-      title: settings.settings.skin.value == Skins.iOS
+      title: ss.settings.skin.value == Skins.iOS
           ? CupertinoSlider(
         activeColor: context.theme.colorScheme.primary.withOpacity(0.6),
         thumbColor: context.theme.colorScheme.primary,

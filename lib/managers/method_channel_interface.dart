@@ -85,7 +85,7 @@ class MethodChannelInterface {
     // call.method is the name of the call from native code
     switch (call.method) {
       case "new-server":
-        if (!settings.settings.finishedSetup.value) return Future.value("");
+        if (!ss.settings.finishedSetup.value) return Future.value("");
 
         // The arguments for a new server are formatted with the new server address inside square brackets
         // As such: [https://alksdjfoaehg.ngrok.io]
@@ -183,7 +183,7 @@ class MethodChannelInterface {
         // Remove the notification from that chat
         await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
 
-        if (settings.settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
+        if (ss.settings.privateMarkChatAsRead.value && chat.autoSendReadReceipts!) {
           await http.markChatRead(chat.guid);
         }
 
@@ -199,7 +199,7 @@ class MethodChannelInterface {
 
         return Future.value("");
       case "shareAttachments":
-        if (!settings.settings.finishedSetup.value) return Future.value("");
+        if (!ss.settings.finishedSetup.value) return Future.value("");
         recentIntent = call.arguments["id"];
         List<PlatformFile> attachments = [];
 
@@ -239,7 +239,7 @@ class MethodChannelInterface {
         }
 
         // Go to the new chat creator with all of these attachments to select a chat in case it wasn't a direct share
-        navigatorService.pushAndRemoveUntil(
+        ns.pushAndRemoveUntil(
               Get.context!,
               ConversationView(
                 existingAttachments: attachments,
@@ -252,7 +252,7 @@ class MethodChannelInterface {
         return Future.value("");
 
       case "shareText":
-        if (!settings.settings.finishedSetup.value) return Future.value("");
+        if (!ss.settings.finishedSetup.value) return Future.value("");
         recentIntent = call.arguments["id"];
         // Get the text that was shared to the app
         String? text = call.arguments["text"];
@@ -278,7 +278,7 @@ class MethodChannelInterface {
           }
         }
         // Navigate to the new chat creator with the specified text
-        navigatorService.pushAndRemoveUntil(
+        ns.pushAndRemoveUntil(
               Get.context!,
               ConversationView(
                 existingText: text,
@@ -289,7 +289,7 @@ class MethodChannelInterface {
         recentIntent = null;
         return Future.value("");
       case "media-colors":
-        if (!settings.settings.colorsFromMedia.value) return Future.value("");
+        if (!ss.settings.colorsFromMedia.value) return Future.value("");
         final Color primary = Color(call.arguments['primary']);
         final Color lightBg = Color(call.arguments['lightBg']);
         final Color darkBg = Color(call.arguments['darkBg']);
@@ -317,7 +317,7 @@ class MethodChannelInterface {
                 background: lightBg,
               )
           );
-          if (themes.inDarkMode(Get.context!)) {
+          if (ts.inDarkMode(Get.context!)) {
             if (primaryPercent != 0.5 && darkBgPercent != 0.5) {
               double difference = min((primaryPercent / (primaryPercent + darkBgPercent)), 1 - (primaryPercent / (primaryPercent + darkBgPercent)));
               Tween<double> color1 = Tween<double>(begin: 0, end: difference);
@@ -352,7 +352,7 @@ class MethodChannelInterface {
                   .tween("color2", Tween<double>(begin: 0.8, end: 1));
             }
           }
-          themes.changeTheme(Get.context!, light: lightTheme, dark: darkTheme);
+          ts.changeTheme(Get.context!, light: lightTheme, dark: darkTheme);
           isRunning = false;
         }
         return Future.value("");
@@ -379,7 +379,7 @@ class MethodChannelInterface {
   Future<void> openChat(String id, {List<PlatformFile> existingAttachments = const [], String? existingText}) async {
     // If the ID is -1, it means the notification grouping header was tapped
     if (id == "-1") {
-      navigatorService.key.currentState?.popUntil((route) => route.isFirst);
+      ns.key.currentState?.popUntil((route) => route.isFirst);
       return;
     }
 
@@ -419,7 +419,7 @@ class MethodChannelInterface {
 
       // if (!ChatController.isActive(openedChat.guid))
       // Actually navigate to the chat page
-      navigatorService.pushAndRemoveUntil(
+      ns.pushAndRemoveUntil(
           Get.context!,
           ConversationView(
             chat: openedChat,

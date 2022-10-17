@@ -68,9 +68,9 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
   Widget build(BuildContext context) {
     super.build(context);
     final bool hideAttachments =
-        settings.settings.redactedMode.value && settings.settings.hideAttachments.value;
+        ss.settings.redactedMode.value && ss.settings.hideAttachments.value;
     final bool hideAttachmentTypes =
-        settings.settings.redactedMode.value && settings.settings.hideAttachmentTypes.value;
+        ss.settings.redactedMode.value && ss.settings.hideAttachmentTypes.value;
     return AnimatedContainer(
       duration: Duration(milliseconds: 250),
       padding: EdgeInsets.all(containsThis ? 20 : 5),
@@ -138,7 +138,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
                     child: Padding(
                       padding: const EdgeInsets.all(5.0),
                       child: Icon(
-                        settings.settings.skin.value == Skins.iOS ? CupertinoIcons.check_mark : Icons.check,
+                        ss.settings.skin.value == Skins.iOS ? CupertinoIcons.check_mark : Icons.check,
                         color: context.theme.colorScheme.onPrimary,
                         size: 18,
                       ),
@@ -154,7 +154,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
               child: InkWell(
                 child: widget.data.type == AssetType.video
                     ? Icon(
-                  settings.settings.skin.value == Skins.iOS ? CupertinoIcons.play_circle_fill : Icons.play_circle_filled,
+                  ss.settings.skin.value == Skins.iOS ? CupertinoIcons.play_circle_fill : Icons.play_circle_filled,
                   color: Colors.white.withOpacity(0.5),
                   size: 50,
                 )

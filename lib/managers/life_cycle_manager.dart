@@ -57,7 +57,7 @@ class LifeCycleManager {
     }
 
     // Refresh all the chats assuming that the app has already finished setup
-    if (settings.settings.finishedSetup.value && !kIsDesktop) {
+    if (ss.settings.finishedSetup.value && !kIsDesktop) {
       ChatBloc().resumeRefresh();
     }
   }
@@ -67,7 +67,7 @@ class LifeCycleManager {
     // When we close we want to set the currently active chat to be un-alive
     ChatManager().setActiveToDead();
 
-    if (settings.settings.finishedSetup.value) {
+    if (ss.settings.finishedSetup.value) {
       // Close the socket and set the isAlive to false
       //
       // NOTE: [closeSocket] does not necessarily close the socket, it simply requests the SocketManager to attempt to do so

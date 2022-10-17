@@ -259,7 +259,7 @@ bool sameSender(Message? first, Message? second) {
 
 String buildDate(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
-  String time = settings.settings.use24HrFormat.value
+  String time = ss.settings.use24HrFormat.value
       ? intl.DateFormat.Hm().format(dateTime)
       : intl.DateFormat.jm().format(dateTime);
   String date;
@@ -268,12 +268,12 @@ String buildDate(DateTime? dateTime) {
   } else if (dateTime.isYesterday()) {
     date = "Yesterday";
   } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
-    date = intl.DateFormat(settings.settings.skin.value != Skins.iOS ? "EEE" : "EEEE").format(dateTime);
-  } else if (settings.settings.skin.value == Skins.Material && DateTime.now().difference(dateTime.toLocal()).inDays <= 365) {
+    date = intl.DateFormat(ss.settings.skin.value != Skins.iOS ? "EEE" : "EEEE").format(dateTime);
+  } else if (ss.settings.skin.value == Skins.Material && DateTime.now().difference(dateTime.toLocal()).inDays <= 365) {
     date = intl.DateFormat.MMMd().format(dateTime);
-  } else if (settings.settings.skin.value == Skins.Samsung && DateTime.now().year == dateTime.toLocal().year) {
+  } else if (ss.settings.skin.value == Skins.Samsung && DateTime.now().year == dateTime.toLocal().year) {
     date = intl.DateFormat.MMMd().format(dateTime);
-  } else if (settings.settings.skin.value == Skins.Samsung && DateTime.now().year != dateTime.toLocal().year) {
+  } else if (ss.settings.skin.value == Skins.Samsung && DateTime.now().year != dateTime.toLocal().year) {
     date = intl.DateFormat.yMMMd().format(dateTime);
   } else {
     date = intl.DateFormat.yMd().format(dateTime);
@@ -287,7 +287,7 @@ String buildSeparatorDateSamsung(DateTime dateTime) {
 
 String buildTime(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
-  String time = settings.settings.use24HrFormat.value
+  String time = ss.settings.use24HrFormat.value
       ? intl.DateFormat.Hm().format(dateTime)
       : intl.DateFormat.jm().format(dateTime);
   return time;
@@ -395,7 +395,7 @@ String getGroupEventText(Message message) {
   }
 
   final bool hideNames =
-      settings.settings.redactedMode.value && settings.settings.hideContactInfo.value;
+      ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
   if (hideNames) {
     handle = "Someone";
     other = "someone";
@@ -485,7 +485,7 @@ Size getGifDimensions(Uint8List bytes) {
 /// Take the passed [address] or serverAddress from Settings
 /// and sanitize it, making sure it includes an http schema
 String? sanitizeServerAddress({String? address}) {
-  String serverAddress = address ?? settings.settings.serverAddress.value;
+  String serverAddress = address ?? ss.settings.serverAddress.value;
 
   String sanitized = serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();
   if (sanitized.isEmpty) return null;
@@ -593,7 +593,7 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
 
 Widget getIndicatorIcon(SocketState socketState, {double size = 24, bool showAlpha = true}) {
   return Obx(() {
-    if (settings.settings.colorblindMode.value) {
+    if (ss.settings.colorblindMode.value) {
       if (socketState == SocketState.connecting) {
         return Icon(Icons.cloud_upload, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
       } else if (socketState == SocketState.connected) {
@@ -694,7 +694,7 @@ Future<T?> createAsyncTask<T>(AsyncTask<List<dynamic>, T> task) async {
 
 extension PlatformSpecificCapitalize on String {
   String get psCapitalize {
-    if (settings.settings.skin.value == Skins.iOS) {
+    if (ss.settings.skin.value == Skins.iOS) {
       return toUpperCase();
     } else {
       return this;
@@ -715,7 +715,7 @@ extension IsEmoji on String {
 
 extension WidgetLocation on GlobalKey {
   Rect? globalPaintBounds(BuildContext context) {
-    double difference = context.width - navigatorService.width(context);
+    double difference = context.width - ns.width(context);
     final renderObject = currentContext?.findRenderObject();
     final translation = renderObject?.getTransformTo(null).getTranslation();
     if (translation != null && renderObject?.paintBounds != null) {
@@ -781,7 +781,7 @@ Future<void> paintGroupAvatar({
   }
 
   if (participants == null) return;
-  int maxAvatars = settings.settings.maxAvatarsInGroupWidget.value;
+  int maxAvatars = ss.settings.maxAvatarsInGroupWidget.value;
 
   if (participants.length == 1) {
     await paintAvatar(
@@ -829,7 +829,7 @@ Future<void> paintGroupAvatar({
         ..paint(canvas, Offset(left + realSize * 0.25, top + realSize * 0.25));
     } else {
       Paint paint = Paint()
-        ..color = (settings.settings.skin.value == Skins.Samsung
+        ..color = (ss.settings.skin.value == Skins.Samsung
                 ? Get.context?.theme.colorScheme.secondary
                 : Get.context?.theme.backgroundColor) ??
             HexColor("928E8E");
@@ -898,12 +898,12 @@ Future<void> paintAvatar(
   paint.isAntiAlias = true;
   paint.shader =
       ui.Gradient.linear(Offset(dx + size * 0.5, dy + size * 0.5), Offset(size.toDouble(), size.toDouble()), [
-    !settings.settings.colorfulAvatars.value
+    !ss.settings.colorfulAvatars.value
         ? HexColor("928E8E")
         : colors.isNotEmpty
             ? colors[1]
             : HexColor("928E8E"),
-    !settings.settings.colorfulAvatars.value
+    !ss.settings.colorfulAvatars.value
         ? HexColor("686868")
         : colors.isNotEmpty
             ? colors[0]
