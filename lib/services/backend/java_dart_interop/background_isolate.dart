@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:bluebubbles/layouts/startup/upgrading_db.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -80,6 +79,5 @@ backgroundIsolateEntrypoint() async {
     }
   }
 
-  if (!ContactManager().hasFetchedContacts) await ContactManager().loadContacts(headless: true);
   MethodChannelInterface().init(customChannel: _backgroundChannel);
 }

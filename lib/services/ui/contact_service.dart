@@ -114,6 +114,13 @@ class ContactsService extends GetxService {
     return contact;
   }
 
+  Contact? getContact(String address) {
+    final tempHandle = Handle(
+      address: address
+    );
+    return matchHandleToContact(tempHandle);
+  }
+
   Future<List<Contact>> fetchNetworkContacts({Function(String)? logger}) async {
     final networkContacts = <Contact>[];
     // refresh UI on web without waiting for avatars

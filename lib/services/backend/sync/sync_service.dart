@@ -27,12 +27,12 @@ class SyncService extends GetxService {
     await _manager!.start();
   }
 
-  Future<void> startIncrementalSync({String? chatGuid, bool saveDate = true, Function? onComplete}) async {
+  Future<void> startIncrementalSync() async {
     isIncrementalSyncing.value = true;
     try {
       int syncStart = settings.settings.lastIncrementalSync.value;
-      final incrementalSyncManager = IncrementalSyncManager(syncStart, chatGuid: chatGuid, saveDate: saveDate, onComplete: () {
-        onComplete?.call();
+      final incrementalSyncManager = IncrementalSyncManager(syncStart, onComplete: () async {
+        await cs.refreshContacts();
         isIncrementalSyncing.value = false;
       });
       await incrementalSyncManager.start();

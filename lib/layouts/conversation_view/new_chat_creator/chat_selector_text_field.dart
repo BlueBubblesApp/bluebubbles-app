@@ -2,7 +2,6 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_custom_cupertino_textfield.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -105,7 +104,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             if (done.isEmpty) return;
             done = done.trim();
             if (done.isEmail || done.isPhoneNumber) {
-              Contact? contact = ContactManager().getContact(done);
+              Contact? contact = cs.getContact(done);
               if (contact == null) {
                 widget.onSelected(UniqueContact(address: done, displayName: done.isEmail ? done : await formatPhoneNumber(done)));
               } else {

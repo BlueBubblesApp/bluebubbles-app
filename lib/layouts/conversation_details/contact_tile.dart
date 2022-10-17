@@ -12,7 +12,6 @@ import 'package:get/get.dart' hide Response;
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,8 +34,7 @@ class ContactTile extends StatelessWidget {
     required this.updateChat,
     required this.canBeRemoved,
   }) : super(key: key) {
-    contact = ContactManager().getContact(handle.address);
-    if (contact != null) ContactManager().loadContactAvatar(contact!);
+    contact = handle.contact;
   }
 
   Future<void> makeCall(String phoneNumber) async {

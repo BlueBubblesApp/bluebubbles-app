@@ -1,10 +1,10 @@
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/services/network/http_service.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:tuple/tuple.dart';
@@ -36,7 +36,7 @@ class FullSyncManager extends SyncManager {
     super.start();
     addToOutput('Full sync is starting...');
     addToOutput("Reloading your contacts...");
-    await ContactManager().loadContacts(force: true, loadAvatars: true);
+    await cs.refreshContacts(reloadUI: false);
 
     addToOutput('Fetching chats from the server...');
 
@@ -78,11 +78,13 @@ class FullSyncManager extends SyncManager {
                 displayName = chat.displayName;
               } else if (displayName.contains(';-;')) {
                 String addr = displayName.split(';-;')[1];
-                Contact? contact = ContactManager().getContact(addr);
+                Contact? contact = cs.getContact(addr);
                 if (contact != null) {
                   displayName = contact.displayName;
+                } else if (!addr.contains("@")) {
+                  displayName = await formatPhoneNumber(addr);
                 } else {
-                  displayName = await ContactManager().getFormattedAddress(addr);
+                  displayName = addr;
                 }
               }
 
@@ -193,6 +195,8 @@ class FullSyncManager extends SyncManager {
 
   @override
   Future<void> complete() async {
+    addToOutput("Reloading your contacts...");
+    await cs.refreshContacts(reloadUI: false);
     addToOutput("Reloading your chats...");
     await ChatBloc().refreshChats(force: true);
     await super.complete();

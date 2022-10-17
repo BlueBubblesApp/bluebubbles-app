@@ -1,9 +1,10 @@
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/setup/pages/page_template.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_io/io.dart';
 
 class RequestContacts extends StatelessWidget {
   @override
@@ -30,7 +31,10 @@ class RequestContacts extends StatelessWidget {
         },
       ),
       onNextPressed: () async {
-        if (!(await ContactManager().canAccessContacts())) {
+        if (Platform.isAndroid && !(await cs.canAccessContacts())) {
+          await Permission.contacts.request();
+        }
+        if (!(await cs.canAccessContacts())) {
           return await showDialog(
             context: context,
             builder: (BuildContext context) {

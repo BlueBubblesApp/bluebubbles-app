@@ -4,7 +4,6 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -46,7 +45,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
   @override
   void initState() {
     super.initState();
-    contact = ContactManager().getContact(widget.handle?.address);
+    contact = widget.handle?.contact;
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
@@ -56,7 +55,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
       }
 
       if (contact == null && event["type"] == 'update-contacts') {
-        contact = ContactManager().getContact(widget.handle?.address);
+        contact = widget.handle?.contact;
         setState(() {});
       }
     });
@@ -192,7 +191,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
             final avatar = contact?.avatar;
 
             if (isNullOrEmpty(avatar)!) {
-              String? initials = ContactManager().getContactInitials(widget.handle);
+              String? initials = widget.handle?.initials;
               if (!isNullOrEmpty(initials)!) {
                 return Text(
                   initials!,

@@ -8,12 +8,10 @@ import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/handle.dart';
 import 'package:bluebubbles/repository/models/html/message.dart';
-import 'package:bluebubbles/repository/models/models.dart' show Contact;
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
@@ -38,7 +36,7 @@ String getFullChatTitle(Chat _chat) {
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-      String? name = ContactManager().getContactTitle(chat.participants[i]);
+      String? name = chat.participants[i].displayName;
 
       if (chat.participants.length > 1 && !name.isPhoneNumber) {
         name = name.trim().split(" ")[0];
@@ -216,7 +214,7 @@ class Chat {
   bool shouldMuteNotification(Message? message) {
     if (settings.settings.filterUnknownSenders.value &&
         participants.length == 1 &&
-        ContactManager().getContact(participants[0].address) == null) {
+        participants[0].contact == null) {
       return true;
     } else if (settings.settings.globalTextDetection.value.isNotEmpty) {
       List<String> text = settings.settings.globalTextDetection.value.split(",");

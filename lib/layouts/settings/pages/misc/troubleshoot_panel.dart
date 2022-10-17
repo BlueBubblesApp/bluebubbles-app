@@ -3,7 +3,6 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -104,7 +103,7 @@ class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> with The
                               ),
                             )
                           );
-                          await ContactManager().fetchContactsDesktop(logger: (newLog) {
+                          await cs.fetchNetworkContacts(logger: (newLog) {
                             log.add(newLog);
                           });
                         },

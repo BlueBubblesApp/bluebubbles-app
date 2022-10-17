@@ -5,10 +5,8 @@ import 'package:bluebubbles/helpers/emoji_regex.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -238,7 +236,7 @@ class MessageHelper {
         ? ""
         : message.isFromMe!
             ? "You: "
-            : "${ContactManager().getContactTitle(message.handle)}: ";
+            : "${message.handle?.displayName}: ";
     // If the item type is not 0, it's a group event
     if (message.isGroupEvent()) {
       return sender + getGroupEventText(message);
@@ -271,7 +269,7 @@ class MessageHelper {
       return "$output: ${getAttachmentText(attachments)}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the sender
-      String? sender = message.isFromMe! ? "You" : ContactManager().getContactTitle(message.handle);
+      String? sender = message.isFromMe! ? "You" : message.handle?.displayName;
       // fetch the associated message object
       Message? associatedMessage = Message.findOne(guid: message.associatedMessageGuid);
       if (associatedMessage != null) {

@@ -21,7 +21,6 @@ import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/wrappers/tablet_mode_wrapper.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
@@ -567,7 +566,7 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
                                   );
 
                                   final contacts = <Map<String, dynamic>>[];
-                                  for (Contact c in ContactManager().contacts) {
+                                  for (Contact c in cs.contacts) {
                                     var map = c.toMap();
                                     contacts.add(map);
                                   }

@@ -12,7 +12,6 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -384,14 +383,14 @@ String getGroupEventText(Message message) {
   String text = "Unknown group event";
   String? handle = "You";
   if (!message.isFromMe! && message.handleId != null && message.handle != null) {
-    handle = ContactManager().getContactTitle(message.handle);
+    handle = message.handle?.displayName;
   }
 
   String? other = "someone";
   if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
     Handle? item = Handle.findOne(originalROWID: message.otherHandle);
     if (item != null) {
-      other = ContactManager().getContactTitle(item);
+      other = item.displayName;
     }
   }
 
@@ -872,7 +871,7 @@ Future<void> paintAvatar(
     }
   }
 
-  Contact? contact = ContactManager().getContact(handle?.address);
+  Contact? contact = handle?.contact;
   final avatar = contact?.avatar;
   if (avatar != null) {
     Uint8List? contactAvatar = await circularize(avatar, size: size.toInt());
@@ -913,7 +912,7 @@ Future<void> paintAvatar(
 
   canvas.drawCircle(Offset(dx + size * 0.5, dy + size * 0.5), size * 0.5, paint);
 
-  String? initials = ContactManager().getContactInitials(handle);
+  String? initials = handle?.initials;
 
   if (initials == null) {
     IconData icon = Icons.person;

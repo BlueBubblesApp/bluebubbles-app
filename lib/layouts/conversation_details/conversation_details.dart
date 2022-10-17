@@ -16,7 +16,6 @@ import 'package:bluebubbles/layouts/settings/pages/theming/avatar/avatar_crop.da
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -305,11 +304,11 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                           Expanded(
                             child: InkWell(
                               onTap: () {
-                                final contact = ContactManager().getContact(chat.participants.first.address);
+                                final contact = chat.participants.first.contact;
                                 onPressContact(contact, chat.participants.first);
                               },
                               onLongPress: () {
-                                final contact = ContactManager().getContact(chat.participants.first.address);
+                                final contact = chat.participants.first.contact;
                                 onPressContact(contact, chat.participants.first, isLongPressed: true);
                               },
                               child: Container(
@@ -340,11 +339,11 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                         Expanded(
                           child: InkWell(
                             onTap: () {
-                              final contact = ContactManager().getContact(chat.participants.first.address);
+                              final contact = chat.participants.first.contact;
                               onPressContact(contact, chat.participants.first, isEmail: true);
                             },
                             onLongPress: () {
-                              final contact = ContactManager().getContact(chat.participants.first.address);
+                              final contact = chat.participants.first.contact;
                               onPressContact(contact, chat.participants.first, isEmail: true, isLongPressed: true);
                             },
                             child: Container(
@@ -374,7 +373,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                           Expanded(
                             child: InkWell(
                               onTap: () async {
-                                final contact = ContactManager().getContact(chat.participants.first.address);
+                                final contact = chat.participants.first.contact;
                                 final handle = chat.participants.first;
                                 if (contact == null) {
                                   await MethodChannelInterface().invokeMethod("open-contact-form",
@@ -500,7 +499,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                                     return slugify(text, delimiter: '').toString().replaceAll('-', '');
                                   }
 
-                                  for (Contact contact in ContactManager().contacts) {
+                                  for (Contact contact in cs.contacts) {
                                     for (String phone in contact.phones) {
                                       String cleansed = slugText(phone);
 

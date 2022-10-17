@@ -13,7 +13,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -143,18 +142,13 @@ class NotificationManager {
     Uint8List? contactIcon;
 
     // Get the contact name if the message is not from you
-    String? contactName = 'You';
+    String contactName = 'You';
     if (!message.isFromMe!) {
-      contactName = ContactManager().getContactTitle(message.handle);
-    }
-
-    // If it's still null or empty, we need to put something in there... so 'You'
-    if (contactName.isEmpty) {
-      contactName = 'Unknown';
+      contactName = message.handle?.displayName ?? "Unknown";
     }
 
     // Get the actual contact metadata
-    Contact? contact = ContactManager().getContact(message.handle?.address);
+    Contact? contact = message.handle?.contact;
 
     // Build the message text for the notification
     String? messageText = MessageHelper.getNotificationText(message);
@@ -167,9 +161,6 @@ class NotificationManager {
         if (contact.avatar!.isNotEmpty) contactIcon = contact.avatar!;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
-        if (contact != null) {
-          await ContactManager().loadContactAvatar(contact);
-        }
         // If [defaultAvatar] is not loaded, load it from assets
         if ((contact?.avatar == null || contact!.avatar!.isEmpty) && defaultAvatar == null) {
           ByteData file = await loadAsset("assets/images/person64.png");

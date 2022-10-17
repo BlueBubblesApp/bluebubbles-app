@@ -6,7 +6,6 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -43,8 +42,8 @@ class _ContactAvatarGroupWidgetState extends OptimizedState<ContactAvatarGroupWi
   void initState() {
     super.initState();
     participants.sort((a, b) {
-      bool avatarA = ContactManager().getContact(a.address)?.avatar?.isNotEmpty ?? false;
-      bool avatarB = ContactManager().getContact(b.address)?.avatar?.isNotEmpty ?? false;
+      bool avatarA = a.contact?.avatar?.isNotEmpty ?? false;
+      bool avatarB = b.contact?.avatar?.isNotEmpty ?? false;
       if (!avatarA && avatarB) return 1;
       if (avatarA && !avatarB) return -1;
       return 0;

@@ -20,7 +20,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.da
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -106,7 +105,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   initState() {
     super.initState();
     showReplies = widget.showReplies;
-    contactTitle = ContactManager().getContactTitle(widget.message.handle);
+    contactTitle = widget.message.handle?.displayName ?? "Unknown";
 
     effect = widget.message.expressiveSendStyleId == null
         ? "none"
@@ -544,7 +543,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
   @override
   Widget build(BuildContext context) {
-    contactTitle = ContactManager().getContactTitle(widget.message.handle);
+    contactTitle = widget.message.handle?.displayName ?? "Unknown";
 
     if (Skin.of(context) != null) {
       skin.value = Skin.of(context)!.skin;

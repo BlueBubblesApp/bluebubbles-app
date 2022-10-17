@@ -472,7 +472,7 @@ class _AboutPanelState extends OptimizedState<AboutPanel> with ThemeHelpers {
                                                           style: context.theme.textTheme.bodyLarge),
                                                     if (kIsDesktop)
                                                       Text(
-                                                        "${fs.packageInfo.version ?? "Unknown Version"}_${Platform.operatingSystem.capitalizeFirst!}",
+                                                        "${fs.packageInfo.version}_${Platform.operatingSystem.capitalizeFirst!}",
                                                         style: context.theme.textTheme.bodyLarge,
                                                       ),
                                                   ],

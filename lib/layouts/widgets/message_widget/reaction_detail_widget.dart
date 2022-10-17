@@ -1,7 +1,6 @@
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +29,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
 
     contactTitle = widget.message.isFromMe! ? "You" : widget.handle!.address;
 
-    String? title = ContactManager().getContactTitle(widget.handle);
+    String? title = widget.handle?.displayName;
     if (title != contactTitle) {
       contactTitle = title;
     }

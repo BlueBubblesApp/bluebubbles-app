@@ -18,7 +18,6 @@ import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
@@ -362,7 +361,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             onTap: () async {
               if (!chat!.isGroup()) {
                 final handle = chat!.handles.first;
-                final contact = ContactManager().getContact(handle.address);
+                final contact = handle.contact;
                 if (contact == null) {
                   await MethodChannelInterface().invokeMethod("open-contact-form",
                       {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
@@ -956,7 +955,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     if (widget.type != ChatSelectorTypes.ONLY_EXISTING) {
-      for (Contact contact in ContactManager().contacts) {
+      for (Contact contact in cs.contacts) {
         String name = slugText(contact.displayName);
         if (name.contains(tempSearchQuery)) {
           addContactEntries(contact);
@@ -1108,7 +1107,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         for (Handle e in item.chat?.participants ?? []) {
           UniqueContact contact = UniqueContact(
               address: e.address,
-              displayName: ContactManager().getContact(e.address)?.displayName ?? await formatPhoneNumber(e));
+              displayName: e.displayName
+          );
           selected.add(contact);
         }
 

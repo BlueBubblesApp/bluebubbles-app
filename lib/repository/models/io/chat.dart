@@ -10,7 +10,6 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -36,7 +35,7 @@ String getFullChatTitle(Chat _chat) {
 
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      String? name = ContactManager().getContactTitle(chat.participants[i]);
+      String name = chat.participants[i].displayName;
 
       if (chat.participants.length > 1 && !name.numericOnly().isPhoneNumber) {
         name = name.trim().split(" ")[0];
@@ -402,7 +401,6 @@ class Chat {
 
   factory Chat.fromMap(Map<String, dynamic> json) {
     List<Handle> participants = [];
-    List<Contact?> fakeParticipants = [];
     if (json.containsKey('participants')) {
       for (dynamic item in (json['participants'] as List<dynamic>)) {
         participants.add(Handle.fromMap(item));
@@ -598,7 +596,7 @@ class Chat {
     /// Filter unknown senders & sender doesn't have a contact, then don't notify
     if (settings.settings.filterUnknownSenders.value &&
         participants.length == 1 &&
-        ContactManager().getContact(participants[0].address) == null) {
+        participants.first.contact == null) {
       return true;
 
       /// Check if global text detection is on and notify accordingly

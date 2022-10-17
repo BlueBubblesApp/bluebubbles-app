@@ -1,16 +1,52 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/repository/models/html/chat.dart';
+import 'package:bluebubbles/repository/models/html/contact.dart';
+import 'package:bluebubbles/repository/models/html/objectbox.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 
 class Handle {
   int? id;
   int? originalROWID;
   String address;
+  String? formattedAddress;
   String? country;
   String? color;
   String? defaultEmail;
   String? defaultPhone;
   String? uncanonicalizedId;
+  final String fakeName = faker.person.name();
+
+  final contactRelation = ToOne<Contact>();
+  Contact? webContact;
+
+  Contact? get contact => webContact;
+  String get displayName {
+    if (settings.settings.redactedMode.value) {
+      if (settings.settings.generateFakeContactNames.value) {
+        return fakeName;
+      } else if (settings.settings.hideContactInfo.value) {
+        return "";
+      }
+    }
+    if (contact != null) return contact!.displayName;
+    return address.contains("@") ? address : (formattedAddress ?? address);
+  }
+  String? get initials {
+    // Remove any numbers, certain symbols, and non-alphabet characters
+    String importantChars = displayName.toUpperCase().replaceAll(RegExp(r'[^a-zA-Z _-]'), "").trim();
+    if (importantChars.isEmpty) return null;
+
+    // Split by a space or special character delimiter, take each of the items and
+    // reduce it to just the capitalized first letter. Then join the array by an empty char
+    String reduced = importantChars
+        .split(RegExp(r' |-|_'))
+        .take(2)
+        .map((e) => e.isEmpty ? '' : e[0].toUpperCase())
+        .join('');
+    return reduced.isEmpty ? null : reduced;
+  }
 
   Handle({
     this.id,

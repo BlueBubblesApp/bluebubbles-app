@@ -34,6 +34,13 @@ class Handle {
 
   Contact? get contact => kIsWeb ? webContact : contactRelation.target;
   String get displayName {
+    if (settings.settings.redactedMode.value) {
+      if (settings.settings.generateFakeContactNames.value) {
+        return fakeName;
+      } else if (settings.settings.hideContactInfo.value) {
+        return "";
+      }
+    }
     if (contact != null) return contact!.displayName;
     return address.contains("@") ? address : (formattedAddress ?? address);
   }
@@ -86,17 +93,6 @@ class Handle {
 
   static int count() {
     return handleBox.count();
-  }
-
-  String getAddress() {
-    if (settings.settings.redactedMode.value) {
-      if (settings.settings.generateFakeContactNames.value) {
-        return fakeName;
-      } else if (settings.settings.hideContactInfo.value) {
-        return "";
-      }
-    }
-    return contact?.displayName ?? formattedAddress ?? address;
   }
 
   /// Save a single handle - prefer [bulkSave] for multiple handles rather

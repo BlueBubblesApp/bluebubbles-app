@@ -5,7 +5,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -31,7 +30,7 @@ class CustomAvatarColorPanelController extends StatefulController {
     List<Widget> items = [];
     for (Handle item in handles) {
       items.add(SettingsTile(
-        title: ContactManager().getContact(item.address)?.displayName ?? await formatPhoneNumber(item),
+        title: item.displayName,
         subtitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));

@@ -21,7 +21,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dar
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
@@ -743,7 +742,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             onTap: () async {
               Handle? handle = widget.message.handle;
               String? address = handle?.address ?? "";
-              Contact? contact = ContactManager().getContact(address);
+              Contact? contact = handle?.contact;
               UniqueContact uniqueContact;
               if (contact == null) {
                 uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(handle)));

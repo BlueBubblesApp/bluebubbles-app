@@ -20,7 +20,6 @@ import 'package:bluebubbles/layouts/startup/testing_mode.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -246,8 +245,8 @@ Future<Null> initApp() async {
     await initializeDateFormatting();
 
     /* ----- CONTACTS INITIALIZATION ----- */
-    if (!ContactManager().hasFetchedContacts && !kIsDesktop && !kIsWeb) {
-      await ContactManager().loadContacts(headless: true);
+    if (!kIsWeb) {
+      await cs.init();
     }
 
     /* ----- SPLASH SCREEN INITIALIZATION ----- */
@@ -612,7 +611,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
       /* ----- SERVER VERSION CHECK ----- */
       if (kIsWeb && settings.settings.finishedSetup.value) {
-        int version = (await settings.getServerDetails()).item4 ?? 0;
+        int version = (await settings.getServerDetails()).item4;
         if (version < 42) {
           setState(() {
             serverCompatible = false;

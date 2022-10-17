@@ -1,6 +1,5 @@
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +40,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                 onTap: () async {
                   Get.back();
                   List<String?> names = chat.participants
-                      .map((e) => ContactManager().getContactTitle(e))
+                      .map((e) => e.displayName)
                       .toList();
                   List<String> existing = chat.muteArgs?.split(",") ?? [];
                   showDialog(

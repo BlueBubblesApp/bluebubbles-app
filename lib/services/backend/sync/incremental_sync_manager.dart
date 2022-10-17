@@ -72,7 +72,7 @@ class IncrementalSyncManager extends SyncManager {
     // the count can be slightly lower than the real count. To account
     // for this, we just multiple the count by 2. This way, even if all
     // the messages have a null text, we can still account for them when we fetch.
-    int serverVersion = (await settings.getServerDetails()).item4 ?? 0;
+    int serverVersion = (await settings.getServerDetails()).item4;
     bool isBugged = serverVersion < 142; // Server: v1.2.0
 
     // 0: Hit API endpoint to check for updated messages

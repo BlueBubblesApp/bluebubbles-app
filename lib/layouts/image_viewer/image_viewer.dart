@@ -9,7 +9,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -117,7 +116,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(ContactManager().getContactTitle(widget.attachment.message.target?.handle), style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white)),
+                          Text(widget.attachment.message.target?.handle?.displayName ?? "", style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white)),
                           if (widget.attachment.message.target?.dateCreated != null)
                             Padding(
                               padding: const EdgeInsets.only(top: 2.0),

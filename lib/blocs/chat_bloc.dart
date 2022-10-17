@@ -4,7 +4,6 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -59,7 +58,6 @@ class ChatBloc {
     Chat? chat = Chat.findOne(guid: guid);
     if (chat != null) {
       _chats.add(chat);
-      await ContactManager().getAvatarsForChat(chat);
       return chat;
     }
 
@@ -79,13 +77,6 @@ class ChatBloc {
 
     chatRequest = Completer<void>();
     Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
-
-    // Get the contacts in case we haven't
-    if (ContactManager().contacts.isEmpty) {
-      if (kIsDesktop || kIsWeb) {
-        ContactManager().loadContacts().then((e) => ChatBloc().chats.refresh());
-      }
-    }
 
     _messageSubscription ??= setupMessageListener();
 
@@ -259,13 +250,9 @@ class ChatBloc {
   Future<void> updateShareTarget(Chat chat) async {
     Uint8List? icon;
     Contact? contact =
-        chat.participants.length == 1 ? ContactManager().getContact(chat.participants.first.address) : null;
+        chat.participants.length == 1 ? chat.participants.first.contact : null;
     try {
       if (contact != null) {
-        /*if (!contact.hasAvatar) {
-          await ContactManager().loadContactAvatar(contact);
-        }*/
-
         icon = contact.avatar;
       }
 
@@ -357,9 +344,6 @@ class ChatBloc {
         if (isNullOrEmpty(chat.participants)!) {
           chat.getParticipants();
         }
-
-        // Fetch the avatars for the chat so they load in first.
-        await ContactManager().getAvatarsForChat(chat);
 
         if (kIsWeb) {
           for (Handle element in chat.participants) {
@@ -531,13 +515,13 @@ extension Helpers on RxList<Chat> {
   RxList<Chat> unknownSendersHelper(bool unknown) {
     if (!settings.settings.filterUnknownSenders.value) return this;
     if (unknown) {
-      return where((e) => e.participants.length == 1 && ContactManager().getContact(e.participants[0].address) == null)
+      return where((e) => e.participants.length == 1 && e.participants[0].contact == null)
           .toList()
           .obs;
     } else {
       return where((e) =>
           e.participants.length > 1 ||
-          (e.participants.length == 1 && ContactManager().getContact(e.participants[0].address) != null)).toList().obs;
+          (e.participants.length == 1 && e.participants[0].contact != null)).toList().obs;
     }
   }
 }
