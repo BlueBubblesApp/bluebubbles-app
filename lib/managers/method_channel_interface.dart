@@ -6,7 +6,6 @@ import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -386,22 +385,18 @@ class MethodChannelInterface {
     // If the currently active chat is the same as the tapped notification, we
     // clear notifications for it and update the text field data
     if (ChatManager().activeChat?.chat.guid == id) {
-      ChatManager().setActiveChat(ChatManager().activeChat!.chat);
-  
-      // Get the current text field and update the attachments/text
-      TextFieldData? data = TextFieldBloc().getTextField(id);
-      if (data != null) {
-        if (existingAttachments.isNotEmpty) {
-          data.attachments.addAll(existingAttachments);
-          final ids = data.attachments.map((e) => e.path).toSet();
-          data.attachments.retainWhere((element) => ids.remove(element.path));
-          EventDispatcher().emit("text-field-update-attachments", null);
-        }
+      final chat = ChatManager().activeChat!.chat;
+      ChatManager().setActiveChat(chat);
 
-        if (existingText != null) {
-          data.controller.text = existingText;
-          EventDispatcher().emit("text-field-update-text", null);
-        }
+      if (existingAttachments.isNotEmpty) {
+        chat.textFieldAttachments.addAll(existingAttachments.where((e) => e.path != null).map((e) => e.path!));
+        chat.textFieldAttachments = chat.textFieldAttachments.toSet().toList();
+        EventDispatcher().emit("text-field-update-attachments", null);
+      }
+
+      if (existingText != null) {
+        chat.textFieldText = existingText;
+        EventDispatcher().emit("text-field-update-text", null);
       }
 
       return;

@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:typed_data';
 
-import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -74,7 +72,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   TextEditingController? subjectController;
   FocusNode? subjectFocusNode;
   List<PlatformFile> pickedImages = [];
-  TextFieldData? textFieldData;
   DropzoneViewController? dropZoneController;
   ChatController? safeChat;
   Chat? chat;
@@ -145,12 +142,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     getPlaceholder();
     chat = ChatController.forGuid(widget.chatGuid)?.chat;
-    if (ChatController.forGuid(widget.chatGuid) != null) {
-      textFieldData = TextFieldBloc().getTextField(widget.chatGuid!);
-    }
 
-    controller = textFieldData != null ? textFieldData!.controller : TextEditingController();
-    subjectController = textFieldData != null ? textFieldData!.subjectController : TextEditingController();
+    controller = TextEditingController(text: chat?.textFieldText);
+    subjectController = TextEditingController();
 
     // Add the text listener to detect when we should send the typing indicators
     controller!.addListener(() {
@@ -203,6 +197,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     // Add a listener for emoji
     controller!.addListener(() {
       String text = controller!.text;
+      chat?.textFieldText = text;
       if (text != previousText) {
         previousText = text;
         RegExp regExp = RegExp(r"(?<=^| |\n):[^: \n]{2,}((?=[ \n]|$)|:)", multiLine: true);
@@ -329,9 +324,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       updateTextFieldAttachments();
     }
 
-    if (textFieldData != null) {
-      addAttachments(textFieldData?.attachments ?? []);
-    }
+    getCachedAttachments();
 
     setCanRecord();
   }
@@ -343,6 +336,25 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
   }
 
+  void getCachedAttachments() async {
+    if (chat?.textFieldAttachments.isNotEmpty ?? false) {
+      for (String s in chat!.textFieldAttachments) {
+        final file = File(s);
+        if (await file.exists()) {
+          final bytes = await file.readAsBytes();
+          addAttachments([
+            PlatformFile(
+              name: file.path.split("/").last,
+              bytes: bytes,
+              size: bytes.length,
+              path: s,
+            ),
+          ]);
+        }
+      }
+    }
+  }
+
   void addAttachments(List<PlatformFile> attachments) {
     pickedImages.addAll(attachments);
     if (!kIsWeb) pickedImages = pickedImages.toSet().toList();
@@ -350,19 +362,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   void updateTextFieldAttachments() {
-    if (textFieldData != null) {
-      textFieldData!.attachments = List<PlatformFile>.from(pickedImages);
-    }
+    chat?.textFieldAttachments.addAll(pickedImages.where((e) => e.path != null).map((e) => e.path!));
 
     setCanRecord();
   }
 
   void addSharedAttachments() {
-    if (textFieldData != null && mounted) {
-      pickedImages = textFieldData!.attachments;
-      setState(() {});
-    }
-
+    getCachedAttachments();
     setCanRecord();
   }
 
@@ -388,6 +394,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       });
     }
     pickedImages = [];
+    chat?.save(updateTextFieldText: true, updateTextFieldAttachments: true);
     super.dispose();
   }
 

@@ -109,7 +109,7 @@
     },
     {
       "id": "3:9017250848141753702",
-      "lastPropertyId": "21:55197157095191277",
+      "lastPropertyId": "23:7756745453707268462",
       "name": "Chat",
       "properties": [
         {
@@ -214,6 +214,16 @@
           "id": "21:55197157095191277",
           "name": "autoSendTypingIndicators",
           "type": 1
+        },
+        {
+          "id": "22:8357397541593794158",
+          "name": "textFieldText",
+          "type": 9
+        },
+        {
+          "id": "23:7756745453707268462",
+          "name": "textFieldAttachments",
+          "type": 30
         }
       ],
       "relations": [

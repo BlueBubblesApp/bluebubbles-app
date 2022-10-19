@@ -344,6 +344,8 @@ class Chat {
   Message? latestMessage;
   bool? autoSendReadReceipts = true;
   bool? autoSendTypingIndicators = true;
+  String? textFieldText;
+  List<String> textFieldAttachments = [];
 
   final RxnString _customAvatarPath = RxnString();
 
@@ -388,6 +390,8 @@ class Chat {
     this.fakeLatestMessageText,
     this.autoSendReadReceipts = true,
     this.autoSendTypingIndicators = true,
+    this.textFieldText,
+    this.textFieldAttachments = const [],
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
@@ -517,6 +521,8 @@ class Chat {
     bool updateAutoSendReadReceipts = false,
     bool updateAutoSendTypingIndicators = false,
     bool updateCustomAvatarPath = false,
+    bool updateTextFieldText = false,
+    bool updateTextFieldAttachments = false,
   }) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -549,6 +555,12 @@ class Chat {
       }
       if (!updateCustomAvatarPath) {
         customAvatarPath = existing?.customAvatarPath ?? customAvatarPath;
+      }
+      if (!updateTextFieldText) {
+        textFieldText = existing?.textFieldText ?? textFieldText;
+      }
+      if (!updateTextFieldAttachments) {
+        textFieldAttachments = existing?.textFieldAttachments ?? textFieldAttachments;
       }
 
       /// Save the chat and add the participants
@@ -1121,6 +1133,10 @@ class Chat {
     chat1._pinIndex.value ??= chat2._pinIndex.value;
     chat1.autoSendReadReceipts ??= chat2.autoSendReadReceipts;
     chat1.autoSendTypingIndicators ??= chat2.autoSendTypingIndicators;
+    chat1.textFieldText ??= chat2.textFieldText;
+    if (chat1.textFieldAttachments.isEmpty) {
+      chat1.textFieldAttachments.addAll(chat2.textFieldAttachments);
+    }
     chat1.chatIdentifier ??= chat2.chatIdentifier;
     chat1.displayName ??= chat2.displayName;
     chat1.fakeLatestMessageText ??= chat2.fakeLatestMessageText;

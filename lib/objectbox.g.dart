@@ -132,7 +132,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(3, 9017250848141753702),
       name: 'Chat',
-      lastPropertyId: const IdUid(21, 55197157095191277),
+      lastPropertyId: const IdUid(23, 7756745453707268462),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -235,6 +235,16 @@ final _entities = <ModelEntity>[
             id: const IdUid(21, 55197157095191277),
             name: 'autoSendTypingIndicators',
             type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(22, 8357397541593794158),
+            name: 'textFieldText',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(23, 7756745453707268462),
+            name: 'textFieldAttachments',
+            type: 30,
             flags: 0)
       ],
       relations: <ModelRelation>[
@@ -1009,7 +1019,14 @@ ModelDefinition getObjectBoxModel() {
           final customAvatarPathOffset = object.customAvatarPath == null
               ? null
               : fbb.writeString(object.customAvatarPath!);
-          fbb.startTable(22);
+          final textFieldTextOffset = object.textFieldText == null
+              ? null
+              : fbb.writeString(object.textFieldText!);
+          final textFieldAttachmentsOffset = fbb.writeList(object
+              .textFieldAttachments
+              .map(fbb.writeString)
+              .toList(growable: false));
+          fbb.startTable(24);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -1030,6 +1047,8 @@ ModelDefinition getObjectBoxModel() {
           fbb.addInt64(18, object.pinIndex);
           fbb.addBool(19, object.autoSendReadReceipts);
           fbb.addBool(20, object.autoSendTypingIndicators);
+          fbb.addOffset(21, textFieldTextOffset);
+          fbb.addOffset(22, textFieldAttachmentsOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1064,7 +1083,9 @@ ModelDefinition getObjectBoxModel() {
               latestMessageText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 28),
               fakeLatestMessageText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 30),
               autoSendReadReceipts: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 42),
-              autoSendTypingIndicators: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44))
+              autoSendTypingIndicators: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44),
+              textFieldText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 46),
+              textFieldAttachments: const fb.ListReader<String>(fb.StringReader(asciiOptimization: true), lazy: false).vTableGet(buffer, rootOffset, 48, []))
             ..title = const fb.StringReader(asciiOptimization: true)
                 .vTableGetNullable(buffer, rootOffset, 32)
             ..customAvatarPath = const fb.StringReader(asciiOptimization: true)
@@ -1769,6 +1790,14 @@ class Chat_ {
   /// see [Chat.autoSendTypingIndicators]
   static final autoSendTypingIndicators =
       QueryBooleanProperty<Chat>(_entities[1].properties[19]);
+
+  /// see [Chat.textFieldText]
+  static final textFieldText =
+      QueryStringProperty<Chat>(_entities[1].properties[20]);
+
+  /// see [Chat.textFieldAttachments]
+  static final textFieldAttachments =
+      QueryStringVectorProperty<Chat>(_entities[1].properties[21]);
 
   /// see [Chat.handles]
   static final handles =
