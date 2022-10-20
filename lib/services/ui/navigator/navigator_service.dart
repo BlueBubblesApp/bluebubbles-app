@@ -1,6 +1,6 @@
-import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
-import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
+import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/core/events/event_dispatcher.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

@@ -3,10 +3,10 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/app/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/core/events/event_dispatcher.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:bluebubbles/repository/models/models.dart';

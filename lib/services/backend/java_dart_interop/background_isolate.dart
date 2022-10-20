@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/layouts/startup/upgrading_db.dart';
+import 'package:bluebubbles/app/layouts/startup/upgrading_db.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';

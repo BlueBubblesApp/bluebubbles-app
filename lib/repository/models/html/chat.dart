@@ -8,7 +8,7 @@ import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/core/events/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/handle.dart';
 import 'package:bluebubbles/repository/models/html/message.dart';
