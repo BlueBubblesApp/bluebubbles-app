@@ -23,8 +23,8 @@ backgroundIsolateEntrypoint() async {
   debugPrint("(ISOLATE) Starting up...");
   isUiThread = false;
   WidgetsFlutterBinding.ensureInitialized();
-  await fs.init();
   await ss.init(headless: true);
+  await fs.init();
   await mcs.init(headless: true);
   Directory objectBoxDirectory = Directory(join(fs.appDocDir.path, 'objectbox'));
   final sqlitePath = join(fs.appDocDir.path, "chat.db");

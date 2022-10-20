@@ -109,15 +109,12 @@ Future<Null> bubble() async {
 Future<Null> initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   /* ----- SERVICES INITIALIZATION ----- */
+  await ss.init();
   await fs.init();
   await Logger.init();
   Logger.startup.value = true;
   Logger.info('Startup Logs');
-  await ss.init();
   await ts.init();
-  if (!kIsWeb) {
-    await cs.init();
-  }
   await mcs.init();
 
   /* ----- RANDOM STUFF INITIALIZATION ----- */
@@ -226,6 +223,13 @@ Future<Null> initApp() async {
         }
       }
     }
+
+    // these initializations require objectbox to be initialized first
+    ss.getFcmData();
+    if (!kIsWeb) {
+      await cs.init();
+    }
+    await intents.init();
 
     /* ----- DESKTOP/WEB FIREBASE INITIALIZATION ----- */
     FirebaseDart.setup(
@@ -546,7 +550,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     }
 
     /* ----- MANAGER INITIALIZATION ----- */
-    mcs.init();
     LifeCycleManager().opened();
 
     /* ----- ANDROID BACKGROUND ISOLATE INITIALIZATION ----- */

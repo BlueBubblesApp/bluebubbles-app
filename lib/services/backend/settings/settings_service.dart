@@ -23,7 +23,6 @@ class SettingsService extends GetxService {
   Future<void> init({bool headless = false}) async {
     prefs = await SharedPreferences.getInstance();
     settings = Settings.getSettings();
-    fcmData = FCMData.getFCM();
     if (!headless && !kIsWeb && !kIsDesktop) {
       // refresh rate
       if (!kIsWeb && !kIsDesktop) {
@@ -56,6 +55,11 @@ class SettingsService extends GetxService {
         }
       }
     }
+  }
+
+  // this is a separate method because objectbox needs to be initialized
+  void getFcmData() {
+    fcmData = FCMData.getFCM();
   }
 
   Future<void> saveSettings([Settings? newSettings, bool updateDisplayMode = false]) async {
