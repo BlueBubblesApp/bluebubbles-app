@@ -222,8 +222,8 @@ class NotificationManager {
       Uint8List avatar = await avatarAsBytes(
           isGroup: chatIsGroup, handle: handle, participants: participants, chatGuid: chatGuid, quality: 256);
       var notif = uh.Notification(chatTitle, body: messageText, icon: "data:image/png;base64,${base64Encode(avatar)}");
-      notif.onClick.listen((event) {
-        // todo MethodChannelInterface().openChat(chatGuid);
+      notif.onClick.listen((event) async {
+        await intents.openChat(chatGuid);
       });
       return;
     }

@@ -11,7 +11,6 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/window_effects.dart';
 import 'package:bluebubbles/layouts/conversation_list/pages/conversation_list.dart';
-import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/startup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/startup/splash_screen.dart';
@@ -51,7 +50,6 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:path/path.dart' show basename, dirname, join;
 import 'package:path/path.dart' as p;
-import 'package:permission_handler/permission_handler.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:secure_application/secure_application.dart';
 import 'package:system_tray/system_tray.dart';
@@ -78,6 +76,7 @@ late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
 late final Database db;
 late final bool isUiThread;
+final Completer<void> storeStartup = Completer();
 
 String? _recentIntent;
 String? get recentIntent => _recentIntent;
@@ -225,6 +224,7 @@ Future<Null> initApp() async {
     }
 
     // these initializations require objectbox to be initialized first
+    storeStartup.complete();
     ss.getFcmData();
     if (!kIsWeb) {
       await cs.init();
@@ -600,16 +600,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       }
     });
 
-    // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      /* ----- COLORS FROM MEDIA LISTENER INITIALIZATION ----- */
-      // todo move to method channel initialization
-      if (ss.settings.colorsFromMedia.value) {
-        try {
-          await mcs.invokeMethod("start-notif-listener");
-        } catch (_) {}
-      }
-
       /* ----- SERVER VERSION CHECK ----- */
       if (kIsWeb && ss.settings.finishedSetup.value) {
         int version = (await ss.getServerDetails()).item4;
@@ -631,64 +622,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       if (kIsDesktop) {
         await initSystemTray();
       }
-
-      // todo intents
-      /*if (!kIsWeb && !kIsDesktop && ss.settings.finishedSetup.value) {
-        mcs.invokeMethod("get-starting-intent").then((value) {
-          if (value['guid'] != null) {
-            LifeCycleManager().isBubble = value['bubble'] == "true";
-            MethodChannelInterface().openChat(value['guid'].toString());
-          }
-        });
-
-        if (!LifeCycleManager().isBubble) {
-          // Get sharing media from files shared to the app from cold start
-          // This one only handles files, not text
-          ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
-            if (value.isEmpty) return;
-
-            // If we don't have storage permission, we can't do anything
-            if (!await Permission.storage.request().isGranted) return;
-
-            // Add the attached files to a list
-            List<PlatformFile> attachments = [];
-            for (SharedMediaFile element in value) {
-              attachments.add(PlatformFile(
-                name: element.path.split("/").last,
-                path: element.path,
-                size: 0,
-              ));
-            }
-
-            if (attachments.isEmpty) return;
-
-            // Go to the new chat creator, with all of our attachments
-            ns.pushAndRemoveUntil(
-              context,
-              ConversationView(
-                existingAttachments: attachments,
-                isCreator: true,
-              ),
-              (route) => route.isFirst,
-            );
-          });
-
-          // Same thing as [getInitialMedia] except for text
-          ReceiveSharingIntent.getInitialText().then((String? text) {
-            if (text == null) return;
-
-            // Go to the new chat creator, with all of our text
-            ns.pushAndRemoveUntil(
-              context,
-              ConversationView(
-                existingText: text,
-                isCreator: true,
-              ),
-              (route) => route.isFirst,
-            );
-          });
-        }
-      }*/
 
       if (!ss.settings.finishedSetup.value) {
         setState(() {

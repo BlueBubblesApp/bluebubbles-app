@@ -2,16 +2,13 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/services/backend/settings/settings_service.dart';
-import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:idb_shim/idb.dart';
-import 'package:idb_shim/idb_browser.dart';
-import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:receive_intent/receive_intent.dart';
 import 'package:universal_io/io.dart';
 
@@ -39,10 +36,82 @@ class IntentsService extends GetxService {
     super.onClose();
   }
 
-  void handleIntent(Intent? intent) {
+  void handleIntent(Intent? intent) async {
     if (intent == null) return;
 
-    // todo see how intent data comes in and perform actions
-    // receive media, text, chat open, send message, mark read, chat read status change, socket warning, etc
+    switch (intent.action) {
+      case "android.intent.action.SEND":
+      case "android.intent.action.SEND_MULTIPLE":
+        if (intent.extra?["android.intent.extra.TEXT"] != null) {
+          await openChat(intent.extra?["android.intent.extra.shortcut.ID"], text: intent.extra?["android.intent.extra.TEXT"]);
+        } else if (intent.extra?["android.intent.extra.STREAM"] != null) {
+          final data = intent.extra!["android.intent.extra.STREAM"];
+          final files = <PlatformFile>[];
+          if (data is List) {
+            for (String? s in data) {
+              if (s == null) continue;
+              final path = await mcs.invokeMethod("get-content-path", {"uri": s});
+              final bytes = await File(path).readAsBytes();
+              files.add(PlatformFile(
+                path: path,
+                name: path.split("/").last,
+                bytes: bytes,
+                size: bytes.length,
+              ));
+            }
+          } else if (data != null) {
+            final path = await mcs.invokeMethod("get-content-path", {"uri": data});
+            final bytes = await File(path).readAsBytes();
+            files.add(PlatformFile(
+              path: path,
+              name: path.split("/").last,
+              bytes: bytes,
+              size: bytes.length,
+            ));
+          }
+          await openChat(intent.extra?["android.intent.extra.shortcut.ID"], attachments: files);
+        }
+        return;
+      default:
+        if (intent.extra?["chatGuid"] != null) {
+          final guid = intent.extra!["chatGuid"]!;
+          final bubble = intent.extra!["bubble"] ?? false;
+          LifeCycleManager().isBubble = bubble;
+          await openChat(guid);
+        }
+    }
+  }
+
+  Future<void> openChat(String? guid, {String? text, List<PlatformFile> attachments = const []}) async {
+    if (guid == null) {
+      ns.pushAndRemoveUntil(
+        Get.context!,
+        ConversationView(
+          existingAttachments: attachments,
+          existingText: text,
+          isCreator: true,
+        ),
+        (route) => route.isFirst,
+      );
+    } else if (guid == "-1") {
+      ns.key.currentState!.popUntil((route) => route.isFirst);
+    } else if (guid == "-2") {
+      Get.toNamed("/settings/server-management-panel");
+    } else {
+      final chat = Chat.findOne(guid: guid);
+      if (chat == null) return;
+
+      if (ChatManager().activeChat?.chat.guid != guid) {
+        ns.pushAndRemoveUntil(
+          Get.context!,
+          ConversationView(
+            chat: chat,
+            existingAttachments: attachments,
+            existingText: text,
+          ),
+          (route) => route.isFirst,
+        );
+      }
+    }
   }
 }

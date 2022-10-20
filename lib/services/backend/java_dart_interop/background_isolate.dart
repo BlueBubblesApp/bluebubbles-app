@@ -76,4 +76,5 @@ backgroundIsolateEntrypoint() async {
       await initStore();
     }
   }
+  storeStartup.complete();
 }
