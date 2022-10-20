@@ -161,10 +161,6 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                   ),
                   const SizedBox(height: 20),
                   PasswordField(controller: passwordController, onSubmitted: (pass) {
-                    if (urlController.text == "googleplaytest" && pass == "googleplaytest") {
-                      Get.toNamed("/testing-mode");
-                      return;
-                    }
                     connect(urlController.text, pass);
                   }),
                   const SizedBox(height: 20),
@@ -233,11 +229,6 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                             minimumSize: MaterialStateProperty.all(Size(30, 30)),
                           ),
                           onPressed: () async {
-                            if (urlController.text == "googleplaytest" &&
-                                passwordController.text == "googleplaytest") {
-                              Get.toNamed("/testing-mode");
-                              return;
-                            }
                             connect(urlController.text, passwordController.text);
                           },
                           child: Row(

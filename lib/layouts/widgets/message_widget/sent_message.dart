@@ -23,7 +23,6 @@ import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -519,7 +518,7 @@ class SentMessageHelper {
                             Navigator.of(context).pop();
                             MessageManager().removeMessage(chat, message.guid);
                             Message.softDelete(message.guid!);
-                            NotificationManager().clearFailedToSend();
+                            await notif.clearFailedToSend();
                             ActionHandler.retryMessage(message);
                           },
                         ),
@@ -535,7 +534,7 @@ class SentMessageHelper {
 
                             // Remove the message from the Bloc
                             MessageManager().removeMessage(chat, message.guid);
-                            NotificationManager().clearFailedToSend();
+                            await notif.clearFailedToSend();
                             // Get the "new" latest info
                             List<Message> latest = Chat.getMessages(chat, limit: 1);
                             chat.latestMessage = latest.first;
@@ -550,9 +549,9 @@ class SentMessageHelper {
                         child: Text("Cancel",
                             style: context.theme.textTheme.bodyLarge!
                                 .copyWith(color: Get.context!.theme.colorScheme.primary)),
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.of(context).pop();
-                          NotificationManager().clearFailedToSend();
+                          await notif.clearFailedToSend();
                         },
                       )
                     ],

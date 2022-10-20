@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -33,9 +34,14 @@ class MethodChannelService extends GetxService {
     channel = MethodChannel('com.bluebubbles.messaging');
     channel.setMethodCallHandler(_callHandler);
     if (!kIsWeb && !kIsDesktop && headless) await channel.invokeMethod('MessagingBackground#initialized');
-    if (!headless && ss.settings.colorsFromMedia.value) {
+    if (!kIsWeb && !kIsDesktop && !headless) {
       try {
-        await mcs.invokeMethod("start-notif-listener");
+        if (ss.settings.colorsFromMedia.value) {
+          await mcs.invokeMethod("start-notif-listener");
+        }
+        if (!LifeCycleManager().isBubble) {
+          BackgroundIsolate.initialize();
+        }
       } catch (_) {}
     }
   }

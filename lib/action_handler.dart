@@ -12,7 +12,6 @@ import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -262,7 +261,7 @@ class ActionHandler {
 
       ChatController? currChat = ChatManager().activeChat;
       if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
-        NotificationManager().createFailedToSendMessage();
+        await notif.createFailedToSend();
       }
 
       await Message.replaceMessage(tempGuid, message);
@@ -600,7 +599,7 @@ class ActionHandler {
 
         if (!isHeadless) MessageManager().updateMessage(chats.first, data['tempGuid'], message);
       }
-    } else if (forceProcess || !NotificationManager().hasProcessed(data["guid"])) {
+    } else if (forceProcess) {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
         Logger.info("Client received new message ${chats[i].guid}");
@@ -653,11 +652,11 @@ class ActionHandler {
       for (Chat element in chats) {
         if (!isHeadless) MessageManager().addMessage(element, message);
       }
-    } else if (NotificationManager().hasProcessed(data["guid"])) {
+    }/* else if (NotificationManager().hasProcessed(data["guid"])) {
       Message? existing = Message.findOne(guid: data['guid']);
       if (existing != null) {
         handleUpdatedMessage(data, headless: isHeadless);
       }
-    }
+    }*/
   }
 }

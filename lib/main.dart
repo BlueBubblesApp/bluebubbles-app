@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:isolate';
-import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -15,15 +14,11 @@ import 'package:bluebubbles/layouts/startup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/startup/splash_screen.dart';
 import 'package:bluebubbles/layouts/startup/upgrading_db.dart';
-import 'package:bluebubbles/layouts/startup/testing_mode.dart';
 import 'package:bluebubbles/layouts/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
-import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/dart_vlc.dart';
@@ -41,7 +36,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
@@ -57,10 +51,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
-import 'package:win_toast/win_toast.dart';
 import 'package:window_manager/window_manager.dart';
-
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
 late final FirebaseApp app;
 late final Store store;
@@ -115,6 +106,7 @@ Future<Null> initApp() async {
   Logger.info('Startup Logs');
   await ts.init();
   await mcs.init();
+  notif.init();
 
   /* ----- RANDOM STUFF INITIALIZATION ----- */
   HttpOverrides.global = BadCertOverride();
@@ -223,7 +215,7 @@ Future<Null> initApp() async {
       }
     }
 
-    // these initializations require objectbox to be initialized first
+    /* ----- SERVICES INITIALIZATION POST OBJECTBOX ----- */
     storeStartup.complete();
     ss.getFcmData();
     if (!kIsWeb) {
@@ -265,11 +257,6 @@ Future<Null> initApp() async {
 
     /* ----- ANDROID SPECIFIC INITIALIZATION ----- */
     if (!kIsWeb && !kIsDesktop) {
-      /* ----- NOTIFICATIONS PLUGIN INITIALIZATION ----- */
-      const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
-      final InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
-      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
       /* ----- TIME ZONE INITIALIZATION ----- */
       tz.initializeTimeZones();
       try {
@@ -329,19 +316,6 @@ Future<Null> initApp() async {
 
       /* ----- GIPHY API KEY INITIALIZATION ----- */
       await dotenv.load(fileName: '.env');
-
-      /* ----- NOTIFICATION INITIALIZATION ----- */
-      if (Platform.isWindows) {
-        WinToast.instance().initialize(
-          appName: "BlueBubbles",
-          productName: "BlueBubbles",
-          companyName: "23344BlueBubbles",
-        );
-
-        // Delete temp dir in case any notif icons weren't cleared
-        Directory temp = Directory(join(fs.appDocDir.path, "temp"));
-        if (await temp.exists()) await temp.delete(recursive: true);
-      }
     }
 
     /* ----- EMOJI FONT INITIALIZATION ----- */
@@ -520,9 +494,6 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
               }),
             ),
         defaultTransition: Transition.cupertino,
-        getPages: [
-          GetPage(page: () => TestingMode(), name: "/testing-mode"),
-        ],
       ),
     );
   }
@@ -552,40 +523,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
     /* ----- MANAGER INITIALIZATION ----- */
     LifeCycleManager().opened();
-
-    /* ----- ANDROID BACKGROUND ISOLATE INITIALIZATION ----- */
-    if (!kIsWeb && !kIsDesktop && !LifeCycleManager().isBubble) {
-      // This initialization sets the function address in the native code to be used later
-      BackgroundIsolate.initialize();
-      // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
-      NotificationManager().createNotificationChannel(
-        NotificationManager.NEW_MESSAGE_CHANNEL,
-        "New Messages",
-        "For new messages retreived",
-      );
-      NotificationManager().createNotificationChannel(
-        NotificationManager.SOCKET_ERROR_CHANNEL,
-        "Socket Connection Error",
-        "Notifications that will appear when the connection to the server has failed",
-      );
-      // create a send port to receive messages from the background isolate when
-      // the UI thread is active
-      final result = IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
-      if (!result) {
-        IsolateNameServer.removePortNameMapping('bg_isolate');
-        IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
-      }
-      port.listen((dynamic data) {
-        Logger.info("SendPort received action ${data['action']}");
-        if (data['action'] == 'new-message') {
-          // Add it to the queue with the data as the item
-          IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
-        } else if (data['action'] == 'update-message') {
-          // Add it to the queue with the data as the item
-          IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
-        }
-      });
-    }
 
     /* ----- CACHED ASSETS INITIALIZATION ----- */
     ChatManager().loadAssets();

@@ -132,11 +132,6 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
               controller: passwordController,
               textInputAction: TextInputAction.next,
               onSubmitted: (_) {
-                if (urlController.text == "googleplaytest" &&
-                    passwordController.text == "googleplaytest") {
-                  Get.toNamed("/testing-mode");
-                  return;
-                }
                 connect(urlController.text, passwordController.text);
                 connecting = true;
                 if (mounted) setState(() {});
@@ -162,10 +157,6 @@ class _ManualEntryDialogState extends OptimizedState<ManualEntryDialog> {
           TextButton(
             child: Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
             onPressed: () {
-              if (urlController.text == "googleplaytest" && passwordController.text == "googleplaytest") {
-                Get.toNamed("/testing-mode");
-                return;
-              }
               connect(urlController.text, passwordController.text);
               connecting = true;
               if (mounted) setState(() {});

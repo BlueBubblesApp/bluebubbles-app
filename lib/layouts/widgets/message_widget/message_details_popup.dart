@@ -24,7 +24,6 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -962,7 +961,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                   showSnackbar("Error", "Select a date in the future");
                   return;
                 }
-                NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate!);
+                await notif.createReminder(widget.currentChat!.chat, widget.message, finalDate!);
                 popDetails();
                 showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
               }

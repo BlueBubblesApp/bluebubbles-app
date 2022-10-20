@@ -5,7 +5,6 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -247,26 +246,12 @@ class ChatBloc {
   }
 
   Future<void> updateShareTarget(Chat chat) async {
-    Uint8List? icon;
-    Contact? contact =
-        chat.participants.length == 1 ? chat.participants.first.contact : null;
-    try {
-      if (contact != null) {
-        icon = contact.avatar;
-      }
-
-      if (icon == null) {
-        // If [defaultAvatar] is not loaded, load it from assets
-        if (NotificationManager().defaultAvatar == null) {
-          ByteData file = await loadAsset("assets/images/person64.png");
-          NotificationManager().defaultAvatar = file.buffer.asUint8List();
-        }
-
-        icon = NotificationManager().defaultAvatar;
-      }
-    } catch (ex) {
-      Logger.error("Failed to load contact avatar: ${ex.toString()}");
-    }
+    final icon = await avatarAsBytes(
+        isGroup: chat.isGroup(),
+        participants: chat.participants,
+        chatGuid: chat.guid,
+        quality: 256
+    );
 
     // If we don't have a title, try to get it
     if (isNullOrEmpty(chat.title)!) {
@@ -282,9 +267,7 @@ class ChatBloc {
         "guid": chat.guid,
         "icon": icon,
       });
-    } catch (ex) {
-      // Ignore the error, cuz whatever
-    }
+    } catch (_) {}
   }
 
   Future<void> handleMessageAction(NewMessageEvent event) async {

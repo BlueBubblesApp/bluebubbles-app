@@ -9,7 +9,6 @@ import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -206,10 +205,6 @@ class MessageHelper {
     // See if there is an existing message for the given GUID
     Message? existingMessage;
     if (!force) existingMessage = Message.findOne(guid: message.guid);
-    // If we've already processed the GUID, skip it
-    if (NotificationManager().hasProcessed(message.guid!)) return;
-    // Add the message to the "processed" list
-    NotificationManager().addProcessed(message.guid!);
     // Handle all the cases that would mean we don't show the notification
     if (!ss.settings.finishedSetup.value) return; // Don't notify if not fully setup
     if (existingMessage != null) return;
@@ -228,7 +223,7 @@ class MessageHelper {
           !Get.currentRoute.contains("settings")) return;
       if (currChat?.chat.guid == chat.guid && !LifeCycleManager().isBubble) return;
     }
-    await NotificationManager().createNotificationFromMessage(chat, message);
+    await notif.createNotification(chat, message);
   }
 
   static String getNotificationText(Message message, {bool withSender = false}) {

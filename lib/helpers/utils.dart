@@ -441,7 +441,7 @@ String cleansePhoneNumber(String input) {
   return output;
 }
 
-Future<dynamic> loadAsset(String path) {
+Future<ByteData> loadAsset(String path) {
   return rootBundle.load(path);
 }
 
@@ -744,7 +744,6 @@ bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMac
 Future<Uint8List> avatarAsBytes({
   required String chatGuid,
   required bool isGroup,
-  required Handle? handle,
   List<Handle>? participants,
   double quality = 256,
 }) async {
