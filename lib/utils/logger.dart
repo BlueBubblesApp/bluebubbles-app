@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/helpers/share.dart';
+import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/services/services.dart';

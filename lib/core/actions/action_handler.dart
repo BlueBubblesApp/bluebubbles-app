@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
-import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/types/darty.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';

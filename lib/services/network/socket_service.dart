@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubbles/helpers/crypto.dart';
+import 'package:bluebubbles/utils/crypto_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/network/network_tasks.dart';
 import 'package:bluebubbles/utils/general_utils.dart';

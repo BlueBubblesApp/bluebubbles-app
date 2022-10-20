@@ -4,7 +4,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/types/darty.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
