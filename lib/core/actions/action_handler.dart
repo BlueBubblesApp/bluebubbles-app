@@ -599,7 +599,7 @@ class ActionHandler {
 
         if (!isHeadless) MessageManager().updateMessage(chats.first, data['tempGuid'], message);
       }
-    } else if (forceProcess) {
+    } else if (true) {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
         Logger.info("Client received new message ${chats[i].guid}");

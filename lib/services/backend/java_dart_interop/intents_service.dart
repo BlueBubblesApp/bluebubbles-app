@@ -75,7 +75,7 @@ class IntentsService extends GetxService {
       default:
         if (intent.extra?["chatGuid"] != null) {
           final guid = intent.extra!["chatGuid"]!;
-          final bubble = intent.extra!["bubble"] ?? false;
+          final bubble = intent.extra!["bubble"] == "true";
           LifeCycleManager().isBubble = bubble;
           await openChat(guid);
         }

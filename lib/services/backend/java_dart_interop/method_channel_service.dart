@@ -52,11 +52,14 @@ class MethodChannelService extends GetxService {
         await storeStartup.future;
         // remove brackets from URL
         String address = call.arguments.toString().replaceAll("[", "").replaceAll("]", "");
-        ss.settings.serverAddress.value = sanitizeServerAddress(address: address)!;
-        ss.settings.save();
+        String sanitized = sanitizeServerAddress(address: address)!;
+        if (sanitized != ss.settings.serverAddress.value) {
+          ss.settings.serverAddress.value = sanitizeServerAddress(address: address)!;
+          ss.settings.save();
 
-        if (!background) {
-          Get.reload<SocketService>(force: true);
+          if (!background) {
+            Get.reload<SocketService>(force: true);
+          }
         }
         return true;
       case "new-message":

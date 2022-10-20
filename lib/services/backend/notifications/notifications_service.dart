@@ -111,7 +111,12 @@ class NotificationsService extends GetxService {
         chatGuid: guid,
         quality: 256
     );
-    final contactIcon = message.handle?.contact?.avatar ?? (await loadAsset("assets/images/person64.png")).buffer.asUint8List();
+    final contactIcon = message.handle?.contact?.avatar ?? (message.handle != null ? await avatarAsBytes(
+        isGroup: isGroup,
+        participants: [message.handle!],
+        chatGuid: guid,
+        quality: 256
+    ) : (await loadAsset("assets/images/person64.png")).buffer.asUint8List());
 
     if (kIsWeb && Notification.permission == "granted") {
       final notif = Notification(title, body: text, icon: "data:image/png;base64,${base64Encode(chatIcon)}", tag: message.guid);

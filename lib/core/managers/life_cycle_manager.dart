@@ -46,8 +46,8 @@ class LifeCycleManager {
 
     // Set the app as open and start the socket
     updateStatus(true);
-    if (!kIsDesktop) {
-      // socket.startSocketIO();
+    if (!kIsDesktop && !kIsWeb) {
+      socket.reconnect();
     }
 
     if (kIsDesktop) {
@@ -72,7 +72,7 @@ class LifeCycleManager {
       // If there are socket processes using the socket, then it will not close, and will wait until those tasks are done
       updateStatus(false);
       if (!kIsDesktop && !kIsWeb) {
-        socket.closeSocket();
+        socket.disconnect();
       }
     }
   }

@@ -295,12 +295,6 @@ public class NewMessageNotification implements Handler {
                 // Set the color. This is the blue primary color
                 .setColor(4888294);
 
-        // Set the sound of the notification (Android 7 and below)
-        if (soundPath != "default") {
-            int soundResourceId = context.getResources().getIdentifier(soundPath, "raw", context.getPackageName());
-            notificationBuilder.setSound(Uri.parse("android.resource://" + context.getPackageName() + "/" + soundResourceId));
-        }
-
         // Disable the alert if it's from you
         notificationBuilder.setOnlyAlertOnce(messageIsFromMe);
 

@@ -76,6 +76,15 @@ class SocketService extends GetxService {
     socket.connect();
   }
 
+  void disconnect() {
+    socket.disconnect();
+    state.value = SocketState.disconnected;
+  }
+
+  void reconnect() {
+    socket.connect();
+  }
+
   void closeSocket() {
     socket.dispose();
     state.value = SocketState.disconnected;
@@ -110,6 +119,7 @@ class SocketService extends GetxService {
 
     switch (status) {
       case SocketState.connected:
+        print('fireddddd');
         state.value = SocketState.connected;
         NetworkTasks.onConnect();
         return;
@@ -125,12 +135,12 @@ class SocketService extends GetxService {
         Logger.info("Socket connect error, fetching new URL...");
         state.value = SocketState.error;
         // After 5 seconds of an error, we should retry the connection
-        Timer(Duration(seconds: 5), () async {
+        /*Timer(Duration(seconds: 5), () async {
           if (state.value == SocketState.connected) return;
 
           await fdb.fetchNewUrl();
           Get.reload<SocketService>(force: true);
-        });
+        });*/
         return;
       default:
         return;
