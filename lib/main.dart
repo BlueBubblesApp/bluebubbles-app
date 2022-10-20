@@ -23,7 +23,6 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
@@ -53,7 +52,6 @@ import 'package:local_auth/local_auth.dart';
 import 'package:path/path.dart' show basename, dirname, join;
 import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:secure_application/secure_application.dart';
 import 'package:system_tray/system_tray.dart';
@@ -120,6 +118,7 @@ Future<Null> initApp() async {
   if (!kIsWeb) {
     await cs.init();
   }
+  await mcs.init();
 
   /* ----- RANDOM STUFF INITIALIZATION ----- */
   HttpOverrides.global = BadCertOverride();
@@ -547,7 +546,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     }
 
     /* ----- MANAGER INITIALIZATION ----- */
-    MethodChannelInterface().init();
+    mcs.init();
     LifeCycleManager().opened();
 
     /* ----- ANDROID BACKGROUND ISOLATE INITIALIZATION ----- */
@@ -603,7 +602,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       // todo move to method channel initialization
       if (ss.settings.colorsFromMedia.value) {
         try {
-          await MethodChannelInterface().invokeMethod("start-notif-listener");
+          await mcs.invokeMethod("start-notif-listener");
         } catch (_) {}
       }
 
@@ -629,8 +628,9 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
         await initSystemTray();
       }
 
-      if (!kIsWeb && !kIsDesktop && ss.settings.finishedSetup.value) {
-        MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
+      // todo intents
+      /*if (!kIsWeb && !kIsDesktop && ss.settings.finishedSetup.value) {
+        mcs.invokeMethod("get-starting-intent").then((value) {
           if (value['guid'] != null) {
             LifeCycleManager().isBubble = value['bubble'] == "true";
             MethodChannelInterface().openChat(value['guid'].toString());
@@ -684,7 +684,7 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
             );
           });
         }
-      }
+      }*/
 
       if (!ss.settings.finishedSetup.value) {
         setState(() {

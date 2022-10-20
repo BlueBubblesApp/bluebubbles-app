@@ -1862,13 +1862,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.1.0"
-  receive_sharing_intent:
+  receive_intent:
     dependency: "direct main"
     description:
-      name: receive_sharing_intent
+      name: receive_intent
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.4.5"
+    version: "0.2.2"
   record:
     dependency: "direct main"
     description:

@@ -24,7 +24,6 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -488,7 +487,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           child: InkWell(
             onTap: () async {
               String? url = widget.message.getUrl();
-              MethodChannelInterface().invokeMethod("open-link", {"link": url ?? widget.message.text, "forceBrowser": true});
+              mcs.invokeMethod("open-link", {"link": url ?? widget.message.text, "forceBrowser": true});
               popDetails();
             },
             child: ListTile(

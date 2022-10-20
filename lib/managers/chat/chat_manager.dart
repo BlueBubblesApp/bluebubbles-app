@@ -5,7 +5,6 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
@@ -160,7 +159,7 @@ class ChatManager {
         await http.markChatRead(chat.guid);
       }
 
-      if (!MethodChannelInterface().headless && ss.settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
+      if (ss.settings.privateSendTypingIndicators.value && chat.autoSendTypingIndicators!) {
         socket.sendMessage("update-typing-status", {"chatGuid": chat.guid});
       }
     }
@@ -168,7 +167,7 @@ class ChatManager {
     // We want to clear the notifications for the chat so long as it is not a bubble-chat
     // This is because we do not want to kill the bubble-process (crashing it)
     if (!LifeCycleManager().isBubble) {
-      await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+      await mcs.invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
     }
   }
 

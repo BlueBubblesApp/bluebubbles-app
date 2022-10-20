@@ -1,6 +1,5 @@
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/foundation.dart';
@@ -31,7 +30,7 @@ class DatabaseService extends GetxService {
           url = sanitizeServerAddress(address: event.snapshot.value);
         });
       } else {
-        url = sanitizeServerAddress(address: await MethodChannelInterface().invokeMethod("get-server-url"));
+        url = sanitizeServerAddress(address: await mcs.invokeMethod("get-server-url"));
       }
       // Update the address of the copied settings
       ss.settings.serverAddress.value = url ?? ss.settings.serverAddress.value;

@@ -12,7 +12,6 @@ import 'package:bluebubbles/layouts/settings/pages/theming/advanced/advanced_the
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
@@ -415,10 +414,10 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       Obx(
                             () => SettingsSwitch(
                           onChanged: (bool val) async {
-                            await MethodChannelInterface().invokeMethod("request-notif-permission");
+                            await mcs.invokeMethod("request-notif-permission");
                             if (val) {
                               try {
-                                await MethodChannelInterface().invokeMethod("start-notif-listener");
+                                await mcs.invokeMethod("start-notif-listener");
                                 // disable monet theming if music theme enabled
                                 ss.settings.monetTheming.value = Monet.none;
                                 saveSettings();

@@ -3,7 +3,6 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
@@ -59,10 +58,10 @@ class ContactTile extends StatelessWidget {
       },
       onTap: () async {
         if (contact == null) {
-          await MethodChannelInterface().invokeMethod("open-contact-form",
+          await mcs.invokeMethod("open-contact-form",
               {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
         } else {
-          await MethodChannelInterface().invokeMethod("view-contact-form", {'id': contact!.id});
+          await mcs.invokeMethod("view-contact-form", {'id': contact!.id});
         }
       },
       child: ListTile(

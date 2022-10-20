@@ -6,10 +6,8 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 
 /// [LifeCycleManager] is responsible for keeping track of when the app is open and when it is closed
 ///
@@ -75,10 +73,6 @@ class LifeCycleManager {
       updateStatus(false);
       if (!kIsDesktop && !kIsWeb) {
         socket.closeSocket();
-
-        // Closes the background thread when the app is fully closed
-        // This does not necessarily mean that the isolate will be closed (such as if the app is not fully closed), but it will attempt to do so
-        MethodChannelInterface().closeThread();
       }
     }
   }

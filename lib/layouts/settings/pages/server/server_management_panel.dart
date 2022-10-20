@@ -8,7 +8,6 @@ import 'package:bluebubbles/layouts/settings/dialogs/sync_dialog.dart';
 import 'package:bluebubbles/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/pages/sync/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/dialogs/manual_entry_dialog.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -676,7 +675,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                             var ref = db.reference().child('config').child('nextRestart');
                             await ref.set(DateTime.now().toUtc().millisecondsSinceEpoch);
                           } else {
-                            await MethodChannelInterface().invokeMethod(
+                            await mcs.invokeMethod(
                               "set-next-restart", {
                                 "value": DateTime.now().toUtc().millisecondsSinceEpoch
                               }

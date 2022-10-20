@@ -25,7 +25,6 @@ import 'package:bluebubbles/layouts/conversation_list/pages/material_conversatio
 import 'package:bluebubbles/layouts/conversation_list/pages/samsung_conversation_list.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -79,7 +78,7 @@ class ConversationListController extends StatefulController {
 
     File file = File("${fs.appDocDir.path}/attachments/${randomString(16)}.png");
     await file.create(recursive: true);
-    await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+    await mcs.invokeMethod("open-camera", {"path": file.path, "type": "camera"});
 
     if (!(await file.exists())) return;
     if ((await file.length()) == 0) {

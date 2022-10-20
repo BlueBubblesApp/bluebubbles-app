@@ -4,7 +4,6 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -212,7 +211,7 @@ class ChatBloc {
       chat.toggleHasUnread(false);
 
       // Remove from notification shade
-      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+      mcs.invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
     }
 
     // Update their position in the chat list
@@ -226,7 +225,7 @@ class ChatBloc {
 
     // Remove from notification shade
     if (clearNotifications && !isUnread) {
-      await MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+      await mcs.invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
       if (ss.settings.enablePrivateAPI.value &&
           ss.settings.privateMarkChatAsRead.value &&
           chat.autoSendReadReceipts!) {
@@ -278,7 +277,7 @@ class ChatBloc {
     if (isNullOrEmpty(chat.title)!) return;
 
     try {
-      await MethodChannelInterface().invokeMethod("push-share-targets", {
+      await mcs.invokeMethod("push-share-targets", {
         "title": chat.title,
         "guid": chat.guid,
         "icon": icon,

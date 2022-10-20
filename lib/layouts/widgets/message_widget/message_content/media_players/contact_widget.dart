@@ -4,7 +4,6 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -74,7 +73,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                   ..setAttribute("download", widget.file.name)
                   ..click();
               } else {
-                MethodChannelInterface().invokeMethod(
+                mcs.invokeMethod(
                   "open_file",
                   {
                     "path": "/attachments/${widget.attachment.guid!}/${basename(widget.file.path!)}",

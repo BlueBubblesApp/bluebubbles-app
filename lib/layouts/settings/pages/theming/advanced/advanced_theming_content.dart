@@ -10,7 +10,6 @@ import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -171,9 +170,9 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                   // disable monet theming if music theme enabled
                   ss.settings.monetTheming.value = Monet.none;
                   ss.saveSettings(ss.settings);
-                  await MethodChannelInterface().invokeMethod("request-notif-permission");
+                  await mcs.invokeMethod("request-notif-permission");
                   try {
-                    await MethodChannelInterface().invokeMethod("start-notif-listener");
+                    await mcs.invokeMethod("start-notif-listener");
                     ss.settings.colorsFromMedia.value = true;
                     ss.saveSettings(ss.settings);
                   } catch (e) {

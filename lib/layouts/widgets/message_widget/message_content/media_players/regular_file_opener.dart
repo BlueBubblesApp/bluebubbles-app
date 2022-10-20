@@ -4,8 +4,8 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -84,7 +84,7 @@ class RegularFileOpener extends StatelessWidget {
             return;
           }
           try {
-            await MethodChannelInterface().invokeMethod(
+            await mcs.invokeMethod(
               "open_file",
               {
                 "path": "/attachments/${attachment.guid!}/${basename(file.path!)}",

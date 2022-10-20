@@ -47,7 +47,7 @@ dependencies:
       url: https://github.com/BlueBubblesApp/chewie_audio.git
       ref: BlueBubbles
   mime_type: ^1.0.0
-  receive_sharing_intent: ^1.4.5 # mobile only
+  receive_intent: ^0.2.2 # mobile only
   flutter_map: ^2.2.0
   video_thumbnail: ^0.5.2 # mobile only
   flutter_slidable: ^2.0.0

@@ -21,7 +21,6 @@ import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/message/message_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -363,10 +362,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 final handle = chat!.handles.first;
                 final contact = handle.contact;
                 if (contact == null) {
-                  await MethodChannelInterface().invokeMethod("open-contact-form",
+                  await mcs.invokeMethod("open-contact-form",
                       {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
                 } else {
-                  await MethodChannelInterface().invokeMethod("view-contact-form", {'id': contact.id});
+                  await mcs.invokeMethod("view-contact-form", {'id': contact.id});
                 }
               }
             },

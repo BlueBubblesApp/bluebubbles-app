@@ -2,7 +2,6 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -96,7 +95,7 @@ class AttachmentDownloadController extends GetxController {
       attachmentDownloader._removeFromQueue(this);
       return;
     } else if (!kIsWeb && !kIsDesktop) {
-      await MethodChannelInterface().invokeMethod("download-file", {
+      await mcs.invokeMethod("download-file", {
         "data": response.data,
         "path": attachment.getPath(),
       });

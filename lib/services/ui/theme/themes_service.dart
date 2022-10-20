@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -12,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart' hide GetStringUtils;
 import 'package:material_color_utilities/material_color_utilities.dart';
+import 'package:simple_animations/simple_animations.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 
@@ -180,6 +184,59 @@ class ThemesService extends GetxService {
     _loadTheme(context);
   }
 
+  void updateMusicTheme(BuildContext context, Color primary, Color lightBg, Color darkBg, double primaryPercent, double lightBgPercent, double darkBgPercent) {
+    final darkTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme 🌙");
+    final lightTheme = ThemeStruct.getThemes().firstWhere((e) => e.name == "Music Theme ☀");
+    darkTheme.data = darkTheme.data.copyWith(
+        colorScheme: darkTheme.data.colorScheme.copyWith(
+          primary: primary,
+          background: darkBg,
+        )
+    );
+    lightTheme.data = darkTheme.data.copyWith(
+        colorScheme: darkTheme.data.colorScheme.copyWith(
+          primary: primary,
+          background: lightBg,
+        )
+    );
+    if (inDarkMode(context)) {
+      if (primaryPercent != 0.5 && darkBgPercent != 0.5) {
+        double difference = min((primaryPercent / (primaryPercent + darkBgPercent)), 1 - (primaryPercent / (primaryPercent + darkBgPercent)));
+        Tween<double> color1 = Tween<double>(begin: 0, end: difference);
+        Tween<double> color2 = Tween<double>(begin: 1 - difference, end: 1);
+        ConversationViewMixin.gradientTween.value = MovieTween()
+          ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+              .tween("color1", color1)
+          ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+              .tween("color2", color2);
+      } else {
+        ConversationViewMixin.gradientTween.value = MovieTween()
+          ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+              .tween("color1", Tween<double>(begin: 0, end: 0.2))
+          ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+              .tween("color2", Tween<double>(begin: 0.8, end: 1));
+      }
+    } else {
+      if (primaryPercent != 0.5 && lightBgPercent != 0.5) {
+        double difference = min((primaryPercent / (primaryPercent + lightBgPercent)), 1 - (primaryPercent / (primaryPercent + lightBgPercent)));
+        Tween<double> color1 = Tween<double>(begin: 0.0, end: difference);
+        Tween<double> color2 = Tween<double>(begin: 1.0 - difference, end: 1.0);
+        ConversationViewMixin.gradientTween.value = MovieTween()
+          ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+              .tween("color1", color1)
+          ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+              .tween("color2", color2);
+      } else {
+        ConversationViewMixin.gradientTween.value = MovieTween()
+          ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+              .tween("color1", Tween<double>(begin: 0, end: 0.2))
+          ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+              .tween("color2", Tween<double>(begin: 0.8, end: 1));
+      }
+    }
+    changeTheme(Get.context!, light: lightTheme, dark: darkTheme);
+  }
+
   void _loadTheme(BuildContext context, {ThemeStruct? lightOverride, ThemeStruct? darkOverride}) {
     // Set the theme to match those of the settings
     ThemeData light = (lightOverride ?? ThemeStruct.getLightTheme()).data;
@@ -225,7 +282,7 @@ class ThemesService extends GetxService {
     return previous;
   }
 
-  changeTheme(BuildContext context, {ThemeStruct? light, ThemeStruct? dark}) {
+  void changeTheme(BuildContext context, {ThemeStruct? light, ThemeStruct? dark}) {
     light?.save();
     dark?.save();
     if (light != null) ss.prefs.setString("selected-light", light.name);

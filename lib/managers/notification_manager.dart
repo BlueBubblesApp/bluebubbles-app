@@ -14,7 +14,6 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -70,14 +69,14 @@ class NotificationManager {
   /// This is done through native code and all of this data is hard coded for now
   Future<void> createNotificationChannel(String channelID, String channelName, String channelDescription) async {
     //List<String> sounds = ["twig.wav", "walrus.wav", "sugarfree.wav", "raspberry.wav"];
-    await MethodChannelInterface().invokeMethod("create-notif-channel", {
+    await mcs.invokeMethod("create-notif-channel", {
       "channel_name": channelName,
       "channel_description": channelDescription,
       "CHANNEL_ID": channelID,
     });
     /*if (channelID.contains("new_messages")) {
       sounds.forEach((s) async {
-        await MethodChannelInterface().invokeMethod("create-notif-channel", {
+        await mcs.invokeMethod("create-notif-channel", {
           "channel_name": channelName,
           "channel_description": channelDescription,
           "CHANNEL_ID": channelID + "_$s",
@@ -224,7 +223,7 @@ class NotificationManager {
           isGroup: chatIsGroup, handle: handle, participants: participants, chatGuid: chatGuid, quality: 256);
       var notif = uh.Notification(chatTitle, body: messageText, icon: "data:image/png;base64,${base64Encode(avatar)}");
       notif.onClick.listen((event) {
-        MethodChannelInterface().openChat(chatGuid);
+        // todo MethodChannelInterface().openChat(chatGuid);
       });
       return;
     }
@@ -290,7 +289,7 @@ class NotificationManager {
       }
       return;
     }
-    await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
+    await mcs.invokeMethod("new-message-notification", {
       "CHANNEL_ID": NEW_MESSAGE_CHANNEL +
           (ss.settings.notificationSound.value == "default"
               ? ""
@@ -316,31 +315,23 @@ class NotificationManager {
 
   /// Creates a notification for when the socket is disconnected
   void createSocketWarningNotification() {
-    if (!kIsWeb && !kIsDesktop) {
-      MethodChannelInterface().platform.invokeMethod("create-socket-issue-warning", {
-        "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
-      });
-    }
+    mcs.invokeMethod("create-socket-issue-warning", {
+      "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
+    });
   }
 
   void createFailedToSendMessage() {
-    if (!kIsWeb && !kIsDesktop) {
-      MethodChannelInterface().platform.invokeMethod("message-failed-to-send", {
-        "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
-      });
-    }
+    mcs.invokeMethod("message-failed-to-send", {
+      "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
+    });
   }
 
   /// Clears the socket warning notification
   void clearSocketWarning() {
-    if (!kIsWeb && !kIsDesktop) {
-      MethodChannelInterface().platform.invokeMethod("clear-socket-issue");
-    }
+    mcs.invokeMethod("clear-socket-issue");
   }
 
   void clearFailedToSend() {
-    if (!kIsWeb && !kIsDesktop) {
-      MethodChannelInterface().platform.invokeMethod("clear-failed-to-send");
-    }
+    mcs.invokeMethod("clear-failed-to-send");
   }
 }

@@ -34,7 +34,7 @@ class BaseLogger extends GetxService {
 
   set setEnabledLevels(List<LogLevel> levels) => enabledLevels = levels;
 
-  init() async {
+  Future<void> init() async {
     // For now, only do logs on desktop
     if (kIsDesktop) {
       String startupPath = (await getDownloadsDirectory())!.path;

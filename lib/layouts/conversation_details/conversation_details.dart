@@ -17,7 +17,6 @@ import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/stateful_boilerplate.dart';
 import 'package:bluebubbles/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -376,10 +375,10 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                                 final contact = chat.participants.first.contact;
                                 final handle = chat.participants.first;
                                 if (contact == null) {
-                                  await MethodChannelInterface().invokeMethod("open-contact-form",
+                                  await mcs.invokeMethod("open-contact-form",
                                       {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
                                 } else {
-                                  await MethodChannelInterface().invokeMethod("view-contact-form", {'id': contact.id});
+                                  await mcs.invokeMethod("view-contact-form", {'id': contact.id});
                                 }
                               },
                               child: Container(

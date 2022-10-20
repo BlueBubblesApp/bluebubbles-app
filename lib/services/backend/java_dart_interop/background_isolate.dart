@@ -2,20 +2,18 @@ import 'dart:ui';
 
 import 'package:bluebubbles/layouts/startup/upgrading_db.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:path/path.dart' show join;
 import 'package:universal_io/io.dart';
 
 class BackgroundIsolate {
   static void initialize() {
     CallbackHandle callbackHandle = PluginUtilities.getCallbackHandle(backgroundIsolateEntrypoint)!;
-    MethodChannelInterface().invokeMethod("initialize-background-handle", {"handle": callbackHandle.toRawHandle()});
+    mcs.invokeMethod("initialize-background-handle", {"handle": callbackHandle.toRawHandle()});
   }
 }
 
@@ -24,10 +22,10 @@ backgroundIsolateEntrypoint() async {
   // can't use logger here
   debugPrint("(ISOLATE) Starting up...");
   isUiThread = false;
-  MethodChannel _backgroundChannel = MethodChannel("com.bluebubbles.messaging");
   WidgetsFlutterBinding.ensureInitialized();
   await fs.init();
   await ss.init(headless: true);
+  await mcs.init(headless: true);
   Directory objectBoxDirectory = Directory(join(fs.appDocDir.path, 'objectbox'));
   final sqlitePath = join(fs.appDocDir.path, "chat.db");
 
@@ -78,6 +76,4 @@ backgroundIsolateEntrypoint() async {
       await initStore();
     }
   }
-
-  MethodChannelInterface().init(customChannel: _backgroundChannel);
 }
