@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';

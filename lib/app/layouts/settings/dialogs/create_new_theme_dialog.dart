@@ -1,7 +1,7 @@
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';

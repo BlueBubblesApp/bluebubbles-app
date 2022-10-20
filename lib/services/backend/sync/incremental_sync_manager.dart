@@ -1,7 +1,7 @@
 import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
 import 'package:bluebubbles/services/services.dart';

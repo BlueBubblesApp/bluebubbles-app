@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/repository/models/html/message.dart';
 import 'package:bluebubbles/repository/models/html/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';

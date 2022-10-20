@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/utils/logger.dart';
 
 class VCard {
   String? _vCardString;

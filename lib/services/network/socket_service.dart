@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/crypto.dart';
-import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/network/network_tasks.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/services/services.dart';

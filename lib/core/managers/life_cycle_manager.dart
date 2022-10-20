@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';

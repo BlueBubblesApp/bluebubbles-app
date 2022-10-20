@@ -2,7 +2,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/app/helpers/ui_helpers.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';

@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

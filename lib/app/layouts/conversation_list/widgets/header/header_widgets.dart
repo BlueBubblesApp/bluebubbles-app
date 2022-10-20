@@ -1,8 +1,8 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/app/helpers/ui_helpers.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/layouts/setup/setup_view.dart';

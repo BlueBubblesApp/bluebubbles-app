@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';

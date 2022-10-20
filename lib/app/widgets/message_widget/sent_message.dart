@@ -8,7 +8,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/unfinished/theme_selector.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/delivered_receipt.dart';

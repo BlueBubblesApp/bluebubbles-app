@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:bluebubbles/repository/models/models.dart';

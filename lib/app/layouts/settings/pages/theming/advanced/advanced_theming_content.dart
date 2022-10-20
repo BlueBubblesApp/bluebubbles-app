@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/create_new_theme_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/advanced_theming_tile.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';

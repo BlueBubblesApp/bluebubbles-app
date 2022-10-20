@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
 import 'package:bluebubbles/objectbox.g.dart';

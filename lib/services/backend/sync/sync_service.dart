@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart';
 

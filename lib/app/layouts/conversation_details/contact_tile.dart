@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

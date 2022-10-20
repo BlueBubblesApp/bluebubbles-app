@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/message_marker.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';

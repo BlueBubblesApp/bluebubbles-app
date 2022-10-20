@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/app/helpers/ui_helpers.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';

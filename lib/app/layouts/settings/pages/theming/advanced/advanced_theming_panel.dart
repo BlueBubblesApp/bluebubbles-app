@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/app/helpers/ui_helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/old_themes_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/advanced/advanced_theming_content.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';

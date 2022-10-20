@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/page_template.dart';

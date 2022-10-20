@@ -3,10 +3,10 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_text_field.dart';

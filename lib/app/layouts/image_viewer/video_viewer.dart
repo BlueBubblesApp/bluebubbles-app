@@ -4,7 +4,7 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/share.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';

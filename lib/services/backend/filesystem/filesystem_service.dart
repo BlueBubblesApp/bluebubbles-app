@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/services/backend/settings/settings_service.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';

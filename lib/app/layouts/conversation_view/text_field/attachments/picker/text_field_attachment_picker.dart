@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/share.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';

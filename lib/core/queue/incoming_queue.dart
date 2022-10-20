@@ -1,5 +1,5 @@
 import 'package:bluebubbles/core/actions/action_handler.dart';
-import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/core/queue/queue_impl.dart';
 
 class IncomingQueue extends QueueManager {

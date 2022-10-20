@@ -10,8 +10,8 @@ import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/darty.dart';
-import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart' hide Response;

@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/emoji_regex.dart';
-import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/app/widgets/components/reaction.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/core/managers/life_cycle_manager.dart';

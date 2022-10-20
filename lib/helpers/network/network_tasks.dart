@@ -1,5 +1,5 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';

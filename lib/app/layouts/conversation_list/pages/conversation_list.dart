@@ -19,7 +19,7 @@ import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/cupertino_conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/material_conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/samsung_conversation_list.dart';

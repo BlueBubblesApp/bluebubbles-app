@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/helpers/window_effects.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/utils/window_effects.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';

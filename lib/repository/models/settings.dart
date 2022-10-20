@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/app/widgets/components/reaction.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';

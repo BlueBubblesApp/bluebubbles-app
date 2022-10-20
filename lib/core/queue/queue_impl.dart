@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/utils/logger.dart';
 
 class QueueItem {
   String event;

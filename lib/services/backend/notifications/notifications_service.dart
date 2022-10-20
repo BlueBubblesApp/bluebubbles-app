@@ -3,9 +3,9 @@ import 'dart:math';
 
 import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
