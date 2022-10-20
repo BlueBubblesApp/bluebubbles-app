@@ -230,6 +230,7 @@ Future<Null> initApp() async {
       await cs.init();
     }
     await intents.init();
+    socket;
 
     /* ----- DESKTOP/WEB FIREBASE INITIALIZATION ----- */
     FirebaseDart.setup(
