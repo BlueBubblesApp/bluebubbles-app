@@ -9,7 +9,7 @@ import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/models.dart';

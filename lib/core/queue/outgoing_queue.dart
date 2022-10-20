@@ -1,4 +1,4 @@
-import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/core/queue/queue_impl.dart';

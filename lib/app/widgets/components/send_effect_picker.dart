@@ -18,7 +18,7 @@ import 'package:bluebubbles/app/animations/spotlight_classes.dart';
 import 'package:bluebubbles/app/animations/spotlight_rendering.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
-import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:confetti/confetti.dart';

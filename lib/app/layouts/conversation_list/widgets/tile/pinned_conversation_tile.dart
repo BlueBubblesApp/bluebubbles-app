@@ -15,8 +15,8 @@ import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart
 import 'package:bluebubbles/app/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';

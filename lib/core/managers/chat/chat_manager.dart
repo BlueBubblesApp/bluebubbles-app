@@ -3,8 +3,8 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';

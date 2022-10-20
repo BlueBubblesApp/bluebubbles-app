@@ -1,4 +1,4 @@
-import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/conversation_details.dart';
@@ -6,7 +6,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';

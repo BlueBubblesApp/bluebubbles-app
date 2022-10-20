@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/message.dart';
 import 'package:bluebubbles/services/services.dart';

@@ -8,7 +8,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/message/message_manager.dart';
+import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';

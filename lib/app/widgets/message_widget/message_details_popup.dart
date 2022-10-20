@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -19,11 +19,11 @@ import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_alert_dialog.
 import 'package:bluebubbles/app/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/message/message_manager.dart';
+import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';

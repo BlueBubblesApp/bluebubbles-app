@@ -11,8 +11,8 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/samsung_c
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
-import 'package:bluebubbles/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';

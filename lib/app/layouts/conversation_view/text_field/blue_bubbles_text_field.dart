@@ -14,7 +14,7 @@ import 'package:bluebubbles/app/widgets/message_widget/message_content/media_pla
 import 'package:bluebubbles/app/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/widgets/components/send_effect_picker.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';

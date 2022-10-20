@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/core/queue/incoming_queue.dart';
 import 'package:bluebubbles/core/queue/queue_impl.dart';
 import 'package:bluebubbles/repository/models/models.dart';

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
@@ -19,9 +19,9 @@ import 'package:bluebubbles/app/widgets/message_widget/message_content/message_a
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/app/widgets/components/screen_effects_widget.dart';
-import 'package:bluebubbles/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/core/queue/outgoing_queue.dart';
 import 'package:bluebubbles/core/queue/queue_impl.dart';
 import 'package:bluebubbles/repository/intents.dart';
