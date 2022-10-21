@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -180,7 +179,7 @@ class BaseLogger extends GetxService {
 
   String _buildLog(LogLevel level, String name, String? tag, dynamic log) {
     final time = DateTime.now().toLocal().toString();
-    String theLog = "[$time][${describeEnum(level).toUpperCase()}]${LifeCycleManager().isBubble ? "[Bubbled]" : ""}";
+    String theLog = "[$time][${describeEnum(level).toUpperCase()}]${ls.isBubble ? "[Bubbled]" : ""}";
 
     // If we have a name, add the name
     if (name.isNotEmpty) {

@@ -19,7 +19,6 @@ import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -401,7 +400,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
           child: buildBackButton(context, callback: () {
             isDisposing = true;
-            if (LifeCycleManager().isBubble) {
+            if (ls.isBubble) {
               SystemNavigator.pop();
               return false;
             }
@@ -654,7 +653,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     padding: EdgeInsets.only(left: 15.0, top: kIsDesktop || kIsWeb ? 5 : 45),
                     child: GestureDetector(
                       onTap: () {
-                        if (LifeCycleManager().isBubble) {
+                        if (ls.isBubble) {
                           SystemNavigator.pop();
                           return;
                         }
@@ -668,7 +667,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                         children: [
                           buildBackButton(context, callback: () {
                             isDisposing = true;
-                            if (LifeCycleManager().isBubble) {
+                            if (ls.isBubble) {
                               SystemNavigator.pop();
                               return false;
                             }

@@ -22,7 +22,6 @@ import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -411,7 +410,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
   Widget buildDetailsMenu() {
     bool showAltLayout =
-        ss.settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !LifeCycleManager().isBubble;
+        ss.settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !ls.isBubble;
     double maxMenuWidth = min(max(ns.width(context) * 3 / 5, 200), ns.width(context) * 4 / 5) * (showAltLayout ? 0.5 : 1);
     double maxHeight = context.height - messageTopOffset - widget.childSize!.height;
 
@@ -480,7 +479,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
       if (widget.message.fullText.replaceAll("\n", " ").hasUrl &&
           !kIsWeb &&
           !kIsDesktop &&
-          !LifeCycleManager().isBubble)
+          !ls.isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -669,7 +668,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
       if (widget.currentChat!.chat.isGroup() &&
           !widget.message.isFromMe! &&
           dmChat != null &&
-          !LifeCycleManager().isBubble)
+          !ls.isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -731,7 +730,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
       if (widget.currentChat!.chat.isGroup() &&
           !widget.message.isFromMe! &&
           dmChat == null &&
-          !LifeCycleManager().isBubble)
+          !ls.isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -777,7 +776,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-      if (!LifeCycleManager().isBubble)
+      if (!ls.isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -1015,7 +1014,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     if (widget.message.fullText.replaceAll("\n", " ").hasUrl &&
         !kIsWeb &&
         !kIsDesktop &&
-        !LifeCycleManager().isBubble) {
+        !ls.isBubble) {
       maxToShow++;
     }
     if (showDownload && kIsWeb && widget.message.attachments.first?.webUrl != null) maxToShow++;

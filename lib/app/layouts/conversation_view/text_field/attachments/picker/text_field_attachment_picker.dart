@@ -8,7 +8,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/text_field/attachments
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chunked_stream/chunked_stream.dart';
@@ -42,10 +41,6 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
   void initState() {
     super.initState();
     getAttachments();
-    // If the app is reopened, then update the attachments
-    LifeCycleManager().stream.listen((event) async {
-      if (event) getAttachments();
-    });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!mounted) return;

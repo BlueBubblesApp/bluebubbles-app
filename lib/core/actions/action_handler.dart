@@ -10,7 +10,6 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/core/queue/outgoing_queue.dart';
 import 'package:bluebubbles/core/queue/queue_impl.dart';
@@ -260,7 +259,7 @@ class ActionHandler {
       message.error = MessageError.BAD_REQUEST.code;
 
       ChatController? currChat = ChatManager().activeChat;
-      if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
+      if (!ls.isAlive || currChat?.chat.guid != chat.guid) {
         await notif.createFailedToSend();
       }
 

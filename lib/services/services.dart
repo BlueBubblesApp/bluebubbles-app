@@ -2,6 +2,7 @@ export 'backend/filesystem/filesystem_service.dart';
 export 'backend/java_dart_interop/background_isolate.dart';
 export 'backend/java_dart_interop/intents_service.dart';
 export 'backend/java_dart_interop/method_channel_service.dart';
+export 'backend/lifecycle/lifecycle_service.dart';
 export 'backend/notifications/notifications_service.dart';
 export 'backend/settings/settings_service.dart';
 export 'backend/setup/setup_service.dart';

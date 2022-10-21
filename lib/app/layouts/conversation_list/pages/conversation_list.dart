@@ -12,7 +12,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -137,7 +136,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
     if (ss.prefs.getString('lastOpenedChat') != null &&
         showAltLayoutContextless &&
         ChatManager().activeChat?.chat.guid != ss.prefs.getString('lastOpenedChat') &&
-        !LifeCycleManager().isBubble) {
+        !ls.isBubble) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         ns.pushAndRemoveUntil(
           context,

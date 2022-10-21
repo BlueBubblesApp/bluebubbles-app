@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -168,7 +167,7 @@ class AttachmentSender {
 
       // send a notification to the user
       ChatController? currChat = ChatManager().activeChat;
-      if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
+      if (!ls.isAlive || currChat?.chat.guid != chat.guid) {
         await notif.createFailedToSend();
       }
 

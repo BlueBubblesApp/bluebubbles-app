@@ -21,7 +21,6 @@ import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/app/widgets/components/screen_effects_widget.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/core/queue/outgoing_queue.dart';
 import 'package:bluebubbles/core/queue/queue_impl.dart';
 import 'package:bluebubbles/repository/intents.dart';
@@ -122,11 +121,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       initChatSelector();
     }
     initConversationViewState();
-
-    LifeCycleManager().stream.listen((event) {
-      if (!mounted) return;
-      currentChat?.isActive = true;
-    });
 
     ever(ChatBloc().chats, (List<Chat> chats) {
       currentChat = ChatManager().activeChat;
@@ -698,11 +692,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           ),
           child: WillPopScope(
             onWillPop: () async {
-              if (LifeCycleManager().isBubble) {
-                ChatManager().setActiveChat(null);
+              if (ls.isBubble) {
                 SystemNavigator.pop();
               }
-              return !LifeCycleManager().isBubble;
+              return !ls.isBubble;
             },
             child: Obx(
               () {
