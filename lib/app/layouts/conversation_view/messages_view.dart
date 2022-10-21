@@ -15,7 +15,7 @@ import 'package:bluebubbles/app/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -91,42 +91,39 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
     smartReplyController = StreamController<List<String>>.broadcast();
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) async {
+    eventDispatcher.stream.listen((e) async {
       if (!mounted) return;
-      if (!event.containsKey("type")) return;
 
-      if (event["type"] == "refresh-messagebloc" && event["data"].containsKey("chatGuid")) {
+      if (e.item1 == "refresh-messagebloc" && e.item2 != null) {
         // Handle event's that require a matching guid
-        String? chatGuid = event["data"]["chatGuid"];
+        String? chatGuid = e.item2;
         if (widget.chat!.guid == chatGuid) {
-          if (event["type"] == "refresh-messagebloc") {
-            // Clear state items
-            noMoreLocalMessages = false;
-            noMoreMessages = false;
-            _messages = [];
-            loadedPages = [];
+          // Clear state items
+          noMoreLocalMessages = false;
+          noMoreMessages = false;
+          _messages = [];
+          loadedPages = [];
 
-            // Reload the state after refreshing
-            widget.messageBloc!.refresh().then((_) async {
-              if (mounted) {
-                await rebuild(this);
-              }
-            });
-          }
+          // Reload the state after refreshing
+          widget.messageBloc!.refresh().then((_) async {
+            if (mounted) {
+              await rebuild(this);
+            }
+          });
         }
-      } else if (event["type"] == "add-custom-smartreply") {
-        if (event["data"]["path"] != null) {
+      } else if (e.item1 == "add-custom-smartreply") {
+        if (e.item2["path"] != null) {
           internalSmartReplies.addEntries([
             _buildReply("Attach recent photo", onTap: () async {
-              EventDispatcher().emit('add-attachment', event['data']);
+              eventDispatcher.emit('add-attachment', e.item2);
               internalSmartReplies.remove('Attach recent photo');
               await rebuild(this);
             })
           ]);
           await rebuild(this);
         }
-      } else if (event["type"] == "scroll-to-message") {
-        final message = event["data"];
+      } else if (e.item1 == "scroll-to-message") {
+        final message = e.item2;
         final index = _messages.indexWhere((element) => element.guid == message.guid);
         await scrollController?.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
         scrollController?.highlight(index, highlightDuration: Duration(milliseconds: 500));
@@ -139,7 +136,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       widgetsBuilt = true;
-      EventDispatcher().emit("update-highlight", widget.chat!.guid);
+      eventDispatcher.emit("update-highlight", widget.chat!.guid);
       // See if we need to load anything from the message bloc
       await Future.delayed(Duration(milliseconds: 100));
       if (widget.messages.isNotEmpty) {
@@ -427,7 +424,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
     final Widget child = FocusScope(
       node: _node,
       onFocusChange:
-          kIsDesktop || kIsWeb ? (focus) => focus ? EventDispatcher().emit('focus-keyboard', null) : null : null,
+          kIsDesktop || kIsWeb ? (focus) => focus ? eventDispatcher.emit('focus-keyboard', null) : null : null,
       child: Stack(
         children: [
           GestureDetector(
@@ -661,7 +658,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
           });
         }
         for (Map file in files) {
-          EventDispatcher().emit('add-attachment', file);
+          eventDispatcher.emit('add-attachment', file);
         }
         dragging.value = false;
       },

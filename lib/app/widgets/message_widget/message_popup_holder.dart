@@ -10,7 +10,7 @@ import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -78,7 +78,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
   }
 
   void openMessageDetails(bool keyboardStatus) async {
-    EventDispatcher().emit("unfocus-keyboard", null);
+    eventDispatcher.emit("unfocus-keyboard", null);
     HapticFeedback.lightImpact();
     getOffset();
 
@@ -88,7 +88,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       });
     }
 
-    EventDispatcher().emit('popup-pushed', true);
+    eventDispatcher.emit('popup-pushed', true);
     widget.popupPushed.call(true);
     await Navigator.push(
       Get.context ?? context,
@@ -117,9 +117,9 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         opaque: false,
       ),
     );
-    EventDispatcher().emit('popup-pushed', false);
+    eventDispatcher.emit('popup-pushed', false);
     widget.popupPushed.call(false);
-    if (keyboardStatus || kIsDesktop || kIsWeb) EventDispatcher().emit('focus-keyboard', null);
+    if (keyboardStatus || kIsDesktop || kIsWeb) eventDispatcher.emit('focus-keyboard', null);
     if (mounted) {
       setState(() {
         visible = true;

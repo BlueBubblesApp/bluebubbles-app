@@ -20,7 +20,7 @@ import 'package:bluebubbles/app/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -112,11 +112,9 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         : effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ??
             "unknown";
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'refresh-avatar' && event["data"][0] == widget.message.handle?.address && mounted) {
-        widget.message.handle?.color = event['data'][1];
+    eventDispatcher.stream.listen((event) {
+      if (event.item1 == 'refresh-avatar' && event.item2[0] == widget.message.handle?.address && mounted) {
+        widget.message.handle?.color = event.item2[1];
         setState(() {});
       }
     });
@@ -124,7 +122,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     if (!(stringToMessageEffect[effect] ?? MessageEffect.none).isBubble && widget.message.datePlayed == null) {
       WidgetsBinding.instance.addObserver(this);
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        EventDispatcher().emit('play-effect', {
+        eventDispatcher.emit('play-effect', {
           'type': effect,
           'size': key.globalPaintBounds(context),
         });
@@ -993,7 +991,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                 });
                               }
                             } else {
-                              EventDispatcher().emit('play-effect', {
+                              eventDispatcher.emit('play-effect', {
                                 'type': effect,
                                 'size': key.globalPaintBounds(context),
                               });

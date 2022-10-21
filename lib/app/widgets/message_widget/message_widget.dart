@@ -17,7 +17,7 @@ import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/app/widgets/message_widget/stickers_widget.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -364,7 +364,7 @@ class _MessageState extends State<MessageWidget> {
                 || !ss.settings.swipeToReply.value
                 || !(chat?.isIMessage ?? true) ? null : (details) {
               if (offset.value >= replyThreshold) {
-                EventDispatcher().emit("focus-keyboard", _message);
+                eventDispatcher.emit("focus-keyboard", _message);
               }
               offset.value = 0;
               ChatController.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);

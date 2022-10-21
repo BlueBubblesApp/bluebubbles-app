@@ -4,7 +4,7 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -395,7 +395,7 @@ class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
                       onTap: () async {
                           refreshingContacts.value = true;
                           await cs.refreshContacts();
-                          EventDispatcher().emit("refresh-all", null);
+                          eventDispatcher.emit("refresh-all", null);
                           refreshingContacts.value = false;
                       },
                       trailing: Obx(() => refreshingContacts.value == null

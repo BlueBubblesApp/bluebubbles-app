@@ -1,6 +1,6 @@
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -139,7 +139,7 @@ class NavigatorService extends GetxService {
             id2result = true;
           }
           if (!(Get.global(2).currentState?.canPop() ?? true)) {
-            EventDispatcher().emit('update-highlight', null);
+            eventDispatcher.emit('update-highlight', null);
           }
           return true;
         }, id: 2);

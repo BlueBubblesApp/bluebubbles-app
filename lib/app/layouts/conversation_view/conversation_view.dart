@@ -20,7 +20,7 @@ import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart
 import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/app/widgets/components/screen_effects_widget.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/queue/outgoing_queue.dart';
 import 'package:bluebubbles/core/queue/queue_impl.dart';
 import 'package:bluebubbles/repository/intents.dart';
@@ -592,11 +592,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                 if (ss.settings.swipeToCloseKeyboard.value &&
                                     details.delta.dy > 0 &&
                                     (currentChat?.keyboardOpen ?? false)) {
-                                  EventDispatcher().emit("unfocus-keyboard", null);
+                                  eventDispatcher.emit("unfocus-keyboard", null);
                                 } else if (ss.settings.swipeToOpenKeyboard.value &&
                                     details.delta.dy < 0 &&
                                     !(currentChat?.keyboardOpen ?? false)) {
-                                  EventDispatcher().emit("focus-keyboard", null);
+                                  eventDispatcher.emit("focus-keyboard", null);
                                 }
                               },
                               child: textField);

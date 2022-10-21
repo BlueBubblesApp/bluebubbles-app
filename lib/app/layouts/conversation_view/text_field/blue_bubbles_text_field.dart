@@ -15,7 +15,7 @@ import 'package:bluebubbles/app/widgets/scroll_physics/custom_bouncing_scroll_ph
 import 'package:bluebubbles/app/widgets/components/send_effect_picker.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chunked_stream/chunked_stream.dart';
@@ -108,16 +108,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   void initState() {
     super.initState();
 
-    EventDispatcher().stream.listen((event) {
-      if (!event.containsKey("type")) return;
-      if (event['type'] == 'update-emoji-picker') {
-        if (event['data']['chatGuid'] != widget.chatGuid) return;
+    eventDispatcher.stream.listen((e) {
+      if (e.item1 == 'update-emoji-picker') {
+        if (e.item2['chatGuid'] != widget.chatGuid) return;
         emojiSelectedIndex.value = 0;
-        emojiMatches.value = event['data']['emojiMatches'];
-      } else if (event['type'] == 'replace-emoji') {
-        if (event['data']['chatGuid'] != widget.chatGuid) return;
+        emojiMatches.value = e.item2['emojiMatches'];
+      } else if (e.item1 == 'replace-emoji') {
+        if (e.item2['chatGuid'] != widget.chatGuid) return;
         emojiSelectedIndex.value = 0;
-        int index = event['data']['emojiMatchIndex'];
+        int index = e.item2['emojiMatchIndex'];
         String text = controller!.text;
         RegExp regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
         Iterable<RegExpMatch> matches = regExp.allMatches(text);
@@ -133,7 +132,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           emojiSelectedIndex.value = 0;
           emojiMatches.value = <Emoji>[];
         }
-        EventDispatcher().emit('focus-keyboard', null);
+        eventDispatcher.emit('focus-keyboard', null);
       }
     });
 
@@ -242,7 +241,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           }
           print("${allMatches.length} matches found for: $emojiName");
         }
-        EventDispatcher()
+        eventDispatcher
             .emit('update-emoji-picker', {'emojiMatches': allMatches.toList(), 'chatGuid': widget.chatGuid});
       }
     });
@@ -259,7 +258,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         showShareMenu.value = false;
       }
 
-      EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
+      eventDispatcher.emit("keyboard-status", focusNode!.hasFocus);
     });
     subjectFocusNode!.addListener(() {
       ChatController.forGuid(widget.chatGuid)?.keyboardOpen = focusNode?.hasFocus ?? false;
@@ -269,7 +268,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         showShareMenu.value = false;
       }
 
-      EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
+      eventDispatcher.emit("keyboard-status", focusNode!.hasFocus);
     });
 
     if (kIsWeb) {
@@ -291,27 +290,26 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       });
     }
 
-    EventDispatcher().stream.listen((event) {
-      if (!event.containsKey("type")) return;
-      if (event["type"] == "unfocus-keyboard" && (focusNode!.hasFocus || subjectFocusNode!.hasFocus)) {
+    eventDispatcher.stream.listen((event) {
+      if (event.item1 == "unfocus-keyboard" && (focusNode!.hasFocus || subjectFocusNode!.hasFocus)) {
         focusNode!.unfocus();
         subjectFocusNode!.unfocus();
-      } else if (event["type"] == "focus-keyboard" && !focusNode!.hasFocus && !subjectFocusNode!.hasFocus) {
+      } else if (event.item1 == "focus-keyboard" && !focusNode!.hasFocus && !subjectFocusNode!.hasFocus) {
         focusNode!.requestFocus();
-        if (event['data'] is Message) {
-          replyToMessage.value = event['data'];
+        if (event.item2 is Message) {
+          replyToMessage.value = event.item2;
         }
-      } else if (event["type"] == "text-field-update-attachments") {
+      } else if (event.item1 == "text-field-update-attachments") {
         addSharedAttachments();
         while (!(ModalRoute.of(context)?.isCurrent ?? false)) {
           Navigator.of(context).pop();
         }
-      } else if (event["type"] == "text-field-update-text") {
+      } else if (event.item1 == "text-field-update-text") {
         while (!(ModalRoute.of(context)?.isCurrent ?? false)) {
           Navigator.of(context).pop();
         }
-      } else if (event["type"] == "focus-keyboard" && event["data"] != null) {
-        replyToMessage.value = event['data'];
+      } else if (event.item1 == "focus-keyboard" && event.item2 != null) {
+        replyToMessage.value = event.item2;
       }
     });
 
@@ -680,7 +678,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       emojiSelectedIndex.value = index;
                                     },
                                     onTap: () {
-                                      EventDispatcher().emit(
+                                      eventDispatcher.emit(
                                           'replace-emoji', {'emojiMatchIndex': index, 'chatGuid': widget.chatGuid});
                                     },
                                     child: Obx(
@@ -959,20 +957,20 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       curve: Curves.easeInOut,
       child: FocusScope(
         child: Focus(
-          onKey: (focus, event) {
-            if (event is RawKeyDownEvent) {
+          onKey: (focus, ev) {
+            if (ev is RawKeyDownEvent) {
               RawKeyEventDataWindows? windowsData;
               RawKeyEventDataLinux? linuxData;
               RawKeyEventDataWeb? webData;
               RawKeyEventDataAndroid? androidData;
-              if (event.data is RawKeyEventDataWindows) {
-                windowsData = event.data as RawKeyEventDataWindows;
-              } else if (event.data is RawKeyEventDataLinux) {
-                linuxData = event.data as RawKeyEventDataLinux;
-              } else if (event.data is RawKeyEventDataWeb) {
-                webData = event.data as RawKeyEventDataWeb;
-              } else if (event.data is RawKeyEventDataAndroid) {
-                androidData = event.data as RawKeyEventDataAndroid;
+              if (ev.data is RawKeyEventDataWindows) {
+                windowsData = ev.data as RawKeyEventDataWindows;
+              } else if (ev.data is RawKeyEventDataLinux) {
+                linuxData = ev.data as RawKeyEventDataLinux;
+              } else if (ev.data is RawKeyEventDataWeb) {
+                webData = ev.data as RawKeyEventDataWeb;
+              } else if (ev.data is RawKeyEventDataAndroid) {
+                androidData = ev.data as RawKeyEventDataAndroid;
               }
 
               int maxShown = context.height / 3 ~/ 48;
@@ -1008,8 +1006,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               // Tab
               if (windowsData?.keyCode == 9 || linuxData?.keyCode == 65289 || webData?.code == "Tab" || androidData?.physicalKey == PhysicalKeyboardKey.tab) {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
-                  EventDispatcher()
-                      .emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
+                  eventDispatcher.emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
                   emojiSelectedIndex.value = 0;
                   emojiController.jumpTo(0);
                   return KeyEventResult.handled;
@@ -1019,8 +1016,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               // Enter
               if (windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
-                  EventDispatcher()
-                      .emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
+                  eventDispatcher.emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
                   emojiSelectedIndex.value = 0;
                   emojiController.jumpTo(0);
                   return KeyEventResult.handled;
@@ -1036,19 +1032,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
             }
 
-            if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
+            if (ev is! RawKeyDownEvent) return KeyEventResult.ignored;
             RawKeyEventDataWindows? windowsData;
             RawKeyEventDataLinux? linuxData;
             RawKeyEventDataWeb? webData;
-            if (event.data is RawKeyEventDataWindows) {
-              windowsData = event.data as RawKeyEventDataWindows;
-            } else if (event.data is RawKeyEventDataLinux) {
-              linuxData = event.data as RawKeyEventDataLinux;
-            } else if (event.data is RawKeyEventDataWeb) {
-              webData = event.data as RawKeyEventDataWeb;
+            if (ev.data is RawKeyEventDataWindows) {
+              windowsData = ev.data as RawKeyEventDataWindows;
+            } else if (ev.data is RawKeyEventDataLinux) {
+              linuxData = ev.data as RawKeyEventDataLinux;
+            } else if (ev.data is RawKeyEventDataWeb) {
+              webData = ev.data as RawKeyEventDataWeb;
             }
             if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") &&
-                !event.isShiftPressed) {
+                !ev.isShiftPressed) {
               sendMessage();
               focusNode!.requestFocus();
               return KeyEventResult.handled;
@@ -1057,7 +1053,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             if (windowsData != null) {
               if ((windowsData.physicalKey == PhysicalKeyboardKey.keyV ||
                       windowsData.logicalKey == LogicalKeyboardKey.keyV) &&
-                  (event.isControlPressed)) {
+                  (ev.isControlPressed)) {
                 Pasteboard.image.then((image) {
                   if (image != null) {
                     addAttachment(PlatformFile(
@@ -1072,7 +1068,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
             if (webData != null) {
               if ((webData.physicalKey == PhysicalKeyboardKey.keyV || webData.logicalKey == LogicalKeyboardKey.keyV) &&
-                  (event.isControlPressed || previousKeyCode == 0x1700000000)) {
+                  (ev.isControlPressed || previousKeyCode == 0x1700000000)) {
                 getPastedImageWeb().then((value) {
                   if (value != null) {
                     var r = html.FileReader();
@@ -1094,7 +1090,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               return KeyEventResult.ignored;
             }
             if (kIsDesktop || kIsWeb) return KeyEventResult.ignored;
-            if (event.physicalKey == PhysicalKeyboardKey.enter && ss.settings.sendWithReturn.value) {
+            if (ev.physicalKey == PhysicalKeyboardKey.enter && ss.settings.sendWithReturn.value) {
               if (!isNullOrEmpty(controller!.text)!) {
                 sendMessage();
                 focusNode!.previousFocus(); // I genuinely don't know why this works
@@ -1106,7 +1102,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               }
             }
             // 99% sure this isn't necessary but keeping it for now
-            if (event.isKeyPressed(LogicalKeyboardKey.enter) &&
+            if (ev.isKeyPressed(LogicalKeyboardKey.enter) &&
                 ss.settings.sendWithReturn.value &&
                 !isNullOrEmpty(controller!.text)!) {
               sendMessage();

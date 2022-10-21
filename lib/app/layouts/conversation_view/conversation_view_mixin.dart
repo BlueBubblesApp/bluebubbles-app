@@ -18,7 +18,7 @@ import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -95,18 +95,17 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         .map((e) => e.guid)
         .toList();
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!["add-unread-chat", "remove-unread-chat", "refresh-messagebloc"].contains(event["type"])) return;
-      if (!event["data"].containsKey("chatGuid")) return;
+    eventDispatcher.stream.listen((event) {
+      if (!["add-unread-chat", "remove-unread-chat", "refresh-messagebloc"].contains(event.item1)) return;
 
       // Ignore any events having to do with this chat
-      String? chatGuid = event["data"]["chatGuid"];
+      String? chatGuid = event.item2;
       if (chat!.guid == chatGuid) return;
 
       int preLength = newMessages.length;
-      if (event["type"] == "add-unread-chat" && !newMessages.contains(chatGuid)) {
+      if (event.item1 == "add-unread-chat" && !newMessages.contains(chatGuid)) {
         newMessages.add(chatGuid);
-      } else if (event["type"] == "remove-unread-chat" && newMessages.contains(chatGuid)) {
+      } else if (event.item1 == "remove-unread-chat" && newMessages.contains(chatGuid)) {
         newMessages.remove(chatGuid);
       }
 
@@ -404,7 +403,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               SystemNavigator.pop();
               return false;
             }
-            EventDispatcher().emit("update-highlight", null);
+            eventDispatcher.emit("update-highlight", null);
             return true;
           }),
         ),
@@ -657,7 +656,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                           SystemNavigator.pop();
                           return;
                         }
-                        EventDispatcher().emit("update-highlight", null);
+                        eventDispatcher.emit("update-highlight", null);
                         Navigator.of(context).pop();
                       },
                       behavior: HitTestBehavior.translucent,
@@ -671,7 +670,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                               SystemNavigator.pop();
                               return false;
                             }
-                            EventDispatcher().emit("update-highlight", null);
+                            eventDispatcher.emit("update-highlight", null);
                             return true;
                           }),
                           if (ChatBloc().unreads.value > 0)

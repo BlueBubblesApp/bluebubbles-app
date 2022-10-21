@@ -6,7 +6,7 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:get/get.dart';
@@ -254,7 +254,7 @@ class MessageBloc {
     }
 
     emitLoaded();
-    EventDispatcher().emit("scroll-to-message", message);
+    eventDispatcher.emit("scroll-to-message", message);
   }
 
   Future<LoadMessageResult> loadMessageChunk(int offset,

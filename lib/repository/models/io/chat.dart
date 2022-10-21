@@ -10,7 +10,7 @@ import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/tasks/sync_tasks.dart';
@@ -681,9 +681,9 @@ class Chat {
     save(updateHasUnreadMessage: true);
 
     if (hasUnread) {
-      EventDispatcher().emit("add-unread-chat", {"chatGuid": guid});
+      eventDispatcher.emit("add-unread-chat", {"chatGuid": guid});
     } else {
-      EventDispatcher().emit("remove-unread-chat", {"chatGuid": guid});
+      eventDispatcher.emit("remove-unread-chat", {"chatGuid": guid});
     }
 
     ChatBloc().updateUnreads();

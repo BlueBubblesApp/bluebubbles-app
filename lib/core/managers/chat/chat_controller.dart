@@ -6,7 +6,7 @@ import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -97,12 +97,10 @@ class ChatController {
   ChatController(this.chat) {
     messageMarkers = MessageMarkers(chat.guid);
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
+    eventDispatcher.stream.listen((event) {
       // Track the offset for when the keyboard is opened
-      if (event["type"] == "keyboard-status" && scrollController.hasClients) {
-        keyboardOpen = event.containsKey("data") ? event["data"] : false;
+      if (event.item1 == "keyboard-status" && scrollController.hasClients) {
+        keyboardOpen = event.item2 ?? false;
         if (keyboardOpen) {
           keyboardOpenOffset = scrollController.offset;
         }
@@ -126,7 +124,7 @@ class ChatController {
       if (keyboardOpen &&
           ss.settings.hideKeyboardOnScroll.value &&
           scrollController.offset > keyboardOpenOffset + 100) {
-        EventDispatcher().emit("unfocus-keyboard", null);
+        eventDispatcher.emit("unfocus-keyboard", null);
       }
 
       if (showScrollDown.value && scrollController.offset >= 500) return;
@@ -378,7 +376,7 @@ class ChatController {
     }
 
     if (ss.settings.openKeyboardOnSTB.value) {
-      EventDispatcher().emit("focus-keyboard", null);
+      eventDispatcher.emit("focus-keyboard", null);
       keyboardOpenOffset = 0;
     }
   }

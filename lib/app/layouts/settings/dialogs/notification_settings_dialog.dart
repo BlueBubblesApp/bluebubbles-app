@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,7 +29,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                 chat.toggleMute(chat.muteType != "mute");
                 chat.save();
                 updateParent.call();
-                EventDispatcher().emit("refresh", null);
+                eventDispatcher.emit("refresh", null);
               },
             ),
             if (chat.isGroup())
@@ -109,7 +109,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                                 Get.back();
                                 chat.save(updateMuteType: true, updateMuteArgs: true);
                                 updateParent.call();
-                                EventDispatcher().emit("refresh", null);
+                                eventDispatcher.emit("refresh", null);
                               }
                           ),
                         ],
@@ -151,7 +151,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                       chat.muteArgs = finalDate.toIso8601String();
                       chat.save(updateMuteType: true, updateMuteArgs: true);
                       updateParent.call();
-                      EventDispatcher().emit("refresh", null);
+                      eventDispatcher.emit("refresh", null);
                     }
                   }
                 }
@@ -177,7 +177,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                 chat.muteArgs = controller.text;
                 chat.save(updateMuteType: true, updateMuteArgs: true);
                 updateParent.call();
-                EventDispatcher().emit("refresh", null);
+                eventDispatcher.emit("refresh", null);
               },
             ),
             ListTile(
@@ -192,7 +192,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                 chat.muteArgs = null;
                 chat.save(updateMuteType: true, updateMuteArgs: true);
                 updateParent.call();
-                EventDispatcher().emit("refresh", null);
+                eventDispatcher.emit("refresh", null);
               },
             ),
           ]),

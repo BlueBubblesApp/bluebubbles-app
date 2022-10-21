@@ -1,10 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
@@ -46,15 +44,13 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
   void initState() {
     super.initState();
     contact = widget.handle?.contact;
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'refresh-avatar' && event["data"][0] == widget.handle?.address && mounted) {
-        widget.handle?.color = event['data'][1];
+    eventDispatcher.stream.listen((event) {
+      if (event.item1 == 'refresh-avatar' && event.item1[0] == widget.handle?.address && mounted) {
+        widget.handle?.color = event.item2[1];
         setState(() {});
       }
 
-      if (contact == null && event["type"] == 'update-contacts') {
+      if (contact == null && event.item1 == 'update-contacts') {
         contact = widget.handle?.contact;
         setState(() {});
       }
@@ -87,7 +83,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
                 Get.back();
                 widget.handle!.color = null;
                 widget.handle!.save(updateColor: true);
-                EventDispatcher().emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
+                eventDispatcher.emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
               },
               child: const Text("RESET"),
             )
@@ -129,7 +125,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
 
     widget.handle!.save(updateColor: true);
 
-    EventDispatcher().emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
+    eventDispatcher.emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
   }
 
   @override

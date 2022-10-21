@@ -16,7 +16,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -136,11 +136,9 @@ class _ConversationTileState extends CustomState<ConversationTile, void, Convers
           ChatManager().activeChat?.chat.guid == controller.chat.guid;
     }
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'update-highlight' && mounted) {
-        if ((kIsDesktop || kIsWeb) && event['data'] == controller.chat.guid) {
+    eventDispatcher.stream.listen((event) {
+      if (event.item1 == 'update-highlight' && mounted) {
+        if ((kIsDesktop || kIsWeb) && event.item2 == controller.chat.guid) {
           controller.shouldHighlight.value = true;
         } else if (controller.shouldHighlight.value = true) {
           controller.shouldHighlight.value = false;

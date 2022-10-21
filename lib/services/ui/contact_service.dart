@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -53,7 +53,7 @@ class ContactsService extends GetxService {
     if (refreshedContacts.isNotEmpty) {
       contacts = refreshedContacts;
       if (reloadUI) {
-        EventDispatcher().emit('update-contacts', null);
+        eventDispatcher.emit('update-contacts', null);
       }
     }
   }
@@ -160,7 +160,7 @@ class ContactsService extends GetxService {
           handles.firstWhere((e) => e.address == handle.address).webContact = c;
         }
       }
-      EventDispatcher().emit('update-contacts', null);
+      eventDispatcher.emit('update-contacts', null);
     }
 
     logger?.call("Fetching contacts (with avatars)...");

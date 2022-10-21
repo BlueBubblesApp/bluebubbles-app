@@ -21,7 +21,7 @@ import 'package:bluebubbles/app/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -498,7 +498,7 @@ class SentMessageHelper {
           return GestureDetector(
             onTap: () {
               if (!ss.settings.autoOpenKeyboard.value && !isVisible && !kIsWeb && !kIsDesktop) {
-                EventDispatcher().emit('unfocus-keyboard', null);
+                eventDispatcher.emit('unfocus-keyboard', null);
               }
               showDialog(
                 context: context,
@@ -645,7 +645,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
       WidgetsBinding.instance.addObserver(this);
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
-        EventDispatcher().emit('play-effect', {
+        eventDispatcher.emit('play-effect', {
           'type': effect,
           'size': key.globalPaintBounds(context),
         });
@@ -1014,7 +1014,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                   });
                 }
               } else {
-                EventDispatcher().emit('play-effect', {
+                eventDispatcher.emit('play-effect', {
                   'type': effect,
                   'size': key.globalPaintBounds(context),
                 });

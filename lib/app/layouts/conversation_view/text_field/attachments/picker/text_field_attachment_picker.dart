@@ -7,7 +7,7 @@ import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chunked_stream/chunked_stream.dart';
@@ -42,12 +42,11 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
     super.initState();
     getAttachments();
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+    eventDispatcher.stream.listen((event) {
       if (!mounted) return;
-      if (!event.containsKey("type")) return;
 
-      if (event["type"] == "add-attachment") {
-        PlatformFile file = PlatformFile.fromMap(event['data']);
+      if (event.item1 == "add-attachment") {
+        PlatformFile file = PlatformFile.fromMap(event.item2);
         widget.onAddAttachment(file);
       }
     });
@@ -62,7 +61,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
       _images = images;
       if (DateTime.now().toLocal().isWithin(images.first.modifiedDateTime, minutes: 2)) {
         dynamic file = await images.first.file;
-        EventDispatcher().emit('add-custom-smartreply', {
+        eventDispatcher.emit('add-custom-smartreply', {
           "path": file.path,
           "name": file.path.split('/').last,
           "size": file.lengthSync(),

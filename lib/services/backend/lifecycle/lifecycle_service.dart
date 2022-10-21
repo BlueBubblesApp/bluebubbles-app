@@ -1,4 +1,4 @@
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
@@ -53,7 +53,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
     if (!kIsDesktop && !kIsWeb) {
       socket.reconnect();
     } else {
-      EventDispatcher().emit('focus-keyboard', null);
+      eventDispatcher.emit('focus-keyboard', null);
     }
   }
 

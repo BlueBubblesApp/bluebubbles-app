@@ -21,7 +21,7 @@ import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -51,8 +51,8 @@ class _SettingsPageState extends OptimizedState<SettingsPage> with ThemeHelpers 
   void initState() {
     super.initState();
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (event["type"] == 'theme-update') {
+    eventDispatcher.stream.listen((event) {
+      if (event.item1 == 'theme-update') {
         setState(() {});
       }
     });

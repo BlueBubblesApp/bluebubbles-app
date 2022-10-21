@@ -12,7 +12,7 @@ import 'package:bluebubbles/app/animations/love_classes.dart';
 import 'package:bluebubbles/app/animations/love_rendering.dart';
 import 'package:bluebubbles/app/animations/spotlight_classes.dart';
 import 'package:bluebubbles/app/animations/spotlight_rendering.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
@@ -40,14 +40,12 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
   void initState() {
     super.initState();
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) async {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'play-effect' && mounted) {
+    eventDispatcher.stream.listen((event) async {
+      if (event.item1 == 'play-effect' && mounted) {
         setState(() {
-          screenSelected = event['data']['type'];
+          screenSelected = event.item2['type'];
         });
-        final rect = event['data']['size'];
+        final rect = event.item2['size'];
         if (screenSelected == "fireworks" && !fireworkController.isPlaying) {
           fireworkController.windowSize = Size(ns.width(context), context.height);
           fireworkController.start();

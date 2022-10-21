@@ -11,7 +11,7 @@ import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/advanced/advanced_theming_panel.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
@@ -86,7 +86,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         if (val == null) return;
                         AdaptiveTheme.of(context).setThemeMode(val);
                         controller.update();
-                        EventDispatcher().emit('theme-update', null);
+                        eventDispatcher.emit('theme-update', null);
                       },
                       options: AdaptiveThemeMode.values,
                       textProcessing: (val) => val.toString().split(".").last,
@@ -162,7 +162,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         ss.settings.skin.value = val;
                         saveSettings();
                         setState(() {});
-                        EventDispatcher().emit('theme-update', null);
+                        eventDispatcher.emit('theme-update', null);
                       },
                       options: Skins.values,
                       textProcessing: (val) {
@@ -212,7 +212,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           } else {
                             SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
                           }
-                          EventDispatcher().emit('theme-update', null);
+                          eventDispatcher.emit('theme-update', null);
                         },
                         initialVal: ss.settings.immersiveMode.value,
                         title: "Immersive Mode",

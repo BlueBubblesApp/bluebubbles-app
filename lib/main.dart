@@ -17,7 +17,7 @@ import 'package:bluebubbles/app/layouts/startup/upgrading_db.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/dart_vlc.dart';
@@ -505,8 +505,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     /* ----- APP REFRESH LISTENER INITIALIZATION ----- */
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (event["type"] == 'refresh-all') {
+    eventDispatcher.stream.listen((event) {
+      if (event.item1 == 'refresh-all') {
         setState(() {});
       }
     });
@@ -585,15 +585,13 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     if (kIsDesktop && Platform.isWindows) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
         await WindowEffects.setEffect(color: context.theme.backgroundColor);
-        EventDispatcher().stream.listen((Map<String, dynamic> event) async {
-          if (!event.containsKey("type")) return;
-
-          if (event["type"] == 'theme-update') {
+        eventDispatcher.stream.listen((event) async {
+          if (event.item1 == 'theme-update') {
             await WindowEffects.setEffect(color: context.theme.backgroundColor);
           }
 
-          if (event["type"] == 'popup-pushed') {
-            bool popup = event["data"] as bool;
+          if (event.item1 == 'popup-pushed') {
+            bool popup = event.item2;
             if (popup) {
               ss.settings.windowEffect.value = WindowEffect.disabled;
             } else {

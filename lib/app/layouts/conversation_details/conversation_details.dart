@@ -16,7 +16,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_cro
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -761,7 +761,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       initialVal: widget.chat.autoSendReadReceipts!,
                       onChanged: (value) {
                         widget.chat.toggleAutoRead(!widget.chat.autoSendReadReceipts!);
-                        EventDispatcher().emit("refresh", null);
+                        eventDispatcher.emit("refresh", null);
                         if (mounted) setState(() {});
                       },
                       backgroundColor: tileColor,
@@ -775,7 +775,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       initialVal: widget.chat.autoSendTypingIndicators!,
                       onChanged: (value) {
                         widget.chat.toggleAutoType(!widget.chat.autoSendTypingIndicators!);
-                        EventDispatcher().emit("refresh", null);
+                        eventDispatcher.emit("refresh", null);
                         if (mounted) setState(() {});
                       },
                       backgroundColor: tileColor,
@@ -786,7 +786,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       initialVal: widget.chat.isPinned!,
                       onChanged: (value) {
                         widget.chat.togglePin(!widget.chat.isPinned!);
-                        EventDispatcher().emit("refresh", null);
+                        eventDispatcher.emit("refresh", null);
                         if (mounted) setState(() {});
                       },
                       backgroundColor: tileColor,
@@ -797,7 +797,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       initialVal: widget.chat.muteType == "mute",
                       onChanged: (value) {
                         widget.chat.toggleMute(value);
-                        EventDispatcher().emit("refresh", null);
+                        eventDispatcher.emit("refresh", null);
                         if (mounted) setState(() {});
                       },
                       backgroundColor: tileColor,
@@ -812,7 +812,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                         } else {
                           ChatBloc().unArchiveChat(widget.chat);
                         }
-                        EventDispatcher().emit("refresh", null);
+                        eventDispatcher.emit("refresh", null);
                         if (mounted) setState(() {});
                       },
                       backgroundColor: tileColor,
@@ -853,7 +853,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                                     onPressed: () async {
                                       Navigator.of(context).pop();
                                       widget.chat.clearTranscript();
-                                      EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
+                                      eventDispatcher.emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
                                     },
                                   ),
                                 ]);

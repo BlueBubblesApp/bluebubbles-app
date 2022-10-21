@@ -21,7 +21,7 @@ import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -424,7 +424,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           child: InkWell(
             onTap: () async {
               popDetails();
-              EventDispatcher().emit("focus-keyboard", widget.message);
+              eventDispatcher.emit("focus-keyboard", widget.message);
             },
             child: ListTile(
               mouseCursor: SystemMouseCursors.click,
@@ -751,7 +751,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 context,
                 cupertino.CupertinoPageRoute(
                   builder: (BuildContext context) {
-                    EventDispatcher().emit("update-highlight", null);
+                    eventDispatcher.emit("update-highlight", null);
                     return ConversationView(
                       isCreator: true,
                       selected: [uniqueContact],
@@ -797,7 +797,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                               ))
                           .toList();
                     }
-                    EventDispatcher().emit("update-highlight", null);
+                    eventDispatcher.emit("update-highlight", null);
                     return ConversationView(
                       isCreator: true,
                       existingText: widget.message.text,

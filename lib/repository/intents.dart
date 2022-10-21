@@ -7,7 +7,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_vi
 import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -50,7 +50,7 @@ class OpenNewChatCreatorAction extends Action<OpenNewChatCreatorIntent> {
   @override
   Object? invoke(covariant OpenNewChatCreatorIntent intent) {
     if (ss.settings.finishedSetup.value) {
-      EventDispatcher().emit("update-highlight", null);
+      eventDispatcher.emit("update-highlight", null);
       ns.pushAndRemoveUntil(
         context,
         ConversationView(
@@ -97,7 +97,7 @@ class ReplyRecentAction extends Action<ReplyRecentIntent> {
   Object? invoke(covariant ReplyRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      EventDispatcher().emit("focus-keyboard", message);
+      eventDispatcher.emit("focus-keyboard", message);
     }
     return null;
   }

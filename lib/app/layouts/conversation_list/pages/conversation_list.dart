@@ -23,7 +23,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/pages/cupertino_conver
 import 'package:bluebubbles/app/layouts/conversation_list/pages/material_conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/samsung_conversation_list.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/core/events/event_dispatcher.dart';
+import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -96,7 +96,7 @@ class ConversationListController extends StatefulController {
   }
 
   void openNewChatCreator(BuildContext context, {List<PlatformFile>? existing}) async {
-    EventDispatcher().emit("update-highlight", null);
+    eventDispatcher.emit("update-highlight", null);
     ns.pushAndRemoveUntil(
       context,
       ConversationView(
