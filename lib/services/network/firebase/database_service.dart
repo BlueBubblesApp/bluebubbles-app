@@ -9,8 +9,6 @@ import 'package:get/get.dart';
 DatabaseService fdb = Get.isRegistered<DatabaseService>() ? Get.find<DatabaseService>() : Get.put(DatabaseService());
 
 class DatabaseService extends GetxService {
-  late final FirebaseApp app;
-
   @override
   void onInit() {
     super.onInit();
