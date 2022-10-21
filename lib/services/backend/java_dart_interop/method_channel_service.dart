@@ -6,7 +6,6 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/core/queue/incoming_queue.dart';
 import 'package:bluebubbles/core/queue/queue_impl.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -39,7 +38,7 @@ class MethodChannelService extends GetxService {
         if (ss.settings.colorsFromMedia.value) {
           await mcs.invokeMethod("start-notif-listener");
         }
-        if (!LifeCycleManager().isBubble) {
+        if (!ls.isBubble) {
           BackgroundIsolate.initialize();
         }
       } catch (_) {}

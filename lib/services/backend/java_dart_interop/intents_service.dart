@@ -4,7 +4,6 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -76,7 +75,7 @@ class IntentsService extends GetxService {
         if (intent.extra?["chatGuid"] != null) {
           final guid = intent.extra!["chatGuid"]!;
           final bubble = intent.extra!["bubble"] == "true";
-          LifeCycleManager().isBubble = bubble;
+          ls.isBubble = bubble;
           await openChat(guid);
         }
     }

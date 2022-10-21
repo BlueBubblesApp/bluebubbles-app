@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
@@ -166,7 +165,7 @@ class ChatManager {
 
     // We want to clear the notifications for the chat so long as it is not a bubble-chat
     // This is because we do not want to kill the bubble-process (crashing it)
-    if (!LifeCycleManager().isBubble) {
+    if (!ls.isBubble) {
       await mcs.invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
     }
   }

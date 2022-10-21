@@ -7,7 +7,6 @@ import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -211,17 +210,17 @@ class MessageHelper {
     if (chat.shouldMuteNotification(message)) return; // Don''t notify if the chat is muted
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
     // Don't notify if window focused in desktop and chat list notifs off
-    if (!ss.settings.notifyOnChatList.value && kIsDesktop && LifeCycleManager().isAlive) return;
+    if (!ss.settings.notifyOnChatList.value && kIsDesktop && ls.isAlive) return;
     ChatController? currChat = ChatManager().activeChat;
 
     // add unread icon as long as it isn't the active chat
     if (currChat?.chat.guid != chat.guid) ChatBloc().toggleChatUnread(chat, true, clearNotifications: false);
 
-    if ((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) {
+    if ((ls.isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) {
       if (!ss.settings.notifyOnChatList.value &&
           currChat == null &&
           !Get.currentRoute.contains("settings")) return;
-      if (currChat?.chat.guid == chat.guid && !LifeCycleManager().isBubble) return;
+      if (currChat?.chat.guid == chat.guid && !ls.isBubble) return;
     }
     await notif.createNotification(chat, message);
   }

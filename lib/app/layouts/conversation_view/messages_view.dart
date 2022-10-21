@@ -16,7 +16,6 @@ import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -235,7 +234,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
     int originalMessageLength = _messages.length;
     if (event.type == MessageBlocEventType.insert && mounted) {
       // If we have an incoming message and the app is alive, clear notifications for the chat
-      if (LifeCycleManager().isAlive && !event.outGoing) {
+      if (ls.isAlive && !event.outGoing) {
         Chat? activeChat = ChatManager().activeChat?.chat;
         if (activeChat != null) {
           ChatManager().clearChatNotifications(activeChat);

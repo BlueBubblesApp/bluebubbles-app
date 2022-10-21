@@ -17,7 +17,6 @@ import 'package:bluebubbles/app/layouts/startup/upgrading_db.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/core/events/event_dispatcher.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/intents.dart';
@@ -85,20 +84,20 @@ set recentIntent(String? intent) {
 @pragma('vm:entry-point')
 //ignore: prefer_void_to_null
 Future<Null> main() async {
-  await initApp();
+  await initApp(false);
 }
 
 @pragma('vm:entry-point')
 // ignore: prefer_void_to_null
 Future<Null> bubble() async {
-  LifeCycleManager().isBubble = true;
-  await initApp();
+  await initApp(true);
 }
 
 //ignore: prefer_void_to_null
-Future<Null> initApp() async {
+Future<Null> initApp(bool bubble) async {
   WidgetsFlutterBinding.ensureInitialized();
   /* ----- SERVICES INITIALIZATION ----- */
+  ls.isBubble = false;
   await ss.init();
   await fs.init();
   await Logger.init();
@@ -362,12 +361,12 @@ class BadCertOverride extends HttpOverrides {
 class DesktopWindowListener extends WindowListener {
   @override
   void onWindowFocus() {
-    LifeCycleManager().opened();
+    ls.open();
   }
 
   @override
   void onWindowBlur() {
-    LifeCycleManager().close();
+    ls.close();
   }
 
   @override
@@ -383,7 +382,7 @@ class DesktopWindowListener extends WindowListener {
   }
 }
 
-class Main extends StatelessWidget with WidgetsBindingObserver {
+class Main extends StatelessWidget {
   final ThemeData darkTheme;
   final ThemeData lightTheme;
 
@@ -440,7 +439,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         builder: (context, child) =>
             SecureApplication(
               child: Builder(builder: (context) {
-                if (ss.canAuthenticate && !LifeCycleManager().isAlive) {
+                if (ss.canAuthenticate && !ls.isAlive) {
                   if (ss.settings.shouldSecure.value) {
                     SecureApplicationProvider.of(context, listen: false)!.lock();
                     if (ss.settings.securityLevel.value == SecurityLevel.locked_and_secured) {
@@ -517,12 +516,10 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
 
     // we want to refresh the page rather than loading a new instance of [Home]
     // to avoid errors
-    if (LifeCycleManager().isAlive && kIsWeb) {
+    //todo see if necessary
+    if (ls.isAlive && kIsWeb) {
       html.window.location.reload();
     }
-
-    /* ----- MANAGER INITIALIZATION ----- */
-    LifeCycleManager().opened();
 
     /* ----- CACHED ASSETS INITIALIZATION ----- */
     ChatManager().loadAssets();
@@ -580,20 +577,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     // Clean up observer when app is fully closed
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  /// Called when the app is either closed or opened or paused
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Call the [LifeCycleManager] events based on the [state]
-    if (state == AppLifecycleState.paused && !LifeCycleManager().isBubble) {
-      SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
-        Logger.error("Error caught while hiding keyboard: ${e.toString()}");
-      });
-      LifeCycleManager().close();
-    } else if (state == AppLifecycleState.resumed) {
-      LifeCycleManager().opened();
-    }
   }
 
   /// Just in case the theme doesn't change automatically
@@ -723,14 +706,14 @@ Future<void> initSystemTray() async {
       MenuItemLable(
         label: 'Open App',
         onClicked: (_) async {
-          LifeCycleManager().opened();
+          ls.open();
           await WindowManager.instance.show();
         },
       ),
       MenuItemLable(
         label: 'Hide App',
         onClicked: (_) async {
-          LifeCycleManager().close();
+          ls.close();
           await WindowManager.instance.hide();
         },
       ),
