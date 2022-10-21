@@ -1865,12 +1865,10 @@ packages:
   receive_intent:
     dependency: "direct main"
     description:
-      path: "."
-      ref: master
-      resolved-ref: ddf4cf166b1c613b5fa5b89ac3446915f6ca7933
-      url: "https://github.com/BlueBubblesApp/receive_intent.git"
-    source: git
-    version: "0.2.2"
+      name: receive_intent
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.3"
   receive_sharing_intent:
     dependency: "direct main"
     description:

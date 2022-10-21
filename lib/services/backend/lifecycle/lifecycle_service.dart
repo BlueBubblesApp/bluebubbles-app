@@ -12,6 +12,7 @@ LifecycleService ls = Get.isRegistered<LifecycleService>() ? Get.find<LifecycleS
 
 class LifecycleService extends GetxService with WidgetsBindingObserver {
   bool isBubble = false;
+  bool isUiThread = true;
   bool get isAlive => WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
 
   @override

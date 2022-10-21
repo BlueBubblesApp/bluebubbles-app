@@ -25,9 +25,6 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
-import 'package:firebase_dart/firebase_dart.dart';
-// ignore: implementation_imports
-import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide MenuItem;
 import 'package:flutter/scheduler.dart' hide Priority;
@@ -38,7 +35,6 @@ import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
-import 'package:idb_shim/idb_shim.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:path/path.dart' show basename, dirname, join;
@@ -52,7 +48,6 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
 
-late final FirebaseApp app;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -64,8 +59,6 @@ late final Box<ScheduledMessage> scheduledBox;
 late final Box<ThemeStruct> themeBox;
 late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
-late final Database db;
-late final bool isUiThread;
 final Completer<void> storeStartup = Completer();
 
 String? _recentIntent;
@@ -98,6 +91,7 @@ Future<Null> initApp(bool bubble) async {
   WidgetsFlutterBinding.ensureInitialized();
   /* ----- SERVICES INITIALIZATION ----- */
   ls.isBubble = false;
+  ls.isUiThread = true;
   await ss.init();
   await fs.init();
   await Logger.init();
@@ -109,7 +103,6 @@ Future<Null> initApp(bool bubble) async {
 
   /* ----- RANDOM STUFF INITIALIZATION ----- */
   HttpOverrides.global = BadCertOverride();
-  isUiThread = true;
   dynamic exception;
   StackTrace? stacktrace;
 
@@ -222,22 +215,6 @@ Future<Null> initApp(bool bubble) async {
     }
     await intents.init();
     socket;
-
-    /* ----- DESKTOP/WEB FIREBASE INITIALIZATION ----- */
-    FirebaseDart.setup(
-      platform: fdu.Platform.web(
-        currentUrl: Uri.base.toString(),
-        isMobile: false,
-        isOnline: true,
-      ),
-    );
-    final options = FirebaseOptions(
-        appId: 'my_app_id',
-        apiKey: 'apiKey',
-        projectId: 'my_project',
-        messagingSenderId: 'ignore',
-        authDomain: 'my_project.firebaseapp.com');
-    app = await Firebase.initializeApp(options: options);
 
     /* ----- DATE FORMATTING INITIALIZATION ----- */
     await initializeDateFormatting();

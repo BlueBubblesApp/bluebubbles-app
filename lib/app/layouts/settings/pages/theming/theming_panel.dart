@@ -637,7 +637,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                   final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["ttf"]);
                                   if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-                                  final txn = db.transaction("BBStore", idbModeReadWrite);
+                                  final txn = fs.webDb.transaction("BBStore", idbModeReadWrite);
                                   final store = txn.objectStore("BBStore");
                                   await store.put(res.files.first.bytes!, "iosFont");
                                   await txn.completed;
@@ -744,7 +744,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           return SettingsTile(
                             onTap: () async {
                               if (kIsWeb) {
-                                final txn = db.transaction("BBStore", idbModeReadWrite);
+                                final txn = fs.webDb.transaction("BBStore", idbModeReadWrite);
                                 final store = txn.objectStore("BBStore");
                                 await store.delete("iosFont");
                                 await txn.completed;

@@ -2,12 +2,29 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:firebase_dart/firebase_dart.dart';
+import 'package:firebase_dart/implementation/pure_dart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 DatabaseService fdb = Get.isRegistered<DatabaseService>() ? Get.find<DatabaseService>() : Get.put(DatabaseService());
 
 class DatabaseService extends GetxService {
+  late final FirebaseApp app;
+
+  @override
+  void onInit() {
+    super.onInit();
+    if (kIsDesktop || kIsWeb) {
+      FirebaseDart.setup(
+        platform: Platform.web(
+          currentUrl: Uri.base.toString(),
+          isMobile: false,
+          isOnline: true,
+        ),
+      );
+    }
+  }
+
   /// Fetch the new server URL from the Firebase Database
   Future<String?> fetchNewUrl() async {
     // Make sure setup is complete and we have valid data

@@ -78,18 +78,6 @@ class FCMData {
     ss.prefs.remove('applicationID');
   }
 
-  static Future<void> initializeFirebase(FCMData data) async {
-    var options = FirebaseOptions(
-      appId: data.applicationID!,
-      apiKey: data.apiKey!,
-      projectId: data.projectID!,
-      storageBucket: data.storageBucket,
-      databaseURL: data.firebaseURL,
-      messagingSenderId: data.clientID,
-    );
-    app = await Firebase.initializeApp(options: options);
-  }
-
   static FCMData getFCM() {
     final result = fcmDataBox.getAll();
     if (result.isEmpty) {

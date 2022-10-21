@@ -21,7 +21,7 @@ class BackgroundIsolate {
 backgroundIsolateEntrypoint() async {
   // can't use logger here
   debugPrint("(ISOLATE) Starting up...");
-  isUiThread = false;
+  ls.isUiThread = false;
   WidgetsFlutterBinding.ensureInitialized();
   await ss.init(headless: true);
   await fs.init();

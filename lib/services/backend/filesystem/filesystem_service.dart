@@ -16,6 +16,7 @@ FilesystemService fs = Get.isRegistered<FilesystemService>() ? Get.find<Filesyst
 class FilesystemService extends GetxService {
   late final Directory appDocDir;
   late final PackageInfo packageInfo;
+  late final Database webDb;
   final RxBool fontExistsOnDisk = false.obs;
 
   Future<void> init() async {
@@ -50,8 +51,8 @@ class FilesystemService extends GetxService {
           db.createObjectStore("BBStore");
         }
       }).then((_db) async {
-        db = _db;
-        final txn = db.transaction("BBStore", idbModeReadOnly);
+        webDb = _db;
+        final txn = webDb.transaction("BBStore", idbModeReadOnly);
         final store = txn.objectStore("BBStore");
         Uint8List? bytes = await store.getObject("iosFont") as Uint8List?;
         await txn.completed;
