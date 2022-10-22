@@ -19,7 +19,6 @@ import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';

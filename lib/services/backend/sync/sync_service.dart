@@ -3,7 +3,6 @@ import 'dart:isolate';
 
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/services.dart';

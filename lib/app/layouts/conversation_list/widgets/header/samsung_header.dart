@@ -9,7 +9,6 @@ import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_vi
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';

@@ -129,7 +129,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
 
   void sendReaction(String type) {
     Logger.info("Sending reaction type: $type");
-    ActionHandler.sendReaction(widget.message.getChat() ?? ChatManager().activeChat!.chat, widget.message, type);
+    ActionHandler.sendReaction(widget.message.getChat() ?? ChatManager().activeChat!.chat, widget.message, ReactionType.values.firstWhere((e) => describeEnum(e) == type));
   }
 
   Widget buildForDevice() {

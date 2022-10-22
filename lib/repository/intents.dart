@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -117,7 +118,7 @@ class HeartRecentAction extends Action<HeartRecentIntent> {
   Object? invoke(covariant HeartRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      ActionHandler.sendReaction(chat, message, "love");
+      ActionHandler.sendReaction(chat, message, ReactionType.love);
     }
     return null;
   }
@@ -137,7 +138,7 @@ class LikeRecentAction extends Action<LikeRecentIntent> {
   Object? invoke(covariant LikeRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      ActionHandler.sendReaction(chat, message, "like");
+      ActionHandler.sendReaction(chat, message, ReactionType.like);
     }
     return null;
   }
@@ -157,7 +158,7 @@ class DislikeRecentAction extends Action<DislikeRecentIntent> {
   Object? invoke(covariant DislikeRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      ActionHandler.sendReaction(chat, message, "dislike");
+      ActionHandler.sendReaction(chat, message, ReactionType.dislike);
     }
     return null;
   }
@@ -177,7 +178,7 @@ class LaughRecentAction extends Action<LaughRecentIntent> {
   Object? invoke(covariant LaughRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      ActionHandler.sendReaction(chat, message, "laugh");
+      ActionHandler.sendReaction(chat, message, ReactionType.laugh);
     }
     return null;
   }
@@ -197,7 +198,7 @@ class EmphasizeRecentAction extends Action<EmphasizeRecentIntent> {
   Object? invoke(covariant EmphasizeRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      ActionHandler.sendReaction(chat, message, "emphasize");
+      ActionHandler.sendReaction(chat, message, ReactionType.emphasize);
     }
     return null;
   }
@@ -217,7 +218,7 @@ class QuestionRecentAction extends Action<QuestionRecentIntent> {
   Object? invoke(covariant QuestionRecentIntent intent) async {
     final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      ActionHandler.sendReaction(chat, message, "question");
+      ActionHandler.sendReaction(chat, message, ReactionType.question);
     }
     return null;
   }

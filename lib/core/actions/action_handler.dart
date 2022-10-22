@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
@@ -11,8 +12,8 @@ import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
-import 'package:bluebubbles/core/queue/outgoing_queue.dart';
-import 'package:bluebubbles/core/queue/queue_impl.dart';
+import 'package:bluebubbles/services/backend/queue/outgoing_queue.dart';
+import 'package:bluebubbles/services/backend/queue/queue_impl.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -129,7 +130,7 @@ class ActionHandler {
         Map<String, dynamic> params = {"chat": chat, "message": message};
 
         // Add the message send to the queue
-        await OutgoingQueue().add(QueueItem(event: "send-message", item: params), completer: completer != null ? completerList[index] : null);
+        outq.queue(OutgoingItem(type: QueueType.sendMessage, chat: chat, message: message));
 
         if (index == messages.length - 1) {
           completer?.complete();
@@ -165,7 +166,7 @@ class ActionHandler {
       Map<String, dynamic> params = {"chat": chat, "message": message};
 
       // Add the message send to the queue
-      await OutgoingQueue().add(QueueItem(event: "send-message", item: params), completer: completer);
+      outq.queue(OutgoingItem(type: QueueType.sendMessage, chat: chat, message: message));
     }
   }
 
@@ -357,12 +358,12 @@ class ActionHandler {
     return completer.future;
   }
 
-  static Future<void> sendReaction(Chat chat, Message? message, String reaction) async {
+  static Future<void> sendReaction(Chat chat, Message message, ReactionType reaction) async {
     // Create params for the queue item
     Map<String, dynamic> params = {"chat": chat, "message": message, "reaction": reaction};
 
     // Add the message send to the queue
-    await OutgoingQueue().add(QueueItem(event: "send-reaction", item: params));
+    outq.queue(OutgoingItem(type: QueueType.sendMessage, chat: chat, message: message, reaction: reaction));
   }
 
   static Future<void> sendReactionHelper(Chat chat, Message message, String reaction) async {

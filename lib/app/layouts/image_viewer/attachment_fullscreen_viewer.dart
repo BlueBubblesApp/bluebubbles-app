@@ -16,7 +16,6 @@ import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/repository/intents.dart';
-import 'package:bluebubbles/repository/models/dart_vlc.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';

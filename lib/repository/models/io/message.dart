@@ -15,10 +15,7 @@ import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
-import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/repository/models/attributed_body.dart';
-import 'package:bluebubbles/repository/models/io/attachment.dart';
-import 'package:bluebubbles/repository/models/objectbox.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
@@ -30,9 +27,6 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
-
-import 'chat.dart';
-import 'handle.dart';
 
 /// Async method to fetch attachments;
 class GetMessageAttachments extends AsyncTask<List<dynamic>, Map<String, List<Attachment?>>> {
@@ -750,8 +744,9 @@ class Message {
       threadOriginator?.handle ??= Handle.findOne(id: threadOriginator.handleId);
       if (threadOriginator != null) associatedMessages.add(threadOriginator);
       if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
-      if (!guid!.startsWith("temp"))
+      if (!guid!.startsWith("temp")) {
         bloc?.threadOriginators.conditionalAdd(guid!, threadOriginatorGuid!, shouldRefresh);
+      }
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     return this;

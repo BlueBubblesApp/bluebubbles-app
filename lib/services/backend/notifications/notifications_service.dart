@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
+import 'package:bluebubbles/helpers/repository/reaction.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -162,7 +163,7 @@ class NotificationsService extends GetxService {
             } else if (actions[event.actionIndex!] == "Mark Read") {
               await ChatBloc().toggleChatUnread(chat, false);
             } else if (papi) {
-              await ActionHandler.sendReaction(chat, message, ReactionTypes.emojiToReaction[actions[event.actionIndex!]]!);
+              await ActionHandler.sendReaction(chat, message, ReactionHelpers.emojiToReaction(actions[event.actionIndex!]));
             }
           }
         });

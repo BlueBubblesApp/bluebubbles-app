@@ -142,7 +142,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
   void sendReaction(String type) {
     Logger.info("Sending reaction type: $type");
-    ActionHandler.sendReaction(widget.message.getChat() ?? widget.currentChat!.chat, widget.message, type);
+    ActionHandler.sendReaction(widget.message.getChat() ?? widget.currentChat!.chat, widget.message, ReactionType.values.firstWhere((e) => describeEnum(e) == type));
     Navigator.of(context).pop();
   }
 

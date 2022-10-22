@@ -1,11 +1,11 @@
-import 'package:image_size_getter/image_size_getter.dart';
-
 export 'package:bluebubbles/repository/models/io/attachment.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/attachment.dart';
 export 'package:bluebubbles/repository/models/io/chat.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/chat.dart';
 export 'package:bluebubbles/repository/models/io/contact.dart'
   if (dart.library.html) 'package:bluebubbles/repository/models/html/contact.dart';
+export 'package:dart_vlc/dart_vlc.dart'
+  if (dart.library.html) 'package:bluebubbles/repository/models/html/dart_vlc.dart' hide Record;
 export 'package:bluebubbles/repository/models/io/fcm_data.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/fcm_data.dart';
 export 'package:bluebubbles/repository/models/io/handle.dart'
@@ -18,6 +18,8 @@ export 'package:bluebubbles/repository/models/io/launch_at_startup.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/launch_at_startup.dart';
 export 'package:bluebubbles/repository/models/io/message.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/message.dart';
+export 'package:bluebubbles/objectbox.g.dart'
+    if (dart.library.html) 'package:bluebubbles/repository/models/html/objectbox.dart' hide Version;
 export 'package:bluebubbles/repository/models/io/scheduled.dart'
     if (dart.library.html) 'package:bluebubbles/repository/models/html/scheduled.dart';
 export 'package:bluebubbles/repository/models/io/theme.dart'
@@ -32,33 +34,6 @@ export 'package:bluebubbles/repository/models/platform_file.dart';
 export 'package:bluebubbles/repository/models/settings.dart';
 export 'package:bluebubbles/repository/models/attributed_body.dart';
 export 'package:bluebubbles/repository/models/structured_name.dart';
-
-class AsyncInput extends AsyncImageInput {
-  AsyncInput(this._input);
-
-  /// The input data of [ImageInput].
-  final ImageInput _input;
-
-  @override
-  Future<bool> supportRangeLoad() async {
-    return true;
-  }
-
-  @override
-  Future<bool> exists() async {
-    return _input.exists();
-  }
-
-  @override
-  Future<List<int>> getRange(int start, int end) async {
-    return _input.getRange(start, end);
-  }
-
-  @override
-  Future<int> get length async => _input.length;
-
-  @override
-  Future<HaveResourceImageInput> delegateInput() async {
-    return HaveResourceImageInput(innerInput: _input);
-  }
-}
+export 'package:bluebubbles/repository/models/queue_items.dart';
+export 'package:bluebubbles/repository/models/async_image_input.dart';
+export 'package:bluebubbles/repository/models/reactions.dart';

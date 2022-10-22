@@ -6,8 +6,6 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/core/queue/incoming_queue.dart';
-import 'package:bluebubbles/core/queue/queue_impl.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -65,13 +63,17 @@ class MethodChannelService extends GetxService {
         await storeStartup.future;
         Logger.info("Received new message from FCM");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
-        IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+        if (!isNullOrEmpty(data)!) {
+          inq.queue(IncomingItem.fromMap(QueueType.newMessage, data!));
+        }
         return true;
       case "updated-message":
         await storeStartup.future;
         Logger.info("Received updated message from FCM");
         Map<String, dynamic>? data = jsonDecode(call.arguments);
-        IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+        if (!isNullOrEmpty(data)!) {
+          inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, data!));
+        }
         return true;
       case "reply":
         await storeStartup.future;
@@ -82,7 +84,13 @@ class MethodChannelService extends GetxService {
           return false;
         } else {
           final Completer<void> completer = Completer();
-          await ActionHandler.sendMessage(chat, data["text"], completer: completer);
+          outq.queue(OutgoingItem(
+              type: QueueType.newMessage,
+              completer: completer,
+              chat: chat,
+              message: Message(text: data["text"])
+          ));
+          await completer.future;
           return true;
         }
       case "markAsRead":

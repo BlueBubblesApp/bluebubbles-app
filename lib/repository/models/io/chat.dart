@@ -13,7 +13,6 @@ import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/tasks/sync_tasks.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
