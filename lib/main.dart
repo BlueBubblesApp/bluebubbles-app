@@ -215,7 +215,6 @@ Future<Null> initApp(bool bubble) async {
       await cs.init();
     }
     await intents.init();
-    socket;
 
     /* ----- DATE FORMATTING INITIALIZATION ----- */
     await initializeDateFormatting();

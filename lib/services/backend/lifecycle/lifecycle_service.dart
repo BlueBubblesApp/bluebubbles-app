@@ -1,3 +1,4 @@
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -28,7 +29,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state != AppLifecycleState.resumed) {
       SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
         Logger.error("Error caught while hiding keyboard: ${e.toString()}");
@@ -39,6 +40,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
         close();
       }
     } else if (state == AppLifecycleState.resumed) {
+      await storeStartup.future;
       open();
     }
   }

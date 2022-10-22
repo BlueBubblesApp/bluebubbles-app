@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:isolate';
+
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
@@ -42,7 +45,23 @@ class SyncService extends GetxService {
     if (kIsWeb || kIsDesktop) {
       contacts.addAll((await incrementalSyncIsolate.call(null)).map((e) => Contact.fromMap(e)));
     } else {
-      contacts.addAll((await flutterCompute(incrementalSyncIsolate, null)).map((e) => Contact.fromMap(e)));
+      contacts.addAll((await incrementalSyncIsolate.call(null)).map((e) => Contact.fromMap(e)));
+      /*final completer = Completer<List<Map<String, dynamic>>>();
+      final port = RawReceivePort();
+      port.handler = (List<Map<String, dynamic>> response) {
+        port.close();
+        completer.complete(response);
+      };
+
+      try {
+        await FlutterIsolate.spawn(incrementalSyncIsolate, port.sendPort);
+      } catch (e) {
+        Logger.error('Got error when opening isolate: $e');
+        port.close();
+      }
+
+      contacts.addAll((await completer.future).map((e) => Contact.fromMap(e)));
+      FlutterIsolate.killAll();*/
     }
     cs.completeContactsRefresh(contacts);
 
@@ -51,9 +70,9 @@ class SyncService extends GetxService {
 }
 
 @pragma('vm:entry-point')
-Future<List<Map<String, dynamic>>> incrementalSyncIsolate(void _) async {
+Future<List<Map<String, dynamic>>> incrementalSyncIsolate(SendPort? port) async {
   try {
-    if (!kIsWeb && !kIsDesktop) {
+    /*if (!kIsWeb && !kIsDesktop) {
       WidgetsFlutterBinding.ensureInitialized();
       ls.isUiThread = false;
       await ss.init(headless: true);
@@ -67,15 +86,17 @@ Future<List<Map<String, dynamic>>> incrementalSyncIsolate(void _) async {
       messageBox = store.box<Message>();
       scheduledBox = store.box<ScheduledMessage>();
       themeBox = store.box<ThemeStruct>();
-    }
+    }*/
 
     int syncStart = ss.settings.lastIncrementalSync.value;
     final incrementalSyncManager = IncrementalSyncManager(syncStart);
     await incrementalSyncManager.start();
     final map = await cs.refreshContacts();
+    port?.send(map);
     return map;
   } catch (ex) {
     Logger.error('Incremental sync failed! Error: $ex');
+    port?.send([]);
     return <Map<String, dynamic>>[];
   }
 }
