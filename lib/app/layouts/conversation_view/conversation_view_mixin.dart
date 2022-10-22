@@ -99,7 +99,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       if (!["add-unread-chat", "remove-unread-chat", "refresh-messagebloc"].contains(event.item1)) return;
 
       // Ignore any events having to do with this chat
-      String? chatGuid = event.item2;
+      String? chatGuid = event.item2["chatGuid"];
       if (chat!.guid == chatGuid) return;
 
       int preLength = newMessages.length;

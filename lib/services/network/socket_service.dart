@@ -119,7 +119,6 @@ class SocketService extends GetxService {
 
     switch (status) {
       case SocketState.connected:
-        print('fireddddd');
         state.value = SocketState.connected;
         NetworkTasks.onConnect();
         return;

@@ -1,6 +1,14 @@
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_isolate/flutter_isolate.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' show join;
 
 SyncService sync = Get.isRegistered<SyncService>() ? Get.find<SyncService>() : Get.put(SyncService());
 
@@ -29,16 +37,45 @@ class SyncService extends GetxService {
 
   Future<void> startIncrementalSync() async {
     isIncrementalSyncing.value = true;
-    try {
-      int syncStart = ss.settings.lastIncrementalSync.value;
-      final incrementalSyncManager = IncrementalSyncManager(syncStart, onComplete: () async {
-        await cs.refreshContacts();
-        isIncrementalSyncing.value = false;
-      });
-      await incrementalSyncManager.start();
-    } catch (ex) {
-      isIncrementalSyncing.value = false;
-      Logger.error('Incremental sync failed! Error: $ex');
+
+    final contacts = <Contact>[];
+    if (kIsWeb || kIsDesktop) {
+      contacts.addAll((await incrementalSyncIsolate.call(null)).map((e) => Contact.fromMap(e)));
+    } else {
+      contacts.addAll((await flutterCompute(incrementalSyncIsolate, null)).map((e) => Contact.fromMap(e)));
     }
+    cs.completeContactsRefresh(contacts);
+
+    isIncrementalSyncing.value = false;
+  }
+}
+
+@pragma('vm:entry-point')
+Future<List<Map<String, dynamic>>> incrementalSyncIsolate(void _) async {
+  try {
+    if (!kIsWeb && !kIsDesktop) {
+      WidgetsFlutterBinding.ensureInitialized();
+      ls.isUiThread = false;
+      await ss.init(headless: true);
+      await fs.init();
+      store = Store.attach(getObjectBoxModel(), join(fs.appDocDir.path, 'objectbox'));
+      attachmentBox = store.box<Attachment>();
+      chatBox = store.box<Chat>();
+      contactBox = store.box<Contact>();
+      fcmDataBox = store.box<FCMData>();
+      handleBox = store.box<Handle>();
+      messageBox = store.box<Message>();
+      scheduledBox = store.box<ScheduledMessage>();
+      themeBox = store.box<ThemeStruct>();
+    }
+
+    int syncStart = ss.settings.lastIncrementalSync.value;
+    final incrementalSyncManager = IncrementalSyncManager(syncStart);
+    await incrementalSyncManager.start();
+    final map = await cs.refreshContacts();
+    return map;
+  } catch (ex) {
+    Logger.error('Incremental sync failed! Error: $ex');
+    return <Map<String, dynamic>>[];
   }
 }

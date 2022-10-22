@@ -180,7 +180,6 @@ class IncrementalSyncManager extends SyncManager {
     if (syncedChats.isNotEmpty) {
       List<Chat> updatedChats =
           await Chat.syncLatestMessages(syncedChats.values.toList(), true);
-      await ChatBloc().updateChatPositions(updatedChats);
     }
 
     // End the sync

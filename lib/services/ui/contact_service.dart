@@ -4,13 +4,11 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
-import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact, StructuredName;
 import 'package:flutter/foundation.dart';
-import 'package:flutter_isolate/flutter_isolate.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -41,14 +39,92 @@ class ContactsService extends GetxService {
     }
   }
 
-  Future<void> refreshContacts({bool reloadUI = true}) async {
-    if (!(await cs.canAccessContacts())) return;
-    final List<Contact> refreshedContacts = [];
+  Future<List<Map<String, dynamic>>> refreshContacts({bool reloadUI = true}) async {
+    if (!(await cs.canAccessContacts())) return [];
+    final contacts = <Contact>[];
+    bool hasChanges = false;
     if (kIsWeb || kIsDesktop) {
-      refreshedContacts.addAll(await refreshContactsIsolate.call(kIsWeb ? "" : store.directoryPath));
+      contacts.addAll(await cs.fetchNetworkContacts());
     } else {
-      refreshedContacts.addAll(await flutterCompute(refreshContactsIsolate, store.directoryPath));
+      contacts.addAll((await FastContacts.allContacts).map((e) => Contact(
+        displayName: e.displayName,
+        emails: e.emails,
+        phones: e.phones,
+        structuredName: e.structuredName == null ? null : StructuredName(
+          namePrefix: e.structuredName!.namePrefix,
+          givenName: e.structuredName!.givenName,
+          middleName: e.structuredName!.middleName,
+          familyName: e.structuredName!.familyName,
+          nameSuffix: e.structuredName!.nameSuffix,
+        ),
+        id: e.id,
+      )));
+      // get avatars
+      for (Contact c in contacts) {
+        try {
+          c.avatar = await FastContacts.getContactImage(c.id, size: ContactImageSize.fullSize);
+        } catch (_) {
+          c.avatar = await FastContacts.getContactImage(c.id);
+        }
+      }
     }
+    // compare loaded contacts to db contacts
+    if (!kIsWeb) {
+      final dbContacts = contactBox.getAll();
+      // save any updated contacts
+      for (Contact c in dbContacts) {
+        final refreshedContact = contacts.firstWhereOrNull((element) => element.id == c.id);
+        if (refreshedContact != null && c != refreshedContact) {
+          hasChanges = true;
+          refreshedContact.save();
+        }
+      }
+      // save any new contacts
+      final newContacts = contacts.where((e) => !dbContacts.map((e) => e.id).contains(e.id)).toList();
+      if (newContacts.isNotEmpty) {
+        hasChanges = true;
+        contactBox.putMany(newContacts);
+      }
+    }
+    // load stored handles
+    final List<Handle> handles = [];
+    if (kIsWeb) {
+      handles.addAll(ChatBloc().cachedHandles);
+    } else {
+      handles.addAll(handleBox.getAll());
+    }
+    // get formatted addresses
+    for (Handle h in handles) {
+      if (!h.address.contains("@") && h.formattedAddress == null) {
+        h.formattedAddress = await formatPhoneNumber(h.address);
+      }
+    }
+    // match handles to contacts and save match
+    final handlesToSearch = List<Handle>.from(handles);
+    for (Contact c in contacts) {
+      final handle = cs.matchContactToHandle(c, handlesToSearch);
+      if (handle != null) {
+        handlesToSearch.removeWhere((e) => e.address == handle.address);
+        if (!kIsWeb) {
+          // we have changes if the handle doesn't have an associated contact,
+          // even if there were no contact changes in the first place
+          if (handles.firstWhere((e) => e.address == handle.address).contactRelation.target == null) {
+            hasChanges = true;
+          }
+          handles.firstWhere((e) => e.address == handle.address).contactRelation.target = c;
+        } else {
+          handles.firstWhere((e) => e.address == handle.address).webContact = c;
+        }
+      }
+    }
+    if (!kIsWeb) {
+      Handle.bulkSave(handles);
+    }
+    // only return contacts if things changed (or on web)
+    return kIsWeb || hasChanges ? contacts.map((e) => e.toMap()).toList() : [];
+  }
+
+  void completeContactsRefresh(List<Contact> refreshedContacts, {bool reloadUI = true}) {
     handles = Handle.find();
     if (refreshedContacts.isNotEmpty) {
       contacts = refreshedContacts;
@@ -72,9 +148,9 @@ class ContactsService extends GetxService {
           handle = h;
           break;
         }
-        // try to match last 10 - 7 digits
+        // try to match last 11 - 7 digits
         for (String p in numericPhones) {
-          final matchLengths = [10, 9, 8, 7];
+          final matchLengths = [11, 10, 9, 8, 7];
           if (matchLengths.contains(p.length) && numericAddress.endsWith(p)) {
             handle = h;
             break;
@@ -229,89 +305,4 @@ class ContactsService extends GetxService {
     }
     return networkContacts;
   }
-}
-
-@pragma('vm:entry-point')
-Future<List<Contact>> refreshContactsIsolate(String dir) async {
-  final contacts = <Contact>[];
-  bool hasChanges = false;
-  if (kIsWeb || kIsDesktop) {
-    contacts.addAll(await cs.fetchNetworkContacts());
-  } else {
-    contacts.addAll((await FastContacts.allContacts).map((e) => Contact(
-      displayName: e.displayName,
-      emails: e.emails,
-      phones: e.phones,
-      structuredName: e.structuredName == null ? null : StructuredName(
-        namePrefix: e.structuredName!.namePrefix,
-        givenName: e.structuredName!.givenName,
-        middleName: e.structuredName!.middleName,
-        familyName: e.structuredName!.familyName,
-        nameSuffix: e.structuredName!.nameSuffix,
-      ),
-      id: e.id,
-    )));
-    // get avatars
-    for (Contact c in contacts) {
-      c.avatar = await FastContacts.getContactImage(c.id, size: ContactImageSize.fullSize);
-    }
-  }
-  // compare loaded contacts to db contacts
-  if (!kIsWeb) {
-    final store = Store.attach(getObjectBoxModel(), dir);
-    final contactBox = store.box<Contact>();
-    final dbContacts = contactBox.getAll();
-    // save any updated contacts
-    for (Contact c in dbContacts) {
-      final refreshedContact = contacts.firstWhereOrNull((element) => element.id == c.id);
-      if (refreshedContact != null && c != refreshedContact) {
-        hasChanges = true;
-        refreshedContact.save();
-      }
-    }
-    // save any new contacts
-    final newContacts = contacts.where((e) => !dbContacts.map((e) => e.id).contains(e.id)).toList();
-    if (newContacts.isNotEmpty) {
-      hasChanges = true;
-      contactBox.putMany(newContacts);
-    }
-  }
-  // load stored handles
-  final List<Handle> handles = [];
-  if (kIsWeb) {
-    handles.addAll(ChatBloc().cachedHandles);
-  } else {
-    final store = Store.attach(getObjectBoxModel(), dir);
-    final handleBox = store.box<Handle>();
-    handles.addAll(handleBox.getAll());
-  }
-  // get formatted addresses
-  for (Handle h in handles) {
-    if (!h.address.contains("@") && h.formattedAddress == null) {
-      h.formattedAddress = await formatPhoneNumber(h.address);
-    }
-  }
-  // match handles to contacts and save match
-  final handlesToSearch = List<Handle>.from(handles);
-  for (Contact c in contacts) {
-    final handle = cs.matchContactToHandle(c, handlesToSearch);
-    if (handle != null) {
-      handlesToSearch.removeWhere((e) => e.address == handle.address);
-      if (!kIsWeb) {
-        // we have changes if the handle doesn't have an associated contact,
-        // even if there were no contact changes in the first place
-        if (handles.firstWhere((e) => e.address == handle.address).contactRelation.target == null) {
-          hasChanges = true;
-        }
-        handles.firstWhere((e) => e.address == handle.address).contactRelation.target = c;
-      } else {
-        handles.firstWhere((e) => e.address == handle.address).webContact = c;
-      }
-    }
-  }
-  if (!kIsWeb) {
-    Handle.bulkSave(handles);
-  }
-  // only return contacts if things changed (or on web)
-  return kIsWeb || hasChanges ? contacts : [];
 }

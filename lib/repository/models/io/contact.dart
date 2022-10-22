@@ -73,12 +73,26 @@ class Contact {
 
   Map<String, dynamic> toMap() {
     return {
+      'dbId': dbId,
       'id': id,
       'displayName': displayName,
       'phoneNumbers': getUniqueNumbers(phones),
       'emails': getUniqueEmails(emails),
+      'structuredName': structuredName?.toMap(),
       'avatar': avatar == null ? null : base64Encode(avatar!),
     };
+  }
+
+  static Contact fromMap(Map<String, dynamic> m) {
+    return Contact(
+      dbId: m['dbId'],
+      id: m['id'],
+      displayName: m['displayName'],
+      phones: m['phoneNumbers'],
+      emails: m['emails'],
+      structuredName: StructuredName.fromMap(m['structuredName']),
+      avatar: m['avatar'] == null ? null : base64Decode(m['avatar']!),
+    );
   }
 
   @override
