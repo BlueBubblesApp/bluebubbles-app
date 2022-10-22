@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
@@ -512,6 +513,8 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     });
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
+      await ChatBloc().refreshChats();
+
       /* ----- SERVER VERSION CHECK ----- */
       if (kIsWeb && ss.settings.finishedSetup.value) {
         int version = (await ss.getServerDetails()).item4;

@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
 
-EventDispatcher eventDispatcher = Get.isRegistered<EventDispatcher>() ? Get.find<EventDispatcher>() : Get.put(eventDispatcher);
+EventDispatcher eventDispatcher = Get.isRegistered<EventDispatcher>() ? Get.find<EventDispatcher>() : Get.put(EventDispatcher());
 
 class EventDispatcher extends GetxService with WidgetsBindingObserver {
   final StreamController<Tuple2<String, dynamic>> _stream = StreamController<Tuple2<String, dynamic>>.broadcast();
