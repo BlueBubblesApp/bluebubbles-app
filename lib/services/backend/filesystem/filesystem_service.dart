@@ -69,4 +69,15 @@ class FilesystemService extends GetxService {
       });
     }
   }
+
+  void deleteDB() {
+    if (kIsWeb) return;
+    attachmentBox.removeAll();
+    chatBox.removeAll();
+    fcmDataBox.removeAll();
+    handleBox.removeAll();
+    messageBox.removeAll();
+    scheduledBox.removeAll();
+    themeBox.removeAll();
+  }
 }

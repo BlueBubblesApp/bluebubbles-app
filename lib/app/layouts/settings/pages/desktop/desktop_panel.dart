@@ -7,7 +7,6 @@ import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -606,7 +605,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                                 TextButton(
                                   child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                   onPressed: () async {
-                                    await DBProvider.deleteDB();
+                                    fs.deleteDB();
                                     socket.forgetConnection();
                                     ss.settings = Settings();
                                     ss.fcmData = FCMData();
@@ -666,7 +665,7 @@ class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers 
                                       child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                       onPressed: () async {
                                         customPath.value = path;
-                                        await DBProvider.deleteDB();
+                                        fs.deleteDB();
                                         socket.forgetConnection();
                                         ss.settings = Settings();
                                         ss.fcmData = FCMData();

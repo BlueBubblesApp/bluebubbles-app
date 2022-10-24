@@ -3,14 +3,12 @@ import 'dart:async';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
-import 'package:sqflite/sqflite.dart';
 
 class Settings {
   final RxString guidAuthKey = "".obs;
@@ -145,221 +143,6 @@ class Settings {
   // Windows settings
   final RxBool useWindowsAccent = RxBool(false);
 
-  Settings();
-
-  factory Settings.fromConfigEntries(List<ConfigEntry> entries) {
-    Settings settings = Settings();
-    for (ConfigEntry entry in entries) {
-      if (entry.name == "serverAddress") {
-        settings.serverAddress.value = entry.value;
-      } else if (entry.name == "guidAuthKey") {
-        settings.guidAuthKey.value = entry.value;
-      } else if (entry.name == "finishedSetup") {
-        settings.finishedSetup.value = entry.value;
-      } else if (entry.name == "autoOpenKeyboard") {
-        settings.autoOpenKeyboard.value = entry.value;
-      } else if (entry.name == "autoDownload") {
-        settings.autoDownload.value = entry.value;
-      } else if (entry.name == "onlyWifiDownload") {
-        settings.onlyWifiDownload.value = entry.value;
-      } else if (entry.name == "autoSave") {
-        settings.autoSave.value = entry.value;
-      } else if (entry.name == "hideTextPreviews") {
-        settings.hideTextPreviews.value = entry.value;
-      } else if (entry.name == "showIncrementalSync") {
-        settings.showIncrementalSync.value = entry.value;
-      } else if (entry.name == "lowMemoryMode") {
-        settings.lowMemoryMode.value = entry.value;
-      } else if (entry.name == "lastIncrementalSync") {
-        settings.lastIncrementalSync.value = entry.value;
-      } else if (entry.name == "displayMode") {
-        settings.refreshRate.value = entry.value;
-      } else if (entry.name == "rainbowBubbles") {
-        settings.colorfulAvatars.value = entry.value;
-      } else if (entry.name == "colorfulBubbles") {
-        settings.colorfulBubbles.value = entry.value;
-      } else if (entry.name == "hideDividers") {
-        settings.hideDividers.value = entry.value;
-      } else if (entry.name == "theme") {
-        settings.theme.value = ThemeMode.values[entry.value];
-      } else if (entry.name == "skin") {
-        settings.skin.value = Skins.values[entry.value];
-      } else if (entry.name == "fullscreenViewerSwipeDir") {
-        settings.fullscreenViewerSwipeDir.value = SwipeDirection.values[entry.value];
-      } else if (entry.name == "scrollVelocity") {
-        settings.scrollVelocity.value = entry.value;
-      } else if (entry.name == "sendWithReturn") {
-        settings.sendWithReturn.value = entry.value;
-      } else if (entry.name == "doubleTapForDetails") {
-        settings.doubleTapForDetails.value = entry.value;
-      } else if (entry.name == "denseChatTiles") {
-        settings.denseChatTiles.value = entry.value;
-      } else if (entry.name == "smartReply") {
-        settings.smartReply.value = entry.value;
-      } else if (entry.name == "reducedForehead") {
-        settings.reducedForehead.value = entry.value;
-      } else if (entry.name == "preCachePreviewImages") {
-        settings.preCachePreviewImages.value = entry.value;
-      } else if (entry.name == "showConnectionIndicator") {
-        settings.showConnectionIndicator.value = entry.value;
-      } else if (entry.name == "sendDelay") {
-        settings.sendDelay.value = entry.value;
-      } else if (entry.name == "recipientAsPlaceholder") {
-        settings.recipientAsPlaceholder.value = entry.value;
-      } else if (entry.name == "hideKeyboardOnScroll") {
-        settings.hideKeyboardOnScroll.value = entry.value;
-      } else if (entry.name == "swipeToOpenKeyboard") {
-        settings.swipeToOpenKeyboard.value = entry.value;
-      } else if (entry.name == "newMessageMenuBar") {
-        settings.moveChatCreatorToHeader.value = entry.value;
-      } else if (entry.name == "swipeToCloseKeyboard") {
-        settings.swipeToCloseKeyboard.value = entry.value;
-      } else if (entry.name == "moveChatCreatorToHeader") {
-        settings.moveChatCreatorToHeader.value = entry.value;
-      } else if (entry.name == "cameraFAB") {
-        settings.cameraFAB.value = entry.value;
-      } else if (entry.name == "openKeyboardOnSTB") {
-        settings.openKeyboardOnSTB.value = entry.value;
-      } else if (entry.name == "swipableConversationTiles") {
-        settings.swipableConversationTiles.value = entry.value;
-      } else if (entry.name == "enablePrivateAPI") {
-        settings.enablePrivateAPI.value = entry.value;
-      } else if (entry.name == "privateSendTypingIndicators") {
-        settings.privateSendTypingIndicators.value = entry.value;
-      } else if (entry.name == "colorblindMode") {
-        settings.colorblindMode.value = entry.value;
-      } else if (entry.name == "privateMarkChatAsRead") {
-        settings.privateMarkChatAsRead.value = entry.value;
-      } else if (entry.name == "privateManualMarkAsRead") {
-        settings.privateManualMarkAsRead.value = entry.value;
-      } else if (entry.name == "privateSubjectLine") {
-        settings.privateSubjectLine.value = entry.value;
-      } else if (entry.name == "showSyncIndicator") {
-        settings.showSyncIndicator.value = entry.value;
-      } else if (entry.name == "showDeliveryTimestamps") {
-        settings.showDeliveryTimestamps.value = entry.value;
-      } else if (entry.name == "redactedMode") {
-        settings.redactedMode.value = entry.value;
-      } else if (entry.name == "hideMessageContent") {
-        settings.hideMessageContent.value = entry.value;
-      } else if (entry.name == "hideReactions") {
-        settings.hideReactions.value = entry.value;
-      } else if (entry.name == "hideAttachments") {
-        settings.hideAttachments.value = entry.value;
-      } else if (entry.name == "hideAttachmentTypes") {
-        settings.hideAttachmentTypes.value = entry.value;
-      } else if (entry.name == "hideContactPhotos") {
-        settings.hideContactPhotos.value = entry.value;
-      } else if (entry.name == "hideContactInfo") {
-        settings.hideContactInfo.value = entry.value;
-      } else if (entry.name == "removeLetterAvatars") {
-        settings.removeLetterAvatars.value = entry.value;
-      } else if (entry.name == "generateFakeContactNames") {
-        settings.generateFakeContactNames.value = entry.value;
-      } else if (entry.name == "generateFakeMessageContent") {
-        settings.generateFakeMessageContent.value = entry.value;
-      } else if (entry.name == "previewCompressionQuality") {
-        settings.previewCompressionQuality.value = entry.value;
-      } else if (entry.name == "filteredChatList") {
-        settings.filteredChatList.value = entry.value;
-      } else if (entry.name == "startVideosMuted") {
-        settings.startVideosMuted.value = entry.value;
-      } else if (entry.name == "startVideosMutedFullscreen") {
-        settings.startVideosMutedFullscreen.value = entry.value;
-      } else if (entry.name == "use24HrFormat") {
-        settings.use24HrFormat.value = entry.value;
-      } else if (entry.name == "enableQuickTapback") {
-        settings.enableQuickTapback.value = entry.value;
-      } else if (entry.name == "quickTapbackType") {
-        settings.quickTapbackType.value = entry.value;
-      } else if (entry.name == "alwaysShowAvatars") {
-        settings.alwaysShowAvatars.value = entry.value;
-      } else if (entry.name == "iosShowPin") {
-        settings.iosShowPin.value = entry.value;
-      } else if (entry.name == "iosShowAlert") {
-        settings.iosShowAlert.value = entry.value;
-      } else if (entry.name == "iosShowDelete") {
-        settings.iosShowDelete.value = entry.value;
-      } else if (entry.name == "iosShowMarkRead") {
-        settings.iosShowMarkRead.value = entry.value;
-      } else if (entry.name == "iosShowArchive") {
-        settings.iosShowArchive.value = entry.value;
-      } else if (entry.name == "materialRightAction") {
-        settings.materialRightAction.value = MaterialSwipeAction.values[entry.value];
-      } else if (entry.name == "materialLeftAction") {
-        settings.materialLeftAction.value = MaterialSwipeAction.values[entry.value];
-      } else if (entry.name == "shouldSecure") {
-        settings.shouldSecure.value = entry.value;
-      } else if (entry.name == "securityLevel") {
-        settings.securityLevel.value = SecurityLevel.values[entry.value];
-      } else if (entry.name == "incognitoKeyboard") {
-        settings.incognitoKeyboard.value = entry.value;
-      } else if (entry.name == "pinRowsPortrait") {
-        settings.pinRowsPortrait.value = entry.value;
-      } else if (entry.name == "maxAvatarsInGroupWidget") {
-        settings.maxAvatarsInGroupWidget.value = entry.value;
-      } else if (entry.name == "notifyOnChatList") {
-        settings.notifyOnChatList.value = entry.value;
-      } else if (entry.name == "notifyReactions") {
-        settings.notifyReactions.value = entry.value;
-      } else if (entry.name == "notificationSound") {
-        settings.notificationSound.value = entry.value;
-      } else if (entry.name == "colorsFromMedia") {
-        settings.colorsFromMedia.value = entry.value;
-      } else if (entry.name == "monetTheming") {
-        settings.monetTheming.value = Monet.values[entry.value];
-      } else if (entry.name == "globalTextDetection") {
-        settings.globalTextDetection.value = entry.value;
-      } else if (entry.name == "filterUnknownSenders") {
-        settings.filterUnknownSenders.value = entry.value;
-      } else if (entry.name == "tabletMode") {
-        settings.tabletMode.value = kIsDesktop || entry.value;
-      } else if (entry.name == "immersiveMode") {
-        settings.immersiveMode.value = entry.value;
-      } else if (entry.name == "swipeToReply") {
-        settings.swipeToReply.value = entry.value;
-      } else if (entry.name == "privateAPISend") {
-        settings.privateAPISend.value = entry.value;
-      } else if (entry.name == "avatarScale") {
-        settings.avatarScale.value = entry.value;
-      } else if (entry.name == "launchAtStartup") {
-        settings.launchAtStartup.value = entry.value;
-      } else if (entry.name == "minimizeToTray") {
-        settings.minimizeToTray.value = entry.value;
-      } else if (entry.name == "closeToTray") {
-        settings.closeToTray.value = entry.value;
-      } else if (entry.name == "selectedActionIndices") {
-        settings.selectedActionIndices.value = entry.value;
-      } else if (entry.name == "actionList") {
-        settings.actionList.value = entry.value;
-      } else if (entry.name == "askWhereToSave") {
-        settings.askWhereToSave.value = entry.value;
-      } else if (entry.name == "indicatorsOnPinnedChats") {
-        settings.statusIndicatorsOnChats.value = entry.value;
-      } else if (entry.name == "apiTimeout") {
-        settings.apiTimeout.value = entry.value;
-      } else if (entry.name == "allowUpsideDownRotation") {
-        settings.allowUpsideDownRotation.value = entry.value;
-      } else if (entry.name == "useCustomTitleBar") {
-        settings.useCustomTitleBar.value = entry.value;
-      } else if (entry.name == "betterScrolling") {
-        settings.betterScrolling.value = entry.value;
-      } else if (entry.name == "betterScrollingMultiplier") {
-        settings.betterScrollingMultiplier.value = entry.value;
-      } else if (entry.name == "windowEffect") {
-        settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == entry.value) ?? WindowEffect.disabled;
-      } else if (entry.name == "windowEffectCustomOpacityLight") {
-        settings.windowEffectCustomOpacityLight.value = entry.value;
-      } else if (entry.name == "windowEffectCustomOpacityDark") {
-        settings.windowEffectCustomOpacityDark.value = entry.value;
-      } else if (entry.name == "useWindowsAccent") {
-        settings.useWindowsAccent.value = entry.value;
-      }
-    }
-    settings.save();
-    return settings;
-  }
-
   Future<DisplayMode> getDisplayMode() async {
     List<DisplayMode> modes = await FlutterDisplayMode.supported;
     return modes.firstWhereOrNull((element) => element.refreshRate == refreshRate.value) ?? DisplayMode.auto;
@@ -393,16 +176,6 @@ class Settings {
     } else {
       return Settings();
     }
-  }
-
-  static Future<Settings> getSettingsOld(Database db) async {
-    List<Map<String, dynamic>> result = await db.query("config");
-    if (result.isEmpty) return Settings();
-    List<ConfigEntry> entries = [];
-    for (Map<String, dynamic> setting in result) {
-      entries.add(ConfigEntry.fromMap(setting));
-    }
-    return Settings.fromConfigEntries(entries);
   }
 
   Map<String, dynamic> toMap({bool includeAll = false}) {

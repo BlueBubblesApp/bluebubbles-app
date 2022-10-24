@@ -1,9 +1,4 @@
-import 'dart:async';
-
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:firebase_dart/firebase_dart.dart';
 
 class FCMData {
   int? id;
@@ -36,26 +31,6 @@ class FCMData {
       clientID: clientID.contains("-") ? clientID.substring(0, clientID.indexOf("-")) : clientID,
       applicationID: client["client_info"]["mobilesdk_app_id"],
     );
-  }
-
-  factory FCMData.fromConfigEntries(List<ConfigEntry> entries) {
-    FCMData data = FCMData();
-    for (ConfigEntry entry in entries) {
-      if (entry.name == "projectID") {
-        data.projectID = entry.value;
-      } else if (entry.name == "storageBucket") {
-        data.storageBucket = entry.value;
-      } else if (entry.name == "apiKey") {
-        data.apiKey = entry.value;
-      } else if (entry.name == "firebaseURL") {
-        data.firebaseURL = entry.value;
-      } else if (entry.name == "clientID") {
-        data.clientID = entry.value;
-      } else if (entry.name == "applicationID") {
-        data.applicationID = entry.value;
-      }
-    }
-    return data;
   }
 
   FCMData save() {

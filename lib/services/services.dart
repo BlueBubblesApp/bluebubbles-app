@@ -14,6 +14,7 @@ export 'backend/sync/sync_manager_impl.dart' show SyncStatus;
 export 'backend/sync/sync_service.dart';
 export 'backend/sync/tasks/sync_tasks.dart';
 export 'backend/action_handler.dart';
+export 'backend_ui_interop/event_dispatcher.dart';
 export 'network/firebase/cloud_messaging_service.dart';
 export 'network/firebase/database_service.dart';
 export 'network/downloads_service.dart';

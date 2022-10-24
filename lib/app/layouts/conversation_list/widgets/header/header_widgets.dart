@@ -9,7 +9,6 @@ import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -136,7 +135,7 @@ class OverflowMenu extends StatelessWidget {
                   TextButton(
                     child: Text("Yes", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                     onPressed: () async {
-                      await DBProvider.deleteDB();
+                      fs.deleteDB();
                       socket.forgetConnection();
                       ss.settings = Settings();
                       ss.fcmData = FCMData();
