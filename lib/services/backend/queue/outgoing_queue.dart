@@ -17,7 +17,7 @@ class OutgoingQueue extends Queue {
 
     switch (item.type) {
       case QueueType.sendMessage:
-        await ah.sendMessage(item.chat, item.message, item.reaction);
+        await ah.sendMessage(item.chat, item.message, item.selected, item.reaction);
         break;
       case QueueType.sendAttachment:
         await ah.sendAttachment(item.chat, item.message);

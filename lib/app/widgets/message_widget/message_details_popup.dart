@@ -142,7 +142,20 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
   void sendReaction(String type) {
     Logger.info("Sending reaction type: $type");
-    ActionHandler.sendReaction(widget.message.getChat() ?? widget.currentChat!.chat, widget.message, ReactionType.values.firstWhere((e) => describeEnum(e) == type));
+    outq.queue(OutgoingItem(
+        type: QueueType.newMessage,
+        chat: widget.message.getChat() ?? widget.currentChat!.chat,
+        message: Message(
+          associatedMessageGuid: widget.message.guid,
+          associatedMessageType: type,
+          dateCreated: DateTime.now(),
+          hasAttachments: false,
+          isFromMe: true,
+          handleId: 0,
+        ),
+        selected: widget.message,
+        reaction: ReactionType.values.firstWhere((e) => describeEnum(e) == type),
+    ));
     Navigator.of(context).pop();
   }
 

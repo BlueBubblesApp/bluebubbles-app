@@ -93,10 +93,12 @@ class Share {
     await file.create();
     await file.writeAsString(vcfString);
 
+    final bytes = await file.readAsBytes();
     PlatformFile pFile = PlatformFile(
       name: fileName,
-      size: await file.length(),
+      size: bytes.length,
       path: filePath,
+      bytes: bytes,
     );
 
     await showDialog(
@@ -121,18 +123,30 @@ class Share {
     );
     if (!send) return;
 
-    OutgoingQueue().add(
-      QueueItem(
-        event: "send-attachment",
-        item: AttachmentSender(
-          pFile,
-          chat,
-          "",
-          null,
-          null,
-          null,
+    final message = Message(
+      guid: _attachmentGuid,
+      text: "",
+      dateCreated: DateTime.now(),
+      hasAttachments: true,
+      attachments: [
+        Attachment(
+          guid: _attachmentGuid,
+          isOutgoing: true,
+          isSticker: false,
+          hideAttachment: false,
+          uti: "public.jpg",
+          bytes: bytes,
+          transferName: fileName,
         ),
-      ),
+      ],
+      isFromMe: true,
+      handleId: 0,
     );
+
+    outq.queue(OutgoingItem(
+      type: QueueType.sendAttachment,
+      chat: chat,
+      message: message,
+    ));
   }
 }

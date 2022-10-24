@@ -37,6 +37,7 @@ class IncomingItem extends QueueItem {
 class OutgoingItem extends QueueItem {
   Chat chat;
   Message message;
+  Message? selected;
   ReactionType? reaction;
 
   OutgoingItem({
@@ -44,6 +45,7 @@ class OutgoingItem extends QueueItem {
     Completer<void>? completer,
     required this.chat,
     required this.message,
+    this.selected,
     this.reaction,
   }) : super(type: type, completer: completer);
 }

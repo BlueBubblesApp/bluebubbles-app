@@ -517,9 +517,17 @@ class SentMessageHelper {
                             // Remove the OG alert dialog
                             Navigator.of(context).pop();
                             MessageManager().removeMessage(chat, message.guid);
-                            Message.softDelete(message.guid!);
+                            Message.delete(message.guid!);
                             await notif.clearFailedToSend();
-                            ActionHandler.retryMessage(message);
+
+                            message.id = null;
+                            message.error = 0;
+                            message.dateCreated = DateTime.now();
+                            outq.queue(OutgoingItem(
+                              type: QueueType.newMessage,
+                              chat: chat,
+                              message: message,
+                            ));
                           },
                         ),
                       if (chat != null)

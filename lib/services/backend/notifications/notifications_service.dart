@@ -163,7 +163,21 @@ class NotificationsService extends GetxService {
             } else if (actions[event.actionIndex!] == "Mark Read") {
               await ChatBloc().toggleChatUnread(chat, false);
             } else if (papi) {
-              await ah.sendMessage(chat, message, ReactionHelpers.emojiToReaction(actions[event.actionIndex!]));
+              final reaction = ReactionHelpers.emojiToReaction(actions[event.actionIndex!]);
+              outq.queue(OutgoingItem(
+                type: QueueType.newMessage,
+                chat: chat,
+                message: Message(
+                  associatedMessageGuid: message.guid,
+                  associatedMessageType: describeEnum(reaction),
+                  dateCreated: DateTime.now(),
+                  hasAttachments: false,
+                  isFromMe: true,
+                  handleId: 0,
+                ),
+                selected: message,
+                reaction: reaction,
+              ));
             }
           }
         });

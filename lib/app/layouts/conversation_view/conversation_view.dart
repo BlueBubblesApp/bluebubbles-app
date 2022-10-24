@@ -266,113 +266,76 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     super.dispose();
   }
 
-  Future<bool> send(
-      List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
-    bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
-    bool alreadySent = false;
+  Future<bool> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
     if (isCreator!) {
-      if (chat == null && selected.length == 1) {
-        try {
-          if (kIsWeb) {
-            chat = await Chat.findOneWeb(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
-          } else {
-            chat = Chat.findOne(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
-          }
-        } catch (_) {}
+      if (await ss.isMinBigSur && selected.length > 1) {
+        showSnackbar("Error", "Creating group chats is currently unsupported on Big Sur!");
+        return false;
       }
 
-      if (chat == null && (await ss.isMinBigSur)) {
-        if (searchQuery.isNotEmpty) {
-          selected.add(UniqueContact(address: searchQuery, displayName: searchQuery));
-          resetCursor();
-        }
-        if (selected.length > 1) {
-          showSnackbar("Error", "Creating group chats is currently unsupported on Big Sur!");
-          return false;
-        } else if (isNullOrEmpty(text, trimString: true)!) {
-          showSnackbar("Error",
-              "Starting new chats with an attachment is currently unsupported on Big Sur! Please start the chat with a text instead.");
-          return false;
-        } else if (!isNullOrEmpty(cleansePhoneNumber(selected.firstOrNull?.address ?? ""))!) {
-          chat = await ActionHandler.createChatBigSur(
-              context, cleansePhoneNumber(selected.firstOrNull?.address ?? ""), text);
-          if (chat == null) {
-            Navigator.of(context).pop();
-            showSnackbar("Error", "Failed to create chat.");
-            return false;
-          } else {
-            alreadySent = true;
-          }
-        }
-      } else {
-        chat ??= await createChat();
-      }
-
-      // If the chat is still null, return false
+      chat = await ah.createChat(selected.where((e) => e.address != null).map((e) => cleansePhoneNumber(e.address!)).toList(), text);
       if (chat == null) return false;
 
       ss.prefs.setString('lastOpenedChat', chat!.guid);
+      initChatController(chat!);
+      messageBloc = initMessageBloc();
+      messageBloc!.getMessages();
 
-      // If the current chat is null, set it
-      if (isDifferentChat) {
-        initChatController(chat!);
-      }
-
-      bool isDifferentBloc = messageBloc == null || messageBloc?.currentChat?.guid != chat!.guid;
-
-      // Fetch messages
-      if (isDifferentBloc) {
-        // Init the states
-        messageBloc = initMessageBloc();
-        messageBloc!.getMessages();
-      }
       if (worker == null) {
         initListener();
       }
     } else {
-      if (isDifferentChat) {
-        initChatController(chat!);
+      if (currentChat != null) {
+        await currentChat!.scrollToBottom();
       }
-    }
 
-    // Scroll to the bottom right before the message is sent
-    if (currentChat != null) {
-      await currentChat!.scrollToBottom();
-    }
-
-    if (attachments.isNotEmpty && chat != null) {
-      for (int i = 0; i < attachments.length; i++) {
-        OutgoingQueue().add(
-          QueueItem(
-            event: "send-attachment",
-            item: AttachmentSender(
-              attachments[i],
-              chat!,
-              // This means to send the text when the last attachment is sent
-              // If we switched this to i == 0, then it will be send with the first attachment
-              i == attachments.length - 1 && !alreadySent ? text : "",
-              effectId,
-              subject,
-              replyGuid,
+      for (PlatformFile file in attachments) {
+        final message = Message(
+          text: "",
+          dateCreated: DateTime.now(),
+          hasAttachments: true,
+          attachments: [
+            Attachment(
+              isOutgoing: true,
+              isSticker: false,
+              hideAttachment: false,
+              uti: "public.jpg",
+              bytes: file.bytes,
+              transferName: file.name,
             ),
-          ),
+          ],
+          isFromMe: true,
+          handleId: 0,
         );
+        message.generateTempGuid();
+        message.attachments.first!.guid = message.guid;
+        final completer = Completer<void>();
+        outq.queue(OutgoingItem(
+          type: QueueType.sendAttachment,
+          chat: chat!,
+          message: message,
+          completer: completer,
+        ));
+        await completer.future;
       }
-    } else if (chat != null && !alreadySent) {
-      // We include messageBloc here because the bloc listener may not be instantiated yet
-      ActionHandler.sendMessage(chat!, text, subject: subject, replyGuid: replyGuid, effectId: effectId);
-    }
 
-    if (alreadySent) {
-      setState(() {
-        tween = Tween<double>(begin: 1, end: 0);
-        controller = Control.stop;
-        message = null;
-        existingText = "";
-        existingAttachments = [];
-        isCreator = false;
-        wasCreator = true;
-      });
+      if (text.isNotEmpty || subject.isNotEmpty) {
+        final message = Message(
+          text: text,
+          subject: subject,
+          threadOriginatorGuid: replyGuid,
+          expressiveSendStyleId: effectId,
+          dateCreated: DateTime.now(),
+          hasAttachments: true,
+          isFromMe: true,
+          handleId: 0,
+        );
+        outq.queue(OutgoingItem(
+          type: QueueType.sendMessage,
+          chat: chat!,
+          message: message,
+        ));
+      }
     }
 
     return true;

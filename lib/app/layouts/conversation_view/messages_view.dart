@@ -398,7 +398,11 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
           onTap: onTap ??
               () {
                 if (currentChat?.chat != null) {
-                  ActionHandler.sendMessage(currentChat!.chat, text);
+                  outq.queue(OutgoingItem(
+                      type: QueueType.newMessage,
+                      chat: currentChat!.chat,
+                      message: Message(text: text)
+                  ));
                 }
               },
           child: Center(
