@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';

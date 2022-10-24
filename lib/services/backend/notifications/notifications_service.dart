@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/helpers/repository/reaction.dart';

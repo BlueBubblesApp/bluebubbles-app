@@ -1,5 +1,4 @@
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/location_widget.dart';

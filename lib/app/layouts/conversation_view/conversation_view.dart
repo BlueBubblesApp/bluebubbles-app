@@ -2,10 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';

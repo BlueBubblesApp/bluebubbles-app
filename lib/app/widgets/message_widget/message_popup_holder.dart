@@ -1,4 +1,3 @@
-import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';

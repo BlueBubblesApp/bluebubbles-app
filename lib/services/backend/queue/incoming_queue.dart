@@ -1,4 +1,3 @@
-import 'package:bluebubbles/core/actions/action_handler.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
