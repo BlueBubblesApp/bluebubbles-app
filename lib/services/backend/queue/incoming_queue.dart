@@ -17,10 +17,10 @@ class IncomingQueue extends Queue {
 
     switch (item.type) {
       case QueueType.newMessage:
-        await ActionHandler.handleMessage(item.message, isHeadless: !ls.isAlive);
+        await ah.handleNewMessage(item.chat, item.message);
         break;
       case QueueType.updatedMessage:
-        await ActionHandler.handleUpdatedMessage(item.message, headless: !ls.isAlive);
+        await ah.handleUpdatedMessage(item.chat, item.message);
         break;
       default:
         Logger.info("Unhandled queue event: ${describeEnum(item.type)}");

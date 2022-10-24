@@ -14,18 +14,21 @@ abstract class QueueItem {
 }
 
 class IncomingItem extends QueueItem {
-  Message? message;
+  Chat chat;
+  Message message;
 
   IncomingItem._({
     required QueueType type,
     Completer<void>? completer,
-    this.message,
+    required this.chat,
+    required this.message,
   }) : super(type: type, completer: completer);
 
   factory IncomingItem.fromMap(QueueType t, Map<String, dynamic> m, [Completer<void>? c]) {
     return IncomingItem._(
       type: t,
       completer: c,
+      chat: Chat.fromMap(m['chats'].first),
       message: Message.fromMap(m),
     );
   }

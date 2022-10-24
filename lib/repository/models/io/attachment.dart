@@ -205,7 +205,7 @@ class Attachment {
   }
 
   /// replaces a temporary attachment with the new one from the server
-  static Attachment replaceAttachment(String? oldGuid, Attachment newAttachment) {
+  static Future<Attachment> replaceAttachment(String? oldGuid, Attachment newAttachment) async {
     if (kIsWeb) return newAttachment;
     Attachment? existing = Attachment.findOne(oldGuid!);
     if (existing == null) {
@@ -236,7 +236,7 @@ class Attachment {
     String appDocPath = fs.appDocDir.path;
     String pathName = "$appDocPath/attachments/$oldGuid";
     Directory directory = Directory(pathName);
-    directory.renameSync("$appDocPath/attachments/${newAttachment.guid}");
+    await directory.rename("$appDocPath/attachments/${newAttachment.guid}");
     // grab values from existing
     newAttachment.id = existing.id;
     newAttachment.width = existing.width;

@@ -17,10 +17,10 @@ class OutgoingQueue extends Queue {
 
     switch (item.type) {
       case QueueType.sendMessage:
-        await ActionHandler.sendMessageHelper(item.chat, item.message, item.reaction);
+        await ah.sendMessage(item.chat, item.message, item.reaction);
         break;
       case QueueType.sendAttachment:
-        await ActionHandler.sendAttachmentHelper(item.message);
+        await ah.sendAttachment(item.chat, item.message);
         break;
       default:
         Logger.info("Unhandled queue event: ${describeEnum(item.type)}");
