@@ -6,7 +6,7 @@ import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/repository/models/io/message.dart';
+import 'package:bluebubbles/models/io/message.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';

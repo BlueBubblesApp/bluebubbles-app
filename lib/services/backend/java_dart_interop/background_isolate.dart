@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/app/layouts/startup/upgrading_db.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' show join;

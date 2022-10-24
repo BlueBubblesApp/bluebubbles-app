@@ -12,7 +12,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/theming/advanced/advanced
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';

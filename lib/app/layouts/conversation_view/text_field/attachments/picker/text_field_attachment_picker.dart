@@ -8,7 +8,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/text_field/attachments
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:bluebubbles/models/global/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chunked_stream/chunked_stream.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;

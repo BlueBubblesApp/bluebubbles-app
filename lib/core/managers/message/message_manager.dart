@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/services/network/http_service.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:dio/dio.dart';
 
 class NewMessageType {

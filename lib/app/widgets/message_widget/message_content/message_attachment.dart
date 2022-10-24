@@ -11,7 +11,7 @@ import 'package:bluebubbles/app/widgets/message_widget/message_content/media_pla
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/location_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/video_widget.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

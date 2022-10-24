@@ -13,7 +13,7 @@ import 'package:bluebubbles/app/widgets/message_widget/message_content/media_pla
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';

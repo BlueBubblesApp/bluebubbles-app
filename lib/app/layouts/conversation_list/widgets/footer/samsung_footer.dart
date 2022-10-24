@@ -1,7 +1,7 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

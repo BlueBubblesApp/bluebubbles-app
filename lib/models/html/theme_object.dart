@@ -1,7 +1,7 @@
 import 'dart:core';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/repository/models/html/theme_entry.dart';
+import 'package:bluebubbles/models/html/theme_entry.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 

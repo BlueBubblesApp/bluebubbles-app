@@ -1,7 +1,7 @@
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as p;

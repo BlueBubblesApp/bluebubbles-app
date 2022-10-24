@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:flutter/foundation.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import

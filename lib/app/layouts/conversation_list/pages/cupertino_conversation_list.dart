@@ -11,7 +11,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_l
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/cupertino_header.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';

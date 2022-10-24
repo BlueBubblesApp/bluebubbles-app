@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';

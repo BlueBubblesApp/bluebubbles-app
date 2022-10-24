@@ -13,16 +13,16 @@ import 'package:objectbox/internal.dart'; // generated code can access "internal
 import 'package:objectbox/objectbox.dart';
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
-import 'repository/models/io/attachment.dart';
-import 'repository/models/io/chat.dart';
-import 'repository/models/io/contact.dart';
-import 'repository/models/io/fcm_data.dart';
-import 'repository/models/io/handle.dart';
-import 'repository/models/io/message.dart';
-import 'repository/models/io/scheduled.dart';
-import 'repository/models/io/theme.dart';
-import 'repository/models/io/theme_entry.dart';
-import 'repository/models/io/theme_object.dart';
+import '/models/io/attachment.dart';
+import '/models/io/chat.dart';
+import '/models/io/contact.dart';
+import '/models/io/fcm_data.dart';
+import '/models/io/handle.dart';
+import '/models/io/message.dart';
+import '/models/io/scheduled.dart';
+import '/models/io/theme.dart';
+import '/models/io/theme_entry.dart';
+import '/models/io/theme_object.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
 

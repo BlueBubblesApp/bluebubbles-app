@@ -8,7 +8,7 @@ import 'package:bluebubbles/app/widgets/message_widget/message_details_popup.dar
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chewie_audio/chewie_audio.dart';
 import 'package:flutter/material.dart';

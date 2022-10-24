@@ -3,7 +3,7 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/location_widget.dart';
 import 'package:bluebubbles/services/backend/queue/outgoing_queue.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';

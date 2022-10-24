@@ -1,4 +1,4 @@
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 
 enum Indicator { READ, DELIVERED, SENT, NONE }
 

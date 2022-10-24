@@ -11,7 +11,7 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/video_widget.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';

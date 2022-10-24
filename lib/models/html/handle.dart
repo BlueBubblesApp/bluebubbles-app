@@ -1,7 +1,7 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/repository/models/html/chat.dart';
-import 'package:bluebubbles/repository/models/html/contact.dart';
-import 'package:bluebubbles/repository/models/html/objectbox.dart';
+import 'package:bluebubbles/models/html/chat.dart';
+import 'package:bluebubbles/models/html/contact.dart';
+import 'package:bluebubbles/models/html/objectbox.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';

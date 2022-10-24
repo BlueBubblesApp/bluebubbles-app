@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;

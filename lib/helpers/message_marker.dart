@@ -1,5 +1,5 @@
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:get/get.dart';
 
 class MessageMarkers {

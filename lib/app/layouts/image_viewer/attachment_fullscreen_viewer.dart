@@ -15,8 +15,8 @@ import 'package:bluebubbles/app/widgets/message_widget/message_content/media_pla
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
-import 'package:bluebubbles/repository/intents.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/services/backend_ui_interop/intents.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import "package:flutter/material.dart";

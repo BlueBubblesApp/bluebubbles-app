@@ -5,7 +5,7 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/helpers/ui_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:file_picker/file_picker.dart';

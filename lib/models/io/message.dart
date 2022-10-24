@@ -15,7 +15,7 @@ import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;

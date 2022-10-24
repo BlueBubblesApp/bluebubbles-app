@@ -1,23 +1,20 @@
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/repository/models/io/theme_object.dart';
+import 'package:bluebubbles/models/html/objectbox.dart';
+import 'package:bluebubbles/models/html/theme_object.dart';
 import 'package:flutter/material.dart';
-// (needed when generating objectbox model code)
-// ignore: unnecessary_import
-import 'package:objectbox/objectbox.dart';
 
-@Entity()
 class ThemeEntry {
   int? id;
   int? themeId;
   String? name;
+  Color? color;
+
+  String? get dbColor => color?.value.toRadixString(16);
+
+  set dbColor(String? s) => s == null ? color = null : color = HexColor(s);
   bool? isFont;
   int? fontSize;
   int? fontWeight;
-
-  Color? color;
-  String? get dbColor => color?.value.toRadixString(16);
-  set dbColor(String? s) => s == null ? color = null : color = HexColor(s);
 
   final themeObject = ToOne<ThemeObject>();
 
@@ -48,5 +45,4 @@ class ThemeEntry {
           fontSize: fontSize?.toDouble(),
         )
       : color;
-
 }

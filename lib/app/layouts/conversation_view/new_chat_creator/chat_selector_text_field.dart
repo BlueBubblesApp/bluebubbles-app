@@ -2,7 +2,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/new_chat_creator/contact_selector_custom_cupertino_textfield.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';

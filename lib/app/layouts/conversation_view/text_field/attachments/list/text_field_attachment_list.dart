@@ -1,6 +1,6 @@
 import 'package:bluebubbles/app/layouts/conversation_view/text_field/attachments/list/attachment_list_item.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:bluebubbles/models/global/platform_file.dart';
 import 'package:flutter/material.dart';
 
 class TextFieldAttachmentList extends StatefulWidget {

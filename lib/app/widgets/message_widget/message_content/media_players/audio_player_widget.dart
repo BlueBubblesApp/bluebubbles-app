@@ -2,7 +2,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:bluebubbles/models/global/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chewie_audio/chewie_audio.dart';
 import 'package:flutter/foundation.dart';

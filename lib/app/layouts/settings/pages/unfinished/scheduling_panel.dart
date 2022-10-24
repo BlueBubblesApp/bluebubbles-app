@@ -8,7 +8,7 @@ import 'package:bluebubbles/layouts/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/layouts/settings/pages/unfinished/scheduler_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

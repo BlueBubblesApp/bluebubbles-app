@@ -1,5 +1,5 @@
 
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/types/darty.dart';
 import 'package:dio/dio.dart';
 

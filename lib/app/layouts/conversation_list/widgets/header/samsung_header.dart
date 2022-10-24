@@ -8,7 +8,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/header_
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';

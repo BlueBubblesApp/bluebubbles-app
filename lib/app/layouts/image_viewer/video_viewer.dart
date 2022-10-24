@@ -7,7 +7,7 @@ import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chewie/chewie.dart';
 // (needed for custom back button)
