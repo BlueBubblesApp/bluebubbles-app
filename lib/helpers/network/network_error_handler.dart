@@ -1,6 +1,7 @@
 
+import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/models/models.dart';
-import 'package:bluebubbles/types/darty.dart';
+import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:dio/dio.dart';
 
 Message handleSendError(dynamic error, Message m) {

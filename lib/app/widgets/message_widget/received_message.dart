@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/types/darty.dart';
+import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';

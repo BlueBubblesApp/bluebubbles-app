@@ -1,6 +1,6 @@
 import 'dart:core';
 
-import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/models/io/theme_entry.dart';

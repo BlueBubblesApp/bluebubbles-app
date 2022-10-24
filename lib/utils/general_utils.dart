@@ -4,9 +4,8 @@ import 'dart:ui' as ui;
 
 import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/country_codes.dart';
-import 'package:bluebubbles/helpers/emoji_regex.dart';
+import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/models/country_codes.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view_mixin.dart';
@@ -86,7 +85,7 @@ Future<String> formatPhoneNumber(dynamic item) async {
   try {
     meta = await PhoneNumberUtil.formatAsYouType(address, cc);
   } catch (ex) {
-    CountryCode? code = getCountryCodes().firstWhereOrNull((e) => e.code == cc);
+    CountryCode? code = countryCodes.firstWhereOrNull((e) => e.code == cc);
     if (!address.startsWith("+") && code != null) {
       try {
         meta = await PhoneNumberUtil.formatAsYouType("${code.dialCode}$address", cc);

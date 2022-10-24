@@ -1,10 +1,6 @@
-import 'package:collection/collection.dart';
-
 String? countryCode;
 
-List<CountryCode> countryCodes = [];
-
-List<Map<String, String>> codes = [
+const codes = [
   {
     "name": "افغانستان",
     "code": "AF",
@@ -1242,23 +1238,14 @@ List<Map<String, String>> codes = [
   },
 ];
 
-List<CountryCode> getCountryCodes() {
-  if (countryCodes.isNotEmpty) return countryCodes;
-  for (Map<String, String> item in codes) {
-    if (countryCodes.firstWhereOrNull((element) => element.code == item['code']) == null) {
-      countryCodes.add(CountryCode(name: item["name"]!, code: item["code"]!, dialCode: item["dial_code"]!));
-    }
-  }
-
-  return countryCodes;
-}
+List<CountryCode> countryCodes = codes.map((e) => CountryCode(name: e["name"]!, code: e["code"]!, dialCode: e["dial_code"]!)).toList();
 
 class CountryCode {
-  String name;
-  String code;
-  String dialCode;
+  final String name;
+  final String code;
+  final String dialCode;
 
-  CountryCode({
+  const CountryCode({
     required this.name,
     required this.code,
     required this.dialCode,

@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/helpers/ui_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/messages_view.dart';
