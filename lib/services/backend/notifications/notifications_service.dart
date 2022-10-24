@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
-import 'package:bluebubbles/helpers/repository/reaction.dart';
+import 'package:bluebubbles/helpers/models/reaction.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
