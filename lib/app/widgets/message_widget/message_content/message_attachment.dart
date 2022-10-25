@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/app/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/widgets/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/attachment_downloader_widget.dart';
