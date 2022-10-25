@@ -1,4 +1,4 @@
-import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/helpers/ui_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
@@ -68,11 +68,11 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
               ? ConversationListFAB(parentController: controller)
               : null,
           body: Obx(() {
-            final chats = ChatBloc().chats
+            final _chats = chats.chats
                 .archivedHelper(showArchived)
                 .unknownSendersHelper(showUnknown);
 
-            if (!ChatBloc().loadedChatBatch.value || chats.isEmpty) {
+            if (!chats.loadedChatBatch.value || _chats.isEmpty) {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 100),
@@ -81,7 +81,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          !ChatBloc().loadedChatBatch.value
+                          !chats.loadedChatBatch.value
                               ? "Loading chats..."
                               : showArchived
                               ? "You have no archived chats"
@@ -91,7 +91,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                           style: context.theme.textTheme.labelLarge,
                         ),
                       ),
-                      if (!ChatBloc().loadedChatBatch.value)
+                      if (!chats.loadedChatBatch.value)
                         buildProgressIndicator(context, size: 15),
                     ],
                   ),
@@ -115,7 +115,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                       ? NeverScrollableScrollPhysics()
                       : ThemeSwitcher.getScrollPhysics(),
                   itemBuilder: (context, index) {
-                    final chat = chats[index];
+                    final chat = _chats[index];
                     final child = ListItem(chat: chat, controller: controller);
                     final separator = Obx(() => !ss.settings.hideDividers.value ? Padding(
                       padding: const EdgeInsets.only(left: 20),
@@ -134,7 +134,7 @@ class _MaterialConversationListState extends OptimizedState<MaterialConversation
                       ],
                     );
                   },
-                  itemCount: chats.length,
+                  itemCount: _chats.length,
                 )),
               ),
             );

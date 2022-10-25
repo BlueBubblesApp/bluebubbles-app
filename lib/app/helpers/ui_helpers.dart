@@ -1,8 +1,6 @@
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -162,8 +160,7 @@ Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat 
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
-            ChatBloc().toggleChatUnread(chat, !chat.hasUnreadMessage!);
-            if (_this.mounted) _this.setState(() {});
+            chat.toggleHasUnread(!chat.hasUnreadMessage!);
             Navigator.pop(context);
           },
           child: Padding(
@@ -191,12 +188,7 @@ Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat 
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              if (chat.isArchived!) {
-                ChatBloc().unArchiveChat(chat);
-              } else {
-                ChatBloc().archiveChat(chat);
-              }
-              if (_this.mounted) _this.setState(() {});
+              chat.toggleArchived(!chat.isArchived!);
               Navigator.pop(context);
             },
             child: Padding(
@@ -227,9 +219,8 @@ Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat 
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () async {
-              ChatBloc().deleteChat(chat);
+              chats.removeChat(chat);
               Chat.deleteChat(chat);
-              if (_this.mounted) _this.setState(() {});
               Navigator.pop(context);
             },
             child: Padding(

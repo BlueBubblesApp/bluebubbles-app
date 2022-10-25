@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
@@ -101,7 +100,7 @@ class MethodChannelService extends GetxService {
         if (chat == null) {
           return false;
         } else {
-          ChatBloc().toggleChatUnread(chat, !(data["read"] ?? true));
+          chat.toggleHasUnread(!(data["read"] ?? true));
           return true;
         }
       case "media-colors":

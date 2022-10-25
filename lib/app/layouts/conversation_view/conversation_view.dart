@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
@@ -119,19 +118,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       initChatSelector();
     }
     initConversationViewState();
-
-    ever(ChatBloc().chats, (List<Chat> chats) {
-      currentChat = ChatManager().activeChat;
-
-      if (currentChat != null) {
-        Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat?.guid);
-        if (_chat != null) {
-          _chat.getParticipants();
-          currentChat!.chat = _chat;
-          if (mounted) setState(() {});
-        }
-      }
-    });
 
     KeyboardVisibilityController().onChange.listen((bool visible) async {
       await Future.delayed(Duration(milliseconds: 500));
@@ -472,7 +458,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               ),
             if (isCreator!)
               Obx(() {
-                if (!ChatBloc().hasChats.value) {
+                if (!chats.hasChats.value) {
                   return Center(
                     child: Container(
                       padding: EdgeInsets.symmetric(vertical: 20.0),

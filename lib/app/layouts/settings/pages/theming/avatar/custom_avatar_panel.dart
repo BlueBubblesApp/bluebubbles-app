@@ -1,4 +1,3 @@
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/helpers/ui_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
@@ -30,7 +29,7 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> with The
       headerColor: headerColor,
       bodySlivers: [
         Obx(() {
-          if (!ChatBloc().loadedChatBatch.value) {
+          if (!chats.loadedChatBatch.value) {
             return SliverToBoxAdapter(
               child: Center(
                 child: Padding(
@@ -51,7 +50,7 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> with The
               ),
             );
           }
-          if (ChatBloc().loadedChatBatch.value && ChatBloc().chats.isEmpty) {
+          if (chats.loadedChatBatch.value && chats.chats.isEmpty) {
             return SliverToBoxAdapter(
               child: Center(
                 child: Padding(
@@ -70,15 +69,15 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> with The
                   (context, index) {
                 return ConversationTile(
                   key: Key(
-                      ChatBloc().chats[index].guid.toString()),
-                  chat: ChatBloc().chats[index],
+                      chats.chats[index].guid.toString()),
+                  chat: chats.chats[index],
                   controller: Get.put(
                     ConversationListController(showUnknownSenders: true, showArchivedChats: true),
                     tag: "custom-avatar-panel"
                   ),
                   inSelectMode: true,
                   onSelect: (_) {
-                    if (ChatBloc().chats[index].customAvatarPath != null) {
+                    if (chats.chats[index].customAvatarPath != null) {
                       showDialog(
                         context: context,
                         builder: (BuildContext context) {
@@ -105,10 +104,10 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> with The
                                 TextButton(
                                     child: Text("Reset", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                     onPressed: () {
-                                      File file = File(ChatBloc().chats[index].customAvatarPath!);
+                                      File file = File(chats.chats[index].customAvatarPath!);
                                       file.delete();
-                                      ChatBloc().chats[index].customAvatarPath = null;
-                                      ChatBloc().chats[index].save(updateCustomAvatarPath: true);
+                                      chats.chats[index].customAvatarPath = null;
+                                      chats.chats[index].save(updateCustomAvatarPath: true);
                                       Get.back();
                                     }),
                                 TextButton(
@@ -132,7 +131,7 @@ class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> with The
                   },
                 );
               },
-              childCount: ChatBloc().chats.length,
+              childCount: chats.chats.length,
             ),
           );
         }),

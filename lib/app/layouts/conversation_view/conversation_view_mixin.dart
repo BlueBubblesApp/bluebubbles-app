@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
@@ -44,7 +43,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   /// Regular conversation view variables
   OverlayEntry? entry;
   LayerLink layerLink = LayerLink();
-  List<String?> newMessages = [];
   bool processingParticipants = false;
 
   /// Chat selector variables
@@ -88,30 +86,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     if (isCreator!) return;
 
     fetchParticipants();
-
-    newMessages = ChatBloc()
-        .chats
-        .where((element) => element.guid != chat?.guid && (element.hasUnreadMessage ?? false))
-        .map((e) => e.guid)
-        .toList();
-
-    eventDispatcher.stream.listen((event) {
-      if (!["add-unread-chat", "remove-unread-chat", "refresh-messagebloc"].contains(event.item1)) return;
-
-      // Ignore any events having to do with this chat
-      String? chatGuid = event.item2["chatGuid"];
-      if (chat!.guid == chatGuid) return;
-
-      int preLength = newMessages.length;
-      if (event.item1 == "add-unread-chat" && !newMessages.contains(chatGuid)) {
-        newMessages.add(chatGuid);
-      } else if (event.item1 == "remove-unread-chat" && newMessages.contains(chatGuid)) {
-        newMessages.remove(chatGuid);
-      }
-
-      // Only re-render if the newMessages count changes
-      if (preLength != newMessages.length && mounted) setState(() {});
-    });
 
     // Listen for changes in the group
     MessageManager().stream.listen((NewMessageEvent event) async {
@@ -673,18 +647,19 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                             eventDispatcher.emit("update-highlight", null);
                             return true;
                           }),
-                          if (ChatBloc().unreads.value > 0)
-                            Container(
-                              width: 25.0,
-                              height: 20.0,
-                              decoration: BoxDecoration(
-                                  color: context.theme.colorScheme.primary,
-                                  shape: BoxShape.rectangle,
-                                  borderRadius: BorderRadius.circular(10)),
-                              child: Center(
-                                  child: Text(ChatBloc().unreads.value.toString(),
-                                      textAlign: TextAlign.center, style: TextStyle(color: context.theme.colorScheme.onPrimary, fontSize: 12.0))),
-                            ),
+                          // todo
+                          // if (ChatBloc().unreads.value > 0)
+                          //   Container(
+                          //     width: 25.0,
+                          //     height: 20.0,
+                          //     decoration: BoxDecoration(
+                          //         color: context.theme.colorScheme.primary,
+                          //         shape: BoxShape.rectangle,
+                          //         borderRadius: BorderRadius.circular(10)),
+                          //     child: Center(
+                          //         child: Text(ChatBloc().unreads.value.toString(),
+                          //             textAlign: TextAlign.center, style: TextStyle(color: context.theme.colorScheme.onPrimary, fontSize: 12.0))),
+                          //   ),
                         ],
                       ),
                       )),
@@ -808,7 +783,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     if (matchingChats.isEmpty) {
-      for (var i in ChatBloc().chats) {
+      for (var i in chats.chats) {
         // If the lengths don't match continue
         if (i.participants.length != selected.length) continue;
 
@@ -859,11 +834,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Future<void> loadEntries() async {
     if (!isCreator!) return;
 
-    // If we don't have chats, fetch them
-    if (ChatBloc().chats.isEmpty) {
-      await ChatBloc().refreshChats();
-    }
-
     void setChats(List<Chat> newChats) {
       conversations = newChats;
       for (int i = 0; i < conversations.length; i++) {
@@ -875,22 +845,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       filterContacts();
     }
 
-    ever(ChatBloc().chats, (List<Chat> chats) async {
-      if (chats.isEmpty) return;
-
-      // Make sure the contact count changed, otherwise, don't set the chats
-      if (chats.length == previousContactCount) return;
-      previousContactCount = chats.length;
-
-      // Update and filter the chats
-      setChats(chats);
-    });
-
-    // When the chat request is finished, set the chats
-    if (ChatBloc().chatRequest != null) {
-      await ChatBloc().chatRequest!.future;
-      setChats(ChatBloc().chats);
-    }
+    setChats(chats.chats);
   }
 
   void setContacts(List<UniqueContact> contacts, {bool addToStream = true, refreshState = false}) {
@@ -1030,8 +985,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     Logger.info("Starting chat with participants: ${participants.join(", ")}");
 
     Future<void> returnChat(Chat newChat) async {
-      newChat.save();
-      await ChatBloc().updateChatPosition(newChat);
+      newChat = newChat.save();
+      chats.addChat(newChat);
       completer.complete(newChat);
       Navigator.of(context).pop();
     }

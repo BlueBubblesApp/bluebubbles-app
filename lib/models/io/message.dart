@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:async_task/async_task.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
@@ -955,7 +954,7 @@ class Message {
   Size getBubbleSize(BuildContext context,
       {double? maxWidthOverride, double? minHeightOverride, String? textOverride}) {
     // cache this value because the calculation can be expensive
-    if (ChatBloc().cachedMessageBubbleSizes[guid!] != null) return ChatBloc().cachedMessageBubbleSizes[guid!]!;
+    if (MessagesService.cachedBubbleSizes[guid!] != null) return MessagesService.cachedBubbleSizes[guid!]!;
     // if attachment, then grab width / height
     if (fullText.isEmpty && (attachments).isNotEmpty) {
       return Size(
@@ -997,7 +996,7 @@ class Message {
     // add 16 to the height to account for container margins
     size = Size(size.width, size.height + 16);
     // cache the value
-    ChatBloc().cachedMessageBubbleSizes[guid!] = size;
+    MessagesService.cachedBubbleSizes[guid!] = size;
     return size;
   }
 

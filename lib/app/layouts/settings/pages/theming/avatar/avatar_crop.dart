@@ -1,6 +1,3 @@
-import 'dart:typed_data';
-
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/helpers/ui_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
@@ -31,13 +28,13 @@ class _AvatarCropState extends OptimizedState<AvatarCrop> with ThemeHelpers {
   void onCropped(Uint8List croppedData) async {
     String appDocPath = fs.appDocDir.path;
     if (widget.index != null) {
-      File file = File(ChatBloc().chats[widget.index!].customAvatarPath ?? "$appDocPath/avatars/${ChatBloc().chats[widget.index!].guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
-      if (ChatBloc().chats[widget.index!].customAvatarPath == null) {
+      File file = File(chats.chats[widget.index!].customAvatarPath ?? "$appDocPath/avatars/${chats.chats[widget.index!].guid.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
+      if (chats.chats[widget.index!].customAvatarPath == null) {
         await file.create(recursive: true);
       }
       await file.writeAsBytes(croppedData);
-      ChatBloc().chats[widget.index!].customAvatarPath = file.path;
-      ChatBloc().chats[widget.index!].save(updateCustomAvatarPath: true);
+      chats.chats[widget.index!].customAvatarPath = file.path;
+      chats.chats[widget.index!].save(updateCustomAvatarPath: true);
       Navigator.of(context).pop();
       ns.backSettings(context);
       showSnackbar("Notice", "Custom chat avatar saved successfully");

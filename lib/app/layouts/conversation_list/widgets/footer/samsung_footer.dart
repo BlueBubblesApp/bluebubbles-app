@@ -1,7 +1,7 @@
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -73,11 +73,7 @@ class _SamsungFooterState extends CustomState<SamsungFooter, void, ConversationL
           IconButton(
             onPressed: () {
               for (Chat element in controller.selectedChats) {
-                if (element.isArchived!) {
-                  ChatBloc().unArchiveChat(element);
-                } else {
-                  ChatBloc().archiveChat(element);
-                }
+                element.toggleArchived(!element.isArchived!);
               }
               controller.clearSelectedChats();
             },
@@ -89,7 +85,7 @@ class _SamsungFooterState extends CustomState<SamsungFooter, void, ConversationL
           IconButton(
             onPressed: () {
               for (Chat element in controller.selectedChats) {
-                ChatBloc().deleteChat(element);
+                chats.removeChat(element);
                 Chat.deleteChat(element);
               }
               controller.clearSelectedChats();

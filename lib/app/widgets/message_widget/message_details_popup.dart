@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
@@ -81,7 +80,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     topMinimum = (widget.message.hasReactions ? 250 : 110);
     messageTopOffset = max(topMinimum, min(widget.childOffsetY, Get.height - widget.childSize!.height - 200));
 
-    dmChat = ChatBloc().chats.firstWhereOrNull(
+    dmChat = chats.chats.firstWhereOrNull(
           (chat) =>
               !chat.isGroup() && chat.participants.where((handle) => handle.id == widget.message.handleId).length == 1,
         );

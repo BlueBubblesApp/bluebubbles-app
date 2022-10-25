@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/helpers/models/reaction.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
@@ -160,7 +159,7 @@ class NotificationsService extends GetxService {
               WinToast.instance().bringWindowToFront();
               await intents.openChat(guid);
             } else if (actions[event.actionIndex!] == "Mark Read") {
-              await ChatBloc().toggleChatUnread(chat, false);
+              chat.toggleHasUnread(false);
             } else if (papi) {
               final reaction = ReactionHelpers.emojiToReaction(actions[event.actionIndex!]);
               outq.queue(OutgoingItem(

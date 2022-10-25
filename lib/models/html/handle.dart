@@ -1,4 +1,3 @@
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/models/html/chat.dart';
 import 'package:bluebubbles/models/html/contact.dart';
 import 'package:bluebubbles/models/html/objectbox.dart';
@@ -101,7 +100,7 @@ class Handle {
 
   static Handle? findOne({int? id, int? originalROWID, String? address}) {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    return ChatBloc().cachedHandles.firstWhereOrNull((e) => originalROWID != null ? e.originalROWID == originalROWID : e.address == address);
+    return chats.webCachedHandles.firstWhereOrNull((e) => originalROWID != null ? e.originalROWID == originalROWID : e.address == address);
   }
 
   static List<Handle> find() {

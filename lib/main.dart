@@ -3,7 +3,6 @@ import 'dart:isolate';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/models/country_codes.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
@@ -56,19 +55,6 @@ late final Box<ThemeStruct> themeBox;
 late final Box<ThemeEntry> themeEntryBox;
 late final Box<ThemeObject> themeObjectBox;
 final Completer<void> storeStartup = Completer();
-
-String? _recentIntent;
-String? get recentIntent => _recentIntent;
-set recentIntent(String? intent) {
-  _recentIntent = intent;
-
-  // After 5 seconds, we want to set the intent to null
-  if (intent != null) {
-    Future.delayed(Duration(seconds: 5), () {
-      _recentIntent = null;
-    });
-  }
-}
 
 @pragma('vm:entry-point')
 //ignore: prefer_void_to_null
@@ -184,6 +170,7 @@ Future<Null> initApp(bool bubble) async {
       await cs.init();
     }
     await intents.init();
+    chats.init();
 
     /* ----- DATE FORMATTING INITIALIZATION ----- */
     await initializeDateFormatting();
@@ -481,8 +468,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
     });
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      await ChatBloc().refreshChats();
-
       /* ----- SERVER VERSION CHECK ----- */
       if (kIsWeb && ss.settings.finishedSetup.value) {
         int version = (await ss.getServerDetails()).item4;

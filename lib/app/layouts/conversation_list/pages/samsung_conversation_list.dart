@@ -1,4 +1,4 @@
-import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/helpers/ui_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
@@ -81,7 +81,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
               showScrollbar: true,
               controller: controller.samsungScrollController,
                 child: Obx(() {
-                  final chats = ChatBloc().chats
+                  final _chats = chats.chats
                       .archivedHelper(controller.showArchivedChats)
                       .unknownSendersHelper(controller.showUnknownSenders);
 
@@ -93,7 +93,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                     slivers: [
                       SamsungHeader(parentController: controller),
 
-                      if (!ChatBloc().loadedChatBatch.value || chats.bigPinHelper(false).isEmpty)
+                      if (!chats.loadedChatBatch.value || _chats.bigPinHelper(false).isEmpty)
                         SliverToBoxAdapter(
                           child: Center(
                             child: Padding(
@@ -103,7 +103,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text(
-                                      !ChatBloc().loadedChatBatch.value
+                                      !chats.loadedChatBatch.value
                                           ? "Loading chats..."
                                           : showArchived
                                           ? "You have no archived chats"
@@ -113,7 +113,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                                       style: context.theme.textTheme.labelLarge,
                                     ),
                                   ),
-                                  if (!ChatBloc().loadedChatBatch.value)
+                                  if (!chats.loadedChatBatch.value)
                                     buildProgressIndicator(context, size: 15),
                                 ],
                               ),
@@ -121,16 +121,16 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                           ),
                         ),
 
-                      if (chats.bigPinHelper(true).isNotEmpty)
+                      if (_chats.bigPinHelper(true).isNotEmpty)
                         SliverPadding(
                           padding: const EdgeInsets.only(bottom: 15),
                           sliver: SliverList(
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
-                                final chat = chats.bigPinHelper(true)[index];
+                                final chat = _chats.bigPinHelper(true)[index];
                                 final item = ListItem(chat: chat, controller: controller);
                                 // give the list rounded corners at top and bottom
-                                if (chats.bigPinHelper(true).length == 1) {
+                                if (_chats.bigPinHelper(true).length == 1) {
                                   return Container(
                                     decoration: BoxDecoration(
                                       borderRadius: const BorderRadius.only(
@@ -144,7 +144,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                                     clipBehavior: Clip.antiAlias,
                                     child: item,
                                   );
-                                } else if (index == 0 || index == chats.bigPinHelper(true).length - 1) {
+                                } else if (index == 0 || index == _chats.bigPinHelper(true).length - 1) {
                                   return Container(
                                     decoration: BoxDecoration(
                                       borderRadius: index == 0 ? const BorderRadius.only(
@@ -166,7 +166,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                                   );
                                 }
                               },
-                              childCount: chats.bigPinHelper(true).length,
+                              childCount: _chats.bigPinHelper(true).length,
                             )
                           ),
                         ),
@@ -176,10 +176,10 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                         sliver: SliverList(
                             delegate: SliverChildBuilderDelegate(
                                   (context, index) {
-                                final chat = chats.bigPinHelper(false)[index];
+                                final chat = _chats.bigPinHelper(false)[index];
                                 final item = ListItem(chat: chat, controller: controller);
                                 // give the list rounded corners at top and bottom
-                                if (chats.bigPinHelper(false).length == 1) {
+                                if (_chats.bigPinHelper(false).length == 1) {
                                   return Container(
                                     decoration: BoxDecoration(
                                       borderRadius: const BorderRadius.only(
@@ -193,7 +193,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                                     clipBehavior: Clip.antiAlias,
                                     child: item,
                                   );
-                                } else if (index == 0 || index == chats.bigPinHelper(false).length - 1) {
+                                } else if (index == 0 || index == _chats.bigPinHelper(false).length - 1) {
                                   return Container(
                                     decoration: BoxDecoration(
                                       borderRadius: index == 0 ? const BorderRadius.only(
@@ -215,7 +215,7 @@ class _SamsungConversationListState extends OptimizedState<SamsungConversationLi
                                   );
                                 }
                               },
-                              childCount: chats.bigPinHelper(false).length,
+                              childCount: _chats.bigPinHelper(false).length,
                             )
                         ),
                       ),

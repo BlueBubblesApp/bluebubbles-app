@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -8,7 +7,6 @@ import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/html/attachment.dart';
 import 'package:bluebubbles/models/html/handle.dart';
 import 'package:bluebubbles/models/html/message.dart';
@@ -257,23 +255,23 @@ class Chat {
   }
 
   Chat toggleHasUnread(bool hasUnread) {
-    if (hasUnread) {
-      if (ChatManager().isChatActiveByGuid(guid)) {
-        return this;
-      }
+    if ((hasUnread && ChatManager().isChatActiveByGuid(guid)) || hasUnreadMessage == hasUnread) {
+      return this;
     }
 
     hasUnreadMessage = hasUnread;
-    ChatBloc().chats.firstWhereOrNull((e) => e.guid == guid)?.hasUnreadMessage = hasUnread;
-    save();
+    save(updateHasUnreadMessage: true);
 
-    if (hasUnread) {
-      eventDispatcher.emit("add-unread-chat", {"chatGuid": guid});
-    } else {
-      eventDispatcher.emit("remove-unread-chat", {"chatGuid": guid});
-    }
+    try {
+      if (ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {
+        if (!hasUnread && autoSendReadReceipts!) {
+          http.markChatRead(guid);
+        } else {
+          http.markChatUnread(guid);
+        }
+      }
+    } catch (_) {}
 
-    ChatBloc().updateUnreads();
     return this;
   }
 
@@ -335,9 +333,7 @@ class Chat {
     }
 
     if (checkForMessageText) {
-      // Update the chat position
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-      ChatBloc().updateChatPosition(this);
+      chats.sort();
     }
 
     // If the message is for adding or removing participants,
@@ -412,7 +408,7 @@ class Chat {
 
       // Sync all changes with the chatbloc
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-      ChatBloc().updateChat(this);
+      chats.updateChat(this);
     }
   }
 
@@ -466,7 +462,7 @@ class Chat {
     _pinIndex.value = null;
     save();
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    ChatBloc().updateChat(this);
+    chats.updateChat(this);
     return this;
   }
 
@@ -476,7 +472,7 @@ class Chat {
     muteArgs = null;
     save();
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    ChatBloc().updateChat(this);
+    chats.updateChat(this);
     return this;
   }
 
@@ -485,7 +481,7 @@ class Chat {
     this.isArchived = isArchived;
     save();
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    ChatBloc().updateChat(this);
+    chats.updateChat(this);
     return this;
   }
 
@@ -498,11 +494,10 @@ class Chat {
   }
 
   static Future<Chat?> findOneWeb({String? guid, String? chatIdentifier}) async {
-    await ChatBloc().chatRequest!.future;
     if (guid != null) {
-      return ChatBloc().chats.firstWhere((e) => e.guid == guid) as Chat;
+      return chats.chats.firstWhere((e) => e.guid == guid) as Chat;
     } else if (chatIdentifier != null) {
-      return ChatBloc().chats.firstWhereOrNull((e) => e.chatIdentifier == chatIdentifier) as Chat;
+      return chats.chats.firstWhereOrNull((e) => e.chatIdentifier == chatIdentifier) as Chat;
     }
     return null;
   }

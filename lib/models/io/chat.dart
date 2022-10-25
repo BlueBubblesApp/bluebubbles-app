@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:async_task/async_task.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -10,8 +9,6 @@ import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
-import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -305,6 +302,7 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
       for (Chat c in chats) {
         c.participants = List<Handle>.from(c.handles);
         c._deduplicateParticipants();
+        c.title = c.getTitle();
         if ([c.autoSendReadReceipts, c.autoSendTypingIndicators].contains(null)) {
           c.autoSendReadReceipts ??= true;
           c.autoSendTypingIndicators ??= true;
@@ -666,26 +664,27 @@ class Chat {
     });
   }
 
-  Chat toggleHasUnread(bool hasUnread) {
-    if (hasUnread) {
-      if (ChatManager().isChatActive(this)) {
-        return this;
-      }
+  Chat toggleHasUnread(bool hasUnread, {bool clearLocalNotifications = true}) {
+    if ((hasUnread && ChatManager().isChatActive(this)) || hasUnreadMessage == hasUnread) {
+      return this;
     }
-
-    if (hasUnreadMessage == hasUnread || (recentIntent != null && recentIntent != guid)) return this;
 
     hasUnreadMessage = hasUnread;
-    ChatBloc().chats.firstWhereOrNull((e) => e.guid == guid)?.hasUnreadMessage = hasUnread;
     save(updateHasUnreadMessage: true);
 
-    if (hasUnread) {
-      eventDispatcher.emit("add-unread-chat", {"chatGuid": guid});
-    } else {
-      eventDispatcher.emit("remove-unread-chat", {"chatGuid": guid});
-    }
+    try {
+      if (clearLocalNotifications && !hasUnread) {
+        mcs.invokeMethod("clear-chat-notifs", {"chatGuid": guid});
+      }
+      if (ss.settings.enablePrivateAPI.value && ss.settings.privateMarkChatAsRead.value) {
+        if (!hasUnread && autoSendReadReceipts!) {
+          http.markChatRead(guid);
+        } else {
+          http.markChatUnread(guid);
+        }
+      }
+    } catch (_) {}
 
-    ChatBloc().updateUnreads();
     return this;
   }
 
@@ -765,11 +764,6 @@ class Chat {
       } else if (!ChatManager().isChatActive(this)) {
         toggleHasUnread(true);
       }
-    }
-
-    if (checkForMessageText) {
-      // Update the chat position
-      ChatBloc().updateChatPosition(this);
     }
 
     // If the message is for adding or removing participants,
@@ -860,9 +854,6 @@ class Chat {
     final chat = await ChatManager().fetchChat(guid);
     if (chat != null) {
       chat.save();
-
-      // Sync all changes with the chatbloc
-      ChatBloc().updateChat(this);
     }
   }
 
@@ -997,7 +988,6 @@ class Chat {
     this.isPinned = isPinned;
     _pinIndex.value = null;
     save(updateIsPinned: true, updatePinIndex: true);
-    ChatBloc().updateChat(this);
     return this;
   }
 
@@ -1006,7 +996,6 @@ class Chat {
     muteType = isMuted ? "mute" : null;
     muteArgs = null;
     save(updateMuteType: true, updateMuteArgs: true);
-    ChatBloc().updateChat(this);
     return this;
   }
 
@@ -1014,7 +1003,6 @@ class Chat {
     if (id == null) return this;
     this.isArchived = isArchived;
     save(updateIsArchived: true);
-    ChatBloc().updateChat(this);
     return this;
   }
 
@@ -1025,7 +1013,6 @@ class Chat {
     if (autoSendReadReceipts) {
       http.markChatRead(guid);
     }
-    ChatBloc().updateChat(this);
     return this;
   }
 
@@ -1036,18 +1023,11 @@ class Chat {
     if (!autoSendTypingIndicators) {
       socket.sendMessage("stopped-typing", {"chatGuid": guid});
     }
-    ChatBloc().updateChat(this);
     return this;
   }
 
   /// Finds a chat - only use this method on Flutter Web!!!
   static Future<Chat?> findOneWeb({String? guid, String? chatIdentifier}) async {
-    await ChatBloc().chatRequest!.future;
-    if (guid != null) {
-      return ChatBloc().chats.firstWhere((e) => e.guid == guid);
-    } else if (chatIdentifier != null) {
-      return ChatBloc().chats.firstWhereOrNull((e) => e.chatIdentifier == chatIdentifier);
-    }
     return null;
   }
 
@@ -1126,44 +1106,44 @@ class Chat {
     return message;
   }
 
-  static Chat merge(Chat chat1, Chat chat2) {
-    chat1.id ??= chat2.id;
-    chat1._customAvatarPath.value ??= chat2._customAvatarPath.value;
-    chat1._pinIndex.value ??= chat2._pinIndex.value;
-    chat1.autoSendReadReceipts ??= chat2.autoSendReadReceipts;
-    chat1.autoSendTypingIndicators ??= chat2.autoSendTypingIndicators;
-    chat1.textFieldText ??= chat2.textFieldText;
-    if (chat1.textFieldAttachments.isEmpty) {
-      chat1.textFieldAttachments.addAll(chat2.textFieldAttachments);
+  Chat merge(Chat other) {
+    id ??= other.id;
+    _customAvatarPath.value ??= other._customAvatarPath.value;
+    _pinIndex.value ??= other._pinIndex.value;
+    autoSendReadReceipts ??= other.autoSendReadReceipts;
+    autoSendTypingIndicators ??= other.autoSendTypingIndicators;
+    textFieldText ??= other.textFieldText;
+    if (textFieldAttachments.isEmpty) {
+      textFieldAttachments.addAll(other.textFieldAttachments);
     }
-    chat1.chatIdentifier ??= chat2.chatIdentifier;
-    chat1.displayName ??= chat2.displayName;
-    chat1.fakeLatestMessageText ??= chat2.fakeLatestMessageText;
-    if (chat1.handles.isEmpty) {
-      chat1.handles.addAll(chat2.handles);
+    chatIdentifier ??= other.chatIdentifier;
+    displayName ??= other.displayName;
+    fakeLatestMessageText ??= other.fakeLatestMessageText;
+    if (handles.isEmpty) {
+      handles.addAll(other.handles);
     }
 
-    chat1.hasUnreadMessage ??= chat2.hasUnreadMessage;
-    chat1.isArchived ??= chat2.isArchived;
-    chat1.isFiltered ??= chat2.isFiltered;
-    chat1.isPinned ??= chat2.isPinned;
-    chat1.latestMessage ??= chat2.latestMessage;
-    chat1.latestMessageDate ??= chat2.latestMessageDate;
-    chat1.latestMessageText ??= chat2.latestMessageText;
+    hasUnreadMessage ??= other.hasUnreadMessage;
+    isArchived ??= other.isArchived;
+    isFiltered ??= other.isFiltered;
+    isPinned ??= other.isPinned;
+    latestMessage ??= other.latestMessage;
+    latestMessageDate ??= other.latestMessageDate;
+    latestMessageText ??= other.latestMessageText;
     
-    if (chat1.messages.isEmpty) {
-      chat1.messages.addAll(chat2.messages);
+    if (messages.isEmpty) {
+      messages.addAll(other.messages);
     }
 
-    chat1.muteArgs ??= chat2.muteArgs;
-    if (chat1.participants.isEmpty) {
-      chat1.participants.addAll(chat2.participants);
+    muteArgs ??= other.muteArgs;
+    if (participants.isEmpty) {
+      participants.addAll(other.participants);
     }
 
-    chat1.style ??= chat2.style;
-    chat1.title ??= chat2.title;
+    style ??= other.style;
+    title ??= other.title;
 
-    return chat1;
+    return this;
   }
 
   static int sort(Chat? a, Chat? b) {

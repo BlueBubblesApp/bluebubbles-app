@@ -1,5 +1,4 @@
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
@@ -198,7 +197,7 @@ class FullSyncManager extends SyncManager {
     addToOutput("Reloading your contacts...");
     await cs.refreshContacts(reloadUI: false);
     addToOutput("Reloading your chats...");
-    await ChatBloc().refreshChats(force: true);
+    await chats.init();
     await super.complete();
   }
 }

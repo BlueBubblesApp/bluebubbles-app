@@ -1,5 +1,4 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -10,8 +9,6 @@ import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/custom_ava
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/advanced/advanced_theming_panel.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
@@ -561,7 +558,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         ),
                         onTap: () async {
                           controller.gettingIcons.value = true;
-                          for (Chat c in ChatBloc().chats.where((c) => c.isGroup())) {
+                          for (Chat c in chats.chats.where((c) => c.isGroup())) {
                             final response = await http.getChatIcon(c.guid).catchError((err) async {
                               Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
                               return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));

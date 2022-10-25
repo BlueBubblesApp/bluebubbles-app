@@ -1,7 +1,7 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/helpers/ui_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
@@ -54,7 +54,7 @@ class PinnedOrderPanel extends StatelessWidget {
                   TextButton(
                       child: Text("Reset", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                       onPressed: () {
-                        ChatBloc().removePinIndices();
+                        chats.removePinIndices();
                       }),
                 ],
               ),
@@ -68,7 +68,7 @@ class PinnedOrderPanel extends StatelessWidget {
             mainAxisSize: MainAxisSize.max,
             children: <Widget>[
               Obx(() {
-                if (!ChatBloc().loadedChatBatch.value) {
+                if (!chats.loadedChatBatch.value) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 50.0),
@@ -87,7 +87,7 @@ class PinnedOrderPanel extends StatelessWidget {
                     ),
                   );
                 }
-                if (ChatBloc().hasChats.value && ChatBloc().chats.bigPinHelper(true).isEmpty) {
+                if (chats.hasChats.value && chats.chats.bigPinHelper(true).isEmpty) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 50.0),
@@ -102,17 +102,17 @@ class PinnedOrderPanel extends StatelessWidget {
                 return ReorderableListView.builder(
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),
-                  onReorder: ChatBloc().updateChatPinIndex,
+                  onReorder: chats.updateChatPinIndex,
                   header: Padding(
                     padding: const EdgeInsets.all(13.0),
                     child: Text("Set the order of pinned chats by dragging the chat tile to the desired location.", style: context.theme.textTheme.bodyLarge),
                   ),
                   itemBuilder: (context, index) {
                     return AbsorbPointer(
-                      key: Key(ChatBloc().chats.bigPinHelper(true)[index].guid.toString()),
+                      key: Key(chats.chats.bigPinHelper(true)[index].guid.toString()),
                       absorbing: true,
                       child: ConversationTile(
-                        chat: ChatBloc().chats.bigPinHelper(true)[index],
+                        chat: chats.chats.bigPinHelper(true)[index],
                         controller: Get.put(
                           ConversationListController(showUnknownSenders: true, showArchivedChats: true),
                           tag: "pinned-order-panel"
@@ -122,7 +122,7 @@ class PinnedOrderPanel extends StatelessWidget {
                       ),
                     );
                   },
-                  itemCount: ChatBloc().chats.bigPinHelper(true).length,
+                  itemCount: chats.chats.bigPinHelper(true).length,
                 );
               }),
             ],

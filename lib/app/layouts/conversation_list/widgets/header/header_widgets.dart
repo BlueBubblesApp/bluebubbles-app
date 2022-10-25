@@ -1,4 +1,3 @@
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/helpers/ui_helpers.dart';
@@ -89,7 +88,7 @@ class OverflowMenu extends StatelessWidget {
       ) : null,
       onSelected: (int value) {
         if (value == 0) {
-          ChatBloc().markAllAsRead();
+          chats.markAllAsRead();
         } else if (value == 1) {
           ns.pushLeft(
             context,

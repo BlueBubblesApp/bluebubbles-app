@@ -1,4 +1,3 @@
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -11,8 +10,8 @@ class NetworkTasks {
       await ss.getServerDetails(refresh: true);
       ss.checkServerUpdate(context: Get.context!);
 
-      if (kIsWeb && ChatBloc().chats.isEmpty) {
-        await ChatBloc().refreshChats(force: true);
+      if (kIsWeb && chats.chats.isEmpty) {
+        await chats.init();
       }
       if (kIsWeb && cs.contacts.isEmpty) {
         await cs.refreshContacts();

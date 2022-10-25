@@ -1,4 +1,3 @@
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/helpers/ui_helpers.dart';
@@ -407,7 +406,7 @@ class ChatListState extends OptimizedState<ChatList> with ThemeHelpers {
       physics: ThemeSwitcher.getScrollPhysics(),
       slivers: <Widget>[
         Obx(() {
-          if (!ChatBloc().loadedChatBatch.value) {
+          if (!chats.loadedChatBatch.value) {
             return SliverToBoxAdapter(
               child: Center(
                 child: Padding(
@@ -428,7 +427,7 @@ class ChatListState extends OptimizedState<ChatList> with ThemeHelpers {
               ),
             );
           }
-          if (ChatBloc().loadedChatBatch.value && ChatBloc().chats.isEmpty) {
+          if (chats.loadedChatBatch.value && chats.chats.isEmpty) {
             return SliverToBoxAdapter(
               child: Center(
                 child: Padding(
@@ -462,17 +461,17 @@ class ChatListState extends OptimizedState<ChatList> with ThemeHelpers {
                       controller: _controller,
                       itemBuilder: (context, index) {
                         return ConversationTile(
-                          key: Key(ChatBloc().chats[index].guid.toString()),
-                          chat: ChatBloc().chats[index],
+                          key: Key(chats.chats[index].guid.toString()),
+                          chat: chats.chats[index],
                           controller: Get.put(
                             ConversationListController(showUnknownSenders: true, showArchivedChats: true),
                             tag: "notification-panel"
                           ),
                           inSelectMode: true,
-                          subtitle: Text(getSubtitle(ChatBloc().chats[index]),
+                          subtitle: Text(getSubtitle(chats.chats[index]),
                               style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),),
                           onSelect: (_) async {
-                            final chat = ChatBloc().chats[index];
+                            final chat = chats.chats[index];
                             await showDialog(
                               context: context,
                               builder: (context) => NotificationSettingsDialog(chat, () {
@@ -482,7 +481,7 @@ class ChatListState extends OptimizedState<ChatList> with ThemeHelpers {
                           },
                         );
                       },
-                      itemCount: ChatBloc().chats.length,
+                      itemCount: chats.chats.length,
                     ),
                   ),
                 ),

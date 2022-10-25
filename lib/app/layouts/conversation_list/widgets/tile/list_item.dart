@@ -1,4 +1,3 @@
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
@@ -117,16 +116,12 @@ class ListItem extends StatelessWidget {
             } else if (action == MaterialSwipeAction.alerts) {
               chat.toggleMute(chat.muteType != "mute");
             } else if (action == MaterialSwipeAction.delete) {
-              ChatBloc().deleteChat(chat);
+              chats.removeChat(chat);
               Chat.deleteChat(chat);
             } else if (action == MaterialSwipeAction.mark_read) {
-              ChatBloc().toggleChatUnread(chat, !chat.hasUnreadMessage!);
+              chat.toggleHasUnread(!chat.hasUnreadMessage!);
             } else if (action == MaterialSwipeAction.archive) {
-              if (chat.isArchived!) {
-                ChatBloc().unArchiveChat(chat);
-              } else {
-                ChatBloc().archiveChat(chat);
-              }
+              chat.toggleArchived(!chat.isArchived!);
             }
           },
           child: tile,

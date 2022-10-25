@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/helpers/ui_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
@@ -88,12 +88,12 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                 if (!showArchived && !showUnknown)
                   CupertinoHeader(controller: controller),
                 Obx(() {
-                  final chats = ChatBloc().chats
+                  final _chats = chats.chats
                       .archivedHelper(showArchived)
                       .unknownSendersHelper(showUnknown)
                       .bigPinHelper(true);
 
-                  if (chats.isEmpty) {
+                  if (_chats.isEmpty) {
                     return const SliverToBoxAdapter(child: SizedBox.shrink());
                   }
 
@@ -103,7 +103,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                   int colCount = kIsDesktop
                       ? ss.settings.pinColumnsLandscape.value
                       : ss.settings.pinColumnsPortrait.value;
-                  int pinCount = chats.length;
+                  int pinCount = _chats.length;
                   int usedRowCount = min((pinCount / colCount).ceil(), rowCount);
                   int maxOnPage = rowCount * colCount;
                   int _pageCount = (pinCount / maxOnPage).ceil();
@@ -135,11 +135,11 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                         ? WrapAlignment.start : WrapAlignment.center,
                                     children: List.generate(
                                       index < _filledPageCount
-                                          ? maxOnPage : chats.length % maxOnPage,
+                                          ? maxOnPage : _chats.length % maxOnPage,
                                       (_index) {
                                         return PinnedConversationTile(
-                                          key: Key(chats[index * maxOnPage + _index].guid.toString()),
-                                          chat: chats[index * maxOnPage + _index],
+                                          key: Key(_chats[index * maxOnPage + _index].guid.toString()),
+                                          chat: _chats[index * maxOnPage + _index],
                                           controller: controller,
                                         );
                                       },
@@ -180,12 +180,12 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                   );
                 }),
                 Obx(() {
-                  final chats = ChatBloc().chats
+                  final _chats = chats.chats
                       .archivedHelper(showArchived)
                       .unknownSendersHelper(showUnknown)
                       .bigPinHelper(false);
 
-                  if (!ChatBloc().loadedChatBatch.value || chats.isEmpty) {
+                  if (!chats.loadedChatBatch.value || _chats.isEmpty) {
                     return SliverToBoxAdapter(
                       child: Center(
                         child: Padding(
@@ -195,7 +195,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Text(
-                                  !ChatBloc().loadedChatBatch.value
+                                  !chats.loadedChatBatch.value
                                     ? "Loading chats..."
                                     : showArchived
                                     ? "You have no archived chats"
@@ -205,7 +205,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                   style: context.textTheme.labelLarge,
                                 ),
                               ),
-                              if (!ChatBloc().loadedChatBatch.value)
+                              if (!chats.loadedChatBatch.value)
                                 buildProgressIndicator(context, size: 15),
                             ],
                           ),
@@ -217,7 +217,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        final chat = chats[index];
+                        final chat = _chats[index];
                         final child = ConversationTile(
                           key: Key(chat.guid.toString()),
                           chat: chat,
@@ -283,7 +283,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                       flex: 2,
                                       icon: CupertinoIcons.trash,
                                       onPressed: (context) {
-                                        ChatBloc().deleteChat(chat);
+                                        chats.removeChat(chat);
                                         Chat.deleteChat(chat);
                                       },
                                     ),
@@ -296,7 +296,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                           ? CupertinoIcons.person_crop_circle_badge_checkmark
                                           : CupertinoIcons.person_crop_circle_badge_exclam,
                                       onPressed: (context) {
-                                        ChatBloc().toggleChatUnread(chat, !chat.hasUnreadMessage!);
+                                        chat.toggleHasUnread(!chat.hasUnreadMessage!);
                                       },
                                     ),
                                   if (ss.settings.iosShowArchive.value)
@@ -306,11 +306,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                                       flex: 2,
                                       icon: chat.isArchived! ? CupertinoIcons.tray_arrow_up : CupertinoIcons.tray_arrow_down,
                                       onPressed: (context) {
-                                        if (chat.isArchived!) {
-                                          ChatBloc().unArchiveChat(chat);
-                                        } else {
-                                          ChatBloc().archiveChat(chat);
-                                        }
+                                        chat.toggleArchived(!chat.isArchived!);
                                       },
                                     ),
                                 ],
@@ -321,7 +317,7 @@ class CupertinoConversationListState extends OptimizedState<CupertinoConversatio
                           ],
                         );
                       },
-                      childCount: chats.length,
+                      childCount: _chats.length,
                     ),
                   );
                 }),

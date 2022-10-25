@@ -377,6 +377,19 @@ class HttpService extends GetxService {
     });
   }
 
+  /// Mark a chat read by its [guid]
+  Future<Response> markChatUnread(String guid, {CancelToken? cancelToken}) async {
+    if ((await ss.getServerDetails()).item1 < 13) throw Exception();
+    return runApiGuarded(() async {
+      final response = await dio.post(
+        "$origin/chat/$guid/unread",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return returnSuccessOrError(response);
+    });
+  }
+
   /// Add or remove a participant (specify [method] as "add" or "remove")
   /// to a chat by its [guid]. Provide a participant [address].
   Future<Response> addRemoveParticipant(String method, String guid, String address, {CancelToken? cancelToken}) async {

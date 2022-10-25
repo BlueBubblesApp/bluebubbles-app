@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
@@ -255,7 +254,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            ChatBloc().toggleChatUnread(widget.chat, !widget.chat.hasUnreadMessage!);
+            widget.chat.toggleHasUnread(!widget.chat.hasUnreadMessage!);
             popPeekView();
           },
           child: ListTile(
@@ -277,11 +276,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            if (widget.chat.isArchived!) {
-              ChatBloc().unArchiveChat(widget.chat);
-            } else {
-              ChatBloc().archiveChat(widget.chat);
-            }
+            widget.chat.toggleArchived(!widget.chat.isArchived!);
             popPeekView();
           },
           child: ListTile(
@@ -303,7 +298,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            ChatBloc().deleteChat(widget.chat);
+            chats.removeChat(widget.chat);
             Chat.deleteChat(widget.chat);
             popPeekView();
           },

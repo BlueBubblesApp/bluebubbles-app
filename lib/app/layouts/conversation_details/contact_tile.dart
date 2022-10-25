@@ -8,7 +8,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -287,7 +286,6 @@ class ContactTile extends StatelessWidget {
                       Logger.info("Removed participant ${handle.address}");
                       Chat updatedChat = Chat.fromMap(response.data["data"]);
                       updatedChat.save();
-                      await ChatBloc().updateChatPosition(updatedChat);
                       Chat chatWithParticipants = updatedChat.getParticipants();
 
                       Logger.info("Updating chat with ${chatWithParticipants.participants.length} participants");

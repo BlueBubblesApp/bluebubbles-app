@@ -1,6 +1,8 @@
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 
 extension UrlParsing on String {
   bool get hasUrl => urlRegex.hasMatch(this) && !kIsWeb;
@@ -34,4 +36,38 @@ Indicator shouldShow(
   if (latestMessage?.dateCreated != null) return Indicator.SENT;
 
   return Indicator.NONE;
+}
+
+extension ChatListHelpers on RxList<Chat> {
+  /// Helper to return archived chats or all chats depending on the bool passed to it
+  /// This helps reduce a vast amount of code in build methods so the widgets can
+  /// update without StreamBuilders
+  RxList<Chat> archivedHelper(bool archived) {
+    if (archived) {
+      return where((e) => e.isArchived ?? false).toList().obs;
+    } else {
+      return where((e) => !(e.isArchived ?? false)).toList().obs;
+    }
+  }
+
+  RxList<Chat> bigPinHelper(bool pinned) {
+    if (pinned) {
+      return where((e) => e.isPinned ?? false).toList().obs;
+    } else {
+      return where((e) => !(e.isPinned ?? false)).toList().obs;
+    }
+  }
+
+  RxList<Chat> unknownSendersHelper(bool unknown) {
+    if (!ss.settings.filterUnknownSenders.value) return this;
+    if (unknown) {
+      return where((e) => e.participants.length == 1 && cs.getContact(e.participants[0].address) == null)
+          .toList()
+          .obs;
+    } else {
+      return where((e) =>
+      e.participants.length > 1 ||
+          (e.participants.length == 1 && cs.getContact(e.participants[0].address) != null)).toList().obs;
+    }
+  }
 }

@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
@@ -537,7 +536,7 @@ class SentMessageHelper {
                           onPressed: () async {
                             Navigator.of(context).pop();
                             // Delete the message from the DB
-                            Message.softDelete(message.guid!);
+                            Message.delete(message.guid!);
 
                             // Remove the message from the Bloc
                             MessageManager().removeMessage(chat, message.guid);
@@ -547,9 +546,7 @@ class SentMessageHelper {
                             chat.latestMessage = latest.first;
                             chat.latestMessageDate = latest.first.dateCreated;
                             chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
-
-                            // Update it in the Bloc
-                            await ChatBloc().updateChatPosition(chat);
+                            chat.save();
                           },
                         ),
                       TextButton(

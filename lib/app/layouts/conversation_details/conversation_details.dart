@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
@@ -16,7 +15,6 @@ import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_cro
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -122,8 +120,6 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   } else {
                     Get.back();
                     widget.chat.changeName(controller.text);
-                    widget.chat.getTitle();
-                    ChatBloc().updateChat(chat);
                   }
                 },
               ),
@@ -807,13 +803,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       title: "Archive Conversation",
                       initialVal: widget.chat.isArchived!,
                       onChanged: (value) {
-                        if (value) {
-                          ChatBloc().archiveChat(widget.chat);
-                        } else {
-                          ChatBloc().unArchiveChat(widget.chat);
-                        }
-                        eventDispatcher.emit("refresh", null);
-                        if (mounted) setState(() {});
+                        widget.chat.toggleArchived(value);
                       },
                       backgroundColor: tileColor,
                     ),

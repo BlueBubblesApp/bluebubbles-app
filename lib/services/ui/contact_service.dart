@@ -1,9 +1,7 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -89,7 +87,7 @@ class ContactsService extends GetxService {
     // load stored handles
     final List<Handle> handles = [];
     if (kIsWeb) {
-      handles.addAll(ChatBloc().cachedHandles);
+      handles.addAll(chats.webCachedHandles);
     } else {
       handles.addAll(handleBox.getAll());
     }
@@ -228,7 +226,7 @@ class ContactsService extends GetxService {
         logger?.call("Got exception: $e");
         logger?.call(s.toString());
       }
-      final handlesToSearch = List<Handle>.from(ChatBloc().cachedHandles);
+      final handlesToSearch = List<Handle>.from(chats.webCachedHandles);
       for (Contact c in contacts) {
         final handle = cs.matchContactToHandle(c, handlesToSearch);
         if (handle != null) {

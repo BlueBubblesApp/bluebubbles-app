@@ -1,4 +1,3 @@
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
@@ -235,9 +234,9 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
   Object? invoke(covariant OpenNextChatIntent intent) {
     final chat = ChatManager().activeChat?.chat;
     if (chat != null) {
-      final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
-      if (index > -1 && index < ChatBloc().chats.length - 1) {
-        final _chat = ChatBloc().chats[index + 1];
+      final index = chats.chats.indexWhere((e) => e.guid == chat.guid);
+      if (index > -1 && index < chats.chats.length - 1) {
+        final _chat = chats.chats[index + 1];
         ns.pushAndRemoveUntil(
           context,
           ConversationView(
@@ -266,9 +265,9 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
   Object? invoke(covariant OpenPreviousChatIntent intent) {
     final chat = ChatManager().activeChat?.chat;
     if (chat != null) {
-      final index = ChatBloc().chats.indexWhere((e) => e.guid == chat.guid);
-      if (index > 0 && index < ChatBloc().chats.length) {
-        final _chat = ChatBloc().chats[index - 1];
+      final index = chats.chats.indexWhere((e) => e.guid == chat.guid);
+      if (index > 0 && index < chats.chats.length) {
+        final _chat = chats.chats[index - 1];
         ns.pushAndRemoveUntil(
           context,
           ConversationView(

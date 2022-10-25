@@ -1,4 +1,3 @@
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/header_widgets.dart';
@@ -204,11 +203,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                       IconButton(
                         onPressed: () {
                           for (Chat element in controller.selectedChats) {
-                            if (element.isArchived!) {
-                              ChatBloc().unArchiveChat(element);
-                            } else {
-                              ChatBloc().archiveChat(element);
-                            }
+                            element.toggleArchived(!element.isArchived!);
                           }
                           controller.clearSelectedChats();
                         },
@@ -220,7 +215,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                       IconButton(
                         onPressed: () {
                           for (Chat element in controller.selectedChats) {
-                            ChatBloc().deleteChat(element);
+                            chats.removeChat(element);
                             Chat.deleteChat(element);
                           }
                           controller.clearSelectedChats();
