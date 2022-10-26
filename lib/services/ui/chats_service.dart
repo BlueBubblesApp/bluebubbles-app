@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -12,6 +15,8 @@ ChatsService chats = Get.isRegistered<ChatsService>() ? Get.find<ChatsService>()
 
 class ChatsService extends GetxService {
   static const batchSize = 15;
+  int currentCount = 0;
+  late final StreamSubscription countSub;
 
   final RxBool hasChats = false.obs;
   final RxBool loadedChatBatch = false.obs;
@@ -20,12 +25,23 @@ class ChatsService extends GetxService {
   final List<Handle> webCachedHandles = [];
 
   Future<void> init() async {
+    // watch for new chats
+    final countQuery = (chatBox.query()
+      ..order(Chat_.id, flags: Order.descending)).watch(triggerImmediately: true);
+    countSub = countQuery.listen((event) {
+      final newCount = event.count();
+      if (newCount > currentCount) {
+        addChat(event.findFirst()!);
+      }
+      currentCount = newCount;
+    });
+
     Logger.info("Fetching chats...", tag: "ChatBloc");
-    int count = Chat.count() ?? (await http.chatCount().catchError((err) {
+    currentCount = Chat.count() ?? (await http.chatCount().catchError((err) {
       Logger.info("Error when fetching chat count!", tag: "ChatBloc");
     })).data['data']['total'];
 
-    if (count != 0) {
+    if (currentCount != 0) {
       hasChats.value = true;
     } else {
       loadedChatBatch.value = true;
@@ -33,7 +49,7 @@ class ChatsService extends GetxService {
     }
 
     final newChats = <Chat>[];
-    final batches = (count < batchSize) ? batchSize : (count / batchSize).ceil();
+    final batches = (currentCount < batchSize) ? batchSize : (currentCount / batchSize).ceil();
 
     for (int i = 0; i < batches; i++) {
       List<Chat> temp;
@@ -73,6 +89,12 @@ class ChatsService extends GetxService {
         ),
       });
     }
+  }
+
+  @override
+  void onClose() {
+    countSub.cancel();
+    super.onClose();
   }
 
   void sort() {
