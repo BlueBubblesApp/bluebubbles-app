@@ -2,6 +2,12 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## 1.11.0
+
+### Removed Features
+
+* Swipe actions on conversation tiles in iOS theme - use long-press for same functionality instead
+
 ## 1.10.1
 
 ### Fixes & Optimizations

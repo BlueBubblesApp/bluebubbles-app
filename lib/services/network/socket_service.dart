@@ -8,6 +8,7 @@ import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
@@ -63,14 +64,17 @@ class SocketService extends GetxService {
     socket.onError((data) => handleStatusUpdate(SocketState.error, data));
 
     // custom events
-    socket.on("new-message", (data) => handleCustomEvent("new-message", data));
-    socket.on("updated-message", (data) => handleCustomEvent("updated-message", data));
-    socket.on("message-send-errors", (data) => handleCustomEvent("message-send-errors", data));
-    socket.on("group-name-change", (data) => handleCustomEvent("group-name-change", data));
-    socket.on("participant-removed", (data) => handleCustomEvent("participant-removed", data));
-    socket.on("participant-added", (data) => handleCustomEvent("participant-added", data));
-    socket.on("participant-left", (data) => handleCustomEvent("participant-left", data));
-    socket.on("chat-read-status-changed", (data) => handleCustomEvent("chat-read-status-change", data));
+    // only listen to these events from socket on web/desktop (FCM handles on Android)
+    if (kIsWeb || kIsDesktop) {
+      socket.on("new-message", (data) => handleCustomEvent("new-message", data));
+      socket.on("updated-message", (data) => handleCustomEvent("updated-message", data));
+      socket.on("message-send-errors", (data) => handleCustomEvent("message-send-errors", data));
+      socket.on("group-name-change", (data) => handleCustomEvent("group-name-change", data));
+      socket.on("participant-removed", (data) => handleCustomEvent("participant-removed", data));
+      socket.on("participant-added", (data) => handleCustomEvent("participant-added", data));
+      socket.on("participant-left", (data) => handleCustomEvent("participant-left", data));
+      socket.on("chat-read-status-changed", (data) => handleCustomEvent("chat-read-status-change", data));
+    }
     socket.on("typing-indicator", (data) => handleCustomEvent("typing-indicator", data));
 
     socket.connect();

@@ -392,6 +392,7 @@ class Chat {
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
+    if (participants.isEmpty) participants = [];
   }
 
   bool get isTextForwarding => guid.startsWith("SMS");
@@ -988,6 +989,8 @@ class Chat {
     this.isPinned = isPinned;
     _pinIndex.value = null;
     save(updateIsPinned: true, updatePinIndex: true);
+    chats.updateChat(this);
+    chats.sort();
     return this;
   }
 
@@ -1003,6 +1006,8 @@ class Chat {
     if (id == null) return this;
     this.isArchived = isArchived;
     save(updateIsArchived: true);
+    chats.updateChat(this);
+    chats.sort();
     return this;
   }
 

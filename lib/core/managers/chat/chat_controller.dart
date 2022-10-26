@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
@@ -12,6 +13,7 @@ import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chewie_audio/chewie_audio.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -114,7 +116,11 @@ class ChatController {
       final chatQuery = chatBox.query(Chat_.guid.equals(chat.guid)).watch();
       sub = chatQuery.listen((Query<Chat> query) {
         final _chat = chatBox.get(chat.id!);
-        if (_chat != null) chats.updateChat(_chat);
+        if (_chat != null) {
+          bool shouldSort = chat.latestMessageDate != _chat.latestMessageDate;
+          chats.updateChat(_chat, shouldSort: shouldSort);
+          chat = _chat.merge(chat);
+        }
       });
     }
   }

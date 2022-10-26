@@ -36,17 +36,17 @@ class ChatsService extends GetxService {
     final batches = (count < batchSize) ? batchSize : (count / batchSize).ceil();
 
     for (int i = 0; i < batches; i++) {
-      List<Chat> _chats;
+      List<Chat> temp;
       if (kIsWeb) {
-        _chats = await ChatManager().getChats(withLastMessage: true, limit: batchSize, offset: i * batchSize);
+        temp = await ChatManager().getChats(withLastMessage: true, limit: batchSize, offset: i * batchSize);
       } else {
-        _chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
+        temp = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       }
 
-      for (Chat c in _chats) {
+      for (Chat c in temp) {
         ChatManager().createChatController(c);
       }
-      newChats.addAll(_chats);
+      newChats.addAll(temp);
 
       if (kIsWeb) {
         webCachedHandles.addAll(chats.map((e) => e.participants).flattened.toList());
@@ -79,14 +79,12 @@ class ChatsService extends GetxService {
     chats.sort(Chat.sort);
   }
 
-  void updateChat(Chat updated) {
+  void updateChat(Chat updated, {bool shouldSort = false}) {
     final index = chats.indexWhere((e) => updated.guid == e.guid);
     final toUpdate = chats[index];
-    bool shouldSort = toUpdate.isArchived != updated.isArchived
-        || toUpdate.isPinned != updated.isPinned
-        || toUpdate.pinIndex != updated.pinIndex
-        || toUpdate.latestMessageDate != updated.latestMessageDate;
-    chats[index] = updated.merge(toUpdate);
+    // this is so the list doesn't re-render
+    // ignore: invalid_use_of_protected_member
+    chats.value[index] = updated.merge(toUpdate);
     if (shouldSort) sort();
   }
 
@@ -119,9 +117,10 @@ class ChatsService extends GetxService {
 
     // Move the pinIndex for each of the chats, and save the pinIndex in the DB
     items.forEachIndexed((i, e) {
-    e.pinIndex = i;
-    e.save(updatePinIndex: true);
+      e.pinIndex = i;
+      e.save(updatePinIndex: true);
     });
+    chats.sort();
   }
 
   void removePinIndices() {
@@ -129,5 +128,6 @@ class ChatsService extends GetxService {
       element.pinIndex = null;
       element.save(updatePinIndex: true);
     });
+    chats.sort();
   }
 }
