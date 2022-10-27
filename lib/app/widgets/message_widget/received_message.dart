@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
@@ -20,7 +19,6 @@ import 'package:bluebubbles/app/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -43,7 +41,7 @@ class ReceivedMessage extends StatefulWidget {
   final Message? olderMessage;
   final Message? newerMessage;
   final bool showHandle;
-  final MessageBloc? messageBloc;
+  final MessagesService? messageBloc;
   final bool hasTimestampAbove;
   final bool hasTimestampBelow;
   final bool showReplies;
@@ -845,7 +843,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             widget.olderMessage?.guid != msg.guid)
           GestureDetector(
             onTap: () {
-              showReplyThread(context, widget.message, widget.messageBloc);
+              showReplyThread(context, widget.message, widget.messageBloc!);
             },
             child: Container(
               width: ns.width(context) - 10,
@@ -1022,27 +1020,28 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                   ),
                                 ),
                         ),
-                      Obx(() {
-                        final list =
-                            widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ??
-                                [].obs.reversed;
-                        if (list.isNotEmpty) {
-                          return GestureDetector(
-                            onTap: () {
-                              showReplyThread(context, widget.message, widget.messageBloc);
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
-                              child: Text(
-                                "${list.length} repl${list.length > 1 ? "ies" : "y"}",
-                                style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                      Builder(
+                        builder: (_) {
+                          final list =
+                              widget.messageBloc?.struct.threads(widget.message.guid!) ?? [];
+                          if (list.isNotEmpty) {
+                            return GestureDetector(
+                              onTap: () {
+                                showReplyThread(context, widget.message, widget.messageBloc!);
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
+                                child: Text(
+                                  "${list.length} repl${list.length > 1 ? "ies" : "y"}",
+                                  style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                                ),
                               ),
-                            ),
-                          );
-                        } else {
-                          return Container();
-                        }
-                      }),
+                            );
+                          } else {
+                            return Container();
+                          }
+                        },
+                      ),
                     ],
                   ),
                   // Add the timestamp for the samsung theme

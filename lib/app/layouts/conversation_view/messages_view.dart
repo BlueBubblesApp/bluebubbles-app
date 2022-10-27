@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -14,7 +13,6 @@ import 'package:bluebubbles/app/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -28,17 +26,17 @@ import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:scroll_to_index/scroll_to_index.dart';
 
 class MessagesView extends StatefulWidget {
-  final MessageBloc? messageBloc;
+  final bool isSearchView;
   final bool showHandle;
-  final Chat? chat;
+  final Chat chat;
   final Function? initComplete;
   final List<Message> messages;
 
   MessagesView({
     Key? key,
-    this.messageBloc,
+    required this.isSearchView,
     required this.showHandle,
-    this.chat,
+    required this.chat,
     this.initComplete,
     this.messages = const [],
   }) : super(key: key);
@@ -48,7 +46,7 @@ class MessagesView extends StatefulWidget {
 }
 
 class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver {
-  Completer<LoadMessageResult>? loader;
+  Completer<void>? loader;
   bool noMoreMessages = false;
   bool noMoreLocalMessages = false;
   List<Message> _messages = <Message>[];
@@ -68,6 +66,8 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
   Map<String, Widget> internalSmartReplies = {};
 
   late StreamController<List<String>> smartReplyController;
+  late final messageService = ms("${widget.isSearchView ? "search/" : ""}${widget.chat.guid}")
+    ..init(widget.chat, handleNewMessage);
 
   AutoScrollController? get scrollController {
     if (currentChat == null) return null;
@@ -81,12 +81,13 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
       !kIsDesktop &&
       (!ss.settings.redactedMode.value || !ss.settings.hideMessageContent.value);
 
+  Chat get chat => widget.chat;
+
   @override
   void initState() {
     super.initState();
 
     currentChat = ChatManager().activeChat;
-    if (widget.messageBloc != null) ever<MessageBlocEvent?>(widget.messageBloc!.event, (e) => handleNewMessage(e));
 
     smartReplyController = StreamController<List<String>>.broadcast();
 
@@ -104,11 +105,9 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
           loadedPages = [];
 
           // Reload the state after refreshing
-          widget.messageBloc!.refresh().then((_) async {
-            if (mounted) {
-              await rebuild(this);
-            }
-          });
+          messageService.reload();
+          messageService.init(chat, handleNewMessage);
+          await rebuild(this);
         }
       } else if (e.item1 == "add-custom-smartreply") {
         if (e.item2["path"] != null) {
@@ -135,15 +134,16 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       widgetsBuilt = true;
-      eventDispatcher.emit("update-highlight", widget.chat!.guid);
+      eventDispatcher.emit("update-highlight", widget.chat.guid);
       // See if we need to load anything from the message bloc
       await Future.delayed(Duration(milliseconds: 100));
       if (widget.messages.isNotEmpty) {
         _messages = widget.messages;
-      } else if (_messages.isEmpty && widget.messageBloc!.messages.isEmpty) {
-        widget.messageBloc!.getMessages();
-      } else if (_messages.isEmpty && widget.messageBloc!.messages.isNotEmpty) {
-        widget.messageBloc!.emitLoaded();
+      } else if (_messages.isEmpty && messageService.struct.isEmpty) {
+        messageService.loadChunk(0);
+      } else if (_messages.isEmpty && messageService.struct.isNotEmpty) {
+        _messages = messageService.struct.messages;
+        _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
       }
     });
   }
@@ -181,40 +181,38 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
     if (!smartReplyController.isClosed) smartReplyController.sink.add(replies);
   }
 
-  Future<void>? loadNextChunk() {
-    if (noMoreMessages || loadedPages.contains(_messages.length)) return null;
-    int messageCount = _messages.length;
+  Future<void> loadNextChunk() async {
+    if (noMoreMessages) return;
 
     // If we already are loading a chunk, don't load again
     if (loader != null && !loader!.isCompleted) {
       return loader!.future;
     }
-
-    // Create a new completer
     loader = Completer();
-    loadedPages.add(messageCount);
 
     // Start loading the next chunk of messages
-    widget.messageBloc!
-        .loadMessageChunk(_messages.length, checkLocal: !noMoreLocalMessages)
-        .then((LoadMessageResult val) async {
-      if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
-        if (val == LoadMessageResult.RETREIVED_NO_MESSAGES) {
-          noMoreMessages = true;
-          Logger.info("No more messages to load", tag: "MessageBloc");
-        } else if (val == LoadMessageResult.RETREIVED_LAST_PAGE) {
-          // Mark this chat saying we have no more messages to load
-          noMoreLocalMessages = true;
-        }
-      }
-
-      // Complete the future
-      loader!.complete(val);
-    }).catchError((ex) {
-      loader!.complete(LoadMessageResult.FAILED_TO_RETREIVE);
+    final gotMessages = await messageService.loadChunk(_messages.length).catchError((e) {
+      Logger.error("Failed to fetch message chunk! $e");
     });
+    noMoreMessages = !gotMessages;
+    final newMessages = messageService.struct.messages.sublist(_messages.length);
+
 
     return loader!.future;
+  }
+
+  void handleNewMessage(Message message) {
+    _messages.add(message);
+    _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+    final insertIndex = _messages.indexOf(message);
+    _listKey!.currentState!.insertItem(
+        insertIndex,
+        duration: Duration(milliseconds: 300),
+    );
+
+    if (insertIndex == 0 && showSmartReplies) {
+      updateReplies();
+    }
   }
 
   void handleNewMessage(MessageBlocEvent? event) async {
@@ -224,8 +222,8 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
     // Skip deleted messages
     if (event.message != null && event.message!.dateDeleted != null) return;
-    if (!isNullOrEmpty(event.messages)!) {
-      event.messages = event.messages.where((element) => element.dateDeleted == null).toList();
+    if (!isNullOrEmpty(event._messages)!) {
+      event._messages = event._messages.where((element) => element.dateDeleted == null).toList();
     }
     int originalMessageLength = _messages.length;
     if (event.type == MessageBlocEventType.insert && mounted) {
@@ -245,7 +243,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
         }
       }
 
-      _messages = event.messages;
+      _messages = event._messages;
       if (_listKey != null && _listKey!.currentState != null) {
         _listKey!.currentState!.insertItem(
           event.index != null ? event.index! : 0,
@@ -287,7 +285,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
       }
     } else {
       int originalMessageLength = _messages.length;
-      _messages = event.messages;
+      _messages = event._messages;
       /*_messages.forEach((message) {
         currentChat?.getAttachmentsForMessage(message);
         currentChat?.messageMarkers.updateMessageMarkers(message);
@@ -586,11 +584,11 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                                           olderMessage: olderMessage,
                                           newerMessage: newerMessage,
                                           showHandle: widget.showHandle,
-                                          isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                                          isFirstSentMessage: messageService.mostRecentSent?.guid == _messages[index].guid,
                                           showHero: fullAnimation,
                                           showReplies: true,
                                           onUpdate: (event) => onUpdateMessage(event),
-                                          bloc: widget.messageBloc!,
+                                          bloc: messageService,
                                           autoplayEffect: index == 0 && _messages[index].originalROWID != null,
                                         )),
                                     )

@@ -1,4 +1,3 @@
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -9,7 +8,6 @@ import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -26,7 +24,7 @@ class MessagePopupHolder extends StatefulWidget {
   final Message? olderMessage;
   final Message? newerMessage;
   final Function(bool) popupPushed;
-  final MessageBloc? messageBloc;
+  final MessagesService? messageBloc;
 
   MessagePopupHolder({
     Key? key,

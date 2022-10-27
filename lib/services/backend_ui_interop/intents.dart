@@ -1,4 +1,3 @@
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
@@ -7,7 +6,6 @@ import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -87,13 +85,13 @@ class ReplyRecentIntent extends Intent {
 }
 
 class ReplyRecentAction extends Action<ReplyRecentIntent> {
-  ReplyRecentAction(this.bloc);
+  ReplyRecentAction(this.service);
 
-  final MessageBloc bloc;
+  final MessagesService service;
 
   @override
   Object? invoke(covariant ReplyRecentIntent intent) async {
-    final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
+    final message = service.mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       eventDispatcher.emit("focus-keyboard", message);
     }
@@ -106,14 +104,14 @@ class HeartRecentIntent extends Intent {
 }
 
 class HeartRecentAction extends Action<HeartRecentIntent> {
-  HeartRecentAction(this.bloc, this.chat);
+  HeartRecentAction(this.service, this.chat);
 
-  final MessageBloc bloc;
+  final MessagesService service;
   final Chat chat;
 
   @override
   Object? invoke(covariant HeartRecentIntent intent) async {
-    final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
+    final message = service.mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       _sendReactionHelper(chat, message, ReactionType.love);
     }
@@ -126,14 +124,14 @@ class LikeRecentIntent extends Intent {
 }
 
 class LikeRecentAction extends Action<LikeRecentIntent> {
-  LikeRecentAction(this.bloc, this.chat);
+  LikeRecentAction(this.service, this.chat);
 
-  final MessageBloc bloc;
+  final MessagesService service;
   final Chat chat;
 
   @override
   Object? invoke(covariant LikeRecentIntent intent) async {
-    final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
+    final message = service.mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       _sendReactionHelper(chat, message, ReactionType.like);
     }
@@ -146,14 +144,14 @@ class DislikeRecentIntent extends Intent {
 }
 
 class DislikeRecentAction extends Action<DislikeRecentIntent> {
-  DislikeRecentAction(this.bloc, this.chat);
+  DislikeRecentAction(this.service, this.chat);
 
-  final MessageBloc bloc;
+  final MessagesService service;
   final Chat chat;
 
   @override
   Object? invoke(covariant DislikeRecentIntent intent) async {
-    final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
+    final message = service.mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       _sendReactionHelper(chat, message, ReactionType.dislike);
     }
@@ -166,14 +164,14 @@ class LaughRecentIntent extends Intent {
 }
 
 class LaughRecentAction extends Action<LaughRecentIntent> {
-  LaughRecentAction(this.bloc, this.chat);
+  LaughRecentAction(this.service, this.chat);
 
-  final MessageBloc bloc;
+  final MessagesService service;
   final Chat chat;
 
   @override
   Object? invoke(covariant LaughRecentIntent intent) async {
-    final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
+    final message = service.mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       _sendReactionHelper(chat, message, ReactionType.laugh);
     }
@@ -186,14 +184,14 @@ class EmphasizeRecentIntent extends Intent {
 }
 
 class EmphasizeRecentAction extends Action<EmphasizeRecentIntent> {
-  EmphasizeRecentAction(this.bloc, this.chat);
+  EmphasizeRecentAction(this.service, this.chat);
 
-  final MessageBloc bloc;
+  final MessagesService service;
   final Chat chat;
 
   @override
   Object? invoke(covariant EmphasizeRecentIntent intent) async {
-    final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
+    final message = service.mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       _sendReactionHelper(chat, message, ReactionType.emphasize);
     }
@@ -206,14 +204,14 @@ class QuestionRecentIntent extends Intent {
 }
 
 class QuestionRecentAction extends Action<QuestionRecentIntent> {
-  QuestionRecentAction(this.bloc, this.chat);
+  QuestionRecentAction(this.service, this.chat);
 
-  final MessageBloc bloc;
+  final MessagesService service;
   final Chat chat;
 
   @override
   Object? invoke(covariant QuestionRecentIntent intent) async {
-    final message = bloc.messages.values.firstWhereOrNull((element) => element.associatedMessageGuid == null);
+    final message = service.mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       _sendReactionHelper(chat, message, ReactionType.question);
     }

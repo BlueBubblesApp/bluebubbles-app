@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -17,7 +16,6 @@ import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -38,7 +36,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Chat? chat;
   Chat? previousChat;
   bool? isCreator;
-  MessageBloc? messageBloc;
+  MessagesService? messageBloc;
 
   /// Regular conversation view variables
   OverlayEntry? entry;
@@ -146,8 +144,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     });
   }
 
-  MessageBloc initMessageBloc() {
-    messageBloc = MessageBloc(chat);
+  MessagesService initMessageBloc() {
+    messageBloc = ms(chat.guid)..init();
     return messageBloc!;
   }
 

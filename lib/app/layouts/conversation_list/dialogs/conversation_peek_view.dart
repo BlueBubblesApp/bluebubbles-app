@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
@@ -169,7 +168,6 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                                           isFirstSentMessage: false,
                                           showHero: false,
                                           showReplies: true,
-                                          bloc: MessageBloc(widget.chat),
                                           autoplayEffect: false,
                                         )
                                       ),

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -17,7 +16,6 @@ import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/app/widgets/message_widget/stickers_widget.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -54,7 +52,7 @@ class MessageWidget extends StatefulWidget {
   final bool showHero;
   final bool showReplies;
   final Message? Function(NewMessageEvent event)? onUpdate;
-  final MessageBloc? bloc;
+  final MessagesService? bloc;
   final bool autoplayEffect;
 
   late final _fakeOlderSubject = faker.lorem.words(olderMessage?.subject?.split(" ").length ?? 0).join(" ");
@@ -124,13 +122,13 @@ class _MessageState extends State<MessageWidget> {
         if (message.associatedMessageGuid == widget.message.guid) fetchAssoc = true;
         if (message.hasAttachments) fetchAttach = true;
 
-        if (kIsWeb && message.associatedMessageGuid != null) {
+        /*if (kIsWeb && message.associatedMessageGuid != null) {
           // someone removed their reaction (remove original)
           if (message.associatedMessageType!.startsWith("-") &&
               ReactionTypes.toList().contains(message.associatedMessageType!.replaceAll("-", ""))) {
-            MapEntry? entry = widget.bloc?.reactionMessages.entries.firstWhereOrNull((entry) =>
-                entry.value.handle?.address == message.handle?.address &&
-                entry.value.associatedMessageType == message.associatedMessageType!.replaceAll("-", ""));
+            MapEntry? entry = widget.bloc?.struct.reactions.firstWhereOrNull((entry) =>
+                entry.handle?.address == message.handle?.address &&
+                entry.associatedMessageType == message.associatedMessageType!.replaceAll("-", ""));
             if (entry != null) widget.bloc?.reactionMessages.remove(entry.key);
             // someone changed their reaction (remove original and add new)
           } else if (widget.bloc?.reactionMessages.entries.firstWhereOrNull((e) =>
@@ -148,7 +146,7 @@ class _MessageState extends State<MessageWidget> {
               ReactionTypes.toList().contains(message.associatedMessageType)) {
             widget.bloc?.reactionMessages[message.guid!] = message;
           }
-        }
+        }*/
 
         // If the associated message GUID matches this one, fetch associated messages
         if (fetchAssoc) fetchAssociatedMessages(shouldReload: true);
@@ -200,7 +198,7 @@ class _MessageState extends State<MessageWidget> {
   void fetchAssociatedMessages({bool shouldReload = false}) {
     associatedCount = _message.associatedMessages.length;
     try {
-      _message.fetchAssociatedMessages(bloc: widget.bloc, shouldRefresh: shouldReload);
+      _message.fetchAssociatedMessages(service: widget.bloc, shouldRefresh: shouldReload);
     } catch (_) {}
 
     bool hasChanges = false;

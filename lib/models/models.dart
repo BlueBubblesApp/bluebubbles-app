@@ -37,3 +37,4 @@ export 'package:bluebubbles/models/global/structured_name.dart';
 export 'package:bluebubbles/models/global/queue_items.dart';
 export 'package:bluebubbles/models/global/async_image_input.dart';
 export 'package:bluebubbles/models/global/reactions.dart';
+export 'package:bluebubbles/models/global/chat_messages.dart';

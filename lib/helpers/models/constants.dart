@@ -105,6 +105,10 @@ enum Monet {
 
 enum Indicator { READ, DELIVERED, SENT, NONE }
 
+enum LoadMessageResult { RETRIEVED_MESSAGES, FAILED_TO_RETRIEVE, RETRIEVED_LAST_PAGE }
+
+enum SearchMethod {local, network}
+
 final urlRegex = RegExp(
     r"(?:^| )(((((H|h)(T|t)|(F|f))(T|t)(P|p)((S|s)?))\://)|www.)[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,6}(\:[0-9]{1,5})*(/($|[a-zA-Z0-9\.\,\;\?\'\\\+&amp;%\$#@!^*()\=~_\/-]+))*");
 

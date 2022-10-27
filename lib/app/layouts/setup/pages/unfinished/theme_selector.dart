@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
@@ -34,7 +33,7 @@ class ThemeSelectorController extends GetxController {
   }
 
   void setMessagesView() {
-    messagesView = MessagesView(
+    /*messagesView = MessagesView(
       messageBloc: MessageBloc(
         Chat(
             id: 69,
@@ -156,7 +155,7 @@ class ThemeSelectorController extends GetxController {
           ),
         ),
       ],
-    );
+    );*/
   }
 }
 

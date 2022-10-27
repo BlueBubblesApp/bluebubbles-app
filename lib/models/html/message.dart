@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
@@ -294,21 +293,16 @@ class Message {
     return null;
   }
 
-  Message fetchAssociatedMessages({MessageBloc? bloc, bool shouldRefresh = false}) {
-    associatedMessages =
-        (bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [])
-            .cast<Message>();
+  Message fetchAssociatedMessages({MessagesService? service, bool shouldRefresh = false}) {
+    associatedMessages = (service?.struct.reactions.where((element) => element.associatedMessageGuid == guid).toList() ?? []).cast<Message>();
     if (threadOriginatorGuid != null) {
-      final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
+      final existing = service?.struct.getMessage(threadOriginatorGuid!);
       final threadOriginator = existing;
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       threadOriginator?.handle ??= Handle.findOne(originalROWID: threadOriginator.handleId);
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       if (threadOriginator != null) associatedMessages.add(threadOriginator);
-      if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
-      if (!guid!.startsWith("temp")) {
-        bloc?.threadOriginators.conditionalAdd(guid!, threadOriginatorGuid!, shouldRefresh);
-      }
+      if (existing == null && threadOriginator != null) service?.struct.addThreadOriginator(threadOriginator);
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     return this;

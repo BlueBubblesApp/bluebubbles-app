@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:async_task/async_task.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -734,18 +733,15 @@ class Message {
   }
 
   /// Fetch reactions
-  Message fetchAssociatedMessages({MessageBloc? bloc, bool shouldRefresh = false}) {
+  Message fetchAssociatedMessages({MessagesService? service, bool shouldRefresh = false}) {
     associatedMessages = Message.find(cond: Message_.associatedMessageGuid.equals(guid ?? ""));
     associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
     if (threadOriginatorGuid != null) {
-      final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
+      final existing = service?.struct.getMessage(threadOriginatorGuid!);
       final threadOriginator = existing ?? Message.findOne(guid: threadOriginatorGuid);
       threadOriginator?.handle ??= Handle.findOne(id: threadOriginator.handleId);
       if (threadOriginator != null) associatedMessages.add(threadOriginator);
-      if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
-      if (!guid!.startsWith("temp")) {
-        bloc?.threadOriginators.conditionalAdd(guid!, threadOriginatorGuid!, shouldRefresh);
-      }
+      if (existing == null && threadOriginator != null) service?.struct.addThreadOriginator(threadOriginator);
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     return this;
@@ -887,8 +883,8 @@ class Message {
     return chat.messages.length;
   }
 
-  void mergeWith(Message otherMessage) {
-    Message.merge(this, otherMessage);
+  Message mergeWith(Message otherMessage) {
+    return Message.merge(this, otherMessage);
   }
 
   /// Get what shape the reply line should be

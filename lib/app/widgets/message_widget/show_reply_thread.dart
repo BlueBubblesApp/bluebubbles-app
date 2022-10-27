@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget.dart';
@@ -10,13 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-void showReplyThread(BuildContext context, Message message, MessageBloc? messageBloc) {
-  List<Message> _messages = [];
-  if (message.threadOriginatorGuid != null) {
-    _messages = messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == message.threadOriginatorGuid || e.guid == message.threadOriginatorGuid).toList() ?? [];
-  } else {
-    _messages = messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == message.guid || e.guid == message.guid).toList() ?? [];
-  }
+void showReplyThread(BuildContext context, Message message, MessagesService service) {
+  final _messages = service.struct.threads(message.threadOriginatorGuid ?? message.guid!);
   _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
   final controller = ScrollController();
   Navigator.push(
@@ -71,10 +65,10 @@ void showReplyThread(BuildContext context, Message message, MessageBloc? message
                                         olderMessage: index > 0 ? _messages[index - 1] : null,
                                         newerMessage: index < _messages.length - 1 ? _messages[index + 1] : null,
                                         showHandle: true,
-                                        isFirstSentMessage: messageBloc!.firstSentMessage == _messages[index].guid,
+                                        isFirstSentMessage: service.mostRecentSent?.guid == _messages[index].guid,
                                         showHero: false,
                                         showReplies: false,
-                                        bloc: messageBloc,
+                                        bloc: service,
                                         autoplayEffect: false,
                                       )),
                                 );

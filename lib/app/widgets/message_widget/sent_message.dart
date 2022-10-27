@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
@@ -584,7 +583,7 @@ class SentMessage extends StatefulWidget {
   final bool showHero;
   final bool shouldFadeIn;
   final bool showDeliveredReceipt;
-  final MessageBloc? messageBloc;
+  final MessagesService? messageBloc;
   final bool hasTimestampAbove;
   final bool hasTimestampBelow;
   final bool showReplies;
@@ -694,7 +693,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
           widget.olderMessage?.threadOriginatorGuid != widget.message.threadOriginatorGuid) {
         messageColumn.add(GestureDetector(
           onTap: () {
-            showReplyThread(context, widget.message, widget.messageBloc);
+            showReplyThread(context, widget.message, widget.messageBloc!);
           },
           child: StreamBuilder<dynamic>(
               stream: ChatController.of(context)?.totalOffsetStream.stream,
@@ -1045,31 +1044,33 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                     ),
                   ),
           ),
-        Obx(() {
-          final list =
-              widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ?? [].obs.reversed;
-          if (list.isNotEmpty) {
-            return GestureDetector(
-              onTap: () {
-                showReplyThread(context, widget.message, widget.messageBloc);
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 18.0, top: 2, bottom: 4),
-                child: Text(
-                  "${list.length} repl${list.length > 1 ? "ies" : "y"}",
-                  style: context.theme.textTheme.labelSmall!
-                      .copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
+        Builder(
+          builder: (_) {
+            final list =
+                widget.messageBloc?.struct.threads(widget.message.guid!) ?? [];
+            if (list.isNotEmpty) {
+              return GestureDetector(
+                onTap: () {
+                  showReplyThread(context, widget.message, widget.messageBloc!);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0, right: 18.0, top: 2, bottom: 4),
+                  child: Text(
+                    "${list.length} repl${list.length > 1 ? "ies" : "y"}",
+                    style: context.theme.textTheme.labelSmall!
+                        .copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
-            );
-          } else {
-            return DeliveredReceipt(
-              message: widget.message,
-              showDeliveredReceipt: widget.showDeliveredReceipt,
-              shouldAnimate: widget.shouldFadeIn,
-            );
-          }
-        }),
+              );
+            } else {
+              return DeliveredReceipt(
+                message: widget.message,
+                showDeliveredReceipt: widget.showDeliveredReceipt,
+                shouldAnimate: widget.shouldFadeIn,
+              );
+            }
+          },
+        ),
       ],
     ));
 

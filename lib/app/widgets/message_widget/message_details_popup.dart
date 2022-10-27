@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
@@ -19,7 +18,6 @@ import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -51,7 +49,7 @@ class MessageDetailsPopup extends StatefulWidget {
   final Size? childSize;
   final Widget child;
   final ChatController? currentChat;
-  final MessageBloc? messageBloc;
+  final MessagesService? messageBloc;
 
   @override
   MessageDetailsPopupState createState() => MessageDetailsPopupState();
@@ -713,14 +711,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           ),
         ),
       if ((widget.message.threadOriginatorGuid != null ||
-              widget.messageBloc?.threadOriginators.values.firstWhereOrNull((e) => e == widget.message.guid) != null) &&
+              widget.messageBloc!.struct.threads(widget.message.guid!).isNotEmpty) &&
           isBigSur)
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
               popDetails();
-              showReplyThread(context, widget.message, widget.messageBloc);
+              showReplyThread(context, widget.message, widget.messageBloc!);
             },
             child: ListTile(
               mouseCursor: SystemMouseCursors.click,
