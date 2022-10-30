@@ -234,8 +234,6 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
           ),
           (route) => route.isFirst,
         );
-
-        ChatManager().setActiveChat(_chat);
       }
     }
     return null;
@@ -265,8 +263,6 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
           ),
           (route) => route.isFirst,
         );
-        
-        ChatManager().setActiveChat(_chat);
       }
     }
     return null;

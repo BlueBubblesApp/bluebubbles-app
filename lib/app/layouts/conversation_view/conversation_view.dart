@@ -66,7 +66,6 @@ class ConversationViewState extends State<ConversationView> {
   void initState() {
     super.initState();
 
-    ss.prefs.setString('lastOpenedChat', chat.guid);
     ChatManager().setActiveChat(chat);
     currentChat = ChatManager().activeChat!;
 
@@ -83,6 +82,7 @@ class ConversationViewState extends State<ConversationView> {
 
   @override
   void dispose() {
+    ChatManager().setAllInactive();
     currentChat.disposeControllers();
     currentChat.dispose();
     super.dispose();

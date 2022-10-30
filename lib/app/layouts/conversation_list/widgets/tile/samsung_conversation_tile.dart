@@ -96,7 +96,7 @@ class SamsungTrailing extends CustomStateful<ConversationTileController> {
 }
 
 class _SamsungTrailingState extends CustomState<SamsungTrailing, void, ConversationTileController> {
-  late final MessageMarkers? markers = ChatManager().getChatController(controller.chat)?.messageMarkers;
+  late final MessageMarkers? markers = ChatManager().getChatController(controller.chat.guid)?.messageMarkers;
 
   DateTime? dateCreated;
   bool unread = false;

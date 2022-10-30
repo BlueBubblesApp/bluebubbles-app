@@ -454,9 +454,6 @@ class _HomeState extends OptimizedState<Home> with WidgetsBindingObserver {
       html.window.location.reload();
     }
 
-    /* ----- CACHED ASSETS INITIALIZATION ----- */
-    ChatManager().loadAssets();
-
     // Bind the lifecycle events
     WidgetsBinding.instance.addObserver(this);
 

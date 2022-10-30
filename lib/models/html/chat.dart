@@ -255,7 +255,7 @@ class Chat {
   }
 
   Chat toggleHasUnread(bool hasUnread) {
-    if ((hasUnread && ChatManager().isChatActiveByGuid(guid)) || hasUnreadMessage == hasUnread) {
+    if ((hasUnread && ChatManager().isChatActive(guid)) || hasUnreadMessage == hasUnread) {
       return this;
     }
 
@@ -327,7 +327,7 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
         toggleHasUnread(false);
-      } else if (!ChatManager().isChatActiveByGuid(guid)) {
+      } else if (!ChatManager().isChatActive(guid)) {
         toggleHasUnread(true);
       }
     }

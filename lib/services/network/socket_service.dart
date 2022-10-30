@@ -168,7 +168,7 @@ class SocketService extends GetxService {
       case "chat-read-status-changed":
         return;
       case "typing-indicator":
-        ChatController? currentChat = ChatManager().getChatControllerByGuid(data["guid"]);
+        ChatController? currentChat = ChatManager().getChatController(data["guid"]);
         if (currentChat == null) return;
         if (data["display"]) {
           currentChat.displayTypingIndicator();

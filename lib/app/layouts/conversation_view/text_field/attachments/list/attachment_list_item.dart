@@ -44,7 +44,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       try {
         preview = await AttachmentHelper.getVideoThumbnail(widget.file.path!);
       } catch (ex) {
-        preview = ChatManager().noVideoPreviewIcon;
+        preview = fs.noVideoPreviewIcon;
       }
 
       if (mounted) setState(() {});

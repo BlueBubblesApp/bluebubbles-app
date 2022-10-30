@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/helpers/models/reaction.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -27,6 +29,8 @@ class NotificationsService extends GetxService {
   static const String REMINDER_CHANNEL = "com.bluebubbles.reminders";
 
   final FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
+  StreamSubscription? countSub;
+  int currentCount = 0;
 
   bool get hideContent => ss.settings.hideTextPreviews.value;
 
@@ -62,6 +66,31 @@ class NotificationsService extends GetxService {
       Directory temp = Directory(join(fs.appDocDir.path, "temp"));
       if (await temp.exists()) await temp.delete(recursive: true);
     }
+    // watch for new messages and handle the notification
+    if (!kIsWeb) {
+      final countQuery = (messageBox.query()
+        ..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
+      countSub = countQuery.listen((event) {
+        final newCount = event.count();
+        if (newCount > currentCount) {
+          event.limit = newCount - currentCount;
+          final messages = event.find();
+          for (Message message in messages) {
+            if (message.chat.target == null) continue;
+            message.handle = Handle.findOne(id: message.handleId);
+            message.attachments = List<Attachment>.from(message.dbAttachments);
+            MessageHelper.handleNotification(message, message.chat.target!);
+          }
+        }
+        currentCount = newCount;
+      });
+    }
+  }
+
+  @override
+  void onClose() {
+    countSub?.cancel();
+    super.onClose();
   }
 
   Future<void> createNotificationChannel(String channelID, String channelName, String channelDescription) async {

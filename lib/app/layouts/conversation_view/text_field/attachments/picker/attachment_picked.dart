@@ -40,7 +40,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
       try {
         image = await AttachmentHelper.getVideoThumbnail(file.path, useCachedFile: false);
       } catch (ex) {
-        image = ChatManager().noVideoPreviewIcon;
+        image = fs.noVideoPreviewIcon;
       }
 
       if (mounted) setState(() {});

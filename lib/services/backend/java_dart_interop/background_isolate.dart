@@ -20,7 +20,7 @@ backgroundIsolateEntrypoint() async {
   WidgetsFlutterBinding.ensureInitialized();
   ls.isUiThread = false;
   await ss.init(headless: true);
-  await fs.init();
+  await fs.init(headless: true);
   await mcs.init(headless: true);
   debugPrint("Trying to attach to an existing ObjectBox store");
   try {

@@ -343,7 +343,7 @@ class ChatLeading extends StatelessWidget {
         if (unreadIcon != null && ss.settings.skin.value == Skins.iOS)
           unreadIcon!,
         StreamBuilder<Map<String, dynamic>>(
-            stream: ChatManager().getChatController(controller.chat)?.stream as Stream<Map<String, dynamic>>?,
+            stream: ChatManager().getChatController(controller.chat.guid)?.stream as Stream<Map<String, dynamic>>?,
             builder: (BuildContext context, AsyncSnapshot snapshot) {
               bool showTypingIndicator = false;
               if (snapshot.connectionState == ConnectionState.active

@@ -119,7 +119,7 @@ class MaterialTrailing extends CustomStateful<ConversationTileController> {
 }
 
 class _MaterialTrailingState extends CustomState<MaterialTrailing, void, ConversationTileController> {
-  late final MessageMarkers? markers = ChatManager().getChatController(controller.chat)?.messageMarkers;
+  late final MessageMarkers? markers = ChatManager().getChatController(controller.chat.guid)?.messageMarkers;
 
   DateTime? dateCreated;
   bool unread = false;

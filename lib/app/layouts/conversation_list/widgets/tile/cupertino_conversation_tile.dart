@@ -118,7 +118,7 @@ class CupertinoTrailing extends CustomStateful<ConversationTileController> {
 }
 
 class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, ConversationTileController> {
-  late final MessageMarkers? markers = ChatManager().getChatController(controller.chat)?.messageMarkers;
+  late final MessageMarkers? markers = ChatManager().getChatController(controller.chat.guid)?.messageMarkers;
 
   DateTime? dateCreated;
   late final StreamSubscription<Query<Message>> sub;

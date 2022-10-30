@@ -111,6 +111,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
       }
       _messages = messageService.struct.messages;
       _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      setState(() {});
       _messages.forEachIndexed((i, _) {
         listKey.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
       });

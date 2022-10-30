@@ -127,7 +127,7 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
       duration = tempController.value.duration;
     } catch (_) {
       // If an error occurs, set the thumbnail to the cached no preview image
-      videoPreview = ChatManager().noVideoPreviewIcon;
+      videoPreview = fs.noVideoPreviewIcon;
 
       if (attachment.metadata?['thumbnail_status'] != 'error') {
         attachment.metadata ??= {};

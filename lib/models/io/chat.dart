@@ -666,7 +666,7 @@ class Chat {
   }
 
   Chat toggleHasUnread(bool hasUnread, {bool clearLocalNotifications = true}) {
-    if ((hasUnread && ChatManager().isChatActive(this)) || hasUnreadMessage == hasUnread) {
+    if ((hasUnread && ChatManager().isChatActive(guid)) || hasUnreadMessage == hasUnread) {
       return this;
     }
 
@@ -762,7 +762,7 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
         toggleHasUnread(false);
-      } else if (!ChatManager().isChatActive(this)) {
+      } else if (!ChatManager().isChatActive(guid)) {
         toggleHasUnread(true);
       }
     }

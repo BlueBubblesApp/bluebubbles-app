@@ -109,7 +109,7 @@ class VideoWidgetController extends GetxController {
       } catch (ex) {
         // If an error occurs, set the thumnail to the cached no preview image.
         // Only save to DB if the status wasn't already `error` somehow
-        thumbnail = ChatManager().noVideoPreviewIcon;
+        thumbnail = fs.noVideoPreviewIcon;
         if (attachment.metadata?['thumbnail_status'] != 'error') {
           attachment.metadata ??= {};
           attachment.metadata!['thumbnail_status'] = 'error';

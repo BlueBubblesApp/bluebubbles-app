@@ -82,7 +82,7 @@ class ActionHandler extends GetxService {
           final tempGuid = element.guid;
           element = handleSendError(error, element);
 
-          if (!ls.isAlive || !(ChatManager().getChatController(c)?.isAlive ?? false)) {
+          if (!ls.isAlive || !(ChatManager().getChatController(c.guid)?.isAlive ?? false)) {
             await notif.createFailedToSend();
           }
           await Message.replaceMessage(tempGuid, element);
@@ -101,7 +101,7 @@ class ActionHandler extends GetxService {
         final tempGuid = m.guid;
         m = handleSendError(error, m);
 
-        if (!ls.isAlive || !(ChatManager().getChatController(c)?.isAlive ?? false)) {
+        if (!ls.isAlive || !(ChatManager().getChatController(c.guid)?.isAlive ?? false)) {
           await notif.createFailedToSend();
         }
         await Message.replaceMessage(tempGuid, m);
@@ -147,7 +147,7 @@ class ActionHandler extends GetxService {
       final tempGuid = m.guid;
       m = handleSendError(error, m);
 
-      if (!ls.isAlive || !(ChatManager().getChatController(c)?.isAlive ?? false)) {
+      if (!ls.isAlive || !(ChatManager().getChatController(c.guid)?.isAlive ?? false)) {
         await notif.createFailedToSend();
       }
       await Message.replaceMessage(tempGuid, m);
@@ -203,7 +203,9 @@ class ActionHandler extends GetxService {
       m.handle = handle;
     }
     // Display notification if needed and save everything to DB
-    await MessageHelper.handleNotification(m, c);
+    if (!ls.isAlive) {
+      await MessageHelper.handleNotification(m, c);
+    }
     await c.addMessage(m);
     for (Attachment? a in m.attachments) {
       if (a == null) continue;

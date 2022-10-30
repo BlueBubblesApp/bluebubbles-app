@@ -1,5 +1,4 @@
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
@@ -46,10 +45,9 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   }
 
   void open() {
-    final currentChat = ChatManager().getActiveDeadController();
-    if (currentChat != null) {
+    ChatManager().setActiveToAlive();
+    if (ChatManager().activeChat != null) {
       ChatManager().clearChatNotifications(ChatManager().activeChat!.chat);
-      ChatManager().setActiveToAlive();
     }
 
     if (!kIsDesktop && !kIsWeb) {

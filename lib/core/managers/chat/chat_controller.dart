@@ -118,7 +118,7 @@ class ChatController {
 
   static ChatController? forGuid(String? guid) {
     if (guid == null) return null;
-    return ChatManager().getChatControllerByGuid(guid);
+    return ChatManager().getChatController(guid);
   }
 
   void initScrollController() {

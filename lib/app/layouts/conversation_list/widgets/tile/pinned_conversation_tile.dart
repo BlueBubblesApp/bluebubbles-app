@@ -415,7 +415,7 @@ class PinnedIndicators extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<Map<String, dynamic>>(
-        stream: ChatManager().getChatController(controller.chat)?.stream as Stream<Map<String, dynamic>>?,
+        stream: ChatManager().getChatController(controller.chat.guid)?.stream as Stream<Map<String, dynamic>>?,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           bool showTypingIndicator = false;
           if (snapshot.connectionState == ConnectionState.active
@@ -423,7 +423,7 @@ class PinnedIndicators extends StatelessWidget {
               && snapshot.data["type"] == ChatControllerEvent.TypingStatus) {
             showTypingIndicator = snapshot.data["data"];
           }
-          MessageMarkers? markers = ChatManager().getChatController(controller.chat)?.messageMarkers;
+          MessageMarkers? markers = ChatManager().getChatController(controller.chat.guid)?.messageMarkers;
 
           return Obx(() {
             if (showTypingIndicator) {

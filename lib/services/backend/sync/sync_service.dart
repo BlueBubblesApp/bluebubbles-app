@@ -75,7 +75,7 @@ Future<List<Map<String, dynamic>>> incrementalSyncIsolate(SendPort? port) async 
       WidgetsFlutterBinding.ensureInitialized();
       ls.isUiThread = false;
       await ss.init(headless: true);
-      await fs.init();
+      await fs.init(headless: true);
       store = Store.attach(getObjectBoxModel(), join(fs.appDocDir.path, 'objectbox'));
       attachmentBox = store.box<Attachment>();
       chatBox = store.box<Chat>();
