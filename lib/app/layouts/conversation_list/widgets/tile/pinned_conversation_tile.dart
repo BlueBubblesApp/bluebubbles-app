@@ -5,7 +5,6 @@ import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/dialogs/conversation_peek_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
@@ -16,8 +15,8 @@ import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart
 import 'package:bluebubbles/app/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -57,7 +56,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
 
     if (kIsDesktop || kIsWeb) {
       controller.shouldHighlight.value =
-          ChatManager().activeChat?.chat.guid == controller.chat.guid;
+          cm.activeChat?.chat.guid == controller.chat.guid;
     }
 
     eventDispatcher.stream.listen((event) {
@@ -414,74 +413,58 @@ class PinnedIndicators extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<Map<String, dynamic>>(
-        stream: ChatManager().getChatController(controller.chat.guid)?.stream as Stream<Map<String, dynamic>>?,
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          bool showTypingIndicator = false;
-          if (snapshot.connectionState == ConnectionState.active
-              && snapshot.hasData
-              && snapshot.data["type"] == ChatControllerEvent.TypingStatus) {
-            showTypingIndicator = snapshot.data["data"];
-          }
-          MessageMarkers? markers = ChatManager().getChatController(controller.chat.guid)?.messageMarkers;
+    return Obx(() {
+      final showTypingIndicator = cvc(controller.chat).showTypingIndicator.value;
+      if (showTypingIndicator) {
+        return Positioned(
+          top: -sqrt(width / 2),
+          right: -sqrt(width / 2) - width * 0.25,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 32),
+            child: const FittedBox(
+              child: TypingIndicator(
+                visible: true,
+              ),
+            ),
+          ),
+        );
+      }
 
-          return Obx(() {
-            if (showTypingIndicator) {
-              return Positioned(
-                top: -sqrt(width / 2),
-                right: -sqrt(width / 2) - width * 0.25,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 32),
-                  child: const FittedBox(
-                    child: TypingIndicator(
-                      visible: true,
-                    ),
-                  ),
-                ),
-              );
-            }
+      final showMarker = shouldShow(controller.chat.latestMessageGetter);
+      if (ss.settings.statusIndicatorsOnChats.value
+          && !controller.chat.isGroup()
+          && showMarker != Indicator.NONE) {
+        return Positioned(
+          left: sqrt(width) - width * 0.05 * sqrt(2),
+          top: width - width * 0.13 * 2,
+          child: Container(
+            width: width * 0.27,
+            height: width * 0.27,
+            decoration: BoxDecoration(
+              border: Border.all(
+                  color: context.theme.colorScheme.background, width: 1),
+              borderRadius: BorderRadius.circular(30),
+              color: context.theme.colorScheme.tertiaryContainer,
+            ),
+            child: Transform.rotate(
+              angle: showMarker != Indicator.SENT
+                  ? pi / 2 : 0,
+              child: Icon(
+                showMarker == Indicator.DELIVERED
+                    ? CupertinoIcons.location_north_fill
+                    : showMarker == Indicator.READ
+                    ? CupertinoIcons.location_north
+                    : CupertinoIcons.location_fill,
+                color: context.theme.colorScheme.onTertiaryContainer,
+                size: width * 0.14,
+              ),
+            ),
+          ),
+        );
+      }
 
-            final showMarker = shouldShow(
-                controller.chat.latestMessageGetter,
-                markers?.myLastMessage.value,
-                markers?.lastReadMessage.value,
-                markers?.lastDeliveredMessage.value
-            );
-            if (ss.settings.statusIndicatorsOnChats.value
-                && !controller.chat.isGroup()
-                && showMarker != Indicator.NONE) {
-              return Positioned(
-                left: sqrt(width) - width * 0.05 * sqrt(2),
-                top: width - width * 0.13 * 2,
-                child: Container(
-                  width: width * 0.27,
-                  height: width * 0.27,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: context.theme.colorScheme.background, width: 1),
-                    borderRadius: BorderRadius.circular(30),
-                    color: context.theme.colorScheme.tertiaryContainer,
-                  ),
-                  child: Transform.rotate(
-                    angle: showMarker != Indicator.SENT
-                        ? pi / 2 : 0,
-                    child: Icon(
-                      showMarker == Indicator.DELIVERED
-                          ? CupertinoIcons.location_north_fill
-                          : showMarker == Indicator.READ
-                          ? CupertinoIcons.location_north
-                          : CupertinoIcons.location_fill,
-                      color: context.theme.colorScheme.onTertiaryContainer,
-                      size: width * 0.14,
-                    ),
-                  ),
-                ),
-              );
-            }
-
-            return const SizedBox.shrink();
-          });
-        }
-    );
+      return const SizedBox.shrink();
+    });
   }
 }
 

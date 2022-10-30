@@ -7,7 +7,7 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
 import 'package:bluebubbles/models/html/attachment.dart';
 import 'package:bluebubbles/models/html/chat.dart';
 import 'package:bluebubbles/models/html/handle.dart';
@@ -268,19 +268,19 @@ class Message {
     return this;
   }
 
-  List<Attachment?>? fetchAttachments({ChatController? currentChat}) {
+  List<Attachment?>? fetchAttachments({ChatLifecycleManager? currentChat}) {
     return attachments;
   }
 
   static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages,
-      {ChatController? currentChat}) {
+      {ChatLifecycleManager? currentChat}) {
     final Map<String, List<Attachment?>> map = {};
     map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
     return map;
   }
 
   static Future<Map<String, List<Attachment?>>> fetchAttachmentsByMessagesAsync(List<Message?> messages,
-      {ChatController? currentChat}) async {
+      {ChatLifecycleManager? currentChat}) async {
     final Map<String, List<Attachment?>> map = {};
     map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
     return map;

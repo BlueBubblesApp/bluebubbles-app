@@ -13,7 +13,7 @@ import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -1264,7 +1264,7 @@ class _SyncDialogState extends State<SyncDialog> {
       offset = Message.countForChat(widget.chat) ?? 0;
     }
 
-    ChatManager().getMessages(widget.chat.guid, offset: offset, limit: widget.limit).then((dynamic messages) {
+    cm.getMessages(widget.chat.guid, offset: offset, limit: widget.limit).then((dynamic messages) {
       if (mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";

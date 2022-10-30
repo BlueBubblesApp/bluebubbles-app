@@ -12,8 +12,8 @@ import 'package:bluebubbles/app/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/app/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -49,14 +49,14 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
 
   late final messageService = widget.customService ?? ms(widget.chat.guid)
     ..init(widget.chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage);
-  late final ChatController currentChat = ChatManager().activeChat!;
+  late final ConversationViewController controller = cvc(chat, tag: widget.customService?.tag);
   final Duration animationDuration = Duration(milliseconds: 400);
   final smartReply = GoogleMlKit.nlp.smartReply();
   final focusNode = FocusScopeNode();
   final listKey = GlobalKey<SliverAnimatedListState>();
   final RxBool dragging = false.obs;
 
-  AutoScrollController get scrollController => currentChat.scrollController;
+  AutoScrollController get scrollController => controller.scrollController;
   bool get showSmartReplies => ss.settings.smartReply.value && !kIsWeb && !kIsDesktop;
   Chat get chat => widget.chat;
 
@@ -178,7 +178,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
     _messages = messageService.struct.messages;
     _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
     fetching = false;
-    _messages.sublist(oldLength - 1).forEachIndexed((i, _) {
+    _messages.sublist(max(oldLength - 1, 0)).forEachIndexed((i, _) {
       listKey.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
     });
   }
@@ -227,7 +227,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
               () {
             outq.queue(OutgoingItem(
                 type: QueueType.newMessage,
-                chat: currentChat.chat,
+                chat: controller.chat,
                 message: Message(text: text)
             ));
           },
@@ -260,21 +260,21 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
             // I have no idea why this works
             onPanDown: kIsDesktop || kIsWeb ? (details) => focusNode.requestFocus() : null,
             onHorizontalDragStart: (details) {},
-            onHorizontalDragUpdate: (details) {
+            /*onHorizontalDragUpdate: (details) {
               if (ss.settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
-                ChatManager().activeChat!.timeStampOffset += details.delta.dx * 0.3;
+                cm.activeChat!.timeStampOffset += details.delta.dx * 0.3;
               }
             },
             onHorizontalDragEnd: (details) {
               if (ss.settings.skin.value != Skins.Samsung) {
-                ChatManager().activeChat!.timeStampOffset = 0;
+                cm.activeChat!.timeStampOffset = 0;
               }
             },
             onHorizontalDragCancel: () {
               if (ss.settings.skin.value != Skins.Samsung) {
-                ChatManager().activeChat!.timeStampOffset = 0;
+                cm.activeChat!.timeStampOffset = 0;
               }
-            },
+            },*/
             child: AnimatedOpacity(
               opacity: _messages.isEmpty && widget.customService == null ? 0 : 1,
               duration: Duration(milliseconds: 150),
@@ -312,7 +312,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                           child: Row(
                             children: <Widget>[
                               if (widget.chat.guid == "theme-selector" ||
-                                  (currentChat.showTypingIndicator &&
+                                  (controller.showTypingIndicator.value &&
                                       (ss.settings.skin.value == Skins.Samsung ||
                                           ss.settings.alwaysShowAvatars.value)))
                                 Padding(
@@ -327,10 +327,10 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                                 ),
                               Padding(
                                 padding: EdgeInsets.only(top: 5),
-                                child: TypingIndicator(
+                                child: Obx(() => TypingIndicator(
                                   visible:
-                                      widget.chat.guid == "theme-selector" ? true : currentChat.showTypingIndicator,
-                                ),
+                                      widget.chat.guid == "theme-selector" ? true : controller.showTypingIndicator.value,
+                                )),
                               ),
                             ],
                           ),

@@ -1,21 +1,16 @@
 import 'dart:async';
 
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
+import 'package:get/get.dart' hide Response;
 
-class ChatManager {
-  factory ChatManager() {
-    return _manager;
-  }
+ChatManager cm = Get.isRegistered<ChatManager>() ? Get.find<ChatManager>() : Get.put(ChatManager());
 
-  static final ChatManager _manager = ChatManager._internal();
-  ChatManager._internal();
-
-  ChatController? activeChat;
-  final Map<String, ChatController> _chatControllers = {};
+class ChatManager extends GetxService {
+  ChatLifecycleManager? activeChat;
+  final Map<String, ChatLifecycleManager> _chatControllers = {};
 
   void setAllInactive() {
     activeChat = null;
@@ -49,9 +44,9 @@ class ChatManager {
     }
   }
 
-  ChatController createChatController(Chat chat, {active = false}) {
+  ChatLifecycleManager createChatController(Chat chat, {active = false}) {
     // If a chat is passed, get the chat and set it be active and make sure it's stored
-    ChatController controller = getChatController(chat.guid) ?? ChatController(chat);
+    ChatLifecycleManager controller = getChatController(chat.guid) ?? ChatLifecycleManager(chat);
     _chatControllers[chat.guid] = controller;
 
     // If we are setting a new active chat, we need to clear the active statuses on
@@ -67,7 +62,7 @@ class ChatManager {
     return controller;
   }
 
-  ChatController? getChatController(String guid) {
+  ChatLifecycleManager? getChatController(String guid) {
     if (!_chatControllers.containsKey(guid)) return null;
     return _chatControllers[guid];
   }

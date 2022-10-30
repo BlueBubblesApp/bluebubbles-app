@@ -14,7 +14,7 @@ import 'package:bluebubbles/app/widgets/message_widget/message_content/media_pla
 import 'package:bluebubbles/app/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/widgets/components/send_effect_picker.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -42,12 +42,12 @@ import 'package:universal_io/io.dart';
 class BlueBubblesTextField extends StatefulWidget {
   final Future<bool> Function(
       List<PlatformFile> attachments, String text, String subject, String? replyToGuid, String? effectId) onSend;
-  final String? chatGuid;
+  final ConversationViewController controller;
 
   BlueBubblesTextField({
     Key? key,
     required this.onSend,
-    required this.chatGuid,
+    required this.controller,
   }) : super(key: key);
 
   static BlueBubblesTextFieldState? of(BuildContext context) {
@@ -65,8 +65,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   FocusNode? subjectFocusNode;
   List<PlatformFile> pickedImages = [];
   DropzoneViewController? dropZoneController;
-  ChatController? safeChat;
-  Chat? chat;
+  ChatLifecycleManager? safeChat;
+  late final Chat chat = widget.controller.chat;
+  String get chatGuid => chat.guid;
+  ConversationViewController get cvController => widget.controller;
   Rxn<Message?> replyToMessage = Rxn();
 
   bool selfTyping = false;
@@ -102,11 +104,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     eventDispatcher.stream.listen((e) {
       if (e.item1 == 'update-emoji-picker') {
-        if (e.item2['chatGuid'] != widget.chatGuid) return;
+        if (e.item2['chatGuid'] != chatGuid) return;
         emojiSelectedIndex.value = 0;
         emojiMatches.value = e.item2['emojiMatches'];
       } else if (e.item1 == 'replace-emoji') {
-        if (e.item2['chatGuid'] != widget.chatGuid) return;
+        if (e.item2['chatGuid'] != chatGuid) return;
         emojiSelectedIndex.value = 0;
         int index = e.item2['emojiMatchIndex'];
         String text = controller!.text;
@@ -132,15 +134,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     emojiFullNames = Map.fromEntries(Emoji.all().map((e) => MapEntry(e.name, e)));
 
     getPlaceholder();
-    chat = ChatController.forGuid(widget.chatGuid)?.chat;
 
-    controller = TextEditingController(text: chat?.textFieldText);
+    controller = TextEditingController(text: chat.textFieldText);
     subjectController = TextEditingController();
 
     // Add the text listener to detect when we should send the typing indicators
     controller!.addListener(() {
       setCanRecord();
-      if (!mounted || ChatController.forGuid(widget.chatGuid)?.chat == null) return;
+      if (!mounted || chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!ss.settings.enablePrivateAPI.value ||
@@ -150,12 +151,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
       if (controller!.text.isEmpty && pickedImages.isEmpty && selfTyping) {
         selfTyping = false;
-        socket.sendMessage("stopped-typing", {"chatGuid": widget.chatGuid});
+        socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
       } else if (!selfTyping && (controller!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
         if (ss.settings.privateSendTypingIndicators.value &&
-            ChatController.forGuid(widget.chatGuid)!.chat.autoSendTypingIndicators!) {
-          socket.sendMessage("started-typing", {"chatGuid": widget.chatGuid});
+            chat.autoSendTypingIndicators!) {
+          socket.sendMessage("started-typing", {"chatGuid": chatGuid});
         }
       }
 
@@ -163,7 +164,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     });
     subjectController!.addListener(() {
       setCanRecord();
-      if (!mounted || ChatController.forGuid(widget.chatGuid)?.chat == null) return;
+      if (!mounted || chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!ss.settings.enablePrivateAPI.value ||
@@ -173,12 +174,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
       if (subjectController!.text.isEmpty && pickedImages.isEmpty && selfTyping) {
         selfTyping = false;
-        socket.sendMessage("stopped-typing", {"chatGuid": widget.chatGuid});
+        socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
       } else if (!selfTyping && (subjectController!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
         if (ss.settings.privateSendTypingIndicators.value &&
-            ChatController.forGuid(widget.chatGuid)!.chat.autoSendTypingIndicators!) {
-          socket.sendMessage("started-typing", {"chatGuid": widget.chatGuid});
+            chat.autoSendTypingIndicators!) {
+          socket.sendMessage("started-typing", {"chatGuid": chatGuid});
         }
       }
 
@@ -188,7 +189,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     // Add a listener for emoji
     controller!.addListener(() {
       String text = controller!.text;
-      chat?.textFieldText = text;
+      chat.textFieldText = text;
       if (text != previousText) {
         previousText = text;
         RegExp regExp = RegExp(r"(?<=^| |\n):[^: \n]{2,}((?=[ \n]|$)|:)", multiLine: true);
@@ -234,7 +235,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           print("${allMatches.length} matches found for: $emojiName");
         }
         eventDispatcher
-            .emit('update-emoji-picker', {'emojiMatches': allMatches.toList(), 'chatGuid': widget.chatGuid});
+            .emit('update-emoji-picker', {'emojiMatches': allMatches.toList(), 'chatGuid': chatGuid});
       }
     });
 
@@ -243,7 +244,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     focusNode = FocusNode();
     subjectFocusNode = FocusNode();
     focusNode!.addListener(() {
-      ChatController.forGuid(widget.chatGuid)?.keyboardOpen = focusNode?.hasFocus ?? false;
+      cvController.keyboardOpen = focusNode?.hasFocus ?? false;
 
       if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
@@ -253,7 +254,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       eventDispatcher.emit("keyboard-status", focusNode!.hasFocus);
     });
     subjectFocusNode!.addListener(() {
-      ChatController.forGuid(widget.chatGuid)?.keyboardOpen = focusNode?.hasFocus ?? false;
+      cvController.keyboardOpen = focusNode?.hasFocus ?? false;
 
       if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
@@ -318,8 +319,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   void getCachedAttachments() async {
-    if (chat?.textFieldAttachments.isNotEmpty ?? false) {
-      for (String s in chat!.textFieldAttachments) {
+    if (chat.textFieldAttachments.isNotEmpty ?? false) {
+      for (String s in chat.textFieldAttachments) {
         final file = File(s);
         if (await file.exists()) {
           final bytes = await file.readAsBytes();
@@ -343,7 +344,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   void updateTextFieldAttachments() {
-    chat?.textFieldAttachments.addAll(pickedImages.where((e) => e.path != null).map((e) => e.path!));
+    chat.textFieldAttachments.addAll(pickedImages.where((e) => e.path != null).map((e) => e.path!));
 
     setCanRecord();
   }
@@ -351,12 +352,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   void addSharedAttachments() {
     getCachedAttachments();
     setCanRecord();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    safeChat = ChatController.forGuid(widget.chatGuid);
   }
 
   @override
@@ -375,15 +370,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       });
     }
     pickedImages = [];
-    chat?.save(updateTextFieldText: true, updateTextFieldAttachments: true);
+    chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);
     super.dispose();
   }
 
   void disposeAudioFile(BuildContext context, PlatformFile file) {
     // Dispose of the audio controller
-    ChatController.forGuid(widget.chatGuid)?.audioPlayers[file.path]?.item1.dispose();
-    ChatController.forGuid(widget.chatGuid)?.audioPlayers[file.path]?.item2.pause();
-    ChatController.forGuid(widget.chatGuid)?.audioPlayers.removeWhere((key, _) => key == file.path);
+    cvController.audioPlayers[file.path]?.item1.dispose();
+    cvController.audioPlayers[file.path]?.item2.pause();
+    cvController.audioPlayers.removeWhere((key, _) => key == file.path);
     if (file.path != null) {
       // Delete the file
       File(file.path!).delete();
@@ -450,13 +445,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               child: Text(
                 "Send", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
               onPressed: () async {
-                ChatController? thisChat = ChatController.of(originalContext);
-                if (thisChat == null) {
-                  addAttachments([file]);
-                } else {
-                  await widget.onSend([file], "", "", null, null);
-                  if (!kIsWeb) disposeAudioFile(originalContext, file);
-                }
+                await widget.onSend([file], "", "", null, null);
+                if (!kIsWeb) disposeAudioFile(originalContext, file);
 
                 // Remove the OG alert dialog
                 Get.back();
@@ -518,7 +508,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             ListTile(
               title: Text("Send location", style: Theme.of(context).textTheme.bodyLarge),
               onTap: () async {
-                Share.location(ChatController.forGuid(widget.chatGuid)!.chat);
+                Share.location(chat);
                 Get.back();
               },
             ),
@@ -662,7 +652,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     },
                                     onTap: () {
                                       eventDispatcher.emit(
-                                          'replace-emoji', {'emojiMatchIndex': index, 'chatGuid': widget.chatGuid});
+                                          'replace-emoji', {'emojiMatchIndex': index, 'chatGuid': chatGuid});
                                     },
                                     child: Obx(
                                       () => ListTile(
@@ -852,7 +842,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               : context.theme.colorScheme.primary,
           child: InkWell(
             onTap: () async {
-              await Share.location(ChatController.forGuid(widget.chatGuid)!.chat);
+              await Share.location(chat);
             },
             child: Padding(
               padding: EdgeInsets.only(
@@ -874,7 +864,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<void> getPlaceholder() async {
-    String placeholder = chat?.isTextForwarding ?? false ? "Text Forwarding" : "iMessage";
+    String placeholder = chat.isTextForwarding ? "Text Forwarding" : "iMessage";
 
     try {
       // Don't do anything if this setting isn't enabled
@@ -886,26 +876,26 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             ss.settings.redactedMode.value && ss.settings.generateFakeContactNames.value;
 
         // If it's a group chat, get the title of the chat
-        if (ChatController.forGuid(widget.chatGuid)?.chat.isGroup() ?? false) {
+        if (chat.isGroup() ?? false) {
           if (generateNames) {
             placeholder = "Group Chat";
           } else if (hideInfo) {
-            placeholder = chat?.isTextForwarding ?? false ? "Text Forwarding" : "iMessage";
+            placeholder = chat.isTextForwarding ? "Text Forwarding" : "iMessage";
           } else {
-            String? title = ChatController.forGuid(widget.chatGuid)?.chat.getTitle();
+            String? title = chat.getTitle();
             if (!isNullOrEmpty(title)!) {
               placeholder = title!;
             }
           }
-        } else if (!isNullOrEmpty(ChatController.forGuid(widget.chatGuid)?.chat.participants)!) {
+        } else if (!isNullOrEmpty(chat.participants)!) {
           if (generateNames) {
-            placeholder = chat!.participants.length > 1 ? "Group Chat" : chat!.participants[0].fakeName;
+            placeholder = chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
           } else if (hideInfo) {
-            placeholder = chat?.isTextForwarding ?? false ? "Text Forwarding" : "iMessage";
+            placeholder = chat.isTextForwarding ?? false ? "Text Forwarding" : "iMessage";
           } else {
             // If it's not a group chat, get the participant's contact info
-            Handle? handle = ChatController.forGuid(widget.chatGuid)?.chat.participants[0];
-            Contact? contact = handle?.contact;
+            Handle? handle = chat.participants[0];
+            Contact? contact = handle.contact;
             if (contact == null) {
               placeholder = await formatPhoneNumber(handle);
             } else {
@@ -989,7 +979,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               // Tab
               if (windowsData?.keyCode == 9 || linuxData?.keyCode == 65289 || webData?.code == "Tab" || androidData?.physicalKey == PhysicalKeyboardKey.tab) {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
-                  eventDispatcher.emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
+                  eventDispatcher.emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat.guid});
                   emojiSelectedIndex.value = 0;
                   emojiController.jumpTo(0);
                   return KeyEventResult.handled;
@@ -999,7 +989,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               // Enter
               if (windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") {
                 if (emojiMatches.value.length > emojiSelectedIndex.value) {
-                  eventDispatcher.emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat!.guid});
+                  eventDispatcher.emit('replace-emoji', {'emojiMatchIndex': emojiSelectedIndex.value, 'chatGuid': chat.guid});
                   emojiSelectedIndex.value = 0;
                   emojiController.jumpTo(0);
                   return KeyEventResult.handled;
@@ -1100,7 +1090,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 decoration: BoxDecoration(
                   border: Border.fromBorderSide((ss.settings.enablePrivateAPI.value &&
                               ss.settings.privateSubjectLine.value &&
-                              (chat?.isIMessage ?? true)) ||
+                              (chat.isIMessage ?? true)) ||
                           replyToMessage.value != null
                       ? BorderSide(
                           color: context.theme.colorScheme.properSurface,
@@ -1171,7 +1161,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     }),
                     if (ss.settings.enablePrivateAPI.value &&
                         ss.settings.privateSubjectLine.value &&
-                        (chat?.isIMessage ?? true))
+                        (chat.isIMessage ?? true))
                       CustomCupertinoTextField(
                         enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                         textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
@@ -1206,7 +1196,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       ),
                     if (ss.settings.enablePrivateAPI.value &&
                         ss.settings.privateSubjectLine.value &&
-                        (chat?.isIMessage ?? true))
+                        (chat.isIMessage ?? true))
                       Divider(
                           height: 1.5,
                           thickness: 1.5,
@@ -1247,7 +1237,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           minLines: 1,
                           placeholder: ss.settings.recipientAsPlaceholder.value == true
                               ? placeholder.value
-                              : chat?.isTextForwarding ?? false
+                              : chat.isTextForwarding ?? false
                                   ? "Text Forwarding"
                                   : "iMessage",
                           padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
@@ -1257,7 +1247,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             border: Border.fromBorderSide(
                               (ss.settings.enablePrivateAPI.value &&
                                           ss.settings.privateSubjectLine.value &&
-                                          (chat?.isIMessage ?? true)) ||
+                                          (chat.isIMessage ?? true)) ||
                                       replyToMessage.value != null
                                   ? BorderSide.none
                                   : BorderSide(
@@ -1347,7 +1337,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           color: context.theme.colorScheme.outline) : SizedBox.shrink()),
                     if (ss.settings.enablePrivateAPI.value &&
                         ss.settings.privateSubjectLine.value &&
-                        (chat?.isIMessage ?? true))
+                        (chat.isIMessage ?? true))
                       TextField(
                         enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
                         controller: subjectController,
@@ -1387,7 +1377,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       ),
                     if (ss.settings.enablePrivateAPI.value &&
                         ss.settings.privateSubjectLine.value &&
-                        (chat?.isIMessage ?? true))
+                        (chat.isIMessage ?? true))
                       Divider(
                           height: 1.5,
                           thickness: 1.5,
@@ -1429,7 +1419,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         ),
                         hintText: ss.settings.recipientAsPlaceholder.value == true
                             ? placeholder.value
-                            : chat?.isTextForwarding ?? false
+                            : chat.isTextForwarding ?? false
                                 ? "Text Forwarding"
                                 : "iMessage",
                         hintStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
@@ -1595,9 +1585,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       (controller!.text.trim().isNotEmpty ||
                                           subjectController!.text.trim().isNotEmpty)))) &&
                           !isRecording.value &&
-                          (chat?.isIMessage ?? true)) {
+                          (chat.isIMessage ?? true)) {
                         sendEffectAction(context, this, controller!.text.trim(), subjectController!.text.trim(),
-                            replyToMessage.value?.guid, widget.chatGuid, sendMessage);
+                            replyToMessage.value?.guid, chatGuid, sendMessage);
                       }
                     },
                     child: ButtonTheme(
@@ -1614,14 +1604,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         onPressed: sendAction,
                         onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) &&
                                 !isRecording.value &&
-                                (chat?.isIMessage ?? true)
+                                (chat.isIMessage ?? true)
                             ? () => sendEffectAction(
                                 context,
                                 this,
                                 controller!.text.trim(),
                                 subjectController!.text.trim(),
                                 replyToMessage.value?.guid,
-                                widget.chatGuid,
+                                chatGuid,
                                 sendMessage)
                             : null,
                         child: Stack(
@@ -1692,23 +1682,23 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                             (controller!.text.trim().isNotEmpty ||
                                                 subjectController!.text.trim().isNotEmpty)))) &&
                                 !isRecording.value &&
-                                (chat?.isIMessage ?? true)) {
+                                (chat.isIMessage ?? true)) {
                               sendEffectAction(context, this, controller!.text.trim(), subjectController!.text.trim(),
-                                  replyToMessage.value?.guid, widget.chatGuid, sendMessage);
+                                  replyToMessage.value?.guid, chatGuid, sendMessage);
                             }
                           },
                           child: InkWell(
                             onTap: sendAction,
                             onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) &&
                                     !isRecording.value &&
-                                    (chat?.isIMessage ?? true)
+                                    (chat.isIMessage ?? true)
                                 ? () => sendEffectAction(
                                     context,
                                     this,
                                     controller!.text.trim(),
                                     subjectController!.text.trim(),
                                     replyToMessage.value?.guid,
-                                    widget.chatGuid,
+                                    chatGuid,
                                     sendMessage)
                                 : null,
                             child: Stack(

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -22,6 +22,7 @@ class StickersWidget extends StatefulWidget {
 
 class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAliveClientMixin {
   bool _visible = true;
+  late final controller = cvc(cm.activeChat!.chat);
 
   @override
   void initState() {
@@ -37,7 +38,7 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
   }
 
   Future<void> loadStickers() async {
-    if (ChatManager().activeChat == null) return;
+    if (cm.activeChat == null) return;
     // For each message, load the sticker for it
     for (Message msg in widget.messages) {
       // If the message type isn't a sticker, skip it
@@ -49,7 +50,7 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
       }
       for (Attachment? attachment in msg.attachments) {
         // If we've already loaded it, don't try again
-        if (ChatManager().activeChat!.stickerData.keys.contains(attachment!.guid)) continue;
+        if (controller.stickerData.keys.contains(attachment!.guid)) continue;
 
         String pathName = AttachmentHelper.getAttachmentPath(attachment);
 
@@ -69,7 +70,7 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
 
               if (image != null) {
                 final bytes = await File(pathName).readAsBytes();
-                ChatManager().activeChat!.stickerData[msg.guid!] = {
+                controller.stickerData[msg.guid!] = {
                   attachment.guid!: bytes
                 };
               }
@@ -85,7 +86,7 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
 
           if (image != null) {
             final bytes = await File(pathName).readAsBytes();
-            ChatManager().activeChat!.stickerData[msg.guid!] = {
+            controller.stickerData[msg.guid!] = {
               attachment.guid!: bytes
             };
           }
@@ -100,11 +101,11 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
     super.build(context);
 
     final guids = widget.messages.map((e) => e.guid!);
-    final stickers = ChatManager().activeChat?.stickerData.entries.where((element) => guids.contains(element.key)).map((e) => e.value);
+    final stickers = controller.stickerData.entries.where((element) => guids.contains(element.key)).map((e) => e.value);
 
-    if (stickers?.isEmpty ?? true) return Container();
+    if (stickers.isEmpty) return Container();
 
-    final data = stickers!.map((e) => e.values).expand((element) => element);
+    final data = stickers.map((e) => e.values).expand((element) => element);
 
     List<double> leftVec = [];
     data.forEachIndexed((index, item) {

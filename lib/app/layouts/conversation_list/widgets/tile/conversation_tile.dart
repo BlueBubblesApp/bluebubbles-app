@@ -14,8 +14,8 @@ import 'package:bluebubbles/app/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -132,7 +132,7 @@ class _ConversationTileState extends CustomState<ConversationTile, void, Convers
 
     if (kIsDesktop || kIsWeb) {
       controller.shouldHighlight.value =
-          ChatManager().activeChat?.chat.guid == controller.chat.guid;
+          cm.activeChat?.chat.guid == controller.chat.guid;
     }
 
     eventDispatcher.stream.listen((event) {
@@ -342,69 +342,61 @@ class ChatLeading extends StatelessWidget {
       children: [
         if (unreadIcon != null && ss.settings.skin.value == Skins.iOS)
           unreadIcon!,
-        StreamBuilder<Map<String, dynamic>>(
-            stream: ChatManager().getChatController(controller.chat.guid)?.stream as Stream<Map<String, dynamic>>?,
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              bool showTypingIndicator = false;
-              if (snapshot.connectionState == ConnectionState.active
-                  && snapshot.hasData
-                  && snapshot.data["type"] == ChatControllerEvent.TypingStatus) {
-                showTypingIndicator = snapshot.data["data"];
-              }
-              double height = Theme.of(context).textTheme.labelLarge!.fontSize! * 1.25;
-              return Stack(
-                clipBehavior: Clip.none,
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2, right: 2),
-                    child: controller.isSelected ? Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        color: context.theme.colorScheme.primary,
-                      ),
-                      width: 40,
-                      height: 40,
-                      child: Center(
-                        child: Icon(
-                          Icons.check,
-                          color: context.theme.colorScheme.onPrimary,
-                          size: 20,
-                        ),
-                      ),
-                    ) : ContactAvatarGroupWidget(
-                      chat: controller.chat,
-                      size: 40,
-                      editable: false,
-                      onTap: () => controller.onTap(context),
+        Obx(() {
+          final showTypingIndicator = cvc(controller.chat).showTypingIndicator.value;
+          double height = Theme.of(context).textTheme.labelLarge!.fontSize! * 1.25;
+          return Stack(
+            clipBehavior: Clip.none,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(top: 2, right: 2),
+                child: controller.isSelected ? Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    color: context.theme.colorScheme.primary,
+                  ),
+                  width: 40,
+                  height: 40,
+                  child: Center(
+                    child: Icon(
+                      Icons.check,
+                      color: context.theme.colorScheme.onPrimary,
+                      size: 20,
                     ),
                   ),
-                  if (showTypingIndicator)
-                    Positioned(
-                      top: 30,
-                      left: 20,
-                      height: height,
-                      child: const FittedBox(
-                        alignment: Alignment.centerLeft,
-                        child: TypingIndicator(
-                          chatList: true,
-                          visible: true,
-                        ),
-                      ),
+                ) : ContactAvatarGroupWidget(
+                  chat: controller.chat,
+                  size: 40,
+                  editable: false,
+                  onTap: () => controller.onTap(context),
+                ),
+              ),
+              if (showTypingIndicator)
+                Positioned(
+                  top: 30,
+                  left: 20,
+                  height: height,
+                  child: const FittedBox(
+                    alignment: Alignment.centerLeft,
+                    child: TypingIndicator(
+                      chatList: true,
+                      visible: true,
                     ),
-                  if (unreadIcon != null && ss.settings.skin.value == Skins.Samsung)
-                    Positioned(
-                      top: 30,
-                      right: 20,
-                      height: height,
-                      child: FittedBox(
-                        alignment: Alignment.centerRight,
-                        child: unreadIcon,
-                      ),
-                    ),
-                ],
-              );
-            }
-        ),
+                  ),
+                ),
+              if (unreadIcon != null && ss.settings.skin.value == Skins.Samsung)
+                Positioned(
+                  top: 30,
+                  right: 20,
+                  height: height,
+                  child: FittedBox(
+                    alignment: Alignment.centerRight,
+                    child: unreadIcon,
+                  ),
+                ),
+            ],
+          );
+        })
       ],
     );
   }

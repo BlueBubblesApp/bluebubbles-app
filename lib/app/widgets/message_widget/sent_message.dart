@@ -16,8 +16,8 @@ import 'package:bluebubbles/app/widgets/message_widget/message_popup_holder.dart
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/app/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -42,7 +42,6 @@ class SentMessageHelper {
     Future<List<InlineSpan>> msgSpanFuture, {
     Widget? customContent,
     Message? olderMessage,
-    ChatController? currentChat,
     Color? customColor,
     bool padding = true,
     bool margin = true,
@@ -370,7 +369,7 @@ class SentMessageHelper {
             getErrorWidget(
               context,
               message,
-              currentChat != null ? currentChat.chat : ChatManager().activeChat?.chat,
+              cm.activeChat?.chat,
               service,
             ),
           ],
@@ -657,8 +656,8 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
       });
     }
 
-    /*if (ChatManager().activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
-      ChatManager().activeChat?.autoplayGuid = null;
+    /*if (cm.activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
+      cm.activeChat?.autoplayGuid = null;
       SchedulerBinding.instance!.addPostFrameCallback((_) {
         if (ModalRoute.of(context)?.animation?.status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
           setState(() {
@@ -691,12 +690,12 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
       if (msg != null &&
           widget.olderMessage?.guid != msg.guid &&
           widget.olderMessage?.threadOriginatorGuid != widget.message.threadOriginatorGuid) {
-        messageColumn.add(GestureDetector(
+        /*messageColumn.add(GestureDetector(
           onTap: () {
             showReplyThread(context, widget.message, widget.messageBloc!);
           },
           child: StreamBuilder<dynamic>(
-              stream: ChatController.of(context)?.totalOffsetStream.stream,
+              stream: ChatLifecycleManager.of(context)?.totalOffsetStream.stream,
               builder: (context, snapshot) {
                 dynamic data;
                 if (snapshot.data is double) {
@@ -719,7 +718,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                       mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                       children: [
                         if ((ss.settings.alwaysShowAvatars.value ||
-                                (ChatController.of(context)?.chat.isGroup() ?? false)) &&
+                                (ChatLifecycleManager.of(context)?.chat.isGroup() ?? false)) &&
                             !msg.isFromMe!)
                           Padding(
                             padding: EdgeInsets.only(top: 5, left: 6),
@@ -802,7 +801,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                   ),
                 );
               }),
-        ));
+        ));*/
       }
     }
 
@@ -879,9 +878,9 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
           threadOriginatorSize ??= widget.olderMessage?.getBubbleSize(context);
         }
         messageSize ??= widget.message.getBubbleSize(context);
-        messageColumn.add(
+        /*messageColumn.add(
           StreamBuilder<dynamic>(
-              stream: ChatController.of(context)?.totalOffsetStream.stream,
+              stream: ChatLifecycleManager.of(context)?.totalOffsetStream.stream,
               builder: (context, snapshot) {
                 double? data;
                 if (snapshot.data is double) {
@@ -907,7 +906,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                   padding: EdgeInsets.only(
                     // add extra padding when showing contact avatars
                     left: max(
-                        ((ChatManager().activeChat?.chat.isGroup() ?? false) ||
+                        ((cm.activeChat?.chat.isGroup() ?? false) ||
                                     ss.settings.alwaysShowAvatars.value
                                 ? 75
                                 : 40) -
@@ -954,7 +953,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                   ),
                 );
               }),
-        );
+        );*/
         messagePopupColumn.add(
           MessageWidgetMixin.addStickersToWidget(
             message: MessageWidgetMixin.addReactionsToWidget(

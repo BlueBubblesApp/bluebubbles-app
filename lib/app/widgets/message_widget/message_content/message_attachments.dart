@@ -1,6 +1,6 @@
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
@@ -85,7 +85,7 @@ class MessageAttachments extends StatelessWidget {
               attachmentWidget,
               Container(width: 5),
               // todo temporarily set bloc null
-              SentMessageHelper.getErrorWidget(context, message, ChatManager().activeChat?.chat, rightPadding: 0, null),
+              SentMessageHelper.getErrorWidget(context, message, cm.activeChat?.chat, rightPadding: 0, null),
             ],
           ));
         }

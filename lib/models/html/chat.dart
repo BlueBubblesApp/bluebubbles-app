@@ -6,7 +6,7 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/html/attachment.dart';
 import 'package:bluebubbles/models/html/handle.dart';
 import 'package:bluebubbles/models/html/message.dart';
@@ -255,7 +255,7 @@ class Chat {
   }
 
   Chat toggleHasUnread(bool hasUnread) {
-    if ((hasUnread && ChatManager().isChatActive(guid)) || hasUnreadMessage == hasUnread) {
+    if ((hasUnread && cm.isChatActive(guid)) || hasUnreadMessage == hasUnread) {
       return this;
     }
 
@@ -327,7 +327,7 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
         toggleHasUnread(false);
-      } else if (!ChatManager().isChatActive(guid)) {
+      } else if (!cm.isChatActive(guid)) {
         toggleHasUnread(true);
       }
     }
@@ -381,7 +381,7 @@ class Chat {
 
   void serverSyncParticipants() async {
     // Send message to server to get the participants
-    final chat = await ChatManager().fetchChat(guid);
+    final chat = await cm.fetchChat(guid);
     if (chat != null) {
       // Make sure that all participants for our local chat are fetched
       getParticipants();

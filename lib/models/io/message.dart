@@ -11,7 +11,7 @@ import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -364,6 +364,8 @@ class Message {
     if (error2 != null) _error.value = error2;
     if (dateRead2 != null) _dateRead.value = dateRead2;
     if (dateDelivered2 != null) _dateDelivered.value = dateDelivered2;
+    if (attachments == const []) attachments = [];
+    if (associatedMessages == const []) associatedMessages = [];
   }
 
   String get fullText {
@@ -653,7 +655,7 @@ class Message {
 
   /// Fetch attachments for a single message. Prefer using [fetchAttachmentsByMessages]
   /// or [fetchAttachmentsByMessagesAsync] when working with a list of messages.
-  List<Attachment?>? fetchAttachments({ChatController? currentChat}) {
+  List<Attachment?>? fetchAttachments({ChatLifecycleManager? currentChat}) {
     if (kIsWeb || (hasAttachments && attachments.isNotEmpty)) {
       return attachments;
     }

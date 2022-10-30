@@ -1,7 +1,8 @@
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
 import 'package:bluebubbles/models/global/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chewie_audio/chewie_audio.dart';
@@ -39,8 +40,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   void initState() {
     super.initState();
 
-    ChatController? thisChat = ChatController.of(widget.context);
-    if (!kIsWeb && thisChat != null && thisChat.audioPlayers.containsKey(widget.file.path)) {
+    ConversationViewController thisChat = cvc(cm.activeChat!.chat);
+    if (!kIsWeb && thisChat.audioPlayers.containsKey(widget.file.path)) {
       audioController = thisChat.audioPlayers[widget.file.path]!.item2;
       controller = thisChat.audioPlayers[widget.file.path]!.item1;
     } else {
@@ -74,9 +75,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         cupertinoColumnAlignment: widget.isFromMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       );
 
-      thisChat = ChatController.of(widget.context);
-      if (!kIsWeb && thisChat != null && widget.file.path != null) {
-        ChatController.of(widget.context)!.audioPlayers[widget.file.path!] = Tuple2(controller, audioController);
+      if (!kIsWeb && widget.file.path != null) {
+        thisChat.audioPlayers[widget.file.path!] = Tuple2(controller, audioController);
       }
     }
   }

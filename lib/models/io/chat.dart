@@ -8,7 +8,7 @@ import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -666,7 +666,7 @@ class Chat {
   }
 
   Chat toggleHasUnread(bool hasUnread, {bool clearLocalNotifications = true}) {
-    if ((hasUnread && ChatManager().isChatActive(guid)) || hasUnreadMessage == hasUnread) {
+    if ((hasUnread && cm.isChatActive(guid)) || hasUnreadMessage == hasUnread) {
       return this;
     }
 
@@ -762,7 +762,7 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
         toggleHasUnread(false);
-      } else if (!ChatManager().isChatActive(guid)) {
+      } else if (!cm.isChatActive(guid)) {
         toggleHasUnread(true);
       }
     }
@@ -852,7 +852,7 @@ class Chat {
 
   void serverSyncParticipants() async {
     // Send message to server to get the participants
-    final chat = await ChatManager().fetchChat(guid);
+    final chat = await cm.fetchChat(guid);
     if (chat != null) {
       chat.save();
     }

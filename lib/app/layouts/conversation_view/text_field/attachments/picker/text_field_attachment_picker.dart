@@ -6,7 +6,7 @@ import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/global/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -194,7 +194,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                         primary: context.theme.colorScheme.properSurface,
                                       ),
                                       onPressed: () async {
-                                        await Share.location(ChatManager().activeChat!.chat);
+                                        await Share.location(cm.activeChat!.chat);
                                       },
                                       child: Column(
                                         mainAxisAlignment: MainAxisAlignment.center,

@@ -6,7 +6,6 @@ import 'package:bluebubbles/app/layouts/conversation_details/conversation_detail
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
@@ -18,7 +17,6 @@ import 'package:bluebubbles/app/widgets/message_widget/message_content/message_a
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/app/widgets/components/screen_effects_widget.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:defer_pointer/defer_pointer.dart';
@@ -51,14 +49,14 @@ class ConversationViewState extends State<ConversationView> {
   Message? message;
   Tween<double> tween = Tween<double>(begin: 1, end: 0);
   double offset = 0;
-  Control controller = Control.stop;
+  Control control = Control.stop;
 
   bool markingAsRead = false;
   bool markedAsRead = false;
 
+  late final ConversationViewController controller = cvc(chat, tag: widget.customService?.tag);
   late final RxBool adjustBackground = RxBool(ts.isGradientBg(Get.context!));
   final GlobalKey key = GlobalKey();
-  late final ChatController currentChat;
 
   Chat get chat => widget.chat;
 
@@ -66,8 +64,7 @@ class ConversationViewState extends State<ConversationView> {
   void initState() {
     super.initState();
 
-    ChatManager().setActiveChat(chat);
-    currentChat = ChatManager().activeChat!;
+    cm.setActiveChat(chat);
 
     KeyboardVisibilityController().onChange.listen((bool visible) async {
       await Future.delayed(Duration(milliseconds: 500));
@@ -82,14 +79,13 @@ class ConversationViewState extends State<ConversationView> {
 
   @override
   void dispose() {
-    ChatManager().setAllInactive();
-    currentChat.disposeControllers();
-    currentChat.dispose();
+    cm.setAllInactive();
+    controller.close();
     super.dispose();
   }
 
   Future<bool> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
-    await currentChat.scrollToBottom();
+    await controller.scrollToBottom();
 
     for (PlatformFile file in attachments) {
       final message = Message(
@@ -163,7 +159,7 @@ class ConversationViewState extends State<ConversationView> {
             begin: ns.width(context) - 30,
             end: min(max(size.width, size2.width) + 68,
                 ns.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
-        controller = Control.play;
+        control = Control.play;
         message = _message;
       });
     }
@@ -172,12 +168,12 @@ class ConversationViewState extends State<ConversationView> {
   }
 
   Widget buildScrollToBottomFAB(BuildContext context) {
-    if (!currentChat.showScrollDown.value) return const SizedBox.shrink();
+    if (!controller.showScrollDown.value) return const SizedBox.shrink();
     if (ss.settings.skin.value != Skins.iOS) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 15.0),
         child: FloatingActionButton(
-          onPressed: currentChat.scrollToBottom,
+          onPressed: controller.scrollToBottom,
           child: Icon(
             Icons.arrow_downward,
             color: context.theme.colorScheme.onSecondary,
@@ -204,7 +200,7 @@ class ConversationViewState extends State<ConversationView> {
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Center(
                     child: GestureDetector(
-                      onTap: currentChat.scrollToBottom,
+                      onTap: controller.scrollToBottom,
                       child: Text(
                         "\u{2193} Scroll to bottom \u{2193}",
                         textAlign: TextAlign.center,
@@ -227,7 +223,7 @@ class ConversationViewState extends State<ConversationView> {
     final textField = BlueBubblesTextField(
       key: key,
       onSend: send,
-      chatGuid: widget.chat.guid,
+      controller: controller,
     );
 
     final Widget child = Actions(
@@ -268,7 +264,7 @@ class ConversationViewState extends State<ConversationView> {
                           ),
                            Obx(() => AnimatedOpacity(
                             duration: Duration(milliseconds: 250),
-                            opacity: currentChat.showScrollDown.value ? 1 : 0,
+                            opacity: controller.showScrollDown.value ? 1 : 0,
                             curve: Curves.easeInOut,
                             child: buildScrollToBottomFAB(context),
                           )),
@@ -282,11 +278,11 @@ class ConversationViewState extends State<ConversationView> {
                             onPanUpdate: (details) {
                               if (ss.settings.swipeToCloseKeyboard.value &&
                                   details.delta.dy > 0 &&
-                                  currentChat.keyboardOpen) {
+                                  controller.keyboardOpen) {
                                 eventDispatcher.emit("unfocus-keyboard", null);
                               } else if (ss.settings.swipeToOpenKeyboard.value &&
                                   details.delta.dy < 0 &&
-                                  !currentChat.keyboardOpen) {
+                                  !controller.keyboardOpen) {
                                 eventDispatcher.emit("focus-keyboard", null);
                               }
                             },
@@ -304,7 +300,7 @@ class ConversationViewState extends State<ConversationView> {
                       if (message != null) {
                         setState(() {
                           tween = Tween<double>(begin: 1, end: 0);
-                          controller = Control.stop;
+                          control = Control.stop;
                           message = null;
                         });
                       }
@@ -312,7 +308,7 @@ class ConversationViewState extends State<ConversationView> {
                     child: Visibility(
                       visible: message != null,
                       child: CustomAnimationBuilder<double>(
-                          control: controller,
+                          control: control,
                           tween: tween,
                           duration: Duration(milliseconds: 250),
                           builder: (context, value, child) {
@@ -323,7 +319,6 @@ class ConversationViewState extends State<ConversationView> {
                               false,
                               message?.isBigEmoji() ?? false,
                               MessageWidgetMixin.buildMessageSpansAsync(context, message),
-                              currentChat: currentChat,
                               customWidth: (message?.hasAttachments ?? false) &&
                                       (message?.text?.isEmpty ?? true) &&
                                       (message?.subject?.isEmpty ?? true)

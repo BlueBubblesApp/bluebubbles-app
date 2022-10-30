@@ -2,7 +2,7 @@ import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:faker/faker.dart';
@@ -224,16 +224,17 @@ abstract class MessageWidgetMixin {
       RegExp exp = RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
       List<Tuple2<String, int>> linkIndexMatches = <Tuple2<String, int>>[];
+      final controller = cvc(cm.activeChat!.chat);
       if (!kIsWeb && !kIsDesktop) {
-        if (ChatManager().activeChat?.mlKitParsedText[message.guid!] == null) {
+        if (controller.mlKitParsedText[message.guid!] == null) {
           try {
-            ChatManager().activeChat?.mlKitParsedText[message.guid!] =
+            controller.mlKitParsedText[message.guid!] =
                 await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english).annotateText(message.text!);
           } catch (ex) {
             Logger.warn('Failed to extract entities using mlkit! Error: ${ex.toString()}');
           }
         }
-        final entities = ChatManager().activeChat?.mlKitParsedText[message.guid!] ?? [];
+        final entities = controller.mlKitParsedText[message.guid!] ?? [];
         List<EntityAnnotation> normalizedEntities = [];
         if (entities.isNotEmpty) {
           for (int i = 0; i < entities.length; i++) {

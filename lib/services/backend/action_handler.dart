@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/network/network_error_handler.dart';
@@ -82,7 +82,7 @@ class ActionHandler extends GetxService {
           final tempGuid = element.guid;
           element = handleSendError(error, element);
 
-          if (!ls.isAlive || !(ChatManager().getChatController(c.guid)?.isAlive ?? false)) {
+          if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
             await notif.createFailedToSend();
           }
           await Message.replaceMessage(tempGuid, element);
@@ -101,7 +101,7 @@ class ActionHandler extends GetxService {
         final tempGuid = m.guid;
         m = handleSendError(error, m);
 
-        if (!ls.isAlive || !(ChatManager().getChatController(c.guid)?.isAlive ?? false)) {
+        if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
           await notif.createFailedToSend();
         }
         await Message.replaceMessage(tempGuid, m);
@@ -147,7 +147,7 @@ class ActionHandler extends GetxService {
       final tempGuid = m.guid;
       m = handleSendError(error, m);
 
-      if (!ls.isAlive || !(ChatManager().getChatController(c.guid)?.isAlive ?? false)) {
+      if (!ls.isAlive || !(cm.getChatController(c.guid)?.isAlive ?? false)) {
         await notif.createFailedToSend();
       }
       await Message.replaceMessage(tempGuid, m);
@@ -234,6 +234,6 @@ class ActionHandler extends GetxService {
       await cs.init();
     }
     // get and return the chat from server
-    return await ChatManager().fetchChat(partialData.guid) ?? partialData;
+    return await cm.fetchChat(partialData.guid) ?? partialData;
   }
 }

@@ -4,8 +4,8 @@ import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -39,7 +39,8 @@ class DesktopVideoWidgetController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    Map<String, Player> controllers = ChatManager().activeChat?.videoPlayersDesktop ?? {};
+    final ConversationViewController thisChat = cvc(cm.activeChat!.chat);
+    Map<String, Player> controllers = thisChat.videoPlayersDesktop;
     showPlayPauseOverlay =
         RxBool(!controllers.containsKey(attachment.guid) || !controllers[attachment.guid]!.playback.isPlaying);
 
@@ -64,7 +65,8 @@ class DesktopVideoWidgetController extends GetxController {
     controller!.pause();
     controller!.seek(Duration.zero);
     createListeners(controller!);
-    ChatManager().activeChat?.addVideoDesktop({attachment.guid!: controller!});
+    final ConversationViewController thisChat = cvc(cm.activeChat!.chat);
+    thisChat.videoPlayersDesktop[attachment.guid!] = controller!;
   }
 
   void createListeners(Player controller) {
@@ -147,7 +149,7 @@ class DesktopVideoWidget extends StatelessWidget {
           controller.controller!.pause();
         } else {
           controller.navigated = true;
-          ChatController? currentChat = ChatManager().activeChat;
+          ChatLifecycleManager? currentChat = cm.activeChat;
           await Navigator.of(context).push(
             ThemeSwitcher.buildPageRoute(
               builder: (context) => AttachmentFullscreenViewer(

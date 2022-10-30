@@ -1,4 +1,4 @@
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/widgets.dart';
@@ -10,7 +10,7 @@ String getContactName(BuildContext context, String? contactTitle, String? contac
 
   String contactName = contactTitle ?? "";
   if (hideInfo || generateName) {
-    currentChat = ChatManager().activeChat?.chat ?? currentChat;
+    currentChat = cm.activeChat?.chat ?? currentChat;
     int index = (currentChat?.participants ?? []).indexWhere((h) => h.address == contactAddress);
     List<String> fakeNames = currentChat?.participants.map((e) => e.fakeName).toList() ?? [];
     if (generateName && fakeNames.isNotEmpty) {

@@ -7,7 +7,7 @@ import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -96,8 +96,6 @@ class SamsungTrailing extends CustomStateful<ConversationTileController> {
 }
 
 class _SamsungTrailingState extends CustomState<SamsungTrailing, void, ConversationTileController> {
-  late final MessageMarkers? markers = ChatManager().getChatController(controller.chat.guid)?.messageMarkers;
-
   DateTime? dateCreated;
   bool unread = false;
   String muteType = "";
@@ -197,13 +195,8 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
             ),
           Obx(() {
             String indicatorText = "";
-            if (ss.settings.statusIndicatorsOnChats.value && markers != null) {
-              Indicator show = shouldShow(
-                  cachedLatestMessage,
-                  markers!.myLastMessage.value,
-                  markers!.lastReadMessage.value,
-                  markers!.lastDeliveredMessage.value
-              );
+            if (ss.settings.statusIndicatorsOnChats.value) {
+              Indicator show = shouldShow(cachedLatestMessage);
               indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
             }
 

@@ -6,8 +6,8 @@ import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -52,9 +52,9 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     Size size = renderBox.size;
     Offset offset = renderBox.localToGlobal(Offset.zero);
     bool increaseWidth = !MessageHelper.getShowTail(context, widget.message, widget.newerMessage) &&
-        (ss.settings.alwaysShowAvatars.value || (ChatManager().activeChat?.chat.isGroup() ?? false));
+        (ss.settings.alwaysShowAvatars.value || (cm.activeChat?.chat.isGroup() ?? false));
     bool doNotIncreaseHeight = ((widget.message.isFromMe ?? false) ||
-        !(ChatManager().activeChat?.chat.isGroup() ?? false) ||
+        !(cm.activeChat?.chat.isGroup() ?? false) ||
         !sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
 
@@ -128,7 +128,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     Logger.info("Sending reaction type: $type");
     outq.queue(OutgoingItem(
       type: QueueType.newMessage,
-      chat: widget.message.getChat() ?? ChatManager().activeChat!.chat,
+      chat: widget.message.getChat() ?? cm.activeChat!.chat,
       message: Message(
         associatedMessageGuid: widget.message.guid,
         associatedMessageType: type,
@@ -146,7 +146,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     bool showAltLayout =
         ss.settings.tabletMode.value && (!context.isPhone || context.isLandscape) && context.width > 600 && !ls.isBubble;
 
-    ChatController? currentChat = ChatManager().activeChat;
+    ChatLifecycleManager? currentChat = cm.activeChat;
     Widget popup = MessageDetailsPopup(
       currentChat: currentChat,
       child: widget.popupChild,
@@ -176,25 +176,16 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         key: containerKey,
         onDoubleTap: ss.settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
             ? () => openMessageDetails(isVisible)
-            : ss.settings.enableQuickTapback.value && (ChatManager().activeChat?.chat.isIMessage ?? true)
+            : ss.settings.enableQuickTapback.value && (cm.activeChat?.chat.isIMessage ?? true)
                 ? () {
                     if (widget.message.guid!.startsWith('temp')) return;
-                    if (kIsDesktop &&
-                        (ChatManager()
-                                .activeChat
-                                ?.videoPlayersDesktop
-                                .keys
-                                .any((String guid) => widget.message.attachments.any((a) => a?.guid == guid)) ??
-                            false)) {
-                      return;
-                    }
                     HapticFeedback.lightImpact();
                     sendReaction(ss.settings.quickTapbackType.value);
                   }
                 : null,
         onLongPress: ss.settings.doubleTapForDetails.value &&
                 ss.settings.enableQuickTapback.value &&
-                (ChatManager().activeChat?.chat.isIMessage ?? true)
+                (cm.activeChat?.chat.isIMessage ?? true)
             ? () {
                 if (widget.message.guid!.startsWith('temp')) return;
                 HapticFeedback.lightImpact();

@@ -26,15 +26,11 @@ extension EffectHelper on MessageEffect {
   bool get isScreen => !isBubble && this != MessageEffect.none;
 }
 
-Indicator shouldShow(
-    Message? latestMessage, Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
+Indicator shouldShow(Message? latestMessage) {
   if (!(latestMessage?.isFromMe ?? false)) return Indicator.NONE;
   if (latestMessage?.dateRead != null) return Indicator.READ;
   if (latestMessage?.dateDelivered != null) return Indicator.DELIVERED;
-  if (latestMessage?.guid == lastReadMessage?.guid) return Indicator.READ;
-  if (latestMessage?.guid == lastDeliveredMessage?.guid) return Indicator.DELIVERED;
   if (latestMessage?.dateCreated != null) return Indicator.SENT;
-
   return Indicator.NONE;
 }
 

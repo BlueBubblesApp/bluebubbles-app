@@ -18,7 +18,7 @@ import 'package:bluebubbles/app/animations/spotlight_classes.dart';
 import 'package:bluebubbles/app/animations/spotlight_rendering.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:confetti/confetti.dart';
@@ -288,7 +288,6 @@ void sendEffectAction(
                                                 false,
                                                 message.isBigEmoji(),
                                                 MessageWidgetMixin.buildMessageSpansAsync(context, message),
-                                                currentChat: ChatController.forGuid(chatGuid),
                                                 customColor: Theme.of(context).primaryColor,
                                                 effect: stringToMessageEffect[
                                                 typeSelected == "bubble" ? bubbleSelected : screenSelected] ??

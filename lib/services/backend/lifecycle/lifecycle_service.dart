@@ -1,5 +1,5 @@
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -45,9 +45,9 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   }
 
   void open() {
-    ChatManager().setActiveToAlive();
-    if (ChatManager().activeChat != null) {
-      ChatManager().clearChatNotifications(ChatManager().activeChat!.chat);
+    cm.setActiveToAlive();
+    if (cm.activeChat != null) {
+      cm.clearChatNotifications(cm.activeChat!.chat);
     }
 
     if (!kIsDesktop && !kIsWeb) {
@@ -58,14 +58,14 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   }
 
   void close() {
-    ChatManager().setActiveToDead();
+    cm.setActiveToDead();
     if (!kIsDesktop && !kIsWeb) {
       socket.disconnect();
     }
   }
 
   void closeBubble() {
-    ChatManager().setAllInactive();
+    cm.setAllInactive();
     socket.disconnect();
   }
 }

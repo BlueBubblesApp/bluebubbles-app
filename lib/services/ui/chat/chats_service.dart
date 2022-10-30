@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
@@ -54,13 +54,13 @@ class ChatsService extends GetxService {
     for (int i = 0; i < batches; i++) {
       List<Chat> temp;
       if (kIsWeb) {
-        temp = await ChatManager().getChats(withLastMessage: true, limit: batchSize, offset: i * batchSize);
+        temp = await cm.getChats(withLastMessage: true, limit: batchSize, offset: i * batchSize);
       } else {
         temp = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       }
 
       for (Chat c in temp) {
-        ChatManager().createChatController(c);
+        cm.createChatController(c);
       }
       newChats.addAll(temp);
 
@@ -112,7 +112,7 @@ class ChatsService extends GetxService {
 
   void addChat(Chat toAdd) {
     chats.add(toAdd);
-    ChatManager().createChatController(toAdd);
+    cm.createChatController(toAdd);
     sort();
   }
 

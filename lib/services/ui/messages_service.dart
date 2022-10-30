@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/main.dart';
@@ -49,7 +49,7 @@ class MessagesService extends GetxController {
       ..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
     countSub = countQuery.listen((event) {
       final newCount = event.count();
-      if (newCount > currentCount) {
+      if (newCount > currentCount && currentCount != 0) {
         event.limit = newCount - currentCount;
         final messages = event.find();
         for (Message message in messages) {
@@ -101,7 +101,7 @@ class MessagesService extends GetxController {
       _messages = await Chat.getMessagesAsync(chat, offset: offset);
       if (_messages.isEmpty) {
         // get from server and save
-        final fromServer = await ChatManager().getMessages(chat.guid, offset: offset);
+        final fromServer = await cm.getMessages(chat.guid, offset: offset);
         await MessageHelper.bulkAddMessages(chat, fromServer,
             notifyMessageManager: false, notifyForNewMessage: false, checkForLatestMessageText: false);
         // re-fetch from the DB because it will find handles / associated messages for us
@@ -132,12 +132,12 @@ class MessagesService extends GetxController {
       _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
       struct.addMessages(_messages);
     } else {
-      final beforeResponse = await ChatManager().getMessages(
+      final beforeResponse = await cm.getMessages(
         chat.guid,
         limit: 25,
         before: around.dateCreated!.millisecondsSinceEpoch,
       );
-      final afterResponse = await ChatManager().getMessages(
+      final afterResponse = await cm.getMessages(
         chat.guid,
         limit: 25,
         sort: "ASC",

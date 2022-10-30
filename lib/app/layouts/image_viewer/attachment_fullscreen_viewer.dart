@@ -13,7 +13,7 @@ import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/attachment_downloader_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -28,7 +28,7 @@ class AttachmentFullscreenViewer extends StatefulWidget {
     required this.showInteractions,
     this.currentChat,
   }) : super(key: key);
-  final ChatController? currentChat;
+  final ChatLifecycleManager? currentChat;
   final Attachment attachment;
   final bool showInteractions;
 

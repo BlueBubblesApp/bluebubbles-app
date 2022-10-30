@@ -4,8 +4,8 @@ import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -204,7 +204,7 @@ class MessageHelper {
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
     // Don't notify if window focused in desktop and chat list notifs off
     if (!ss.settings.notifyOnChatList.value && kIsDesktop && ls.isAlive) return;
-    ChatController? currChat = ChatManager().activeChat;
+    ChatLifecycleManager? currChat = cm.activeChat;
 
     // add unread icon as long as it isn't the active chat
     if (currChat?.chat.guid != chat.guid) chat.toggleHasUnread(true);
@@ -392,11 +392,6 @@ class MessageHelper {
         newerMessage!.isFromMe! &&
         message.dateDelivered != null &&
         newerMessage.dateDelivered == null) return true;
-
-    Message? lastRead = ChatManager().activeChat?.messageMarkers.lastReadMessage.value;
-    if (lastRead != null && lastRead.guid == message.guid) return true;
-    Message? lastDelivered = ChatManager().activeChat?.messageMarkers.lastDeliveredMessage.value;
-    if (lastDelivered != null && lastDelivered.guid == message.guid) return true;
 
     return false;
   }

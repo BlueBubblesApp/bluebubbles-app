@@ -8,7 +8,7 @@ import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -391,8 +391,6 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   }
 
   void refreshAttachment() {
-    ChatManager().activeChat?.clearImageData(widget.attachment);
-
     showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
     AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
       initBytes();

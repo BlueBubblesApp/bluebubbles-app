@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
@@ -23,12 +23,6 @@ class DeliveredReceipt extends StatefulWidget {
 
 class _DeliveredReceiptState extends State<DeliveredReceipt> {
   bool shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
-    if (ChatManager().activeChat != null) {
-      lastReadMessage ??= ChatManager().activeChat?.messageMarkers.lastReadMessage.value;
-      lastDeliveredMessage ??= ChatManager().activeChat?.messageMarkers.lastDeliveredMessage.value;
-      myLastMessage ??= ChatManager().activeChat?.messageMarkers.myLastMessage.value;
-    }
-
     // If the message is the same as the last read message, we want to show it
     if (!widget.showDeliveredReceipt &&
         widget.message.dateRead != null &&
@@ -78,14 +72,12 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> {
     return text;
   }
 
-  MessageMarkers? markers = ChatManager().activeChat?.messageMarkers;
-
   @override
   Widget build(BuildContext context) {
     Widget timestampWidget = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Obx(() {
-        if (shouldShow(markers?.myLastMessage.value, markers?.lastReadMessage.value, markers?.lastDeliveredMessage.value)) {
+      child: Builder(builder: (_) {
+        if (widget.message.guid == cm.activeChat?.chat.latestMessage?.guid) {
           return Text(
             getText(),
             style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),

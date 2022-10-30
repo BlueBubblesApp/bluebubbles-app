@@ -3,7 +3,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -222,7 +222,7 @@ class OpenNextChatAction extends Action<OpenNextChatIntent> {
 
   @override
   Object? invoke(covariant OpenNextChatIntent intent) {
-    final chat = ChatManager().activeChat?.chat;
+    final chat = cm.activeChat?.chat;
     if (chat != null) {
       final index = chats.chats.indexWhere((e) => e.guid == chat.guid);
       if (index > -1 && index < chats.chats.length - 1) {
@@ -251,7 +251,7 @@ class OpenPreviousChatAction extends Action<OpenPreviousChatIntent> {
 
   @override
   Object? invoke(covariant OpenPreviousChatIntent intent) {
-    final chat = ChatManager().activeChat?.chat;
+    final chat = cm.activeChat?.chat;
     if (chat != null) {
       final index = chats.chats.indexWhere((e) => e.guid == chat.guid);
       if (index > 0 && index < chats.chats.length) {

@@ -15,8 +15,8 @@ import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_alert_dialog.
 import 'package:bluebubbles/app/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -46,7 +46,7 @@ class MessageDetailsPopup extends StatefulWidget {
   final double childOffsetY;
   final Size? childSize;
   final Widget child;
-  final ChatController? currentChat;
+  final ChatLifecycleManager? currentChat;
   final MessagesService? messageBloc;
 
   @override
@@ -58,7 +58,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   bool showTools = false;
   String? selfReaction;
   String? currentlySelectedReaction;
-  ChatController? currentChat;
+  ChatLifecycleManager? currentChat;
   Chat? dmChat;
 
   late double messageTopOffset;
@@ -837,8 +837,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           child: InkWell(
             onTap: () {
               for (Attachment? element in widget.message.attachments) {
-                ChatManager().activeChat?.clearImageData(element!);
-                AttachmentHelper.redownloadAttachment(element!);
+                cvc(cm.activeChat!.chat).imageData.remove(element!.guid!);
+                AttachmentHelper.redownloadAttachment(element);
               }
               setState(() {});
               popDetails();

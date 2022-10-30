@@ -5,9 +5,8 @@ import 'package:bluebubbles/utils/crypto_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/network/network_tasks.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart';
@@ -168,12 +167,10 @@ class SocketService extends GetxService {
       case "chat-read-status-changed":
         return;
       case "typing-indicator":
-        ChatController? currentChat = ChatManager().getChatController(data["guid"]);
-        if (currentChat == null) return;
-        if (data["display"]) {
-          currentChat.displayTypingIndicator();
-        } else {
-          currentChat.hideTypingIndicator();
+        final chat = chats.chats.firstWhereOrNull((element) => element.guid == data["guid"]);
+        if (chat != null) {
+          final controller = cvc(chat);
+          controller.showTypingIndicator.value = data["display"];
         }
         return;
       default:
