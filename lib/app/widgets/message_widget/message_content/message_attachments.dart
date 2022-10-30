@@ -84,7 +84,8 @@ class MessageAttachments extends StatelessWidget {
             children: [
               attachmentWidget,
               Container(width: 5),
-              SentMessageHelper.getErrorWidget(context, message, ChatManager().activeChat?.chat, rightPadding: 0),
+              // todo temporarily set bloc null
+              SentMessageHelper.getErrorWidget(context, message, ChatManager().activeChat?.chat, rightPadding: 0, null),
             ],
           ));
         }

@@ -5,9 +5,11 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 
 // TODO determine how and when to update message widgets
 // 1) when threaded items are added, the thread count needs to update
@@ -24,6 +26,7 @@ class MessagesService extends GetxController {
   late final StreamSubscription countSub;
   final ChatMessages struct = ChatMessages();
   late final Function(Message) updateFunc;
+  late final Function(Message) removeFunc;
 
   final String tag;
   MessagesService(this.tag);
@@ -36,9 +39,10 @@ class MessagesService extends GetxController {
   Message? get mostRecent => (struct.messages.toList()
     ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
 
-  void init(Chat c, Function(Message) onNewMessage, Function(Message) onUpdatedMessage) {
+  void init(Chat c, Function(Message) onNewMessage, Function(Message) onUpdatedMessage, Function(Message) onDeletedMessage) {
     chat = c;
     updateFunc = onUpdatedMessage;
+    removeFunc = onDeletedMessage;
     // watch for new messages
     final countQuery = (messageBox.query(Message_.dateDeleted.isNull())
       ..link(Message_.chat, Chat_.id.equals(chat.id!))
@@ -46,15 +50,19 @@ class MessagesService extends GetxController {
     countSub = countQuery.listen((event) {
       final newCount = event.count();
       if (newCount > currentCount) {
-        final message = event.findFirst()!;
-        message.handle = Handle.findOne(id: message.handleId);
-        message.attachments = List<Attachment>.from(message.dbAttachments);
-        // add this as a reaction if needed
-        if (message.associatedMessageGuid != null) {
-          struct.getMessage(message.associatedMessageGuid!)?.associatedMessages.add(message);
+        event.limit = newCount - currentCount;
+        final messages = event.find();
+        for (Message message in messages) {
+          message.handle = Handle.findOne(id: message.handleId);
+          message.attachments = List<Attachment>.from(message.dbAttachments);
+          // add this as a reaction if needed
+          // todo update relevant messages (associated message or thread originator)
+          if (message.associatedMessageGuid != null) {
+            struct.getMessage(message.associatedMessageGuid!)?.associatedMessages.add(message);
+          }
+          struct.addMessages([message]);
+          onNewMessage.call(message);
         }
-        struct.addMessages([message]);
-        onNewMessage.call(message);
       }
       currentCount = newCount;
     });
@@ -79,6 +87,11 @@ class MessagesService extends GetxController {
     updated = updated.mergeWith(toUpdate);
     struct.addMessages([updated]);
     updateFunc.call(updated);
+  }
+
+  void removeMessage(Message toRemove) {
+    struct.removeMessage(toRemove.guid!);
+    struct.removeAttachments(toRemove.attachments.map((e) => e!.guid!));
   }
 
   Future<bool> loadChunk(int offset) async {
@@ -135,5 +148,39 @@ class MessagesService extends GetxController {
       _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
       struct.addMessages(_messages);
     }
+  }
+
+  static Future<List<dynamic>> getMessages({
+    bool withChats = false,
+    bool withAttachments = false,
+    bool withHandles = false,
+    bool withChatParticipants = false,
+    List<dynamic> where = const [],
+    String sort = "DESC",
+    int? before, int? after,
+    String? chatGuid,
+    int offset = 0, int limit = 100
+  }) async {
+    Completer<List<dynamic>> completer = Completer();
+    final withQuery = <String>["attributedBody"];
+    if (withChats) withQuery.add("chat");
+    if (withAttachments) withQuery.add("attachment");
+    if (withHandles) withQuery.add("handle");
+    if (withChatParticipants) withQuery.add("chat.participants");
+    withQuery.add("attachment.metadata");
+
+    http.messages(withQuery: withQuery, where: where, sort: sort, before: before, after: after, chatGuid: chatGuid, offset: offset, limit: limit).then((response) {
+      if (!completer.isCompleted) completer.complete(response.data["data"]);
+    }).catchError((err) {
+      late final dynamic error;
+      if (err is Response) {
+        error = err.data["error"]["message"];
+      } else {
+        error = err?.toString();
+      }
+      if (!completer.isCompleted) completer.completeError(error ?? "");
+    });
+
+    return completer.future;
   }
 }

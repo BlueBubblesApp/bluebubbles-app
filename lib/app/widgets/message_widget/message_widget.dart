@@ -16,10 +16,8 @@ import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/app/widgets/message_widget/stickers_widget.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -39,7 +37,6 @@ class MessageWidget extends StatefulWidget {
     required this.isFirstSentMessage,
     required this.showHero,
     required this.showReplies,
-    this.onUpdate,
     this.bloc,
     required this.autoplayEffect,
   }) : super(key: key);
@@ -51,7 +48,6 @@ class MessageWidget extends StatefulWidget {
   final bool isFirstSentMessage;
   final bool showHero;
   final bool showReplies;
-  final Message? Function(NewMessageEvent event)? onUpdate;
   final MessagesService? bloc;
   final bool autoplayEffect;
 
@@ -70,7 +66,6 @@ class _MessageState extends State<MessageWidget> {
   int attachmentCount = 0;
   int associatedCount = 0;
   ChatController? currentChat;
-  StreamSubscription<NewMessageEvent>? subscription;
   late Message _message;
   Message? _newerMessage;
   Message? _olderMessage;
@@ -107,81 +102,10 @@ class _MessageState extends State<MessageWidget> {
     checkHandle();
     fetchAssociatedMessages();
     fetchAttachments();
-
-    // Listen for new messages
-    subscription = MessageManager().stream.listen((data) {
-      // If the message doesn't apply to this chat, ignore it
-      if (data.chatGuid != currentChat?.chat.guid) return;
-
-      if (data.type == NewMessageType.ADD) {
-        // Check if the new message has an associated GUID that matches this message
-        bool fetchAssoc = false;
-        bool fetchAttach = false;
-        Message? message = data.event["message"];
-        if (message == null) return;
-        if (message.associatedMessageGuid == widget.message.guid) fetchAssoc = true;
-        if (message.hasAttachments) fetchAttach = true;
-
-        /*if (kIsWeb && message.associatedMessageGuid != null) {
-          // someone removed their reaction (remove original)
-          if (message.associatedMessageType!.startsWith("-") &&
-              ReactionTypes.toList().contains(message.associatedMessageType!.replaceAll("-", ""))) {
-            MapEntry? entry = widget.bloc?.struct.reactions.firstWhereOrNull((entry) =>
-                entry.handle?.address == message.handle?.address &&
-                entry.associatedMessageType == message.associatedMessageType!.replaceAll("-", ""));
-            if (entry != null) widget.bloc?.reactionMessages.remove(entry.key);
-            // someone changed their reaction (remove original and add new)
-          } else if (widget.bloc?.reactionMessages.entries.firstWhereOrNull((e) =>
-                      e.value.associatedMessageGuid == message.associatedMessageGuid &&
-                      e.value.handle?.address == message.handle?.address) !=
-                  null &&
-              ReactionTypes.toList().contains(message.associatedMessageType)) {
-            MapEntry? entry = widget.bloc?.reactionMessages.entries.firstWhereOrNull((e) =>
-                e.value.associatedMessageGuid == message.associatedMessageGuid &&
-                e.value.handle?.address == message.handle?.address);
-            if (entry != null) widget.bloc?.reactionMessages.remove(entry.key);
-            widget.bloc?.reactionMessages[message.guid!] = message;
-            // we have a fresh reaction (add new)
-          } else if (widget.bloc?.reactionMessages[message.guid!] == null &&
-              ReactionTypes.toList().contains(message.associatedMessageType)) {
-            widget.bloc?.reactionMessages[message.guid!] = message;
-          }
-        }*/
-
-        // If the associated message GUID matches this one, fetch associated messages
-        if (fetchAssoc) fetchAssociatedMessages(shouldReload: true);
-        if (fetchAttach) fetchAttachments(forceReload: true);
-      } else if (data.type == NewMessageType.UPDATE) {
-        String? oldGuid = data.event["oldGuid"];
-        // If the guid does not match our current guid, then it's not meant for us
-        if (oldGuid != _message.guid && oldGuid != _newerMessage?.guid) return;
-
-        // Tell the [MessagesView] to update with the new event, to ensure that things are done synchronously
-        if (widget.onUpdate != null) {
-          Message? result = widget.onUpdate!(data);
-          if (result != null) {
-            if (mounted) {
-              setState(() {
-                if (_message.guid == oldGuid) {
-                  final associatedMessages = _message.associatedMessages;
-                  _message = result;
-                  _message.associatedMessages = associatedMessages;
-                } else if (_newerMessage!.guid == oldGuid) {
-                  final associatedMessages = _newerMessage!.associatedMessages;
-                  _newerMessage = result;
-                  _newerMessage!.associatedMessages = associatedMessages;
-                }
-              });
-            }
-          }
-        }
-      }
-    });
   }
 
   @override
   void dispose() {
-    subscription?.cancel();
     super.dispose();
   }
 

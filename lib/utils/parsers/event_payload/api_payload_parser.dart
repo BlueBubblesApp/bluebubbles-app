@@ -1,6 +1,5 @@
-
-import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/utils/parsers/event_payload/api_payload.dart';
+import 'package:bluebubbles/services/services.dart';
 
 class ApiPayloadParser {
 
@@ -77,7 +76,7 @@ class ApiPayloadParser {
   Future<List<dynamic>> enrichMessages(List<String> guids) async {
     // Fetch the corresponding messages from the API.
     // For messages, we need the latest n' greatest.
-    List<dynamic> messages = await MessageManager().getMessages(
+    List<dynamic> messages = await MessagesService.getMessages(
         limit: guids.length,
         withChats: true,
         withHandles: true,

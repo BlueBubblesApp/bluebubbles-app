@@ -1,5 +1,4 @@
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:collection/collection.dart';
 
@@ -150,11 +149,7 @@ List<Message> syncMessages(Chat c, List<Message> messages) {
   List<String> existingMessageGuids = existingMessages.map((e) => e.guid!).toList();
 
   // Insert any non-existing messages
-  List<Message> newMessages = messages.where(
-          (element) => !existingMessageGuids.contains(element.guid)).toList();
-  for (Message m in newMessages) {
-    MessageManager().addMessage(c, m);
-  }
+  List<Message> newMessages = messages.where((element) => !existingMessageGuids.contains(element.guid)).toList();
   messageBox.putMany(newMessages);
 
   // Update any existing messages

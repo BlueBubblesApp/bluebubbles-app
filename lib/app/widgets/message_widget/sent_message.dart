@@ -18,8 +18,6 @@ import 'package:bluebubbles/app/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
-import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -52,6 +50,7 @@ class SentMessageHelper {
     MessageEffect effect = MessageEffect.none,
     Control controller = Control.stop,
     void Function()? updateController,
+    MessagesService? service,
   }) {
     if (effect.isBubble) assert(updateController != null);
     Color bubbleColor;
@@ -372,6 +371,7 @@ class SentMessageHelper {
               context,
               message,
               currentChat != null ? currentChat.chat : ChatManager().activeChat?.chat,
+              service,
             ),
           ],
         ));
@@ -479,7 +479,7 @@ class SentMessageHelper {
     }
   }
 
-  static Widget getErrorWidget(BuildContext context, Message? message, Chat? chat, {double rightPadding = 8.0}) {
+  static Widget getErrorWidget(BuildContext context, Message? message, Chat? chat, MessagesService? service, {double rightPadding = 8.0}) {
     if (message != null && message.error > 0) {
       int errorCode = message.error;
       String errorText = "Server Error. Contact Support.";
@@ -513,7 +513,7 @@ class SentMessageHelper {
                           onPressed: () async {
                             // Remove the OG alert dialog
                             Navigator.of(context).pop();
-                            MessageManager().removeMessage(chat, message.guid);
+                            service?.removeMessage(message);
                             Message.delete(message.guid!);
                             await notif.clearFailedToSend();
 
@@ -538,7 +538,7 @@ class SentMessageHelper {
                             Message.delete(message.guid!);
 
                             // Remove the message from the Bloc
-                            MessageManager().removeMessage(chat, message.guid);
+                            service?.removeMessage(message);
                             await notif.clearFailedToSend();
                             // Get the "new" latest info
                             List<Message> latest = Chat.getMessages(chat, limit: 1);
@@ -834,7 +834,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
         setState(() {
           animController = Control.stop;
         });
-      });
+      }, service: widget.messageBloc);
       if (widget.showHero) {
         message = Hero(
           tag: "first",

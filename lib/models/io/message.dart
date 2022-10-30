@@ -12,7 +12,6 @@ import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
-import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -610,7 +609,6 @@ class Message {
       // If we have a chat and the message doesn't exist, let's add the message as new
       if (chat != null) {
         await chat.addMessage(newMessage);
-        MessageManager().addMessage(chat, newMessage, outgoing: false);
         return newMessage;
       } else {
         // If we don't have a chat, we just want to add the message

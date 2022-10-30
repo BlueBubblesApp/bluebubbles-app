@@ -1,8 +1,8 @@
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -21,7 +21,7 @@ class _SyncDialogState extends OptimizedState<SyncDialog> {
 
   void syncMessages() async {
     DateTime now = DateTime.now().toUtc().subtract(lookback);
-    MessageManager().getMessages(withChats: true, withAttachments: true, withHandles: true, after: now.millisecondsSinceEpoch, limit: 100).then((dynamic messages) {
+    MessagesService.getMessages(withChats: true, withAttachments: true, withHandles: true, after: now.millisecondsSinceEpoch, limit: 100).then((dynamic messages) {
       if (mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";

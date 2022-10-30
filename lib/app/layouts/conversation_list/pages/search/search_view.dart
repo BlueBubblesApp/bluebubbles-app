@@ -7,7 +7,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -107,7 +106,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
         return map;
       }).toList();
     } else {
-      response = await MessageManager().getMessages(
+      response = await MessagesService.getMessages(
           limit: 50,
           withChats: true,
           withHandles: true,

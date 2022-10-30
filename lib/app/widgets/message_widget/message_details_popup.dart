@@ -17,7 +17,6 @@ import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -990,7 +989,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            MessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
+            widget.messageBloc?.removeMessage(widget.message);
             Message.softDelete(widget.message.guid!);
             popDetails();
           },

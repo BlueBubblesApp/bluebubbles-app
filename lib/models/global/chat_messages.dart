@@ -36,6 +36,29 @@ class ChatMessages {
     }
   }
 
+  void removeMessage(String guid) {
+    _messages.remove(guid);
+    _reactions.remove(guid);
+    final result = _threads.remove(guid);
+    if (result == null) {
+      for (Map element in _threads.values) {
+        element.remove(guid);
+      }
+    }
+    final result2 = _edits.remove(guid);
+    if (result2 == null) {
+      for (Map element in _edits.values) {
+        element.remove(guid);
+      }
+    }
+  }
+
+  void removeAttachments(Iterable<String> guids) {
+    for (String s in guids) {
+      _attachments.remove(s);
+    }
+  }
+
   void addThreadOriginator(Message m) {
     _threads[m.guid!] ??= {};
     _threads[m.guid]![m.guid!] = m;

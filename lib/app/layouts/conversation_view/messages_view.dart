@@ -48,7 +48,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
   RxList<Widget> internalSmartReplies = <Widget>[].obs;
 
   late final messageService = widget.customService ?? ms(widget.chat.guid)
-    ..init(widget.chat, handleNewMessage, handleUpdatedMessage);
+    ..init(widget.chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage);
   late final ChatController currentChat = ChatManager().activeChat!;
   final Duration animationDuration = Duration(milliseconds: 400);
   final smartReply = GoogleMlKit.nlp.smartReply();
@@ -76,7 +76,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
           _messages = [];
           // Reload the state after refreshing
           messageService.reload();
-          messageService.init(chat, handleNewMessage, handleUpdatedMessage);
+          messageService.init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage);
           await rebuild(this);
         }
       } else if (e.item1 == "add-custom-smartreply") {
@@ -200,6 +200,12 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
   void handleUpdatedMessage(Message message) {
     final index = _messages.indexWhere((e) => e.guid == message.guid);
     _messages[index] = message;
+  }
+
+  void handleDeletedMessage(Message message) {
+    final index = _messages.indexWhere((e) => e.guid == message.guid);
+    _messages.removeAt(index);
+    listKey.currentState!.removeItem(index, (context, animation) => const SizedBox.shrink());
   }
 
   Widget _buildReply(String text, {Function()? onTap}) => Container(

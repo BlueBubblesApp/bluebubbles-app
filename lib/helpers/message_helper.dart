@@ -6,7 +6,6 @@ import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -117,11 +116,6 @@ class MessageHelper {
 
         if (notifyForNewMessage) {
           await MessageHelper.handleNotification(message, msgChat, force: true);
-        }
-
-        // Tell all listeners that we have a new message, and save the message
-        if (notifyMessageManager) {
-          MessageManager().addMessage(msgChat, message);
         }
       });
     }
