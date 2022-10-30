@@ -23,6 +23,7 @@ class MessagesService extends GetxController {
   late final Chat chat;
   late final StreamSubscription countSub;
   final ChatMessages struct = ChatMessages();
+  late final Function(Message) updateFunc;
 
   final String tag;
   MessagesService(this.tag);
@@ -35,8 +36,9 @@ class MessagesService extends GetxController {
   Message? get mostRecent => (struct.messages.toList()
     ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
 
-  void init(Chat c, Function(Message) onNewMessage) {
+  void init(Chat c, Function(Message) onNewMessage, Function(Message) onUpdatedMessage) {
     chat = c;
+    updateFunc = onUpdatedMessage;
     // watch for new messages
     final countQuery = (messageBox.query(Message_.dateDeleted.isNull())
       ..link(Message_.chat, Chat_.id.equals(chat.id!))
@@ -74,7 +76,9 @@ class MessagesService extends GetxController {
 
   void updateMessage(Message updated) {
     final toUpdate = struct.getMessage(updated.guid!)!;
-    struct.addMessages([updated.mergeWith(toUpdate)]);
+    updated = updated.mergeWith(toUpdate);
+    struct.addMessages([updated]);
+    updateFunc.call(updated);
   }
 
   Future<bool> loadChunk(int offset) async {

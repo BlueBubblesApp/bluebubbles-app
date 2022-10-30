@@ -50,6 +50,8 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
   ScrollPhysics? physics;
   StreamSubscription<NewMessageEvent>? newMessageEventStream;
 
+  late final messageService = widget.currentChat == null ? null : ms(widget.currentChat!.chat.guid);
+
   @override
   void initState() {
     super.initState();
@@ -63,35 +65,6 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
 
   void init() async {
     getStartingIndex();
-
-    // If the allAttachments is not updated
-    if (startingIndex == null) {
-      // Then fetch all of them and try again
-      await widget.currentChat?.updateChatAttachments();
-      getStartingIndex();
-    }
-
-    if (widget.currentChat != null) {
-      newMessageEventStream = MessageManager().stream.listen((event) async {
-        // We don't need to do anything if there isn't a new message
-        if (event.type != NewMessageType.ADD) return;
-
-        // If the new message event isn't for this particular chat, don't do anything
-        if (event.chatGuid != widget.currentChat!.chat.guid) return;
-
-        List<Attachment> older = widget.currentChat!.chatAttachments.sublist(0);
-
-        // Update all of the attachments
-        await widget.currentChat!.updateChatAttachments();
-        List<Attachment> newer = widget.currentChat!.chatAttachments.sublist(0);
-        if (newer.length > older.length) {
-          Logger.info("Increasing currentIndex from $currentIndex to ${newer.length - older.length + currentIndex}");
-          currentIndex += newer.length - older.length;
-          controller!.animateToPage(currentIndex, duration: Duration(milliseconds: 0), curve: Curves.easeIn);
-        }
-      });
-    }
-
     currentIndex = startingIndex ?? 0;
     controller = PageController(initialPage: startingIndex ?? 0);
     if (mounted) setState(() {});
@@ -99,8 +72,8 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
 
   void getStartingIndex() {
     if (widget.currentChat == null) return;
-    for (int i = 0; i < widget.currentChat!.chatAttachments.length; i++) {
-      if (widget.currentChat!.chatAttachments[i].guid == widget.attachment.guid) {
+    for (int i = 0; i < messageService!.struct.attachments.length; i++) {
+      if (messageService!.struct.attachments[i].guid == widget.attachment.guid) {
         startingIndex = i;
       }
     }
@@ -144,7 +117,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                 },
               ),
               leadingWidth: 75,
-              title: Text(kIsWeb || !widget.showInteractions || widget.currentChat == null ? "Media" : "${currentIndex + 1} of ${widget.currentChat?.chatAttachments.length}", style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+              title: Text(kIsWeb || !widget.showInteractions || widget.currentChat == null ? "Media" : "${currentIndex + 1} of ${messageService!.struct.attachments.length}", style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
               centerTitle: ss.settings.skin.value == Skins.iOS,
               iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
               backgroundColor: context.theme.colorScheme.properSurface,
@@ -180,11 +153,11 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                       child: PageView.builder(
                         physics: physics ?? ThemeSwitcher.getScrollPhysics(),
                         reverse: ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
-                        itemCount: kIsWeb ? 1 : widget.currentChat?.chatAttachments.length ?? 1,
+                        itemCount: kIsWeb ? 1 : messageService?.struct.attachments.length ?? 1,
                         itemBuilder: (BuildContext context, int index) {
                           Logger.info("Showing index: $index");
                           Attachment attachment = !kIsWeb && widget.currentChat != null
-                              ? widget.currentChat!.chatAttachments[index]
+                              ? messageService!.struct.attachments[index]
                               : widget.attachment;
                           String mimeType = attachment.mimeType!;
                           mimeType = mimeType.substring(0, mimeType.indexOf("/"));

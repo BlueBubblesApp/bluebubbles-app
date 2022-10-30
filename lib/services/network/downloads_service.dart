@@ -110,8 +110,6 @@ class AttachmentDownloadController extends GetxController {
       if (!kIsWeb) {
         await AttachmentHelper.compressAttachment(attachment, attachment.getPath());
         attachment.save(null);
-      } else if (ChatManager().activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) == null) {
-        ChatManager().activeChat?.chatAttachments.add(attachment);
       }
     } catch (ex) {
       // So what if it crashes here.... I don't care...

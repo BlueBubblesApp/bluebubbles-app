@@ -8,7 +8,6 @@ import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/models/country_codes.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -70,9 +69,10 @@ Future<String> formatPhoneNumber(dynamic item) async {
   } else if (item is Handle?) {
     address = item?.address;
     cc = item?.country ?? cc;
-  } else if (item is UniqueContact?) {
+    // todo
+  }/* else if (item is UniqueContact?) {
     address = item?.address;
-  } else {
+  }*/ else {
     return item.toString();
   }
 

@@ -47,13 +47,11 @@ class OpenNewChatCreatorAction extends Action<OpenNewChatCreatorIntent> {
   Object? invoke(covariant OpenNewChatCreatorIntent intent) {
     if (ss.settings.finishedSetup.value) {
       eventDispatcher.emit("update-highlight", null);
-      ns.pushAndRemoveUntil(
+      /*ns.pushAndRemoveUntil(
         context,
-        ConversationView(
-          isCreator: true,
-        ),
+        ConversationView(),
         (route) => route.isFirst,
-      );
+      );*/
     }
     return null;
   }
@@ -85,13 +83,13 @@ class ReplyRecentIntent extends Intent {
 }
 
 class ReplyRecentAction extends Action<ReplyRecentIntent> {
-  ReplyRecentAction(this.service);
+  ReplyRecentAction(this.chat);
 
-  final MessagesService service;
+  final Chat chat;
 
   @override
   Object? invoke(covariant ReplyRecentIntent intent) async {
-    final message = service.mostRecent;
+    final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       eventDispatcher.emit("focus-keyboard", message);
     }
@@ -104,14 +102,13 @@ class HeartRecentIntent extends Intent {
 }
 
 class HeartRecentAction extends Action<HeartRecentIntent> {
-  HeartRecentAction(this.service, this.chat);
+  HeartRecentAction(this.chat);
 
-  final MessagesService service;
   final Chat chat;
 
   @override
   Object? invoke(covariant HeartRecentIntent intent) async {
-    final message = service.mostRecent;
+    final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       _sendReactionHelper(chat, message, ReactionType.love);
     }
@@ -124,14 +121,13 @@ class LikeRecentIntent extends Intent {
 }
 
 class LikeRecentAction extends Action<LikeRecentIntent> {
-  LikeRecentAction(this.service, this.chat);
+  LikeRecentAction(this.chat);
 
-  final MessagesService service;
   final Chat chat;
 
   @override
   Object? invoke(covariant LikeRecentIntent intent) async {
-    final message = service.mostRecent;
+    final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       _sendReactionHelper(chat, message, ReactionType.like);
     }
@@ -144,14 +140,13 @@ class DislikeRecentIntent extends Intent {
 }
 
 class DislikeRecentAction extends Action<DislikeRecentIntent> {
-  DislikeRecentAction(this.service, this.chat);
+  DislikeRecentAction(this.chat);
 
-  final MessagesService service;
   final Chat chat;
 
   @override
   Object? invoke(covariant DislikeRecentIntent intent) async {
-    final message = service.mostRecent;
+    final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       _sendReactionHelper(chat, message, ReactionType.dislike);
     }
@@ -164,14 +159,13 @@ class LaughRecentIntent extends Intent {
 }
 
 class LaughRecentAction extends Action<LaughRecentIntent> {
-  LaughRecentAction(this.service, this.chat);
+  LaughRecentAction(this.chat);
 
-  final MessagesService service;
   final Chat chat;
 
   @override
   Object? invoke(covariant LaughRecentIntent intent) async {
-    final message = service.mostRecent;
+    final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       _sendReactionHelper(chat, message, ReactionType.laugh);
     }
@@ -184,14 +178,13 @@ class EmphasizeRecentIntent extends Intent {
 }
 
 class EmphasizeRecentAction extends Action<EmphasizeRecentIntent> {
-  EmphasizeRecentAction(this.service, this.chat);
+  EmphasizeRecentAction(this.chat);
 
-  final MessagesService service;
   final Chat chat;
 
   @override
   Object? invoke(covariant EmphasizeRecentIntent intent) async {
-    final message = service.mostRecent;
+    final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       _sendReactionHelper(chat, message, ReactionType.emphasize);
     }
@@ -204,14 +197,13 @@ class QuestionRecentIntent extends Intent {
 }
 
 class QuestionRecentAction extends Action<QuestionRecentIntent> {
-  QuestionRecentAction(this.service, this.chat);
+  QuestionRecentAction(this.chat);
 
-  final MessagesService service;
   final Chat chat;
 
   @override
   Object? invoke(covariant QuestionRecentIntent intent) async {
-    final message = service.mostRecent;
+    final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
       _sendReactionHelper(chat, message, ReactionType.question);
     }

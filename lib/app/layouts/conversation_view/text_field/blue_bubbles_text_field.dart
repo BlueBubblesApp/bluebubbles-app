@@ -40,20 +40,12 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 
 class BlueBubblesTextField extends StatefulWidget {
-  final List<PlatformFile>? existingAttachments;
-  final String? existingText;
-  final bool? isCreator;
-  final bool wasCreator;
   final Future<bool> Function(
       List<PlatformFile> attachments, String text, String subject, String? replyToGuid, String? effectId) onSend;
   final String? chatGuid;
 
   BlueBubblesTextField({
     Key? key,
-    this.existingAttachments,
-    this.existingText,
-    required this.isCreator,
-    required this.wasCreator,
     required this.onSend,
     required this.chatGuid,
   }) : super(key: key);
@@ -312,15 +304,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         replyToMessage.value = event.item2;
       }
     });
-
-    if (widget.existingText != null) {
-      controller!.text = widget.existingText!;
-    }
-
-    if (widget.existingAttachments != null) {
-      addAttachments(widget.existingAttachments ?? []);
-      updateTextFieldAttachments();
-    }
 
     getCachedAttachments();
 
@@ -1269,8 +1252,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                   : "iMessage",
                           padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                           placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
-                          autofocus: (ss.settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
-                              !widget.isCreator!,
+                          autofocus: ss.settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop,
                           decoration: BoxDecoration(
                             border: Border.fromBorderSide(
                               (ss.settings.enablePrivateAPI.value &&
@@ -1421,8 +1403,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                           ? TextInputAction.send
                           : TextInputAction.newline,
-                      autofocus: (ss.settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
-                          !widget.isCreator!,
+                      autofocus: ss.settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop,
                       cursorColor: context.theme.colorScheme.primary,
                       key: _searchFormKey,
                       onSubmitted: (String value) {

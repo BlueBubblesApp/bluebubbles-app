@@ -2,29 +2,27 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/conversation_details.dart';
+import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
+import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/messages_view.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/app/widgets/components/screen_effects_widget.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
-import 'package:bluebubbles/services/backend/queue/outgoing_queue.dart';
-import 'package:bluebubbles/services/backend/queue/queue_impl.dart';
-import 'package:bluebubbles/services/backend_ui_interop/intents.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:defer_pointer/defer_pointer.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -32,327 +30,154 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
-import 'package:slugify/slugify.dart';
-
-abstract class ChatSelectorTypes {
-  static const String ALL = "ALL";
-  static const String ONLY_EXISTING = "ONLY_EXISTING";
-  static const String ONLY_CONTACTS = "ONLY_CONTACTS";
-}
+import 'package:url_launcher/url_launcher.dart';
 
 class ConversationView extends StatefulWidget {
-  final List<PlatformFile> existingAttachments;
-  final String? existingText;
-  final List<UniqueContact> selected;
-
   ConversationView({
     Key? key,
-    this.chat,
-    this.previousChat,
-    this.existingAttachments = const [],
-    this.existingText,
-    this.isCreator = false,
-    this.onSelect,
-    this.selectIcon,
-    this.customHeading,
-    this.customMessageBloc,
-    this.onMessagesViewComplete,
-    this.selected = const [],
-    this.type = ChatSelectorTypes.ALL,
+    required this.chat,
+    this.customService,
   }) : super(key: key);
 
-  final Chat? chat;
-  final Chat? previousChat;
-  final Function(List<UniqueContact> items)? onSelect;
-  final Widget? selectIcon;
-  final String? customHeading;
-  final String type;
-  final bool isCreator;
-  final MessageBloc? customMessageBloc;
-  final Function? onMessagesViewComplete;
+  final Chat chat;
+  final MessagesService? customService;
 
   @override
   ConversationViewState createState() => ConversationViewState();
 }
 
-class ConversationViewState extends State<ConversationView> with ConversationViewMixin, WidgetsBindingObserver {
-  List<PlatformFile> existingAttachments = [];
-  String? existingText;
-  Brightness? brightness;
-  Color? previousBackgroundColor;
-  bool gotBrightness = false;
+class ConversationViewState extends State<ConversationView> {
+  // message animation
   Message? message;
   Tween<double> tween = Tween<double>(begin: 1, end: 0);
   double offset = 0;
   Control controller = Control.stop;
-  bool wasCreator = false;
-  GlobalKey key = GlobalKey();
-  Worker? worker;
-  bool widgetsBuilt = false;
-  final RxBool adjustBackground = RxBool(false);
+
+  bool markingAsRead = false;
+  bool markedAsRead = false;
+
+  late final RxBool adjustBackground = RxBool(ts.isGradientBg(Get.context!));
+  final GlobalKey key = GlobalKey();
+  late final ChatController currentChat;
+
+  Chat get chat => widget.chat;
 
   @override
   void initState() {
     super.initState();
 
-    getAdjustBackground();
-
-    selected = widget.selected.isEmpty ? [] : widget.selected;
-    existingAttachments = widget.existingAttachments.isEmpty ? [] : widget.existingAttachments;
-    existingText = widget.existingText;
-
-    // Initialize the current chat state
-    if (widget.chat != null) {
-      initChatController(widget.chat!);
-    }
-
-    isCreator = widget.isCreator;
-    chat = widget.chat;
-    previousChat = widget.previousChat;
-
-    if (chat != null) {
-      ss.prefs.setString('lastOpenedChat', chat!.guid);
-    }
-
-    if (widget.selected.isEmpty) {
-      initChatSelector();
-    }
-    initConversationViewState();
+    ss.prefs.setString('lastOpenedChat', chat.guid);
+    ChatManager().setActiveChat(chat);
+    currentChat = ChatManager().activeChat!;
 
     KeyboardVisibilityController().onChange.listen((bool visible) async {
       await Future.delayed(Duration(milliseconds: 500));
-      final textFieldSize = (key.currentContext?.findRenderObject() as RenderBox?)?.size.height;
       if (mounted) {
+        final textFieldSize = (key.currentContext?.findRenderObject() as RenderBox?)?.size.height;
         setState(() {
           offset = (textFieldSize ?? 0) > 300 ? 300 : 0;
         });
       }
     });
-
-    // Set the custom message bloc if provided (and there is not already an existing one)
-    if (widget.customMessageBloc != null && messageBloc == null) {
-      messageBloc = widget.customMessageBloc;
-    } else if (widget.chat != null && messageBloc == null) {
-      messageBloc = MessageBloc(widget.chat);
-    }
-
-    initListener();
-
-    // Bind the lifecycle events
-    WidgetsBinding.instance.addObserver(this);
-
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      // This will clear the notifications,
-      //so we need to set the last clear time.
-      ChatManager().setActiveChat(chat);
-      lastNotificationClear = DateTime.now().millisecondsSinceEpoch;
-
-      if (widget.isCreator) {
-        setState(() {
-          getShowAlert();
-        });
-      }
-    });
-  }
-
-  void getAdjustBackground() async {
-    var lightTheme = ThemeStruct.getLightTheme();
-    var darkTheme = ThemeStruct.getDarkTheme();
-    if ((lightTheme.gradientBg && !ts.inDarkMode(Get.context!)) ||
-        (darkTheme.gradientBg && ts.inDarkMode(Get.context!))) {
-      if (adjustBackground.value != true) adjustBackground.value = true;
-    } else {
-      if (adjustBackground.value != false) adjustBackground.value = false;
-    }
-  }
-
-  void getShowAlert() async {
-    shouldShowAlert = widget.isCreator && (await ss.isMinBigSur);
-  }
-
-  void initListener() {
-    if (messageBloc != null) {
-      worker = ever<MessageBlocEvent?>(messageBloc!.event, (event) async {
-        // Get outta here if we don't have a chat "open"
-        if (currentChat == null) return;
-        if (event == null) return;
-
-        // Skip deleted messages
-        if (event.message != null && event.message!.dateDeleted != null) return;
-
-        if (event.type == MessageBlocEventType.insert && mounted && event.outGoing) {
-          final constraints = BoxConstraints(
-            maxWidth: ns.width(context) * MessageWidgetMixin.MAX_SIZE,
-            minHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
-            maxHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
-          );
-          final renderParagraph = RichText(
-            text: TextSpan(
-              text: event.message!.text,
-              style: context.theme.extension<BubbleText>()!.bubbleText,
-            ),
-            maxLines: 1,
-          ).createRenderObject(context);
-          final renderParagraph2 = RichText(
-            text: TextSpan(
-              text: event.message!.subject ?? "",
-              style: context.theme.extension<BubbleText>()!.bubbleText,
-            ),
-            maxLines: 1,
-          ).createRenderObject(context);
-          final size = renderParagraph.getDryLayout(constraints);
-          final size2 = renderParagraph2.getDryLayout(constraints);
-          if (!(event.message?.hasAttachments ?? false) &&
-              (!(event.message?.text?.isEmpty ?? true) || !(event.message?.subject?.isEmpty ?? true))) {
-            setState(() {
-              tween = Tween<double>(
-                  begin: ns.width(context) - 30,
-                  end: min(max(size.width, size2.width) + 68,
-                      ns.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
-              controller = Control.play;
-              message = event.message;
-            });
-          } else {
-            setState(() {
-              isCreator = false;
-              wasCreator = true;
-              existingText = "";
-              existingAttachments = [];
-            });
-          }
-        }
-      });
-    }
-  }
-
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    if (ChatManager().hasActiveChat) didChangeDependenciesConversationView();
-  }
-
-  /// Called when the app is either closed or opened or paused
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused && mounted) {
-      Logger.info("Removing ChatController imageData");
-      ChatManager().activeChat?.imageData.clear();
-    }
-    if (widgetsBuilt && ChatManager().hasActiveChat) didChangeDependenciesConversationView();
   }
 
   @override
   void dispose() {
-    if (currentChat != null) {
-      currentChat!.disposeControllers();
-      currentChat!.dispose();
-    }
+    currentChat.disposeControllers();
+    currentChat.dispose();
     super.dispose();
   }
 
   Future<bool> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
-    if (isCreator!) {
-      if (await ss.isMinBigSur && selected.length > 1) {
-        showSnackbar("Error", "Creating group chats is currently unsupported on Big Sur!");
-        return false;
-      }
+    await currentChat.scrollToBottom();
 
-      chat = await ah.createChat(selected.where((e) => e.address != null).map((e) => cleansePhoneNumber(e.address!)).toList(), text);
-      if (chat == null) return false;
+    for (PlatformFile file in attachments) {
+      final message = Message(
+        text: "",
+        dateCreated: DateTime.now(),
+        hasAttachments: true,
+        attachments: [
+          Attachment(
+            isOutgoing: true,
+            isSticker: false,
+            hideAttachment: false,
+            uti: "public.jpg",
+            bytes: file.bytes,
+            transferName: file.name,
+          ),
+        ],
+        isFromMe: true,
+        handleId: 0,
+      );
+      message.generateTempGuid();
+      message.attachments.first!.guid = message.guid;
+      final completer = Completer<void>();
+      outq.queue(OutgoingItem(
+        type: QueueType.sendAttachment,
+        chat: chat,
+        message: message,
+        completer: completer,
+      ));
+      await completer.future;
+    }
 
-      ss.prefs.setString('lastOpenedChat', chat!.guid);
-      initChatController(chat!);
-      messageBloc = initMessageBloc();
-      messageBloc!.getMessages();
-
-      if (worker == null) {
-        initListener();
-      }
-    } else {
-      if (currentChat != null) {
-        await currentChat!.scrollToBottom();
-      }
-
-      for (PlatformFile file in attachments) {
-        final message = Message(
-          text: "",
-          dateCreated: DateTime.now(),
-          hasAttachments: true,
-          attachments: [
-            Attachment(
-              isOutgoing: true,
-              isSticker: false,
-              hideAttachment: false,
-              uti: "public.jpg",
-              bytes: file.bytes,
-              transferName: file.name,
-            ),
-          ],
-          isFromMe: true,
-          handleId: 0,
-        );
-        message.generateTempGuid();
-        message.attachments.first!.guid = message.guid;
-        final completer = Completer<void>();
-        outq.queue(OutgoingItem(
-          type: QueueType.sendAttachment,
-          chat: chat!,
-          message: message,
-          completer: completer,
-        ));
-        await completer.future;
-      }
-
-      if (text.isNotEmpty || subject.isNotEmpty) {
-        final message = Message(
-          text: text,
-          subject: subject,
-          threadOriginatorGuid: replyGuid,
-          expressiveSendStyleId: effectId,
-          dateCreated: DateTime.now(),
-          hasAttachments: true,
-          isFromMe: true,
-          handleId: 0,
-        );
-        outq.queue(OutgoingItem(
-          type: QueueType.sendMessage,
-          chat: chat!,
-          message: message,
-        ));
-      }
+    if (text.isNotEmpty || subject.isNotEmpty) {
+      final _message = Message(
+        text: text,
+        subject: subject,
+        threadOriginatorGuid: replyGuid,
+        expressiveSendStyleId: effectId,
+        dateCreated: DateTime.now(),
+        hasAttachments: true,
+        isFromMe: true,
+        handleId: 0,
+      );
+      outq.queue(OutgoingItem(
+        type: QueueType.sendMessage,
+        chat: chat,
+        message: _message,
+      ));
+      final constraints = BoxConstraints(
+        maxWidth: ns.width(context) * MessageWidgetMixin.MAX_SIZE,
+        minHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
+        maxHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
+      );
+      final renderParagraph = RichText(
+        text: TextSpan(
+          text: _message.text,
+          style: context.theme.extension<BubbleText>()!.bubbleText,
+        ),
+        maxLines: 1,
+      ).createRenderObject(context);
+      final renderParagraph2 = RichText(
+        text: TextSpan(
+          text: _message.subject ?? "",
+          style: context.theme.extension<BubbleText>()!.bubbleText,
+        ),
+        maxLines: 1,
+      ).createRenderObject(context);
+      final size = renderParagraph.getDryLayout(constraints);
+      final size2 = renderParagraph2.getDryLayout(constraints);
+      setState(() {
+        tween = Tween<double>(
+            begin: ns.width(context) - 30,
+            end: min(max(size.width, size2.width) + 68,
+                ns.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
+        controller = Control.play;
+        message = _message;
+      });
     }
 
     return true;
   }
 
-  Widget buildFAB() {
-    if (widget.onSelect != null) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 55.0),
-        child: FloatingActionButton(
-          onPressed: () => widget.onSelect!(selected),
-          child: widget.selectIcon ??
-              Icon(
-                Icons.check,
-                color: Theme.of(context).textTheme.bodyMedium!.color,
-              ),
-          backgroundColor: Theme.of(context).primaryColor,
-        ),
-      );
-    }
-
-    return Container();
-  }
-
   Widget buildScrollToBottomFAB(BuildContext context) {
-    if (currentChat != null &&
-        currentChat!.showScrollDown.value &&
-        (ss.settings.skin.value == Skins.Material ||
-            ss.settings.skin.value == Skins.Samsung)) {
+    if (!currentChat.showScrollDown.value) return const SizedBox.shrink();
+    if (ss.settings.skin.value != Skins.iOS) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 15.0),
         child: FloatingActionButton(
-          onPressed: currentChat!.scrollToBottom,
+          onPressed: currentChat.scrollToBottom,
           child: Icon(
             Icons.arrow_downward,
             color: context.theme.colorScheme.onSecondary,
@@ -360,9 +185,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           backgroundColor: context.theme.colorScheme.secondary,
         ),
       );
-    } else if (currentChat != null &&
-        currentChat!.showScrollDown.value &&
-        ss.settings.skin.value == Skins.iOS) {
+    } else {
       return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Padding(
           padding: EdgeInsets.only(left: 25.0, bottom: 15),
@@ -381,7 +204,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Center(
                     child: GestureDetector(
-                      onTap: currentChat!.scrollToBottom,
+                      onTap: currentChat.scrollToBottom,
                       child: Text(
                         "\u{2193} Scroll to bottom \u{2193}",
                         textAlign: TextAlign.center,
@@ -397,89 +220,37 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         ),
       ]);
     }
-    return Container();
   }
 
   @override
   Widget build(BuildContext context) {
-    Future.delayed(Duration.zero, () {
-      widgetsBuilt = true;
-    });
-    currentChat?.isActive = true;
-
-    if (messageBloc == null && !isCreator!) {
-      messageBloc = initMessageBloc();
-    }
-
-    Widget textField = BlueBubblesTextField(
+    final textField = BlueBubblesTextField(
       key: key,
       onSend: send,
-      wasCreator: wasCreator,
-      isCreator: isCreator,
-      existingAttachments: existingAttachments,
-      existingText: existingText,
-      chatGuid: widget.chat?.guid,
+      chatGuid: widget.chat.guid,
     );
 
     final Widget child = Actions(
-        actions: isCreator! || !ss.settings.enablePrivateAPI.value || widget.chat == null
-            ? {}
-            : {
-                ReplyRecentIntent: ReplyRecentAction(messageBloc!),
-                HeartRecentIntent: HeartRecentAction(messageBloc!, widget.chat!),
-                LikeRecentIntent: LikeRecentAction(messageBloc!, widget.chat!),
-                DislikeRecentIntent: DislikeRecentAction(messageBloc!, widget.chat!),
-                LaughRecentIntent: LaughRecentAction(messageBloc!, widget.chat!),
-                EmphasizeRecentIntent: EmphasizeRecentAction(messageBloc!, widget.chat!),
-                QuestionRecentIntent: QuestionRecentAction(messageBloc!, widget.chat!),
-                OpenChatDetailsIntent: OpenChatDetailsAction(context, widget.chat!),
-              },
+        actions: {
+          if (ss.settings.enablePrivateAPI.value)
+            ReplyRecentIntent: ReplyRecentAction(widget.chat),
+          if (ss.settings.enablePrivateAPI.value)
+            HeartRecentIntent: HeartRecentAction(widget.chat),
+          if (ss.settings.enablePrivateAPI.value)
+            LikeRecentIntent: LikeRecentAction(widget.chat),
+          if (ss.settings.enablePrivateAPI.value)
+            DislikeRecentIntent: DislikeRecentAction(widget.chat),
+          if (ss.settings.enablePrivateAPI.value)
+            LaughRecentIntent: LaughRecentAction(widget.chat),
+          if (ss.settings.enablePrivateAPI.value)
+            EmphasizeRecentIntent: EmphasizeRecentAction(widget.chat),
+          if (ss.settings.enablePrivateAPI.value)
+            QuestionRecentIntent: QuestionRecentAction(widget.chat),
+          OpenChatDetailsIntent: OpenChatDetailsAction(context, widget.chat),
+        },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: <Widget>[
-            if (isCreator!)
-              ChatSelectorTextField(
-                controller: chatSelectorController,
-                onRemove: (UniqueContact item) {
-                  if (item.isChat) {
-                    selected.removeWhere((e) => (e.chat?.guid) == item.chat!.guid);
-                  } else {
-                    selected.removeWhere((e) => e.address == item.address);
-                  }
-                  fetchChatController();
-                  filterContacts();
-                  resetCursor();
-                  if (mounted) setState(() {});
-                },
-                onSelected: onSelected,
-                isCreator: widget.isCreator,
-                allContacts: contacts,
-                selectedContacts: selected,
-              ),
-            if (isCreator!)
-              Obx(() {
-                if (!chats.hasChats.value) {
-                  return Center(
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 20.0),
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              "Loading existing chats...",
-                              style: context.theme.textTheme.labelLarge,
-                            ),
-                          ),
-                          buildProgressIndicator(context, size: 15),
-                        ],
-                      ),
-                    ),
-                  );
-                } else {
-                  return SizedBox.shrink();
-                }
-              }),
             Flexible(
               fit: FlexFit.loose,
               child: DeferredPointerHandler(
@@ -487,69 +258,42 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   Positioned.fill(child: ScreenEffectsWidget()),
                   Column(mainAxisAlignment: MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
                     Expanded(
-                      child: Obx(
-                        () => fetchingChatController.value
-                            ? Center(
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(vertical: 20.0),
-                                  child: Column(
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text(
-                                          "Loading chat...",
-                                          style: context.theme.textTheme.labelLarge,
-                                        ),
-                                      ),
-                                      buildProgressIndicator(context, size: 15),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : (searchQuery.isEmpty || !isCreator!) && chat != null
-                                ? Stack(
-                                    alignment: Alignment.bottomCenter,
-                                    children: [
-                                      MessagesView(
-                                        key: Key(chat?.guid ?? "unknown-chat"),
-                                        messageBloc: messageBloc,
-                                        showHandle: chat!.participants.length > 1,
-                                        chat: chat,
-                                        initComplete: widget.onMessagesViewComplete,
-                                      ),
-                                      currentChat != null
-                                          ? Obx(() => AnimatedOpacity(
-                                                duration: Duration(milliseconds: 250),
-                                                opacity: currentChat!.showScrollDown.value ? 1 : 0,
-                                                curve: Curves.easeInOut,
-                                                child: buildScrollToBottomFAB(context),
-                                              ))
-                                          : Container(),
-                                    ],
-                                  )
-                                : buildChatSelectorBody(),
+                      child: Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: [
+                          MessagesView(
+                            key: Key(chat.guid),
+                            customService: widget.customService,
+                            chat: chat,
+                          ),
+                           Obx(() => AnimatedOpacity(
+                            duration: Duration(milliseconds: 250),
+                            opacity: currentChat.showScrollDown.value ? 1 : 0,
+                            curve: Curves.easeInOut,
+                            child: buildScrollToBottomFAB(context),
+                          )),
+                        ],
                       ),
                     ),
-                    if (widget.onSelect == null)
-                      Obx(() {
-                        if (ss.settings.swipeToCloseKeyboard.value ||
-                            ss.settings.swipeToOpenKeyboard.value) {
-                          return GestureDetector(
-                              onPanUpdate: (details) {
-                                if (ss.settings.swipeToCloseKeyboard.value &&
-                                    details.delta.dy > 0 &&
-                                    (currentChat?.keyboardOpen ?? false)) {
-                                  eventDispatcher.emit("unfocus-keyboard", null);
-                                } else if (ss.settings.swipeToOpenKeyboard.value &&
-                                    details.delta.dy < 0 &&
-                                    !(currentChat?.keyboardOpen ?? false)) {
-                                  eventDispatcher.emit("focus-keyboard", null);
-                                }
-                              },
-                              child: textField);
-                        }
-                        return textField;
-                      }),
+                    Obx(() {
+                      if (ss.settings.swipeToCloseKeyboard.value ||
+                          ss.settings.swipeToOpenKeyboard.value) {
+                        return GestureDetector(
+                            onPanUpdate: (details) {
+                              if (ss.settings.swipeToCloseKeyboard.value &&
+                                  details.delta.dy > 0 &&
+                                  currentChat.keyboardOpen) {
+                                eventDispatcher.emit("unfocus-keyboard", null);
+                              } else if (ss.settings.swipeToOpenKeyboard.value &&
+                                  details.delta.dy < 0 &&
+                                  !currentChat.keyboardOpen) {
+                                eventDispatcher.emit("focus-keyboard", null);
+                              }
+                            },
+                            child: textField);
+                      }
+                      return textField;
+                    }),
                   ]),
                   AnimatedPositioned(
                     duration: Duration(milliseconds: 300),
@@ -562,10 +306,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                           tween = Tween<double>(begin: 1, end: 0);
                           controller = Control.stop;
                           message = null;
-                          existingText = "";
-                          existingAttachments = [];
-                          isCreator = false;
-                          wasCreator = true;
                         });
                       }
                     },
@@ -625,10 +365,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       child: Theme(
           data: context.theme.copyWith(
             // in case some components still use legacy theming
-            primaryColor: context.theme.colorScheme.bubble(context, chat?.isIMessage ?? true),
+            primaryColor: context.theme.colorScheme.bubble(context, chat.isIMessage),
             colorScheme: context.theme.colorScheme.copyWith(
-              primary: context.theme.colorScheme.bubble(context, chat?.isIMessage ?? true),
-              onPrimary: context.theme.colorScheme.onBubble(context, chat?.isIMessage ?? true),
+              primary: context.theme.colorScheme.bubble(context, chat.isIMessage),
+              onPrimary: context.theme.colorScheme.onBubble(context, chat.isIMessage),
               surface: ss.settings.monetTheming.value == Monet.full
                   ? null
                   : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
@@ -661,21 +401,17 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   });
                 }
 
-                chat?.getTitle();
                 return Scaffold(
                   backgroundColor: _backgroundColor.value,
-                  extendBodyBehindAppBar: !isCreator!,
-                  appBar: (!isCreator! || false.obs.value) // Necessary
-                      ? buildConversationViewHeader(context) as PreferredSizeWidget?
-                      : buildChatSelectorHeader() as PreferredSizeWidget?,
+                  appBar: buildConversationViewHeader(context),
                   body: Obx(() => adjustBackground.value
                       ? MirrorAnimationBuilder<Movie>(
-                          tween: ConversationViewMixin.gradientTween.value,
+                          tween: gradientTween.value,
                           curve: Curves.fastOutSlowIn,
                           duration: Duration(seconds: 3),
                           builder: (context, anim, child) {
                             return Container(
-                              decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
+                              decoration: adjustBackground.value
                                   ? BoxDecoration(
                                       gradient:
                                           LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
@@ -683,7 +419,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                       anim.get("color2")
                                     ], colors: [
                                       context.theme.colorScheme
-                                          .bubble(context, chat?.isIMessage ?? true)
+                                          .bubble(context, chat.isIMessage)
                                           .withOpacity(0.5),
                                       context.theme.colorScheme.background,
                                     ]))
@@ -693,13 +429,431 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                           },
                           child: child,
                         )
-                      : child),
-                  floatingActionButton: AnimatedOpacity(
-                      duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
+                      : child
+                  ),
                 );
               },
             ),
           )),
+    );
+  }
+
+  static Rx<MovieTween> gradientTween = Rx<MovieTween>(MovieTween()
+    ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+        .tween("color1", Tween<double>(begin: 0, end: 0.2))
+    ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+        .tween("color2", Tween<double>(begin: 0.8, end: 1)));
+
+  void openDetails() {
+    Navigator.of(context).push(
+      ThemeSwitcher.buildPageRoute(
+        builder: (context) => TitleBarWrapper(
+          hideInSplitView: true,
+          child: ConversationDetails(
+            chat: chat,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void markChatAsRead() {
+    void setProgress(bool val) {
+      if (mounted) {
+        setState(() {
+          markingAsRead = val;
+
+          if (!val) {
+            markedAsRead = true;
+          }
+        });
+      }
+
+      // Unset the marked icon
+      Future.delayed(Duration(seconds: 3), () {
+        if (mounted) {
+          setState(() {
+            markedAsRead = false;
+          });
+        }
+      });
+    }
+
+    // Set that we are
+    setProgress(true);
+
+    http.markChatRead(chat.guid).then((_) {
+      setProgress(false);
+    }).catchError((_) {
+      setProgress(false);
+    });
+  }
+
+  Widget buildCupertinoTrailing() {
+    Color? fontColor = context.theme.colorScheme.onBackground;
+    bool manualMark =
+        ss.settings.enablePrivateAPI.value && ss.settings.privateManualMarkAsRead.value;
+    bool showManual = !ss.settings.privateMarkChatAsRead.value && !widget.chat.isGroup();
+    List<Widget> items = [
+      if (showManual && manualMark && markingAsRead)
+        Padding(
+            padding: EdgeInsets.only(right: ss.settings.colorblindMode.value ? 15.0 : 10.0),
+            child: ss.settings.skin.value == Skins.iOS
+                ? Theme(
+              data: ThemeData(
+                cupertinoOverrideTheme: CupertinoThemeData(
+                  brightness: context.theme.colorScheme.brightness,
+                ),
+              ),
+              child: CupertinoActivityIndicator(
+                radius: 12,
+              ),
+            )
+                : Container(
+                height: 24,
+                width: 24,
+                child: Center(
+                    child: CircularProgressIndicator(
+                      backgroundColor: context.theme.colorScheme.properSurface,
+                      valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                      strokeWidth: 2,
+                    )))),
+      if (showManual && manualMark && !markingAsRead)
+        Padding(
+          padding: EdgeInsets.only(right: ss.settings.colorblindMode.value ? 10.0 : 5.0),
+          child: GestureDetector(
+            child: Icon(
+              (markedAsRead)
+                  ? CupertinoIcons.check_mark_circled
+                  : CupertinoIcons.check_mark_circled_solid,
+              color: (markedAsRead) ? HexColor('43CC47').withAlpha(200) : fontColor,
+            ),
+            onTap: markChatAsRead,
+          ),
+        ),
+    ];
+
+    if (ss.settings.showConnectionIndicator.value) {
+      items.add(Obx(() => getIndicatorIcon(socket.state.value, size: 12)));
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(right: 30.0, top: kIsDesktop ? 10 : 45),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: items,
+      ),
+    );
+  }
+
+  PreferredSizeWidget buildConversationViewHeader(BuildContext context) {
+    Color? fontColor = context.theme.colorScheme.onBackground;
+    Color? fontColor2 = context.theme.colorScheme.outline;
+    String? title = chat.title;
+
+    final hideTitle = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+    final generateTitle =
+        ss.settings.redactedMode.value && ss.settings.generateFakeContactNames.value;
+
+    if (generateTitle) {
+      title = chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
+    } else if (hideTitle) {
+      fontColor = Colors.transparent;
+      fontColor2 = Colors.transparent;
+    }
+
+    if (ss.settings.skin.value == Skins.Material ||
+        ss.settings.skin.value == Skins.Samsung) {
+      return AppBar(
+        toolbarHeight: kIsDesktop ? 70 : null,
+        systemOverlayStyle:
+        context.theme.colorScheme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        title: Padding(
+          padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+          child: GestureDetector(
+            onTap: () async {
+              if (!chat.isGroup()) {
+                final handle = chat.handles.first;
+                final contact = handle.contact;
+                if (contact == null) {
+                  await mcs.invokeMethod("open-contact-form",
+                      {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+                } else {
+                  await mcs.invokeMethod("view-contact-form", {'id': contact.id});
+                }
+              }
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title!,
+                  style: context.theme.textTheme.titleLarge!.apply(color: fontColor),
+                ),
+                if (ss.settings.skin.value == Skins.Samsung &&
+                    (chat.isGroup() || (!title.isPhoneNumber && !title.isEmail)))
+                  Text(
+                    generateTitle
+                        ? ""
+                        : chat.isGroup()
+                        ? "${chat.participants.length} recipients"
+                        : chat.participants[0].address,
+                    style: context.theme.textTheme.labelLarge!.apply(color: fontColor2),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        bottom: PreferredSize(
+          child: Container(
+            color: context.theme.colorScheme.properSurface,
+            height: 0.5,
+          ),
+          preferredSize: Size.fromHeight(0.5),
+        ),
+        leading: Padding(
+          padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+          child: buildBackButton(context, callback: () {
+            if (ls.isBubble) {
+              SystemNavigator.pop();
+              return false;
+            }
+            eventDispatcher.emit("update-highlight", null);
+            return true;
+          }),
+        ),
+        automaticallyImplyLeading: false,
+        backgroundColor: context.theme.colorScheme.background,
+        actionsIconTheme: IconThemeData(color: context.theme.colorScheme.primary),
+        iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+            child: Obx(() {
+              if (ss.settings.showConnectionIndicator.value) {
+                return Obx(() => getIndicatorIcon(socket.state.value, size: 12));
+              } else {
+                return SizedBox.shrink();
+              }
+            }),
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+            child: Obx(() {
+              if (ss.settings.privateManualMarkAsRead.value && markingAsRead) {
+                return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              backgroundColor: context.theme.colorScheme.properSurface,
+                              valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary)),
+                        )));
+              } else {
+                return SizedBox.shrink();
+              }
+            }),
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+            child: Obx(() {
+              if (ss.settings.enablePrivateAPI.value &&
+                  ss.settings.privateManualMarkAsRead.value &&
+                  !markingAsRead) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: GestureDetector(
+                    child: Icon(
+                      (markedAsRead)
+                          ? ss.settings.skin.value == Skins.iOS
+                          ? CupertinoIcons.check_mark_circled_solid
+                          : Icons.check_circle
+                          : ss.settings.skin.value == Skins.iOS
+                          ? CupertinoIcons.check_mark_circled
+                          : Icons.check_circle_outline,
+                      color: (markedAsRead) ? HexColor('43CC47').withAlpha(200) : fontColor,
+                    ),
+                    onTap: markChatAsRead,
+                  ),
+                );
+              } else {
+                return SizedBox.shrink();
+              }
+            }),
+          ),
+          if ((!chat.isGroup() &&
+              (chat.participants[0].address.isPhoneNumber || chat.participants[0].address.isEmail)) &&
+              !kIsDesktop &&
+              !kIsWeb)
+            Padding(
+              padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: GestureDetector(
+                  child: Icon(
+                    chat.participants[0].address.isPhoneNumber ? Icons.call : Icons.email,
+                    color: fontColor,
+                  ),
+                  onTap: () {
+                    if (chat.participants[0].address.isPhoneNumber) {
+                      launchUrl(Uri(scheme: "tel", path: chat.participants[0].address));
+                    } else {
+                      launchUrl(Uri(scheme: "mailto", path: chat.participants[0].address));
+                    }
+                  },
+                ),
+              ),
+            ),
+          Padding(
+            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: GestureDetector(
+                child: Icon(
+                  ss.settings.skin.value == Skins.iOS
+                      ? CupertinoIcons.ellipsis
+                      : Icons.more_vert,
+                  color: fontColor,
+                ),
+                onTap: openDetails,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    TextStyle? titleStyle = Theme.of(context).textTheme.bodyMedium;
+    if (!generateTitle && hideTitle) titleStyle = titleStyle!.copyWith(color: Colors.transparent);
+
+    final children = [
+      if (kIsDesktop) SizedBox(height: chat.participants.length == 1 ?  8.0 : 3.0, width: 5.0),
+      ContactAvatarGroupWidget(
+        chat: chat,
+        size: chat.participants.length == 1 ? 40 : 45,
+        onTap: openDetails,
+      ),
+      if (!kIsDesktop) SizedBox(height: 5.0, width: 5.0),
+      Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
+        Container(
+          constraints: BoxConstraints(
+              maxWidth: ns.width(context) / 2 - 55,
+              maxHeight: 20.5
+          ),
+          child: RichText(
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: Theme.of(context).textTheme.titleMedium,
+              children: [
+                ...MessageHelper.buildEmojiText(
+                  title ?? "",
+                  titleStyle!,
+                ),
+              ],
+            ),
+          ),
+        ),
+        Icon(
+          CupertinoIcons.chevron_right,
+          size: context.theme.textTheme.bodyMedium!.fontSize!,
+          color: context.theme.colorScheme.outline,
+        ),
+      ]),
+    ];
+
+    return PreferredSize(
+      preferredSize: Size.fromHeight(!kIsDesktop && (context.orientation == Orientation.landscape && context.isPhone) ? 55 : 75),
+      child: ClipPath(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+              decoration: BoxDecoration(
+                color: context.theme.colorScheme.properSurface.withOpacity(0.3),
+                border: Border(
+                  bottom: BorderSide(color: context.theme.colorScheme.properSurface, width: 1.5),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 15.0, top: kIsDesktop || kIsWeb ? 5 : 45),
+                      child: GestureDetector(
+                          onTap: () {
+                            if (ls.isBubble) {
+                              SystemNavigator.pop();
+                              return;
+                            }
+                            eventDispatcher.emit("update-highlight", null);
+                            Navigator.of(context).pop();
+                          },
+                          behavior: HitTestBehavior.translucent,
+                          child: Obx(() => Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              buildBackButton(context, callback: () {
+                                if (ls.isBubble) {
+                                  SystemNavigator.pop();
+                                  return false;
+                                }
+                                eventDispatcher.emit("update-highlight", null);
+                                return true;
+                              }),
+                              // todo
+                              // if (ChatBloc().unreads.value > 0)
+                              //   Container(
+                              //     width: 25.0,
+                              //     height: 20.0,
+                              //     decoration: BoxDecoration(
+                              //         color: context.theme.colorScheme.primary,
+                              //         shape: BoxShape.rectangle,
+                              //         borderRadius: BorderRadius.circular(10)),
+                              //     child: Center(
+                              //         child: Text(ChatBloc().unreads.value.toString(),
+                              //             textAlign: TextAlign.center, style: TextStyle(color: context.theme.colorScheme.onPrimary, fontSize: 12.0))),
+                              //   ),
+                            ],
+                          ),
+                          )),
+                    ),
+                  ),
+                  Container(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 5),
+                      child: GestureDetector(
+                        onTap: openDetails,
+                        child: Builder(builder: (context) {
+                          if (!kIsDesktop && (context.orientation == Orientation.landscape && context.isPhone)) {
+                            return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: children);
+                          }
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: children,
+                          );
+                        }),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Obx(() => buildCupertinoTrailing()),
+                  )
+                ],
+              )
+          ),
+        ),
+      ),
     );
   }
 }

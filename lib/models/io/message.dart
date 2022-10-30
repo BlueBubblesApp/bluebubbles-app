@@ -653,59 +653,6 @@ class Message {
     return this;
   }
 
-  /// Fetch attachments with a bulk list of messages. Returns a map with the
-  /// message guid as key and a list of attachments as the value. DO NOT use this
-  /// method in performance-sensitive areas, prefer using
-  /// [fetchAttachmentsByMessagesAsync]
-  static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages,
-      {ChatController? currentChat}) {
-    final Map<String, List<Attachment?>> map = {};
-    if (kIsWeb) {
-      map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
-      return map;
-    }
-
-    /// If we have a [ChatController] just return the attachments stored in it
-    if (currentChat != null) {
-      map.addEntries(messages.map((e) => MapEntry(e!.guid!, currentChat.getAttachmentsForMessage(e))));
-      return map;
-    }
-
-    if (messages.isEmpty) return {};
-
-    return store.runInTransaction(TxMode.read, () {
-      /// Find eligible message IDs and then find [AttachmentMessageJoin]s
-      /// matching those message IDs
-
-      /// Add the attachments with some fancy list operations
-      /// The conditional is in case objectbox hasn't persisted the dbAttachments yet
-      map.addEntries(messages
-          .where((element) => element?.id != null)
-          .map((e) => MapEntry(e!.guid!, e.dbAttachments.isEmpty ? e.attachments : e.dbAttachments)));
-      return map;
-    });
-  }
-
-  /// Fetch message attachments for a list of messages, but async
-  static Future<Map<String, List<Attachment?>>> fetchAttachmentsByMessagesAsync(List<Message?> messages,
-      {ChatController? currentChat}) async {
-    final Map<String, List<Attachment?>> map = {};
-    if (kIsWeb) {
-      map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
-      return map;
-    }
-
-    if (currentChat != null) {
-      map.addEntries(messages.map((e) => MapEntry(e!.guid!, currentChat.getAttachmentsForMessage(e))));
-      return map;
-    }
-
-    final task = GetMessageAttachments([
-      messages.map((e) => e!.id!).toList(),
-    ]);
-    return (await createAsyncTask<Map<String, List<Attachment?>>>(task)) ?? {};
-  }
-
   /// Fetch attachments for a single message. Prefer using [fetchAttachmentsByMessages]
   /// or [fetchAttachmentsByMessagesAsync] when working with a list of messages.
   List<Attachment?>? fetchAttachments({ChatController? currentChat}) {
@@ -713,14 +660,10 @@ class Message {
       return attachments;
     }
 
-    if (currentChat?.messageAttachments.containsKey(guid) ?? false) {
-      attachments = currentChat!.getAttachmentsForMessage(this);
-      if (attachments.isNotEmpty) return attachments;
-    }
-
     if (id == null) return [];
     return store.runInTransaction(TxMode.read, () {
-      return dbAttachments;
+      attachments = dbAttachments;
+      return attachments;
     });
   }
 

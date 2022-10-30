@@ -1,3 +1,4 @@
+/*
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view_mixin.dart';
@@ -70,7 +71,9 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   children: <Widget>[
                     Text(
                         generateName
-                            ? /*ContactManager().getContact(contact.address)?.fakeName ?? */"Person ${index + 1}"
+                            ? */
+/*ContactManager().getContact(contact.address)?.fakeName ?? *//*
+"Person ${index + 1}"
                             : hideInfo
                                 ? "          "
                                 : contact.displayName!.trim(),
@@ -168,3 +171,4 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
     );
   }
 }
+*/

@@ -1,9 +1,9 @@
 import 'dart:math';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/app/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -174,6 +174,14 @@ class ThemesService extends GetxService {
         (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.system &&
             SchedulerBinding.instance.window.platformBrightness == Brightness.dark));
 
+  bool isGradientBg(BuildContext context) {
+    if (inDarkMode(context)) {
+      return ThemeStruct.getDarkTheme().gradientBg;
+    } else {
+      return ThemeStruct.getLightTheme().gradientBg;
+    }
+  }
+
   Future<void> refreshMonet(BuildContext context) async {
     monetPalette = await DynamicColorPlugin.getCorePalette();
     _loadTheme(context);
@@ -204,13 +212,13 @@ class ThemesService extends GetxService {
         double difference = min((primaryPercent / (primaryPercent + darkBgPercent)), 1 - (primaryPercent / (primaryPercent + darkBgPercent)));
         Tween<double> color1 = Tween<double>(begin: 0, end: difference);
         Tween<double> color2 = Tween<double>(begin: 1 - difference, end: 1);
-        ConversationViewMixin.gradientTween.value = MovieTween()
+        ConversationViewState.gradientTween.value = MovieTween()
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
               .tween("color1", color1)
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
               .tween("color2", color2);
       } else {
-        ConversationViewMixin.gradientTween.value = MovieTween()
+        ConversationViewState.gradientTween.value = MovieTween()
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
               .tween("color1", Tween<double>(begin: 0, end: 0.2))
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
@@ -221,13 +229,13 @@ class ThemesService extends GetxService {
         double difference = min((primaryPercent / (primaryPercent + lightBgPercent)), 1 - (primaryPercent / (primaryPercent + lightBgPercent)));
         Tween<double> color1 = Tween<double>(begin: 0.0, end: difference);
         Tween<double> color2 = Tween<double>(begin: 1.0 - difference, end: 1.0);
-        ConversationViewMixin.gradientTween.value = MovieTween()
+        ConversationViewState.gradientTween.value = MovieTween()
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
               .tween("color1", color1)
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
               .tween("color2", color2);
       } else {
-        ConversationViewMixin.gradientTween.value = MovieTween()
+        ConversationViewState.gradientTween.value = MovieTween()
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
               .tween("color1", Tween<double>(begin: 0, end: 0.2))
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))

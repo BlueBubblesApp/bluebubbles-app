@@ -136,8 +136,6 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                                 context,
                                 ConversationView(
                                   chat: widget.chat,
-                                  existingAttachments: [],
-                                  existingText: null,
                                 ),
                                     (route) => route.isFirst,
                               );

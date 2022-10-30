@@ -41,13 +41,13 @@ class ChatManager {
     });
   }
 
-  void setActiveChat(Chat? chat, {clearNotifications = true, loadAttachments = true}) {
+  void setActiveChat(Chat? chat, {clearNotifications = true}) {
     // If no chat is passed, clear all active chats (should just be one)
     if (chat == null) {
       return setAllInactive();
     }
 
-    createChatController(chat, active: true, loadAttachments: loadAttachments);
+    createChatController(chat, active: true);
     if (clearNotifications) {
       clearChatNotifications(chat);
     }
@@ -63,9 +63,9 @@ class ChatManager {
     return controller?.isActive ?? false;
   }
 
-  void createChatControllers(List<Chat> chats, {loadAttachments = true}) {
+  void createChatControllers(List<Chat> chats) {
     for (Chat c in chats) {
-      createChatController(c, loadAttachments: loadAttachments);
+      createChatController(c);
     }
   }
 
@@ -101,7 +101,7 @@ class ChatManager {
     activeChat = null;
   }
 
-  ChatController createChatController(Chat chat, {active = false, loadAttachments = false}) {
+  ChatController createChatController(Chat chat, {active = false}) {
     // If a chat is passed, get the chat and set it be active and make sure it's stored
     ChatController? controller = getChatController(chat);
     controller ??= ChatController(chat);
@@ -117,11 +117,6 @@ class ChatManager {
     controller.isAlive = active;
     if (active) {
       activeChat = controller;
-    }
-
-    // Preload the message attachments
-    if (loadAttachments) {
-      controller.preloadMessageAttachments();
     }
 
     return controller;

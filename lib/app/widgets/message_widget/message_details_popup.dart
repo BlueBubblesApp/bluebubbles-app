@@ -10,7 +10,6 @@ import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_alert_dialog.dart';
 import 'package:bluebubbles/app/widgets/message_widget/reaction_detail_widget.dart';
@@ -688,7 +687,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 cupertino.CupertinoPageRoute(
                   builder: (BuildContext context) {
                     return ConversationView(
-                      chat: dmChat,
+                      chat: dmChat!,
                     );
                   },
                 ),
@@ -746,7 +745,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             onTap: () async {
-              Handle? handle = widget.message.handle;
+              /*Handle? handle = widget.message.handle;
               String? address = handle?.address ?? "";
               Contact? contact = handle?.contact;
               UniqueContact uniqueContact;
@@ -767,7 +766,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                     );
                   },
                 ),
-              );
+              );*/
             },
             child: ListTile(
               mouseCursor: SystemMouseCursors.click,
@@ -790,7 +789,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              popDetails();
+              /*popDetails();
               Navigator.pushReplacement(
                 context,
                 cupertino.CupertinoPageRoute(
@@ -815,7 +814,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                     );
                   },
                 ),
-              );
+              );*/
             },
             child: ListTile(
               mouseCursor: SystemMouseCursors.click,

@@ -8,7 +8,6 @@ import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_gallery_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/contact_tile.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
@@ -488,7 +487,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                               TextButton(
                                 child: Text("Pick Contact", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                                 onPressed: () async {
-                                  final contacts = [];
+                                  /*final contacts = [];
                                   final cache = [];
                                   String slugText(String text) {
                                     return slugify(text, delimiter: '').toString().replaceAll('-', '');
@@ -571,7 +570,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                                     } else {
                                       participantController.text = selected!.address!;
                                     }
-                                  }
+                                  }*/
                                 },
                               ),
                               TextButton(

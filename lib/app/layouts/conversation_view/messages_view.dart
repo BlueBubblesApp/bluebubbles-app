@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
@@ -13,32 +14,25 @@ import 'package:bluebubbles/app/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/core/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/core/managers/chat/chat_manager.dart';
-import 'package:bluebubbles/core/managers/message/message_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:scroll_to_index/scroll_to_index.dart';
 
 class MessagesView extends StatefulWidget {
-  final bool isSearchView;
-  final bool showHandle;
+  final MessagesService? customService;
   final Chat chat;
-  final Function? initComplete;
-  final List<Message> messages;
 
   MessagesView({
     Key? key,
-    required this.isSearchView,
-    required this.showHandle,
+    this.customService,
     required this.chat,
-    this.initComplete,
-    this.messages = const [],
   }) : super(key: key);
 
   @override
@@ -46,50 +40,29 @@ class MessagesView extends StatefulWidget {
 }
 
 class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver {
-  Completer<void>? loader;
-  bool noMoreMessages = false;
-  bool noMoreLocalMessages = false;
+  bool fetching = false;
+  late bool noMoreMessages = widget.customService != null;
   List<Message> _messages = <Message>[];
 
-  GlobalKey<SliverAnimatedListState>? _listKey;
+  RxList<Widget> smartReplies = <Widget>[].obs;
+  RxList<Widget> internalSmartReplies = <Widget>[].obs;
+
+  late final messageService = widget.customService ?? ms(widget.chat.guid)
+    ..init(widget.chat, handleNewMessage, handleUpdatedMessage);
+  late final ChatController currentChat = ChatManager().activeChat!;
   final Duration animationDuration = Duration(milliseconds: 400);
   final smartReply = GoogleMlKit.nlp.smartReply();
-  bool initializedList = false;
-  List<int> loadedPages = [];
-  ChatController? currentChat;
-  bool keyboardOpen = false;
-  bool widgetsBuilt = false;
+  final focusNode = FocusScopeNode();
+  final listKey = GlobalKey<SliverAnimatedListState>();
   final RxBool dragging = false.obs;
 
-  List<Message> currentMessages = [];
-  List<String> replies = [];
-  Map<String, Widget> internalSmartReplies = {};
-
-  late StreamController<List<String>> smartReplyController;
-  late final messageService = ms("${widget.isSearchView ? "search/" : ""}${widget.chat.guid}")
-    ..init(widget.chat, handleNewMessage);
-
-  AutoScrollController? get scrollController {
-    if (currentChat == null) return null;
-
-    return currentChat!.scrollController;
-  }
-
-  bool get showSmartReplies =>
-      ss.settings.smartReply.value &&
-      !kIsWeb &&
-      !kIsDesktop &&
-      (!ss.settings.redactedMode.value || !ss.settings.hideMessageContent.value);
-
+  AutoScrollController get scrollController => currentChat.scrollController;
+  bool get showSmartReplies => ss.settings.smartReply.value && !kIsWeb && !kIsDesktop;
   Chat get chat => widget.chat;
 
   @override
   void initState() {
     super.initState();
-
-    currentChat = ChatManager().activeChat;
-
-    smartReplyController = StreamController<List<String>>.broadcast();
 
     eventDispatcher.stream.listen((e) async {
       if (!mounted) return;
@@ -97,333 +70,180 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
       if (e.item1 == "refresh-messagebloc" && e.item2 != null) {
         // Handle event's that require a matching guid
         String? chatGuid = e.item2;
-        if (widget.chat!.guid == chatGuid) {
+        if (widget.chat.guid == chatGuid) {
           // Clear state items
-          noMoreLocalMessages = false;
           noMoreMessages = false;
           _messages = [];
-          loadedPages = [];
-
           // Reload the state after refreshing
           messageService.reload();
-          messageService.init(chat, handleNewMessage);
+          messageService.init(chat, handleNewMessage, handleUpdatedMessage);
           await rebuild(this);
         }
       } else if (e.item1 == "add-custom-smartreply") {
         if (e.item2["path"] != null) {
-          internalSmartReplies.addEntries([
+          internalSmartReplies.add(
             _buildReply("Attach recent photo", onTap: () async {
               eventDispatcher.emit('add-attachment', e.item2);
-              internalSmartReplies.remove('Attach recent photo');
-              await rebuild(this);
+              internalSmartReplies.clear();
             })
-          ]);
-          await rebuild(this);
+          );
         }
       } else if (e.item1 == "scroll-to-message") {
         final message = e.item2;
         final index = _messages.indexWhere((element) => element.guid == message.guid);
-        await scrollController?.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
-        scrollController?.highlight(index, highlightDuration: Duration(milliseconds: 500));
+        await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
+        scrollController.highlight(index, highlightDuration: Duration(milliseconds: 500));
       }
     });
 
-    if (widget.initComplete != null) widget.initComplete!();
-
     WidgetsBinding.instance.addObserver(this);
-
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      widgetsBuilt = true;
       eventDispatcher.emit("update-highlight", widget.chat.guid);
       // See if we need to load anything from the message bloc
       await Future.delayed(Duration(milliseconds: 100));
-      if (widget.messages.isNotEmpty) {
-        _messages = widget.messages;
-      } else if (_messages.isEmpty && messageService.struct.isEmpty) {
-        messageService.loadChunk(0);
-      } else if (_messages.isEmpty && messageService.struct.isNotEmpty) {
-        _messages = messageService.struct.messages;
-        _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      if (messageService.tag.contains("search")) {
+        await messageService.loadSearchChunk(
+          messageService.struct.messages.first,
+          messageService.tag.contains("local") ? SearchMethod.local : SearchMethod.network
+        );
+      } else if (messageService.struct.isEmpty) {
+        await messageService.loadChunk(0);
       }
+      _messages = messageService.struct.messages;
+      _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+      _messages.forEachIndexed((i, _) {
+        listKey.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
+      });
     });
   }
 
-  Future<void> resetReplies() async {
-    if (replies.isEmpty) return;
-    replies = [];
-    internalSmartReplies.clear();
-    await rebuild(this);
-    return smartReplyController.sink.add(replies);
+  @override
+  void dispose() {
+    if (!kIsWeb && !kIsDesktop) smartReply.close();
+    messageService.close();
+    super.dispose();
   }
 
-  void updateReplies() async {
-    // If there are no messages or the latest message is from me, reset the replies
-    if (isNullOrEmpty(_messages)!) return await resetReplies();
-    if (_messages.first.isFromMe!) return await resetReplies();
-    if (kIsWeb || kIsDesktop) return await resetReplies();
+  void updateReplies({bool updateConversation = true}) async {
+    if (isNullOrEmpty(_messages)! || kIsWeb || kIsDesktop) return;
 
+    if (updateConversation) {
+      _messages.where((e) => !isNullOrEmpty(e.fullText)! && e.dateCreated != null).take(min(_messages.length, 5)).forEach((message) {
+        _addMessageToSmartReply(message);
+      });
+    }
     Logger.info("Getting smart replies...");
     SmartReplySuggestionResult results = await smartReply.suggestReplies();
 
     if (results.status == SmartReplySuggestionResultStatus.success) {
       Logger.info("Smart Replies found: ${results.suggestions.length}");
-      replies = results.suggestions;
-      Logger.debug(replies.toString());
+      smartReplies.value = results.suggestions.map((e) => _buildReply(e)).toList();
+      Logger.debug(smartReplies.toString());
+    } else {
+      smartReplies.clear();
     }
+  }
 
-    // If there is nothing in the list, get out
-    if (isNullOrEmpty(replies)!) {
-      resetReplies();
-      return;
+  void _addMessageToSmartReply(Message message) {
+    if (message.isFromMe ?? false) {
+      smartReply.addMessageToConversationFromLocalUser(
+          message.fullText,
+          message.dateCreated!.millisecondsSinceEpoch
+      );
+    } else {
+      smartReply.addMessageToConversationFromRemoteUser(
+          message.fullText,
+          message.dateCreated!.millisecondsSinceEpoch,
+          message.handle?.address ?? "participant"
+      );
     }
-
-    // If everything passes, add replies to the stream
-    if (!smartReplyController.isClosed) smartReplyController.sink.add(replies);
   }
 
   Future<void> loadNextChunk() async {
     if (noMoreMessages) return;
 
     // If we already are loading a chunk, don't load again
-    if (loader != null && !loader!.isCompleted) {
-      return loader!.future;
+    if (fetching) {
+      return;
     }
-    loader = Completer();
+    fetching = true;
 
     // Start loading the next chunk of messages
-    final gotMessages = await messageService.loadChunk(_messages.length).catchError((e) {
+    noMoreMessages = !(await messageService.loadChunk(_messages.length).catchError((e) {
       Logger.error("Failed to fetch message chunk! $e");
+    }));
+
+    final oldLength = _messages.length;
+    _messages = messageService.struct.messages;
+    _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
+    fetching = false;
+    _messages.sublist(oldLength - 1).forEachIndexed((i, _) {
+      listKey.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
     });
-    noMoreMessages = !gotMessages;
-    final newMessages = messageService.struct.messages.sublist(_messages.length);
-
-
-    return loader!.future;
   }
 
   void handleNewMessage(Message message) {
     _messages.add(message);
     _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
     final insertIndex = _messages.indexOf(message);
-    _listKey!.currentState!.insertItem(
-        insertIndex,
-        duration: Duration(milliseconds: 300),
+    listKey.currentState!.insertItem(
+      insertIndex,
+      duration: Duration(milliseconds: 300),
     );
 
     if (insertIndex == 0 && showSmartReplies) {
-      updateReplies();
+      _addMessageToSmartReply(message);
+      updateReplies(updateConversation: false);
     }
   }
 
-  void handleNewMessage(MessageBlocEvent? event) async {
-    // Get outta here if we don't have a chat "open"
-    if (currentChat == null) return;
-    if (event == null) return;
-
-    // Skip deleted messages
-    if (event.message != null && event.message!.dateDeleted != null) return;
-    if (!isNullOrEmpty(event._messages)!) {
-      event._messages = event._messages.where((element) => element.dateDeleted == null).toList();
-    }
-    int originalMessageLength = _messages.length;
-    if (event.type == MessageBlocEventType.insert && mounted) {
-      // If we have an incoming message and the app is alive, clear notifications for the chat
-      if (ls.isAlive && !event.outGoing) {
-        Chat? activeChat = ChatManager().activeChat?.chat;
-        if (activeChat != null) {
-          ChatManager().clearChatNotifications(activeChat);
-        }
-      }
-
-      bool isNewMessage = true;
-      for (Message? message in _messages) {
-        if (message!.guid == event.message!.guid) {
-          isNewMessage = false;
-          break;
-        }
-      }
-
-      _messages = event._messages;
-      if (_listKey != null && _listKey!.currentState != null) {
-        _listKey!.currentState!.insertItem(
-          event.index != null ? event.index! : 0,
-          duration: isNewMessage
-              ? event.outGoing
-                  // This determines how long to wait until showing the
-                  // "new" message after animating to the position
-                  ? Duration(milliseconds: 300)
-                  : animationDuration
-              : Duration(milliseconds: 0),
-        );
-      }
-
-      if (event.outGoing) {
-        currentChat!.sentMessages.add(event.message);
-        Future.delayed(Duration(milliseconds: 300) * 2, () {
-          currentChat!.sentMessages.removeWhere((element) => element!.guid == event.message!.guid);
-        });
-      }
-
-      if (event.outGoing) await Future.delayed(Duration(milliseconds: 300));
-
-      currentChat!.getAttachmentsForMessage(event.message);
-
-      if (event.message!.hasAttachments) {
-        await currentChat!.updateChatAttachments();
-        if (mounted) await rebuild(this);
-      }
-
-      if (isNewMessage && showSmartReplies) {
-        updateReplies();
-      }
-    } else if (event.type == MessageBlocEventType.remove) {
-      for (int i = 0; i < _messages.length; i++) {
-        if (_messages[i].guid == event.remove && _listKey!.currentState != null) {
-          _messages.removeAt(i);
-          _listKey!.currentState!.removeItem(i, (context, animation) => Container());
-        }
-      }
-    } else {
-      int originalMessageLength = _messages.length;
-      _messages = event._messages;
-      /*_messages.forEach((message) {
-        currentChat?.getAttachmentsForMessage(message);
-        currentChat?.messageMarkers.updateMessageMarkers(message);
-      });*/
-
-      // This needs to be in reverse so that the oldest message gets added first
-      // We also only want to grab the last 5, so long as there are at least 5 results
-      List<Message> reversed = _messages.reversed.toList();
-      int sampleSize = (_messages.length > 5) ? 5 : _messages.length;
-      reversed.sublist(reversed.length - sampleSize).forEach((message) {
-        if (!isEmptyString(message.fullText, stripWhitespace: true) && !kIsWeb && !kIsDesktop) {
-          if (message.isFromMe ?? false) {
-            smartReply.addMessageToConversationFromLocalUser(
-                message.fullText, message.dateCreated?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch);
-          } else {
-            smartReply.addMessageToConversationFromRemoteUser(
-                message.fullText,
-                message.dateCreated?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch,
-                message.handle?.address ?? "participant");
-          }
-        }
-      });
-
-      // We only want to update smart replies on the intial message fetch
-      if (originalMessageLength == 0) {
-        if (showSmartReplies) {
-          if (_messages.isNotEmpty) updateReplies();
-        }
-      }
-      _listKey ??= GlobalKey<SliverAnimatedListState>();
-
-      if (originalMessageLength < _messages.length) {
-        for (int i = originalMessageLength; i < _messages.length; i++) {
-          if (_listKey != null && _listKey!.currentState != null) {
-            if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
-              // wait for the end of that frame.
-              await SchedulerBinding.instance.endOfFrame;
-            }
-            _listKey!.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
-          }
-        }
-      } else if (originalMessageLength > _messages.length) {
-        for (int i = originalMessageLength; i >= _messages.length; i--) {
-          if (_listKey != null && _listKey!.currentState != null) {
-            try {
-              if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
-                // wait for the end of that frame.
-                await SchedulerBinding.instance.endOfFrame;
-              }
-              _listKey!.currentState!
-                  .removeItem(i, (context, animation) => Container(), duration: Duration(milliseconds: 0));
-            } catch (ex) {
-              Logger.error("Error removing item animation");
-              Logger.error(ex.toString());
-            }
-          }
-        }
-      } else {
-        await rebuild(this);
-      }
-    }
-
-    if (originalMessageLength == 0) await rebuild(this);
+  void handleUpdatedMessage(Message message) {
+    final index = _messages.indexWhere((e) => e.guid == message.guid);
+    _messages[index] = message;
   }
 
-  /// All message update events are handled within the message widgets, to prevent top level setstates
-  Message? onUpdateMessage(NewMessageEvent event) {
-    if (event.type != NewMessageType.UPDATE) return null;
-    currentChat!.updateExistingAttachments(event);
-
-    String? oldGuid = event.event["oldGuid"];
-    Message? message = event.event["message"];
-
-    bool updatedAMessage = false;
-    for (int i = 0; i < _messages.length; i++) {
-      if (_messages[i].guid == oldGuid) {
-        Logger.info("Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]", tag: "MessageStatus");
-        _messages[i] = message;
-        updatedAMessage = true;
-        break;
-      }
-    }
-    if (!updatedAMessage) {
-      Logger.warn("Message not updated (not found): [${message!.text}] - [${message.guid}] - [$oldGuid]",
-          tag: "MessageStatus");
-    }
-
-    return message;
-  }
-
-  MapEntry<String, Widget> _buildReply(String text, {Function()? onTap}) => MapEntry(
-      text,
-      Container(
-        margin: EdgeInsets.all(5),
-        decoration: BoxDecoration(
-          border: Border.all(
-            width: 2,
-            style: BorderStyle.solid,
-            color: context.theme.colorScheme.properSurface,
-          ),
-          borderRadius: BorderRadius.circular(19),
-        ),
-        child: InkWell(
-          customBorder: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(19),
-          ),
-          onTap: onTap ??
+  Widget _buildReply(String text, {Function()? onTap}) => Container(
+    margin: EdgeInsets.all(5),
+    decoration: BoxDecoration(
+      border: Border.all(
+        width: 2,
+        style: BorderStyle.solid,
+        color: context.theme.colorScheme.properSurface,
+      ),
+      borderRadius: BorderRadius.circular(19),
+    ),
+    child: InkWell(
+      customBorder: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(19),
+      ),
+      onTap: onTap ??
               () {
-                if (currentChat?.chat != null) {
-                  outq.queue(OutgoingItem(
-                      type: QueueType.newMessage,
-                      chat: currentChat!.chat,
-                      message: Message(text: text)
-                  ));
-                }
-              },
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 1.5, left: 13.0, right: 13.0),
-              child: RichText(
-                text: TextSpan(
-                  children: MessageHelper.buildEmojiText(
-                    text,
-                    context.theme.extension<BubbleText>()!.bubbleText,
-                  ),
-                ),
+            outq.queue(OutgoingItem(
+                type: QueueType.newMessage,
+                chat: currentChat.chat,
+                message: Message(text: text)
+            ));
+          },
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 1.5, left: 13.0, right: 13.0),
+          child: RichText(
+            text: TextSpan(
+              children: MessageHelper.buildEmojiText(
+                text,
+                context.theme.extension<BubbleText>()!.bubbleText,
               ),
             ),
           ),
         ),
-      ));
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final _node = FocusScopeNode();
-    final _scrollController = scrollController ?? AutoScrollController();
     final Widget child = FocusScope(
-      node: _node,
+      node: focusNode,
       onFocusChange:
           kIsDesktop || kIsWeb ? (focus) => focus ? eventDispatcher.emit('focus-keyboard', null) : null : null,
       child: Stack(
@@ -431,7 +251,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
           GestureDetector(
             behavior: HitTestBehavior.deferToChild,
             // I have no idea why this works
-            onPanDown: kIsDesktop || kIsWeb ? (details) => _node.requestFocus() : null,
+            onPanDown: kIsDesktop || kIsWeb ? (details) => focusNode.requestFocus() : null,
             onHorizontalDragStart: (details) {},
             onHorizontalDragUpdate: (details) {
               if (ss.settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
@@ -449,70 +269,50 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
               }
             },
             child: AnimatedOpacity(
-              opacity: _messages.isEmpty && widget.initComplete == null ? 0 : 1,
+              opacity: _messages.isEmpty && widget.customService == null ? 0 : 1,
               duration: Duration(milliseconds: 150),
               curve: Curves.easeIn,
               child: ScrollbarWrapper(
                 reverse: true,
-                controller: _scrollController,
+                controller: scrollController,
                 showScrollbar: true,
                 child: Obx(
                   () => CustomScrollView(
-                    controller: _scrollController,
+                    controller: scrollController,
                     reverse: true,
                     physics: (ss.settings.betterScrolling.value && (kIsDesktop || kIsWeb))
                         ? NeverScrollableScrollPhysics()
                         : ThemeSwitcher.getScrollPhysics(),
                     slivers: <Widget>[
                       if (showSmartReplies)
-                        StreamBuilder<List<String?>>(
-                          stream: smartReplyController.stream,
-                          builder: (context, snapshot) {
-                            return SliverToBoxAdapter(
-                              child: Padding(
-                                padding: EdgeInsets.only(
-                                    top: ss.settings.skin.value != Skins.iOS ? 8.0 : 0.0, right: 5),
-                                child: AnimatedSize(
-                                  duration: Duration(milliseconds: 400),
-                                  child: internalSmartReplies.isEmpty && replies.isNotEmpty
-                                      ? Container(
-                                          height: context.theme.extension<BubbleText>()!.bubbleText.fontSize! + 35,
-                                          child: ListView(
-                                              reverse: true,
-                                              scrollDirection: Axis.horizontal,
-                                              children: replies.map((e) => _buildReply(e).value).toList()))
-                                      : internalSmartReplies.isNotEmpty
-                                          ? Container(
-                                              height: context.theme.extension<BubbleText>()!.bubbleText.fontSize! + 35,
-                                              child: ListView(
-                                                  reverse: true,
-                                                  scrollDirection: Axis.horizontal,
-                                                  children: (internalSmartReplies
-                                                        ..addEntries(replies.map((e) => _buildReply(e))))
-                                                      .values
-                                                      .toList()
-                                                      .reversed
-                                                      .toList()),
-                                            )
-                                          : Container(),
-                                ),
-                              ),
-                            );
-                          },
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: ss.settings.skin.value != Skins.iOS ? 8.0 : 0.0, right: 5),
+                            child: Obx(() => AnimatedSize(
+                              duration: Duration(milliseconds: 400),
+                              child: smartReplies.isNotEmpty || internalSmartReplies.isNotEmpty ? Container(
+                                height: context.theme.extension<BubbleText>()!.bubbleText.fontSize! + 35,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: smartReplies..addAll(internalSmartReplies),
+                                )
+                              ) : const SizedBox.shrink())
+                            ),
+                          ),
                         ),
-                      if (ss.settings.enablePrivateAPI.value || widget.chat?.guid == "theme-selector")
+                      if (ss.settings.enablePrivateAPI.value || widget.chat.guid == "theme-selector")
                         SliverToBoxAdapter(
                           child: Row(
                             children: <Widget>[
-                              if (widget.chat?.guid == "theme-selector" ||
-                                  (currentChat!.showTypingIndicator &&
+                              if (widget.chat.guid == "theme-selector" ||
+                                  (currentChat.showTypingIndicator &&
                                       (ss.settings.skin.value == Skins.Samsung ||
                                           ss.settings.alwaysShowAvatars.value)))
                                 Padding(
                                   padding: EdgeInsets.only(left: 10.0),
                                   child: ContactAvatarWidget(
-                                    key: Key("${widget.chat!.participants[0].address}-messages-view"),
-                                    handle: widget.chat!.participants[0],
+                                    key: Key("${widget.chat.participants[0].address}-messages-view"),
+                                    handle: widget.chat.participants[0],
                                     size: 30,
                                     fontSize: 14,
                                     borderThickness: 0.1,
@@ -522,31 +322,29 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                                 padding: EdgeInsets.only(top: 5),
                                 child: TypingIndicator(
                                   visible:
-                                      widget.chat?.guid == "theme-selector" ? true : currentChat!.showTypingIndicator,
+                                      widget.chat.guid == "theme-selector" ? true : currentChat.showTypingIndicator,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      if (_messages.isEmpty && widget.initComplete != null)
+                      if (_messages.isEmpty && widget.customService != null)
                         SliverToBoxAdapter(
                           child: NewMessageLoader(
-                            text: "Loading surrounding message context from your Mac..."
+                            text: "Loading surrounding message context..."
                           ),
                         ),
-                      _listKey != null
-                          ? SliverAnimatedList(
+                      SliverAnimatedList(
                               initialItemCount: _messages.length + 1,
-                              key: _listKey,
+                              key: listKey,
                               itemBuilder: (BuildContext context, int index, Animation<double> animation) {
                                 // Load more messages if we are at the top and we aren't alrady loading
                                 // and we have more messages to load
                                 if (index == _messages.length) {
-                                  if (!noMoreMessages &&
-                                      (loader == null ||
-                                          !loader!.isCompleted ||
-                                          !loadedPages.contains(_messages.length))) {
-                                    loadNextChunk();
+                                  if (!noMoreMessages) {
+                                    if (!fetching) {
+                                      loadNextChunk();
+                                    }
                                     return NewMessageLoader();
                                   }
 
@@ -571,23 +369,22 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                                     padding: EdgeInsets.only(left: 5.0, right: 5.0),
                                     child: GestureDetector(
                                       onTap: () {
-                                        scrollController!.scrollToIndex(2, preferPosition: AutoScrollPosition.begin);
+                                        scrollController.scrollToIndex(2, preferPosition: AutoScrollPosition.begin);
                                       },
                                       child: AutoScrollTag(
                                         key: ValueKey("${_messages[index].guid!}-scrolling"),
                                         index: index,
-                                        controller: _scrollController,
+                                        controller: scrollController,
                                         highlightColor: context.theme.colorScheme.surface.withOpacity(0.7),
                                         child: MessageWidget(
                                           key: Key(_messages[index].guid!),
                                           message: _messages[index],
                                           olderMessage: olderMessage,
                                           newerMessage: newerMessage,
-                                          showHandle: widget.showHandle,
+                                          showHandle: chat.participants.length > 1,
                                           isFirstSentMessage: messageService.mostRecentSent?.guid == _messages[index].guid,
                                           showHero: fullAnimation,
                                           showReplies: true,
-                                          onUpdate: (event) => onUpdateMessage(event),
                                           bloc: messageService,
                                           autoplayEffect: index == 0 && _messages[index].originalROWID != null,
                                         )),
@@ -619,8 +416,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
                                 }
 
                                 return messageWidget;
-                              })
-                          : SliverToBoxAdapter(child: Container()),
+                              }),
                       SliverPadding(
                         padding: EdgeInsets.all(70),
                       ),
@@ -633,7 +429,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
           Positioned.fill(
             child: IgnorePointer(
               child: Obx(() => Container(
-                    color: dragging.value ? context.theme.colorScheme.bubble(context, widget.chat!.isIMessage).withAlpha(50) : Colors.transparent,
+                    color: dragging.value ? context.theme.colorScheme.bubble(context, widget.chat.isIMessage).withAlpha(50) : Colors.transparent,
                   )),
             ),
           ),
@@ -665,12 +461,5 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
       },
       child: child,
     );
-  }
-
-  @override
-  void dispose() {
-    if (!smartReplyController.isClosed) smartReplyController.close();
-    if (!kIsWeb && !kIsDesktop) smartReply.close();
-    super.dispose();
   }
 }

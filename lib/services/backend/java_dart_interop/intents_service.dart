@@ -83,7 +83,7 @@ class IntentsService extends GetxService {
 
   Future<void> openChat(String? guid, {String? text, List<PlatformFile> attachments = const []}) async {
     if (guid == null) {
-      ns.pushAndRemoveUntil(
+      /*ns.pushAndRemoveUntil(
         Get.context!,
         ConversationView(
           existingAttachments: attachments,
@@ -91,7 +91,7 @@ class IntentsService extends GetxService {
           isCreator: true,
         ),
         (route) => route.isFirst,
-      );
+      );*/
     } else if (guid == "-1") {
       ns.key.currentState!.popUntil((route) => route.isFirst);
     } else if (guid == "-2") {
@@ -105,8 +105,6 @@ class IntentsService extends GetxService {
           Get.context!,
           ConversationView(
             chat: chat,
-            existingAttachments: attachments,
-            existingText: text,
           ),
           (route) => route.isFirst,
         );

@@ -97,14 +97,14 @@ class ConversationListController extends StatefulController {
 
   void openNewChatCreator(BuildContext context, {List<PlatformFile>? existing}) async {
     eventDispatcher.emit("update-highlight", null);
-    ns.pushAndRemoveUntil(
+    /*ns.pushAndRemoveUntil(
       context,
       ConversationView(
         isCreator: true,
         existingAttachments: existing ?? [],
       ),
       (route) => route.isFirst,
-    );
+    )*/;
   }
 }
 
@@ -142,8 +142,8 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
           context,
           ConversationView(
             chat: kIsWeb
-                ? await Chat.findOneWeb(guid: ss.prefs.getString('lastOpenedChat'))
-                : Chat.findOne(guid: ss.prefs.getString('lastOpenedChat'))),
+                ? (await Chat.findOneWeb(guid: ss.prefs.getString('lastOpenedChat')))!
+                : Chat.findOne(guid: ss.prefs.getString('lastOpenedChat'))!),
           (route) => route.isFirst,
         );
       });

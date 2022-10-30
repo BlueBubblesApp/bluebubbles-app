@@ -359,18 +359,13 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
                     controller: fakeController,
                     inSelectMode: true,
                     onSelect: (_) {
-                      MessageBloc customBloc = MessageBloc(chat, canLoadMore: false, loadMethod: local ? "local" : "network");
+                      final service = ms("${local ? "local" : "network"}-search/${chat.guid}");
+                      service.struct.addMessages([message]);
                       ns.push(
                         context,
                         ConversationView(
                           chat: chat,
-                          existingAttachments: [],
-                          existingText: null,
-                          isCreator: false,
-                          customMessageBloc: customBloc,
-                          onMessagesViewComplete: () {
-                            customBloc.loadSearchChunk(message);
-                          },
+                          customService: service,
                         ),
                       );
                     },

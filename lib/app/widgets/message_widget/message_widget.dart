@@ -304,7 +304,7 @@ class _MessageState extends State<MessageWidget> {
             stickersWidget: stickersWidget,
             attachmentsWidget: widgetAttachments,
             reactionsWidget: reactionsWidget,
-            shouldFadeIn: currentChat?.sentMessages.firstWhereOrNull((e) => e?.guid == _message.guid) != null,
+            shouldFadeIn: widget.bloc?.mostRecentSent?.guid == _message.guid,
             showHero: widget.showHero,
             showDeliveredReceipt: widget.isFirstSentMessage || _tapped,
             autoplayEffect: widget.autoplayEffect,

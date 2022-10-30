@@ -48,8 +48,6 @@ class ChatController {
   Map<String, List<EntityAnnotation>> mlKitParsedText = {};
   List<VideoPlayerController> videoControllersToDispose = [];
   List<Player> videoControllersToDisposeDesktop = [];
-  List<Attachment> chatAttachments = [];
-  List<Message?> sentMessages = [];
   bool showTypingIndicator = false;
   Timer? indicatorHideTimer;
   OverlayEntry? entry;
@@ -58,8 +56,6 @@ class ChatController {
 
   bool isActive = false;
   bool isAlive = false;
-
-  Map<String, List<Attachment?>> messageAttachments = {};
 
   double _timeStampOffset = 0.0;
   double _replyOffset = 0.0;
@@ -181,8 +177,6 @@ class ChatController {
     urlPreviews = {};
     videoControllersToDispose = [];
     videoControllersToDisposeDesktop = [];
-    chatAttachments = [];
-    sentMessages = [];
     entry = null;
     isActive = true;
     showTypingIndicator = false;
@@ -201,48 +195,6 @@ class ChatController {
         context.findAncestorStateOfType<MessageDetailsPopupState>()?.currentChat;
   }
 
-  /// Fetch and store all of the attachments for a [message]
-  /// @param [message] the message you want to fetch for
-  List<Attachment?> getAttachmentsForMessage(Message? message) {
-    // If we have already disposed, do nothing
-    if (!messageAttachments.containsKey(message!.guid)) {
-      preloadMessageAttachments(specificMessages: [message]);
-      return messageAttachments[message.guid] ?? [];
-    }
-    if (messageAttachments[message.guid] != null && messageAttachments[message.guid]!.isNotEmpty) {
-      final guids = messageAttachments[message.guid]!.map((e) => e!.guid).toSet();
-      messageAttachments[message.guid]!.retainWhere((element) => guids.remove(element!.guid));
-    }
-    return messageAttachments[message.guid] ?? [];
-  }
-
-  List<Attachment?>? updateExistingAttachments(NewMessageEvent event) {
-    if (event.type != NewMessageType.UPDATE) return null;
-    String? oldGuid = event.event["oldGuid"];
-    if (!messageAttachments.containsKey(oldGuid)) return [];
-    Message message = event.event["message"];
-    if (message.attachments.isEmpty) return [];
-
-    messageAttachments.remove(oldGuid);
-    messageAttachments[message.guid!] = message.attachments;
-
-    String? newAttachmentGuid = message.attachments.first!.guid;
-    if (imageData.containsKey(oldGuid)) {
-      Uint8List data = imageData.remove(oldGuid)!;
-      imageData[newAttachmentGuid!] = data;
-    } else if (currentPlayingVideo.containsKey(oldGuid)) {
-      VideoPlayerController data = currentPlayingVideo.remove(oldGuid)!;
-      currentPlayingVideo[newAttachmentGuid!] = data;
-    } else if (audioPlayers.containsKey(oldGuid)) {
-      Tuple2<ChewieAudioController, VideoPlayerController> data = audioPlayers.remove(oldGuid)!;
-      audioPlayers[newAttachmentGuid!] = data;
-    } else if (urlPreviews.containsKey(oldGuid)) {
-      Metadata data = urlPreviews.remove(oldGuid)!;
-      urlPreviews[newAttachmentGuid!] = data;
-    }
-    return message.attachments;
-  }
-
   Uint8List? getImageData(Attachment attachment) {
     if (!imageData.containsKey(attachment.guid)) return null;
     return imageData[attachment.guid];
@@ -255,30 +207,6 @@ class ChatController {
   void clearImageData(Attachment attachment) {
     if (!imageData.containsKey(attachment.guid)) return;
     imageData.remove(attachment.guid);
-  }
-
-  Future<void> preloadMessageAttachments({List<Message?>? specificMessages}) async {
-    // We don't want this to be called twice, so we should get outta here if we already have attachments.
-    // The only caveat being if we get passed specific messages to load
-    if (messageAttachments.isNotEmpty && specificMessages != null && specificMessages.isEmpty) return;
-    List<Message?> messages = specificMessages ?? Chat.getMessages(chat, limit: 25);
-    if (specificMessages != null) {
-      messageAttachments.addAll(Message.fetchAttachmentsByMessages(messages));
-    } else {
-      messageAttachments = Message.fetchAttachmentsByMessages(messages);
-    }
-  }
-
-  Future<void> preloadMessageAttachmentsAsync({List<Message?>? specificMessages}) async {
-    // We don't want this to be called twice, so we should get outta here if we already have attachments.
-    // The only caveat being if we get passed specific messages to load
-    if (messageAttachments.isNotEmpty && specificMessages != null && specificMessages.isEmpty) return;
-    List<Message?> messages = specificMessages ?? await Chat.getMessagesAsync(chat, limit: 25);
-    if (specificMessages != null) {
-      messageAttachments.addAll(await Message.fetchAttachmentsByMessagesAsync(messages));
-    } else {
-      messageAttachments = await Message.fetchAttachmentsByMessagesAsync(messages);
-    }
   }
 
   void displayTypingIndicator() {
@@ -301,11 +229,6 @@ class ChatController {
         "data": false,
       },
     );
-  }
-
-  /// Retrieve all of the attachments associated with a chat
-  Future<void> updateChatAttachments() async {
-    chatAttachments = await chat.getAttachmentsAsync();
   }
 
   void changeCurrentPlayingVideo(Map<String, VideoPlayerController> video) {
@@ -372,8 +295,6 @@ class ChatController {
       value.item2.dispose();
       audioPlayers.remove(key);
     });
-    chatAttachments = [];
-    sentMessages = [];
     isActive = false;
     showTypingIndicator = false;
     scrollController.dispose();

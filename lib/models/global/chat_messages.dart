@@ -3,6 +3,7 @@ import 'package:bluebubbles/models/models.dart';
 class ChatMessages {
   final Map<String, Message> _messages = {};
   final Map<String, Message> _reactions = {};
+  final Map<String, Attachment> _attachments = {};
   final Map<String, Map<String, Message>> _threads = {};
   final Map<String, Map<String, Message>> _edits = {};
 
@@ -10,6 +11,7 @@ class ChatMessages {
   bool get isNotEmpty => _messages.isNotEmpty;
   List<Message> get messages => _messages.values.toList();
   List<Message> get reactions => _reactions.values.toList();
+  List<Attachment> get attachments => _attachments.values.toList();
   List<Message> threads(String originatorGuid) => _threads[originatorGuid]?.values.toList() ?? [];
 
   void addMessages(List<Message> __messages) {
@@ -30,6 +32,7 @@ class ChatMessages {
         // add thread 'originator'
         _threads[m.guid]![m.guid!] = m;
       }
+      _attachments.addEntries(m.attachments.map((e) => MapEntry(e!.guid!, e)));
     }
   }
 
