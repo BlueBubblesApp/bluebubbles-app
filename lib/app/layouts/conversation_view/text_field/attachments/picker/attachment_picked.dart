@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
@@ -38,7 +37,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
     final file = File(path!);
     if (widget.data.mimeType != null && widget.data.mimeType!.startsWith("video/")) {
       try {
-        image = await AttachmentHelper.getVideoThumbnail(file.path, useCachedFile: false);
+        image = await as.getVideoThumbnail(file.path, useCachedFile: false);
       } catch (ex) {
         image = fs.noVideoPreviewIcon;
       }
@@ -48,12 +47,11 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
         || widget.data.mimeType == "image/heif"
         || widget.data.mimeType == "image/tif"
         || widget.data.mimeType == "image/tiff") {
-      Attachment fakeAttachment = Attachment(transferName: file.path,
+      Attachment fakeAttachment = Attachment(
+        transferName: file.path,
         mimeType: widget.data.mimeType!,
       );
-      image = await AttachmentHelper.compressAttachment(
-          fakeAttachment, file.path, qualityOverride: 100,
-          getActualPath: false);
+      image = await as.loadAndGetProperties(fakeAttachment, actualPath: file.path, onlyFetchData: true);
       if (mounted) setState(() {});
     } else {
       image = await file.readAsBytes();

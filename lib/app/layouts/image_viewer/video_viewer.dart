@@ -1,12 +1,10 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/video_widget.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chewie/chewie.dart';
@@ -127,7 +125,7 @@ class _VideoViewerState extends State<VideoViewer> {
         OptionItem(
           onTap: () async {
             Navigator.pop(context);
-            await AttachmentHelper.saveToGallery(widget.file);
+            await as.saveToDisk(widget.file);
           },
           iconData: Icons.download,
           title: 'Save to gallery',
@@ -262,7 +260,7 @@ class _VideoViewerState extends State<VideoViewer> {
             onDestinationSelected: (value) async {
               if ((kIsDesktop || kIsWeb) && value > 0) value += 1;
               if (value == 0) {
-                await AttachmentHelper.saveToGallery(widget.file);
+                await as.saveToDisk(widget.file);
               } else if (value == 1) {
                 if (widget.file.path == null) return;
                 Share.file(
@@ -398,7 +396,7 @@ class _VideoViewerState extends State<VideoViewer> {
   void refreshAttachment() {
     isReloading.value = true;
     showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
-    AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
+    as.redownloadAttachment(widget.attachment, onComplete: () async {
       controller.dispose();
       chewieController?.dispose();
       if (kIsWeb || widget.file.path == null) {

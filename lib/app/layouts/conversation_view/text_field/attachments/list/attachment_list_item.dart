@@ -1,11 +1,9 @@
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
-import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -42,7 +40,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
     mimeType = mime(widget.file.name) ?? "Unknown File Type";
     if (mimeType.startsWith("video/") && widget.file.path != null) {
       try {
-        preview = await AttachmentHelper.getVideoThumbnail(widget.file.path!);
+        preview = await as.getVideoThumbnail(widget.file.path!);
       } catch (ex) {
         preview = fs.noVideoPreviewIcon;
       }
@@ -54,10 +52,12 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
           || mimeType == "image/heif"
           || mimeType == "image/tif"
           || mimeType == "image/tiff") {
-        Attachment fakeAttachment =
-                Attachment(transferName: widget.file.path, mimeType: mimeType, bytes: widget.file.bytes);
-        preview = await AttachmentHelper.compressAttachment(
-            fakeAttachment, widget.file.path!, qualityOverride: 100, getActualPath: false);
+        Attachment fakeAttachment = Attachment(
+            transferName: widget.file.path,
+            mimeType: mimeType,
+            bytes: widget.file.bytes
+        );
+        preview = await as.loadAndGetProperties(fakeAttachment, actualPath: widget.file.path!, onlyFetchData: true);
       } else {
         preview = widget.file.bytes ?? await File(widget.file.path!).readAsBytes();
       }
@@ -141,7 +141,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                AttachmentHelper.getIcon(mimeType),
+                getAttachmentIcon(mimeType),
                 color: context.theme.colorScheme.properOnSurface,
               ),
               Align(

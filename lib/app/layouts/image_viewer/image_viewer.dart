@@ -1,14 +1,11 @@
 import 'dart:async';
-import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -61,8 +58,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         || widget.attachment.mimeType == "image/heif"
         || widget.attachment.mimeType == "image/tif"
         || widget.attachment.mimeType == "image/tiff") {
-      bytes =
-          await AttachmentHelper.compressAttachment(widget.attachment, widget.file.path!, qualityOverride: 100);
+      bytes = await as.loadAndGetProperties(widget.attachment, actualPath: widget.file.path);
     } else {
       bytes = await File(widget.file.path!).readAsBytes();
     }
@@ -191,7 +187,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                 color: context.theme.colorScheme.onSecondary,
               ),
               onPressed: () async {
-                await AttachmentHelper.saveToGallery(widget.file);
+                await as.saveToDisk(widget.file);
               },
             ),
             if (!kIsWeb && !kIsDesktop)
@@ -260,7 +256,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
             ],
             onDestinationSelected: (value) async {
               if (value == 0) {
-                await AttachmentHelper.saveToGallery(widget.file);
+                await as.saveToDisk(widget.file);
               } else if (value == 1) {
                 if (widget.file.path == null) return;
                 Share.file(
@@ -392,7 +388,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
 
   void refreshAttachment() {
     showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
-    AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
+    as.redownloadAttachment(widget.attachment, onComplete: () {
       initBytes();
     }, onError: () {
       Navigator.pop(context);

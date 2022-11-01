@@ -1,11 +1,7 @@
 import 'dart:isolate';
-import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
-import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -75,10 +71,10 @@ class ImageWidgetController extends GetxController {
           data.value = Uint8List.view((await rootBundle.load(attachment.transferName!)).buffer);
           return;
         }
-      } else if (AttachmentHelper.canCompress(attachment) &&
+      } else if (attachment.canCompress &&
           attachment.guid != "redacted-mode-demo-attachment" &&
           !attachment.guid!.contains("theme-selector")) {
-        tmpData = await AttachmentHelper.compressAttachment(attachment, file.path!);
+        tmpData = await as.loadAndGetProperties(attachment, actualPath: file.path!);
         // All other attachments can be held in memory as bytes
       } else {
         if (attachment.guid == "redacted-mode-demo-attachment" || attachment.guid!.contains("theme-selector")) {

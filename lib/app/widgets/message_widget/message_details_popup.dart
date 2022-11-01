@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
@@ -15,8 +14,6 @@ import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_alert_dialog.
 import 'package:bluebubbles/app/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -411,7 +408,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   bool get showDownload =>
       widget.message.hasAttachments &&
       widget.message.attachments.where((element) => element!.mimeStart != null).isNotEmpty &&
-      widget.message.attachments.where((element) => AttachmentHelper.getContent(element!) is PlatformFile).isNotEmpty;
+      widget.message.attachments.where((element) => as.getContent(element!) is PlatformFile).isNotEmpty;
 
   bool get isSent => !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
 
@@ -454,12 +451,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             onTap: () async {
               try {
                 for (Attachment? element in widget.message.attachments) {
-                  dynamic content = AttachmentHelper.getContent(element!);
+                  dynamic content = as.getContent(element!);
                   if (content is PlatformFile) {
                     if (element.guid == widget.message.attachments.last?.guid) {
                       popDetails();
                     }
-                    await AttachmentHelper.saveToGallery(content);
+                    await as.saveToDisk(content);
                   }
                 }
               } catch (ex, trace) {
@@ -642,12 +639,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                           progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
                   final file = PlatformFile(
                     name: element.transferName!,
-                    path: kIsWeb ? null : element.getPath(),
+                    path: kIsWeb ? null : element.path,
                     size: response.data.length,
                     bytes: response.data,
                   );
                   bool lastAttachment = element.guid == toDownload.last?.guid;
-                  await AttachmentHelper.saveToGallery(file, showAlert: lastAttachment);
+                  await as.saveToDisk(file);
                 }
                 progress.value = 1;
                 downloadingAttachments.value = false;
@@ -798,7 +795,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                       existingAttachments = widget.message.attachments
                           .map((attachment) => PlatformFile(
                                 name: attachment!.transferName!,
-                                path: kIsWeb ? null : attachment.getPath(),
+                                path: kIsWeb ? null : attachment.path,
                                 bytes: attachment.bytes,
                                 size: attachment.totalBytes!,
                               ))
@@ -838,7 +835,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             onTap: () {
               for (Attachment? element in widget.message.attachments) {
                 cvc(cm.activeChat!.chat).imageData.remove(element!.guid!);
-                AttachmentHelper.redownloadAttachment(element);
+                as.redownloadAttachment(element);
               }
               setState(() {});
               popDetails();
@@ -866,7 +863,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 for (Attachment? element in widget.message.attachments) {
                   Share.file(
                     "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
-                    element.getPath(),
+                    element.path,
                   );
                 }
               } else if (widget.message.text!.isNotEmpty) {

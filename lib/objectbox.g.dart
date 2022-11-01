@@ -13,16 +13,16 @@ import 'package:objectbox/internal.dart'; // generated code can access "internal
 import 'package:objectbox/objectbox.dart';
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
-import '/models/io/attachment.dart';
-import '/models/io/chat.dart';
-import '/models/io/contact.dart';
-import '/models/io/fcm_data.dart';
-import '/models/io/handle.dart';
-import '/models/io/message.dart';
-import '/models/io/scheduled.dart';
-import '/models/io/theme.dart';
-import '/models/io/theme_entry.dart';
-import '/models/io/theme_object.dart';
+import 'models/io/attachment.dart';
+import 'models/io/chat.dart';
+import 'models/io/contact.dart';
+import 'models/io/fcm_data.dart';
+import 'models/io/handle.dart';
+import 'models/io/message.dart';
+import 'models/io/scheduled.dart';
+import 'models/io/theme.dart';
+import 'models/io/theme_entry.dart';
+import 'models/io/theme_object.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
 
@@ -60,11 +60,6 @@ final _entities = <ModelEntity>[
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(6, 2957720185959973011),
-            name: 'transferState',
-            type: 9,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(7, 2217746424870068461),
             name: 'isOutgoing',
             type: 1,
@@ -78,21 +73,6 @@ final _entities = <ModelEntity>[
             id: const IdUid(9, 2227654525168892418),
             name: 'totalBytes',
             type: 6,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(10, 226618350909080419),
-            name: 'isSticker',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(11, 7216531465575414151),
-            name: 'hideAttachment',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(12, 8776591297555015451),
-            name: 'blurhash',
-            type: 9,
             flags: 0),
         ModelProperty(
             id: const IdUid(13, 171869175523313868),
@@ -883,7 +863,11 @@ ModelDefinition getObjectBoxModel() {
         790519381961958997,
         5176315239890900498,
         4255445772578528269,
-        4403726864971073396
+        4403726864971073396,
+        2957720185959973011,
+        226618350909080419,
+        7216531465575414151,
+        8776591297555015451
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -907,15 +891,9 @@ ModelDefinition getObjectBoxModel() {
           final mimeTypeOffset = object.mimeType == null
               ? null
               : fbb.writeString(object.mimeType!);
-          final transferStateOffset = object.transferState == null
-              ? null
-              : fbb.writeString(object.transferState!);
           final transferNameOffset = object.transferName == null
               ? null
               : fbb.writeString(object.transferName!);
-          final blurhashOffset = object.blurhash == null
-              ? null
-              : fbb.writeString(object.blurhash!);
           final bytesOffset =
               object.bytes == null ? null : fbb.writeListInt8(object.bytes!);
           final webUrlOffset =
@@ -929,13 +907,9 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(2, guidOffset);
           fbb.addOffset(3, utiOffset);
           fbb.addOffset(4, mimeTypeOffset);
-          fbb.addOffset(5, transferStateOffset);
           fbb.addBool(6, object.isOutgoing);
           fbb.addOffset(7, transferNameOffset);
           fbb.addInt64(8, object.totalBytes);
-          fbb.addBool(9, object.isSticker);
-          fbb.addBool(10, object.hideAttachment);
-          fbb.addOffset(11, blurhashOffset);
           fbb.addInt64(12, object.height);
           fbb.addInt64(13, object.width);
           fbb.addOffset(14, bytesOffset);
@@ -960,17 +934,14 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 10),
               mimeType: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 12),
-              transferState: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 14),
               isOutgoing: const fb.BoolReader()
                   .vTableGetNullable(buffer, rootOffset, 16),
               transferName: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 18),
-              totalBytes: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 20),
-              isSticker: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 22),
-              hideAttachment: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 24),
-              blurhash: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 26),
-              height: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 28),
+              totalBytes: const fb.Int64Reader()
+                  .vTableGetNullable(buffer, rootOffset, 20),
+              height:
+                  const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 28),
               width: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 30),
               bytes: const fb.Uint8ListReader(lazy: false).vTableGetNullable(buffer, rootOffset, 32) as Uint8List?,
               webUrl: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34))
@@ -1662,57 +1633,41 @@ class Attachment_ {
   static final mimeType =
       QueryStringProperty<Attachment>(_entities[0].properties[4]);
 
-  /// see [Attachment.transferState]
-  static final transferState =
-      QueryStringProperty<Attachment>(_entities[0].properties[5]);
-
   /// see [Attachment.isOutgoing]
   static final isOutgoing =
-      QueryBooleanProperty<Attachment>(_entities[0].properties[6]);
+      QueryBooleanProperty<Attachment>(_entities[0].properties[5]);
 
   /// see [Attachment.transferName]
   static final transferName =
-      QueryStringProperty<Attachment>(_entities[0].properties[7]);
+      QueryStringProperty<Attachment>(_entities[0].properties[6]);
 
   /// see [Attachment.totalBytes]
   static final totalBytes =
-      QueryIntegerProperty<Attachment>(_entities[0].properties[8]);
-
-  /// see [Attachment.isSticker]
-  static final isSticker =
-      QueryBooleanProperty<Attachment>(_entities[0].properties[9]);
-
-  /// see [Attachment.hideAttachment]
-  static final hideAttachment =
-      QueryBooleanProperty<Attachment>(_entities[0].properties[10]);
-
-  /// see [Attachment.blurhash]
-  static final blurhash =
-      QueryStringProperty<Attachment>(_entities[0].properties[11]);
+      QueryIntegerProperty<Attachment>(_entities[0].properties[7]);
 
   /// see [Attachment.height]
   static final height =
-      QueryIntegerProperty<Attachment>(_entities[0].properties[12]);
+      QueryIntegerProperty<Attachment>(_entities[0].properties[8]);
 
   /// see [Attachment.width]
   static final width =
-      QueryIntegerProperty<Attachment>(_entities[0].properties[13]);
+      QueryIntegerProperty<Attachment>(_entities[0].properties[9]);
 
   /// see [Attachment.bytes]
   static final bytes =
-      QueryByteVectorProperty<Attachment>(_entities[0].properties[14]);
+      QueryByteVectorProperty<Attachment>(_entities[0].properties[10]);
 
   /// see [Attachment.webUrl]
   static final webUrl =
-      QueryStringProperty<Attachment>(_entities[0].properties[15]);
+      QueryStringProperty<Attachment>(_entities[0].properties[11]);
 
   /// see [Attachment.message]
   static final message =
-      QueryRelationToOne<Attachment, Message>(_entities[0].properties[16]);
+      QueryRelationToOne<Attachment, Message>(_entities[0].properties[12]);
 
   /// see [Attachment.dbMetadata]
   static final dbMetadata =
-      QueryStringProperty<Attachment>(_entities[0].properties[17]);
+      QueryStringProperty<Attachment>(_entities[0].properties[13]);
 }
 
 /// [Chat] entity fields to define ObjectBox queries.

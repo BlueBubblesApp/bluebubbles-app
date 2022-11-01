@@ -1,14 +1,14 @@
-import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/location_widget.dart';
-import 'package:bluebubbles/services/backend/queue/outgoing_queue.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart' as sp;
-import 'package:universal_io/io.dart';
 
 class Share {
   /// Share a file with other apps.
@@ -79,36 +79,22 @@ class Share {
 
     _locationData = await Geolocator.getCurrentPosition();
     bool send = false;
-    String vcfString = AttachmentHelper.createAppleLocation(_locationData.latitude, _locationData.longitude);
+    String vcfString = as.createAppleLocation(_locationData.latitude, _locationData.longitude);
 
     // Build out the file we are going to send
     String _attachmentGuid = "temp-${randomString(8)}";
     String fileName = "$_attachmentGuid-CL.loc.vcf";
-    File? file;
-    String? filePath;
-
-    filePath = "${AttachmentHelper.getTempPath()}/$fileName";
-    file = File(filePath);
-    await file.create();
-    await file.writeAsString(vcfString);
-
-    final bytes = await file.readAsBytes();
-    PlatformFile pFile = PlatformFile(
-      name: fileName,
-      size: bytes.length,
-      path: filePath,
-      bytes: bytes,
-    );
+    final bytes = Uint8List.fromList(utf8.encode(vcfString));
 
     await showDialog(
       context: Get.context!,
       builder: (context) => AlertDialog(
         backgroundColor: Get.theme.colorScheme.properSurface,
         title: Text("Send Location?", style: Get.textTheme.titleLarge),
-        content: Container(
+        /*content: Container(
           width: 150,
           child: LocationWidget(file: pFile, showOpen: false),
-        ),
+        ),*/
         actions: [
           TextButton(onPressed: () => Get.back(), child: Text("Cancel", style: Get.textTheme.bodyLarge!.copyWith(color: Get.theme.colorScheme.primary))),
           TextButton(
@@ -131,8 +117,6 @@ class Share {
         Attachment(
           guid: _attachmentGuid,
           isOutgoing: true,
-          isSticker: false,
-          hideAttachment: false,
           uti: "public.jpg",
           bytes: bytes,
           transferName: fileName,

@@ -2,17 +2,14 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:animations/animations.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/app/widgets/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/location_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -36,7 +33,7 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
   AttachmentDownloadController? controller;
   late PlatformFile attachmentFile = PlatformFile(
     name: attachment.transferName!,
-    path: kIsWeb ? null : attachment.getPath(),
+    path: kIsWeb ? null : attachment.path,
     bytes: attachment.bytes,
     size: attachment.totalBytes!,
   );
@@ -96,13 +93,13 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
   }
 
   Future<void> getBytes() async {
-    final file = File(attachment.getPath());
+    final file = File(attachment.path);
     if (await file.exists()) {
       final bytes = await file.readAsBytes();
       setState(() {
         attachmentFile = PlatformFile(
           name: attachment.transferName!,
-          path: attachment.getPath(),
+          path: attachment.path,
           bytes: bytes,
           size: attachment.totalBytes!,
         );
@@ -120,7 +117,7 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
     }
 
     try {
-      videoPreview = await AttachmentHelper.getVideoThumbnail(file.path!);
+      videoPreview = await as.getVideoThumbnail(file.path!);
 
       final tempController = VideoPlayerController.file(File(file.path!));
       await tempController.initialize();
@@ -207,10 +204,10 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
           textAlign: TextAlign.center,
         );
       }
-    } else if (attachment.mimeType?.contains("location") ?? false) {
+    }/* else if (attachment.mimeType?.contains("location") ?? false) {
       child = LocationWidget(file: attachmentFile);
       addPadding = false;
-    } else if (attachmentFile.bytes != null) {
+    }*/ else if (attachmentFile.bytes != null) {
       child = RegularFileOpener(
         file: attachmentFile,
         attachment: attachment,

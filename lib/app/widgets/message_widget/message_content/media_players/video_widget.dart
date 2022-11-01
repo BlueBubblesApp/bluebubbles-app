@@ -1,13 +1,9 @@
-import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -106,7 +102,7 @@ class VideoWidgetController extends GetxController {
         }
 
         // If we haven't errored at all, fetch the thumbnail
-        thumbnail = await AttachmentHelper.getVideoThumbnail(file.path!);
+        thumbnail = await as.getVideoThumbnail(file.path!);
       } catch (ex) {
         // If an error occurs, set the thumnail to the cached no preview image.
         // Only save to DB if the status wasn't already `error` somehow

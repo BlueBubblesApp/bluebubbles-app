@@ -1,13 +1,10 @@
 import 'dart:async';
 import 'dart:isolate';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 import 'package:universal_io/io.dart';
 
@@ -52,7 +49,7 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
         // If we've already loaded it, don't try again
         if (controller.stickerData.keys.contains(attachment!.guid)) continue;
 
-        String pathName = AttachmentHelper.getAttachmentPath(attachment);
+        String pathName = attachment.path;
 
         final receivePort = ReceivePort();
 

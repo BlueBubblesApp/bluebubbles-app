@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -964,7 +963,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                             final attachments = m.attachments.where((e) =>
                             e?.guid != null && ["image/png", "image/jpg", "image/jpeg"].contains(e!.mimeType));
                             final files = attachments
-                                .map((e) => AttachmentHelper.getContent(e!, autoDownload: false))
+                                .map((e) => as.getContent(e!, autoDownload: false))
                                 .whereType<PlatformFile>();
                             if (files.isNotEmpty) {
                               for (PlatformFile f in files) {

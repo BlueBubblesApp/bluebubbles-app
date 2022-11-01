@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -13,7 +12,6 @@ import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/attachment_downloader_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -157,8 +155,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                               : widget.attachment;
                           String mimeType = attachment.mimeType!;
                           mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-                          dynamic content = AttachmentHelper.getContent(attachment,
-                              path: attachment.guid == null ? attachment.transferName : null);
+                          dynamic content = as.getContent(attachment, path: attachment.guid == null ? attachment.transferName : null);
 
                           String viewerKey =
                               attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString();
@@ -209,7 +206,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                     attachment: attachment,
                                     onPressed: () {
                                       attachmentDownloader.startDownload(attachment);
-                                      content = AttachmentHelper.getContent(attachment);
+                                      content = as.getContent(attachment);
                                       if (mounted) setState(() {});
                                     },
                                     placeHolder: placeHolder,

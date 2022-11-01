@@ -1,7 +1,5 @@
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -82,7 +80,7 @@ class AttachmentDownloadController extends GetxController {
         onReceiveProgress: (count, total) => setProgress(kIsWeb ? (count / total) : (count / attachment.totalBytes!)));
     if (response.statusCode != 200) {
       if (!kIsWeb) {
-        File file = File(attachment.getPath());
+        File file = File(attachment.path);
         if (await file.exists()) {
           await file.delete();
         }
@@ -97,7 +95,7 @@ class AttachmentDownloadController extends GetxController {
     } else if (!kIsWeb && !kIsDesktop) {
       await mcs.invokeMethod("download-file", {
         "data": response.data,
-        "path": attachment.getPath(),
+        "path": attachment.path,
       });
     }
     attachment.webUrl = response.requestOptions.path;
@@ -108,7 +106,7 @@ class AttachmentDownloadController extends GetxController {
     try {
       // Compress the attachment
       if (!kIsWeb) {
-        await AttachmentHelper.compressAttachment(attachment, attachment.getPath());
+        await as.loadAndGetProperties(attachment, actualPath: attachment.path);
         attachment.save(null);
       }
     } catch (ex) {
@@ -122,7 +120,7 @@ class AttachmentDownloadController extends GetxController {
 
     file.value = PlatformFile(
       name: attachment.transferName!,
-      path: kIsWeb ? null : attachment.getPath(),
+      path: kIsWeb ? null : attachment.path,
       size: response.data.length,
       bytes: response.data,
     );
@@ -131,7 +129,7 @@ class AttachmentDownloadController extends GetxController {
     }
     if (kIsDesktop) {
       if (attachment.bytes != null) {
-        File _file = await File(attachment.getPath()).create(recursive: true);
+        File _file = await File(attachment.path).create(recursive: true);
         _file.writeAsBytesSync(attachment.bytes!.toList());
       }
     }
@@ -142,7 +140,7 @@ class AttachmentDownloadController extends GetxController {
         && !(attachment.message.target?.isInteractive() ?? false)) {
       String filePath = "/storage/emulated/0/Download/";
       if (attachment.mimeType?.startsWith("image") ?? false) {
-        await AttachmentHelper.saveToGallery(file.value!, showAlert: false);
+        await as.saveToDisk(file.value!, isAutoDownload: true);
       } else if (file.value?.bytes != null) {
         await File(join(filePath, file.value!.name)).writeAsBytes(file.value!.bytes!);
       }

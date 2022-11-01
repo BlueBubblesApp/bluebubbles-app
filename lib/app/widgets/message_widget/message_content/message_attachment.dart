@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
@@ -8,7 +7,6 @@ import 'package:bluebubbles/app/widgets/message_widget/message_content/media_fil
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/contact_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/image_widget.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/location_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -51,14 +49,14 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
 
   void updateContent() async {
     // Ge the current attachment content (status)
-    content = AttachmentHelper.getContent(widget.attachment,
+    content = as.getContent(widget.attachment,
         path: widget.attachment.guid == "redacted-mode-demo-attachment" ||
                 widget.attachment.guid!.contains("theme-selector")
             ? widget.attachment.transferName
             : null);
 
     // If we can download it, do so
-    if (await AttachmentHelper.canAutoDownload() && content is Attachment) {
+    if (await as.canAutoDownload() && content is Attachment) {
       if (mounted) {
         setState(() {
           content = attachmentDownloader.startDownload(content);
@@ -126,12 +124,14 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
               file: content, context: context, width: kIsDesktop ? null : 250, isFromMe: widget.isFromMe),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
-        return MediaFile(
+        /*return MediaFile(
           attachment: widget.attachment,
-          child: LocationWidget(
-            file: content,
+          child: UrlPreviewWidget(
+            linkPreviews: [],
+            mess
           ),
-        );
+        );*/
+        return const SizedBox.shrink();
       } else if (widget.attachment.mimeType == "text/vcard") {
         return MediaFile(
           attachment: widget.attachment,

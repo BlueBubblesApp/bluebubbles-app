@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/network/network_error_handler.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -211,7 +209,7 @@ class ActionHandler extends GetxService {
       if (a == null) continue;
 
       a.save(m);
-      if ((await AttachmentHelper.canAutoDownload()) && a.mimeType != null) {
+      if ((await as.canAutoDownload()) && a.mimeType != null) {
         Get.put(AttachmentDownloadController(attachment: a), tag: a.guid);
       }
     }

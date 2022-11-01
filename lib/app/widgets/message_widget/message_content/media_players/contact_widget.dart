@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
@@ -46,7 +45,7 @@ class _ContactWidgetState extends State<ContactWidget> {
     }
 
     try {
-      contact = AttachmentHelper.parseAppleContact(appleContact);
+      contact = as.parseAppleContact(appleContact);
     } catch (ex) {
       contact = Contact(displayName: "Invalid Contact", id: randomString(8));
     }

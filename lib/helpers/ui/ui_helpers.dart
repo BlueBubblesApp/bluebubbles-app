@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -67,7 +66,7 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
 
   // If we have a valid size, we want to calculate the aspect ratio so the image doesn't "jitter" when loading
   // Calculate the aspect ratio for the placeholders
-  double ratio = AttachmentHelper.getAspectRatio(attachment.height, attachment.width, context: context);
+  double ratio = attachment.aspectRatio;
   double height = attachment.height?.toDouble() ?? placeholderHeight;
   double width = attachment.width?.toDouble() ?? placeholderWidth;
 
@@ -246,4 +245,28 @@ Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat 
     ],
   );
   eventDispatcher.emit('focus-keyboard', null);
+}
+
+IconData getAttachmentIcon(String mimeType) {
+  if (mimeType.isEmpty) {
+    return ss.settings.skin.value == Skins.iOS
+        ? CupertinoIcons.arrow_up_right_square
+        : Icons.open_in_new;
+  }
+  if (mimeType == "application/pdf") {
+    return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf;
+  } else if (mimeType == "application/zip") {
+    return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.folder : Icons.folder;
+  } else if (mimeType.startsWith("audio")) {
+    return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.music_note : Icons.music_note;
+  } else if (mimeType.startsWith("image")) {
+    return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.photo : Icons.photo;
+  } else if (mimeType.startsWith("video")) {
+    return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam;
+  } else if (mimeType.startsWith("text")) {
+    return ss.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note;
+  }
+  return ss.settings.skin.value == Skins.iOS
+      ? CupertinoIcons.arrow_up_right_square
+      : Icons.open_in_new;
 }

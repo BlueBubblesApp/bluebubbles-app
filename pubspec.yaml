@@ -151,6 +151,8 @@ dependencies:
   scroll_to_index: ^3.0.1
   animations: ^2.0.7
   flutter_isolate: ^2.0.3
+  # for VCard parsing
+  flutter_contacts: ^1.1.5+1
 
 dependency_overrides:
   rxdart: ^0.27.5

@@ -95,8 +95,6 @@ class ConversationViewState extends State<ConversationView> {
         attachments: [
           Attachment(
             isOutgoing: true,
-            isSticker: false,
-            hideAttachment: false,
             uti: "public.jpg",
             bytes: file.bytes,
             transferName: file.name,

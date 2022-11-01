@@ -3,7 +3,6 @@ import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:async_task/async_task.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/helpers/models/country_codes.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -573,7 +572,7 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
   try {
     var response = await get(Uri.parse(url));
 
-    Directory baseDir = Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
+    Directory baseDir = Directory("${Attachment.baseDirectory}/$guid");
     if (!await baseDir.exists()) {
       await baseDir.create(recursive: true);
     }
