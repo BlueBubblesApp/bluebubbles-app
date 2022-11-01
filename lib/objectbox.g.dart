@@ -318,11 +318,6 @@ final _entities = <ModelEntity>[
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(7, 549408491521049277),
-            name: 'uncanonicalizedId',
-            type: 9,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(8, 9192015144235467286),
             name: 'defaultEmail',
             type: 9,
@@ -867,7 +862,8 @@ ModelDefinition getObjectBoxModel() {
         2957720185959973011,
         226618350909080419,
         7216531465575414151,
-        8776591297555015451
+        8776591297555015451,
+        549408491521049277
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -1148,9 +1144,6 @@ ModelDefinition getObjectBoxModel() {
           final defaultPhoneOffset = object.defaultPhone == null
               ? null
               : fbb.writeString(object.defaultPhone!);
-          final uncanonicalizedIdOffset = object.uncanonicalizedId == null
-              ? null
-              : fbb.writeString(object.uncanonicalizedId!);
           final defaultEmailOffset = object.defaultEmail == null
               ? null
               : fbb.writeString(object.defaultEmail!);
@@ -1164,7 +1157,6 @@ ModelDefinition getObjectBoxModel() {
           fbb.addOffset(3, countryOffset);
           fbb.addOffset(4, colorOffset);
           fbb.addOffset(5, defaultPhoneOffset);
-          fbb.addOffset(6, uncanonicalizedIdOffset);
           fbb.addOffset(7, defaultEmailOffset);
           fbb.addOffset(8, formattedAddressOffset);
           fbb.addInt64(10, object.contactRelation.targetId);
@@ -1189,11 +1181,9 @@ ModelDefinition getObjectBoxModel() {
               defaultEmail: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 18),
               defaultPhone: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 14),
-              uncanonicalizedId: const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 16))
-            ..color =
-                const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 12);
+                  .vTableGetNullable(buffer, rootOffset, 14))
+            ..color = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 12);
           object.contactRelation.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 24, 0);
           object.contactRelation.attach(store);
@@ -1813,21 +1803,17 @@ class Handle_ {
   static final defaultPhone =
       QueryStringProperty<Handle>(_entities[3].properties[5]);
 
-  /// see [Handle.uncanonicalizedId]
-  static final uncanonicalizedId =
-      QueryStringProperty<Handle>(_entities[3].properties[6]);
-
   /// see [Handle.defaultEmail]
   static final defaultEmail =
-      QueryStringProperty<Handle>(_entities[3].properties[7]);
+      QueryStringProperty<Handle>(_entities[3].properties[6]);
 
   /// see [Handle.formattedAddress]
   static final formattedAddress =
-      QueryStringProperty<Handle>(_entities[3].properties[8]);
+      QueryStringProperty<Handle>(_entities[3].properties[7]);
 
   /// see [Handle.contactRelation]
   static final contactRelation =
-      QueryRelationToOne<Handle, Contact>(_entities[3].properties[9]);
+      QueryRelationToOne<Handle, Contact>(_entities[3].properties[8]);
 }
 
 /// [ThemeEntry] entity fields to define ObjectBox queries.

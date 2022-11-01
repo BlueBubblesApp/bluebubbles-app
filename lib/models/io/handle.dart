@@ -2,6 +2,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
@@ -20,7 +21,6 @@ class Handle {
   String? country;
   String? defaultEmail;
   String? defaultPhone;
-  String? uncanonicalizedId;
   @Transient()
   final String fakeName = faker.person.name();
 
@@ -68,28 +68,19 @@ class Handle {
     String? handleColor,
     this.defaultEmail,
     this.defaultPhone,
-    this.uncanonicalizedId,
   }) {
     color = handleColor;
   }
 
-  factory Handle.fromMap(Map<String, dynamic> json) {
-    final data = Handle(
-      id: json.containsKey("ROWID") ? json["ROWID"] : null,
-      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
-      address: json["address"],
-      formattedAddress: json["formattedAddress"],
-      country: json.containsKey("country") ? json["country"] : null,
-      handleColor: json.containsKey("color") ? json["color"] : null,
-      defaultPhone: json['defaultPhone'],
-      uncanonicalizedId: json.containsKey("uncanonicalizedId") ? json["uncanonicalizedId"] : null,
-    );
-
-    // Adds fallback getter for the ID
-    data.id ??= json.containsKey("id") ? json["id"] : null;
-
-    return data;
-  }
+  factory Handle.fromMap(Map<String, dynamic> json) => Handle(
+    id: json["ROWID"] ?? json["id"],
+    originalROWID: json["originalROWID"],
+    address: json["address"],
+    formattedAddress: json["formattedAddress"],
+    country: json["country"],
+    handleColor: json["color"],
+    defaultPhone: json['defaultPhone'],
+  );
 
   static int count() {
     return handleBox.count();
@@ -180,14 +171,16 @@ class Handle {
 
   static Handle merge(Handle handle1, Handle handle2) {
     handle1.id ??= handle2.id;
+    handle1.originalROWID ??= handle2.originalROWID;
     handle1._color.value ??= handle2._color.value;
-    
-    if ((handle1.defaultPhone ?? '').isEmpty) {
+    handle1.country ??= handle2.country;
+    handle1.formattedAddress ??= handle2.formattedAddress;
+    if (isNullOrEmpty(handle1.defaultPhone)!) {
       handle1.defaultPhone = handle2.defaultPhone;
     }
-
-    handle1.country ??= handle2.country;
-    handle1.uncanonicalizedId ??= handle2.uncanonicalizedId;
+    if (isNullOrEmpty(handle1.defaultEmail)!) {
+      handle1.defaultEmail = handle2.defaultEmail;
+    }
 
     return handle1;
   }
@@ -205,13 +198,12 @@ class Handle {
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "originalROWID": originalROWID,
-        "address": address,
-        "formattedAddress": formattedAddress,
-        "country": country,
-        "color": color,
-        "defaultPhone": defaultPhone,
-        "uncanonicalizedId": uncanonicalizedId,
-      };
+    "ROWID": id,
+    "originalROWID": originalROWID,
+    "address": address,
+    "formattedAddress": formattedAddress,
+    "country": country,
+    "color": color,
+    "defaultPhone": defaultPhone,
+  };
 }
