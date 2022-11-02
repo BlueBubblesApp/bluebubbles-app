@@ -718,7 +718,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                       mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                       children: [
                         if ((ss.settings.alwaysShowAvatars.value ||
-                                (ChatLifecycleManager.of(context)?.chat.isGroup() ?? false)) &&
+                                (ChatLifecycleManager.of(context)?.chat.isGroup ?? false)) &&
                             !msg.isFromMe!)
                           Padding(
                             padding: EdgeInsets.only(top: 5, left: 6),
@@ -906,7 +906,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                   padding: EdgeInsets.only(
                     // add extra padding when showing contact avatars
                     left: max(
-                        ((cm.activeChat?.chat.isGroup() ?? false) ||
+                        ((cm.activeChat?.chat.isGroup ?? false) ||
                                     ss.settings.alwaysShowAvatars.value
                                 ? 75
                                 : 40) -

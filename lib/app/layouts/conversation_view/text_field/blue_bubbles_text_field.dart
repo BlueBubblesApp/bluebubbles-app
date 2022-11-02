@@ -876,7 +876,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             ss.settings.redactedMode.value && ss.settings.generateFakeContactNames.value;
 
         // If it's a group chat, get the title of the chat
-        if (chat.isGroup() ?? false) {
+        if (chat.isGroup ?? false) {
           if (generateNames) {
             placeholder = "Group Chat";
           } else if (hideInfo) {

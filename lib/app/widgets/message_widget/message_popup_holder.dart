@@ -52,9 +52,9 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     Size size = renderBox.size;
     Offset offset = renderBox.localToGlobal(Offset.zero);
     bool increaseWidth = !MessageHelper.getShowTail(context, widget.message, widget.newerMessage) &&
-        (ss.settings.alwaysShowAvatars.value || (cm.activeChat?.chat.isGroup() ?? false));
+        (ss.settings.alwaysShowAvatars.value || (cm.activeChat?.chat.isGroup ?? false));
     bool doNotIncreaseHeight = ((widget.message.isFromMe ?? false) ||
-        !(cm.activeChat?.chat.isGroup() ?? false) ||
+        !(cm.activeChat?.chat.isGroup ?? false) ||
         !sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
 

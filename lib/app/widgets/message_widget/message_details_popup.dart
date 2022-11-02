@@ -75,7 +75,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
     dmChat = chats.chats.firstWhereOrNull(
           (chat) =>
-              !chat.isGroup() && chat.participants.where((handle) => handle.id == widget.message.handleId).length == 1,
+              !chat.isGroup && chat.participants.where((handle) => handle.id == widget.message.handleId).length == 1,
         );
 
     fetchReactions();
@@ -267,7 +267,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     if (topMinimum > context.height - 120 - menuHeight) {
       topMinimum = context.height - 120 - menuHeight;
     }
-    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup() || ss.settings.alwaysShowAvatars.value);
+    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup || ss.settings.alwaysShowAvatars.value);
 
     double offset = 20 + (shiftRight ? 35 : 0);
 
@@ -669,7 +669,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-      if (widget.currentChat!.chat.isGroup() &&
+      if (widget.currentChat!.chat.isGroup &&
           !widget.message.isFromMe! &&
           dmChat != null &&
           !ls.isBubble)
@@ -731,7 +731,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-      if (widget.currentChat!.chat.isGroup() &&
+      if (widget.currentChat!.chat.isGroup &&
           !widget.message.isFromMe! &&
           dmChat == null &&
           !ls.isBubble)
@@ -1101,7 +1101,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     }
 
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
-    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup() || ss.settings.alwaysShowAvatars.value);
+    bool shiftRight = !widget.message.isFromMe! && (currentChat!.chat.isGroup || ss.settings.alwaysShowAvatars.value);
 
     double offset = 20 + (shiftRight ? 35 : 0);
     return Positioned(

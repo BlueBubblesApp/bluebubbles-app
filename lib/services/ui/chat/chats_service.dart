@@ -82,7 +82,7 @@ class ChatsService extends GetxService {
         "title": c.title,
         "guid": c.guid,
         "icon": await avatarAsBytes(
-          isGroup: c.isGroup(),
+          isGroup: c.isGroup,
           participants: c.participants,
           chatGuid: c.guid,
           quality: 256

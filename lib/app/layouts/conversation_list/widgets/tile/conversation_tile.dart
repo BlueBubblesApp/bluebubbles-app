@@ -202,7 +202,7 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
         // check if we really need to update this widget
         if (chat.displayName != cachedDisplayName
             || chat.handles.length != cachedParticipants.length) {
-          final newTitle = getFullChatTitle(chat);
+          final newTitle = chat.getTitle();
           if (newTitle != title) {
             setState(() {
               title = newTitle;

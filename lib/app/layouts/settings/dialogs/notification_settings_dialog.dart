@@ -32,7 +32,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                 eventDispatcher.emit("refresh", null);
               },
             ),
-            if (chat.isGroup())
+            if (chat.isGroup)
               ListTile(
                 title: Text("Mute Individuals", style: context.theme.textTheme.bodyLarge),
                 subtitle: Text("Mute certain individuals in this chat",

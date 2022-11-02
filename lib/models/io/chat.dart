@@ -8,7 +8,6 @@ import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -20,46 +19,6 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
 import 'package:universal_io/io.dart';
-
-String getFullChatTitle(Chat _chat) {
-  String? title = "";
-  if (isNullOrEmpty(_chat.displayName)!) {
-    Chat chat = _chat;
-    if (isNullOrEmpty(chat.participants)!) {
-      chat = _chat.getParticipants();
-    }
-
-    List<String> titles = [];
-    for (int i = 0; i < chat.participants.length; i++) {
-      String name = chat.participants[i].displayName;
-
-      if (chat.participants.length > 1 && !name.numericOnly().isPhoneNumber) {
-        name = name.trim().split(" ")[0];
-      } else {
-        name = name.trim();
-      }
-
-      titles.add(name);
-    }
-
-    if (titles.isEmpty) {
-      title = _chat.chatIdentifier;
-    } else if (titles.length == 1) {
-      title = titles[0];
-    } else if (titles.length <= 4) {
-      title = titles.join(", ");
-      int pos = title.lastIndexOf(", ");
-      if (pos != -1) title = "${title.substring(0, pos)} & ${title.substring(pos + 2)}";
-    } else {
-      title = titles.sublist(0, 3).join(", ");
-      title = "$title & ${titles.length - 3} others";
-    }
-  } else {
-    title = _chat.displayName;
-  }
-
-  return title!;
-}
 
 /// Async method to get attachments from objectbox
 class GetChatAttachments extends AsyncTask<List<dynamic>, List<Attachment>> {
@@ -321,13 +280,10 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
 @Entity()
 class Chat {
   int? id;
-  int? originalROWID;
   @Unique()
   String guid;
-  int? style;
   String? chatIdentifier;
   bool? isArchived;
-  bool? isFiltered;
   String? muteType;
   String? muteArgs;
   bool? isPinned;
@@ -345,15 +301,11 @@ class Chat {
   List<String> textFieldAttachments = [];
 
   final RxnString _customAvatarPath = RxnString();
-
   String? get customAvatarPath => _customAvatarPath.value;
-
   set customAvatarPath(String? s) => _customAvatarPath.value = s;
 
   final RxnInt _pinIndex = RxnInt();
-
   int? get pinIndex => _pinIndex.value;
-
   set pinIndex(int? i) => _pinIndex.value = i;
 
   final handles = ToMany<Handle>();
@@ -361,18 +313,11 @@ class Chat {
   @Backlink('chat')
   final messages = ToMany<Message>();
 
-  static final List<Function(List<Chat>)> _watcherFunctions = [];
-
-  final List<Function(List<Message>)> _mWatcherFunctions = [];
-
   Chat({
     this.id,
-    this.originalROWID,
     required this.guid,
-    this.style,
     this.chatIdentifier,
     this.isArchived,
-    this.isFiltered,
     this.isPinned,
     this.muteType,
     this.muteArgs,
@@ -395,117 +340,31 @@ class Chat {
     if (participants.isEmpty) participants = [];
   }
 
-  bool get isTextForwarding => guid.startsWith("SMS");
-
-  bool get isSMS => false;
-
-  bool get isIMessage => !isTextForwarding && !isSMS;
-
   factory Chat.fromMap(Map<String, dynamic> json) {
-    List<Handle> participants = [];
-    if (json.containsKey('participants')) {
-      for (dynamic item in (json['participants'] as List<dynamic>)) {
-        participants.add(Handle.fromMap(item));
-      }
-    }
+    final message = json['lastMessage'] != null ? Message.fromMap(json['lastMessage']) : null;
+    final String? latestText = json["latestMessageText"]
+        ?? (message != null ? MessageHelper.getNotificationText(message) : null);
 
-    Message? message;
-    if (json['lastMessage'] != null) {
-      message = Message.fromMap(json['lastMessage']);
-    }
-    var data = Chat(
-      id: json.containsKey("ROWID") ? json["ROWID"] : null,
-      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
+    return Chat(
+      id: json["ROWID"] ?? json["id"],
       guid: json["guid"],
-      style: json['style'],
-      chatIdentifier: json.containsKey("chatIdentifier") ? json["chatIdentifier"] : null,
-      isArchived: (json["isArchived"] is bool) ? json['isArchived'] : ((json['isArchived'] == 1) ? true : false),
-      isFiltered: json.containsKey("isFiltered")
-          ? (json["isFiltered"] is bool)
-              ? json['isFiltered']
-              : ((json['isFiltered'] == 1) ? true : false)
-          : false,
+      chatIdentifier: json["chatIdentifier"],
+      isArchived: json['isArchived'],
       muteType: json["muteType"],
       muteArgs: json["muteArgs"],
-      isPinned: json.containsKey("isPinned")
-          ? (json["isPinned"] is bool)
-              ? json['isPinned']
-              : ((json['isPinned'] == 1) ? true : false)
-          : false,
-      hasUnreadMessage: json.containsKey("hasUnreadMessage")
-          ? (json["hasUnreadMessage"] is bool)
-              ? json['hasUnreadMessage']
-              : ((json['hasUnreadMessage'] == 1) ? true : false)
-          : false,
+      isPinned: json["isPinned"],
+      hasUnreadMessage: json["hasUnreadMessage"],
       latestMessage: message,
-      latestMessageText: json.containsKey("latestMessageText")
-          ? json["latestMessageText"]
-          : message != null
-              ? MessageHelper.getNotificationText(message)
-              : null,
-      fakeLatestMessageText: json.containsKey("latestMessageText")
-          ? faker.lorem.words((json["latestMessageText"] ?? "").split(" ").length).join(" ")
-          : null,
-      latestMessageDate: json.containsKey("latestMessageDate") && json['latestMessageDate'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['latestMessageDate'] as int)
-          : message?.dateCreated,
-      displayName: json.containsKey("displayName") ? json["displayName"] : null,
+      latestMessageText: latestText,
+      fakeLatestMessageText: faker.lorem.words(latestText?.split(" ").length ?? 1).join(" "),
+      latestMessageDate: parseDate(json['latestMessageDate']) ?? message?.dateCreated,
+      displayName: json["displayName"],
       customAvatar: json['_customAvatarPath'],
       pinnedIndex: json['_pinIndex'],
-      participants: participants,
-      autoSendReadReceipts: json.containsKey("autoSendReadReceipts")
-          ? (json["autoSendReadReceipts"] is bool)
-              ? json['autoSendReadReceipts']
-              : ((json['autoSendReadReceipts'] == 1) ? true : false)
-          : true,
-      autoSendTypingIndicators: json.containsKey("autoSendTypingIndicators")
-          ? (json["autoSendTypingIndicators"] is bool)
-              ? json['autoSendTypingIndicators']
-              : ((json['autoSendTypingIndicators'] == 1) ? true : false)
-          : true,
+      participants: (json['participants'] as List? ?? []).map((e) => Handle.fromMap(e)).toList(),
+      autoSendReadReceipts: json["autoSendReadReceipts"],
+      autoSendTypingIndicators: json["autoSendTypingIndicators"],
     );
-
-    // Adds fallback getter for the ID
-    data.id ??= json.containsKey("id") ? json["id"] : null;
-
-    return data;
-  }
-
-  static void startWatchingChats() {
-    chatBox.query().watch().listen((event) {
-      final chats = event.find();
-      for (Function f in _watcherFunctions) {
-        f.call(chats);
-      }
-    });
-  }
-
-  static void addChatListener(Function(List<Chat>) listener) {
-    _watcherFunctions.add(listener);
-  }
-
-  static bool removeChatListener(Function(List<Chat>) listener) {
-    return _watcherFunctions.remove(listener);
-  }
-
-  void startWatchingMessages() {
-    (messageBox.query(Message_.dateDeleted.isNull())
-      ..link(Message_.chat, Chat_.guid.equals(guid))
-      ..order(Message_.dateCreated, flags: Order.descending))
-        .watch().listen((event) {
-      final messages = event.find();
-      for (Function f in _mWatcherFunctions) {
-        f.call(messages);
-      }
-    });
-  }
-
-  void addMessageListener(Function(List<Message>) listener) {
-    _mWatcherFunctions.add(listener);
-  }
-
-  bool removeMessageListener(Function(List<Message>) listener) {
-    return _mWatcherFunctions.remove(listener);
   }
 
   /// Save a chat to the DB
@@ -591,14 +450,26 @@ class Chat {
   }
 
   /// Get a chat's title
-  String? getTitle() {
-    title = getFullChatTitle(this);
-    return title;
-  }
-
-  /// Get the latest message date as text
-  String getDateText() {
-    return buildDate(latestMessageDate);
+  String getTitle() {
+    if (isNullOrEmpty(displayName)!) {
+      // generate names for group chats or DMs
+      List<String> titles = participants.map((e) => e.displayName.trim().split(isGroup ? " " : String.fromCharCode(65532)).first).toList();
+      if (titles.isEmpty) {
+        title = chatIdentifier;
+      } else if (titles.length == 1) {
+        title = titles[0];
+      } else if (titles.length <= 4) {
+        title = titles.join(", ");
+        int pos = title!.lastIndexOf(", ");
+        if (pos != -1) title = "${title!.substring(0, pos)} & ${title!.substring(pos + 2)}";
+      } else {
+        title = titles.take(3).join(", ");
+        title = "$title & ${titles.length - 3} others";
+      }
+    } else {
+      title = displayName;
+    }
+    return title!;
   }
 
   /// Return whether or not the notification should be muted
@@ -777,79 +648,6 @@ class Chat {
     return this;
   }
 
-  /// Add a lot of messages for the single chat to avoid running [addMessage]
-  /// in a loop
-  /* Future<List<Message>> bulkAddMessages(List<Message> messages,
-      {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
-    for (Message m in messages) {
-      // If this is a message preview and we don't already have metadata for this, get it
-      if (!m.fullText.replaceAll("\n", " ").hasUrl || MetadataHelper.mapIsNotEmpty(m.metadata)) continue;
-      Metadata? meta = await MetadataHelper.fetchMetadata(m);
-      if (!MetadataHelper.isNotEmpty(meta)) continue;
-
-      // Save the metadata to the object
-      m.metadata = meta!.toJson();
-
-      // If pre-caching is enabled, fetch the image and save it
-      if (settings.settings.preCachePreviewImages.value &&
-          m.metadata!.containsKey("image") &&
-          !isNullOrEmpty(m.metadata!["image"])!) {
-        // Save from URL
-        File? newFile = await saveImageFromUrl(m.guid!, m.metadata!["image"]);
-
-        // If we downloaded a file, set the new metadata path
-        if (newFile != null && await newFile.exists()) {
-          m.metadata!["image"] = newFile.path;
-        }
-      }
-    }
-
-    // Save to DB
-    final newMessages = await compute(addMessagesIsolate,
-        [messages.map((e) => e.toMap(includeObjects: true)).toList(), prefs.getString("objectbox-reference")]);
-    cmJoinBox.putMany(newMessages.map((e) => ChatMessageJoin(chatId: id!, messageId: e.id!)).toList());
-
-    Message? newer = newMessages
-        .where((e) => (latestMessageDate?.millisecondsSinceEpoch ?? 0) < e.dateCreated!.millisecondsSinceEpoch)
-        .sorted((a, b) => b.dateCreated!.compareTo(a.dateCreated!))
-        .firstOrNull;
-
-    // If the incoming message was newer than the "last" one, set the unread status accordingly
-    if (checkForMessageText && changeUnreadStatus && newer != null) {
-      // If the message is from me, mark it unread
-      // If the message is not from the same chat as the current chat, mark unread
-      if (newer.isFromMe!) {
-        toggleHasUnread(false);
-      } else if (!ChatController.isActive(guid!)) {
-        toggleHasUnread(true);
-      }
-    }
-
-    if (checkForMessageText) {
-      // Update the chat position
-      ChatBloc().updateChatPosition(this);
-    }
-
-    // If the message is for adding or removing participants,
-    // we need to ensure that all of the chat participants are correct by syncing with the server
-    Message? participantEvent = messages.firstWhereOrNull((element) => isParticipantEvent(element));
-    if (participantEvent != null && checkForMessageText) {
-      serverSyncParticipants();
-    }
-
-    if (newer != null && checkForMessageText) {
-      latestMessage = newer;
-      latestMessageText = MessageHelper.getNotificationText(newer);
-      fakeLatestMessageText = faker.lorem.words((latestMessageText ?? "").split(" ").length).join(" ");
-      latestMessageDate = newer.dateCreated;
-    }
-
-    save();
-
-    // Return the current chat instance (with updated vals)
-    return newMessages;
-  }*/
-
   void serverSyncParticipants() async {
     // Send message to server to get the participants
     final chat = await cm.fetchChat(guid);
@@ -934,46 +732,6 @@ class Chat {
       participants = List<Handle>.from(handles);
     });
 
-    _deduplicateParticipants();
-    return this;
-  }
-
-  Chat addParticipant(Handle participant) {
-    if (kIsWeb) {
-      participants.add(participant);
-      _deduplicateParticipants();
-      return this;
-    }
-    // Save participant and add to list
-    participant = participant.save();
-    if (participant.id == null) return this;
-
-    try {
-      handles.add(participant);
-      save();
-    } catch (_) {}
-
-    // Add to the class and deduplicate
-    participants.add(participant);
-    _deduplicateParticipants();
-    return this;
-  }
-
-  Chat removeParticipant(Handle participant) {
-    if (kIsWeb) {
-      participants.removeWhere((element) => participant.id == element.id);
-      _deduplicateParticipants();
-      return this;
-    }
-
-    // find the join item and delete it
-    store.runInTransaction(TxMode.write, () {
-      handles.removeWhere((element) => element.address == participant.address);
-      save();
-    });
-
-    // Second, remove from this object instance
-    participants.removeWhere((element) => participant.id == element.id);
     _deduplicateParticipants();
     return this;
   }
@@ -1083,10 +841,6 @@ class Chat {
     return (await createAsyncTask<List<Message>>(task)) ?? [];
   }
 
-  bool isGroup() {
-    return participants.length > 1;
-  }
-
   void clearTranscript() {
     if (kIsWeb) return;
     store.runInTransaction(TxMode.write, () {
@@ -1098,15 +852,21 @@ class Chat {
     });
   }
 
+  bool get isTextForwarding => guid.startsWith("SMS");
+
+  bool get isSMS => false;
+
+  bool get isIMessage => !isTextForwarding && !isSMS;
+
+  bool get isGroup => participants.length > 1;
+
   Message? get latestMessageGetter {
     if (latestMessage != null) return latestMessage!;
     List<Message> latest = Chat.getMessages(this, limit: 1);
-    if (latest.isEmpty) return null;
-
-    Message message = latest.first;
+    Message? message = latest.firstOrNull;
     latestMessage = message;
-    if (message.hasAttachments) {
-      message.fetchAttachments();
+    if (message?.hasAttachments ?? false) {
+      message?.fetchAttachments();
     }
     return message;
   }
@@ -1127,25 +887,16 @@ class Chat {
     if (handles.isEmpty) {
       handles.addAll(other.handles);
     }
-
     hasUnreadMessage ??= other.hasUnreadMessage;
     isArchived ??= other.isArchived;
-    isFiltered ??= other.isFiltered;
     isPinned ??= other.isPinned;
     latestMessage ??= other.latestMessage;
     latestMessageDate ??= other.latestMessageDate;
     latestMessageText ??= other.latestMessageText;
-    
-    if (messages.isEmpty) {
-      messages.addAll(other.messages);
-    }
-
     muteArgs ??= other.muteArgs;
     if (participants.isEmpty) {
       participants.addAll(other.participants);
     }
-
-    style ??= other.style;
     title ??= other.title;
 
     return this;
@@ -1175,30 +926,22 @@ class Chat {
         .compareTo((b.latestMessageDate ?? b.latestMessageGetter?.dateCreated)!);
   }
 
-  static void flush() {
-    if (kIsWeb) return;
-    chatBox.removeAll();
-  }
-
   Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "originalROWID": originalROWID,
-        "guid": guid,
-        "style": style,
-        "chatIdentifier": chatIdentifier,
-        "isArchived": isArchived! ? 1 : 0,
-        "isFiltered": isFiltered! ? 1 : 0,
-        "muteType": muteType,
-        "muteArgs": muteArgs,
-        "isPinned": isPinned! ? 1 : 0,
-        "displayName": displayName,
-        "participants": participants.map((item) => item.toMap()).toList(),
-        "hasUnreadMessage": hasUnreadMessage! ? 1 : 0,
-        "latestMessageDate": latestMessageDate != null ? latestMessageDate!.millisecondsSinceEpoch : 0,
-        "latestMessageText": latestMessageText,
-        "_customAvatarPath": _customAvatarPath.value,
-        "_pinIndex": _pinIndex.value,
-        "autoSendReadReceipts": autoSendReadReceipts! ? 1 : 0,
-        "autoSendTypingIndicators": autoSendTypingIndicators! ? 1 : 0,
-      };
+    "ROWID": id,
+    "guid": guid,
+    "chatIdentifier": chatIdentifier,
+    "isArchived": isArchived!,
+    "muteType": muteType,
+    "muteArgs": muteArgs,
+    "isPinned": isPinned!,
+    "displayName": displayName,
+    "participants": participants.map((item) => item.toMap()).toList(),
+    "hasUnreadMessage": hasUnreadMessage!,
+    "latestMessageDate": latestMessageDate?.millisecondsSinceEpoch ?? 0,
+    "latestMessageText": latestMessageText,
+    "_customAvatarPath": _customAvatarPath.value,
+    "_pinIndex": _pinIndex.value,
+    "autoSendReadReceipts": autoSendReadReceipts!,
+    "autoSendTypingIndicators": autoSendTypingIndicators!,
+  };
 }

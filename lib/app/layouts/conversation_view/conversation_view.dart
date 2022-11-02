@@ -486,7 +486,7 @@ class ConversationViewState extends State<ConversationView> {
     Color? fontColor = context.theme.colorScheme.onBackground;
     bool manualMark =
         ss.settings.enablePrivateAPI.value && ss.settings.privateManualMarkAsRead.value;
-    bool showManual = !ss.settings.privateMarkChatAsRead.value && !widget.chat.isGroup();
+    bool showManual = !ss.settings.privateMarkChatAsRead.value && !widget.chat.isGroup;
     List<Widget> items = [
       if (showManual && manualMark && markingAsRead)
         Padding(
@@ -566,7 +566,7 @@ class ConversationViewState extends State<ConversationView> {
           padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
           child: GestureDetector(
             onTap: () async {
-              if (!chat.isGroup()) {
+              if (!chat.isGroup) {
                 final handle = chat.handles.first;
                 final contact = handle.contact;
                 if (contact == null) {
@@ -585,11 +585,11 @@ class ConversationViewState extends State<ConversationView> {
                   style: context.theme.textTheme.titleLarge!.apply(color: fontColor),
                 ),
                 if (ss.settings.skin.value == Skins.Samsung &&
-                    (chat.isGroup() || (!title.isPhoneNumber && !title.isEmail)))
+                    (chat.isGroup || (!title.isPhoneNumber && !title.isEmail)))
                   Text(
                     generateTitle
                         ? ""
-                        : chat.isGroup()
+                        : chat.isGroup
                         ? "${chat.participants.length} recipients"
                         : chat.participants[0].address,
                     style: context.theme.textTheme.labelLarge!.apply(color: fontColor2),
@@ -677,7 +677,7 @@ class ConversationViewState extends State<ConversationView> {
               }
             }),
           ),
-          if ((!chat.isGroup() &&
+          if ((!chat.isGroup &&
               (chat.participants[0].address.isPhoneNumber || chat.participants[0].address.isEmail)) &&
               !kIsDesktop &&
               !kIsWeb)

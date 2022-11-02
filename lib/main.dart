@@ -155,7 +155,6 @@ Future<Null> initApp(bool bubble) async {
       themeBox = store.box<ThemeStruct>();
       themeEntryBox = store.box<ThemeEntry>();
       themeObjectBox = store.box<ThemeObject>();
-      Chat.startWatchingChats();
       if (themeBox.isEmpty()) {
         ss.prefs.setString("selected-dark", "OLED Dark");
         ss.prefs.setString("selected-light", "Bright White");

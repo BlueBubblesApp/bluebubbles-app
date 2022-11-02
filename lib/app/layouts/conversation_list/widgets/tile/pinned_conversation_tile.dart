@@ -346,7 +346,7 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
         // check if we really need to update this widget
         if (chat.displayName != cachedDisplayName
             || chat.handles.length != cachedParticipants.length) {
-          final newTitle = getFullChatTitle(chat);
+          final newTitle = chat.getTitle();
           if (newTitle != title) {
             setState(() {
               title = newTitle;
@@ -432,7 +432,7 @@ class PinnedIndicators extends StatelessWidget {
 
       final showMarker = shouldShow(controller.chat.latestMessageGetter);
       if (ss.settings.statusIndicatorsOnChats.value
-          && !controller.chat.isGroup()
+          && !controller.chat.isGroup
           && showMarker != Indicator.NONE) {
         return Positioned(
           left: sqrt(width) - width * 0.05 * sqrt(2),

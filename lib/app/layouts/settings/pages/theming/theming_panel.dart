@@ -558,7 +558,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         ),
                         onTap: () async {
                           controller.gettingIcons.value = true;
-                          for (Chat c in chats.chats.where((c) => c.isGroup())) {
+                          for (Chat c in chats.chats.where((c) => c.isGroup)) {
                             final response = await http.getChatIcon(c.guid).catchError((err) async {
                               Logger.error("Failed to get chat icon for chat ${c.getTitle()}");
                               return Response(statusCode: 500, requestOptions: RequestOptions(path: ""));

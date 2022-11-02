@@ -20,7 +20,7 @@ class PinnedTileTextBubble extends StatelessWidget {
   final double size;
   final bool leftSide = Random().nextBool();
 
-  bool get showTail => !chat.isGroup();
+  bool get showTail => !chat.isGroup;
 
   List<Color> getBubbleColors(Message message, BuildContext context) {
     List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];

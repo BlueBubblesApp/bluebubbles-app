@@ -162,7 +162,7 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                                           message: widget.messages[index],
                                           olderMessage: index == widget.messages.length - 1 ? null : widget.messages[index + 1],
                                           newerMessage: index == 0 ? null : widget.messages[index - 1],
-                                          showHandle: widget.chat.isGroup(),
+                                          showHandle: widget.chat.isGroup,
                                           isFirstSentMessage: false,
                                           showHero: false,
                                           showReplies: true,

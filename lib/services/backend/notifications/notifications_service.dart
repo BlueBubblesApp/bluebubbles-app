@@ -126,7 +126,7 @@ class NotificationsService extends GetxService {
   Future<void> createNotification(Chat chat, Message message) async {
     if (chat.shouldMuteNotification(message) || message.isFromMe!) return;
 
-    final isGroup = chat.isGroup();
+    final isGroup = chat.isGroup;
     final guid = chat.guid;
     final contactName = message.handle?.displayName ?? "Unknown";
     final title = _notifChatTitle(chat, contactName);
@@ -252,9 +252,9 @@ class NotificationsService extends GetxService {
   }
 
   String _notifChatTitle(Chat chat, String contactName) {
-    final title = chat.getTitle() ?? (chat.isGroup() ? 'Group Chat' : 'DM');
+    final title = chat.getTitle() ?? (chat.isGroup ? 'Group Chat' : 'DM');
     if (kIsDesktop) {
-      return chat.isGroup() ? "$title: $contactName" : title;
+      return chat.isGroup ? "$title: $contactName" : title;
     }
     return title;
   }

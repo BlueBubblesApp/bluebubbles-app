@@ -121,21 +121,11 @@ final _entities = <ModelEntity>[
             type: 6,
             flags: 1),
         ModelProperty(
-            id: const IdUid(2, 8252364803444354563),
-            name: 'originalROWID',
-            type: 6,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(3, 318412581013308394),
             name: 'guid',
             type: 9,
             flags: 2080,
             indexId: const IdUid(2, 4712841847590882583)),
-        ModelProperty(
-            id: const IdUid(4, 4143511131199296878),
-            name: 'style',
-            type: 6,
-            flags: 0),
         ModelProperty(
             id: const IdUid(5, 9099706644901956287),
             name: 'chatIdentifier',
@@ -144,11 +134,6 @@ final _entities = <ModelEntity>[
         ModelProperty(
             id: const IdUid(6, 9117376896883192460),
             name: 'isArchived',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(7, 172817608355620424),
-            name: 'isFiltered',
             type: 1,
             flags: 0),
         ModelProperty(
@@ -828,7 +813,10 @@ ModelDefinition getObjectBoxModel() {
         457159365740007120,
         6085502636952418888,
         7378813296315172429,
-        7968765094195569385
+        7968765094195569385,
+        8252364803444354563,
+        4143511131199296878,
+        172817608355620424
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -960,12 +948,9 @@ ModelDefinition getObjectBoxModel() {
               .toList(growable: false));
           fbb.startTable(24);
           fbb.addInt64(0, object.id ?? 0);
-          fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
-          fbb.addInt64(3, object.style);
           fbb.addOffset(4, chatIdentifierOffset);
           fbb.addBool(5, object.isArchived);
-          fbb.addBool(6, object.isFiltered);
           fbb.addOffset(7, muteTypeOffset);
           fbb.addOffset(8, muteArgsOffset);
           fbb.addBool(9, object.isPinned);
@@ -992,25 +977,22 @@ ModelDefinition getObjectBoxModel() {
           final object = Chat(
               id: const fb.Int64Reader()
                   .vTableGetNullable(buffer, rootOffset, 4),
-              originalROWID: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 6),
               guid: const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 8, ''),
-              style: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 10),
               chatIdentifier: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 12),
               isArchived: const fb.BoolReader()
                   .vTableGetNullable(buffer, rootOffset, 14),
-              isFiltered: const fb.BoolReader()
-                  .vTableGetNullable(buffer, rootOffset, 16),
               isPinned: const fb.BoolReader()
                   .vTableGetNullable(buffer, rootOffset, 22),
               muteType: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 18),
-              muteArgs: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 20),
-              hasUnreadMessage: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 24),
-              displayName: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34),
+              muteArgs: const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 20),
+              hasUnreadMessage: const fb.BoolReader()
+                  .vTableGetNullable(buffer, rootOffset, 24),
+              displayName:
+                  const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 34),
               latestMessageDate: latestMessageDateValue == null ? null : DateTime.fromMillisecondsSinceEpoch(latestMessageDateValue),
               latestMessageText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 28),
               fakeLatestMessageText: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 30),
@@ -1601,84 +1583,73 @@ class Chat_ {
   /// see [Chat.id]
   static final id = QueryIntegerProperty<Chat>(_entities[1].properties[0]);
 
-  /// see [Chat.originalROWID]
-  static final originalROWID =
-      QueryIntegerProperty<Chat>(_entities[1].properties[1]);
-
   /// see [Chat.guid]
-  static final guid = QueryStringProperty<Chat>(_entities[1].properties[2]);
-
-  /// see [Chat.style]
-  static final style = QueryIntegerProperty<Chat>(_entities[1].properties[3]);
+  static final guid = QueryStringProperty<Chat>(_entities[1].properties[1]);
 
   /// see [Chat.chatIdentifier]
   static final chatIdentifier =
-      QueryStringProperty<Chat>(_entities[1].properties[4]);
+      QueryStringProperty<Chat>(_entities[1].properties[2]);
 
   /// see [Chat.isArchived]
   static final isArchived =
-      QueryBooleanProperty<Chat>(_entities[1].properties[5]);
-
-  /// see [Chat.isFiltered]
-  static final isFiltered =
-      QueryBooleanProperty<Chat>(_entities[1].properties[6]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[3]);
 
   /// see [Chat.muteType]
-  static final muteType = QueryStringProperty<Chat>(_entities[1].properties[7]);
+  static final muteType = QueryStringProperty<Chat>(_entities[1].properties[4]);
 
   /// see [Chat.muteArgs]
-  static final muteArgs = QueryStringProperty<Chat>(_entities[1].properties[8]);
+  static final muteArgs = QueryStringProperty<Chat>(_entities[1].properties[5]);
 
   /// see [Chat.isPinned]
   static final isPinned =
-      QueryBooleanProperty<Chat>(_entities[1].properties[9]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[6]);
 
   /// see [Chat.hasUnreadMessage]
   static final hasUnreadMessage =
-      QueryBooleanProperty<Chat>(_entities[1].properties[10]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[7]);
 
   /// see [Chat.latestMessageDate]
   static final latestMessageDate =
-      QueryIntegerProperty<Chat>(_entities[1].properties[11]);
+      QueryIntegerProperty<Chat>(_entities[1].properties[8]);
 
   /// see [Chat.latestMessageText]
   static final latestMessageText =
-      QueryStringProperty<Chat>(_entities[1].properties[12]);
+      QueryStringProperty<Chat>(_entities[1].properties[9]);
 
   /// see [Chat.fakeLatestMessageText]
   static final fakeLatestMessageText =
-      QueryStringProperty<Chat>(_entities[1].properties[13]);
+      QueryStringProperty<Chat>(_entities[1].properties[10]);
 
   /// see [Chat.title]
-  static final title = QueryStringProperty<Chat>(_entities[1].properties[14]);
+  static final title = QueryStringProperty<Chat>(_entities[1].properties[11]);
 
   /// see [Chat.displayName]
   static final displayName =
-      QueryStringProperty<Chat>(_entities[1].properties[15]);
+      QueryStringProperty<Chat>(_entities[1].properties[12]);
 
   /// see [Chat.customAvatarPath]
   static final customAvatarPath =
-      QueryStringProperty<Chat>(_entities[1].properties[16]);
+      QueryStringProperty<Chat>(_entities[1].properties[13]);
 
   /// see [Chat.pinIndex]
   static final pinIndex =
-      QueryIntegerProperty<Chat>(_entities[1].properties[17]);
+      QueryIntegerProperty<Chat>(_entities[1].properties[14]);
 
   /// see [Chat.autoSendReadReceipts]
   static final autoSendReadReceipts =
-      QueryBooleanProperty<Chat>(_entities[1].properties[18]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[15]);
 
   /// see [Chat.autoSendTypingIndicators]
   static final autoSendTypingIndicators =
-      QueryBooleanProperty<Chat>(_entities[1].properties[19]);
+      QueryBooleanProperty<Chat>(_entities[1].properties[16]);
 
   /// see [Chat.textFieldText]
   static final textFieldText =
-      QueryStringProperty<Chat>(_entities[1].properties[20]);
+      QueryStringProperty<Chat>(_entities[1].properties[17]);
 
   /// see [Chat.textFieldAttachments]
   static final textFieldAttachments =
-      QueryStringVectorProperty<Chat>(_entities[1].properties[21]);
+      QueryStringVectorProperty<Chat>(_entities[1].properties[18]);
 
   /// see [Chat.handles]
   static final handles =

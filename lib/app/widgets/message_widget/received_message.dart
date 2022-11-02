@@ -222,7 +222,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       bool hasReactions = message.reactions.isNotEmpty;
       child = Padding(
         padding: EdgeInsets.only(
-          left: cm.activeChat?.chat.isGroup() ?? false ? 5.0 : 0.0,
+          left: cm.activeChat?.chat.isGroup ?? false ? 5.0 : 0.0,
           right: (hasReactions) ? 15.0 : 0.0,
           top: widget.message.reactions.isNotEmpty ? 15 : 0,
         ),
@@ -550,7 +550,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         widget.message.associatedMessages.firstWhereOrNull((e) => e.guid == widget.message.threadOriginatorGuid);
 
     // First, add the message sender (if applicable)
-    bool isGroup = cm.activeChat?.chat.isGroup() ?? false;
+    bool isGroup = cm.activeChat?.chat.isGroup ?? false;
     bool addedSender = false;
     bool showSender = ss.settings.alwaysShowAvatars.value ||
         isGroup ||
@@ -854,7 +854,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                   children: [
                     if ((ss.settings.alwaysShowAvatars.value ||
-                            (cm.activeChat?.chat.isGroup() ?? false)) &&
+                            (cm.activeChat?.chat.isGroup ?? false)) &&
                         !msg.isFromMe!)
                       Padding(
                         padding: EdgeInsets.only(top: 5),

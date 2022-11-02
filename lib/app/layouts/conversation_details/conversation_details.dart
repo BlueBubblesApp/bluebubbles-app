@@ -43,7 +43,7 @@ class ConversationDetails extends StatefulWidget {
 
 class _ConversationDetailsState extends OptimizedState<ConversationDetails> with WidgetsBindingObserver, ThemeHelpers {
   static const maxPageSize = 5;
-  late final TextEditingController controller = TextEditingController(text: chat.isGroup() ? chat.displayName : chat.getTitle());
+  late final TextEditingController controller = TextEditingController(text: chat.isGroup ? chat.displayName : chat.getTitle());
 
   List<Attachment> attachmentsForChat = <Attachment>[];
   bool showMoreParticipants = false;
@@ -195,7 +195,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   child: ContactAvatarGroupWidget(
                     chat: chat,
                     size: 100,
-                    onTap: chat.isGroup() ? () {} : null,
+                    onTap: chat.isGroup ? () {} : null,
                   ),
                 ),
                 if (!hideInfo)
@@ -211,7 +211,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       ),
                     ),
                   ),
-                if (chat.isGroup())
+                if (chat.isGroup)
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -287,7 +287,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       ],
                     ),
                   ),
-                if (!chat.isGroup())
+                if (!chat.isGroup)
                   Padding(
                     padding: const EdgeInsets.only(left: 10.0, right: 10, top: 20),
                     child: Row(
@@ -400,7 +400,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       ],
                     ),
                   ),
-                if (chat.isGroup())
+                if (chat.isGroup)
                   Padding(
                     padding: const EdgeInsets.only(left: 15.0, bottom: 5.0),
                     child: Text(
@@ -410,7 +410,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   ),
               ]),
             ),
-            if (chat.isGroup())
+            if (chat.isGroup)
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   if (index >= clippedParticipants.length && shouldShowMore) {
@@ -456,7 +456,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   );
                 }, childCount: clippedParticipants.length + 1),
               ),
-            if (ss.settings.enablePrivateAPI.value && chat.isIMessage && chat.isGroup())
+            if (ss.settings.enablePrivateAPI.value && chat.isIMessage && chat.isGroup)
               SliverToBoxAdapter(
                 child: ListTile(
                   title: Text("Add Member", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
@@ -747,7 +747,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                     },
                   ),
                   if (!kIsWeb &&
-                      !widget.chat.isGroup() &&
+                      !widget.chat.isGroup &&
                       ss.settings.enablePrivateAPI.value &&
                       ss.settings.privateMarkChatAsRead.value)
                     SettingsSwitch(
@@ -761,7 +761,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       backgroundColor: tileColor,
                     ),
                   if (!kIsWeb &&
-                      !widget.chat.isGroup() &&
+                      !widget.chat.isGroup &&
                       ss.settings.enablePrivateAPI.value &&
                       ss.settings.privateSendTypingIndicators.value)
                     SettingsSwitch(
