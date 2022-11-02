@@ -40,12 +40,12 @@ class Run {
 
 class Attributes {
   Attributes({
-    required this.messagePart,
+    this.messagePart,
     this.attachmentGuid,
     this.mention,
   });
 
-  final int messagePart;
+  final int? messagePart;
   final String? attachmentGuid;
   final String? mention;
 

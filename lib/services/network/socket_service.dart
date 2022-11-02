@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/utils/crypto_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/network/network_tasks.dart';
@@ -23,9 +24,10 @@ enum SocketState {
 class SocketService extends GetxService {
   final Rx<SocketState> state = SocketState.disconnected.obs;
   SocketState _lastState = SocketState.disconnected;
+  Timer? _reconnectTimer;
   late final Socket socket;
   
-  String? get serverAddress => ss.settings.serverAddress.value;
+  String get serverAddress => ss.settings.serverAddress.value;
   String get password => ss.settings.guidAuthKey.value;
 
   @override
@@ -41,7 +43,7 @@ class SocketService extends GetxService {
   }
   
   void startSocket() {
-    if (serverAddress == null) return;
+    if (isNullOrEmpty(serverAddress)!) return;
     OptionBuilder options = OptionBuilder()
         .setQuery({"guid": encodeUri(password)})
         .setTransports(['websocket', 'polling'])
@@ -68,7 +70,6 @@ class SocketService extends GetxService {
     if (kIsWeb || kIsDesktop) {
       socket.on("new-message", (data) => handleCustomEvent("new-message", data));
       socket.on("updated-message", (data) => handleCustomEvent("updated-message", data));
-      socket.on("message-send-errors", (data) => handleCustomEvent("message-send-errors", data));
       socket.on("group-name-change", (data) => handleCustomEvent("group-name-change", data));
       socket.on("participant-removed", (data) => handleCustomEvent("participant-removed", data));
       socket.on("participant-added", (data) => handleCustomEvent("participant-added", data));
@@ -81,15 +82,18 @@ class SocketService extends GetxService {
   }
 
   void disconnect() {
+    if (isNullOrEmpty(serverAddress)!) return;
     socket.disconnect();
     state.value = SocketState.disconnected;
   }
 
   void reconnect() {
+    if (isNullOrEmpty(serverAddress)!) return;
     socket.connect();
   }
 
   void closeSocket() {
+    if (isNullOrEmpty(serverAddress)!) return;
     socket.dispose();
     state.value = SocketState.disconnected;
   }
@@ -124,6 +128,8 @@ class SocketService extends GetxService {
     switch (status) {
       case SocketState.connected:
         state.value = SocketState.connected;
+        _reconnectTimer?.cancel();
+        _reconnectTimer = null;
         NetworkTasks.onConnect();
         return;
       case SocketState.disconnected:
@@ -138,12 +144,12 @@ class SocketService extends GetxService {
         Logger.info("Socket connect error, fetching new URL...");
         state.value = SocketState.error;
         // After 5 seconds of an error, we should retry the connection
-        /*Timer(Duration(seconds: 5), () async {
+        _reconnectTimer = Timer(Duration(seconds: 5), () async {
           if (state.value == SocketState.connected) return;
 
           await fdb.fetchNewUrl();
           Get.reload<SocketService>(force: true);
-        });*/
+        });
         return;
       default:
         return;
@@ -154,18 +160,29 @@ class SocketService extends GetxService {
     // todo once event handlers are written
     switch (event) {
       case "new-message":
+        if (!isNullOrEmpty(data)!) {
+          inq.queue(IncomingItem.fromMap(QueueType.newMessage, data));
+        }
         return;
       case "updated-message":
-        return;
-      case "message-send-errors":
+        if (!isNullOrEmpty(data)!) {
+          inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, data));
+        }
         return;
       case "group-name-change":
-        return;
       case "participant-removed":
       case "participant-added":
       case "participant-left":
+        try {
+          final newChat = Chat.fromMap(data);
+          ah.handleNewOrUpdatedChat(newChat);
+        } catch (_) {}
         return;
       case "chat-read-status-changed":
+        Chat? chat = Chat.findOne(guid: data["chatGuid"]);
+        if (chat != null) {
+          chat.toggleHasUnread(!(data["read"] ?? true));
+        }
         return;
       case "typing-indicator":
         final chat = chats.chats.firstWhereOrNull((element) => element.guid == data["guid"]);

@@ -126,8 +126,9 @@ class FullSyncManager extends SyncManager {
           if (completer != null && !completer!.isCompleted) completer!.complete();
         }
       }
-    } catch (e) {
+    } catch (e, s) {
       addToOutput('Failed to sync chats! Error: ${e.toString()}', level: LogLevel.ERROR);
+      addToOutput(s.toString(), level: LogLevel.ERROR);
       completeWithError(e.toString());
     }
 

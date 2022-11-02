@@ -24,7 +24,9 @@ class ChatsService extends GetxService {
 
   final List<Handle> webCachedHandles = [];
 
-  Future<void> init() async {
+  @override
+  void onInit() {
+    super.onInit();
     // watch for new chats
     final countQuery = (chatBox.query()
       ..order(Chat_.id, flags: Order.descending)).watch(triggerImmediately: true);
@@ -35,7 +37,9 @@ class ChatsService extends GetxService {
       }
       currentCount = newCount;
     });
+  }
 
+  Future<void> init() async {
     Logger.info("Fetching chats...", tag: "ChatBloc");
     currentCount = Chat.count() ?? (await http.chatCount().catchError((err) {
       Logger.info("Error when fetching chat count!", tag: "ChatBloc");

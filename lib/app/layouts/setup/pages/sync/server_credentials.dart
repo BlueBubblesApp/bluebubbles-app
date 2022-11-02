@@ -394,6 +394,7 @@ class _ServerCredentialsState extends OptimizedState<ServerCredentials> {
                 showSnackbar("Warning", "No Firebase project detected! You will not receive notifications for new messages!");
               }
             }
+            Get.reload<SocketService>(force: true);
             goToNextPage();
           }
         } else if (mounted) {
