@@ -110,7 +110,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
 
   void fetchReactions() {
     // If there are no associated messages, return now
-    List<Message> reactions = widget.message.getReactions();
+    List<Message> reactions = widget.message.reactions;
 
     // Filter down the messages to the unique ones (one per user, newest)
     List<Message> reactionMessages = Reaction.getUniqueReactionMessages(reactions);
@@ -488,7 +488,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              String? url = widget.message.getUrl();
+              String? url = widget.message.url;
               mcs.invokeMethod("open-link", {"link": url ?? widget.message.text, "forceBrowser": true});
               popDetails();
             },
@@ -859,7 +859,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              if (widget.message.hasAttachments && !widget.message.isUrlPreview() && !kIsWeb && !kIsDesktop) {
+              if (widget.message.hasAttachments && !widget.message.isUrlPreview && !kIsWeb && !kIsDesktop) {
                 for (Attachment? element in widget.message.attachments) {
                   Share.file(
                     "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",

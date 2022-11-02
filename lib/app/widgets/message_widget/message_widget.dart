@@ -94,7 +94,7 @@ class _MessageState extends State<MessageWidget> {
   }
 
   void init() {
-    if (!_message.hasReactions && _message.getReactions().isNotEmpty) {
+    if (!_message.hasReactions && _message.reactions.isNotEmpty) {
       _message.hasReactions = true;
       _message.save();
     }
@@ -135,7 +135,7 @@ class _MessageState extends State<MessageWidget> {
     if (hasChanges) {
       // If we don't think there are reactions, and we found reactions,
       // Update the DB so it saves that we have reactions
-      if (!_message.hasReactions && _message.getReactions().isNotEmpty) {
+      if (!_message.hasReactions && _message.reactions.isNotEmpty) {
         _message.hasReactions = true;
         _message.save();
       }
@@ -165,7 +165,7 @@ class _MessageState extends State<MessageWidget> {
   @override
   Widget build(BuildContext context) {
     if (_newerMessage != null) {
-      if (_newerMessage!.isGroupEvent()) {
+      if (_newerMessage!.isGroupEvent) {
         showTail = true;
       } else if (ss.settings.skin.value == Skins.Samsung) {
         showTail = MessageHelper.getShowTail(context, _message, _olderMessage);
@@ -174,7 +174,7 @@ class _MessageState extends State<MessageWidget> {
       }
     }
 
-    if (_message.isGroupEvent()) {
+    if (_message.isGroupEvent) {
       return GroupEvent(key: Key("group-event-${_message.guid}"), message: _message);
     }
 
@@ -195,7 +195,7 @@ class _MessageState extends State<MessageWidget> {
     );
 
     UrlPreviewWidget urlPreviewWidget = UrlPreviewWidget(
-        key: Key("preview-${_message.guid}"), linkPreviews: _message.getPreviewAttachments(), message: _message);
+        key: Key("preview-${_message.guid}"), linkPreviews: _message.previewAttachments, message: _message);
     StickersWidget stickersWidget =
         StickersWidget(key: Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages, size: _message.getBubbleSize(context));
     ReactionsWidget reactionsWidget = ReactionsWidget(

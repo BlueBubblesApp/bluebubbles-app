@@ -71,7 +71,7 @@ class ActionHandler extends GetxService {
             effectId: element.expressiveSendStyleId
         ).then((response) async {
           final newMessage = Message.fromMap(response.data['data']);
-          await Message.replaceMessage(element.guid, newMessage, chat: c);
+          await Message.replaceMessage(element.guid, newMessage);
           Logger.info("Message match: [${newMessage.text}] - ${newMessage.guid} - ${element.guid}", tag: "MessageStatus");
           if (index == messages.length - 1) completer.complete();
         }).catchError((error) async {
@@ -90,7 +90,7 @@ class ActionHandler extends GetxService {
     } else {
       http.sendTapback(c.guid, selected!.text ?? "", selected.guid!, describeEnum(r)).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
-        await Message.replaceMessage(m.guid, newMessage, chat: c);
+        await Message.replaceMessage(m.guid, newMessage);
         Logger.info("Reaction match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
         completer.complete();
       }).catchError((error) async {
@@ -134,7 +134,7 @@ class ActionHandler extends GetxService {
         if (a == null) continue;
         Attachment.replaceAttachment(m.guid, a);
       }
-      await Message.replaceMessage(m.guid, newMessage, chat: c);
+      await Message.replaceMessage(m.guid, newMessage);
       attachmentProgress.removeWhere((e) => e.item1 == m.guid);
 
       Logger.info("Attachment match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");

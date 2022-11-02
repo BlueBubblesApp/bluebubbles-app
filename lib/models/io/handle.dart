@@ -82,10 +82,6 @@ class Handle {
     defaultPhone: json['defaultPhone'],
   );
 
-  static int count() {
-    return handleBox.count();
-  }
-
   /// Save a single handle - prefer [bulkSave] for multiple handles rather
   /// than iterating through them
   Handle save({bool updateColor = false}) {
@@ -190,11 +186,6 @@ class Handle {
   static List<Handle> find({Condition<Handle>? cond}) {
     final query = handleBox.query(cond).build();
     return query.find();
-  }
-
-  static void flush() {
-    if (kIsWeb) return;
-    handleBox.removeAll();
   }
 
   Map<String, dynamic> toMap() => {

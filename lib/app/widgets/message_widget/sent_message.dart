@@ -68,7 +68,7 @@ class SentMessageHelper {
     final text = generateContent ? faker.lorem.words(message?.text?.split(" ").length ?? 0).join(" ") : message?.text;
 
     Widget msg;
-    bool hasReactions = (message?.getReactions() ?? []).isNotEmpty;
+    bool hasReactions = (message?.reactions ?? []).isNotEmpty;
     Skins currentSkin = Skin.of(context)?.skin ?? ss.settings.skin.value;
     Size bubbleSize = Size(0, 0);
 
@@ -89,7 +89,7 @@ class SentMessageHelper {
       bubbleSize = message!.getBubbleSize(context);
     }
 
-    if (message?.isBigEmoji() ?? false) {
+    if (message?.isBigEmoji ?? false) {
       // this stack is necessary for layouting width properly
       msg = Stack(alignment: AlignmentDirectional.bottomEnd, children: [
         LayoutBuilder(builder: (_, constraints) {

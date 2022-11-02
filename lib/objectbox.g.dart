@@ -391,7 +391,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(13, 4148278195232901830),
       name: 'Message',
-      lastPropertyId: const IdUid(40, 5039085638407799291),
+      lastPropertyId: const IdUid(41, 4740279940509235463),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -456,48 +456,8 @@ final _entities = <ModelEntity>[
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(13, 6839394073781850549),
-            name: 'isDelayed',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(14, 4584830839955803056),
-            name: 'isAutoReply',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(15, 5300777612659164835),
-            name: 'isSystemMessage',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(16, 7579043230224812288),
-            name: 'isServiceMessage',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(17, 5309991997782167547),
-            name: 'isForward',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(18, 6035615005231958928),
-            name: 'isArchived',
-            type: 1,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(19, 5938275663538454436),
             name: 'hasDdResults',
-            type: 1,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(20, 457159365740007120),
-            name: 'cacheRoomnames',
-            type: 9,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(21, 6085502636952418888),
-            name: 'isAudioMessage',
             type: 1,
             flags: 0),
         ModelProperty(
@@ -521,11 +481,6 @@ final _entities = <ModelEntity>[
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(26, 7378813296315172429),
-            name: 'isExpired',
-            type: 1,
-            flags: 0),
-        ModelProperty(
             id: const IdUid(27, 4765948580516232913),
             name: 'balloonBundleId',
             type: 9,
@@ -544,11 +499,6 @@ final _entities = <ModelEntity>[
             id: const IdUid(30, 7125401610778464945),
             name: 'expressiveSendStyleId',
             type: 9,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(31, 7968765094195569385),
-            name: 'timeExpressiveSendStyleId',
-            type: 10,
             flags: 0),
         ModelProperty(
             id: const IdUid(32, 397296906153054772),
@@ -596,6 +546,11 @@ final _entities = <ModelEntity>[
             id: const IdUid(40, 5039085638407799291),
             name: 'dbAttributedBody',
             type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(41, 4740279940509235463),
+            name: 'associatedMessagePart',
+            type: 6,
             flags: 0)
       ],
       relations: <ModelRelation>[],
@@ -863,7 +818,17 @@ ModelDefinition getObjectBoxModel() {
         226618350909080419,
         7216531465575414151,
         8776591297555015451,
-        549408491521049277
+        549408491521049277,
+        6839394073781850549,
+        4584830839955803056,
+        5300777612659164835,
+        7579043230224812288,
+        5309991997782167547,
+        6035615005231958928,
+        457159365740007120,
+        6085502636952418888,
+        7378813296315172429,
+        7968765094195569385
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -1259,9 +1224,6 @@ ModelDefinition getObjectBoxModel() {
               object.subject == null ? null : fbb.writeString(object.subject!);
           final countryOffset =
               object.country == null ? null : fbb.writeString(object.country!);
-          final cacheRoomnamesOffset = object.cacheRoomnames == null
-              ? null
-              : fbb.writeString(object.cacheRoomnames!);
           final groupTitleOffset = object.groupTitle == null
               ? null
               : fbb.writeString(object.groupTitle!);
@@ -1289,7 +1251,7 @@ ModelDefinition getObjectBoxModel() {
           final dbAttributedBodyOffset = object.dbAttributedBody == null
               ? null
               : fbb.writeString(object.dbAttributedBody!);
-          fbb.startTable(41);
+          fbb.startTable(42);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -1302,26 +1264,15 @@ ModelDefinition getObjectBoxModel() {
           fbb.addInt64(9, object.dateRead?.millisecondsSinceEpoch);
           fbb.addInt64(10, object.dateDelivered?.millisecondsSinceEpoch);
           fbb.addBool(11, object.isFromMe);
-          fbb.addBool(12, object.isDelayed);
-          fbb.addBool(13, object.isAutoReply);
-          fbb.addBool(14, object.isSystemMessage);
-          fbb.addBool(15, object.isServiceMessage);
-          fbb.addBool(16, object.isForward);
-          fbb.addBool(17, object.isArchived);
           fbb.addBool(18, object.hasDdResults);
-          fbb.addOffset(19, cacheRoomnamesOffset);
-          fbb.addBool(20, object.isAudioMessage);
           fbb.addInt64(21, object.datePlayed?.millisecondsSinceEpoch);
           fbb.addInt64(22, object.itemType);
           fbb.addOffset(23, groupTitleOffset);
           fbb.addInt64(24, object.groupActionType);
-          fbb.addBool(25, object.isExpired);
           fbb.addOffset(26, balloonBundleIdOffset);
           fbb.addOffset(27, associatedMessageGuidOffset);
           fbb.addOffset(28, associatedMessageTypeOffset);
           fbb.addOffset(29, expressiveSendStyleIdOffset);
-          fbb.addInt64(
-              30, object.timeExpressiveSendStyleId?.millisecondsSinceEpoch);
           fbb.addBool(31, object.hasAttachments);
           fbb.addBool(32, object.hasReactions);
           fbb.addInt64(33, object.dateDeleted?.millisecondsSinceEpoch);
@@ -1331,6 +1282,7 @@ ModelDefinition getObjectBoxModel() {
           fbb.addInt64(37, object.error);
           fbb.addInt64(38, object.chat.targetId);
           fbb.addOffset(39, dbAttributedBodyOffset);
+          fbb.addInt64(40, object.associatedMessagePart);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1345,8 +1297,6 @@ ModelDefinition getObjectBoxModel() {
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 24);
           final datePlayedValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 46);
-          final timeExpressiveSendStyleIdValue =
-              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 64);
           final dateDeletedValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 70);
           final object = Message(
@@ -1366,45 +1316,31 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGetNullable(buffer, rootOffset, 16),
               country: const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 18),
+              error:
+                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 78, 0),
               dateCreated: dateCreatedValue == null
                   ? null
                   : DateTime.fromMillisecondsSinceEpoch(dateCreatedValue),
-              isFromMe:
-                  const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 26),
-              isDelayed: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 28),
-              isAutoReply: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 30),
-              isSystemMessage: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 32),
-              isServiceMessage: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 34),
-              isForward: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 36),
-              isArchived: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 38),
+              dateRead: dateReadValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateReadValue),
+              dateDelivered: dateDeliveredValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeliveredValue),
+              isFromMe: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 26),
               hasDdResults: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 40),
-              cacheRoomnames: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 42),
-              isAudioMessage: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 44),
               datePlayed: datePlayedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(datePlayedValue),
               itemType: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 48),
               groupTitle: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 50),
               groupActionType: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 52),
-              isExpired: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 54),
               balloonBundleId: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 56),
               associatedMessageGuid: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 58),
+              associatedMessagePart: const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 84),
               associatedMessageType: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 60),
               expressiveSendStyleId: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 62),
-              timeExpressiveSendStyleId: timeExpressiveSendStyleIdValue == null ? null : DateTime.fromMillisecondsSinceEpoch(timeExpressiveSendStyleIdValue),
               hasAttachments: const fb.BoolReader().vTableGet(buffer, rootOffset, 66, false),
               hasReactions: const fb.BoolReader().vTableGet(buffer, rootOffset, 68, false),
               dateDeleted: dateDeletedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue),
               threadOriginatorGuid: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 72),
               threadOriginatorPart: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 74))
-            ..dateRead = dateReadValue == null
-                ? null
-                : DateTime.fromMillisecondsSinceEpoch(dateReadValue)
-            ..dateDelivered = dateDeliveredValue == null
-                ? null
-                : DateTime.fromMillisecondsSinceEpoch(dateDeliveredValue)
             ..bigEmoji =
                 const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 76)
-            ..error =
-                const fb.Int64Reader().vTableGet(buffer, rootOffset, 78, 0)
             ..dbAttributedBody = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 82);
           object.chat.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 80, 0);
@@ -1898,117 +1834,81 @@ class Message_ {
   static final isFromMe =
       QueryBooleanProperty<Message>(_entities[5].properties[11]);
 
-  /// see [Message.isDelayed]
-  static final isDelayed =
-      QueryBooleanProperty<Message>(_entities[5].properties[12]);
-
-  /// see [Message.isAutoReply]
-  static final isAutoReply =
-      QueryBooleanProperty<Message>(_entities[5].properties[13]);
-
-  /// see [Message.isSystemMessage]
-  static final isSystemMessage =
-      QueryBooleanProperty<Message>(_entities[5].properties[14]);
-
-  /// see [Message.isServiceMessage]
-  static final isServiceMessage =
-      QueryBooleanProperty<Message>(_entities[5].properties[15]);
-
-  /// see [Message.isForward]
-  static final isForward =
-      QueryBooleanProperty<Message>(_entities[5].properties[16]);
-
-  /// see [Message.isArchived]
-  static final isArchived =
-      QueryBooleanProperty<Message>(_entities[5].properties[17]);
-
   /// see [Message.hasDdResults]
   static final hasDdResults =
-      QueryBooleanProperty<Message>(_entities[5].properties[18]);
-
-  /// see [Message.cacheRoomnames]
-  static final cacheRoomnames =
-      QueryStringProperty<Message>(_entities[5].properties[19]);
-
-  /// see [Message.isAudioMessage]
-  static final isAudioMessage =
-      QueryBooleanProperty<Message>(_entities[5].properties[20]);
+      QueryBooleanProperty<Message>(_entities[5].properties[12]);
 
   /// see [Message.datePlayed]
   static final datePlayed =
-      QueryIntegerProperty<Message>(_entities[5].properties[21]);
+      QueryIntegerProperty<Message>(_entities[5].properties[13]);
 
   /// see [Message.itemType]
   static final itemType =
-      QueryIntegerProperty<Message>(_entities[5].properties[22]);
+      QueryIntegerProperty<Message>(_entities[5].properties[14]);
 
   /// see [Message.groupTitle]
   static final groupTitle =
-      QueryStringProperty<Message>(_entities[5].properties[23]);
+      QueryStringProperty<Message>(_entities[5].properties[15]);
 
   /// see [Message.groupActionType]
   static final groupActionType =
-      QueryIntegerProperty<Message>(_entities[5].properties[24]);
-
-  /// see [Message.isExpired]
-  static final isExpired =
-      QueryBooleanProperty<Message>(_entities[5].properties[25]);
+      QueryIntegerProperty<Message>(_entities[5].properties[16]);
 
   /// see [Message.balloonBundleId]
   static final balloonBundleId =
-      QueryStringProperty<Message>(_entities[5].properties[26]);
+      QueryStringProperty<Message>(_entities[5].properties[17]);
 
   /// see [Message.associatedMessageGuid]
   static final associatedMessageGuid =
-      QueryStringProperty<Message>(_entities[5].properties[27]);
+      QueryStringProperty<Message>(_entities[5].properties[18]);
 
   /// see [Message.associatedMessageType]
   static final associatedMessageType =
-      QueryStringProperty<Message>(_entities[5].properties[28]);
+      QueryStringProperty<Message>(_entities[5].properties[19]);
 
   /// see [Message.expressiveSendStyleId]
   static final expressiveSendStyleId =
-      QueryStringProperty<Message>(_entities[5].properties[29]);
-
-  /// see [Message.timeExpressiveSendStyleId]
-  static final timeExpressiveSendStyleId =
-      QueryIntegerProperty<Message>(_entities[5].properties[30]);
+      QueryStringProperty<Message>(_entities[5].properties[20]);
 
   /// see [Message.hasAttachments]
   static final hasAttachments =
-      QueryBooleanProperty<Message>(_entities[5].properties[31]);
+      QueryBooleanProperty<Message>(_entities[5].properties[21]);
 
   /// see [Message.hasReactions]
   static final hasReactions =
-      QueryBooleanProperty<Message>(_entities[5].properties[32]);
+      QueryBooleanProperty<Message>(_entities[5].properties[22]);
 
   /// see [Message.dateDeleted]
   static final dateDeleted =
-      QueryIntegerProperty<Message>(_entities[5].properties[33]);
+      QueryIntegerProperty<Message>(_entities[5].properties[23]);
 
   /// see [Message.threadOriginatorGuid]
   static final threadOriginatorGuid =
-      QueryStringProperty<Message>(_entities[5].properties[34]);
+      QueryStringProperty<Message>(_entities[5].properties[24]);
 
   /// see [Message.threadOriginatorPart]
   static final threadOriginatorPart =
-      QueryStringProperty<Message>(_entities[5].properties[35]);
+      QueryStringProperty<Message>(_entities[5].properties[25]);
 
   /// see [Message.bigEmoji]
   static final bigEmoji =
-      QueryBooleanProperty<Message>(_entities[5].properties[36]);
+      QueryBooleanProperty<Message>(_entities[5].properties[26]);
 
   /// see [Message.error]
   static final error =
-      QueryIntegerProperty<Message>(_entities[5].properties[37]);
+      QueryIntegerProperty<Message>(_entities[5].properties[27]);
 
   /// see [Message.chat]
   static final chat =
-      QueryRelationToOne<Message, Chat>(_entities[5].properties[38]);
+      QueryRelationToOne<Message, Chat>(_entities[5].properties[28]);
 
   /// see [Message.dbAttributedBody]
   static final dbAttributedBody =
-      QueryStringProperty<Message>(_entities[5].properties[39]);
+      QueryStringProperty<Message>(_entities[5].properties[29]);
+
+  /// see [Message.associatedMessagePart]
+  static final associatedMessagePart =
+      QueryIntegerProperty<Message>(_entities[5].properties[30]);
 }
 
 /// [ScheduledMessage] entity fields to define ObjectBox queries.

@@ -61,7 +61,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     childOffsetY = offset.dy -
         (doNotIncreaseHeight
             ? 0
-            : widget.message.getReactions().isNotEmpty
+            : widget.message.reactions.isNotEmpty
                 ? 20.0
                 : 23.0);
     childSize = Size(
@@ -69,7 +69,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         size.height +
             (doNotIncreaseHeight
                 ? 0
-                : widget.message.getReactions().isNotEmpty
+                : widget.message.reactions.isNotEmpty
                     ? 20.0
                     : 23.0));
   }

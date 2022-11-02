@@ -105,7 +105,7 @@ class _WelcomePageState extends OptimizedState<WelcomePage> with TickerProviderS
                             autoplayEffect: false,
                             message: Message(
                               guid: "redacted-mode-demo",
-                              dateDelivered2: DateTime.now().toLocal(),
+                              dateDelivered: DateTime.now().toLocal(),
                               dateCreated: DateTime.now().toLocal(),
                               isFromMe: false,
                               hasReactions: true,
@@ -156,7 +156,7 @@ class _WelcomePageState extends OptimizedState<WelcomePage> with TickerProviderS
                               autoplayEffect: false,
                               message: Message(
                                 guid: "redacted-mode-demo-2",
-                                dateDelivered2: DateTime.now().toLocal(),
+                                dateDelivered: DateTime.now().toLocal(),
                                 dateCreated: DateTime.now().toLocal(),
                                 isFromMe: true,
                                 hasReactions: false,

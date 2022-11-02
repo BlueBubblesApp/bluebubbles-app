@@ -225,11 +225,11 @@ class MessageHelper {
             ? "You: "
             : "${message.handle?.displayName}: ";
     // If the item type is not 0, it's a group event
-    if (message.isGroupEvent()) {
+    if (message.isGroupEvent) {
       return sender + getGroupEventText(message);
     }
 
-    if (message.isInteractive()) {
+    if (message.isInteractive) {
       return "${sender}Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
@@ -264,7 +264,7 @@ class MessageHelper {
         String? verb = ReactionTypes.reactionToVerb[message.associatedMessageType];
         // we need to check balloonBundleId first because for some reason
         // game pigeon messages have the text "�"
-        if (associatedMessage.isInteractive()) {
+        if (associatedMessage.isInteractive) {
           return "$sender $verb ${getInteractiveText(associatedMessage)}";
           // now we check if theres a subject or text and construct out message based off that
         } else if (associatedMessage.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {

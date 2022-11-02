@@ -96,7 +96,7 @@ class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
 
       response = messages.map((e) {
         // grab attachments and associated messages
-        e.getRealAttachments();
+        e.realAttachments;
         e.fetchAssociatedMessages();
         final map = e.toMap(includeObjects: true);
         final chat = e.chat.target!;

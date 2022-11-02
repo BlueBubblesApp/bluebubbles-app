@@ -286,7 +286,7 @@ void sendEffectAction(
                                                 message,
                                                 true,
                                                 false,
-                                                message.isBigEmoji(),
+                                                message.isBigEmoji,
                                                 MessageWidgetMixin.buildMessageSpansAsync(context, message),
                                                 customColor: Theme.of(context).primaryColor,
                                                 effect: stringToMessageEffect[

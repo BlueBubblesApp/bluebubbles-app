@@ -315,7 +315,7 @@ class ConversationViewState extends State<ConversationView> {
                               message,
                               true,
                               false,
-                              message?.isBigEmoji() ?? false,
+                              message?.isBigEmoji ?? false,
                               MessageWidgetMixin.buildMessageSpansAsync(context, message),
                               customWidth: (message?.hasAttachments ?? false) &&
                                       (message?.text?.isEmpty ?? true) &&

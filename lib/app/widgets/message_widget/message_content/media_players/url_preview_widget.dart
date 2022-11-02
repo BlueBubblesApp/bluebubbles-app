@@ -187,7 +187,7 @@ class UrlPreviewWidget extends StatelessWidget {
                               padding: EdgeInsets.only(
                                   top: (controller.data.value?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
                               child: Text(
-                                message.fullText.isURL ? message.fullText : (Uri.tryParse(message.getUrl()!)?.host ?? ""),
+                                message.fullText.isURL ? message.fullText : (Uri.tryParse(message.url!)?.host ?? ""),
                                 style: context.theme.textTheme.labelMedium!.copyWith(
                                     fontWeight: FontWeight.normal, color: context.theme.colorScheme.outline),
                                 overflow: TextOverflow.clip,

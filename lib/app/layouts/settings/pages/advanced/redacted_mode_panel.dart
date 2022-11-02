@@ -56,7 +56,7 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with The
                     autoplayEffect: false,
                     message: Message(
                       guid: "redacted-mode-demo",
-                      dateDelivered2: DateTime.now().toLocal(),
+                      dateDelivered: DateTime.now().toLocal(),
                       dateCreated: DateTime.now().toLocal(),
                       isFromMe: false,
                       hasReactions: true,

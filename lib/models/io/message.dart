@@ -11,11 +11,9 @@ import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/general_utils.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
-import 'package:crypto/crypto.dart' as crypto;
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +23,7 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
 
-/// Async method to fetch attachments;
+/// Async method to fetch attachments
 class GetMessageAttachments extends AsyncTask<List<dynamic>, Map<String, List<Attachment?>>> {
   final List<dynamic> stuff;
 
@@ -252,8 +250,6 @@ class BulkSaveNewMessages extends AsyncTask<List<dynamic>, List<Message>> {
   }
 }
 
-enum LineType { meToMe, otherToMe, meToOther, otherToOther }
-
 @Entity()
 class Message {
   int? id;
@@ -267,25 +263,17 @@ class Message {
   String? country;
   DateTime? dateCreated;
   bool? isFromMe;
-  bool? isDelayed;
-  bool? isAutoReply;
-  bool? isSystemMessage;
-  bool? isServiceMessage;
-  bool? isForward;
-  bool? isArchived;
+  // Data detector results
   bool? hasDdResults;
-  String? cacheRoomnames;
-  bool? isAudioMessage;
   DateTime? datePlayed;
   int? itemType;
   String? groupTitle;
   int? groupActionType;
-  bool? isExpired;
   String? balloonBundleId;
   String? associatedMessageGuid;
+  int? associatedMessagePart;
   String? associatedMessageType;
   String? expressiveSendStyleId;
-  DateTime? timeExpressiveSendStyleId;
   Handle? handle;
   bool hasAttachments;
   bool hasReactions;
@@ -315,168 +303,107 @@ class Message {
 
   final chat = ToOne<Chat>();
 
-  String? get dbAttributedBody => attributedBody == null ? null : jsonEncode(attributedBody!.map((e) => e.toMap()).toList());
-  set dbAttributedBody(String? json) => attributedBody = json == null ? null : (jsonDecode(json) as List).map((e) => AttributedBody.fromMap(e)).toList();
+  String? get dbAttributedBody => attributedBody == null
+      ? null : jsonEncode(attributedBody!.map((e) => e.toMap()).toList());
+  set dbAttributedBody(String? json) => attributedBody = json == null
+      ? null : (jsonDecode(json) as List).map((e) => AttributedBody.fromMap(e)).toList();
 
-  Message(
-      {this.id,
-      this.originalROWID,
-      this.guid,
-      this.handleId,
-      this.otherHandle,
-      this.text,
-      this.subject,
-      this.country,
-      int? error2,
-      this.dateCreated,
-      DateTime? dateRead2,
-      DateTime? dateDelivered2,
-      this.isFromMe = true,
-      this.isDelayed = false,
-      this.isAutoReply = false,
-      this.isSystemMessage = false,
-      this.isServiceMessage = false,
-      this.isForward = false,
-      this.isArchived = false,
-      this.hasDdResults = false,
-      this.cacheRoomnames,
-      this.isAudioMessage = false,
-      this.datePlayed,
-      this.itemType = 0,
-      this.groupTitle,
-      this.groupActionType = 0,
-      this.isExpired = false,
-      this.balloonBundleId,
-      this.associatedMessageGuid,
-      this.associatedMessageType,
-      this.expressiveSendStyleId,
-      this.timeExpressiveSendStyleId,
-      this.handle,
-      this.hasAttachments = false,
-      this.hasReactions = false,
-      this.attachments = const [],
-      this.associatedMessages = const [],
-      this.dateDeleted,
-      this.metadata,
-      this.threadOriginatorGuid,
-      this.threadOriginatorPart,
-      this.attributedBody}) {
-    if (error2 != null) _error.value = error2;
-    if (dateRead2 != null) _dateRead.value = dateRead2;
-    if (dateDelivered2 != null) _dateDelivered.value = dateDelivered2;
-    if (attachments == const []) attachments = [];
-    if (associatedMessages == const []) associatedMessages = [];
-  }
-
-  String get fullText {
-    String fullText = subject ?? "";
-    if (fullText.isNotEmpty) {
-      fullText += "\n";
-    }
-
-    fullText += text ?? "";
-
-    return sanitizeString(fullText);
+  Message({
+    this.id,
+    this.originalROWID,
+    this.guid,
+    this.handleId,
+    this.otherHandle,
+    this.text,
+    this.subject,
+    this.country,
+    int? error,
+    this.dateCreated,
+    DateTime? dateRead,
+    DateTime? dateDelivered,
+    this.isFromMe = true,
+    this.hasDdResults = false,
+    this.datePlayed,
+    this.itemType = 0,
+    this.groupTitle,
+    this.groupActionType = 0,
+    this.balloonBundleId,
+    this.associatedMessageGuid,
+    this.associatedMessagePart,
+    this.associatedMessageType,
+    this.expressiveSendStyleId,
+    this.handle,
+    this.hasAttachments = false,
+    this.hasReactions = false,
+    this.attachments = const [],
+    this.associatedMessages = const [],
+    this.dateDeleted,
+    this.metadata,
+    this.threadOriginatorGuid,
+    this.threadOriginatorPart,
+    this.attributedBody}) {
+      if (error != null) _error.value = error;
+      if (dateRead != null) _dateRead.value = dateRead;
+      if (dateDelivered != null) _dateDelivered.value = dateDelivered;
+      if (attachments == const []) attachments = [];
+      if (associatedMessages == const []) associatedMessages = [];
   }
 
   factory Message.fromMap(Map<String, dynamic> json) {
-    bool hasAttachments = false;
-    if (json.containsKey("hasAttachments")) {
-      hasAttachments = json["hasAttachments"] == 1 ? true : false;
-    } else if (json.containsKey("attachments")) {
-      hasAttachments = (json['attachments'] as List).isNotEmpty ? true : false;
-    }
+    final attachments = (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a)).toList();
 
-    List<Attachment> attachments =
-        json.containsKey("attachments") ? (json['attachments'] as List).map((a) => Attachment.fromMap(a)).toList() : [];
     List<AttributedBody>? attributedBody;
-    if (json.containsKey("attributedBody") && json["attributedBody"] != null) {
+    if (json["attributedBody"] != null) {
       if (json['attributedBody'] is Map) {
         json['attributedBody'] = [json['attributedBody']];
       }
-
       attributedBody = (json['attributedBody'] as List).map((a) => AttributedBody.fromMap(a)).toList();
     }
 
-    // Load the metadata
-    dynamic metadata = json.containsKey("metadata") ? json["metadata"] : null;
-    if (!isNullOrEmpty(metadata)!) {
-      // If the metadata is a string, convert it to JSON
-      if (metadata is String) {
+    Map<String, dynamic> metadata = {};
+    if (!isNullOrEmpty(json["metadata"])!) {
+      if (json["metadata"] is String) {
         try {
-          metadata = jsonDecode(metadata);
+          metadata = jsonDecode(json["metadata"]);
         } catch (_) {}
-      }
-    }
-
-    String? associatedMessageGuid;
-    if (json.containsKey("associatedMessageGuid") && json["associatedMessageGuid"] != null) {
-      if ((json["associatedMessageGuid"] as String).contains("/")) {
-        associatedMessageGuid = (json["associatedMessageGuid"] as String).split("/").last;
       } else {
-        associatedMessageGuid = (json["associatedMessageGuid"] as String).split(":").last;
+        metadata = json["metadata"];
       }
     }
 
-    var data = Message(
-      id: json.containsKey("ROWID") ? json["ROWID"] : null,
-      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
+    return Message(
+      id: json["ROWID"] ?? json['id'],
+      originalROWID: json["originalROWID"],
       guid: json["guid"],
-      handleId: (json["handleId"] != null) ? json["handleId"] : 0,
-      otherHandle: (json["otherHandle"] != null) ? json["otherHandle"] : null,
+      handleId: json["handleId"] ?? 0,
+      otherHandle: json["otherHandle"],
       text: sanitizeString(json["text"] ?? attributedBody?.first.string),
-      subject: json.containsKey("subject") ? json["subject"] : null,
-      country: json.containsKey("country") ? json["country"] : null,
-      error2: json.containsKey("_error") ? json["_error"] : 0,
-      dateCreated: json.containsKey("dateCreated") ? parseDate(json["dateCreated"]) : null,
-      dateRead2: json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
-      dateDelivered2: json.containsKey("dateDelivered") ? parseDate(json["dateDelivered"]) : null,
+      subject: json["subject"],
+      country: json["country"],
+      error: json["_error"] ?? 0,
+      dateCreated: parseDate(json["dateCreated"]),
+      dateRead: parseDate(json["dateRead"]),
+      dateDelivered: parseDate(json["dateDelivered"]),
       isFromMe: (json["isFromMe"] is bool) ? json['isFromMe'] : ((json['isFromMe'] == 1) ? true : false),
-      isDelayed: (json["isDelayed"] is bool) ? json['isDelayed'] : ((json['isDelayed'] == 1) ? true : false),
-      isAutoReply: (json["isAutoReply"] is bool) ? json['isAutoReply'] : ((json['isAutoReply'] == 1) ? true : false),
-      isSystemMessage:
-          (json["isSystemMessage"] is bool) ? json['isSystemMessage'] : ((json['isSystemMessage'] == 1) ? true : false),
-      isServiceMessage: (json["isServiceMessage"] is bool)
-          ? json['isServiceMessage']
-          : ((json['isServiceMessage'] == 1) ? true : false),
-      isForward: (json["isForward"] is bool) ? json['isForward'] : ((json['isForward'] == 1) ? true : false),
-      isArchived: (json["isArchived"] is bool) ? json['isArchived'] : ((json['isArchived'] == 1) ? true : false),
-      hasDdResults:
-          (json["hasDdResults"] is bool) ? json['hasDdResults'] : ((json['hasDdResults'] == 1) ? true : false),
-      cacheRoomnames: json.containsKey("cacheRoomnames") ? json["cacheRoomnames"] : null,
-      isAudioMessage:
-          (json["isAudioMessage"] is bool) ? json['isAudioMessage'] : ((json['isAudioMessage'] == 1) ? true : false),
-      datePlayed: json.containsKey("datePlayed") ? parseDate(json["datePlayed"]) : null,
-      itemType: json.containsKey("itemType") ? json["itemType"] : null,
-      groupTitle: json.containsKey("groupTitle") ? json["groupTitle"] : null,
-      groupActionType: (json["groupActionType"] != null) ? json["groupActionType"] : 0,
-      isExpired: (json["isExpired"] is bool) ? json['isExpired'] : ((json['isExpired'] == 1) ? true : false),
-      balloonBundleId: json.containsKey("balloonBundleId") ? json["balloonBundleId"] : null,
-      associatedMessageGuid: associatedMessageGuid,
-      associatedMessageType: json.containsKey("associatedMessageType") ? json["associatedMessageType"] : null,
-      expressiveSendStyleId: json.containsKey("expressiveSendStyleId") ? json["expressiveSendStyleId"] : null,
-      timeExpressiveSendStyleId: json.containsKey("timeExpressiveSendStyleId")
-          ? DateTime.tryParse(json["timeExpressiveSendStyleId"].toString())?.toLocal()
-          : null,
-      handle: json.containsKey("handle") ? (json['handle'] != null ? Handle.fromMap(json['handle']) : null) : null,
-      hasAttachments: hasAttachments,
-      attachments: attachments,
+      datePlayed: parseDate(json["datePlayed"]),
+      itemType: json["itemType"],
+      groupTitle: json["groupTitle"],
+      groupActionType: json["groupActionType"] ?? 0,
+      balloonBundleId: json["balloonBundleId"],
+      associatedMessageGuid: json["associatedMessageGuid"].toString().split("/").last,
+      associatedMessagePart: int.tryParse(json["associatedMessageGuid"].toString().replaceAll("p:", "").split("/").first),
+      associatedMessageType: json["associatedMessageType"],
+      expressiveSendStyleId: json["expressiveSendStyleId"],
+      handle: json['handle'] != null ? Handle.fromMap(json['handle']) : null,
+      hasAttachments: attachments.isNotEmpty || json['hasAttachments'] == true,
+      attachments: (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a)).toList(),
       hasReactions: json.containsKey('hasReactions') ? ((json['hasReactions'] == 1) ? true : false) : false,
-      dateDeleted: json.containsKey("dateDeleted") ? parseDate(json["dateDeleted"]) : null,
+      dateDeleted: parseDate(json["dateDeleted"]),
       metadata: metadata is String ? null : metadata,
-      threadOriginatorGuid: json.containsKey('threadOriginatorGuid') ? json['threadOriginatorGuid'] : null,
-      threadOriginatorPart: json.containsKey('threadOriginatorPart') ? json['threadOriginatorPart'] : null,
-      attributedBody: attributedBody
+      threadOriginatorGuid: json['threadOriginatorGuid'],
+      threadOriginatorPart: json['threadOriginatorPart'],
+      attributedBody: attributedBody,
     );
-
-    // Adds fallback getter for the ID
-    data.id ??= json.containsKey("id") ? json["id"] : null;
-
-    return data;
-  }
-
-  static int count() {
-    return messageBox.count();
   }
 
   /// Save a single message - prefer [bulkSave] for multiple messages rather
@@ -595,36 +522,16 @@ class Message {
   }
 
   /// Replace a temp message with the message from the server
-  static Future<Message> replaceMessage(String? oldGuid, Message newMessage,
-      {bool awaitNewMessageEvent = true, Chat? chat}) async {
+  static Future<Message> replaceMessage(String? oldGuid, Message newMessage) async {
     Message? existing = Message.findOne(guid: oldGuid);
-
-    // Create or wait for the new message
-    if (existing == null || existing.handleId == null || (existing.handle == null && (existing.handleId ?? 0) > 0)) {
-      // If we want to "await" the new message event, wait 500 milliseconds and then see if the message exists in the database
-      // This is not actually awaiting the event, just the milliseconds.
-      if (awaitNewMessageEvent) {
-        await Future.delayed(Duration(milliseconds: 500));
-        return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false, chat: chat);
-      }
-
-      // If we have a chat and the message doesn't exist, let's add the message as new
-      if (chat != null) {
-        await chat.addMessage(newMessage);
-        return newMessage;
-      } else {
-        // If we don't have a chat, we just want to add the message
-        newMessage.save();
-        return newMessage;
-      }
+    if (existing == null) {
+      throw Exception("Cannot replace on a null existing message!!");
     }
 
-    // This is what happens whenever the existing message already exists.
     // We just need to update the timestamps & error
     if (existing.guid != newMessage.guid) {
       existing.guid = newMessage.guid;
     }
-
     existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
     existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
     existing._error.value = newMessage._error.value;
@@ -632,11 +539,9 @@ class Message {
     try {
       messageBox.put(existing, mode: PutMode.update);
     } catch (ex) {
-      Logger.error(
-          'Failed to replace message! This is likely due to a unique constraint being violated. See error below:');
+      Logger.error('Failed to replace message! This is likely due to a unique constraint being violated. See error below:');
       Logger.error(ex.toString());
     }
-
     return existing;
   }
 
@@ -656,11 +561,10 @@ class Message {
   /// Fetch attachments for a single message. Prefer using [fetchAttachmentsByMessages]
   /// or [fetchAttachmentsByMessagesAsync] when working with a list of messages.
   List<Attachment?>? fetchAttachments({ChatLifecycleManager? currentChat}) {
-    if (kIsWeb || (hasAttachments && attachments.isNotEmpty)) {
+    if (attachments.isNotEmpty) {
       return attachments;
     }
 
-    if (id == null) return [];
     return store.runInTransaction(TxMode.read, () {
       attachments = dbAttachments;
       return attachments;
@@ -715,19 +619,6 @@ class Message {
     return null;
   }
 
-  /// Find the date of the latest message in the DB
-  static DateTime? lastMessageDate() {
-    if (kIsWeb) return null;
-    final query = (messageBox.query()
-          ..order(Message_.dateCreated, flags: Order.descending)
-          ..order(Message_.originalROWID, flags: Order.descending))
-        .build();
-    query.limit = 1;
-    final messages = query.find();
-    query.close();
-    return messages.isEmpty ? null : messages.first.dateCreated;
-  }
-
   /// Find a list of messages by the specified condition, or return all messages
   /// when no condition is specified
   static List<Message> find({Condition<Message>? cond}) {
@@ -755,69 +646,28 @@ class Message {
     toDelete?.save();
   }
 
-  static void flush() {
-    if (kIsWeb) return;
-    messageBox.removeAll();
-  }
+  String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)!).join("\n"));
 
-  bool isUrlPreview() {
-    // first condition is for macOS < 11 and second condition is for macOS >= 11
-    return (balloonBundleId != null && balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!) ||
-        (hasDdResults! && (text ?? "").replaceAll("\n", " ").hasUrl);
-  }
+  // first condition is for macOS < 11 and second condition is for macOS >= 11
+  bool get isUrlPreview => (balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!)
+      || (hasDdResults! && (text ?? "").trim().hasUrl);
 
-  String? getUrl() {
-    if (text == null) return null;
-    List<String> splits = text!.replaceAll("\n", " ").split(" ");
-    return splits.firstWhereOrNull((String element) => element.hasUrl);
-  }
+  String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
 
-  bool isInteractive() {
-    return balloonBundleId != null && balloonBundleId != "com.apple.messages.URLBalloonProvider";
-  }
+  bool get isInteractive => balloonBundleId != null && !isUrlPreview;
 
-  bool hasText({stripWhitespace = false}) {
-    return !isEmptyString(fullText, stripWhitespace: stripWhitespace);
-  }
+  bool get isGroupEvent => fullText.isEmpty && !isInteractive && (itemType != null || groupActionType != null);
 
-  bool isGroupEvent() {
-    return isEmptyString(fullText) &&
-        (!hasAttachments || (itemType == 3 && groupActionType == 1)) &&
-        balloonBundleId == null;
-  }
+  bool get isBigEmoji => bigEmoji ?? MessageHelper.shouldShowBigEmoji(fullText);
 
-  bool isBigEmoji() {
-    // We are checking the variable first because we want to
-    // avoid processing twice for this as it won't change
-    bigEmoji ??= MessageHelper.shouldShowBigEmoji(fullText);
+  List<Attachment> get realAttachments => attachments.where((e) => e != null && e.mimeType != null).cast<Attachment>().toList();
 
-    return bigEmoji!;
-  }
+  List<Attachment> get previewAttachments => attachments.where((e) => e != null && e.mimeType == null).cast<Attachment>().toList();
 
-  List<Attachment?> getRealAttachments() {
-    return attachments.where((item) => item!.mimeType != null).toList();
-  }
-
-  List<Attachment?> getPreviewAttachments() {
-    return attachments.where((item) => item!.mimeType == null).toList();
-  }
-
-  List<Message> getReactions() {
-    return associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", ""))).toList();
-  }
+  List<Message> get reactions => associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", ""))).toList();
 
   void generateTempGuid() {
-    List<String> unique = [text ?? "", dateCreated?.millisecondsSinceEpoch.toString() ?? ""];
-
-    String preHashed;
-    if (unique.every((element) => element.trim().isEmpty)) {
-      preHashed = randomString(8);
-    } else {
-      preHashed = unique.join(":");
-    }
-
-    String hashed = crypto.sha1.convert(utf8.encode(preHashed)).toString();
-    guid = "temp-$hashed";
+    guid = "temp-${randomString(8)}";
   }
 
   /// Find how many messages exist in the DB for a chat
@@ -905,7 +755,7 @@ class Message {
               .fold(0, (p, e) => max(p, (e ?? ns.width(context) / 2).toDouble())));
     }
     // initialize constraints for text rendering
-    final fontSizeFactor = isBigEmoji() ? bigEmojiScaleFactor : 1.0;
+    final fontSizeFactor = isBigEmoji ? bigEmojiScaleFactor : 1.0;
     final constraints = BoxConstraints(
       maxWidth: maxWidthOverride ?? ns.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
       minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodySmall!.fontSize! * fontSizeFactor,
@@ -925,7 +775,7 @@ class Message {
       size = Size(size.width + 28, size.height);
     }
     // if we have a URL preview, extend to the full width
-    if (isUrlPreview()) {
+    if (isUrlPreview) {
       size = Size(ns.width(context) * 2 / 3 - 30, size.height);
     }
     // if we have reactions, account for the extra height they add
@@ -1031,31 +881,6 @@ class Message {
     return existing;
   }
 
-  /// Checks if Message [b] is newer than Message [a], based on date
-  static bool isNewer(Message a, Message b) {
-    if (a.id == null && b.id != null) return true;
-
-    // Check all date created cases
-    if (a.dateCreated == null && b.dateCreated != null) return true;
-    if (a.dateCreated != null && b.dateCreated == null) return false;
-    if (a.dateCreated!.millisecondsSinceEpoch < b.dateCreated!.millisecondsSinceEpoch) return true;
-    if (a.dateCreated!.millisecondsSinceEpoch > b.dateCreated!.millisecondsSinceEpoch) return false;
-
-    // Check all date delivered cases
-    if (a.dateDelivered == null && b.dateDelivered != null) return true;
-    if (a.dateDelivered != null && b.dateDelivered == null) return false;
-    if (a.dateDelivered!.millisecondsSinceEpoch < b.dateDelivered!.millisecondsSinceEpoch) return true;
-    if (a.dateDelivered!.millisecondsSinceEpoch > b.dateDelivered!.millisecondsSinceEpoch) return false;
-
-    // Check all date read cases
-    if (a.dateRead == null && b.dateRead != null) return true;
-    if (a.dateRead != null && b.dateRead == null) return false;
-    if (a.dateRead!.millisecondsSinceEpoch < b.dateRead!.millisecondsSinceEpoch) return true;
-    if (a.dateRead!.millisecondsSinceEpoch > b.dateRead!.millisecondsSinceEpoch) return false;
-
-    return false;
-  }
-
   Map<String, dynamic> toMap({bool includeObjects = false}) {
     final map = {
       "ROWID": id,
@@ -1067,34 +892,24 @@ class Message {
       "subject": subject,
       "country": country,
       "_error": _error.value,
-      "dateCreated": (dateCreated == null) ? null : dateCreated!.millisecondsSinceEpoch,
-      "dateRead": (_dateRead.value == null) ? null : _dateRead.value!.millisecondsSinceEpoch,
-      "dateDelivered": (_dateDelivered.value == null) ? null : _dateDelivered.value!.millisecondsSinceEpoch,
-      "isFromMe": isFromMe! ? 1 : 0,
-      "isDelayed": isDelayed! ? 1 : 0,
-      "isAutoReply": isAutoReply! ? 1 : 0,
-      "isSystemMessage": isSystemMessage! ? 1 : 0,
-      "isServiceMessage": isServiceMessage! ? 1 : 0,
-      "isForward": isForward! ? 1 : 0,
-      "isArchived": isArchived! ? 1 : 0,
-      "hasDdResults": hasDdResults! ? 1 : 0,
-      "cacheRoomnames": cacheRoomnames,
-      "isAudioMessage": isAudioMessage! ? 1 : 0,
-      "datePlayed": (datePlayed == null) ? null : datePlayed!.millisecondsSinceEpoch,
+      "dateCreated": dateCreated?.millisecondsSinceEpoch,
+      "dateRead": _dateRead.value?.millisecondsSinceEpoch,
+      "dateDelivered":  _dateDelivered.value?.millisecondsSinceEpoch,
+      "isFromMe": isFromMe!,
+      "hasDdResults": hasDdResults!,
+      "datePlayed": datePlayed?.millisecondsSinceEpoch,
       "itemType": itemType,
       "groupTitle": groupTitle,
       "groupActionType": groupActionType,
-      "isExpired": isExpired! ? 1 : 0,
       "balloonBundleId": balloonBundleId,
       "associatedMessageGuid": associatedMessageGuid,
+      "associatedMessagePart": associatedMessagePart,
       "associatedMessageType": associatedMessageType,
       "expressiveSendStyleId": expressiveSendStyleId,
-      "timeExpressiveSendStyleId":
-          (timeExpressiveSendStyleId == null) ? null : timeExpressiveSendStyleId!.millisecondsSinceEpoch,
-      "handle": (handle != null) ? handle!.toMap() : null,
-      "hasAttachments": hasAttachments ? 1 : 0,
-      "hasReactions": hasReactions ? 1 : 0,
-      "dateDeleted": (dateDeleted == null) ? null : dateDeleted!.millisecondsSinceEpoch,
+      "handle": handle?.toMap(),
+      "hasAttachments": hasAttachments,
+      "hasReactions": hasReactions,
+      "dateDeleted": dateDeleted?.millisecondsSinceEpoch,
       "metadata": jsonEncode(metadata),
       "threadOriginatorGuid": threadOriginatorGuid,
       "threadOriginatorPart": threadOriginatorPart,

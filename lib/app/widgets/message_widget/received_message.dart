@@ -208,23 +208,23 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         opacity = 1;
       });
     }
-    double topPadding = widget.message.getReactions().isNotEmpty && !widget.message.hasAttachments
+    double topPadding = widget.message.reactions.isNotEmpty && !widget.message.hasAttachments
         ? 18
         : (widget.message.isFromMe != widget.olderMessage?.isFromMe && skin.value != Skins.Samsung)
             ? 5.0
             : 0;
 
     late final Widget child;
-    if (message.isBigEmoji()) {
+    if (message.isBigEmoji) {
       final bool hideContent =
           ss.settings.redactedMode.value && ss.settings.hideEmojis.value;
 
-      bool hasReactions = message.getReactions().isNotEmpty;
+      bool hasReactions = message.reactions.isNotEmpty;
       child = Padding(
         padding: EdgeInsets.only(
           left: cm.activeChat?.chat.isGroup() ?? false ? 5.0 : 0.0,
           right: (hasReactions) ? 15.0 : 0.0,
-          top: widget.message.getReactions().isNotEmpty ? 15 : 0,
+          top: widget.message.reactions.isNotEmpty ? 15 : 0,
         ),
         child: hideContent
             ? ClipRRect(
@@ -578,7 +578,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     }
 
     // Second, add the attachments
-    if (widget.message.getRealAttachments().isNotEmpty) {
+    if (widget.message.realAttachments.isNotEmpty) {
       messageColumn.add(
         MessageWidgetMixin.addStickersToWidget(
           message: MessageWidgetMixin.addReactionsToWidget(
@@ -594,9 +594,9 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // Third, let's add the actual message we want to show
     Widget? message;
-    if (widget.message.isInteractive()) {
+    if (widget.message.isInteractive) {
       message = Padding(padding: EdgeInsets.only(left: 10.0), child: BalloonBundleWidget(message: widget.message));
-    } else if (widget.message.hasText()) {
+    } else if (widget.message.fullText.isNotEmpty) {
       message = _buildMessageWithTail(widget.message, stringToMessageEffect[effect] ?? MessageEffect.none);
       if (widget.message.fullText.replaceAll("\n", " ").hasUrl) {
         message = widget.message.fullText.isURL
@@ -668,7 +668,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                           messageWidget: SizedBox(key: showReplies ? key : null, child: message!),
                           reactions: widget.reactionsWidget,
                           message: widget.message,
-                          shouldShow: widget.message.getRealAttachments().isEmpty),
+                          shouldShow: widget.message.realAttachments.isEmpty),
                       stickers: widget.stickersWidget,
                       isFromMe: widget.message.isFromMe!,
                     ),
@@ -704,7 +704,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               messageWidget: SizedBox(child: message),
               reactions: widget.reactionsWidget,
               message: widget.message,
-              shouldShow: widget.message.getRealAttachments().isEmpty),
+              shouldShow: widget.message.realAttachments.isEmpty),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe!,
         ),);
@@ -715,7 +715,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 messageWidget: SizedBox(key: showReplies ? key : null, child: message),
                 reactions: widget.reactionsWidget,
                 message: widget.message,
-                shouldShow: widget.message.getRealAttachments().isEmpty),
+                shouldShow: widget.message.realAttachments.isEmpty),
             stickers: widget.stickersWidget,
             isFromMe: widget.message.isFromMe!,
           ),
@@ -725,7 +725,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               messageWidget: SizedBox(child: message),
               reactions: widget.reactionsWidget,
               message: widget.message,
-              shouldShow: widget.message.getRealAttachments().isEmpty),
+              shouldShow: widget.message.realAttachments.isEmpty),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe!,
         ),);
