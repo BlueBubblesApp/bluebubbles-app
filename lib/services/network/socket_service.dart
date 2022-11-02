@@ -31,7 +31,7 @@ class SocketService extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    startSocket();    
+    startSocket();
   }
 
   @override
@@ -41,6 +41,7 @@ class SocketService extends GetxService {
   }
   
   void startSocket() {
+    if (serverAddress == null) return;
     OptionBuilder options = OptionBuilder()
         .setQuery({"guid": encodeUri(password)})
         .setTransports(['websocket', 'polling'])
