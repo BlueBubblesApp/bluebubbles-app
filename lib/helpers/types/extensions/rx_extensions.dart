@@ -1,37 +1,16 @@
-import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-extension UrlParsing on String {
-  bool get hasUrl => urlRegex.hasMatch(this) && !kIsWeb;
-}
-
-extension MessageErrorExtension on MessageError {
-  static const codes = {
-    MessageError.NO_ERROR: 0,
-    MessageError.TIMEOUT: 4,
-    MessageError.NO_CONNECTION: 1000,
-    MessageError.BAD_REQUEST: 1001,
-    MessageError.SERVER_ERROR: 1002,
-  };
-
-  int get code => codes[this]!;
-}
-
-extension EffectHelper on MessageEffect {
-  bool get isBubble => this == MessageEffect.slam || this == MessageEffect.loud || this == MessageEffect.gentle || this == MessageEffect.invisibleInk;
-
-  bool get isScreen => !isBubble && this != MessageEffect.none;
-}
-
-Indicator shouldShow(Message? latestMessage) {
-  if (!(latestMessage?.isFromMe ?? false)) return Indicator.NONE;
-  if (latestMessage?.dateRead != null) return Indicator.READ;
-  if (latestMessage?.dateDelivered != null) return Indicator.DELIVERED;
-  if (latestMessage?.dateCreated != null) return Indicator.SENT;
-  return Indicator.NONE;
+/// this extensions allows us to update an RxMap without re-rendering UI
+/// (to avoid getting the markNeedsBuild exception)
+extension ConditionlAdd on RxMap {
+  void conditionalAdd(Object? key, Object? value, bool shouldRefresh) {
+    // ignore this warning, for some reason value is a protected member
+    // ignore: invalid_use_of_protected_member
+    this.value[key] = value;
+    if (shouldRefresh) refresh();
+  }
 }
 
 extension ChatListHelpers on RxList<Chat> {

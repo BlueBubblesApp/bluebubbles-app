@@ -1,12 +1,9 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/models/extensions.dart';
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/html/attachment.dart';
 import 'package:bluebubbles/models/html/handle.dart';
 import 'package:bluebubbles/models/html/message.dart';
@@ -339,7 +336,7 @@ class Chat {
     // If the message is for adding or removing participants,
     // we need to ensure that all of the chat participants are correct by syncing with the server
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-    if (isParticipantEvent(message) && checkForMessageText) {
+    if (MessageHelper.isParticipantEvent(message) && checkForMessageText) {
       serverSyncParticipants();
     }
 

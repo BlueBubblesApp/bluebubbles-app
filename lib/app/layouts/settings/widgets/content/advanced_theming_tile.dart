@@ -1,6 +1,6 @@
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';

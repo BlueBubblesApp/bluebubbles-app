@@ -1,8 +1,8 @@
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
@@ -55,7 +55,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         (ss.settings.alwaysShowAvatars.value || (cm.activeChat?.chat.isGroup ?? false));
     bool doNotIncreaseHeight = ((widget.message.isFromMe ?? false) ||
         !(cm.activeChat?.chat.isGroup ?? false) ||
-        !sameSender(widget.message, widget.olderMessage) ||
+        !MessageHelper.sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
 
     childOffsetY = offset.dy -

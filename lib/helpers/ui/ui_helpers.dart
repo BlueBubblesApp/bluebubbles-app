@@ -1,5 +1,8 @@
-import 'package:bluebubbles/helpers/models/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'dart:async';
+import 'dart:math';
+import 'dart:ui' as ui;
+
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,6 +10,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:image/image.dart' as img;
+import 'package:path/path.dart';
+import 'package:universal_io/io.dart';
 
 Widget buildBackButton(BuildContext context,
     {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, bool Function()? callback}) {
@@ -269,4 +275,290 @@ IconData getAttachmentIcon(String mimeType) {
   return ss.settings.skin.value == Skins.iOS
       ? CupertinoIcons.arrow_up_right_square
       : Icons.open_in_new;
+}
+
+void showSnackbar(String title, String message,
+    {int animationMs = 250, int durationMs = 1500, Function(GetBar)? onTap, TextButton? button}) {
+  Get.snackbar(title, message,
+      snackPosition: SnackPosition.BOTTOM,
+      colorText: Get.theme.colorScheme.onInverseSurface,
+      backgroundColor: Get.theme.colorScheme.inverseSurface,
+      margin: EdgeInsets.only(bottom: 10),
+      maxWidth: Get.width - 20,
+      isDismissible: false,
+      duration: Duration(milliseconds: durationMs),
+      animationDuration: Duration(milliseconds: animationMs),
+      mainButton: button,
+      onTap: onTap ??
+              (GetBar bar) {
+            if (Get.isSnackbarOpen ?? false) Get.back();
+          });
+}
+
+Widget getIndicatorIcon(SocketState socketState, {double size = 24, bool showAlpha = true}) {
+  return Obx(() {
+    if (ss.settings.colorblindMode.value) {
+      if (socketState == SocketState.connecting) {
+        return Icon(Icons.cloud_upload, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
+      } else if (socketState == SocketState.connected) {
+        return Icon(Icons.cloud_done, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
+      } else {
+        return Icon(Icons.cloud_off, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
+      }
+    } else {
+      if (socketState == SocketState.connecting) {
+        return Icon(Icons.fiber_manual_record, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
+      } else if (socketState == SocketState.connected) {
+        return Icon(Icons.fiber_manual_record, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
+      } else {
+        return Icon(Icons.fiber_manual_record, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
+      }
+    }
+  });
+}
+
+Color getIndicatorColor(SocketState socketState) {
+  if (socketState == SocketState.connecting) {
+    return HexColor('ffd500');
+  } else if (socketState == SocketState.connected) {
+    return HexColor('32CD32');
+  } else {
+    return HexColor('DC143C');
+  }
+}
+
+Future<Uint8List> avatarAsBytes({
+  required String chatGuid,
+  required bool isGroup,
+  List<Handle>? participants,
+  double quality = 256,
+}) async {
+  ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  Canvas canvas = Canvas(pictureRecorder);
+
+  await paintGroupAvatar(chatGuid: chatGuid, participants: participants, canvas: canvas, size: quality);
+
+  ui.Picture picture = pictureRecorder.endRecording();
+  ui.Image image = await picture.toImage(quality.toInt(), quality.toInt());
+
+  Uint8List bytes = (await image.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List();
+
+  return bytes;
+}
+
+Future<void> paintGroupAvatar({
+  required String chatGuid,
+  required List<Handle>? participants,
+  required Canvas canvas,
+  required double size,
+}) async {
+  if (kIsDesktop) {
+    String customPath = join(fs.appDocDir.path, "avatars", chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
+
+    if (await File(customPath).exists()) {
+      Uint8List? customAvatar = await circularize(await File(customPath).readAsBytes(), size: size.toInt());
+      if (customAvatar != null) {
+        canvas.drawImage(await loadImage(customAvatar), Offset(0, 0), Paint());
+        return;
+      }
+    }
+  }
+
+  if (participants == null) return;
+  int maxAvatars = ss.settings.maxAvatarsInGroupWidget.value;
+
+  if (participants.length == 1) {
+    await paintAvatar(
+      chatGuid: chatGuid,
+      handle: participants.first,
+      canvas: canvas,
+      offset: Offset(0, 0),
+      size: size,
+    );
+    return;
+  }
+
+  Paint paint = Paint()..color = (Get.context?.theme.colorScheme.secondary ?? HexColor("928E8E")).withOpacity(0.6);
+  canvas.drawCircle(Offset(size * 0.5, size * 0.5), size * 0.5, paint);
+
+  int realAvatarCount = min(participants.length, maxAvatars);
+
+  for (int index = 0; index < realAvatarCount; index++) {
+    double padding = size * 0.08;
+    double angle = index / realAvatarCount * 2 * pi + pi * 0.25;
+    double adjustedWidth = size * (-0.07 * realAvatarCount + 1);
+    double innerRadius = size - adjustedWidth * 0.5 - 2 * padding;
+    double realSize = adjustedWidth * 0.65;
+    double top = size * 0.5 + (innerRadius * 0.5) * sin(angle + pi) - realSize * 0.5;
+    double left = size * 0.5 - (innerRadius * 0.5) * cos(angle + pi) - realSize * 0.5;
+
+    if (index == maxAvatars - 1 && participants.length > maxAvatars) {
+      Paint paint = Paint();
+      paint.isAntiAlias = true;
+      paint.color = Get.context?.theme.colorScheme.secondary.withOpacity(0.8) ?? HexColor("686868").withOpacity(0.8);
+      canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
+
+      IconData icon = Icons.people;
+
+      TextPainter()
+        ..textDirection = TextDirection.rtl
+        ..textAlign = TextAlign.center
+        ..text = TextSpan(
+            text: String.fromCharCode(icon.codePoint),
+            style: TextStyle(
+                fontSize: adjustedWidth * 0.3,
+                fontFamily: icon.fontFamily,
+                color: Get.context?.textTheme.labelLarge!.color!.withOpacity(0.8)))
+        ..layout()
+        ..paint(canvas, Offset(left + realSize * 0.25, top + realSize * 0.25));
+    } else {
+      Paint paint = Paint()
+        ..color = (ss.settings.skin.value == Skins.Samsung
+            ? Get.context?.theme.colorScheme.secondary
+            : Get.context?.theme.backgroundColor) ??
+            HexColor("928E8E");
+      canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
+      await paintAvatar(
+        chatGuid: chatGuid,
+        handle: participants[index],
+        canvas: canvas,
+        offset: Offset(left + realSize * 0.01, top + realSize * 0.01),
+        size: realSize * 0.99,
+        borderWidth: size * 0.01,
+        fontSize: adjustedWidth * 0.3,
+      );
+    }
+  }
+}
+
+Future<void> paintAvatar(
+    {required String chatGuid,
+      required Handle? handle,
+      required Canvas canvas,
+      required Offset offset,
+      required double size,
+      double? fontSize,
+      double? borderWidth}) async {
+  fontSize ??= size * 0.5;
+  borderWidth ??= size * 0.05;
+
+  if (kIsDesktop) {
+    String customPath = join(fs.appDocDir.path, "avatars",
+        chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
+
+    if (await File(customPath).exists()) {
+      Uint8List? customAvatar = await circularize(await File(customPath).readAsBytes(), size: size.toInt());
+      if (customAvatar != null) {
+        canvas.drawImage(await loadImage(customAvatar), offset, Paint());
+        return;
+      }
+    }
+  }
+
+  Contact? contact = handle?.contact;
+  final avatar = contact?.avatar;
+  if (avatar != null) {
+    Uint8List? contactAvatar = await circularize(avatar, size: size.toInt());
+    if (contactAvatar != null) {
+      canvas.drawImage(await loadImage(contactAvatar), offset, Paint());
+      return;
+    }
+  }
+
+  List<Color> colors;
+  if (handle?.color == null) {
+    colors = toColorGradient(handle?.address);
+  } else {
+    colors = [
+      HexColor(handle!.color!).lightenAmount(0.02),
+      HexColor(handle.color!),
+    ];
+  }
+
+  double dx = offset.dx;
+  double dy = offset.dy;
+
+  Paint paint = Paint();
+  paint.isAntiAlias = true;
+  paint.shader =
+      ui.Gradient.linear(Offset(dx + size * 0.5, dy + size * 0.5), Offset(size.toDouble(), size.toDouble()), [
+        !ss.settings.colorfulAvatars.value
+            ? HexColor("928E8E")
+            : colors.isNotEmpty
+            ? colors[1]
+            : HexColor("928E8E"),
+        !ss.settings.colorfulAvatars.value
+            ? HexColor("686868")
+            : colors.isNotEmpty
+            ? colors[0]
+            : HexColor("686868"),
+      ]);
+
+  canvas.drawCircle(Offset(dx + size * 0.5, dy + size * 0.5), size * 0.5, paint);
+
+  String? initials = handle?.initials;
+
+  if (initials == null) {
+    IconData icon = Icons.person;
+
+    TextPainter()
+      ..textDirection = TextDirection.rtl
+      ..textAlign = TextAlign.center
+      ..text = TextSpan(
+          text: String.fromCharCode(icon.codePoint), style: TextStyle(fontSize: fontSize, fontFamily: icon.fontFamily))
+      ..layout()
+      ..paint(canvas, Offset(dx + size * 0.25, dy + size * 0.25));
+  } else {
+    TextPainter text = TextPainter()
+      ..textDirection = TextDirection.ltr
+      ..textAlign = TextAlign.center
+      ..text = TextSpan(
+        text: initials,
+        style: TextStyle(fontSize: fontSize),
+      )
+      ..layout();
+
+    text.paint(canvas, Offset(dx + (size - text.width) * 0.5, dy + (size - text.height) * 0.5));
+  }
+}
+
+Future<Uint8List?> circularize(Uint8List data, {required int size}) async {
+  ui.Image image;
+  Uint8List _data = data;
+
+  // Resize the image if it's the wrong size
+  img.Image? _image = img.decodeImage(data);
+  if (_image != null) {
+    _image = img.copyResize(_image, width: size, height: size);
+
+    _data = img.encodePng(_image) as Uint8List;
+  }
+
+  image = await loadImage(_data);
+
+  ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  Canvas canvas = Canvas(pictureRecorder);
+  Paint paint = Paint();
+  paint.isAntiAlias = true;
+
+  Path path = Path()..addOval(Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()));
+
+  canvas.clipPath(path);
+
+  canvas.drawImage(image, Offset(0, 0), paint);
+
+  ui.Picture picture = pictureRecorder.endRecording();
+  image = await picture.toImage(image.width, image.height);
+
+  Uint8List? bytes = (await image.toByteData(format: ui.ImageByteFormat.png))?.buffer.asUint8List();
+
+  return bytes;
+}
+
+Future<ui.Image> loadImage(Uint8List data) async {
+  final Completer<ui.Image> completer = Completer();
+  ui.decodeImageFromList(data, (ui.Image image) {
+    return completer.complete(image);
+  });
+  return completer.future;
 }

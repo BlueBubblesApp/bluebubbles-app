@@ -1,12 +1,8 @@
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/helpers/models/constants.dart';
-import 'package:bluebubbles/helpers/models/extensions.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -195,7 +191,7 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
           Obx(() {
             String indicatorText = "";
             if (ss.settings.statusIndicatorsOnChats.value) {
-              Indicator show = shouldShow(cachedLatestMessage);
+              Indicator show = MessageHelper.shouldShow(cachedLatestMessage);
               indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
             }
 

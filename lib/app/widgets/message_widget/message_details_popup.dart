@@ -1,13 +1,10 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/models/constants.dart';
-import 'package:bluebubbles/helpers/models/extensions.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/share.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_alert_dialog.dart';
@@ -531,7 +528,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-      if (!isEmptyString(widget.message.fullText))
+      if (!isNullOrEmptyString(widget.message.fullText))
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -1014,7 +1011,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     int index = 0;
 
     int maxToShow = 0;
-    if (!isEmptyString(widget.message.fullText)) maxToShow++;
+    if (!isNullOrEmptyString(widget.message.fullText)) maxToShow++;
     if (widget.message.fullText.replaceAll("\n", " ").hasUrl &&
         !kIsWeb &&
         !kIsDesktop &&

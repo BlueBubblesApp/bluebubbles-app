@@ -4,7 +4,7 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/network/network_error_handler.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -193,7 +193,7 @@ class ActionHandler extends GetxService {
     }
     Logger.info("New message: [${m.text}] - for chat [${c.guid}]", tag: "ActionHandler");
     // Gets the chat from the db or server (if new)
-    c = isParticipantEvent(m) ? await handleNewOrUpdatedChat(c) : (Chat.findOne(guid: c.guid) ?? await handleNewOrUpdatedChat(c));
+    c = MessageHelper.isParticipantEvent(m) ? await handleNewOrUpdatedChat(c) : (Chat.findOne(guid: c.guid) ?? await handleNewOrUpdatedChat(c));
     // Get the message handle
     final handle = c.handles.firstWhereOrNull((e) => e.originalROWID == m.handleId);
     if (handle != null) {

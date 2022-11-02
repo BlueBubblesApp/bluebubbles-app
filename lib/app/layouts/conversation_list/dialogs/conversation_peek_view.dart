@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget.dart';

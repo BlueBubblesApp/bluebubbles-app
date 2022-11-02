@@ -1,7 +1,6 @@
-
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -14,8 +13,6 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-
-enum PlayerStatus { NONE, STOPPED, PAUSED, PLAYING, ENDED }
 
 class VideoWidgetController extends GetxController {
   bool navigated = false;

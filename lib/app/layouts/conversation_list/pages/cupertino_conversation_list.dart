@@ -1,9 +1,6 @@
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/models/extensions.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/pinned_conversation_tile.dart';

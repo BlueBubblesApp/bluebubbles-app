@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/footer/samsung_footer.dart';
@@ -18,7 +18,7 @@ import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/cupertino_conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/material_conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/samsung_conversation_list.dart';

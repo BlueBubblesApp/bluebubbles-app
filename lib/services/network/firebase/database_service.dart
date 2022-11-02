@@ -1,5 +1,5 @@
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:firebase_dart/implementation/pure_dart.dart';

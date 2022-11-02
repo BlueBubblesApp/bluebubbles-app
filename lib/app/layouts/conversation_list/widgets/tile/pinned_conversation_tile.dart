@@ -1,11 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/models/constants.dart';
-import 'package:bluebubbles/helpers/models/extensions.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/dialogs/conversation_peek_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
@@ -15,9 +11,6 @@ import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart
 import 'package:bluebubbles/app/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -430,7 +423,7 @@ class PinnedIndicators extends StatelessWidget {
         );
       }
 
-      final showMarker = shouldShow(controller.chat.latestMessageGetter);
+      final showMarker = MessageHelper.shouldShow(controller.chat.latestMessageGetter);
       if (ss.settings.statusIndicatorsOnChats.value
           && !controller.chat.isGroup
           && showMarker != Indicator.NONE) {

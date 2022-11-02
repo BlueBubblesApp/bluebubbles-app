@@ -1,7 +1,7 @@
 /*
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';

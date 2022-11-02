@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as parser;
@@ -46,7 +46,7 @@ class MetadataHelper {
   static Future<Metadata?> fetchMetadata(Message? message) async {
     Metadata? data;
 
-    if (message?.guid == null || isEmptyString(message!.text)) return null;
+    if (message?.guid == null || isNullOrEmptyString(message!.text)) return null;
 
     // If we have a cached item for this already, return that future
     if (_metaCache.containsKey(message.guid)) {

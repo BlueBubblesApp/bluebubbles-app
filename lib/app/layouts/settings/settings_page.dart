@@ -1,8 +1,8 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/backup_restore_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/about_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/message_view/attachment_panel.dart';

@@ -1,7 +1,4 @@
-import 'package:bluebubbles/helpers/models/extensions.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/material_header.dart';

@@ -1,5 +1,5 @@
-import 'package:bluebubbles/helpers/models/constants.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
@@ -22,12 +22,12 @@ class MessageTimeStampSeparator extends StatelessWidget {
   Map<String, String> buildTimeStamp() {
     if (ss.settings.skin.value == Skins.Samsung
         && newerMessage != null &&
-        (!isEmptyString(message.fullText) || message.hasAttachments) &&
+        (!isNullOrEmptyString(message.fullText) || message.hasAttachments) &&
         newerMessage!.dateCreated!.isTomorrow(otherDate: message.dateCreated)) {
         return {"time": buildSeparatorDateSamsung(newerMessage!.dateCreated!)};
     } else if (ss.settings.skin.value != Skins.Samsung
         && newerMessage != null &&
-        (!isEmptyString(message.fullText) || message.hasAttachments) &&
+        (!isNullOrEmptyString(message.fullText) || message.hasAttachments) &&
         withinTimeThreshold(message, newerMessage, threshold: 30)) {
       DateTime timeOfnewerMessage = newerMessage!.dateCreated!;
       String time = buildTime(timeOfnewerMessage);

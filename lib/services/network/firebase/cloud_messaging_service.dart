@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -93,7 +93,7 @@ class CloudMessagingService extends GetxService {
 
         try {
           // Parse and save new FCM data, then retry auth with FCM
-          FCMData fcmData = parseFcmJson(fcmMeta);
+          FCMData fcmData = FCMData.fromMap(fcmMeta);
           ss.saveFCMData(fcmData);
           result = await mcs.invokeMethod('auth', fcmData.toMap());
         } on PlatformException catch (e) {

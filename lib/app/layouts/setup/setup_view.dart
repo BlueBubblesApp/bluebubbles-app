@@ -1,5 +1,5 @@
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/setup_checks/battery_optimization.dart';
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/sync/sync_settings.dart';

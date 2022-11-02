@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';

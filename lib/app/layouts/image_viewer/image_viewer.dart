@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/share.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/models/models.dart';

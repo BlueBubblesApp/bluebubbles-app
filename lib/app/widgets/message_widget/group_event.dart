@@ -1,4 +1,4 @@
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -15,7 +15,7 @@ class GroupEvent extends StatelessWidget {
     Key? key,
     required this.message,
   }) : super(key: key) {
-    text = getGroupEventText(message!);
+    text = MessageHelper.getGroupEventText(message!);
   }
 
   final Message? message;
@@ -34,14 +34,14 @@ class GroupEvent extends StatelessWidget {
     //       textAlign: TextAlign.center,
     //     ),
     //     Text(
-    //       "IS EMPTY: ${isEmptyString(widget.message.fullText)}",
+    //       "IS EMPTY: ${isNullOrEmptyString(widget.message.fullText)}",
     //       style: Theme.of(context).textTheme.labelMedium.apply(color: Colors.red),
     //       overflow: TextOverflow.ellipsis,
     //       maxLines: 2,
     //       textAlign: TextAlign.center,
     //     ),
     //     Text(
-    //       "IS EMPTY (WITH STRIP): ${isEmptyString(widget.message.fullText, stripWhitespace: true)}",
+    //       "IS EMPTY (WITH STRIP): ${isNullOrEmptyString(widget.message.fullText, stripWhitespace: true)}",
     //       style: Theme.of(context).textTheme.labelMedium.apply(color: Colors.red),
     //       overflow: TextOverflow.ellipsis,
     //       maxLines: 2,

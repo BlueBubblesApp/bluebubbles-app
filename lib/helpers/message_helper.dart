@@ -1,11 +1,8 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
-import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -25,6 +22,70 @@ Map<String, String> nameMap = {
 };
 
 class MessageHelper {
+  static Indicator shouldShow(Message? latestMessage) {
+    if (!(latestMessage?.isFromMe ?? false)) return Indicator.NONE;
+    if (latestMessage?.dateRead != null) return Indicator.READ;
+    if (latestMessage?.dateDelivered != null) return Indicator.DELIVERED;
+    if (latestMessage?.dateCreated != null) return Indicator.SENT;
+    return Indicator.NONE;
+  }
+
+  static bool sameSender(Message? first, Message? second) {
+    return (first != null &&
+        second != null &&
+        (first.isFromMe! && second.isFromMe! ||
+            (!first.isFromMe! &&
+                !second.isFromMe! &&
+                (first.handle != null && second.handle != null && first.handle!.address == second.handle!.address))));
+  }
+
+
+  static bool isParticipantEvent(Message message) {
+    if (message.itemType == 1 && [0, 1].contains(message.groupActionType)) return true;
+    if ([2, 3].contains(message.itemType)) return true;
+    return false;
+  }
+
+
+  static String getGroupEventText(Message message) {
+    String text = "Unknown group event";
+    String? handle = "You";
+    if (!message.isFromMe! && message.handleId != null && message.handle != null) {
+      handle = message.handle?.displayName;
+    }
+
+    String? other = "someone";
+    if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
+      Handle? item = Handle.findOne(originalROWID: message.otherHandle);
+      if (item != null) {
+        other = item.displayName;
+      }
+    }
+
+    final bool hideNames =
+        ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
+    if (hideNames) {
+      handle = "Someone";
+      other = "someone";
+    }
+
+    if (message.itemType == 1 && message.groupActionType == 1) {
+      text = "$handle removed $other from the conversation";
+    } else if (message.itemType == 1 && message.groupActionType == 0) {
+      text = "$handle added $other to the conversation";
+    } else if (message.itemType == 3 && message.groupActionType == 1) {
+      text = "$handle changed the group photo";
+    } else if (message.itemType == 3) {
+      text = "$handle left the conversation";
+    } else if (message.itemType == 2 && message.groupTitle != null) {
+      text = "$handle named the conversation \"${message.groupTitle}\"";
+    } else if (message.itemType == 6) {
+      text = "$handle started a FaceTime call";
+    }
+
+    return text;
+  }
+
   static Future<List<Message>> bulkAddMessages(Chat? chat, List<dynamic> messages,
       {bool notifyForNewMessage = false,
       bool notifyMessageManager = true,
@@ -233,7 +294,7 @@ class MessageHelper {
       return "${sender}Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
-    if (isNullOrEmpty(message.fullText, trimString: true)! && !message.hasAttachments) {
+    if (isNullOrEmpty(message.fullText)! && !message.hasAttachments) {
       return "${sender}Empty message";
     }
 
@@ -269,8 +330,8 @@ class MessageHelper {
           // now we check if theres a subject or text and construct out message based off that
         } else if (associatedMessage.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
           return "$sender $verb a message with Invisible Ink";
-        } else if (!isNullOrEmpty(associatedMessage.subject, trimString: true)! ||
-            !isNullOrEmpty(associatedMessage.text, trimString: true)!) {
+        } else if (!isNullOrEmpty(associatedMessage.subject)! ||
+            !isNullOrEmpty(associatedMessage.text)!) {
           String messageText = (associatedMessage.subject ?? "") + (associatedMessage.text ?? "");
           return '$sender $verb “${messageText.trim()}”';
           // if it has an attachment, we should fetch the attachments and get the attachment text
@@ -325,7 +386,7 @@ class MessageHelper {
   }
 
   static bool shouldShowBigEmoji(String text) {
-    if (isEmptyString(text)) return false;
+    if (isNullOrEmptyString(text)) return false;
     if (text.codeUnits.length == 1 && text.codeUnits.first == 9786) return true;
 
     RegExp pattern = emojiRegex;

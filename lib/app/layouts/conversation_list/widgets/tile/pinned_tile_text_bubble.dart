@@ -3,7 +3,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +53,7 @@ class PinnedTileTextBubble extends StatelessWidget {
 
     if (lastMessage?.associatedMessageGuid != null
         || (lastMessage?.isFromMe ?? false)
-        || isNullOrEmpty(messageText, trimString: true)!) {
+        || isNullOrEmpty(messageText)!) {
       return const SizedBox.shrink();
     }
 

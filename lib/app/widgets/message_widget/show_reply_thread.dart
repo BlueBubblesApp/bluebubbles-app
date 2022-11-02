@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/models/models.dart';

@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/animations/balloon_classes.dart';
 import 'package:bluebubbles/app/animations/balloon_rendering.dart';
 import 'package:bluebubbles/app/animations/celebration_class.dart';

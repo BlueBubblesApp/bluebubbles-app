@@ -1,10 +1,10 @@
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_gallery_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/contact_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';

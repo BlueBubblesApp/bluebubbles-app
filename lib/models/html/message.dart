@@ -2,12 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/models/extensions.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
 import 'package:bluebubbles/models/html/attachment.dart';
 import 'package:bluebubbles/models/html/chat.dart';
 import 'package:bluebubbles/models/html/handle.dart';
@@ -349,12 +346,12 @@ class Message {
     return balloonBundleId != null && balloonBundleId != "com.apple.messages.URLBalloonProvider";
   }
 
-  bool hasText({stripWhitespace = false}) {
-    return !isEmptyString(fullText, stripWhitespace: stripWhitespace);
+  bool hasText() {
+    return !isNullOrEmptyString(fullText);
   }
 
   bool isGroupEvent() {
-    return isEmptyString(fullText) && !hasAttachments && balloonBundleId == null;
+    return isNullOrEmptyString(fullText) && !hasAttachments && balloonBundleId == null;
   }
 
   bool isBigEmoji() {

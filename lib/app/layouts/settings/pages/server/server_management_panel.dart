@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/share.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/sync/qr_code_scanner.dart';

@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

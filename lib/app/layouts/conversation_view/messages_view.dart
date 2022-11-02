@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget.dart';
@@ -77,7 +77,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
           // Reload the state after refreshing
           messageService.reload();
           messageService.init(chat, handleNewMessage, handleUpdatedMessage, handleDeletedMessage);
-          await rebuild(this);
+          setState(() {});
         }
       } else if (e.item1 == "add-custom-smartreply") {
         if (e.item2["path"] != null) {

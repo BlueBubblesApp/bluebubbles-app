@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_page_transition.dart';
 import 'package:bluebubbles/app/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/services/services.dart';

@@ -3,11 +3,11 @@ import 'dart:isolate';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:bluebubbles/helpers/models/constants.dart';
-import 'package:bluebubbles/helpers/models/country_codes.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/helpers/types/classes/country_codes.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/startup/failure_to_start.dart';

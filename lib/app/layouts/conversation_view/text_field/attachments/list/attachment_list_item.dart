@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
-import 'package:bluebubbles/helpers/models/constants.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/models/models.dart';

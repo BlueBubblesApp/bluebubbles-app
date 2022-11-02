@@ -1,6 +1,6 @@
 /*
-import 'package:bluebubbles/helpers/models/constants.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/new_chat_creator/contact_selector_custom_cupertino_textfield.dart';
 import 'package:bluebubbles/models/models.dart';

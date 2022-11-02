@@ -1,9 +1,8 @@
 import 'dart:core';
 
-import 'package:bluebubbles/helpers/models/constants.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/models/io/theme_entry.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';

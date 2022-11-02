@@ -3,9 +3,11 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
@@ -34,6 +36,16 @@ class Contact {
   
   Map<String, String>? get dbStructuredName => structuredName?.toMap();
   set dbStructuredName(Map<String, String>? map) => StructuredName.fromMap(map);
+
+  String? get initials {
+    String initials = (structuredName?.givenName.characters.firstOrNull ?? "") + (structuredName?.familyName.characters.firstOrNull ?? "");
+    // If the initials are empty, get them from the display name
+    if (initials.trim().isEmpty) {
+      initials = displayName.characters.firstOrNull ?? "";
+    }
+
+    return initials.isEmpty ? null : initials.toUpperCase();
+  }
 
   static List<Contact> getContacts() {
     return contactBox.getAll();

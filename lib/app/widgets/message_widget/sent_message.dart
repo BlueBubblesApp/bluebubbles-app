@@ -1,23 +1,15 @@
 import 'dart:math';
 
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/helpers/models/constants.dart';
-import 'package:bluebubbles/helpers/models/extensions.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/unfinished/theme_selector.dart';
-import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/delivered_receipt.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/balloon_bundle_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_popup_holder.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/app/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
-import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -806,7 +798,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
     }
 
     // Second, add the attachments
-    if (isEmptyString(widget.message.fullText)) {
+    if (isNullOrEmptyString(widget.message.fullText)) {
       messageColumn.add(
         MessageWidgetMixin.addStickersToWidget(
           message: MessageWidgetMixin.addReactionsToWidget(
@@ -824,7 +816,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
     if (widget.message.balloonBundleId != null &&
         widget.message.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
       message = BalloonBundleWidget(message: widget.message);
-    } else if (!isEmptyString(widget.message.text) || !isEmptyString(widget.message.subject ?? "")) {
+    } else if (!isNullOrEmptyString(widget.message.text) || !isNullOrEmptyString(widget.message.subject ?? "")) {
       message = SentMessageHelper.buildMessageWithTail(context, widget.message, widget.showTail,
           widget.message.hasReactions, widget.message.bigEmoji ?? false, spanFuture,
           olderMessage: widget.olderMessage,
@@ -1098,8 +1090,8 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                 : (skin.value == Skins.iOS)
                     ? 0.0
                     : 10,
-            bottom: (skin.value == Skins.iOS && widget.showTail && !isEmptyString(widget.message.fullText)) ? 5.0 : 0,
-            right: isEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
+            bottom: (skin.value == Skins.iOS && widget.showTail && !isNullOrEmptyString(widget.message.fullText)) ? 5.0 : 0,
+            right: isNullOrEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -1119,8 +1111,8 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin, Widg
                 : (skin.value == Skins.iOS)
                     ? 0.0
                     : 10,
-            bottom: (skin.value == Skins.iOS && widget.showTail && !isEmptyString(widget.message.fullText)) ? 5.0 : 0,
-            right: isEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
+            bottom: (skin.value == Skins.iOS && widget.showTail && !isNullOrEmptyString(widget.message.fullText)) ? 5.0 : 0,
+            right: isNullOrEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,

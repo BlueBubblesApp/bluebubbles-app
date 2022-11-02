@@ -1,12 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/models/constants.dart';
-import 'package:bluebubbles/helpers/models/extensions.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
-import 'package:bluebubbles/utils/general_utils.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/unfinished/theme_selector.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/delivered_receipt.dart';
@@ -15,10 +11,7 @@ import 'package:bluebubbles/app/widgets/message_widget/message_content/message_t
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_popup_holder.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/app/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
-import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -560,7 +553,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     if (widget.message.guid == "redacted-mode-demo" ||
         widget.message.guid!.contains("theme-selector") ||
         ((isGroup || widget.showHandle) &&
-            (!sameSender(widget.message, widget.olderMessage) ||
+            (!MessageHelper.sameSender(widget.message, widget.olderMessage) ||
                 !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30)))) {
       messageColumn.add(
         Padding(
