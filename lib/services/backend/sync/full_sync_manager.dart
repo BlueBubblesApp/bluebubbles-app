@@ -198,7 +198,7 @@ class FullSyncManager extends SyncManager {
     addToOutput("Reloading your contacts...");
     await cs.refreshContacts(reloadUI: false);
     addToOutput("Reloading your chats...");
-    Get.reload<ChatsService>();
+    Get.reload<ChatsService>(force: true);
     await chats.init();
     await super.complete();
   }
