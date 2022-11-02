@@ -11,6 +11,7 @@ class NetworkTasks {
       ss.checkServerUpdate(context: Get.context!);
 
       if (kIsWeb && chats.chats.isEmpty) {
+        Get.reload<ChatsService>();
         await chats.init();
       }
       if (kIsWeb && cs.contacts.isEmpty) {
