@@ -120,6 +120,7 @@ class _SamsungTrailingState extends CustomState<SamsungTrailing, void, Conversat
 
       sub = latestMessageQuery.listen((Query<Message> query) {
         final message = query.findFirst();
+        message?.handle = message.getHandle();
         cachedLatestMessage = message;
         // check if we really need to update this widget
         if (message?.guid != cachedLatestMessageGuid) {

@@ -42,7 +42,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
 
     ever(attachmentDownloader.downloaders, (List<String> downloaders) {
       if (downloaders.contains(widget.attachment.guid)) {
-        if (mounted) setState(() {});
+        // if (mounted) setState(() {});
       }
     });
   }

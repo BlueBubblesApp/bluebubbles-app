@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/utils/crypto_utils.dart';
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/helpers/network/network_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -43,7 +42,6 @@ class SocketService extends GetxService {
   }
   
   void startSocket() {
-    if (isNullOrEmpty(serverAddress)!) return;
     OptionBuilder options = OptionBuilder()
         .setQuery({"guid": encodeUri(password)})
         .setTransports(['websocket', 'polling'])
@@ -51,6 +49,8 @@ class SocketService extends GetxService {
         .disableAutoConnect()
         .enableReconnection();
     socket = io(serverAddress, options.build());
+    // placed here so that [socket] is still initialized
+    if (isNullOrEmpty(serverAddress)!) return;
 
     socket.onConnect((data) => handleStatusUpdate(SocketState.connected, data));
     socket.onReconnect((data) => handleStatusUpdate(SocketState.connected, data));

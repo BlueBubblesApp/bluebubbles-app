@@ -101,8 +101,8 @@ class MessageHelper {
 
   static String getNotificationText(Message message, {bool withSender = false}) {
     if (message.isGroupEvent) return message.groupEventText;
-    String sender = !withSender ? "" : "${message.handle?.displayName ?? "You"}: ";
-
+    String sender = !withSender ? "" : "${message.isFromMe! ? "You" : message.handle?.displayName ?? "Someone"}: ";
+    print(sender);
     if (message.isInteractive) {
       return "$sender${message.interactiveText}";
     }
@@ -123,7 +123,7 @@ class MessageHelper {
       return "$output: ${_getAttachmentText(message.realAttachments)}";
     } else if (!isNullOrEmpty(message.associatedMessageGuid)!) {
       // It's a reaction message, get the sender
-      String sender = message.handle?.displayName ?? "You";
+      String sender = message.isFromMe! ? "You" : message.handle?.displayName ?? "Someone";
       // fetch the associated message object
       Message? associatedMessage = Message.findOne(guid: message.associatedMessageGuid);
       if (associatedMessage != null) {

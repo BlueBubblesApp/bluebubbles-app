@@ -170,6 +170,7 @@ Future<Null> initApp(bool bubble) async {
     }
     await intents.init();
     chats.init();
+    socket;
 
     /* ----- DATE FORMATTING INITIALIZATION ----- */
     await initializeDateFormatting();

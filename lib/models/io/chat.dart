@@ -451,7 +451,7 @@ class Chat {
   String getTitle() {
     if (isNullOrEmpty(displayName)!) {
       // generate names for group chats or DMs
-      List<String> titles = participants.map((e) => e.displayName.trim().split(isGroup ? " " : String.fromCharCode(65532)).first).toList();
+      List<String> titles = participants.map((e) => e.displayName.trim().split(isGroup && e.contact != null ? " " : String.fromCharCode(65532)).first).toList();
       if (titles.isEmpty) {
         title = chatIdentifier;
       } else if (titles.length == 1) {

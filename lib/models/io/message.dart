@@ -381,20 +381,21 @@ class Message {
       dateCreated: parseDate(json["dateCreated"]),
       dateRead: parseDate(json["dateRead"]),
       dateDelivered: parseDate(json["dateDelivered"]),
-      isFromMe: (json["isFromMe"] is bool) ? json['isFromMe'] : ((json['isFromMe'] == 1) ? true : false),
+      isFromMe: json['isFromMe'] == true,
+      hasDdResults: json['hasDdResults'] == true,
       datePlayed: parseDate(json["datePlayed"]),
       itemType: json["itemType"],
       groupTitle: json["groupTitle"],
       groupActionType: json["groupActionType"] ?? 0,
       balloonBundleId: json["balloonBundleId"],
-      associatedMessageGuid: json["associatedMessageGuid"].toString().split("/").last,
+      associatedMessageGuid: json["associatedMessageGuid"]?.toString().split("/").last,
       associatedMessagePart: int.tryParse(json["associatedMessageGuid"].toString().replaceAll("p:", "").split("/").first),
       associatedMessageType: json["associatedMessageType"],
       expressiveSendStyleId: json["expressiveSendStyleId"],
       handle: json['handle'] != null ? Handle.fromMap(json['handle']) : null,
       hasAttachments: attachments.isNotEmpty || json['hasAttachments'] == true,
       attachments: (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a)).toList(),
-      hasReactions: json.containsKey('hasReactions') ? ((json['hasReactions'] == 1) ? true : false) : false,
+      hasReactions: json['hasReactions'] == true,
       dateDeleted: parseDate(json["dateDeleted"]),
       metadata: metadata is String ? null : metadata,
       threadOriginatorGuid: json['threadOriginatorGuid'],
@@ -421,6 +422,9 @@ class Message {
       if (handle != null) {
         handle!.save();
         handleId = handle!.id;
+      }
+      if (otherHandle != null && id == null) {
+        otherHandle = Handle.findOne(originalROWID: otherHandle)?.id;
       }
       // Save associated messages or the original message (depending on whether
       // this message is a reaction or regular message
@@ -664,7 +668,7 @@ class Message {
     return text;
   }
 
-  bool get isGroupEvent => fullText.isEmpty && !isInteractive && (itemType != null || groupActionType != null);
+  bool get isGroupEvent => fullText.isEmpty && attachments.isEmpty && !isInteractive && (itemType != null || groupActionType != null);
 
   String get groupEventText {
     String text = "Unknown group event";
@@ -720,7 +724,7 @@ class Message {
   }
 
   bool sameSender(Message? other) {
-    return isFromMe == other?.isFromMe || handleId == other?.handleId;
+    return (isFromMe! && isFromMe == other?.isFromMe) || handleId == other?.handleId;
   }
 
   void generateTempGuid() {
