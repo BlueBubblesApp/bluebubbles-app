@@ -1,5 +1,4 @@
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -54,7 +53,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
         Padding(
           padding: EdgeInsets.only(bottom: 8.0),
           child: Text(
-            widget.message.isFromMe! ? "You" : getContactName(context, contactTitle, widget.handle?.address),
+            widget.message.isFromMe! ? "You" : widget.handle?.displayName ?? "Unknown",
             style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
           ),
         ),

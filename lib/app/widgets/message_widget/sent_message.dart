@@ -176,7 +176,7 @@ class SentMessageHelper {
                     : (currentSkin == Skins.Material)
                         ? BorderRadius.only(
                             topLeft: Radius.circular(20),
-                            topRight: olderMessage == null || MessageHelper.getShowTail(context, olderMessage, message)
+                            topRight: olderMessage == null || olderMessage.showTail(message)
                                 ? Radius.circular(20)
                                 : Radius.circular(5),
                             bottomLeft: Radius.circular(20),

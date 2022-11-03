@@ -1,3 +1,7 @@
+import 'package:bluebubbles/services/backend/settings/settings_service.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
 const effectMap = {
   "slam": "com.apple.MobileSMS.expressivesend.impact",
   "loud": "com.apple.MobileSMS.expressivesend.loud",
@@ -27,6 +31,33 @@ const stringToMessageEffect = {
   "lasers": MessageEffect.lasers,
   "fireworks": MessageEffect.fireworks,
   "celebration": MessageEffect.celebration,
+};
+
+// known balloon bundle IDs - there will be a lot more
+const balloonBundleIdMap = {
+  'com.apple.Handwriting.HandwritingProvider': 'Handwritten Message',
+  'com.apple.DigitalTouchBalloonProvider': 'Digital Touch Message',
+  'com.apple.messages.MSMessageExtensionBalloonPlugin': {
+    'com.nearfuturespecialists.imessagepoll.MessagesExtension': 'iMessage Poll',
+    'be.nieldeckx.poll.extension': 'iMessage Poll',
+    'com.gamerdelights.gamepigeon.ext': 'GamePigeon',
+    'com.google.ios.youtube.MessagesExtension': 'YouTube',
+    'com.shazam.Shazam.imessageextension': 'Shazam',
+    'com.apple.mobileslideshow.PhotosMessagesApp': 'Photo Slideshow',
+  }
+};
+
+final balloonBundleIdIconMap = {
+  'com.apple.Handwriting.HandwritingProvider': ss.settings.skin.value == Skins.iOS ? CupertinoIcons.pencil_outline : Icons.brush,
+  'com.apple.DigitalTouchBalloonProvider': ss.settings.skin.value == Skins.iOS ? CupertinoIcons.scribble : Icons.draw,
+  'com.apple.messages.MSMessageExtensionBalloonPlugin': {
+    'com.nearfuturespecialists.imessagepoll.MessagesExtension': ss.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_chart : Icons.ballot,
+    'be.nieldeckx.poll.extension': ss.settings.skin.value == Skins.iOS ? CupertinoIcons.doc_chart : Icons.ballot,
+    'com.gamerdelights.gamepigeon.ext': ss.settings.skin.value == Skins.iOS ? CupertinoIcons.game_controller : Icons.flutter_dash,
+    'com.google.ios.youtube.MessagesExtension': ss.settings.skin.value == Skins.iOS ? CupertinoIcons.scribble : Icons.sports_esports,
+    'com.shazam.Shazam.imessageextension': ss.settings.skin.value == Skins.iOS ? CupertinoIcons.music_mic : Icons.noise_aware,
+    'com.apple.mobileslideshow.PhotosMessagesApp': ss.settings.skin.value == Skins.iOS ? CupertinoIcons.slider_horizontal_below_rectangle : Icons.slideshow,
+  }
 };
 
 enum MessageEffect {

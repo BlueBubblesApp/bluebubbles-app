@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';

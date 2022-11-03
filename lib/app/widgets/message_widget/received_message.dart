@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/unfinished/theme_selector.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
@@ -272,7 +271,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   : (skin.value == Skins.Material)
                       ? BorderRadius.only(
                           topLeft: widget.olderMessage == null ||
-                                  MessageHelper.getShowTail(context, widget.olderMessage, widget.message)
+                                widget.olderMessage!.showTail(widget.message)
                               ? Radius.circular(20)
                               : Radius.circular(5),
                           topRight: Radius.circular(20),
@@ -553,14 +552,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     if (widget.message.guid == "redacted-mode-demo" ||
         widget.message.guid!.contains("theme-selector") ||
         ((isGroup || widget.showHandle) &&
-            (!MessageHelper.sameSender(widget.message, widget.olderMessage) ||
+            (!widget.message.sameSender(widget.olderMessage) ||
                 !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30)))) {
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 0),
           child: RichText(
             text: TextSpan(
-              text: getContactName(context, contactTitle, widget.message.handle?.address),
+              text: widget.message.handle?.displayName,
               style: context.theme.textTheme.labelMedium!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -743,7 +742,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 0),
           child: RichText(
             text: TextSpan(
-              text: getContactName(context, contactTitle, widget.message.handle?.address),
+              text: widget.message.handle?.displayName,
               style: context.theme.textTheme.labelMedium!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

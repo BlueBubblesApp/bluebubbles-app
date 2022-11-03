@@ -20,7 +20,7 @@ List<RegExpMatch> parseLinks(String text) {
   return urlRegex.allMatches(text).toList();
 }
 
-String stripHtmlTags(String? htmlString) {
+String stripHtmlTags(String htmlString) {
   final document = parse(htmlString);
   return parse(document.body!.text).documentElement!.text;
 }

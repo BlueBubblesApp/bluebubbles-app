@@ -7,13 +7,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:universal_html/html.dart';
 
 LifecycleService ls = Get.isRegistered<LifecycleService>() ? Get.find<LifecycleService>() : Get.put(LifecycleService());
 
 class LifecycleService extends GetxService with WidgetsBindingObserver {
   bool isBubble = false;
   bool isUiThread = true;
-  bool get isAlive => WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+  bool get isAlive => kIsWeb ? !(window.document.hidden ?? false)
+      : WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
 
   @override
   void onInit() {

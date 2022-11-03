@@ -1,4 +1,5 @@
 export 'backend/sync/sync_helpers.dart';
+export 'network/metadata_helper.dart';
 export 'network/network_error_handler.dart';
 export 'network/network_helpers.dart';
 export 'network/network_tasks.dart';
@@ -16,4 +17,4 @@ export 'types/helpers/string_helpers.dart';
 export 'types/constants.dart';
 export 'ui/theme_helpers.dart';
 export 'ui/ui_helpers.dart';
-export 'message_helper.dart';
+export 'types/helpers/message_helper.dart';

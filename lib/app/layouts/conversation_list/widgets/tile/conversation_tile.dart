@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';

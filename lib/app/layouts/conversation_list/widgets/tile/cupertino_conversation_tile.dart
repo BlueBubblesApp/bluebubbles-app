@@ -175,7 +175,7 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
           Obx(() {
             String indicatorText = "";
             if (ss.settings.statusIndicatorsOnChats.value) {
-              Indicator show = MessageHelper.shouldShow(cachedLatestMessage);
+              Indicator show = cachedLatestMessage?.indicatorToShow ?? Indicator.NONE;
               indicatorText = describeEnum(show).toLowerCase().capitalizeFirst!;
             }
 

@@ -15,7 +15,7 @@ class GroupEvent extends StatelessWidget {
     Key? key,
     required this.message,
   }) : super(key: key) {
-    text = MessageHelper.getGroupEventText(message!);
+    text = message!.groupEventText;
   }
 
   final Message? message;

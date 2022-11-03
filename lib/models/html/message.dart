@@ -136,6 +136,15 @@ class Message {
     return sanitizeString(fullText);
   }
 
+  bool get isUrlPreview => (balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!)
+      || (hasDdResults! && (text ?? "").trim().hasUrl);
+
+  bool get isInteractive => balloonBundleId != null && !isUrlPreview;
+
+  bool get isGroupEvent => fullText.isEmpty && !isInteractive && (itemType != null || groupActionType != null);
+
+  bool get isParticipantEvent => isGroupEvent && ((itemType == 1 && [0, 1].contains(groupActionType)) || [2, 3].contains(itemType));
+
   factory Message.fromMap(Map<String, dynamic> json) {
     bool hasAttachments = false;
     if (json.containsKey("hasAttachments")) {
@@ -330,28 +339,14 @@ class Message {
     return;
   }
 
-  bool isUrlPreview() {
-    // first condition is for macOS < 11 and second condition is for macOS >= 11
-    return (balloonBundleId != null && balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!) ||
-        (hasDdResults! && (text ?? "").replaceAll("\n", " ").hasUrl);
-  }
-
   String? getUrl() {
     if (text == null) return null;
     List<String> splits = text!.replaceAll("\n", " ").split(" ");
     return splits.firstWhereOrNull((String element) => element.hasUrl);
   }
 
-  bool isInteractive() {
-    return balloonBundleId != null && balloonBundleId != "com.apple.messages.URLBalloonProvider";
-  }
-
   bool hasText() {
     return !isNullOrEmptyString(fullText);
-  }
-
-  bool isGroupEvent() {
-    return isNullOrEmptyString(fullText) && !hasAttachments && balloonBundleId == null;
   }
 
   bool isBigEmoji() {
@@ -519,7 +514,7 @@ class Message {
       size = Size(size.width + 28, size.height);
     }
     // if we have a URL preview, extend to the full width
-    if (isUrlPreview()) {
+    if (isUrlPreview) {
       size = Size(ns.width(context) * 2 / 3 - 30, size.height);
     }
     // if we have reactions, account for the extra height they add

@@ -7,7 +7,7 @@ import 'package:bluebubbles/helpers/types/classes/reaction.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -71,6 +71,7 @@ class NotificationsService extends GetxService {
       final countQuery = (messageBox.query()
         ..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
       countSub = countQuery.listen((event) {
+        if (!ss.settings.finishedSetup.value) return;
         final newCount = event.count();
         if (newCount > currentCount) {
           event.limit = newCount - currentCount;

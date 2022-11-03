@@ -1,14 +1,10 @@
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
-import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
@@ -64,28 +60,14 @@ class ContactTile extends StatelessWidget {
         }
       },
       child: ListTile(
-        title: (contact?.displayName != null || hideInfo || generateName)
-            ? RichText(
-                text: TextSpan(
-                    children: MessageHelper.buildEmojiText(
-                        getContactName(context, contact?.displayName ?? "", handle.address, currentChat: chat),
-                        context.theme.textTheme.bodyLarge!)),
-              )
-            : FutureBuilder<String>(
-                future: formatPhoneNumber(handle),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return Text(
-                      handle.address,
-                      style: context.theme.textTheme.bodyLarge,
-                    );
-                  }
-
-                  return RichText(
-                      text: TextSpan(
-                          children: MessageHelper.buildEmojiText(
-                              snapshot.data ?? "Unknown contact details", Theme.of(context).textTheme.bodyLarge!)));
-                }),
+        title: RichText(
+          text: TextSpan(
+            children: MessageHelper.buildEmojiText(
+                handle.displayName,
+                context.theme.textTheme.bodyLarge!
+            ),
+          ),
+        ),
         subtitle: (contact == null || hideInfo || generateName)
             ? null
             : FutureBuilder<String>(

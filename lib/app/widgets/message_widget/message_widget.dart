@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/widgets/message_widget/group_event.dart';
@@ -168,9 +168,9 @@ class _MessageState extends State<MessageWidget> {
       if (_newerMessage!.isGroupEvent) {
         showTail = true;
       } else if (ss.settings.skin.value == Skins.Samsung) {
-        showTail = MessageHelper.getShowTail(context, _message, _olderMessage);
+        showTail = _message.showTail(_olderMessage);
       } else {
-        showTail = MessageHelper.getShowTail(context, _message, _newerMessage);
+        showTail = _message.showTail(_newerMessage);
       }
     }
 

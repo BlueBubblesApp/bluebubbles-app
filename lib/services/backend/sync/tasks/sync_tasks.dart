@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:async_task/async_task.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/helpers/backend/sync/sync_helpers.dart';
 import 'package:bluebubbles/models/models.dart';

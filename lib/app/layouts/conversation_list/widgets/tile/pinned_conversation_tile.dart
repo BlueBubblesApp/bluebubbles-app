@@ -423,7 +423,7 @@ class PinnedIndicators extends StatelessWidget {
         );
       }
 
-      final showMarker = MessageHelper.shouldShow(controller.chat.latestMessageGetter);
+      final showMarker = controller.chat.latestMessageGetter?.indicatorToShow ?? Indicator.NONE;
       if (ss.settings.statusIndicatorsOnChats.value
           && !controller.chat.isGroup
           && showMarker != Indicator.NONE) {

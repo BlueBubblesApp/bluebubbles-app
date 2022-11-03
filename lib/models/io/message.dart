@@ -653,7 +653,46 @@ class Message {
 
   bool get isInteractive => balloonBundleId != null && !isUrlPreview;
 
+  String get interactiveText {
+    String text = "";
+    final temp = balloonBundleIdMap[balloonBundleId?.split(":").first] ?? (balloonBundleId?.split(":").first ?? "Unknown");
+    if (temp is Map) {
+      text = temp[balloonBundleId?.split(":").last] ?? ((balloonBundleId?.split(":").last ?? "Unknown"));
+    } else {
+      text = temp.toString();
+    }
+    return text;
+  }
+
   bool get isGroupEvent => fullText.isEmpty && !isInteractive && (itemType != null || groupActionType != null);
+
+  String get groupEventText {
+    String text = "Unknown group event";
+    String name = handle?.displayName ?? "You";
+
+    String? other = "someone";
+    if (otherHandle != null && isParticipantEvent) {
+      other = Handle.findOne(originalROWID: otherHandle)?.displayName;
+    }
+
+    if (itemType == 1 && groupActionType == 1) {
+      text = "$name removed $other from the conversation";
+    } else if (itemType == 1 && groupActionType == 0) {
+      text = "$name added $other to the conversation";
+    } else if (itemType == 3 && groupActionType == 1) {
+      text = "$name changed the group photo";
+    } else if (itemType == 3) {
+      text = "$name left the conversation";
+    } else if (itemType == 2 && groupTitle != null) {
+      text = "$name named the conversation \"$groupTitle\"";
+    } else if (itemType == 6) {
+      text = "$name started a FaceTime call";
+    }
+
+    return text;
+  }
+
+  bool get isParticipantEvent => isGroupEvent && ((itemType == 1 && [0, 1].contains(groupActionType)) || [2, 3].contains(itemType));
 
   bool get isBigEmoji => bigEmoji ?? MessageHelper.shouldShowBigEmoji(fullText);
 
@@ -661,7 +700,28 @@ class Message {
 
   List<Attachment> get previewAttachments => attachments.where((e) => e != null && e.mimeType == null).cast<Attachment>().toList();
 
-  List<Message> get reactions => associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", ""))).toList();
+  List<Message> get reactions => associatedMessages.where((item) =>
+      ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", ""))).toList();
+
+  Indicator get indicatorToShow {
+    if (isFromMe!) return Indicator.NONE;
+    if (dateRead != null) return Indicator.READ;
+    if (dateDelivered != null) return Indicator.DELIVERED;
+    if (dateCreated != null) return Indicator.SENT;
+    return Indicator.NONE;
+  }
+
+  bool showTail(Message? newer) {
+    // if there is no newer, or if the newer is a different sender
+    if (newer == null || !sameSender(newer)) return true;
+    // if newer is over a minute newer, or if newer hasn't delivered yet
+    return newer.dateCreated!.difference(dateCreated!).inMinutes.abs() > 1
+        || dateDelivered != null && dateDelivered == null;
+  }
+
+  bool sameSender(Message? other) {
+    return isFromMe == other?.isFromMe || handleId == other?.handleId;
+  }
 
   void generateTempGuid() {
     guid = "temp-${randomString(8)}";

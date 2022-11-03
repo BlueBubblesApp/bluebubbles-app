@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
@@ -51,11 +51,11 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     RenderBox renderBox = containerKey.currentContext!.findRenderObject() as RenderBox;
     Size size = renderBox.size;
     Offset offset = renderBox.localToGlobal(Offset.zero);
-    bool increaseWidth = !MessageHelper.getShowTail(context, widget.message, widget.newerMessage) &&
+    bool increaseWidth = !widget.message.showTail(widget.newerMessage) &&
         (ss.settings.alwaysShowAvatars.value || (cm.activeChat?.chat.isGroup ?? false));
     bool doNotIncreaseHeight = ((widget.message.isFromMe ?? false) ||
         !(cm.activeChat?.chat.isGroup ?? false) ||
-        !MessageHelper.sameSender(widget.message, widget.olderMessage) ||
+        !widget.message.sameSender(widget.olderMessage) ||
         !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
 
     childOffsetY = offset.dy -

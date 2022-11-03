@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -48,6 +48,7 @@ class MessagesService extends GetxController {
       ..link(Message_.chat, Chat_.id.equals(chat.id!))
       ..order(Message_.id, flags: Order.descending)).watch(triggerImmediately: true);
     countSub = countQuery.listen((event) {
+      if (!ss.settings.finishedSetup.value) return;
       final newCount = event.count();
       if (newCount > currentCount && currentCount != 0) {
         event.limit = newCount - currentCount;
@@ -102,8 +103,7 @@ class MessagesService extends GetxController {
       if (_messages.isEmpty) {
         // get from server and save
         final fromServer = await cm.getMessages(chat.guid, offset: offset);
-        await MessageHelper.bulkAddMessages(chat, fromServer,
-            notifyMessageManager: false, notifyForNewMessage: false, checkForLatestMessageText: false);
+        await MessageHelper.bulkAddMessages(chat, fromServer, checkForLatestMessageText: false);
         // re-fetch from the DB because it will find handles / associated messages for us
         _messages = await Chat.getMessagesAsync(chat, offset: offset);
       }
