@@ -139,7 +139,6 @@ class _CupertinoTrailingState extends CustomState<CupertinoTrailing, void, Conve
 
       sub = latestMessageQuery.listen((Query<Message> query) {
         final message = query.findFirst();
-        message?.handle = message.getHandle();
         cachedLatestMessage = message;
         // check if we really need to update this widget
         if (message?.guid != cachedLatestMessageGuid) {
