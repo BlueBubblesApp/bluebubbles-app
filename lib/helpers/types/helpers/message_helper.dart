@@ -102,7 +102,7 @@ class MessageHelper {
   static String getNotificationText(Message message, {bool withSender = false}) {
     if (message.isGroupEvent) return message.groupEventText;
     String sender = !withSender ? "" : "${message.isFromMe! ? "You" : message.handle?.displayName ?? "Someone"}: ";
-    print(sender);
+
     if (message.isInteractive) {
       return "$sender${message.interactiveText}";
     }
