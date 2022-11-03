@@ -19,7 +19,7 @@ class StickersWidget extends StatefulWidget {
 
 class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAliveClientMixin {
   bool _visible = true;
-  late final controller = cvc(cm.activeChat!.chat);
+  late final controller = cm.activeChat == null ? null : cvc(cm.activeChat!.chat);
 
   @override
   void initState() {
@@ -47,9 +47,9 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
       }
       for (Attachment? attachment in msg.attachments) {
         // If we've already loaded it, don't try again
-        if (controller.stickerData.keys.contains(attachment!.guid)) continue;
+        if (controller?.stickerData.keys.contains(attachment!.guid) ?? false) continue;
 
-        String pathName = attachment.path;
+        String pathName = attachment!.path;
 
         final receivePort = ReceivePort();
 
@@ -67,7 +67,7 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
 
               if (image != null) {
                 final bytes = await File(pathName).readAsBytes();
-                controller.stickerData[msg.guid!] = {
+                controller?.stickerData[msg.guid!] = {
                   attachment.guid!: bytes
                 };
               }
@@ -83,7 +83,7 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
 
           if (image != null) {
             final bytes = await File(pathName).readAsBytes();
-            controller.stickerData[msg.guid!] = {
+            controller?.stickerData[msg.guid!] = {
               attachment.guid!: bytes
             };
           }
@@ -98,7 +98,7 @@ class _StickersWidgetState extends State<StickersWidget> with AutomaticKeepAlive
     super.build(context);
 
     final guids = widget.messages.map((e) => e.guid!);
-    final stickers = controller.stickerData.entries.where((element) => guids.contains(element.key)).map((e) => e.value);
+    final stickers = controller?.stickerData.entries.where((element) => guids.contains(element.key)).map((e) => e.value) ?? [];
 
     if (stickers.isEmpty) return Container();
 
