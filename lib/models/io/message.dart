@@ -282,6 +282,9 @@ class Message {
   List<Message> associatedMessages = [];
   bool? bigEmoji;
   List<AttributedBody>? attributedBody;
+  List<MessageSummaryInfo>? messageSummaryInfo;
+  PayloadData? payloadData;
+  bool hasApplePayloadData;
 
   final RxInt _error = RxInt(0);
   int get error => _error.value;
@@ -295,6 +298,10 @@ class Message {
   DateTime? get dateDelivered => _dateDelivered.value;
   set dateDelivered(DateTime? d) => _dateDelivered.value = d;
 
+  final Rxn<DateTime> _dateEdited = Rxn<DateTime>();
+  DateTime? get dateEdited => _dateEdited.value;
+  set dateEdited(DateTime? d) => _dateEdited.value = d;
+
   @Backlink('message')
   final dbAttachments = ToMany<Attachment>();
 
@@ -304,6 +311,16 @@ class Message {
       ? null : jsonEncode(attributedBody!.map((e) => e.toMap()).toList());
   set dbAttributedBody(String? json) => attributedBody = json == null
       ? null : (jsonDecode(json) as List).map((e) => AttributedBody.fromMap(e)).toList();
+
+  String? get dbMessageSummaryInfo => messageSummaryInfo == null
+      ? null : jsonEncode(messageSummaryInfo!.map((e) => e.toJson()).toList());
+  set dbMessageSummaryInfo(String? json) => messageSummaryInfo = json == null
+      ? null : (jsonDecode(json) as List).map((e) => MessageSummaryInfo.fromJson(e)).toList();
+
+  String? get dbPayloadData => payloadData == null
+      ? null : jsonEncode(payloadData!.toJson());
+  set dbPayloadData(String? json) => payloadData = json == null
+      ? null : PayloadData.fromJson(jsonDecode(json));
 
   Message({
     this.id,
@@ -338,10 +355,16 @@ class Message {
     this.metadata,
     this.threadOriginatorGuid,
     this.threadOriginatorPart,
-    this.attributedBody}) {
+    this.attributedBody,
+    this.messageSummaryInfo,
+    this.payloadData,
+    this.hasApplePayloadData = false,
+    DateTime? dateEdited,
+  }) {
       if (error != null) _error.value = error;
       if (dateRead != null) _dateRead.value = dateRead;
       if (dateDelivered != null) _dateDelivered.value = dateDelivered;
+      if (dateEdited != null) _dateEdited.value = dateEdited;
       if (attachments == const []) attachments = [];
       if (associatedMessages == const []) associatedMessages = [];
   }
@@ -367,6 +390,16 @@ class Message {
         metadata = json["metadata"];
       }
     }
+
+    List<MessageSummaryInfo> msi = [];
+    try {
+      msi = (json['messageSummaryInfo'] as List? ?? []).map((e) => MessageSummaryInfo.fromJson(e)).toList();
+    } catch (_) {}
+
+    PayloadData? payloadData;
+    try {
+      payloadData = json['payloadData'] == null ? null : PayloadData.fromJson(json['payloadData']);
+    } catch (_) {}
 
     return Message(
       id: json["ROWID"] ?? json['id'],
@@ -401,6 +434,10 @@ class Message {
       threadOriginatorGuid: json['threadOriginatorGuid'],
       threadOriginatorPart: json['threadOriginatorPart'],
       attributedBody: attributedBody,
+      messageSummaryInfo: msi,
+      payloadData: payloadData,
+      hasApplePayloadData: json['hasApplePayloadData'] == true || payloadData != null,
+      dateEdited: parseDate(json["dateEdited"]),
     );
   }
 
@@ -535,6 +572,9 @@ class Message {
     }
     existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
     existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
+    existing._dateEdited.value = newMessage._dateEdited.value ?? existing._dateEdited.value;
+    existing.attributedBody = newMessage.attributedBody ?? existing.attributedBody;
+    existing.messageSummaryInfo = newMessage.messageSummaryInfo ?? existing.messageSummaryInfo;
     existing._error.value = newMessage._error.value;
 
     try {
@@ -895,6 +935,20 @@ class Message {
       existing.dateDeleted = newMessage.dateDeleted;
     }
 
+    // Update date edited (and attr body & message summary info)
+    if ((existing.dateEdited == null && newMessage.dateEdited != null) ||
+        (existing.dateEdited != null &&
+            newMessage.dateEdited != null &&
+            existing.dateEdited!.millisecondsSinceEpoch < newMessage.dateEdited!.millisecondsSinceEpoch)) {
+      existing.dateEdited = newMessage.dateEdited;
+      if (!isNullOrEmpty(newMessage.attributedBody)!) {
+        existing.attributedBody = newMessage.attributedBody;
+      }
+      if (!isNullOrEmpty(newMessage.messageSummaryInfo)!) {
+        existing.messageSummaryInfo = newMessage.messageSummaryInfo;
+      }
+    }
+
     // Update error
     if (existing._error.value != newMessage._error.value) {
       existing._error.value = newMessage._error.value;
@@ -974,10 +1028,14 @@ class Message {
       "metadata": jsonEncode(metadata),
       "threadOriginatorGuid": threadOriginatorGuid,
       "threadOriginatorPart": threadOriginatorPart,
+      "hasApplePayloadData": hasApplePayloadData,
     };
     if (includeObjects) {
       map['attachments'] = (attachments).map((e) => e!.toMap()).toList();
       map['handle'] = handle?.toMap();
+      map['attributedBody'] = attributedBody?.map((e) => e.toMap()).toList();
+      map['messageSummaryInfo'] = messageSummaryInfo?.map((e) => e.toJson()).toList();
+      map['payloadData'] = payloadData?.toJson();
     }
     return map;
   }

@@ -376,7 +376,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(13, 4148278195232901830),
       name: 'Message',
-      lastPropertyId: const IdUid(41, 4740279940509235463),
+      lastPropertyId: const IdUid(45, 9157460167218193355),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -536,6 +536,26 @@ final _entities = <ModelEntity>[
             id: const IdUid(41, 4740279940509235463),
             name: 'associatedMessagePart',
             type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(42, 5528059355711105816),
+            name: 'hasApplePayloadData',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(43, 3013626603452809145),
+            name: 'dateEdited',
+            type: 10,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(44, 317511503043460053),
+            name: 'dbMessageSummaryInfo',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(45, 9157460167218193355),
+            name: 'dbPayloadData',
+            type: 9,
             flags: 0)
       ],
       relations: <ModelRelation>[],
@@ -1233,7 +1253,13 @@ ModelDefinition getObjectBoxModel() {
           final dbAttributedBodyOffset = object.dbAttributedBody == null
               ? null
               : fbb.writeString(object.dbAttributedBody!);
-          fbb.startTable(42);
+          final dbMessageSummaryInfoOffset = object.dbMessageSummaryInfo == null
+              ? null
+              : fbb.writeString(object.dbMessageSummaryInfo!);
+          final dbPayloadDataOffset = object.dbPayloadData == null
+              ? null
+              : fbb.writeString(object.dbPayloadData!);
+          fbb.startTable(46);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.originalROWID);
           fbb.addOffset(2, guidOffset);
@@ -1265,6 +1291,10 @@ ModelDefinition getObjectBoxModel() {
           fbb.addInt64(38, object.chat.targetId);
           fbb.addOffset(39, dbAttributedBodyOffset);
           fbb.addInt64(40, object.associatedMessagePart);
+          fbb.addBool(41, object.hasApplePayloadData);
+          fbb.addInt64(42, object.dateEdited?.millisecondsSinceEpoch);
+          fbb.addOffset(43, dbMessageSummaryInfoOffset);
+          fbb.addOffset(44, dbPayloadDataOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1281,6 +1311,8 @@ ModelDefinition getObjectBoxModel() {
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 46);
           final dateDeletedValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 70);
+          final dateEditedValue =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 88);
           final object = Message(
               id: const fb.Int64Reader()
                   .vTableGetNullable(buffer, rootOffset, 4),
@@ -1320,10 +1352,17 @@ ModelDefinition getObjectBoxModel() {
               hasReactions: const fb.BoolReader().vTableGet(buffer, rootOffset, 68, false),
               dateDeleted: dateDeletedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue),
               threadOriginatorGuid: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 72),
-              threadOriginatorPart: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 74))
+              threadOriginatorPart: const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 74),
+              hasApplePayloadData: const fb.BoolReader().vTableGet(buffer, rootOffset, 86, false),
+              dateEdited: dateEditedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateEditedValue))
             ..bigEmoji =
                 const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 76)
-            ..dbAttributedBody = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 82);
+            ..dbAttributedBody = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 82)
+            ..dbMessageSummaryInfo =
+                const fb.StringReader(asciiOptimization: true)
+                    .vTableGetNullable(buffer, rootOffset, 90)
+            ..dbPayloadData = const fb.StringReader(asciiOptimization: true).vTableGetNullable(buffer, rootOffset, 92);
           object.chat.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 80, 0);
           object.chat.attach(store);
@@ -1880,6 +1919,22 @@ class Message_ {
   /// see [Message.associatedMessagePart]
   static final associatedMessagePart =
       QueryIntegerProperty<Message>(_entities[5].properties[30]);
+
+  /// see [Message.hasApplePayloadData]
+  static final hasApplePayloadData =
+      QueryBooleanProperty<Message>(_entities[5].properties[31]);
+
+  /// see [Message.dateEdited]
+  static final dateEdited =
+      QueryIntegerProperty<Message>(_entities[5].properties[32]);
+
+  /// see [Message.dbMessageSummaryInfo]
+  static final dbMessageSummaryInfo =
+      QueryStringProperty<Message>(_entities[5].properties[33]);
+
+  /// see [Message.dbPayloadData]
+  static final dbPayloadData =
+      QueryStringProperty<Message>(_entities[5].properties[34]);
 }
 
 /// [ScheduledMessage] entity fields to define ObjectBox queries.

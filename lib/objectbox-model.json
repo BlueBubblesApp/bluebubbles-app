@@ -356,7 +356,7 @@
     },
     {
       "id": "13:4148278195232901830",
-      "lastPropertyId": "41:4740279940509235463",
+      "lastPropertyId": "45:9157460167218193355",
       "name": "Message",
       "properties": [
         {
@@ -519,6 +519,26 @@
           "id": "41:4740279940509235463",
           "name": "associatedMessagePart",
           "type": 6
+        },
+        {
+          "id": "42:5528059355711105816",
+          "name": "hasApplePayloadData",
+          "type": 1
+        },
+        {
+          "id": "43:3013626603452809145",
+          "name": "dateEdited",
+          "type": 10
+        },
+        {
+          "id": "44:317511503043460053",
+          "name": "dbMessageSummaryInfo",
+          "type": 9
+        },
+        {
+          "id": "45:9157460167218193355",
+          "name": "dbPayloadData",
+          "type": 9
         }
       ],
       "relations": []

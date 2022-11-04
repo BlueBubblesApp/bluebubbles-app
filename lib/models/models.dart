@@ -39,3 +39,5 @@ export 'package:bluebubbles/models/global/chat_messages.dart';
 export 'package:bluebubbles/models/global/apple_location.dart';
 export 'package:bluebubbles/models/global/isolate.dart';
 export 'package:bluebubbles/models/global/theme_colors.dart';
+export 'package:bluebubbles/models/global/payload_data.dart';
+export 'package:bluebubbles/models/global/message_summary_info.dart';

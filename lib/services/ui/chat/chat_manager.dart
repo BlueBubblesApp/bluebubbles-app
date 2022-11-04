@@ -137,7 +137,7 @@ class ChatManager extends GetxService {
 
   Future<List<dynamic>> getMessages(String guid, {bool withAttachment = true, bool withHandle = true, int offset = 0, int limit = 25, String sort = "DESC", int? after, int? before}) async {
     Completer<List<dynamic>> completer = Completer();
-    final withQuery = <String>["message.attributedbody"];
+    final withQuery = <String>["message.attributedBody", "message.messageSummaryInfo", "message.payloadData"];
     if (withAttachment) withQuery.add("attachment");
     if (withHandle) withQuery.add("handle");
 
