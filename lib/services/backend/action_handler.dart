@@ -207,11 +207,7 @@ class ActionHandler extends GetxService {
     await c.addMessage(m);
     for (Attachment? a in m.attachments) {
       if (a == null) continue;
-
       a.save(m);
-      if ((await as.canAutoDownload()) && a.mimeType != null) {
-        Get.put(AttachmentDownloadController(attachment: a), tag: a.guid);
-      }
     }
   }
 
