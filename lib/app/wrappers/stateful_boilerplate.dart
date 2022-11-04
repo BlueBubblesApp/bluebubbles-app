@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
@@ -20,7 +21,7 @@ abstract class CustomStateful<T extends StatefulController> extends StatefulWidg
 
 /// [State] with support for optimized state management using a custom
 /// [GetxController]
-abstract class CustomState<T extends CustomStateful, R, S extends StatefulController> extends State<T> {
+abstract class CustomState<T extends CustomStateful, R, S extends StatefulController> extends State<T> with ThemeHelpers {
   // completer to check if the page animation is complete
   final animCompleted = Completer<void>();
 
@@ -162,7 +163,7 @@ abstract class CustomState<T extends CustomStateful, R, S extends StatefulContro
 /// Used for cases where we don't need a specific [GetxController], the main
 /// benefit of this class is to provide an optimized [setState] function to
 /// minimize lag and jank.
-abstract class OptimizedState<T extends StatefulWidget> extends State<T> {
+abstract class OptimizedState<T extends StatefulWidget> extends State<T> with ThemeHelpers {
   final animCompleted = Completer<void>();
 
   @override
