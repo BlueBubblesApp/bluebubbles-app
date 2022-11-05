@@ -192,6 +192,7 @@ extension ColorHelpers on Color {
   }
 
   Color lightenOrDarken([double percent = 10]) {
+    if (percent == 0) return this;
     if (computeDifference(Colors.black) >= 50) {
       return darkenPercent(percent);
     } else {

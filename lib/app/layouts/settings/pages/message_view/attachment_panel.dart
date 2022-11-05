@@ -17,7 +17,7 @@ class AttachmentPanel extends StatefulWidget {
   State<StatefulWidget> createState() => _AttachmentPanelState();
 }
 
-class _AttachmentPanelState extends OptimizedState<AttachmentPanel> with ThemeHelpers {
+class _AttachmentPanelState extends OptimizedState<AttachmentPanel> {
 
   @override
   Widget build(BuildContext context) {

@@ -31,7 +31,7 @@ class TabletModeWrapper extends StatefulWidget {
   State<TabletModeWrapper> createState() => _TabletModeWrapperState();
 }
 
-class _TabletModeWrapperState extends OptimizedState<TabletModeWrapper> with ThemeHelpers {
+class _TabletModeWrapperState extends OptimizedState<TabletModeWrapper> {
   //from 0-1
   late final RxDouble _ratio;
   double? _maxWidth;

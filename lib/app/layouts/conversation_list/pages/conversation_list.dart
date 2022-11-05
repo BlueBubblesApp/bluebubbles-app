@@ -122,7 +122,7 @@ class ConversationList extends CustomStateful<ConversationListController> {
   State<StatefulWidget> createState() => _ConversationListState();
 }
 
-class _ConversationListState extends CustomState<ConversationList, void, ConversationListController> with ThemeHelpers {
+class _ConversationListState extends CustomState<ConversationList, void, ConversationListController> {
 
   @override
   void initState() {

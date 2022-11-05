@@ -19,7 +19,7 @@ class AdvancedThemingPanel extends StatefulWidget {
   State<AdvancedThemingPanel> createState() => _AdvancedThemingPanelState();
 }
 
-class _AdvancedThemingPanelState extends OptimizedState<AdvancedThemingPanel> with SingleTickerProviderStateMixin, ThemeHelpers {
+class _AdvancedThemingPanelState extends OptimizedState<AdvancedThemingPanel> with SingleTickerProviderStateMixin {
   int index = ts.inDarkMode(Get.context!) ? 1 : 0;
   final StreamController streamController = StreamController.broadcast();
   late final TabController controller;

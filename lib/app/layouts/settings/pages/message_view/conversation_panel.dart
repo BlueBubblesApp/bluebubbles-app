@@ -13,7 +13,7 @@ class ConversationPanel extends StatefulWidget {
   State<StatefulWidget> createState() => _ConversationPanelState();
 }
 
-class _ConversationPanelState extends OptimizedState<ConversationPanel> with ThemeHelpers {
+class _ConversationPanelState extends OptimizedState<ConversationPanel> {
 
   @override
   Widget build(BuildContext context) {

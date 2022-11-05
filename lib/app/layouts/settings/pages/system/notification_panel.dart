@@ -23,7 +23,7 @@ class NotificationPanel extends StatefulWidget {
   State<StatefulWidget> createState() => _NotificationPanelState();
 }
 
-class _NotificationPanelState extends OptimizedState<NotificationPanel> with SingleTickerProviderStateMixin, ThemeHelpers {
+class _NotificationPanelState extends OptimizedState<NotificationPanel> with SingleTickerProviderStateMixin {
   final ScrollController controller1 = ScrollController();
   late final TabController tabController;
   final RxInt index = 0.obs;
@@ -375,7 +375,7 @@ class ChatList extends StatefulWidget {
   State<StatefulWidget> createState() => ChatListState();
 }
 
-class ChatListState extends OptimizedState<ChatList> with ThemeHelpers {
+class ChatListState extends OptimizedState<ChatList> {
   final ScrollController controller = ScrollController();
 
   String getSubtitle(Chat chat) {

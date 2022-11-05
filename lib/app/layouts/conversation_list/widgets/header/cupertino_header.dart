@@ -119,7 +119,12 @@ class CupertinoHeader extends StatelessWidget {
                         ),
                       if (ss.settings.moveChatCreatorToHeader.value)
                         const SizedBox(width: 10.0),
-                      const OverflowMenu(),
+                      Material(
+                        color: Colors.transparent,
+                        shape: const CircleBorder(),
+                        clipBehavior: Clip.antiAlias,
+                        child: const OverflowMenu(),
+                      ),
                     ],
                   )
                 ],

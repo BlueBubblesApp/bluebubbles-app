@@ -15,7 +15,7 @@ class TroubleshootPanel extends StatefulWidget {
   State<StatefulWidget> createState() => _TroubleshootPanelState();
 }
 
-class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> with ThemeHelpers {
+class _TroubleshootPanelState extends OptimizedState<TroubleshootPanel> {
 
   @override
   Widget build(BuildContext context) {

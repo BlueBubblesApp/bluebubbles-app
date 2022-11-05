@@ -15,7 +15,7 @@ class ConversationListFAB extends CustomStateful<ConversationListController> {
   State<StatefulWidget> createState() => _ConversationListFABState();
 }
 
-class _ConversationListFABState extends CustomState<ConversationListFAB, void, ConversationListController> with ThemeHelpers {
+class _ConversationListFABState extends CustomState<ConversationListFAB, void, ConversationListController> {
 
   @override
   void initState() {

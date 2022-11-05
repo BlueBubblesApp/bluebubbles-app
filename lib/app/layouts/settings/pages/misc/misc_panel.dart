@@ -20,7 +20,7 @@ class MiscPanel extends StatefulWidget {
   State<StatefulWidget> createState() => _MiscPanelState();
 }
 
-class _MiscPanelState extends OptimizedState<MiscPanel> with ThemeHelpers {
+class _MiscPanelState extends OptimizedState<MiscPanel> {
   final RxnBool refreshingContacts = RxnBool();
 
   @override

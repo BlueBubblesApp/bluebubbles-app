@@ -30,7 +30,7 @@ class AdvancedThemingContent extends StatefulWidget {
   State<AdvancedThemingContent> createState() => _AdvancedThemingContentState();
 }
 
-class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent> with ThemeHelpers {
+class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent> {
   late ThemeStruct currentTheme;
   List<ThemeStruct> allThemes = [];
   bool editable = false;

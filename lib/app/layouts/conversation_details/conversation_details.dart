@@ -41,7 +41,7 @@ class ConversationDetails extends StatefulWidget {
   State<ConversationDetails> createState() => _ConversationDetailsState();
 }
 
-class _ConversationDetailsState extends OptimizedState<ConversationDetails> with WidgetsBindingObserver, ThemeHelpers {
+class _ConversationDetailsState extends OptimizedState<ConversationDetails> with WidgetsBindingObserver {
   static const maxPageSize = 5;
   late final TextEditingController controller = TextEditingController(text: chat.isGroup ? chat.displayName : chat.getTitle());
 

@@ -47,7 +47,7 @@ class CustomAvatarColorPanel extends CustomStateful<CustomAvatarColorPanelContro
   State<StatefulWidget> createState() => _CustomAvatarColorPanelState();
 }
 
-class _CustomAvatarColorPanelState extends CustomState<CustomAvatarColorPanel, void, CustomAvatarColorPanelController> with ThemeHelpers {
+class _CustomAvatarColorPanelState extends CustomState<CustomAvatarColorPanel, void, CustomAvatarColorPanelController> {
 
   @override
   Widget build(BuildContext context) {

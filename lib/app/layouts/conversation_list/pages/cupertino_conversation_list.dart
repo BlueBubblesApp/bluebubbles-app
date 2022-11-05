@@ -25,7 +25,7 @@ class CupertinoConversationList extends StatefulWidget {
   State<StatefulWidget> createState() => CupertinoConversationListState();
 }
 
-class CupertinoConversationListState extends OptimizedState<CupertinoConversationList> with ThemeHelpers {
+class CupertinoConversationListState extends OptimizedState<CupertinoConversationList> {
   final PageController _controller = PageController();
 
   bool get showArchived => widget.parentController.showArchivedChats;

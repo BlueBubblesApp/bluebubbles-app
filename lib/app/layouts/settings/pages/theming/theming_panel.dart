@@ -53,7 +53,7 @@ class ThemingPanel extends CustomStateful<ThemingPanelController> {
   State<StatefulWidget> createState() => _ThemingPanelState();
 }
 
-class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelController> with ThemeHelpers {
+class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelController> {
 
   @override
   Widget build(BuildContext context) {

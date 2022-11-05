@@ -22,7 +22,7 @@ class DesktopPanel extends StatefulWidget {
   State<StatefulWidget> createState() => _DesktopPanelState();
 }
 
-class _DesktopPanelState extends OptimizedState<DesktopPanel> with ThemeHelpers {
+class _DesktopPanelState extends OptimizedState<DesktopPanel> {
   final RxList<bool> showButtons = RxList<bool>.filled(ReactionTypes.toList().length + 1, false);
   final RxnBool useCustomPath = RxnBool(ss.prefs.getBool("use-custom-path"));
   final RxnString customPath = RxnString(ss.prefs.getString("custom-path"));

@@ -33,7 +33,7 @@ class SearchView extends StatefulWidget {
   SearchViewState createState() => SearchViewState();
 }
 
-class SearchViewState extends OptimizedState<SearchView> with ThemeHelpers {
+class SearchViewState extends OptimizedState<SearchView> {
   final Duration animationDuration = Duration(milliseconds: 400);
   final TextEditingController textEditingController = TextEditingController();
   final ScrollController scrollController = ScrollController();

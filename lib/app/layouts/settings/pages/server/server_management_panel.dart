@@ -99,7 +99,7 @@ class ServerManagementPanel extends CustomStateful<ServerManagementPanelControll
   State<ServerManagementPanel> createState() => _ServerManagementPanelState();
 }
 
-class _ServerManagementPanelState extends CustomState<ServerManagementPanel, void, ServerManagementPanelController> with ThemeHelpers {
+class _ServerManagementPanelState extends CustomState<ServerManagementPanel, void, ServerManagementPanelController> {
 
   @override
   Widget build(BuildContext context) {

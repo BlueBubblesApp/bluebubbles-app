@@ -36,7 +36,7 @@ class PrivateAPIPanel extends CustomStateful<PrivateAPIPanelController> {
   State<StatefulWidget> createState() => _PrivateAPIPanelState();
 }
 
-class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAPIPanelController> with ThemeHelpers {
+class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAPIPanelController> {
 
   @override
   Widget build(BuildContext context) {

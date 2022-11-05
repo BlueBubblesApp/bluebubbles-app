@@ -22,7 +22,7 @@ class SamsungConversationList extends StatefulWidget {
   State<SamsungConversationList> createState() => _SamsungConversationListState();
 }
 
-class _SamsungConversationListState extends OptimizedState<SamsungConversationList> with ThemeHelpers {
+class _SamsungConversationListState extends OptimizedState<SamsungConversationList> {
   bool get showArchived => widget.parentController.showArchivedChats;
   bool get showUnknown => widget.parentController.showUnknownSenders;
   Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled

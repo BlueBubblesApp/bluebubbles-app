@@ -21,7 +21,7 @@ class SamsungHeader extends CustomStateful<ConversationListController> {
   State<StatefulWidget> createState() => _SamsungHeaderState();
 }
 
-class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationListController> with ThemeHelpers {
+class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationListController> {
   Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled
       ? headerColor
       : Colors.transparent;
@@ -132,9 +132,14 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                             if (!showArchived && !showUnknown)
                               const Padding(
                                 padding: EdgeInsets.only(right: 8.0),
-                                child: SizedBox(
-                                  width: 40,
-                                  child: OverflowMenu(),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  shape: CircleBorder(),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: SizedBox(
+                                    width: 40,
+                                    child: OverflowMenu(),
+                                  ),
                                 ),
                               ),
                           ],

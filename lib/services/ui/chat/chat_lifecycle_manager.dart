@@ -11,6 +11,7 @@ class ChatLifecycleManager {
 
   bool isActive = false;
   bool isAlive = false;
+  ConversationViewController? controller;
 
   ChatLifecycleManager(this.chat) {
     if (!kIsWeb) {

@@ -16,7 +16,7 @@ class CustomAvatarPanel extends StatefulWidget {
   State<StatefulWidget> createState() => _CustomAvatarPanelState();
 }
 
-class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> with ThemeHelpers {
+class _CustomAvatarPanelState extends OptimizedState<CustomAvatarPanel> {
 
   @override
   Widget build(BuildContext context) {

@@ -21,7 +21,7 @@ class MaterialConversationList extends StatefulWidget {
   State<MaterialConversationList> createState() => _MaterialConversationListState();
 }
 
-class _MaterialConversationListState extends OptimizedState<MaterialConversationList> with ThemeHelpers {
+class _MaterialConversationListState extends OptimizedState<MaterialConversationList> {
   bool get showArchived => widget.parentController.showArchivedChats;
   bool get showUnknown => widget.parentController.showUnknownSenders;
   Color get backgroundColor => ss.settings.windowEffect.value == WindowEffect.disabled

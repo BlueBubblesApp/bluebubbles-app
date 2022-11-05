@@ -3,13 +3,13 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/app/layouts/conversation_details/conversation_details.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/cupertino_header.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/material_header.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/app/wrappers/gradient_background_wrapper.dart';
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
-import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
-import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
@@ -44,7 +44,7 @@ class ConversationView extends StatefulWidget {
   ConversationViewState createState() => ConversationViewState();
 }
 
-class ConversationViewState extends State<ConversationView> {
+class ConversationViewState extends OptimizedState<ConversationView> {
   // message animation
   Message? message;
   Tween<double> tween = Tween<double>(begin: 1, end: 0);
@@ -55,7 +55,6 @@ class ConversationViewState extends State<ConversationView> {
   bool markedAsRead = false;
 
   late final ConversationViewController controller = cvc(chat, tag: widget.customService?.tag);
-  late final RxBool adjustBackground = RxBool(ts.isGradientBg(Get.context!));
   final GlobalKey key = GlobalKey();
 
   Chat get chat => widget.chat;
@@ -65,6 +64,7 @@ class ConversationViewState extends State<ConversationView> {
     super.initState();
 
     cm.setActiveChat(chat);
+    cm.activeChat!.controller = controller;
 
     KeyboardVisibilityController().onChange.listen((bool visible) async {
       await Future.delayed(Duration(milliseconds: 500));
@@ -217,6 +217,72 @@ class ConversationViewState extends State<ConversationView> {
   }
 
   @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: ss.settings.immersiveMode.value
+            ? Colors.transparent
+            : context.theme.colorScheme.background,
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
+      ),
+      child: Theme(
+        data: context.theme.copyWith(
+          // in case some components still use legacy theming
+          primaryColor: context.theme.colorScheme.bubble(context, chat.isIMessage),
+          colorScheme: context.theme.colorScheme.copyWith(
+            primary: context.theme.colorScheme.bubble(context, chat.isIMessage),
+            onPrimary: context.theme.colorScheme.onBubble(context, chat.isIMessage),
+            surface: ss.settings.monetTheming.value == Monet.full
+                ? null
+                : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+            onSurface: ss.settings.monetTheming.value == Monet.full
+                ? null
+                : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+          ),
+        ),
+        child: WillPopScope(
+          onWillPop: () async {
+            if (ls.isBubble) {
+              SystemNavigator.pop();
+            }
+            return !ls.isBubble;
+          },
+          child: SafeArea(
+            top: false,
+            bottom: false,
+            child: Scaffold(
+              backgroundColor: context.theme.colorScheme.background,
+              extendBodyBehindAppBar: true,
+              appBar: iOS
+                  ? CupertinoHeader(controller: controller)
+                  : MaterialHeader(controller: controller) as PreferredSizeWidget,
+              body: GradientBackground(
+                controller: controller,
+                child: Stack(
+                  children: [
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: DeferredPointerHandler(
+                        child: BlueBubblesTextField(
+                          key: key,
+                          onSend: send,
+                          controller: controller,
+                        ),
+                      ),
+                    )
+                  ]
+                ),
+              ),
+            ),
+          ),
+        )
+      ),
+    );
+  }
+
+  /*@override
   Widget build(BuildContext context) {
     final textField = BlueBubblesTextField(
       key: key,
@@ -429,13 +495,7 @@ class ConversationViewState extends State<ConversationView> {
             ),
           )),
     );
-  }
-
-  static Rx<MovieTween> gradientTween = Rx<MovieTween>(MovieTween()
-    ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
-        .tween("color1", Tween<double>(begin: 0, end: 0.2))
-    ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
-        .tween("color2", Tween<double>(begin: 0.8, end: 1)));
+  }*/
 
   void openDetails() {
     Navigator.of(context).push(
@@ -480,64 +540,6 @@ class ConversationViewState extends State<ConversationView> {
     }).catchError((_) {
       setProgress(false);
     });
-  }
-
-  Widget buildCupertinoTrailing() {
-    Color? fontColor = context.theme.colorScheme.onBackground;
-    bool manualMark =
-        ss.settings.enablePrivateAPI.value && ss.settings.privateManualMarkAsRead.value;
-    bool showManual = !ss.settings.privateMarkChatAsRead.value && !widget.chat.isGroup;
-    List<Widget> items = [
-      if (showManual && manualMark && markingAsRead)
-        Padding(
-            padding: EdgeInsets.only(right: ss.settings.colorblindMode.value ? 15.0 : 10.0),
-            child: ss.settings.skin.value == Skins.iOS
-                ? Theme(
-              data: ThemeData(
-                cupertinoOverrideTheme: CupertinoThemeData(
-                  brightness: context.theme.colorScheme.brightness,
-                ),
-              ),
-              child: CupertinoActivityIndicator(
-                radius: 12,
-              ),
-            )
-                : Container(
-                height: 24,
-                width: 24,
-                child: Center(
-                    child: CircularProgressIndicator(
-                      backgroundColor: context.theme.colorScheme.properSurface,
-                      valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                      strokeWidth: 2,
-                    )))),
-      if (showManual && manualMark && !markingAsRead)
-        Padding(
-          padding: EdgeInsets.only(right: ss.settings.colorblindMode.value ? 10.0 : 5.0),
-          child: GestureDetector(
-            child: Icon(
-              (markedAsRead)
-                  ? CupertinoIcons.check_mark_circled
-                  : CupertinoIcons.check_mark_circled_solid,
-              color: (markedAsRead) ? HexColor('43CC47').withAlpha(200) : fontColor,
-            ),
-            onTap: markChatAsRead,
-          ),
-        ),
-    ];
-
-    if (ss.settings.showConnectionIndicator.value) {
-      items.add(Obx(() => getIndicatorIcon(socket.state.value, size: 12)));
-    }
-
-    return Padding(
-      padding: EdgeInsets.only(right: 30.0, top: kIsDesktop ? 10 : 45),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: items,
-      ),
-    );
   }
 
   PreferredSizeWidget buildConversationViewHeader(BuildContext context) {
@@ -719,134 +721,6 @@ class ConversationViewState extends State<ConversationView> {
       );
     }
 
-    TextStyle? titleStyle = Theme.of(context).textTheme.bodyMedium;
-    if (!generateTitle && hideTitle) titleStyle = titleStyle!.copyWith(color: Colors.transparent);
-
-    final children = [
-      if (kIsDesktop) SizedBox(height: chat.participants.length == 1 ?  8.0 : 3.0, width: 5.0),
-      ContactAvatarGroupWidget(
-        chat: chat,
-        size: chat.participants.length == 1 ? 40 : 45,
-        onTap: openDetails,
-      ),
-      if (!kIsDesktop) SizedBox(height: 5.0, width: 5.0),
-      Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
-        Container(
-          constraints: BoxConstraints(
-              maxWidth: ns.width(context) / 2 - 55,
-              maxHeight: 20.5
-          ),
-          child: RichText(
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              style: Theme.of(context).textTheme.titleMedium,
-              children: [
-                ...MessageHelper.buildEmojiText(
-                  title ?? "",
-                  titleStyle!,
-                ),
-              ],
-            ),
-          ),
-        ),
-        Icon(
-          CupertinoIcons.chevron_right,
-          size: context.theme.textTheme.bodyMedium!.fontSize!,
-          color: context.theme.colorScheme.outline,
-        ),
-      ]),
-    ];
-
-    return PreferredSize(
-      preferredSize: Size.fromHeight(!kIsDesktop && (context.orientation == Orientation.landscape && context.isPhone) ? 55 : 75),
-      child: ClipPath(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-              decoration: BoxDecoration(
-                color: context.theme.colorScheme.properSurface.withOpacity(0.3),
-                border: Border(
-                  bottom: BorderSide(color: context.theme.colorScheme.properSurface, width: 1.5),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 15.0, top: kIsDesktop || kIsWeb ? 5 : 45),
-                      child: GestureDetector(
-                          onTap: () {
-                            if (ls.isBubble) {
-                              SystemNavigator.pop();
-                              return;
-                            }
-                            eventDispatcher.emit("update-highlight", null);
-                            Navigator.of(context).pop();
-                          },
-                          behavior: HitTestBehavior.translucent,
-                          child: Obx(() => Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              buildBackButton(context, callback: () {
-                                if (ls.isBubble) {
-                                  SystemNavigator.pop();
-                                  return false;
-                                }
-                                eventDispatcher.emit("update-highlight", null);
-                                return true;
-                              }),
-                              // todo
-                              // if (ChatBloc().unreads.value > 0)
-                              //   Container(
-                              //     width: 25.0,
-                              //     height: 20.0,
-                              //     decoration: BoxDecoration(
-                              //         color: context.theme.colorScheme.primary,
-                              //         shape: BoxShape.rectangle,
-                              //         borderRadius: BorderRadius.circular(10)),
-                              //     child: Center(
-                              //         child: Text(ChatBloc().unreads.value.toString(),
-                              //             textAlign: TextAlign.center, style: TextStyle(color: context.theme.colorScheme.onPrimary, fontSize: 12.0))),
-                              //   ),
-                            ],
-                          ),
-                          )),
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: EdgeInsets.only(bottom: 5),
-                      child: GestureDetector(
-                        onTap: openDetails,
-                        child: Builder(builder: (context) {
-                          if (!kIsDesktop && (context.orientation == Orientation.landscape && context.isPhone)) {
-                            return Row(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: children);
-                          }
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: children,
-                          );
-                        }),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Obx(() => buildCupertinoTrailing()),
-                  )
-                ],
-              )
-          ),
-        ),
-      ),
-    );
+    return PreferredSize(preferredSize: Size.zero,child: Container(),);
   }
 }

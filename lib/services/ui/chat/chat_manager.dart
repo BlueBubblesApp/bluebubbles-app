@@ -13,6 +13,7 @@ class ChatManager extends GetxService {
   final Map<String, ChatLifecycleManager> _chatControllers = {};
 
   void setAllInactive() {
+    activeChat?.controller = null;
     activeChat = null;
     _chatControllers.forEach((key, value) {
       value.isActive = false;

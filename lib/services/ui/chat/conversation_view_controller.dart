@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chewie_audio/chewie_audio.dart';
@@ -10,20 +11,21 @@ import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
+import 'package:simple_animations/simple_animations.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
 
 ConversationViewController cvc(Chat chat, {String? tag}) => Get.isRegistered<ConversationViewController>(tag: tag ?? chat.guid)
-? Get.find<ConversationViewController>(tag: tag ?? chat.guid) : Get.put(ConversationViewController(chat, tag: tag), tag: tag ?? chat.guid);
+? Get.find<ConversationViewController>(tag: tag ?? chat.guid) : Get.put(ConversationViewController(chat, tag_: tag), tag: tag ?? chat.guid);
 
-class ConversationViewController extends GetxController {
+class ConversationViewController extends StatefulController {
   final Chat chat;
-  late final String _tag;
+  late final String tag;
   final AutoScrollController scrollController = AutoScrollController();
   final GlobalKey key = GlobalKey();
 
-  ConversationViewController(this.chat, {String? tag}) {
-    _tag = tag ?? chat.guid;
+  ConversationViewController(this.chat, {String? tag_}) {
+    tag = tag_ ?? chat.guid;
   }
 
   final Map<String, Uint8List> imageData = {};
@@ -115,6 +117,6 @@ class ConversationViewController extends GetxController {
   }
 
   void close() {
-    Get.delete<ConversationViewController>(tag: _tag);
+    Get.delete<ConversationViewController>(tag: tag);
   }
 }

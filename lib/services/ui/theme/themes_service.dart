@@ -25,6 +25,12 @@ class ThemesService extends GetxService {
   CorePalette? monetPalette;
   Color? windowsAccentColor;
 
+  final Rx<MovieTween> gradientTween = Rx<MovieTween>(MovieTween()
+    ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+        .tween("color1", Tween<double>(begin: 0, end: 0.2))
+    ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
+        .tween("color2", Tween<double>(begin: 0.8, end: 1)));
+
   Future<void> init() async {
     monetPalette = await DynamicColorPlugin.getCorePalette();
     if (Platform.isWindows) {
@@ -212,13 +218,13 @@ class ThemesService extends GetxService {
         double difference = min((primaryPercent / (primaryPercent + darkBgPercent)), 1 - (primaryPercent / (primaryPercent + darkBgPercent)));
         Tween<double> color1 = Tween<double>(begin: 0, end: difference);
         Tween<double> color2 = Tween<double>(begin: 1 - difference, end: 1);
-        ConversationViewState.gradientTween.value = MovieTween()
+        gradientTween.value = MovieTween()
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
               .tween("color1", color1)
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
               .tween("color2", color2);
       } else {
-        ConversationViewState.gradientTween.value = MovieTween()
+        gradientTween.value = MovieTween()
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
               .tween("color1", Tween<double>(begin: 0, end: 0.2))
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
@@ -229,13 +235,13 @@ class ThemesService extends GetxService {
         double difference = min((primaryPercent / (primaryPercent + lightBgPercent)), 1 - (primaryPercent / (primaryPercent + lightBgPercent)));
         Tween<double> color1 = Tween<double>(begin: 0.0, end: difference);
         Tween<double> color2 = Tween<double>(begin: 1.0 - difference, end: 1.0);
-        ConversationViewState.gradientTween.value = MovieTween()
+        gradientTween.value = MovieTween()
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
               .tween("color1", color1)
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
               .tween("color2", color2);
       } else {
-        ConversationViewState.gradientTween.value = MovieTween()
+        gradientTween.value = MovieTween()
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))
               .tween("color1", Tween<double>(begin: 0, end: 0.2))
           ..scene(begin: Duration.zero, duration: Duration(seconds: 3))

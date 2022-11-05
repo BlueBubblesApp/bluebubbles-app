@@ -20,7 +20,7 @@ class AvatarCrop extends StatefulWidget {
   State<AvatarCrop> createState() => _AvatarCropState();
 }
 
-class _AvatarCropState extends OptimizedState<AvatarCrop> with ThemeHelpers {
+class _AvatarCropState extends OptimizedState<AvatarCrop> {
   final _cropController = CropController();
   Uint8List? _imageData;
   bool _isLoading = true;

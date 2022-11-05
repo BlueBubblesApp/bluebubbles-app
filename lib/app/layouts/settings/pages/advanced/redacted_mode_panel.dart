@@ -16,7 +16,7 @@ class RedactedModePanel extends StatefulWidget {
   State<StatefulWidget> createState() => _RedactedModePanelState();
 }
 
-class _RedactedModePanelState extends OptimizedState<RedactedModePanel> with ThemeHelpers {
+class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
 
   @override
   Widget build(BuildContext context) {

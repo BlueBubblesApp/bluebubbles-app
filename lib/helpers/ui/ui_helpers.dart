@@ -14,6 +14,31 @@ import 'package:image/image.dart' as img;
 import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
+class BackButton extends StatelessWidget {
+  final Function()? onPressed;
+  final Color? color;
+
+  const BackButton({this.color, this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Obx(() => Icon(
+        ss.settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
+        color: color ?? context.theme.colorScheme.primary,
+      )),
+      iconSize: ss.settings.skin.value != Skins.Material ? 30 : 24,
+      onPressed: () {
+        onPressed?.call();
+        while (Get.isOverlaysOpen) {
+          Get.back();
+        }
+        Navigator.of(context).pop();
+      },
+    );
+  }
+}
+
 Widget buildBackButton(BuildContext context,
     {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, bool Function()? callback}) {
   return Material(

@@ -18,7 +18,7 @@ class ChatListPanel extends StatefulWidget {
   State<StatefulWidget> createState() => _ChatListPanelState();
 }
 
-class _ChatListPanelState extends OptimizedState<ChatListPanel> with ThemeHelpers {
+class _ChatListPanelState extends OptimizedState<ChatListPanel> {
   
   @override
   Widget build(BuildContext context) {

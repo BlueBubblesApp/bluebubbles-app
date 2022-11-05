@@ -80,7 +80,7 @@ class OverflowMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() => PopupMenuButton<int>(
-      color: context.theme.colorScheme.properSurface,
+      color: context.theme.colorScheme.properSurface.lightenOrDarken(ss.settings.skin.value == Skins.Samsung ? 20 : 0),
       shape: ss.settings.skin.value != Skins.Material ? RoundedRectangleBorder(
         borderRadius: BorderRadius.all(
           Radius.circular(20.0),

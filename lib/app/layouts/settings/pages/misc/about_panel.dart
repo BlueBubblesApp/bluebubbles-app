@@ -25,7 +25,7 @@ class AboutPanel extends StatefulWidget {
   State<StatefulWidget> createState() => _AboutPanelState();
 }
 
-class _AboutPanelState extends OptimizedState<AboutPanel> with ThemeHelpers {
+class _AboutPanelState extends OptimizedState<AboutPanel> {
 
   @override
   Widget build(BuildContext context) {
