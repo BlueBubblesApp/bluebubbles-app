@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bluebubbles/models/global/attributed_body.dart';
 
 class MessageSummaryInfo {
@@ -68,6 +70,6 @@ class Content {
   );
 
   Map<String, dynamic> toJson() => {
-    "values": values.map((x) => x.toMap()),
+    "values": values.map((x) => x.toMap()).toList(),
   };
 }

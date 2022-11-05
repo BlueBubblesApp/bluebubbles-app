@@ -81,7 +81,10 @@ class ContactsService extends GetxService {
       final newContacts = contacts.where((e) => !dbContacts.map((e) => e.id).contains(e.id)).toList();
       if (newContacts.isNotEmpty) {
         hasChanges = true;
-        contactBox.putMany(newContacts);
+        final ids = contactBox.putMany(newContacts);
+        for (int i = 0; i < newContacts.length; i++) {
+          newContacts[i].dbId = ids[i];
+        }
       }
     }
     // load stored handles
