@@ -275,7 +275,6 @@ Future<void> showConversationTileMenu(BuildContext context, dynamic _this, Chat 
         ),
     ],
   );
-  eventDispatcher.emit('focus-keyboard', null);
 }
 
 IconData getAttachmentIcon(String mimeType) {

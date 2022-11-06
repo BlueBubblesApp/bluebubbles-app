@@ -259,19 +259,53 @@ class ConversationViewState extends OptimizedState<ConversationView> {
               appBar: iOS
                   ? CupertinoHeader(controller: controller)
                   : MaterialHeader(controller: controller) as PreferredSizeWidget,
-              body: GradientBackground(
-                controller: controller,
-                child: Stack(
-                  children: [
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: ConversationTextField(
-                        key: key,
-                        onSend: send,
-                        parentController: controller,
-                      ),
-                    )
-                  ]
+              body: Actions(
+                actions: {
+                  if (ss.settings.enablePrivateAPI.value)
+                    ReplyRecentIntent: ReplyRecentAction(widget.chat),
+                  if (ss.settings.enablePrivateAPI.value)
+                    HeartRecentIntent: HeartRecentAction(widget.chat),
+                  if (ss.settings.enablePrivateAPI.value)
+                    LikeRecentIntent: LikeRecentAction(widget.chat),
+                  if (ss.settings.enablePrivateAPI.value)
+                    DislikeRecentIntent: DislikeRecentAction(widget.chat),
+                  if (ss.settings.enablePrivateAPI.value)
+                    LaughRecentIntent: LaughRecentAction(widget.chat),
+                  if (ss.settings.enablePrivateAPI.value)
+                    EmphasizeRecentIntent: EmphasizeRecentAction(widget.chat),
+                  if (ss.settings.enablePrivateAPI.value)
+                    QuestionRecentIntent: QuestionRecentAction(widget.chat),
+                  OpenChatDetailsIntent: OpenChatDetailsAction(context, widget.chat),
+                },
+                child: GradientBackground(
+                  controller: controller,
+                  child: Stack(
+
+                    children: [
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: GestureDetector(
+                          onPanUpdate: (details) {
+                            if (ss.settings.swipeToCloseKeyboard.value &&
+                                details.delta.dy > 0 &&
+                                controller.keyboardOpen) {
+                              controller.focusNode.unfocus();
+                              controller.subjectFocusNode.unfocus();
+                            } else if (ss.settings.swipeToOpenKeyboard.value &&
+                                details.delta.dy < 0 &&
+                                !controller.keyboardOpen) {
+                              controller.focusNode.requestFocus();
+                            }
+                          },
+                          child: ConversationTextField(
+                            key: key,
+                            onSend: send,
+                            parentController: controller,
+                          ),
+                        ),
+                      )
+                    ]
+                  ),
                 ),
               ),
             ),

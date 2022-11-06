@@ -48,6 +48,8 @@ class ConversationViewController extends StatefulController {
   final RxInt emojiSelectedIndex = 0.obs;
   final ScrollController emojiScrollController = ScrollController();
   final Rxn<Message> replyToMessage = Rxn<Message>(null);
+  final focusNode = FocusNode();
+  final subjectFocusNode = FocusNode();
 
   bool keyboardOpen = false;
   double _keyboardOffset = 0;
@@ -72,7 +74,8 @@ class ConversationViewController extends StatefulController {
       if (keyboardOpen
           && ss.settings.hideKeyboardOnScroll.value
           && scrollController.offset > _keyboardOffset + 100) {
-        eventDispatcher.emit("unfocus-keyboard", null);
+        focusNode.unfocus();
+        subjectFocusNode.unfocus();
       }
 
       if (showScrollDown.value && scrollController.offset >= 500) return;
@@ -120,7 +123,7 @@ class ConversationViewController extends StatefulController {
     }
 
     if (ss.settings.openKeyboardOnSTB.value) {
-      eventDispatcher.emit("focus-keyboard", null);
+      focusNode.requestFocus();
     }
   }
 

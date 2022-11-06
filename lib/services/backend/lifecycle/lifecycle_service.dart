@@ -54,8 +54,6 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
 
     if (!kIsDesktop && !kIsWeb) {
       socket.reconnect();
-    } else {
-      eventDispatcher.emit('focus-keyboard', null);
     }
   }
 

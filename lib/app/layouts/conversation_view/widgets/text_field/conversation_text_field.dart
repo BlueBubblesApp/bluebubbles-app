@@ -62,8 +62,6 @@ class ConversationTextField extends CustomStateful<ConversationViewController> {
 }
 
 class ConversationTextFieldState extends CustomState<ConversationTextField, void, ConversationViewController> with TickerProviderStateMixin {
-  final focusNode = FocusNode();
-  final subjectFocusNode = FocusNode();
   late final textController = TextEditingController(text: chat.textFieldText);
   final subjectTextController = TextEditingController();
   final recorderController = RecorderController();
@@ -87,26 +85,44 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     forceDelete = false;
     if (ss.settings.autoOpenKeyboard.value) {
       updateObx(() {
-        focusNode.requestFocus();
+        getDraftAttachments();
+        controller.focusNode.requestFocus();
       });
     }
 
-    focusNode.addListener(() => focusListener(false));
-    subjectFocusNode.addListener(() => focusListener(true));
+    controller.focusNode.addListener(() => focusListener(false));
+    controller.subjectFocusNode.addListener(() => focusListener(true));
 
     textController.addListener(() => textListener(false));
     subjectTextController.addListener(() => textListener(true));
   }
 
+  void getDraftAttachments() async {
+    if (chat.textFieldAttachments.isNotEmpty) {
+      for (String s in chat.textFieldAttachments) {
+        final file = File(s);
+        if (await file.exists()) {
+          final bytes = await file.readAsBytes();
+          controller.pickedAttachments.add(PlatformFile(
+            name: file.path.split("/").last,
+            bytes: bytes,
+            size: bytes.length,
+            path: s,
+          ));
+        }
+      }
+    }
+  }
+
   void focusListener(bool subject) async {
-    final _focusNode = subject ? subjectFocusNode : focusNode;
+    final _focusNode = subject ? controller.subjectFocusNode : controller.focusNode;
     if (_focusNode.hasFocus && showAttachmentPicker) {
       setState(() {
         showAttachmentPicker = !showAttachmentPicker;
       });
     }
     // remove emoji picker if no field is focused
-    if (!subjectFocusNode.hasFocus && !focusNode.hasFocus) {
+    if (!controller.subjectFocusNode.hasFocus && !controller.focusNode.hasFocus) {
       controller.emojiMatches.value = [];
       controller.emojiSelectedIndex.value = 0;
     }
@@ -190,13 +206,14 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   @override
   void dispose() {
-    focusNode.dispose();
-    subjectFocusNode.dispose();
+    controller.focusNode.dispose();
+    controller.subjectFocusNode.dispose();
     textController.dispose();
     subjectTextController.dispose();
     recorderController.dispose();
     socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
 
+    chat.textFieldAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
     chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);
     super.dispose();
   }
@@ -282,8 +299,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                           );
                         } else {
                           if (!showAttachmentPicker) {
-                            focusNode.unfocus();
-                            subjectFocusNode.unfocus();
+                            controller.focusNode.unfocus();
+                            controller.subjectFocusNode.unfocus();
                           }
                           setState(() {
                             showAttachmentPicker = !showAttachmentPicker;
@@ -329,9 +346,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                     Expanded(
                       child: _TextFields(
                         chat: chat,
-                        subjectFocusNode: subjectFocusNode,
                         subjectTextController: subjectTextController,
-                        focusNode: focusNode,
                         textController: textController,
                         controller: controller,
                         recorderController: recorderController,
@@ -389,18 +404,14 @@ class _TextFields extends StatelessWidget {
   const _TextFields({
     Key? key,
     required this.chat,
-    required this.subjectFocusNode,
     required this.subjectTextController,
-    required this.focusNode,
     required this.textController,
     required this.controller,
     required this.recorderController,
   }) : super(key: key);
 
   final Chat chat;
-  final FocusNode subjectFocusNode;
   final TextEditingController subjectTextController;
-  final FocusNode focusNode;
   final TextEditingController textController;
   final ConversationViewController controller;
   final RecorderController recorderController;
@@ -495,7 +506,7 @@ class _TextFields extends StatelessWidget {
                                             controller.emojiSelectedIndex.value = index;
                                           },
                                           onTap: () {
-                                            final _controller = focusNode.hasFocus ? textController : subjectTextController;
+                                            final _controller = controller.focusNode.hasFocus ? textController : subjectTextController;
                                             controller.emojiSelectedIndex.value = 0;
                                             final text = _controller.text;
                                             final regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
@@ -556,7 +567,7 @@ class _TextFields extends StatelessWidget {
                         chat.isIMessage)
                       CustomCupertinoTextField(
                         textCapitalization: TextCapitalization.sentences,
-                        focusNode: subjectFocusNode,
+                        focusNode: controller.subjectFocusNode,
                         autocorrect: true,
                         controller: subjectTextController,
                         scrollPhysics: const CustomBouncingScrollPhysics(),
@@ -583,7 +594,7 @@ class _TextFields extends StatelessWidget {
                           HapticFeedback.selectionClick();
                         },
                         onSubmitted: (String value) {
-                          focusNode.requestFocus();
+                          controller.focusNode.requestFocus();
                         },
                         // onContentCommitted: onContentCommit,
                       ),
@@ -598,7 +609,7 @@ class _TextFields extends StatelessWidget {
                       ),
                     CustomCupertinoTextField(
                       textCapitalization: TextCapitalization.sentences,
-                      focusNode: focusNode,
+                      focusNode: controller.focusNode,
                       autocorrect: true,
                       controller: textController,
                       scrollPhysics: const CustomBouncingScrollPhysics(),
@@ -628,7 +639,7 @@ class _TextFields extends StatelessWidget {
                         HapticFeedback.selectionClick();
                       },
                       onSubmitted: (String value) {
-                        /*focusNode.requestFocus();
+                        /*controller.focusNode.requestFocus();
                         if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                         sendMessage();*/
                       },
@@ -848,7 +859,7 @@ class _TextFields extends StatelessWidget {
     }
     if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
       // sendMessage();
-      focusNode.requestFocus();
+      controller.focusNode.requestFocus();
       return KeyEventResult.handled;
     }
 
@@ -893,12 +904,12 @@ class _TextFields extends StatelessWidget {
     if (ev.physicalKey == PhysicalKeyboardKey.enter && ss.settings.sendWithReturn.value) {
       if (!isNullOrEmpty(textController.text)! || !isNullOrEmpty(subjectTextController.text)!) {
         // sendMessage();
-        focusNode.previousFocus(); // I genuinely don't know why this works
+        controller.focusNode.previousFocus(); // I genuinely don't know why this works
         return KeyEventResult.handled;
       } else {
         subjectTextController.text = "";
         textController.text = ""; // Stop pressing physical enter with enterIsSend from creating newlines
-        focusNode.previousFocus(); // I genuinely don't know why this works
+        controller.focusNode.previousFocus(); // I genuinely don't know why this works
         return KeyEventResult.handled;
       }
     }
