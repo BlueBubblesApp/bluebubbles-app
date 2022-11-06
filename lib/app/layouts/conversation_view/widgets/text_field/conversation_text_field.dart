@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/picked_attachment.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/text_field_attachment_picker.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachment.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/send_button.dart';
 import 'package:bluebubbles/app/widgets/components/send_effect_picker.dart';
 import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_text_field.dart';
