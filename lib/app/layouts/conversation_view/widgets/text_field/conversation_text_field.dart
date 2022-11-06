@@ -356,14 +356,14 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                 ),
                 Obx(() => AnimatedContainer(
                   height: 50,
-                  duration: Duration(milliseconds: 500),
+                  duration: const Duration(milliseconds: 500),
                   curve: controller.showRecording.value ? Curves.easeOutBack : Curves.easeOut,
                   width: controller.showRecording.value ? 250 : 0,
                   child: AudioWaveforms(
-                    size: Size(220, 40),
+                    size: const Size(220, 40),
                     recorderController: recorderController,
                     padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                    waveStyle: WaveStyle(
+                    waveStyle: const WaveStyle(
                       waveColor: Colors.white,
                       waveCap: StrokeCap.square,
                       spacing: 4.0,
@@ -384,7 +384,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
               ],
             ),
             AnimatedSize(
-              duration: Duration(milliseconds: 250),
+              duration: const Duration(milliseconds: 250),
               curve: Curves.easeIn,
               alignment: Alignment.bottomCenter,
               child: !showAttachmentPicker
@@ -441,7 +441,7 @@ class _TextFields extends StatelessWidget {
               ),
               clipBehavior: Clip.antiAlias,
               child: AnimatedSize(
-                duration: Duration(milliseconds: 400),
+                duration: const Duration(milliseconds: 400),
                 alignment: Alignment.bottomCenter,
                 curve: Curves.easeOutBack,
                 child: Column(
@@ -453,7 +453,7 @@ class _TextFields extends StatelessWidget {
                         Obx(() {
                           if (controller.pickedAttachments.isNotEmpty) {
                             return ConstrainedBox(
-                              constraints: BoxConstraints(
+                              constraints: const BoxConstraints(
                                 maxHeight: 150,
                                 minHeight: 150,
                               ),
@@ -530,7 +530,7 @@ class _TextFields extends StatelessWidget {
                                                     style:
                                                     context.textTheme.labelLarge!.apply(fontFamily: "Apple Color Emoji"),
                                                   ),
-                                                  SizedBox(width: 8),
+                                                  const SizedBox(width: 8),
                                                   Text(
                                                     ":${controller.emojiMatches[index].shortName}:",
                                                     style: context.textTheme.labelLarge!.copyWith(fontWeight: FontWeight.bold),

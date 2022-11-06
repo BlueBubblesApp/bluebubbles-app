@@ -141,7 +141,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
           ]
         ),
         if (ss.settings.showConnectionIndicator.value)
-          ConnectionIndicator(),
+          const ConnectionIndicator(),
       ],
     );
   }

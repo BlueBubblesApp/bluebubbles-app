@@ -37,15 +37,15 @@ class SendButtonState extends OptimizedState<SendButton> with SingleTickerProvid
         backgroundColor: context.theme.colorScheme.primary,
         shape: const CircleBorder(),
         padding: const EdgeInsets.all(0),
-        maximumSize: Size(32, 32),
-        minimumSize: Size(32, 32),
+        maximumSize: const Size(32, 32),
+        minimumSize: const Size(32, 32),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, widget) {
           return Container(
-            constraints: BoxConstraints(minHeight: 32, minWidth: 32),
+            constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(

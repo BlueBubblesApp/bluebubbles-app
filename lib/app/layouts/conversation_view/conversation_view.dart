@@ -232,7 +232,7 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                     height: context.height,
                     child: Stack(
                       children: [
-                        Positioned.fill(child: ScreenEffectsWidget()),
+                        const Positioned.fill(child: ScreenEffectsWidget()),
                         Column(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
@@ -262,8 +262,8 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                                           ),
                                           onPressed: controller.scrollToBottom,
                                           child: Container(
-                                            constraints: BoxConstraints(minHeight: 32, minWidth: 32),
-                                            decoration: BoxDecoration(
+                                            constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                                            decoration: const BoxDecoration(
                                               shape: BoxShape.circle,
                                             ),
                                             alignment: Alignment.center,

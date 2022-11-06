@@ -53,6 +53,7 @@ class ManualMarkState extends OptimizedState<ManualMark> {
 }
 
 class ConnectionIndicator extends StatelessWidget {
+  const ConnectionIndicator();
 
   @override
   Widget build(BuildContext context) {

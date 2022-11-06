@@ -38,7 +38,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
             child: Stack(
               children: [
                 if (ss.settings.showConnectionIndicator.value)
-                  ConnectionIndicator(),
+                  const ConnectionIndicator(),
                 Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20, top: MediaQuery.of(context).viewPadding.top - 2),
                   child: Stack(
