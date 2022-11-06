@@ -1,15 +1,16 @@
 import 'dart:typed_data';
 
+import 'package:animations/animations.dart';
+import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
+import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mime_type/mime_type.dart';
-import 'package:photo_manager/photo_manager.dart';
 import 'package:universal_io/io.dart';
 
 class PickedAttachment extends StatefulWidget {
@@ -60,7 +61,7 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> {
       });
     } else {
       setState(() {
-        image = [] as Uint8List;
+        image = Uint8List.fromList([]);
       });
     }
   }
@@ -75,56 +76,75 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> {
         ),
         constraints: BoxConstraints(maxWidth: image == null ? 0 : (image?.isEmpty ?? false) ? 100 : 200),
         clipBehavior: Clip.antiAlias,
-        child: Stack(
-          alignment: Alignment.topRight,
-          children: <Widget>[
-            if (image?.isNotEmpty ?? false)
-              Image.memory(
-                image!,
-                key: ValueKey(widget.data.path),
-                fit: BoxFit.fitHeight,
-                height: 150,
-                cacheWidth: 300,
-              ),
-            if (image?.isEmpty ?? false)
-              Positioned.fill(
-                child: Container(
-                  color: context.theme.colorScheme.properSurface,
-                  alignment: Alignment.center,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      widget.data.name,
-                      maxLines: 3,
-                      textAlign: TextAlign.center,
+        child: OpenContainer(
+          tappable: false,
+          openBuilder: (_, closeContainer) {
+            final fakeAttachment = Attachment(
+              transferName: widget.data.name,
+              mimeType: mime(widget.data.name) ?? "",
+              bytes: widget.data.bytes,
+            );
+            return AttachmentFullscreenViewer(
+              attachment: fakeAttachment,
+              showInteractions: false,
+            );
+          },
+          closedBuilder: (_, openContainer) {
+            return InkWell(
+              onTap: mime(widget.data.name)?.startsWith("image") ?? false ? openContainer : null,
+              child: Stack(
+                alignment: Alignment.topRight,
+                children: <Widget>[
+                  if (image?.isNotEmpty ?? false)
+                    Image.memory(
+                      image!,
+                      key: ValueKey(widget.data.path),
+                      fit: BoxFit.fitHeight,
+                      height: 150,
+                      cacheWidth: 300,
                     ),
-                  ),
-                ),
+                  if (image?.isEmpty ?? false)
+                    Positioned.fill(
+                      child: Container(
+                        color: context.theme.colorScheme.properSurface,
+                        alignment: Alignment.center,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            widget.data.name,
+                            maxLines: 3,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (image != null)
+                    Positioned(
+                      top: 5,
+                      right: 5,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: context.theme.colorScheme.outline,
+                          shape: const CircleBorder(),
+                          padding: const EdgeInsets.all(0),
+                          maximumSize: Size(32, 32),
+                          minimumSize: Size(32, 32),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Icon(
+                          iOS ? CupertinoIcons.xmark : Icons.close,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        onPressed: () {
+                          widget.controller.pickedAttachments.removeWhere((e) => e.path == widget.data.path);
+                        },
+                      ),
+                    ),
+                ],
               ),
-            if (image != null)
-              Positioned(
-                top: 5,
-                right: 5,
-                child: TextButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: context.theme.colorScheme.outline,
-                    shape: const CircleBorder(),
-                    padding: const EdgeInsets.all(0),
-                    maximumSize: Size(32, 32),
-                    minimumSize: Size(32, 32),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Icon(
-                    iOS ? CupertinoIcons.xmark : Icons.close,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                  onPressed: () {
-                    widget.controller.pickedAttachments.removeWhere((e) => e.path == widget.data.path);
-                  },
-                ),
-              ),
-          ],
+            );
+          }
         ),
       ),
     );

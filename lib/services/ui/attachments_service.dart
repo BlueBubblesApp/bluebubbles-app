@@ -30,7 +30,7 @@ AttachmentsService as = Get.isRegistered<AttachmentsService>() ? Get.find<Attach
 class AttachmentsService extends GetxService {
 
   dynamic getContent(Attachment attachment, {String? path, bool autoDownload = true}) {
-    if (kIsWeb) {
+    if (kIsWeb || attachment.guid == null) {
       if (attachment.bytes == null && autoDownload) {
         return attachmentDownloader.startDownload(attachment);
       } else {

@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chewie_audio/chewie_audio.dart';
+import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -40,8 +41,13 @@ class ConversationViewController extends StatefulController {
   final RxBool showTypingIndicator = false.obs;
   final RxBool showScrollDown = false.obs;
   final RxInt offset = 0.obs;
+  // text field items
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
   final RxBool showRecording = false.obs;
+  final RxList<Emoji> emojiMatches = <Emoji>[].obs;
+  final RxInt emojiSelectedIndex = 0.obs;
+  final ScrollController emojiScrollController = ScrollController();
+  final Rxn<Message> replyToMessage = Rxn<Message>(null);
 
   bool keyboardOpen = false;
   double _keyboardOffset = 0;
