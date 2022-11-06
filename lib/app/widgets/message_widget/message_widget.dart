@@ -286,7 +286,7 @@ class _MessageState extends State<MessageWidget> {
                 || !ss.settings.swipeToReply.value
                 || !(chat?.isIMessage ?? true) ? null : (details) {
               if (offset.value >= replyThreshold) {
-                eventDispatcher.emit("focus-keyboard", _message);
+                currentChat?.controller?.replyToMessage = _message;
               }
               offset.value = 0;
               // ChatLifecycleManager.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);

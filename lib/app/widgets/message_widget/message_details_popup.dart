@@ -425,7 +425,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           child: InkWell(
             onTap: () async {
               popDetails();
-              eventDispatcher.emit("focus-keyboard", widget.message);
+              currentChat?.controller?.replyToMessage = widget.message;
             },
             child: ListTile(
               mouseCursor: SystemMouseCursors.click,

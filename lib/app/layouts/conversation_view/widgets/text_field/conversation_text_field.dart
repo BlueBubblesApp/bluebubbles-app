@@ -35,13 +35,13 @@ import 'package:universal_io/io.dart';
 // reimplement gif / location button DONE
 // reimplement emoji insertion DONE
 // reimplement viewing picked in full screen DONE
-// fix bugs with picked not disappearing properly
+// fix bugs with picked not disappearing properly DONE
 // reimplement focus listener for keyboard shortcuts DONE
 // reimplement typing indicator DONE
 // reimplement event handlers DONE
-// reimplement reply to message
+// reimplement reply to message DONE
 // reimplement send
-// reimplement effect picker
+// reimplement effect picker DONE
 
 class ConversationTextField extends CustomStateful<ConversationViewController> {
   final Future<bool> Function(List<PlatformFile> attachments, String text,
@@ -447,6 +447,51 @@ class _TextFields extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Obx(() {
+                      final reply = controller.replyToMessage;
+                      if (reply != null) {
+                        return Container(
+                          color: context.theme.colorScheme.properSurface,
+                          child: Row(
+                            children: [
+                              IconButton(
+                                constraints: BoxConstraints(maxWidth: 30),
+                                padding: EdgeInsets.symmetric(horizontal: 8),
+                                icon: Icon(
+                                  CupertinoIcons.xmark_circle_fill,
+                                  color: context.theme.colorScheme.properOnSurface,
+                                  size: 17,
+                                ),
+                                onPressed: () {
+                                  controller.replyToMessage = null;
+                                },
+                                iconSize: 17,
+                              ),
+                              Expanded(
+                                child: Text.rich(
+                                  TextSpan(children: [
+                                    const TextSpan(text: "Replying to "),
+                                    TextSpan(
+                                      text: reply.handle?.displayName ?? "You",
+                                      style: context.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
+                                    ),
+                                    TextSpan(
+                                      text: " - ${MessageHelper.getNotificationText(reply)}",
+                                      style: context.textTheme.bodyMedium!.copyWith(fontStyle: FontStyle.italic),
+                                    ),
+                                  ]),
+                                  style: context.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else {
+                        return const SizedBox.shrink();
+                      }
+                    }),
                     Stack(
                       alignment: Alignment.center,
                       children: [
@@ -744,15 +789,15 @@ class _TextFields extends StatelessWidget {
                                 ),
                                 secondChild: SendButton(
                                   onLongPress: () {
-                                    /*sendEffectAction(
+                                    sendEffectAction(
                                       context,
-                                      this,
+                                      controller,
                                       textController.text.trim(),
                                       subjectTextController.text.trim(),
-                                      null,
-                                      chatGuid,
-                                      sendMessage,
-                                    );*/
+                                      controller.replyToMessage?.guid,
+                                      controller.chat.guid,
+                                      ({String? effect}) async {} //sendMessage,
+                                    );
                                   },
                                 ),
                               ),
@@ -840,8 +885,8 @@ class _TextFields extends StatelessWidget {
 
       // Escape
       if (windowsData?.keyCode == 27 || linuxData?.keyCode == 65307 || webData?.code == "Escape" || androidData?.physicalKey == PhysicalKeyboardKey.escape) {
-        if (controller.replyToMessage.value != null) {
-          controller.replyToMessage.value = null;
+        if (controller.replyToMessage != null) {
+          controller.replyToMessage = null;
           return KeyEventResult.handled;
         }
       }

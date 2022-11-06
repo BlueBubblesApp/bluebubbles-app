@@ -19,7 +19,7 @@ import 'package:video_player/video_player.dart';
 ConversationViewController cvc(Chat chat, {String? tag}) => Get.isRegistered<ConversationViewController>(tag: tag ?? chat.guid)
 ? Get.find<ConversationViewController>(tag: tag ?? chat.guid) : Get.put(ConversationViewController(chat, tag_: tag), tag: tag ?? chat.guid);
 
-class ConversationViewController extends StatefulController {
+class ConversationViewController extends StatefulController with SingleGetTickerProviderMixin {
   final Chat chat;
   late final String tag;
   final AutoScrollController scrollController = AutoScrollController();
@@ -47,7 +47,14 @@ class ConversationViewController extends StatefulController {
   final RxList<Emoji> emojiMatches = <Emoji>[].obs;
   final RxInt emojiSelectedIndex = 0.obs;
   final ScrollController emojiScrollController = ScrollController();
-  final Rxn<Message> replyToMessage = Rxn<Message>(null);
+  final Rxn<Message> _replyToMessage = Rxn<Message>(null);
+  Message? get replyToMessage => _replyToMessage.value;
+  set replyToMessage(Message? m) {
+    _replyToMessage.value = m;
+    if (m != null) {
+      focusNode.requestFocus();
+    }
+  }
   final focusNode = FocusNode();
   final subjectFocusNode = FocusNode();
 
