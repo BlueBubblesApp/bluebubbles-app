@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:bluebubbles/app/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/cupertino_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/material_header.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/gradient_background_wrapper.dart';
@@ -264,12 +265,10 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                   children: [
                     Align(
                       alignment: Alignment.bottomCenter,
-                      child: DeferredPointerHandler(
-                        child: BlueBubblesTextField(
-                          key: key,
-                          onSend: send,
-                          controller: controller,
-                        ),
+                      child: ConversationTextField(
+                        key: key,
+                        onSend: send,
+                        parentController: controller,
                       ),
                     )
                   ]

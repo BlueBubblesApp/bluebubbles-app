@@ -1,6 +1,8 @@
+/*
 import 'dart:async';
 import 'dart:math';
 
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -39,15 +41,13 @@ import 'package:transparent_pointer/transparent_pointer.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 
-class BlueBubblesTextField extends StatefulWidget {
-  final Future<bool> Function(
-      List<PlatformFile> attachments, String text, String subject, String? replyToGuid, String? effectId) onSend;
-  final ConversationViewController controller;
+class BlueBubblesTextField extends CustomStateful<ConversationViewController> {
+  final Future<bool> Function(List<PlatformFile> attachments, String text, String subject, String? replyToGuid, String? effectId) onSend;
 
   BlueBubblesTextField({
     Key? key,
     required this.onSend,
-    required this.controller,
+    required super.parentController,
   }) : super(key: key);
 
   static BlueBubblesTextFieldState? of(BuildContext context) {
@@ -58,17 +58,18 @@ class BlueBubblesTextField extends StatefulWidget {
   BlueBubblesTextFieldState createState() => BlueBubblesTextFieldState();
 }
 
-class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerProviderStateMixin {
-  TextEditingController? controller;
-  FocusNode? focusNode;
-  TextEditingController? subjectController;
-  FocusNode? subjectFocusNode;
+class BlueBubblesTextFieldState extends CustomState<BlueBubblesTextField, void, ConversationViewController> with TickerProviderStateMixin {
+  final focusNode = FocusNode();
+  final subjectFocusNode = FocusNode();
+  late final textController = TextEditingController(text: chat.textFieldText);
+  final subjectTextController = TextEditingController();
+
+
+  Chat get chat => controller.chat;
+  String get chatGuid => chat.guid;
+
   List<PlatformFile> pickedImages = [];
   DropzoneViewController? dropZoneController;
-  ChatLifecycleManager? safeChat;
-  late final Chat chat = widget.controller.chat;
-  String get chatGuid => chat.guid;
-  ConversationViewController get cvController => widget.controller;
   Rxn<Message?> replyToMessage = Rxn();
 
   bool selfTyping = false;
@@ -81,15 +82,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   final RxBool isRecording = false.obs;
   final RxBool canRecord = true.obs;
 
-  // bool selfTyping = false;
-
   bool get _canRecord => controller!.text.isEmpty && pickedImages.isEmpty && subjectController!.text.isEmpty && !recordDelay;
   bool recordDelay = false;
   Timer? _debounce;
 
   final RxBool showShareMenu = false.obs;
-
-  final GlobalKey<FormFieldState<String>> _searchFormKey = GlobalKey<FormFieldState<String>>();
 
   Rx<List<Emoji>> emojiMatches = Rx(<Emoji>[]);
   Map<String, Emoji> emojiNames = {};
@@ -134,9 +131,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     emojiFullNames = Map.fromEntries(Emoji.all().map((e) => MapEntry(e.name, e)));
 
     getPlaceholder();
-
-    controller = TextEditingController(text: chat.textFieldText);
-    subjectController = TextEditingController();
 
     // Add the text listener to detect when we should send the typing indicators
     controller!.addListener(() {
@@ -239,10 +233,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       }
     });
 
-    // Create the focus node and then add a an event emitter whenever
-    // the focus changes
-    focusNode = FocusNode();
-    subjectFocusNode = FocusNode();
     focusNode!.addListener(() {
       cvController.keyboardOpen = focusNode?.hasFocus ?? false;
 
@@ -311,6 +301,88 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     setCanRecord();
   }
 
+  @override
+  void dispose() {
+    focusNode.dispose();
+    subjectFocusNode.dispose();
+    textController.dispose();
+    subjectTextController.dispose();
+
+    chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      left: false,
+      right: false,
+      top: false,
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+
+          ThemeSwitcher(
+            iOSSkin: CustomCupertinoTextField(
+              enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
+              enabled: sendCountdown == null,
+              textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                  ? TextInputAction.send
+                  : TextInputAction.newline,
+              cursorColor: context.theme.colorScheme.primary,
+              onLongPressStart: () {
+                Feedback.forLongPress(context);
+              },
+              onTap: () {
+                HapticFeedback.selectionClick();
+              },
+              onSubmitted: (String value) {
+                focusNode.requestFocus();
+                if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
+                sendMessage();
+              },
+              // onContentCommitted: onContentCommit,
+              textCapitalization: TextCapitalization.sentences,
+              focusNode: focusNode,
+              autocorrect: true,
+              controller: textController,
+              scrollPhysics: const CustomBouncingScrollPhysics(),
+              style: context.theme.extension<BubbleText>()!.bubbleText,
+              keyboardType: TextInputType.multiline,
+              maxLines: 14,
+              minLines: 1,
+              placeholder: ss.settings.recipientAsPlaceholder.value == true
+                  ? placeholder.value
+                  : chat.isTextForwarding
+                  ? "Text Forwarding"
+                  : "iMessage",
+              padding: const EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+              placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
+              autofocus: kIsWeb || kIsDesktop,
+              decoration: BoxDecoration(
+                border: Border.fromBorderSide(
+                  (ss.settings.enablePrivateAPI.value &&
+                      ss.settings.privateSubjectLine.value &&
+                      (chat.isIMessage ?? true)) ||
+                      replyToMessage.value != null
+                      ? BorderSide.none
+                      : BorderSide(
+                    color: context.theme.colorScheme.properSurface,
+                    width: 1.5,
+                  ),
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            materialSkin: TextField(
+
+            ),
+          )
+        ]
+      ),
+    );
+  }
+
   void setCanRecord() {
     bool canRec = _canRecord;
     if (canRec != canRecord.value) {
@@ -352,26 +424,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   void addSharedAttachments() {
     getCachedAttachments();
     setCanRecord();
-  }
-
-  @override
-  void dispose() {
-    focusNode!.dispose();
-    subjectFocusNode!.dispose();
-    if (safeChat?.chat == null) controller!.dispose();
-    if (safeChat?.chat == null) subjectController!.dispose();
-
-    if (!kIsWeb) {
-      Directory tempAssets = Directory("${fs.appDocDir.path}/tempAssets");
-      tempAssets.exists().then((value) {
-        if (value) {
-          tempAssets.delete(recursive: true);
-        }
-      });
-    }
-    pickedImages = [];
-    chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);
-    super.dispose();
   }
 
   void disposeAudioFile(BuildContext context, PlatformFile file) {
@@ -1753,30 +1805,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         ]),
       );
 
-  Widget buildAttachmentPicker() => Obx(() => TextFieldAttachmentPicker(
-        visible: showShareMenu.value,
-        onAddAttachment: addAttachment,
-      ));
 
-  void addAttachment(PlatformFile? file) {
-    if (file == null) return;
-
-    for (PlatformFile image in pickedImages) {
-      if (image.bytes == file.bytes) {
-        pickedImages.removeWhere((element) => element.bytes == file.bytes);
-        updateTextFieldAttachments();
-        if (mounted) setState(() {});
-        return;
-      } else if (!kIsWeb && !kIsDesktop && image.path == file.path) {
-        pickedImages.removeWhere((element) => element.path == file.path);
-        updateTextFieldAttachments();
-        if (mounted) setState(() {});
-        return;
-      }
-    }
-
-    addAttachments([file]);
-    updateTextFieldAttachments();
-    if (mounted) setState(() {});
-  }
 }
+*/

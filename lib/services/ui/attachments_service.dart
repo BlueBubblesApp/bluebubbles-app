@@ -276,7 +276,7 @@ class AttachmentsService extends GetxService {
       quality: ss.compressionQuality,
     );
     if (!isNullOrEmpty(thumbnail)!) {
-      return null;
+      return thumbnail;
     } else {
       if (useCachedFile) {
         await cachedFile.writeAsBytes(thumbnail!);

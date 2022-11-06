@@ -40,6 +40,8 @@ class ConversationViewController extends StatefulController {
   final RxBool showTypingIndicator = false.obs;
   final RxBool showScrollDown = false.obs;
   final RxInt offset = 0.obs;
+  final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
+  final RxBool showRecording = false.obs;
 
   bool keyboardOpen = false;
   double _keyboardOffset = 0;

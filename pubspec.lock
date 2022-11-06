@@ -99,6 +99,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.10.0"
+  audio_waveforms:
+    dependency: "direct main"
+    description:
+      name: audio_waveforms
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.5+1"
   barcode:
     dependency: transitive
     description:
@@ -1496,6 +1503,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.6.3"
+  multi_value_listenable_builder:
+    dependency: "direct main"
+    description:
+      name: multi_value_listenable_builder
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.2"
   nested:
     dependency: transitive
     description:

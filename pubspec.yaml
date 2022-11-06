@@ -153,6 +153,8 @@ dependencies:
   flutter_isolate: ^2.0.3
   # for VCard parsing
   flutter_contacts: ^1.1.5+1
+  multi_value_listenable_builder: ^0.0.2
+  audio_waveforms: ^0.1.5+1
 
 dependency_overrides:
   rxdart: ^0.27.5

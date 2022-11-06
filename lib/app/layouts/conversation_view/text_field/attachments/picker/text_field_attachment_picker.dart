@@ -1,16 +1,17 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/text_field/attachments/picker/attachment_picker_file.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/global/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:chunked_stream/chunked_stream.dart';
+import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
@@ -21,21 +22,21 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 
-class TextFieldAttachmentPicker extends StatefulWidget {
-  TextFieldAttachmentPicker({
+class AttachmentPicker extends StatefulWidget {
+  AttachmentPicker({
     Key? key,
-    required this.visible,
-    required this.onAddAttachment,
+    required this.controller,
   }) : super(key: key);
-  final bool visible;
-  final Function(PlatformFile?) onAddAttachment;
+  final ConversationViewController controller;
 
   @override
-  State<TextFieldAttachmentPicker> createState() => _TextFieldAttachmentPickerState();
+  State<AttachmentPicker> createState() => _AttachmentPickerState();
 }
 
-class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
+class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
   List<AssetEntity> _images = <AssetEntity>[];
+
+  ConversationViewController get controller => widget.controller;
 
   @override
   void initState() {
@@ -43,29 +44,29 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
     getAttachments();
 
     eventDispatcher.stream.listen((event) {
-      if (!mounted) return;
-
       if (event.item1 == "add-attachment") {
         PlatformFile file = PlatformFile.fromMap(event.item2);
-        widget.onAddAttachment(file);
+        controller.pickedAttachments.add(file);
       }
     });
   }
 
   Future<void> getAttachments() async {
-    if (!mounted) return;
     if (kIsDesktop || kIsWeb) return;
+    // wait for opening animation to complete
+    await Future.delayed(Duration(milliseconds: 250));
     List<AssetPathEntity> list = await PhotoManager.getAssetPathList(onlyAll: true);
     if (list.isNotEmpty) {
-      List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 24);
-      _images = images;
-      if (DateTime.now().toLocal().isWithin(images.first.modifiedDateTime, minutes: 2)) {
-        dynamic file = await images.first.file;
+      _images = await list.first.getAssetListRange(start: 0, end: 24);
+      // see if there is a recent attachment
+      if (DateTime.now().toLocal().isWithin(_images.first.modifiedDateTime, minutes: 2)) {
+        final file = await _images.first.file;
+        if (file == null) return;
         eventDispatcher.emit('add-custom-smartreply', {
           "path": file.path,
           "name": file.path.split('/').last,
-          "size": file.lengthSync(),
-          "bytes": file.readAsBytesSync(),
+          "size": await file.length(),
+          "bytes": await file.readAsBytes(),
         });
       }
     }
@@ -74,16 +75,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
   }
 
   Future<void> openFullCamera({String type = 'camera'}) async {
-    bool camera = await Permission.camera.isGranted;
-    if (!camera) {
-      bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
-      if (!granted) {
-        showSnackbar(
-            "Error",
-            "Camera was denied"
-        );
-        return;
-      }
+    bool granted = (await Permission.camera.request()).isGranted;
+    if (!granted) {
+      showSnackbar(
+        "Error",
+        "Camera access was denied!"
+      );
+      return;
     }
 
     late final XFile? file;
@@ -93,7 +91,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
       file = await ImagePicker().pickVideo(source: ImageSource.camera);
     }
     if (file != null) {
-      widget.onAddAttachment(PlatformFile(
+      controller.pickedAttachments.add(PlatformFile(
         path: file.path,
         name: file.path.split('/').last,
         size: await file.length(),
@@ -102,245 +100,178 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
     }
   }
 
+  IconData getIcon(int index) {
+    if (iOS) {
+      switch (index) {
+        case 0:
+          return CupertinoIcons.folder_open;
+        case 1:
+          return CupertinoIcons.location;
+        case 2:
+          return CupertinoIcons.camera;
+        case 3:
+          return CupertinoIcons.videocam;
+      }
+    } else {
+      switch (index) {
+        case 0:
+          return Icons.folder_open_outlined;
+        case 1:
+          return Icons.location_on_outlined;
+        case 2:
+          return Icons.photo_camera_outlined;
+        case 3:
+          return Icons.videocam_outlined;
+      }
+    }
+    return Icons.abc;
+  }
+
+  String getText(int index) {
+    switch (index) {
+      case 0:
+        return "Files";
+      case 1:
+        return "Location";
+      case 2:
+        return "Camera";
+      case 3:
+        return "Video";
+    }
+    return "";
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      child: widget.visible
-          ? SizedBox(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  getAttachments();
-                },
-                child: SingleChildScrollView(
-                  physics: AlwaysScrollableScrollPhysics(),
-                  child: SizedBox(
-                    height: 300,
-                    child: CustomScrollView(
-                      physics: ThemeSwitcher.getScrollPhysics(),
-                      scrollDirection: Axis.horizontal,
-                      slivers: <Widget>[
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Flexible(
-                                  fit: FlexFit.loose,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      minWidth: 90,
-                                    ),
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        primary: context.theme.colorScheme.properSurface,
-                                      ),
-                                      onPressed: () async {
-                                        final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
-                                        if (res == null || res.files.isEmpty) return;
+    return SizedBox(
+      height: 300,
+      child: RefreshIndicator(
+        onRefresh: () async {
+          getAttachments();
+        },
+        child: NotificationListener<OverscrollIndicatorNotification>(
+          onNotification: (OverscrollIndicatorNotification overscroll) {
+            // prevent stretchy effect
+            overscroll.disallowIndicator();
+            return true;
+          },
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: 300,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: CustomScrollView(
+                  physics: ThemeSwitcher.getScrollPhysics(),
+                  scrollDirection: Axis.horizontal,
+                  slivers: <Widget>[
+                    SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 1.5,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                          return ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              backgroundColor: context.theme.colorScheme.properSurface,
+                            ),
+                            onPressed: () async {
+                              switch (index) {
+                                case 0:
+                                  final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
+                                  if (res == null || res.files.isEmpty) return;
 
-                                        for (pf.PlatformFile file in res.files) {
-                                          if (file.size / 1024000 > 100) {
-                                            showSnackbar("Error", "This file is over 100 MB! Please compress it before sending.");
-                                            continue;
-                                          }
-                                          widget.onAddAttachment(PlatformFile(
-                                            path: file.path,
-                                            name: file.name,
-                                            bytes: await readByteStream(file.readStream!),
-                                            size: file.size
-                                          ));
-                                        }
-                                      },
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
-                                              ss.settings.skin.value == Skins.iOS ? CupertinoIcons.folder_open : Icons.folder_open,
-                                              color: context.theme.colorScheme.properOnSurface,
-                                            ),
-                                          ),
-                                          Text(
-                                            "Files",
-                                            style: TextStyle(
-                                              color: context.theme.colorScheme.properOnSurface,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Container(height: 10),
-                                Flexible(
-                                  fit: FlexFit.loose,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      minWidth: 90,
-                                    ),
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        primary: context.theme.colorScheme.properSurface,
-                                      ),
-                                      onPressed: () async {
-                                        await Share.location(cm.activeChat!.chat);
-                                      },
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
-                                              ss.settings.skin.value == Skins.iOS ? CupertinoIcons.location : Icons.location_on,
-                                              color: context.theme.colorScheme.properOnSurface,
-                                            ),
-                                          ),
-                                          Text(
-                                            "Location",
-                                            style: TextStyle(
-                                              color: context.theme.colorScheme.properOnSurface,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 5, right: 10, top: 5, bottom: 5),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Flexible(
-                                  fit: FlexFit.loose,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      minWidth: 90,
-                                    ),
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        primary: context.theme.colorScheme.properSurface,
-                                      ),
-                                      onPressed: () async {
-                                        openFullCamera();
-                                      },
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
-                                              ss.settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
-                                              color: context.theme.colorScheme.properOnSurface,
-                                            ),
-                                          ),
-                                          Text(
-                                            "Camera",
-                                            style: TextStyle(
-                                              color: context.theme.colorScheme.properOnSurface,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Container(height: 10),
-                                Flexible(
-                                  fit: FlexFit.loose,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      minWidth: 90,
-                                    ),
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        primary: context.theme.colorScheme.properSurface,
-                                      ),
-                                      onPressed: () async {
-                                        openFullCamera(type: "video");
-                                      },
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
-                                              ss.settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam,
-                                              color: context.theme.colorScheme.properOnSurface,
-                                            ),
-                                          ),
-                                          Text(
-                                            "Video",
-                                            style: TextStyle(
-                                              color: context.theme.colorScheme.properOnSurface,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SliverGrid(
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                          ),
-                          delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                              AssetEntity element = _images[index];
-                              return AttachmentPicked(
-                                key: Key("attachmentPicked${_images[index].id}"),
-                                data: element,
-                                onTap: () async {
-                                  dynamic file = await element.file;
-                                  widget.onAddAttachment(PlatformFile(
-                                    path: file.path,
-                                    name: file.path.split('/').last,
-                                    size: file.lengthSync(),
-                                    bytes: file.readAsBytesSync(),
-                                  ));
-                                },
-                              );
+                                  for (pf.PlatformFile file in res.files) {
+                                    if (file.size / 1024000 > 1000) {
+                                      showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.");
+                                      continue;
+                                    }
+                                    controller.pickedAttachments.add(PlatformFile(
+                                      path: file.path,
+                                      name: file.name,
+                                      bytes: await readByteStream(file.readStream!),
+                                      size: file.size
+                                    ));
+                                  }
+                                  return;
+                                case 1:
+                                  await Share.location(cm.activeChat!.chat);
+                                  return;
+                                case 2:
+                                  openFullCamera();
+                                  return;
+                                case 3:
+                                  openFullCamera(type: "video");
+                                  return;
+                              }
                             },
-                            childCount: _images.length,
-                          ),
-                        ),
-                      ],
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Icon(
+                                  getIcon(index),
+                                  color: context.theme.colorScheme.properOnSurface,
+                                ),
+                                const SizedBox(height: 8.0),
+                                Text(
+                                  getText(index),
+                                  style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        childCount: 4,
+                      ),
                     ),
-                  )
+                    const SliverPadding(padding: EdgeInsets.only(left: 5, right: 5)),
+                    SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                          final element = _images[index];
+                          return AttachmentPickerFile(
+                            key: Key("AttachmentPickerFile-${element.id}"),
+                            data: element,
+                            controller: controller,
+                            onTap: () async {
+                              final file = await element.file;
+                              if (file == null) return;
+                              if ((await file.length()) / 1024000 > 1000) {
+                                showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.");
+                                return;
+                              }
+                              if (controller.pickedAttachments.firstWhereOrNull((e) => e.path == file.path) != null) {
+                                controller.pickedAttachments.removeWhere((e) => e.path == file.path);
+                              } else {
+                                controller.pickedAttachments.add(PlatformFile(
+                                  path: file.path,
+                                  name: file.path.split('/').last,
+                                  size: await file.length(),
+                                  bytes: await file.readAsBytes(),
+                                ));
+                              }
+                            },
+                          );
+                        },
+                        childCount: _images.length,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              height: 300,
             )
-          : Container(),
+          ),
+        ),
+      ),
     );
   }
 }
