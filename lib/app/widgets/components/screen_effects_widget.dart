@@ -51,11 +51,17 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
           fireworkController.start();
           await Future.delayed(Duration(seconds: 1));
           fireworkController.stop();
+          setState(() {
+            screenSelected = "";
+          });
         } else if (screenSelected == "celebration" && !celebrationController.isPlaying) {
           celebrationController.windowSize = Size(ns.width(context), context.height);
           celebrationController.start();
           await Future.delayed(Duration(seconds: 1));
           celebrationController.stop();
+          setState(() {
+            screenSelected = "";
+          });
         } else if (screenSelected == "balloons" && !balloonController.isPlaying) {
           balloonController.windowSize = Size(ns.width(context), context.height);
           balloonController.start();
@@ -74,6 +80,9 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
             spotlightController.start(rect!);
             await Future.delayed(Duration(seconds: 1));
             spotlightController.stop();
+            setState(() {
+              screenSelected = "";
+            });
           }
         } else if (screenSelected == "lasers" && !laserController.isPlaying) {
           if (rect != null) {
@@ -81,6 +90,9 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
             laserController.start(rect!);
             await Future.delayed(Duration(seconds: 1));
             laserController.stop();
+            setState(() {
+              screenSelected = "";
+            });
           }
         } else if (screenSelected == "confetti") {
           confettiController.play();
@@ -104,7 +116,14 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
         createdControllers = true;
       }
     });
-    return Stack(
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300),
+      color: screenSelected == "fireworks"
+          || screenSelected == "celebration"
+          || screenSelected == "spotlight"
+          || screenSelected == "lasers"
+        ? Colors.black : Colors.transparent,
+      child: Stack(
         children: [
           if (screenSelected == "fireworks")
             Fireworks(controller: fireworkController),
@@ -129,6 +148,7 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
               ),
             ),
         ]
+      ),
     );
   }
 }

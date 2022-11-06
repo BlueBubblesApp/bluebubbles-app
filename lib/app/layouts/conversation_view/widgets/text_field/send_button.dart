@@ -34,7 +34,7 @@ class SendButtonState extends OptimizedState<SendButton> with SingleTickerProvid
   Widget build(BuildContext context) {
     return TextButton(
       style: TextButton.styleFrom(
-        backgroundColor: context.theme.colorScheme.errorContainer,
+        backgroundColor: context.theme.colorScheme.primary,
         shape: const CircleBorder(),
         padding: const EdgeInsets.all(0),
         maximumSize: Size(32, 32),

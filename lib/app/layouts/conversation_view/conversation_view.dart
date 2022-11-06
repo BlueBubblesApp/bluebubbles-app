@@ -166,57 +166,6 @@ class ConversationViewState extends OptimizedState<ConversationView> {
     return true;
   }
 
-  Widget buildScrollToBottomFAB(BuildContext context) {
-    if (!controller.showScrollDown.value) return const SizedBox.shrink();
-    if (ss.settings.skin.value != Skins.iOS) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 15.0),
-        child: FloatingActionButton(
-          onPressed: controller.scrollToBottom,
-          child: Icon(
-            Icons.arrow_downward,
-            color: context.theme.colorScheme.onSecondary,
-          ),
-          backgroundColor: context.theme.colorScheme.secondary,
-        ),
-      );
-    } else {
-      return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Padding(
-          padding: EdgeInsets.only(left: 25.0, bottom: 15),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10.0),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: FittedBox(
-                fit: BoxFit.fitWidth,
-                child: Container(
-                  height: 35,
-                  decoration: BoxDecoration(
-                    color: context.theme.colorScheme.secondary.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Center(
-                    child: GestureDetector(
-                      onTap: controller.scrollToBottom,
-                      child: Text(
-                        "\u{2193} Scroll to bottom \u{2193}",
-                        textAlign: TextAlign.center,
-                        style:
-                            context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSecondary),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ]);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -279,32 +228,96 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                 },
                 child: GradientBackground(
                   controller: controller,
-                  child: Stack(
-
-                    children: [
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: GestureDetector(
-                          onPanUpdate: (details) {
-                            if (ss.settings.swipeToCloseKeyboard.value &&
-                                details.delta.dy > 0 &&
-                                controller.keyboardOpen) {
-                              controller.focusNode.unfocus();
-                              controller.subjectFocusNode.unfocus();
-                            } else if (ss.settings.swipeToOpenKeyboard.value &&
-                                details.delta.dy < 0 &&
-                                !controller.keyboardOpen) {
-                              controller.focusNode.requestFocus();
-                            }
-                          },
-                          child: ConversationTextField(
-                            key: key,
-                            onSend: send,
-                            parentController: controller,
-                          ),
+                  child: SizedBox(
+                    height: context.height,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(child: ScreenEffectsWidget()),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Stack(
+                                children: [
+                                  MessagesView(
+                                    key: Key(chat.guid),
+                                    customService: widget.customService,
+                                    chat: chat,
+                                  ),
+                                  Align(
+                                    alignment: iOS ? Alignment.bottomRight : Alignment.bottomCenter,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(bottom: 10, right: 10, left: 10),
+                                      child: Obx(() => AnimatedOpacity(
+                                        opacity: controller.showScrollDown.value ? 1 : 0,
+                                        duration: Duration(milliseconds: 300),
+                                        child: iOS ? TextButton(
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: context.theme.colorScheme.secondary,
+                                            shape: const CircleBorder(),
+                                            padding: const EdgeInsets.all(0),
+                                            maximumSize: Size(32, 32),
+                                            minimumSize: Size(32, 32),
+                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          ),
+                                          onPressed: controller.scrollToBottom,
+                                          child: Container(
+                                            constraints: BoxConstraints(minHeight: 32, minWidth: 32),
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Icon(
+                                              CupertinoIcons.chevron_down,
+                                              color: context.theme.colorScheme.onSecondary,
+                                              size: 20,
+                                            ),
+                                          ),
+                                        ) : FloatingActionButton.small(
+                                          heroTag: null,
+                                          onPressed: controller.scrollToBottom,
+                                          child: Icon(
+                                            Icons.arrow_downward,
+                                            color: context.theme.colorScheme.onSecondary,
+                                          ),
+                                          backgroundColor: context.theme.colorScheme.secondary,
+                                        ),
+                                      )),
+                                    )
+                                  )
+                                ],
+                              ),
+                            ),
+                            Stack(
+                              children: [
+                                Align(
+                                  alignment: Alignment.bottomCenter,
+                                  child: GestureDetector(
+                                    onPanUpdate: (details) {
+                                      if (ss.settings.swipeToCloseKeyboard.value &&
+                                          details.delta.dy > 0 &&
+                                          controller.keyboardOpen) {
+                                        controller.focusNode.unfocus();
+                                        controller.subjectFocusNode.unfocus();
+                                      } else if (ss.settings.swipeToOpenKeyboard.value &&
+                                          details.delta.dy < 0 &&
+                                          !controller.keyboardOpen) {
+                                        controller.focusNode.requestFocus();
+                                      }
+                                    },
+                                    child: ConversationTextField(
+                                      key: key,
+                                      onSend: send,
+                                      parentController: controller,
+                                    ),
+                                  ),
+                                )
+                              ]
+                            ),
+                          ],
                         ),
-                      )
-                    ]
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -529,231 +542,4 @@ class ConversationViewState extends OptimizedState<ConversationView> {
           )),
     );
   }*/
-
-  void openDetails() {
-    Navigator.of(context).push(
-      ThemeSwitcher.buildPageRoute(
-        builder: (context) => TitleBarWrapper(
-          hideInSplitView: true,
-          child: ConversationDetails(
-            chat: chat,
-          ),
-        ),
-      ),
-    );
-  }
-
-  void markChatAsRead() {
-    void setProgress(bool val) {
-      if (mounted) {
-        setState(() {
-          markingAsRead = val;
-
-          if (!val) {
-            markedAsRead = true;
-          }
-        });
-      }
-
-      // Unset the marked icon
-      Future.delayed(Duration(seconds: 3), () {
-        if (mounted) {
-          setState(() {
-            markedAsRead = false;
-          });
-        }
-      });
-    }
-
-    // Set that we are
-    setProgress(true);
-
-    http.markChatRead(chat.guid).then((_) {
-      setProgress(false);
-    }).catchError((_) {
-      setProgress(false);
-    });
-  }
-
-  PreferredSizeWidget buildConversationViewHeader(BuildContext context) {
-    Color? fontColor = context.theme.colorScheme.onBackground;
-    Color? fontColor2 = context.theme.colorScheme.outline;
-    String? title = chat.title;
-
-    final hideTitle = ss.settings.redactedMode.value && ss.settings.hideContactInfo.value;
-    final generateTitle =
-        ss.settings.redactedMode.value && ss.settings.generateFakeContactNames.value;
-
-    if (generateTitle) {
-      title = chat.participants.length > 1 ? "Group Chat" : chat.participants[0].fakeName;
-    } else if (hideTitle) {
-      fontColor = Colors.transparent;
-      fontColor2 = Colors.transparent;
-    }
-
-    if (ss.settings.skin.value == Skins.Material ||
-        ss.settings.skin.value == Skins.Samsung) {
-      return AppBar(
-        toolbarHeight: kIsDesktop ? 70 : null,
-        systemOverlayStyle:
-        context.theme.colorScheme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-        title: Padding(
-          padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-          child: GestureDetector(
-            onTap: () async {
-              if (!chat.isGroup) {
-                final handle = chat.handles.first;
-                final contact = handle.contact;
-                if (contact == null) {
-                  await mcs.invokeMethod("open-contact-form",
-                      {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
-                } else {
-                  await mcs.invokeMethod("view-contact-form", {'id': contact.id});
-                }
-              }
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title!,
-                  style: context.theme.textTheme.titleLarge!.apply(color: fontColor),
-                ),
-                if (ss.settings.skin.value == Skins.Samsung &&
-                    (chat.isGroup || (!title.isPhoneNumber && !title.isEmail)))
-                  Text(
-                    generateTitle
-                        ? ""
-                        : chat.isGroup
-                        ? "${chat.participants.length} recipients"
-                        : chat.participants[0].address,
-                    style: context.theme.textTheme.labelLarge!.apply(color: fontColor2),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        bottom: PreferredSize(
-          child: Container(
-            color: context.theme.colorScheme.properSurface,
-            height: 0.5,
-          ),
-          preferredSize: Size.fromHeight(0.5),
-        ),
-        leading: Padding(
-          padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-          child: buildBackButton(context, callback: () {
-            if (ls.isBubble) {
-              SystemNavigator.pop();
-              return false;
-            }
-            eventDispatcher.emit("update-highlight", null);
-            return true;
-          }),
-        ),
-        automaticallyImplyLeading: false,
-        backgroundColor: context.theme.colorScheme.background,
-        actionsIconTheme: IconThemeData(color: context.theme.colorScheme.primary),
-        iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-            child: Obx(() {
-              if (ss.settings.showConnectionIndicator.value) {
-                return Obx(() => getIndicatorIcon(socket.state.value, size: 12));
-              } else {
-                return SizedBox.shrink();
-              }
-            }),
-          ),
-          Padding(
-            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-            child: Obx(() {
-              if (ss.settings.privateManualMarkAsRead.value && markingAsRead) {
-                return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Center(
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              backgroundColor: context.theme.colorScheme.properSurface,
-                              valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary)),
-                        )));
-              } else {
-                return SizedBox.shrink();
-              }
-            }),
-          ),
-          Padding(
-            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-            child: Obx(() {
-              if (ss.settings.enablePrivateAPI.value &&
-                  ss.settings.privateManualMarkAsRead.value &&
-                  !markingAsRead) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: GestureDetector(
-                    child: Icon(
-                      (markedAsRead)
-                          ? ss.settings.skin.value == Skins.iOS
-                          ? CupertinoIcons.check_mark_circled_solid
-                          : Icons.check_circle
-                          : ss.settings.skin.value == Skins.iOS
-                          ? CupertinoIcons.check_mark_circled
-                          : Icons.check_circle_outline,
-                      color: (markedAsRead) ? HexColor('43CC47').withAlpha(200) : fontColor,
-                    ),
-                    onTap: markChatAsRead,
-                  ),
-                );
-              } else {
-                return SizedBox.shrink();
-              }
-            }),
-          ),
-          if ((!chat.isGroup &&
-              (chat.participants[0].address.isPhoneNumber || chat.participants[0].address.isEmail)) &&
-              !kIsDesktop &&
-              !kIsWeb)
-            Padding(
-              padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-              child: Padding(
-                padding: const EdgeInsets.only(right: 12.0),
-                child: GestureDetector(
-                  child: Icon(
-                    chat.participants[0].address.isPhoneNumber ? Icons.call : Icons.email,
-                    color: fontColor,
-                  ),
-                  onTap: () {
-                    if (chat.participants[0].address.isPhoneNumber) {
-                      launchUrl(Uri(scheme: "tel", path: chat.participants[0].address));
-                    } else {
-                      launchUrl(Uri(scheme: "mailto", path: chat.participants[0].address));
-                    }
-                  },
-                ),
-              ),
-            ),
-          Padding(
-            padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
-            child: Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: GestureDetector(
-                child: Icon(
-                  ss.settings.skin.value == Skins.iOS
-                      ? CupertinoIcons.ellipsis
-                      : Icons.more_vert,
-                  color: fontColor,
-                ),
-                onTap: openDetails,
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    return PreferredSize(preferredSize: Size.zero,child: Container(),);
-  }
 }
