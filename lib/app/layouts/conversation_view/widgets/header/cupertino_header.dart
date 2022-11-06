@@ -25,7 +25,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return ClipRect(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           decoration: BoxDecoration(
             color: context.theme.colorScheme.properSurface.withOpacity(0.3),

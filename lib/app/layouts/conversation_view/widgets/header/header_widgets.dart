@@ -65,7 +65,7 @@ class ConnectionIndicator extends StatelessWidget {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: getIndicatorColor(socket.state.value).withOpacity(0.25),
+              color: getIndicatorColor(socket.state.value).withOpacity(0.4),
               spreadRadius: socket.state.value != SocketState.connected ? max(MediaQuery.of(context).viewPadding.top, 40) : 0,
               blurRadius: socket.state.value != SocketState.connected ? max(MediaQuery.of(context).viewPadding.top, 40) : 0,
             ),
