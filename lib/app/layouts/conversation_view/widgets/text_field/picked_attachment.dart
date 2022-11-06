@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
-import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -26,7 +26,7 @@ class PickedAttachment extends StatefulWidget {
   State<PickedAttachment> createState() => _PickedAttachmentState();
 }
 
-class _PickedAttachmentState extends OptimizedState<PickedAttachment> {
+class _PickedAttachmentState extends OptimizedState<PickedAttachment> with AutomaticKeepAliveClientMixin {
   Uint8List? image;
 
   @override
@@ -68,6 +68,7 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Padding(
       padding: const EdgeInsets.all(5.0),
       child: Container(
@@ -99,6 +100,7 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> {
                     Image.memory(
                       image!,
                       key: ValueKey(widget.data.path),
+                      gaplessPlayback: true,
                       fit: BoxFit.fitHeight,
                       height: 150,
                       cacheWidth: 300,
@@ -149,4 +151,7 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

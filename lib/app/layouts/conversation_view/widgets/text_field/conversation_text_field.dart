@@ -465,6 +465,7 @@ class _TextFields extends StatelessWidget {
                                     delegate: SliverChildBuilderDelegate(
                                       (context, index) {
                                         return PickedAttachment(
+                                          key: ValueKey(controller.pickedAttachments[index].name),
                                           data: controller.pickedAttachments[index],
                                           controller: controller,
                                         );
