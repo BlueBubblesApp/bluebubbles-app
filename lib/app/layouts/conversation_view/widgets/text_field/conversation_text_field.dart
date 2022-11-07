@@ -470,7 +470,7 @@ class _TextFields extends StatelessWidget {
                     subjectTextController: subjectTextController,
                   ),
                   Obx(() {
-                    if (controller.pickedAttachments.isNotEmpty) {
+                    if (controller.pickedAttachments.isNotEmpty && iOS) {
                       return Divider(
                         height: 1.5,
                         thickness: 1.5,
@@ -518,7 +518,7 @@ class _TextFields extends StatelessWidget {
                     ),
                   if (ss.settings.enablePrivateAPI.value &&
                       ss.settings.privateSubjectLine.value &&
-                      chat.isIMessage)
+                      chat.isIMessage && iOS)
                     Divider(
                       height: 1.5,
                       thickness: 1.5,
