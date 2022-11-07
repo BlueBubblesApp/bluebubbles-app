@@ -82,6 +82,8 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> with Autom
             clipBehavior: Clip.antiAlias,
             child: OpenContainer(
               tappable: false,
+              openColor: Colors.black,
+              closedColor: context.theme.colorScheme.background,
               openBuilder: (_, closeContainer) {
                 final fakeAttachment = Attachment(
                   transferName: widget.data.name,
