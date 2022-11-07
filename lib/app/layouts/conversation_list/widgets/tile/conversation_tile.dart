@@ -8,7 +8,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_lis
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/cupertino_conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/material_conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/samsung_conversation_tile.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';

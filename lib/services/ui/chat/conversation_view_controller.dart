@@ -133,7 +133,6 @@ class ConversationViewController extends StatefulController with SingleGetTicker
 
   Future<void> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
     sendFunc?.call(Tuple5(attachments, text, subject, replyGuid, effectId));
-    await Future.delayed(Duration(milliseconds: 500));
   }
 
   void close() {

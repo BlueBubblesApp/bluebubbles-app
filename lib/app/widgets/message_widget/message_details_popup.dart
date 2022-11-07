@@ -5,7 +5,7 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_alert_dialog.dart';
 import 'package:bluebubbles/app/widgets/message_widget/reaction_detail_widget.dart';

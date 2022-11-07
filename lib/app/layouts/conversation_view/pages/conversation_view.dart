@@ -5,7 +5,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/con
 import 'package:bluebubbles/app/wrappers/gradient_background_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/messages_view.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/pages/messages_view.dart';
 import 'package:bluebubbles/app/widgets/components/screen_effects_widget.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
