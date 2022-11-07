@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/widgets/components/send_effect_picker.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +35,7 @@ class SendButtonState extends OptimizedState<SendButton> with SingleTickerProvid
   Widget build(BuildContext context) {
     return TextButton(
       style: TextButton.styleFrom(
-        backgroundColor: context.theme.colorScheme.primary,
+        backgroundColor: iOS ? context.theme.colorScheme.primary : null,
         shape: const CircleBorder(),
         padding: const EdgeInsets.all(0),
         maximumSize: const Size(32, 32),
@@ -48,18 +49,18 @@ class SendButtonState extends OptimizedState<SendButton> with SingleTickerProvid
             constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
+              gradient: iOS ? LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
                 colors: [context.theme.colorScheme.primary, context.theme.colorScheme.primary, context.theme.colorScheme.error, context.theme.colorScheme.error],
                 stops: [0.0, 1 - controller.value, 1 - controller.value, 1.0],
-              )
+              ) : null
             ),
             alignment: Alignment.center,
             child: Icon(
-              controller.value == 0 ? CupertinoIcons.arrow_up : CupertinoIcons.xmark,
-              color: controller.value == 0 ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.onError,
-              size: 20,
+              controller.value == 0 ? (iOS ? CupertinoIcons.arrow_up : Icons.send_outlined) : (iOS ? CupertinoIcons.xmark : Icons.close),
+              color: controller.value == 0 ? (iOS ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.secondary) : (iOS ? context.theme.colorScheme.onError : context.theme.colorScheme.properOnSurface),
+              size: iOS ? 20 : 28,
             ),
           );
         },

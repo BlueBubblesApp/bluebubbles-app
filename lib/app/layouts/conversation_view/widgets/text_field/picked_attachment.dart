@@ -70,84 +70,116 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> with Autom
   Widget build(BuildContext context) {
     super.build(context);
     return Padding(
-      padding: const EdgeInsets.all(5.0),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        constraints: BoxConstraints(maxWidth: image == null ? 0 : (image?.isEmpty ?? false) ? 100 : 200),
-        clipBehavior: Clip.antiAlias,
-        child: OpenContainer(
-          tappable: false,
-          openBuilder: (_, closeContainer) {
-            final fakeAttachment = Attachment(
-              transferName: widget.data.name,
-              mimeType: mime(widget.data.name) ?? "",
-              bytes: widget.data.bytes,
-            );
-            return AttachmentFullscreenViewer(
-              attachment: fakeAttachment,
-              showInteractions: false,
-            );
-          },
-          closedBuilder: (_, openContainer) {
-            return InkWell(
-              onTap: mime(widget.data.name)?.startsWith("image") ?? false ? openContainer : null,
-              child: Stack(
-                alignment: Alignment.topRight,
-                children: <Widget>[
-                  if (image?.isNotEmpty ?? false)
-                    Image.memory(
-                      image!,
-                      key: ValueKey(widget.data.path),
-                      gaplessPlayback: true,
-                      fit: BoxFit.fitHeight,
-                      height: 150,
-                      cacheWidth: 300,
-                    ),
-                  if (image?.isEmpty ?? false)
-                    Positioned.fill(
-                      child: Container(
-                        color: context.theme.colorScheme.properSurface,
-                        alignment: Alignment.center,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            widget.data.name,
-                            maxLines: 3,
-                            textAlign: TextAlign.center,
+      padding: iOS ? const EdgeInsets.all(5) : const EdgeInsets.only(top: 15, left: 7.5, right: 7.5, bottom: 15),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            constraints: BoxConstraints(maxWidth: image == null ? 0 : (image?.isEmpty ?? false) ? 100 : 200),
+            clipBehavior: Clip.antiAlias,
+            child: OpenContainer(
+              tappable: false,
+              openBuilder: (_, closeContainer) {
+                final fakeAttachment = Attachment(
+                  transferName: widget.data.name,
+                  mimeType: mime(widget.data.name) ?? "",
+                  bytes: widget.data.bytes,
+                );
+                return AttachmentFullscreenViewer(
+                  attachment: fakeAttachment,
+                  showInteractions: false,
+                );
+              },
+              closedBuilder: (_, openContainer) {
+                return InkWell(
+                  onTap: mime(widget.data.name)?.startsWith("image") ?? false ? openContainer : null,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.topRight,
+                    children: <Widget>[
+                      if (image?.isNotEmpty ?? false)
+                        Image.memory(
+                          image!,
+                          key: ValueKey(widget.data.path),
+                          gaplessPlayback: true,
+                          fit: iOS ? BoxFit.fitHeight : BoxFit.cover,
+                          height: iOS ? 150 : 75,
+                          width: iOS ? null : 75,
+                          cacheWidth: 300,
+                        ),
+                      if (image?.isEmpty ?? false)
+                        Positioned.fill(
+                          child: Container(
+                            color: context.theme.colorScheme.properSurface,
+                            alignment: Alignment.center,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                widget.data.name,
+                                maxLines: 3,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  if (image != null)
-                    Positioned(
-                      top: 5,
-                      right: 5,
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: context.theme.colorScheme.outline,
-                          shape: const CircleBorder(),
-                          padding: const EdgeInsets.all(0),
-                          maximumSize: Size(32, 32),
-                          minimumSize: Size(32, 32),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      if (image != null && iOS)
+                        Positioned(
+                          top: 5,
+                          right: 5,
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              backgroundColor: context.theme.colorScheme.outline,
+                              shape: const CircleBorder(),
+                              padding: const EdgeInsets.all(0),
+                              maximumSize: const Size(32, 32),
+                              minimumSize: const Size(32, 32),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Icon(
+                              CupertinoIcons.xmark,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            onPressed: () {
+                              widget.controller.pickedAttachments.removeWhere((e) => e.path == widget.data.path);
+                            },
+                          ),
                         ),
-                        child: Icon(
-                          iOS ? CupertinoIcons.xmark : Icons.close,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        onPressed: () {
-                          widget.controller.pickedAttachments.removeWhere((e) => e.path == widget.data.path);
-                        },
-                      ),
-                    ),
-                ],
+                    ],
+                  ),
+                );
+              }
+            ),
+          ),
+          if (!iOS)
+            Positioned(
+              top: -7,
+              right: -7,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  backgroundColor: context.theme.colorScheme.secondary,
+                  shape: CircleBorder(
+                    side: BorderSide(color: context.theme.colorScheme.properSurface)
+                  ),
+                  padding: const EdgeInsets.all(0),
+                  maximumSize: Size(25, 25),
+                  minimumSize: Size(25, 25),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Icon(
+                  Icons.close,
+                  color: context.theme.colorScheme.background,
+                  size: 18,
+                ),
+                onPressed: () {
+                  widget.controller.pickedAttachments.removeWhere((e) => e.path == widget.data.path);
+                },
               ),
-            );
-          }
-        ),
+            ),
+        ],
       ),
     );
   }

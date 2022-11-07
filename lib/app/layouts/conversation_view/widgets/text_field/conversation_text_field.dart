@@ -4,7 +4,9 @@ import 'dart:math';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachment.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/send_button.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachments_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/reply_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
 import 'package:bluebubbles/app/widgets/components/send_effect_picker.dart';
 import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
@@ -225,18 +227,23 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       right: false,
       top: false,
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 5.0),
+        padding: const EdgeInsets.only(bottom: 5.0, top: 5.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Stack(
-              alignment: Alignment.center,
+              alignment: Alignment.bottomCenter,
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     IconButton(
-                      icon: Icon(CupertinoIcons.square_arrow_up_on_square_fill, color: context.theme.colorScheme.outline, size: 28),
+                      icon: Icon(
+                        iOS ? CupertinoIcons.square_arrow_up_on_square_fill : material ? Icons.add_circle_outline : Icons.add,
+                        color: context.theme.colorScheme.outline,
+                        size: 28,
+                      ),
+                      visualDensity: VisualDensity.compact,
                       onPressed: () async {
                         if (kIsDesktop) {
                           final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
@@ -351,7 +358,18 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         controller: controller,
                         recorderController: recorderController,
                       ),
-                    )
+                    ),
+                    if (samsung)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 5.0),
+                        child: TextFieldSuffix(
+                          chat: chat,
+                          subjectTextController: subjectTextController,
+                          textController: textController,
+                          controller: controller,
+                          recorderController: recorderController,
+                        ),
+                      ),
                   ]
                 ),
                 Obx(() => AnimatedContainer(
@@ -416,265 +434,74 @@ class _TextFields extends StatelessWidget {
   final ConversationViewController controller;
   final RecorderController recorderController;
 
-  void deleteAudioRecording(String path) {
-    controller.audioPlayers[path]?.item1.dispose();
-    controller.audioPlayers[path]?.item2.pause();
-    controller.audioPlayers.removeWhere((key, _) => key == path);
-    File(path).delete();
-  }
+  bool get iOS => ss.settings.skin.value == Skins.iOS;
+  bool get samsung => ss.settings.skin.value == Skins.Samsung;
 
   @override
   Widget build(BuildContext context) {
     return FocusScope(
       child: Focus(
         onKey: (_, ev) => handleKey(_, ev, context),
-        child: ThemeSwitcher(
-          iOSSkin: Padding(
-            padding: const EdgeInsets.only(right: 5.0),
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border.fromBorderSide(BorderSide(
-                  color: context.theme.colorScheme.properSurface,
-                  width: 1.5,
-                )),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: AnimatedSize(
-                duration: const Duration(milliseconds: 400),
-                alignment: Alignment.bottomCenter,
-                curve: Curves.easeOutBack,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Obx(() {
-                      final reply = controller.replyToMessage;
-                      if (reply != null) {
-                        return Container(
-                          color: context.theme.colorScheme.properSurface,
-                          child: Row(
-                            children: [
-                              IconButton(
-                                constraints: BoxConstraints(maxWidth: 30),
-                                padding: EdgeInsets.symmetric(horizontal: 8),
-                                icon: Icon(
-                                  CupertinoIcons.xmark_circle_fill,
-                                  color: context.theme.colorScheme.properOnSurface,
-                                  size: 17,
-                                ),
-                                onPressed: () {
-                                  controller.replyToMessage = null;
-                                },
-                                iconSize: 17,
-                              ),
-                              Expanded(
-                                child: Text.rich(
-                                  TextSpan(children: [
-                                    const TextSpan(text: "Replying to "),
-                                    TextSpan(
-                                      text: reply.handle?.displayName ?? "You",
-                                      style: context.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
-                                    ),
-                                    TextSpan(
-                                      text: " - ${MessageHelper.getNotificationText(reply)}",
-                                      style: context.textTheme.bodyMedium!.copyWith(fontStyle: FontStyle.italic),
-                                    ),
-                                  ]),
-                                  style: context.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      } else {
-                        return const SizedBox.shrink();
-                      }
-                    }),
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Obx(() {
-                          if (controller.pickedAttachments.isNotEmpty) {
-                            return ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxHeight: 150,
-                                minHeight: 150,
-                              ),
-                              child: CustomScrollView(
-                                physics: ThemeSwitcher.getScrollPhysics(),
-                                scrollDirection: Axis.horizontal,
-                                slivers: [
-                                  SliverList(
-                                    delegate: SliverChildBuilderDelegate(
-                                      (context, index) {
-                                        return PickedAttachment(
-                                          key: ValueKey(controller.pickedAttachments[index].name),
-                                          data: controller.pickedAttachments[index],
-                                          controller: controller,
-                                        );
-                                      },
-                                      childCount: controller.pickedAttachments.length,
-                                    ),
-                                  )
-                                ],
-                              ),
-                            );
-                          } else {
-                            return const SizedBox.shrink();
-                          }
-                        }),
-                        Obx(() {
-                          if (controller.emojiMatches.isNotEmpty) {
-                            return ConstrainedBox(
-                              constraints: BoxConstraints(maxHeight: min(controller.emojiMatches.length * 48, 150)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(5.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    color: context.theme.colorScheme.properSurface,
-                                  ),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: Scrollbar(
-                                    radius: Radius.circular(4),
-                                    controller: controller.emojiScrollController,
-                                    child: ListView.builder(
-                                      padding: const EdgeInsets.symmetric(vertical: 0),
-                                      controller: controller.emojiScrollController,
-                                      physics: CustomBouncingScrollPhysics(),
-                                      shrinkWrap: true,
-                                      itemBuilder: (BuildContext context, int index) => Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTapDown: (details) {
-                                            controller.emojiSelectedIndex.value = index;
-                                          },
-                                          onTap: () {
-                                            final _controller = controller.focusNode.hasFocus ? textController : subjectTextController;
-                                            controller.emojiSelectedIndex.value = 0;
-                                            final text = _controller.text;
-                                            final regExp = RegExp(":[^: \n]{1,}([ \n:]|\$)", multiLine: true);
-                                            final matches = regExp.allMatches(text);
-                                            if (matches.isNotEmpty && matches.any((m) => m.start < _controller.selection.start)) {
-                                              final match = matches.lastWhere((m) => m.start < _controller.selection.start);
-                                              final char = controller.emojiMatches[index].char;
-                                              _controller.text = "${text.substring(0, match.start)}$char ${text.substring(match.end)}";
-                                              _controller.selection = TextSelection.fromPosition(TextPosition(offset: match.start + char.length + 1));
-                                            }
-                                            controller.emojiMatches.clear();
-                                          },
-                                          child: Obx(() => ListTile(
-                                              dense: true,
-                                              selectedTileColor: context.theme.colorScheme.properSurface.lightenOrDarken(20),
-                                              selected: controller.emojiSelectedIndex.value == index,
-                                              title: Row(
-                                                children: <Widget>[
-                                                  Text(
-                                                    controller.emojiMatches[index].char,
-                                                    style:
-                                                    context.textTheme.labelLarge!.apply(fontFamily: "Apple Color Emoji"),
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    ":${controller.emojiMatches[index].shortName}:",
-                                                    style: context.textTheme.labelLarge!.copyWith(fontWeight: FontWeight.bold),
-                                                  ),
-                                                ],
-                                              )),
-                                          ),
-                                        ),
-                                      ),
-                                      itemCount: controller.emojiMatches.length,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          } else {
-                            return const SizedBox.shrink();
-                          }
-                        }),
-                      ],
-                    ),
-                    Obx(() {
-                      if (controller.pickedAttachments.isNotEmpty) {
-                        return Divider(
-                          height: 1.5,
-                          thickness: 1.5,
-                          color: context.theme.colorScheme.properSurface,
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    }),
-                    if (ss.settings.enablePrivateAPI.value &&
-                        ss.settings.privateSubjectLine.value &&
-                        chat.isIMessage)
-                      CustomCupertinoTextField(
-                        textCapitalization: TextCapitalization.sentences,
-                        focusNode: controller.subjectFocusNode,
-                        autocorrect: true,
-                        controller: subjectTextController,
-                        scrollPhysics: const CustomBouncingScrollPhysics(),
-                        style: context.theme.extension<BubbleText>()!.bubbleText.copyWith(fontWeight: FontWeight.bold),
-                        keyboardType: TextInputType.multiline,
-                        maxLines: 14,
-                        minLines: 1,
-                        placeholder: "Subject",
-                        padding: const EdgeInsets.all(10),
-                        placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(
-                            color: context.theme.colorScheme.outline,
-                            fontWeight: FontWeight.bold
-                        ),
-                        autofocus: kIsWeb || kIsDesktop,
-                        enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
-                        textInputAction: TextInputAction.next,
-                        cursorColor: context.theme.colorScheme.primary,
-                        cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
-                        decoration: const BoxDecoration(),
-                        onLongPressStart: () {
-                          Feedback.forLongPress(context);
-                        },
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                        },
-                        onSubmitted: (String value) {
-                          controller.focusNode.requestFocus();
-                        },
-                        // onContentCommitted: onContentCommit,
-                      ),
-                    if (ss.settings.enablePrivateAPI.value &&
-                        ss.settings.privateSubjectLine.value &&
-                        chat.isIMessage)
-                      Divider(
+        child: Padding(
+          padding: const EdgeInsets.only(right: 5.0),
+          child: Container(
+            decoration: iOS ? BoxDecoration(
+              border: Border.fromBorderSide(BorderSide(
+                color: context.theme.colorScheme.properSurface,
+                width: 1.5,
+              )),
+              borderRadius: BorderRadius.circular(20),
+            ) : BoxDecoration(
+              color: context.theme.colorScheme.properSurface,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 400),
+              alignment: Alignment.bottomCenter,
+              curve: Curves.easeOutBack,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ReplyHolder(controller: controller),
+                  PickedAttachmentsHolder(
+                    controller: controller,
+                    textController: textController,
+                    subjectTextController: subjectTextController,
+                  ),
+                  Obx(() {
+                    if (controller.pickedAttachments.isNotEmpty) {
+                      return Divider(
                         height: 1.5,
                         thickness: 1.5,
-                        indent: 10,
                         color: context.theme.colorScheme.properSurface,
-                      ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }),
+                  if (ss.settings.enablePrivateAPI.value &&
+                      ss.settings.privateSubjectLine.value &&
+                      chat.isIMessage)
                     CustomCupertinoTextField(
                       textCapitalization: TextCapitalization.sentences,
-                      focusNode: controller.focusNode,
+                      focusNode: controller.subjectFocusNode,
                       autocorrect: true,
-                      controller: textController,
+                      controller: subjectTextController,
                       scrollPhysics: const CustomBouncingScrollPhysics(),
-                      style: context.theme.extension<BubbleText>()!.bubbleText,
+                      style: context.theme.extension<BubbleText>()!.bubbleText.copyWith(fontWeight: FontWeight.bold),
                       keyboardType: TextInputType.multiline,
                       maxLines: 14,
                       minLines: 1,
-                      placeholder: ss.settings.recipientAsPlaceholder.value == true
-                          ? chat.getTitle()
-                          : chat.isTextForwarding
-                              ? "Text Forwarding"
-                              : "iMessage",
-                      padding: const EdgeInsets.all(10),
-                      placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
+                      placeholder: "Subject",
+                      padding: EdgeInsets.all(iOS ? 10 : 12.5),
+                      placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(
+                          color: context.theme.colorScheme.outline,
+                          fontWeight: FontWeight.bold
+                      ),
+                      selectionControls: iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
                       autofocus: kIsWeb || kIsDesktop,
                       enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
-                      textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
-                        ? TextInputAction.send
-                        : TextInputAction.newline,
+                      textInputAction: TextInputAction.next,
                       cursorColor: context.theme.colorScheme.primary,
                       cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
                       decoration: const BoxDecoration(),
@@ -685,133 +512,72 @@ class _TextFields extends StatelessWidget {
                         HapticFeedback.selectionClick();
                       },
                       onSubmitted: (String value) {
-                        /*controller.focusNode.requestFocus();
-                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
-                        sendMessage();*/
+                        controller.focusNode.requestFocus();
                       },
                       // onContentCommitted: onContentCommit,
-                      suffix: MultiValueListenableBuilder(
-                        valueListenables: [textController, subjectTextController],
-                        builder: (context, values, _) {
-                          return Obx(() {
-                            bool canSend = textController.text.isNotEmpty ||
-                                subjectTextController.text.isNotEmpty ||
-                                controller.pickedAttachments.isNotEmpty;
-                            return Padding(
-                              padding: const EdgeInsets.all(3.0),
-                              child: AnimatedCrossFade(
-                                crossFadeState: canSend
-                                    ? CrossFadeState.showSecond
-                                    : CrossFadeState.showFirst,
-                                duration: const Duration(milliseconds: 150),
-                                firstChild: TextButton(
-                                  style: TextButton.styleFrom(
-                                    backgroundColor: !controller.showRecording.value
-                                        ? context.theme.colorScheme.outline : context.theme.colorScheme.primary,
-                                    shape: const CircleBorder(),
-                                    padding: const EdgeInsets.all(0),
-                                    maximumSize: Size(32, 32),
-                                    minimumSize: Size(32, 32),
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  child: Center(
-                                    child: Obx(() => !controller.showRecording.value ? const Icon(
-                                      CupertinoIcons.waveform,
-                                      color: Colors.white,
-                                      size: 25,
-                                    ) : Icon(
-                                      CupertinoIcons.stop_fill,
-                                      color: context.theme.colorScheme.onPrimary,
-                                      size: 25,
-                                    )),
-                                  ),
-                                  onPressed: () async {
-                                    controller.showRecording.toggle();
-                                    if (controller.showRecording.value) {
-                                      await recorderController.record();
-                                    } else {
-                                      final path = await recorderController.stop();
-                                      if (path == null) return;
-                                      final _file = File(path);
-                                      final file = PlatformFile(
-                                        name: _file.path.split("/").last,
-                                        path: _file.path,
-                                        bytes: await _file.readAsBytes(),
-                                        size: await _file.length(),
-                                      );
-                                      showDialog(
-                                        context: context,
-                                        barrierDismissible: false,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            backgroundColor: context.theme.colorScheme.properSurface,
-                                            title: Text("Send it?", style: context.theme.textTheme.titleLarge),
-                                            content: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text("Review your audio snippet before sending it", style: context.theme.textTheme.bodyLarge),
-                                                Container(height: 10.0),
-                                                AudioPlayerWidget(
-                                                  key: Key("AudioMessage-$path"),
-                                                  file: file,
-                                                  context: context,
-                                                )
-                                              ],
-                                            ),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                child: Text(
-                                                  "Discard",
-                                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
-                                                ),
-                                                onPressed: () {
-                                                  deleteAudioRecording(file.path!);
-                                                  Get.back();
-                                                }
-                                              ),
-                                              TextButton(
-                                                child: Text(
-                                                  "Send",
-                                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
-                                                ),
-                                                onPressed: () async {
-                                                  // await widget.onSend([file], "", "", null, null);
-                                                  deleteAudioRecording(file.path!);
-                                                  Get.back();
-                                                },
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    }
-                                  },
-                                ),
-                                secondChild: SendButton(
-                                  onLongPress: () {
-                                    sendEffectAction(
-                                      context,
-                                      controller,
-                                      textController.text.trim(),
-                                      subjectTextController.text.trim(),
-                                      controller.replyToMessage?.guid,
-                                      controller.chat.guid,
-                                      ({String? effect}) async {} //sendMessage,
-                                    );
-                                  },
-                                ),
-                              ),
-                            );
-                          });
-                        },
+                    ),
+                  if (ss.settings.enablePrivateAPI.value &&
+                      ss.settings.privateSubjectLine.value &&
+                      chat.isIMessage)
+                    Divider(
+                      height: 1.5,
+                      thickness: 1.5,
+                      indent: 10,
+                      color: context.theme.colorScheme.properSurface,
+                    ),
+                  CustomCupertinoTextField(
+                    textCapitalization: TextCapitalization.sentences,
+                    focusNode: controller.focusNode,
+                    autocorrect: true,
+                    controller: textController,
+                    scrollPhysics: const CustomBouncingScrollPhysics(),
+                    style: context.theme.extension<BubbleText>()!.bubbleText,
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 14,
+                    minLines: 1,
+                    placeholder: ss.settings.recipientAsPlaceholder.value == true
+                        ? chat.getTitle()
+                        : chat.isTextForwarding
+                        ? "Text Forwarding"
+                        : "iMessage",
+                    padding: EdgeInsets.all(iOS ? 10 : 12.5),
+                    placeholderStyle: context.theme.extension<BubbleText>()!.bubbleText.copyWith(color: context.theme.colorScheme.outline),
+                    selectionControls: ss.settings.skin.value == Skins.iOS ? cupertinoTextSelectionControls : materialTextSelectionControls,
+                    autofocus: kIsWeb || kIsDesktop,
+                    enableIMEPersonalizedLearning: !ss.settings.incognitoKeyboard.value,
+                    textInputAction: ss.settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                        ? TextInputAction.send
+                        : TextInputAction.newline,
+                    cursorColor: context.theme.colorScheme.primary,
+                    cursorHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize! * 1.25,
+                    decoration: const BoxDecoration(),
+                    onLongPressStart: () {
+                      Feedback.forLongPress(context);
+                    },
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                    },
+                    onSubmitted: (String value) {
+                      /*controller.focusNode.requestFocus();
+                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
+                        sendMessage();*/
+                    },
+                    // onContentCommitted: onContentCommit,
+                    suffix: samsung ? null : Padding(
+                      padding: EdgeInsets.only(right: iOS ? 0.0 : 5.0),
+                      child: TextFieldSuffix(
+                        chat: chat,
+                        subjectTextController: subjectTextController,
+                        textController: textController,
+                        controller: controller,
+                        recorderController: recorderController,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
-          materialSkin: TextField(),
         ),
       ),
     );
