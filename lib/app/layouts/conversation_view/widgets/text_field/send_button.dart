@@ -21,6 +21,8 @@ class SendButton extends StatefulWidget {
 class SendButtonState extends OptimizedState<SendButton> with SingleTickerProviderStateMixin {
   late final controller = AnimationController(vsync: this, duration: Duration(seconds: ss.settings.sendDelay.value));
 
+  Color get baseColor => iOS ? context.theme.colorScheme.primary : context.theme.colorScheme.properSurface;
+
   @override
   void initState() {
     super.initState();
@@ -48,19 +50,20 @@ class SendButtonState extends OptimizedState<SendButton> with SingleTickerProvid
           return Container(
             constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: iOS ? LinearGradient(
+              shape: iOS ? BoxShape.circle : BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(10),
+              gradient: iOS || controller.value != 0 ? LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [context.theme.colorScheme.primary, context.theme.colorScheme.primary, context.theme.colorScheme.error, context.theme.colorScheme.error],
+                colors: [baseColor, baseColor, context.theme.colorScheme.error, context.theme.colorScheme.error],
                 stops: [0.0, 1 - controller.value, 1 - controller.value, 1.0],
               ) : null
             ),
             alignment: Alignment.center,
             child: Icon(
               controller.value == 0 ? (iOS ? CupertinoIcons.arrow_up : Icons.send_outlined) : (iOS ? CupertinoIcons.xmark : Icons.close),
-              color: controller.value == 0 ? (iOS ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.secondary) : (iOS ? context.theme.colorScheme.onError : context.theme.colorScheme.properOnSurface),
-              size: iOS ? 20 : 28,
+              color: controller.value == 0 ? (iOS ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.secondary) : context.theme.colorScheme.onError,
+              size: iOS || controller.value != 0 ? 20 : 28,
             ),
           );
         },
