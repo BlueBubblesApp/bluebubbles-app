@@ -12,7 +12,6 @@ import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
-import 'package:simple_animations/simple_animations.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
 
@@ -40,8 +39,8 @@ class ConversationViewController extends StatefulController with SingleGetTicker
 
   final RxBool showTypingIndicator = false.obs;
   final RxBool showScrollDown = false.obs;
-  final RxInt offset = 0.obs;
   // text field items
+  final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
   final RxBool showRecording = false.obs;
   final RxList<Emoji> emojiMatches = <Emoji>[].obs;
@@ -61,6 +60,7 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   bool keyboardOpen = false;
   double _keyboardOffset = 0;
   Timer? _scrollDownDebounce;
+  Future<void> Function(Tuple5<List<PlatformFile>, String, String, String?, String?>)? sendFunc;
 
   @override
   void onInit() {
@@ -71,9 +71,6 @@ class ConversationViewController extends StatefulController with SingleGetTicker
       if (scrollController.hasClients) {
         _keyboardOffset = scrollController.offset;
       }
-      await Future.delayed(Duration(milliseconds: 500));
-      final textFieldSize = (key.currentContext?.findRenderObject() as RenderBox?)?.size.height;
-      offset.value = (textFieldSize ?? 0) > 300 ? 300 : 0;
     });
 
     scrollController.addListener(() {
@@ -132,6 +129,11 @@ class ConversationViewController extends StatefulController with SingleGetTicker
     if (ss.settings.openKeyboardOnSTB.value) {
       focusNode.requestFocus();
     }
+  }
+
+  Future<void> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
+    sendFunc?.call(Tuple5(attachments, text, subject, replyGuid, effectId));
+    await Future.delayed(Duration(milliseconds: 500));
   }
 
   void close() {

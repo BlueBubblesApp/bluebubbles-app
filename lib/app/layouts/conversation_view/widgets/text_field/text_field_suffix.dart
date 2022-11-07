@@ -21,6 +21,7 @@ class TextFieldSuffix extends StatefulWidget {
     required this.textController,
     required this.controller,
     required this.recorderController,
+    required this.sendMessage,
   }) : super(key: key);
 
   final Chat chat;
@@ -28,6 +29,7 @@ class TextFieldSuffix extends StatefulWidget {
   final TextEditingController textController;
   final ConversationViewController controller;
   final RecorderController recorderController;
+  final Future<void> Function({String? effect}) sendMessage;
 
   @override
   _TextFieldSuffixState createState() => _TextFieldSuffixState();
@@ -129,7 +131,10 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                                   style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
                               ),
                               onPressed: () async {
-                                // await widget.onSend([file], "", "", null, null);
+                                await widget.controller.send(
+                                  [file],
+                                  "", "", null, null,
+                                );
                                 deleteAudioRecording(file.path!);
                                 Get.back();
                               },
@@ -142,6 +147,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                 },
               ),
               secondChild: SendButton(
+                sendMessage: widget.sendMessage,
                 onLongPress: () {
                   sendEffectAction(
                     context,
@@ -150,7 +156,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                     widget.subjectTextController.text.trim(),
                     widget.controller.replyToMessage?.guid,
                     widget.controller.chat.guid,
-                    ({String? effect}) async {} //sendMessage,
+                    widget.sendMessage,
                   );
                 },
               ),

@@ -3,15 +3,11 @@ import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/text_field_attachment_picker.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachment.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachments_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/reply_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
-import 'package:bluebubbles/app/widgets/components/send_effect_picker.dart';
 import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_text_field.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
 import 'package:bluebubbles/app/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
-import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -28,30 +24,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:giphy_get/giphy_get.dart';
-import 'package:multi_value_listenable_builder/multi_value_listenable_builder.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 
-// todo list
-// reimplement gif / location button DONE
-// reimplement emoji insertion DONE
-// reimplement viewing picked in full screen DONE
-// fix bugs with picked not disappearing properly DONE
-// reimplement focus listener for keyboard shortcuts DONE
-// reimplement typing indicator DONE
-// reimplement event handlers DONE
-// reimplement reply to message DONE
-// reimplement send
-// reimplement effect picker DONE
-
 class ConversationTextField extends CustomStateful<ConversationViewController> {
-  final Future<bool> Function(List<PlatformFile> attachments, String text,
-      String subject, String? replyToGuid, String? effectId) onSend;
-
   ConversationTextField({
     Key? key,
-    required this.onSend,
     required super.parentController,
   }) : super(key: key);
 
@@ -220,6 +199,20 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     super.dispose();
   }
 
+  Future<void> sendMessage({String? effect}) async {
+    await controller.send(
+      controller.pickedAttachments,
+      textController.text,
+      subjectTextController.text,
+      controller.replyToMessage?.threadOriginatorGuid ?? controller.replyToMessage?.guid,
+      effect
+    );
+    controller.pickedAttachments.clear();
+    textController.clear();
+    subjectTextController.clear();
+    controller.replyToMessage = null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -357,6 +350,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         textController: textController,
                         controller: controller,
                         recorderController: recorderController,
+                        sendMessage: sendMessage,
                       ),
                     ),
                     if (samsung)
@@ -368,6 +362,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                           textController: textController,
                           controller: controller,
                           recorderController: recorderController,
+                          sendMessage: sendMessage,
                         ),
                       ),
                   ]
@@ -426,6 +421,7 @@ class _TextFields extends StatelessWidget {
     required this.textController,
     required this.controller,
     required this.recorderController,
+    required this.sendMessage,
   }) : super(key: key);
 
   final Chat chat;
@@ -433,6 +429,7 @@ class _TextFields extends StatelessWidget {
   final TextEditingController textController;
   final ConversationViewController controller;
   final RecorderController recorderController;
+  final Future<void> Function({String? effect}) sendMessage;
 
   bool get iOS => ss.settings.skin.value == Skins.iOS;
   bool get samsung => ss.settings.skin.value == Skins.Samsung;
@@ -558,9 +555,9 @@ class _TextFields extends StatelessWidget {
                       HapticFeedback.selectionClick();
                     },
                     onSubmitted: (String value) {
-                      /*controller.focusNode.requestFocus();
-                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
-                        sendMessage();*/
+                      controller.focusNode.requestFocus();
+                      if (isNullOrEmpty(value)! && controller.pickedAttachments.isEmpty) return;
+                      sendMessage.call();
                     },
                     // onContentCommitted: onContentCommit,
                     suffix: samsung ? null : Padding(
@@ -571,6 +568,7 @@ class _TextFields extends StatelessWidget {
                         textController: textController,
                         controller: controller,
                         recorderController: recorderController,
+                        sendMessage: sendMessage,
                       ),
                     ),
                   ),
@@ -670,7 +668,7 @@ class _TextFields extends StatelessWidget {
       webData = ev.data as RawKeyEventDataWeb;
     }
     if ((windowsData?.keyCode == 13 || linuxData?.keyCode == 65293 || webData?.code == "Enter") && !ev.isShiftPressed) {
-      // sendMessage();
+      sendMessage();
       controller.focusNode.requestFocus();
       return KeyEventResult.handled;
     }
@@ -715,7 +713,7 @@ class _TextFields extends StatelessWidget {
     if (kIsDesktop || kIsWeb) return KeyEventResult.ignored;
     if (ev.physicalKey == PhysicalKeyboardKey.enter && ss.settings.sendWithReturn.value) {
       if (!isNullOrEmpty(textController.text)! || !isNullOrEmpty(subjectTextController.text)!) {
-        // sendMessage();
+        sendMessage();
         controller.focusNode.previousFocus(); // I genuinely don't know why this works
         return KeyEventResult.handled;
       } else {

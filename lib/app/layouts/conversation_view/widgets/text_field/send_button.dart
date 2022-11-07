@@ -1,4 +1,3 @@
-import 'package:bluebubbles/app/widgets/components/send_effect_picker.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -10,9 +9,11 @@ class SendButton extends StatefulWidget {
   const SendButton({
     Key? key,
     required this.onLongPress,
+    required this.sendMessage,
   }) : super(key: key);
 
   final Function() onLongPress;
+  final Function() sendMessage;
 
   @override
   SendButtonState createState() => SendButtonState();
@@ -29,6 +30,7 @@ class SendButtonState extends OptimizedState<SendButton> with SingleTickerProvid
     controller.addListener(() {
       if (controller.isCompleted) {
         controller.reset();
+        widget.sendMessage.call();
       }
     });
   }
@@ -74,7 +76,7 @@ class SendButtonState extends OptimizedState<SendButton> with SingleTickerProvid
         } else if (ss.settings.sendDelay.value != 0) {
           controller.forward();
         } else {
-
+          widget.sendMessage.call();
         }
       },
       onLongPress: () {
