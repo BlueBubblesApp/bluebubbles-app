@@ -51,7 +51,7 @@ class SendButtonState extends OptimizedState<SendButton> with SingleTickerProvid
             constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
             decoration: BoxDecoration(
               shape: iOS ? BoxShape.circle : BoxShape.rectangle,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: iOS ? null : BorderRadius.circular(10),
               gradient: iOS || controller.value != 0 ? LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
