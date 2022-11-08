@@ -125,7 +125,7 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                                   MessagesView(
                                     key: Key(chat.guid),
                                     customService: widget.customService,
-                                    chat: chat,
+                                    controller: controller,
                                   ),
                                   Align(
                                     alignment: iOS ? Alignment.bottomRight : Alignment.bottomCenter,
@@ -133,14 +133,14 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                                       padding: const EdgeInsets.only(bottom: 10, right: 10, left: 10),
                                       child: Obx(() => AnimatedOpacity(
                                         opacity: controller.showScrollDown.value ? 1 : 0,
-                                        duration: Duration(milliseconds: 300),
+                                        duration: const Duration(milliseconds: 300),
                                         child: iOS ? TextButton(
                                           style: TextButton.styleFrom(
                                             backgroundColor: context.theme.colorScheme.secondary,
                                             shape: const CircleBorder(),
                                             padding: const EdgeInsets.all(0),
-                                            maximumSize: Size(32, 32),
-                                            minimumSize: Size(32, 32),
+                                            maximumSize: const Size(32, 32),
+                                            minimumSize: const Size(32, 32),
                                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                           ),
                                           onPressed: controller.scrollToBottom,

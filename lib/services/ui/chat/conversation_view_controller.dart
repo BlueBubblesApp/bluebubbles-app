@@ -62,6 +62,8 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   Timer? _scrollDownDebounce;
   Future<void> Function(Tuple5<List<PlatformFile>, String, String, String?, String?>)? sendFunc;
 
+  final RxDouble timestampOffset = 0.0.obs;
+
   @override
   void onInit() {
     super.onInit();

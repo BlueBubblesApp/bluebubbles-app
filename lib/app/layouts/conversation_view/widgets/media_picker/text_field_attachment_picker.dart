@@ -62,12 +62,12 @@ class _AttachmentPickerState extends OptimizedState<AttachmentPicker> {
       if (DateTime.now().toLocal().isWithin(_images.first.modifiedDateTime, minutes: 2)) {
         final file = await _images.first.file;
         if (file == null) return;
-        eventDispatcher.emit('add-custom-smartreply', {
-          "path": file.path,
-          "name": file.path.split('/').last,
-          "size": await file.length(),
-          "bytes": await file.readAsBytes(),
-        });
+        eventDispatcher.emit('add-custom-smartreply', PlatformFile(
+          path: file.path,
+          name: file.path.split('/').last,
+          size: await file.length(),
+          bytes: await file.readAsBytes(),
+        ));
       }
     }
 
