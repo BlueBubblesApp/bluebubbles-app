@@ -187,6 +187,10 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   @override
   void dispose() {
+    chat.textFieldText = textController.text;
+    chat.textFieldAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
+    chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);
+
     controller.focusNode.dispose();
     controller.subjectFocusNode.dispose();
     textController.dispose();
@@ -194,8 +198,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     recorderController.dispose();
     socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
 
-    chat.textFieldAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
-    chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);
     super.dispose();
   }
 
