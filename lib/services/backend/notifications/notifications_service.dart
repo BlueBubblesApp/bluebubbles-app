@@ -76,6 +76,7 @@ class NotificationsService extends GetxService {
         if (newCount > currentCount) {
           event.limit = newCount - currentCount;
           final messages = event.find();
+          event.limit = 0;
           for (Message message in messages) {
             if (message.chat.target == null) continue;
             message.handle = Handle.findOne(id: message.handleId);

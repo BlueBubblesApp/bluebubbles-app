@@ -157,17 +157,18 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                                       absorbing: true,
                                       child: Padding(
                                         padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-                                        child: MessageWidget(
-                                          key: Key(widget.messages[index].guid!),
-                                          message: widget.messages[index],
-                                          olderMessage: index == widget.messages.length - 1 ? null : widget.messages[index + 1],
-                                          newerMessage: index == 0 ? null : widget.messages[index - 1],
-                                          showHandle: widget.chat.isGroup,
-                                          isFirstSentMessage: false,
-                                          showHero: false,
-                                          showReplies: true,
-                                          autoplayEffect: false,
-                                        )
+                                        // todo
+                                        // child: MessageWidget(
+                                        //   key: Key(widget.messages[index].guid!),
+                                        //   message: widget.messages[index],
+                                        //   olderMessage: index == widget.messages.length - 1 ? null : widget.messages[index + 1],
+                                        //   newerMessage: index == 0 ? null : widget.messages[index - 1],
+                                        //   showHandle: widget.chat.isGroup,
+                                        //   isFirstSentMessage: false,
+                                        //   showHero: false,
+                                        //   showReplies: true,
+                                        //   autoplayEffect: false,
+                                        // )
                                       ),
                                     );
                                   },

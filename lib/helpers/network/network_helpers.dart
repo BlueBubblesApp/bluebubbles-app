@@ -9,11 +9,11 @@ import 'package:universal_io/io.dart';
 String? sanitizeServerAddress({String? address}) {
   String serverAddress = address ?? ss.settings.serverAddress.value;
 
-  String sanitized = serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();
+  String sanitized = serverAddress.replaceAll("https://", "").replaceAll("http://", "").replaceAll('"', "").trim();
   if (sanitized.isEmpty) return null;
 
   Uri? uri = Uri.tryParse(serverAddress);
-  if (uri?.scheme.isEmpty ?? true) {
+  if (uri?.scheme.isEmpty ?? false) {
     if (serverAddress.contains("ngrok.io") || serverAddress.contains("trycloudflare.com")) {
       serverAddress = "https://$serverAddress";
     } else {

@@ -53,13 +53,17 @@ class MessagesService extends GetxController {
       if (newCount > currentCount && currentCount != 0) {
         event.limit = newCount - currentCount;
         final messages = event.find();
+        event.limit = 0;
         for (Message message in messages) {
           message.handle = Handle.findOne(id: message.handleId);
           message.attachments = List<Attachment>.from(message.dbAttachments);
-          // add this as a reaction if needed
-          // todo update relevant messages (associated message or thread originator)
+          // add this as a reaction if needed, update thread originators and associated messages
           if (message.associatedMessageGuid != null) {
             struct.getMessage(message.associatedMessageGuid!)?.associatedMessages.add(message);
+            getActiveMwc(message.associatedMessageGuid!)?.updateAssociatedMessage(message);
+          }
+          if (message.threadOriginatorGuid != null) {
+            getActiveMwc(message.threadOriginatorGuid!)?.updateThreadOriginator(message);
           }
           struct.addMessages([message]);
           onNewMessage.call(message);

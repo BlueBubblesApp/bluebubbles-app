@@ -69,6 +69,7 @@ void showReplyThread(BuildContext context, Message message, MessagesService serv
                                         showHero: false,
                                         showReplies: false,
                                         bloc: service,
+                                        controller: cvc(service.chat),
                                         autoplayEffect: false,
                                       )),
                                 );

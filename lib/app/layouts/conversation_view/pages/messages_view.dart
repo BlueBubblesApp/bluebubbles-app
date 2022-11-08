@@ -287,6 +287,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                           height: context.theme.extension<BubbleText>()!.bubbleText.fontSize! + 35,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
+                            reverse: true,
                             children: smartReplies..addAll(internalSmartReplies),
                           ),
                         ) : const SizedBox.shrink())
@@ -366,6 +367,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                           showHero: index == 0,
                           showReplies: true,
                           bloc: messageService,
+                          controller: controller,
                           autoplayEffect: index == 0 && _messages[index].originalROWID != null,
                         ),
                       ),

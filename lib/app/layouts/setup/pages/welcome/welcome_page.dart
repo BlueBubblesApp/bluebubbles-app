@@ -90,89 +90,90 @@ class _WelcomePageState extends OptimizedState<WelcomePage> with TickerProviderS
                     emissionFrequency: 0.35,
                     canvas: Size(context.width - 16, height + 50),
                   ),
-                  Column(
-                      key: key,
-                      children: [
-                        AbsorbPointer(
-                          absorbing: true,
-                          child: MessageWidget(
-                            newerMessage: null,
-                            olderMessage: null,
-                            isFirstSentMessage: false,
-                            showHandle: true,
-                            showHero: false,
-                            showReplies: false,
-                            autoplayEffect: false,
-                            message: Message(
-                              guid: "redacted-mode-demo",
-                              dateDelivered: DateTime.now().toLocal(),
-                              dateCreated: DateTime.now().toLocal(),
-                              isFromMe: false,
-                              hasReactions: true,
-                              hasAttachments: true,
-                              text: "                                ",
-                              handle: Handle(
-                                id: Random.secure().nextInt(10000),
-                                address: "",
-                              ),
-                              associatedMessages: [
-                                Message(
-                                  dateCreated: DateTime.now().toLocal(),
-                                  guid: "redacted-mode-demo",
-                                  text: "Jane Doe liked a message you sent",
-                                  associatedMessageType: "like",
-                                  isFromMe: false,
-                                ),
-                              ],
-                              attachments: [
-                                Attachment(
-                                  guid: "redacted-mode-demo-attachment",
-                                  originalROWID: Random.secure().nextInt(10000),
-                                  transferName: "assets/images/transparent.png",
-                                  mimeType: "image/png",
-                                  width: 100,
-                                  height: 100,
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              height = (key.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 250;
-                            });
-                            confettiController.play();
-                          },
-                          child: AbsorbPointer(
-                            absorbing: true,
-                            child: MessageWidget(
-                              newerMessage: null,
-                              olderMessage: null,
-                              isFirstSentMessage: false,
-                              showHandle: false,
-                              showHero: false,
-                              showReplies: false,
-                              autoplayEffect: false,
-                              message: Message(
-                                guid: "redacted-mode-demo-2",
-                                dateDelivered: DateTime.now().toLocal(),
-                                dateCreated: DateTime.now().toLocal(),
-                                isFromMe: true,
-                                hasReactions: false,
-                                hasAttachments: false,
-                                text: "                  ",
-                                expressiveSendStyleId: "com.apple.messages.effect.CKConfettiEffect",
-                                handle: Handle(
-                                  id: Random.secure().nextInt(10000),
-                                  address: "",
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                      ]
-                  ),
+                  // todo
+                  // Column(
+                  //     key: key,
+                  //     children: [
+                  //       AbsorbPointer(
+                  //         absorbing: true,
+                  //         child: MessageWidget(
+                  //           newerMessage: null,
+                  //           olderMessage: null,
+                  //           isFirstSentMessage: false,
+                  //           showHandle: true,
+                  //           showHero: false,
+                  //           showReplies: false,
+                  //           autoplayEffect: false,
+                  //           message: Message(
+                  //             guid: "redacted-mode-demo",
+                  //             dateDelivered: DateTime.now().toLocal(),
+                  //             dateCreated: DateTime.now().toLocal(),
+                  //             isFromMe: false,
+                  //             hasReactions: true,
+                  //             hasAttachments: true,
+                  //             text: "                                ",
+                  //             handle: Handle(
+                  //               id: Random.secure().nextInt(10000),
+                  //               address: "",
+                  //             ),
+                  //             associatedMessages: [
+                  //               Message(
+                  //                 dateCreated: DateTime.now().toLocal(),
+                  //                 guid: "redacted-mode-demo",
+                  //                 text: "Jane Doe liked a message you sent",
+                  //                 associatedMessageType: "like",
+                  //                 isFromMe: false,
+                  //               ),
+                  //             ],
+                  //             attachments: [
+                  //               Attachment(
+                  //                 guid: "redacted-mode-demo-attachment",
+                  //                 originalROWID: Random.secure().nextInt(10000),
+                  //                 transferName: "assets/images/transparent.png",
+                  //                 mimeType: "image/png",
+                  //                 width: 100,
+                  //                 height: 100,
+                  //               )
+                  //             ],
+                  //           ),
+                  //         ),
+                  //       ),
+                  //       GestureDetector(
+                  //         onTap: () {
+                  //           setState(() {
+                  //             height = (key.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 250;
+                  //           });
+                  //           confettiController.play();
+                  //         },
+                  //         child: AbsorbPointer(
+                  //           absorbing: true,
+                  //           child: MessageWidget(
+                  //             newerMessage: null,
+                  //             olderMessage: null,
+                  //             isFirstSentMessage: false,
+                  //             showHandle: false,
+                  //             showHero: false,
+                  //             showReplies: false,
+                  //             autoplayEffect: false,
+                  //             message: Message(
+                  //               guid: "redacted-mode-demo-2",
+                  //               dateDelivered: DateTime.now().toLocal(),
+                  //               dateCreated: DateTime.now().toLocal(),
+                  //               isFromMe: true,
+                  //               hasReactions: false,
+                  //               hasAttachments: false,
+                  //               text: "                  ",
+                  //               expressiveSendStyleId: "com.apple.messages.effect.CKConfettiEffect",
+                  //               handle: Handle(
+                  //                 id: Random.secure().nextInt(10000),
+                  //                 address: "",
+                  //               ),
+                  //             ),
+                  //           ),
+                  //         ),
+                  //       )
+                  //     ]
+                  // ),
                 ],
               ),
             ),

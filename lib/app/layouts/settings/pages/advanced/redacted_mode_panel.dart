@@ -42,53 +42,54 @@ class _RedactedModePanelState extends OptimizedState<RedactedModePanel> {
                   ),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10),
-                child: AbsorbPointer(
-                  absorbing: true,
-                  child: MessageWidget(
-                    newerMessage: null,
-                    olderMessage: null,
-                    isFirstSentMessage: false,
-                    showHandle: true,
-                    showHero: false,
-                    showReplies: false,
-                    autoplayEffect: false,
-                    message: Message(
-                      guid: "redacted-mode-demo",
-                      dateDelivered: DateTime.now().toLocal(),
-                      dateCreated: DateTime.now().toLocal(),
-                      isFromMe: false,
-                      hasReactions: true,
-                      hasAttachments: true,
-                      text: "This is a preview of Redacted Mode settings.",
-                      handle: Handle(
-                        id: Random.secure().nextInt(10000),
-                        address: "John Doe",
-                      ),
-                      associatedMessages: [
-                        Message(
-                          dateCreated: DateTime.now().toLocal(),
-                          guid: "redacted-mode-demo",
-                          text: "Jane Doe liked a message you sent",
-                          associatedMessageType: "like",
-                          isFromMe: true,
-                        ),
-                      ],
-                      attachments: [
-                        Attachment(
-                          guid: "redacted-mode-demo-attachment",
-                          originalROWID: Random.secure().nextInt(10000),
-                          transferName: "assets/icon/icon.png",
-                          mimeType: "image/png",
-                          width: 100,
-                          height: 100,
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              // todo
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10),
+              //   child: AbsorbPointer(
+              //     absorbing: true,
+              //     child: MessageWidget(
+              //       newerMessage: null,
+              //       olderMessage: null,
+              //       isFirstSentMessage: false,
+              //       showHandle: true,
+              //       showHero: false,
+              //       showReplies: false,
+              //       autoplayEffect: false,
+              //       message: Message(
+              //         guid: "redacted-mode-demo",
+              //         dateDelivered: DateTime.now().toLocal(),
+              //         dateCreated: DateTime.now().toLocal(),
+              //         isFromMe: false,
+              //         hasReactions: true,
+              //         hasAttachments: true,
+              //         text: "This is a preview of Redacted Mode settings.",
+              //         handle: Handle(
+              //           id: Random.secure().nextInt(10000),
+              //           address: "John Doe",
+              //         ),
+              //         associatedMessages: [
+              //           Message(
+              //             dateCreated: DateTime.now().toLocal(),
+              //             guid: "redacted-mode-demo",
+              //             text: "Jane Doe liked a message you sent",
+              //             associatedMessageType: "like",
+              //             isFromMe: true,
+              //           ),
+              //         ],
+              //         attachments: [
+              //           Attachment(
+              //             guid: "redacted-mode-demo-attachment",
+              //             originalROWID: Random.secure().nextInt(10000),
+              //             transferName: "assets/icon/icon.png",
+              //             mimeType: "image/png",
+              //             width: 100,
+              //             height: 100,
+              //           )
+              //         ],
+              //       ),
+              //     ),
+              //   ),
+              // ),
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
