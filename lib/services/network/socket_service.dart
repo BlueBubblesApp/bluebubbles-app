@@ -68,14 +68,14 @@ class SocketService extends GetxService {
     // custom events
     // only listen to these events from socket on web/desktop (FCM handles on Android)
     if (kIsWeb || kIsDesktop) {
-      socket.on("new-message", (data) => handleCustomEvent("new-message", data));
-      socket.on("updated-message", (data) => handleCustomEvent("updated-message", data));
       socket.on("group-name-change", (data) => handleCustomEvent("group-name-change", data));
       socket.on("participant-removed", (data) => handleCustomEvent("participant-removed", data));
       socket.on("participant-added", (data) => handleCustomEvent("participant-added", data));
       socket.on("participant-left", (data) => handleCustomEvent("participant-left", data));
       socket.on("chat-read-status-changed", (data) => handleCustomEvent("chat-read-status-change", data));
     }
+    socket.on("new-message", (data) => handleCustomEvent("new-message", data));
+    socket.on("updated-message", (data) => handleCustomEvent("updated-message", data));
     socket.on("typing-indicator", (data) => handleCustomEvent("typing-indicator", data));
 
     socket.connect();
