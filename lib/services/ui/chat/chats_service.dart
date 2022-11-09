@@ -31,7 +31,7 @@ class ChatsService extends GetxService {
     countSub = countQuery.listen((event) {
       if (!ss.settings.finishedSetup.value) return;
       final newCount = event.count();
-      if (newCount > currentCount) {
+      if (newCount > currentCount && currentCount != 0) {
         addChat(event.findFirst()!);
       }
       currentCount = newCount;

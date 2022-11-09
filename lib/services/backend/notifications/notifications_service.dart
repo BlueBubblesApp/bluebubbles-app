@@ -73,7 +73,7 @@ class NotificationsService extends GetxService {
       countSub = countQuery.listen((event) {
         if (!ss.settings.finishedSetup.value) return;
         final newCount = event.count();
-        if (newCount > currentCount) {
+        if (newCount > currentCount && currentCount != 0) {
           event.limit = newCount - currentCount;
           final messages = event.find();
           event.limit = 0;
@@ -81,7 +81,7 @@ class NotificationsService extends GetxService {
             if (message.chat.target == null) continue;
             message.handle = Handle.findOne(id: message.handleId);
             message.attachments = List<Attachment>.from(message.dbAttachments);
-            MessageHelper.handleNotification(message, message.chat.target!);
+            MessageHelper.handleNotification(message, message.chat.target!, findExisting: false);
           }
         }
         currentCount = newCount;

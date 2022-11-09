@@ -1,5 +1,7 @@
+import 'dart:isolate';
+import 'dart:ui' hide window;
+
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -15,7 +17,8 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   bool isBubble = false;
   bool isUiThread = true;
   bool get isAlive => kIsWeb ? !(window.document.hidden ?? false)
-      : WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+      : (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed
+        || IsolateNameServer.lookupPortByName('bg_isolate') != null);
 
   @override
   void onInit() {
@@ -53,6 +56,12 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
     }
 
     if (!kIsDesktop && !kIsWeb) {
+      // clever trick so we can see if the app is active in an isolate or not
+      if (!isBubble) {
+        final port = ReceivePort();
+        IsolateNameServer.removePortNameMapping('bg_isolate');
+        IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+      }
       socket.reconnect();
     }
   }
@@ -60,6 +69,7 @@ class LifecycleService extends GetxService with WidgetsBindingObserver {
   void close() {
     cm.setActiveToDead();
     if (!kIsDesktop && !kIsWeb) {
+      IsolateNameServer.removePortNameMapping('bg_isolate');
       socket.disconnect();
     }
   }

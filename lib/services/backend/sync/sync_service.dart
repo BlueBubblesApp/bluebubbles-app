@@ -90,11 +90,15 @@ Future<List<Map<String, dynamic>>> incrementalSyncIsolate(SendPort? port) async 
     int syncStart = ss.settings.lastIncrementalSync.value;
     final incrementalSyncManager = IncrementalSyncManager(syncStart);
     await incrementalSyncManager.start();
+  } catch (ex) {
+    Logger.error('Incremental sync failed! Error: $ex');
+  }
+  try {
     final map = await cs.refreshContacts();
     port?.send(map);
     return map;
   } catch (ex) {
-    Logger.error('Incremental sync failed! Error: $ex');
+    Logger.error('Contacts refresh failed! Error: $ex');
     port?.send([]);
     return <Map<String, dynamic>>[];
   }
