@@ -281,8 +281,8 @@ class Message {
   List<Attachment?> attachments = [];
   List<Message> associatedMessages = [];
   bool? bigEmoji;
-  List<AttributedBody>? attributedBody;
-  List<MessageSummaryInfo>? messageSummaryInfo;
+  List<AttributedBody> attributedBody;
+  List<MessageSummaryInfo> messageSummaryInfo;
   PayloadData? payloadData;
   bool hasApplePayloadData;
 
@@ -307,15 +307,13 @@ class Message {
 
   final chat = ToOne<Chat>();
 
-  String? get dbAttributedBody => attributedBody == null
-      ? null : jsonEncode(attributedBody!.map((e) => e.toMap()).toList());
+  String? get dbAttributedBody => jsonEncode(attributedBody.map((e) => e.toMap()).toList());
   set dbAttributedBody(String? json) => attributedBody = json == null
-      ? null : (jsonDecode(json) as List).map((e) => AttributedBody.fromMap(e)).toList();
+      ? <AttributedBody>[] : (jsonDecode(json) as List).map((e) => AttributedBody.fromMap(e)).toList();
 
-  String? get dbMessageSummaryInfo => messageSummaryInfo == null
-      ? null : jsonEncode(messageSummaryInfo!.map((e) => e.toJson()).toList());
+  String? get dbMessageSummaryInfo => jsonEncode(messageSummaryInfo.map((e) => e.toJson()).toList());
   set dbMessageSummaryInfo(String? json) => messageSummaryInfo = json == null
-      ? null : (jsonDecode(json) as List).map((e) => MessageSummaryInfo.fromJson(e)).toList();
+      ? <MessageSummaryInfo>[] : (jsonDecode(json) as List).map((e) => MessageSummaryInfo.fromJson(e)).toList();
 
   String? get dbPayloadData => payloadData == null
       ? null : jsonEncode(payloadData!.toJson());
@@ -355,8 +353,8 @@ class Message {
     this.metadata,
     this.threadOriginatorGuid,
     this.threadOriginatorPart,
-    this.attributedBody,
-    this.messageSummaryInfo,
+    this.attributedBody = const [],
+    this.messageSummaryInfo = const [],
     this.payloadData,
     this.hasApplePayloadData = false,
     DateTime? dateEdited,
@@ -365,14 +363,16 @@ class Message {
       if (dateRead != null) _dateRead.value = dateRead;
       if (dateDelivered != null) _dateDelivered.value = dateDelivered;
       if (dateEdited != null) _dateEdited.value = dateEdited;
-      if (attachments == const []) attachments = [];
-      if (associatedMessages == const []) associatedMessages = [];
+      if (attachments.isEmpty) attachments = [];
+      if (associatedMessages.isEmpty) associatedMessages = [];
+      if (attributedBody.isEmpty) attributedBody = [];
+      if (messageSummaryInfo.isEmpty) messageSummaryInfo = [];
   }
 
   factory Message.fromMap(Map<String, dynamic> json) {
     final attachments = (json['attachments'] as List? ?? []).map((a) => Attachment.fromMap(a)).toList();
 
-    List<AttributedBody>? attributedBody;
+    List<AttributedBody> attributedBody = [];
     if (json["attributedBody"] != null) {
       if (json['attributedBody'] is Map) {
         json['attributedBody'] = [json['attributedBody']];
@@ -407,7 +407,7 @@ class Message {
       guid: json["guid"],
       handleId: json["handleId"] ?? 0,
       otherHandle: json["otherHandle"],
-      text: sanitizeString(json["text"] ?? attributedBody?.first.string),
+      text: sanitizeString(json["text"] ?? attributedBody.first.string),
       subject: json["subject"],
       country: json["country"],
       error: json["_error"] ?? 0,
@@ -573,8 +573,9 @@ class Message {
     existing._dateDelivered.value = newMessage._dateDelivered.value ?? existing._dateDelivered.value;
     existing._dateRead.value = newMessage._dateRead.value ?? existing._dateRead.value;
     existing._dateEdited.value = newMessage._dateEdited.value ?? existing._dateEdited.value;
-    existing.attributedBody = newMessage.attributedBody ?? existing.attributedBody;
-    existing.messageSummaryInfo = newMessage.messageSummaryInfo ?? existing.messageSummaryInfo;
+    existing.attributedBody = newMessage.attributedBody.isNotEmpty ? newMessage.attributedBody : existing.attributedBody;
+    existing.messageSummaryInfo = newMessage.messageSummaryInfo.isNotEmpty ? newMessage.messageSummaryInfo : existing.messageSummaryInfo;
+    existing.payloadData = newMessage.payloadData ?? existing.payloadData;
     existing._error.value = newMessage._error.value;
 
     try {
@@ -993,6 +994,10 @@ class Message {
       existing.dbAttachments.addAll(newMessage.dbAttachments);
     }
 
+    if (existing.payloadData == null && newMessage.payloadData != null) {
+      existing.payloadData = newMessage.payloadData;
+    }
+
     return existing;
   }
 
@@ -1033,8 +1038,8 @@ class Message {
     if (includeObjects) {
       map['attachments'] = (attachments).map((e) => e!.toMap()).toList();
       map['handle'] = handle?.toMap();
-      map['attributedBody'] = attributedBody?.map((e) => e.toMap()).toList();
-      map['messageSummaryInfo'] = messageSummaryInfo?.map((e) => e.toJson()).toList();
+      map['attributedBody'] = attributedBody.map((e) => e.toMap()).toList();
+      map['messageSummaryInfo'] = messageSummaryInfo.map((e) => e.toJson()).toList();
       map['payloadData'] = payloadData?.toJson();
     }
     return map;
