@@ -27,6 +27,9 @@ class Run {
   final List<int> range;
   final Attributes? attributes;
 
+  bool get isAttachment => attributes?.attachmentGuid != null;
+  bool get hasMention => attributes?.mention != null;
+
   factory Run.fromMap(Map<String, dynamic> json) => Run(
     range: json["range"] == null ? [] : List<int>.from(json["range"].map((x) => x)),
     attributes: json["attributes"] == null ? null : Attributes.fromMap(json["attributes"]),
