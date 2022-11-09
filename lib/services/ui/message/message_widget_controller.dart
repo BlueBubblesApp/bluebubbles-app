@@ -26,13 +26,21 @@ MessageWidgetController? getActiveMwc(String guid) => Get.isRegistered<MessageWi
     ? Get.find<MessageWidgetController>(tag: guid) : null;
 
 class MessageWidgetController extends StatefulController with SingleGetTickerProviderMixin {
+  late List<MessagePart> parts;
   Message message;
+  String? oldMessageGuid;
+  String? newMessageGuid;
   late final String tag;
   late final StreamSubscription<Query<Message>> sub;
+
+  static const maxBubbleSizeFactor = 0.6;
 
   MessageWidgetController(this.message) {
     tag = message.guid!;
   }
+
+  MessageWidgetController? get oldMwc => oldMessageGuid == null ? null : getActiveMwc(oldMessageGuid!);
+  MessageWidgetController? get newMwc => newMessageGuid == null ? null : getActiveMwc(newMessageGuid!);
 
   @override
   void onInit() {

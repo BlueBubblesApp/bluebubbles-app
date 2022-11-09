@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
@@ -28,17 +29,17 @@ class MessageHolder extends CustomStateful<MessageWidgetController> {
 }
 
 class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidgetController> {
-  late final omController = widget.oldMessageGuid == null ? null : getActiveMwc(widget.oldMessageGuid!);
-  late final nmController = widget.newMessageGuid == null ? null : getActiveMwc(widget.newMessageGuid!);
-
   Message get message => controller.message;
-  Message? get olderMessage => omController?.message;
-  Message? get newerMessage => nmController?.message;
+  Message? get olderMessage => controller.oldMwc?.message;
+  Message? get newerMessage => controller.newMwc?.message;
 
   List<MessagePart> messageParts = [];
 
   @override
   void initState() {
+    forceDelete = false;
+    controller.oldMessageGuid = widget.oldMessageGuid;
+    controller.newMessageGuid = widget.newMessageGuid;
     super.initState();
     buildMessageParts();
     // fallback - build from the actual message
@@ -55,6 +56,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
         ));
       }
     }
+    controller.parts = messageParts;
   }
 
   void buildMessageParts() {
@@ -119,6 +121,15 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
 
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        ...messageParts.map((e) => e.attachments.isEmpty ? TextBubble(
+          parentController: controller,
+          message: e,
+        ) : const SizedBox.shrink())
+      ],
+    );
   }
 }
