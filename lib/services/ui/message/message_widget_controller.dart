@@ -61,7 +61,6 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
   void updateMessage(Message newItem) {
     if (newItem.guid != message.guid && message.guid!.contains("temp")) {
       message = Message.merge(newItem, message);
-      print('fired');
       updateWidgetFunctions[MessageWidget]?.call(null);
     } else if (newItem.dateDelivered != message.dateDelivered || newItem.dateRead != message.dateRead) {
       message = Message.merge(newItem, message);
