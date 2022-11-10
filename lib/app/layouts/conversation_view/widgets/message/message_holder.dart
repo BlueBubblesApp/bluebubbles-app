@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/s
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/message_timestamp.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/timestamp_separator.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
@@ -40,6 +41,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   Message? get olderMessage => controller.oldMwc?.message;
   Message? get newerMessage => controller.newMwc?.message;
   Chat get chat => widget.cvController.chat;
+  bool get canSwipeToReply => ss.settings.enablePrivateAPI.value && ss.settings.swipeToReply.value && chat.isIMessage;
 
   List<MessagePart> messageParts = [];
   List<RxDouble> replyOffsets = [];
@@ -67,6 +69,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       }
     }
     controller.parts = messageParts;
+    replyOffsets = List.filled(messageParts.length, 0.0.obs);
   }
 
   void buildMessageParts() {
@@ -96,7 +99,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       }
     }
     messageParts.sort((a, b) => a.part.compareTo(b.part));
-    replyOffsets = List.filled(messageParts.length, 0.0.obs);
   }
 
   List<MessagePart> attributedBodyToMessagePart(AttributedBody e) {
@@ -132,59 +134,65 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-            children: [
-              ...messageParts.mapIndexed((index, e) => Row(
+        TimestampSeparator(olderMessage: olderMessage, message: message),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
-                  GestureDetector(
-                    behavior: HitTestBehavior.deferToChild,
-                    // todo onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
-                    onHorizontalDragUpdate: !ss.settings.enablePrivateAPI.value
-                        || !ss.settings.swipeToReply.value
-                        || !chat.isIMessage ? null : (details) {
-                      final offset = replyOffsets[index];
-                      offset.value += details.delta.dx * 0.3;
-                      if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
-                        HapticFeedback.lightImpact();
-                        gaveHapticFeedback = true;
-                      } else if (offset.value.abs() < SlideToReply.replyThreshold) {
-                        gaveHapticFeedback = false;
-                      }
-                    },
-                    onHorizontalDragEnd: !ss.settings.enablePrivateAPI.value
-                        || !ss.settings.swipeToReply.value
-                        || !chat.isIMessage ? null : (details) {
-                      final offset = replyOffsets[index];
-                      if (offset.value.abs() >= SlideToReply.replyThreshold) {
-                        widget.cvController.replyToMessage = message;
-                      }
-                      offset.value = 0;
-                    },
-                    onHorizontalDragCancel: !ss.settings.enablePrivateAPI.value
-                        || !ss.settings.swipeToReply.value
-                        || !chat.isIMessage ? null : () {
-                      replyOffsets[index].value = 0;
-                    },
-                    child: e.attachments.isEmpty ? TextBubble(
-                      parentController: controller,
-                      message: e,
-                    ) : const SizedBox.shrink(),
-                  ),
-                  Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
+                  ...messageParts.mapIndexed((index, e) => Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!message.isFromMe! && canSwipeToReply)
+                        Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
+                      GestureDetector(
+                        behavior: HitTestBehavior.deferToChild,
+                        // todo onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
+                        onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
+                          if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
+                            return;
+                          }
+                          final offset = replyOffsets[index];
+                          offset.value += details.delta.dx * 0.5;
+                          if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
+                            HapticFeedback.lightImpact();
+                            gaveHapticFeedback = true;
+                          } else if (offset.value.abs() < SlideToReply.replyThreshold) {
+                            gaveHapticFeedback = false;
+                          }
+                        },
+                        onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
+                          final offset = replyOffsets[index];
+                          if (offset.value.abs() >= SlideToReply.replyThreshold) {
+                            widget.cvController.replyToMessage = message;
+                          }
+                          offset.value = 0;
+                        },
+                        onHorizontalDragCancel: !canSwipeToReply ? null : () {
+                          replyOffsets[index].value = 0;
+                        },
+                        child: e.attachments.isEmpty ? TextBubble(
+                          parentController: controller,
+                          message: e,
+                        ) : const SizedBox.shrink(),
+                      ),
+                      if (message.isFromMe! && canSwipeToReply)
+                        Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
+                    ],
+                  )),
+                  if (message.isFromMe!)
+                    DeliveredIndicator(parentController: controller),
                 ],
-              )),
-              if (message.isFromMe!)
-                DeliveredIndicator(parentController: controller),
-            ],
-          ),
+              ),
+            ),
+            MessageTimestamp(controller: controller, cvController: widget.cvController),
+          ],
         ),
-        MessageTimestamp(controller: controller, cvController: widget.cvController),
       ],
     );
   }

@@ -20,7 +20,7 @@ class MessageTimestamp extends StatelessWidget {
     final time = oneLine ? "   ${buildTime(message.dateCreated)}" : "   ${buildDate(message.dateCreated)}\n   ${buildTime(message.dateCreated).toLowerCase()}";
     return Obx(() => AnimatedContainer(
       duration: Duration(milliseconds: cvController.timestampOffset.value == 0 ? 150 : 0),
-      width: min(cvController.timestampOffset.value.abs(), 50),
+      width: min(max(-cvController.timestampOffset.value, 0), 50),
       child: Text(
         time,
         style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
