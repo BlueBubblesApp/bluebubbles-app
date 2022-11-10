@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/delivered_receipt.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -67,14 +69,18 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
   }
 
   void updateMessage(Message newItem) {
-    if (newItem.guid != message.guid && message.guid!.contains("temp")) {
+    final oldGuid = message.guid;
+    if (newItem.guid != oldGuid && oldGuid!.contains("temp")) {
       message = Message.merge(newItem, message);
-      updateWidgetFunctions[MessageWidget]?.call(null);
+      ms(message.chat.target!.guid).updateMessage(message, oldGuid: oldGuid);
+      updateWidgetFunctions[MessageHolder]?.call(null);
     } else if (newItem.dateDelivered != message.dateDelivered || newItem.dateRead != message.dateRead) {
       message = Message.merge(newItem, message);
-      updateWidgetFunctions[DeliveredReceipt]?.call(null);
+      ms(message.chat.target!.guid).updateMessage(message);
+      updateWidgetFunctions[DeliveredIndicator]?.call(null);
     } else if (newItem.dateEdited != message.dateEdited) {
       message = Message.merge(newItem, message);
+      ms(message.chat.target!.guid).updateMessage(message);
       // todo
     }
   }
@@ -82,7 +88,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
 
   void updateThreadOriginator(Message newItem) {
     // todo
-    updateWidgetFunctions[MessageWidget]?.call(null);
+    updateWidgetFunctions[MessageHolder]?.call(null);
   }
 
   void updateAssociatedMessage(Message newItem) {
@@ -90,6 +96,6 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
       message.associatedMessages.add(newItem);
     }
     // todo
-    updateWidgetFunctions[MessageWidget]?.call(null);
+    updateWidgetFunctions[MessageHolder]?.call(null);
   }
 }

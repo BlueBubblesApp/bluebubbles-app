@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
@@ -125,10 +126,13 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
+        Row(),
         ...messageParts.map((e) => e.attachments.isEmpty ? TextBubble(
           parentController: controller,
           message: e,
-        ) : const SizedBox.shrink())
+        ) : const SizedBox.shrink()),
+        if (message.isFromMe!)
+          DeliveredIndicator(parentController: controller),
       ],
     );
   }

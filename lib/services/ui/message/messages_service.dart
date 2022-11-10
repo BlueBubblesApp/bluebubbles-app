@@ -25,7 +25,7 @@ class MessagesService extends GetxController {
   late final Chat chat;
   late final StreamSubscription countSub;
   final ChatMessages struct = ChatMessages();
-  late final Function(Message) updateFunc;
+  late final Function(Message, {String? oldGuid}) updateFunc;
   late final Function(Message) removeFunc;
 
   final String tag;
@@ -39,7 +39,7 @@ class MessagesService extends GetxController {
   Message? get mostRecent => (struct.messages.toList()
     ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
 
-  void init(Chat c, Function(Message) onNewMessage, Function(Message) onUpdatedMessage, Function(Message) onDeletedMessage) {
+  void init(Chat c, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage) {
     chat = c;
     updateFunc = onUpdatedMessage;
     removeFunc = onDeletedMessage;
@@ -87,16 +87,19 @@ class MessagesService extends GetxController {
     Get.reload<MessagesService>(tag: tag);
   }
 
-  void updateMessage(Message updated) {
-    final toUpdate = struct.getMessage(updated.guid!)!;
+  void updateMessage(Message updated, {String? oldGuid}) {
+    final toUpdate = struct.getMessage(oldGuid ?? updated.guid!)!;
     updated = updated.mergeWith(toUpdate);
+    struct.removeMessage(oldGuid ?? updated.guid!);
+    struct.removeAttachments(toUpdate.attachments.map((e) => e!.guid!));
     struct.addMessages([updated]);
-    updateFunc.call(updated);
+    updateFunc.call(updated, oldGuid: oldGuid);
   }
 
   void removeMessage(Message toRemove) {
     struct.removeMessage(toRemove.guid!);
     struct.removeAttachments(toRemove.attachments.map((e) => e!.guid!));
+    removeFunc.call(toRemove);
   }
 
   Future<bool> loadChunk(int offset) async {

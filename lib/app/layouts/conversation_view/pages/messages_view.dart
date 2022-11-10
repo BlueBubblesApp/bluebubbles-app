@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
@@ -109,6 +110,9 @@ class MessagesViewState extends OptimizedState<MessagesView> {
   void dispose() {
     if (!kIsWeb && !kIsDesktop) smartReply.close();
     messageService.close();
+    for (Message m in _messages) {
+      getActiveMwc(m.guid!)?.close();
+    }
     super.dispose();
   }
 
@@ -180,8 +184,8 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     }
   }
 
-  void handleUpdatedMessage(Message message) {
-    final index = _messages.indexWhere((e) => e.guid == message.guid);
+  void handleUpdatedMessage(Message message, {String? oldGuid}) {
+    final index = _messages.indexWhere((e) => e.guid == (oldGuid ?? message.guid));
     _messages[index] = message;
   }
 
