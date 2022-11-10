@@ -148,8 +148,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                   ...messageParts.mapIndexed((index, e) => Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (!message.isFromMe! && canSwipeToReply)
-                        Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
                       GestureDetector(
                         behavior: HitTestBehavior.deferToChild,
                         // todo onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
@@ -181,9 +179,9 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                           message: e,
                         ) : const SizedBox.shrink(),
                       ),
-                      if (message.isFromMe! && canSwipeToReply)
+                      if (canSwipeToReply)
                         Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
-                    ],
+                    ].conditionalReverse(message.isFromMe!),
                   )),
                   if (message.isFromMe!)
                     DeliveredIndicator(parentController: controller),

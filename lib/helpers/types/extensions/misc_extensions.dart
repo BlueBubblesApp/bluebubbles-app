@@ -35,3 +35,10 @@ extension WidgetLocation on GlobalKey {
     }
   }
 }
+
+extension TextBubbleColumn on List<Widget> {
+  List<Widget> conditionalReverse(bool isFromMe) {
+    if (isFromMe) return this;
+    return reversed.toList();
+  }
+}
