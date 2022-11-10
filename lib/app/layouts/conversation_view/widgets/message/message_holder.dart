@@ -1,5 +1,9 @@
+import 'dart:math';
+
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/slide_to_reply.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/message_timestamp.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
@@ -8,7 +12,9 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class MessageHolder extends CustomStateful<MessageWidgetController> {
@@ -33,8 +39,11 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   Message get message => controller.message;
   Message? get olderMessage => controller.oldMwc?.message;
   Message? get newerMessage => controller.newMwc?.message;
+  Chat get chat => widget.cvController.chat;
 
   List<MessagePart> messageParts = [];
+  List<RxDouble> replyOffsets = [];
+  bool gaveHapticFeedback = false;
 
   @override
   void initState() {
@@ -87,6 +96,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       }
     }
     messageParts.sort((a, b) => a.part.compareTo(b.part));
+    replyOffsets = List.filled(messageParts.length, 0.0.obs);
   }
 
   List<MessagePart> attributedBodyToMessagePart(AttributedBody e) {
@@ -122,17 +132,59 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+    return Row(
       children: [
-        Row(),
-        ...messageParts.map((e) => e.attachments.isEmpty ? TextBubble(
-          parentController: controller,
-          message: e,
-        ) : const SizedBox.shrink()),
-        if (message.isFromMe!)
-          DeliveredIndicator(parentController: controller),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
+              ...messageParts.mapIndexed((index, e) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    behavior: HitTestBehavior.deferToChild,
+                    // todo onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
+                    onHorizontalDragUpdate: !ss.settings.enablePrivateAPI.value
+                        || !ss.settings.swipeToReply.value
+                        || !chat.isIMessage ? null : (details) {
+                      final offset = replyOffsets[index];
+                      offset.value += (details.delta.dx * 0.3).abs();
+                      if (!gaveHapticFeedback && offset.value >= SlideToReply.replyThreshold) {
+                        HapticFeedback.lightImpact();
+                        gaveHapticFeedback = true;
+                      } else if (offset.value < SlideToReply.replyThreshold) {
+                        gaveHapticFeedback = false;
+                      }
+                    },
+                    onHorizontalDragEnd: !ss.settings.enablePrivateAPI.value
+                        || !ss.settings.swipeToReply.value
+                        || !chat.isIMessage ? null : (details) {
+                      final offset = replyOffsets[index];
+                      if (offset.value >= SlideToReply.replyThreshold) {
+                        widget.cvController.replyToMessage = message;
+                      }
+                      offset.value = 0;
+                    },
+                    onHorizontalDragCancel: !ss.settings.enablePrivateAPI.value
+                        || !ss.settings.swipeToReply.value
+                        || !chat.isIMessage ? null : () {
+                      replyOffsets[index].value = 0;
+                    },
+                    child: e.attachments.isEmpty ? TextBubble(
+                      parentController: controller,
+                      message: e,
+                    ) : const SizedBox.shrink(),
+                  ),
+                  Obx(() => SlideToReply(width: replyOffsets[index].value)),
+                ],
+              )),
+              if (message.isFromMe!)
+                DeliveredIndicator(parentController: controller),
+            ],
+          ),
+        ),
+        MessageTimestamp(controller: controller, cvController: widget.cvController),
       ],
     );
   }
