@@ -149,11 +149,11 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                         || !ss.settings.swipeToReply.value
                         || !chat.isIMessage ? null : (details) {
                       final offset = replyOffsets[index];
-                      offset.value += (details.delta.dx * 0.3).abs();
-                      if (!gaveHapticFeedback && offset.value >= SlideToReply.replyThreshold) {
+                      offset.value += details.delta.dx * 0.3;
+                      if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
                         HapticFeedback.lightImpact();
                         gaveHapticFeedback = true;
-                      } else if (offset.value < SlideToReply.replyThreshold) {
+                      } else if (offset.value.abs() < SlideToReply.replyThreshold) {
                         gaveHapticFeedback = false;
                       }
                     },
@@ -161,7 +161,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                         || !ss.settings.swipeToReply.value
                         || !chat.isIMessage ? null : (details) {
                       final offset = replyOffsets[index];
-                      if (offset.value >= SlideToReply.replyThreshold) {
+                      if (offset.value.abs() >= SlideToReply.replyThreshold) {
                         widget.cvController.replyToMessage = message;
                       }
                       offset.value = 0;
@@ -176,7 +176,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                       message: e,
                     ) : const SizedBox.shrink(),
                   ),
-                  Obx(() => SlideToReply(width: replyOffsets[index].value)),
+                  Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
                 ],
               )),
               if (message.isFromMe!)
