@@ -156,16 +156,18 @@ class SocketService extends GetxService {
     }
   }
 
-  void handleCustomEvent(String event, Map<String, dynamic> data) {
+  void handleCustomEvent(String event, Map<String, dynamic> data) async {
     // todo once event handlers are written
     switch (event) {
       case "new-message":
         if (!isNullOrEmpty(data)!) {
+          Logger.info("Received new message from socket");
           inq.queue(IncomingItem.fromMap(QueueType.newMessage, data));
         }
         return;
       case "updated-message":
         if (!isNullOrEmpty(data)!) {
+          Logger.info("Received updated message from socket");
           inq.queue(IncomingItem.fromMap(QueueType.updatedMessage, data));
         }
         return;

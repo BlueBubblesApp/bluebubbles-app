@@ -16,12 +16,14 @@ abstract class QueueItem {
 class IncomingItem extends QueueItem {
   Chat chat;
   Message message;
+  String? tempGuid;
 
   IncomingItem._({
     required QueueType type,
     Completer<void>? completer,
     required this.chat,
     required this.message,
+    this.tempGuid,
   }) : super(type: type, completer: completer);
 
   factory IncomingItem.fromMap(QueueType t, Map<String, dynamic> m, [Completer<void>? c]) {
@@ -30,6 +32,7 @@ class IncomingItem extends QueueItem {
       completer: c,
       chat: Chat.fromMap(m['chats'].first),
       message: Message.fromMap(m),
+      tempGuid: m['tempGuid'],
     );
   }
 }

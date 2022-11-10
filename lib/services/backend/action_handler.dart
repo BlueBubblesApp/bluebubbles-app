@@ -71,8 +71,12 @@ class ActionHandler extends GetxService {
             effectId: element.expressiveSendStyleId
         ).then((response) async {
           final newMessage = Message.fromMap(response.data['data']);
-          await Message.replaceMessage(element.guid, newMessage);
-          Logger.info("Message match: [${newMessage.text}] - ${newMessage.guid} - ${element.guid}", tag: "MessageStatus");
+          try {
+            await Message.replaceMessage(element.guid, newMessage);
+            Logger.info("Message match: [${newMessage.text}] - ${newMessage.guid} - ${element.guid}", tag: "MessageStatus");
+          } catch (_) {
+            Logger.info("Message match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
+          }
           if (index == messages.length - 1) completer.complete();
         }).catchError((error) async {
           Logger.error('Failed to send message! Error: ${error.toString()}');
@@ -90,8 +94,12 @@ class ActionHandler extends GetxService {
     } else {
       http.sendTapback(c.guid, selected!.text ?? "", selected.guid!, describeEnum(r)).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
-        await Message.replaceMessage(m.guid, newMessage);
-        Logger.info("Reaction match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
+        try {
+          await Message.replaceMessage(m.guid, newMessage);
+          Logger.info("Reaction match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
+        } catch (_) {
+          Logger.info("Reaction match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
+        }
         completer.complete();
       }).catchError((error) async {
         Logger.error('Failed to send message! Error: ${error.toString()}');
@@ -134,10 +142,14 @@ class ActionHandler extends GetxService {
         if (a == null) continue;
         Attachment.replaceAttachment(m.guid, a);
       }
-      await Message.replaceMessage(m.guid, newMessage);
+      try {
+        await Message.replaceMessage(m.guid, newMessage);
+        Logger.info("Attachment match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
+      } catch (_) {
+        Logger.info("Attachment match failed for ${newMessage.guid} - already handled?", tag: "MessageStatus");
+      }
       attachmentProgress.removeWhere((e) => e.item1 == m.guid);
 
-      Logger.info("Attachment match: [${newMessage.text}] - ${newMessage.guid} - ${m.guid}", tag: "MessageStatus");
       completer.complete();
     }).catchError((error) async {
       Logger.error('Failed to send message! Error: ${error.toString()}');
@@ -185,12 +197,16 @@ class ActionHandler extends GetxService {
     return chat;
   }
 
-  Future<void> handleNewMessage(Chat c, Message m) async {
+  Future<void> handleNewMessage(Chat c, Message m, String? tempGuid, {bool checkExisting = true}) async {
     // sanity check
-    final existing = Message.findOne(guid: m.guid);
-    if (existing != null) {
-      return await handleUpdatedMessage(c, m);
+    if (checkExisting) {
+      final existing = Message.findOne(guid: tempGuid ?? m.guid);
+      if (existing != null) {
+        return await handleUpdatedMessage(c, m, tempGuid, checkExisting: false);
+      }
     }
+    // should have been handled by the sanity check
+    if (tempGuid != null) return;
     Logger.info("New message: [${m.text}] - for chat [${c.guid}]", tag: "ActionHandler");
     // Gets the chat from the db or server (if new)
     c = m.isParticipantEvent ? await handleNewOrUpdatedChat(c) : (Chat.findOne(guid: c.guid) ?? await handleNewOrUpdatedChat(c));
@@ -211,15 +227,17 @@ class ActionHandler extends GetxService {
     }
   }
 
-  Future<void> handleUpdatedMessage(Chat c, Message m) async {
+  Future<void> handleUpdatedMessage(Chat c, Message m, String? tempGuid, {bool checkExisting = true}) async {
     // sanity check
-    final existing = Message.findOne(guid: m.guid);
-    if (existing == null) {
-      return await handleNewMessage(c, m);
+    if (checkExisting) {
+      final existing = Message.findOne(guid: tempGuid ?? m.guid);
+      if (existing == null) {
+        return await handleNewMessage(c, m, tempGuid, checkExisting: false);
+      }
     }
     Logger.info("Updated message: [${m.text}] - for chat [${c.guid}]", tag: "ActionHandler");
     // update the message in the DB
-    await Message.replaceMessage(m.guid, m);
+    await Message.replaceMessage(tempGuid ?? m.guid, m);
   }
 
   Future<Chat> handleNewOrUpdatedChat(Chat partialData) async {

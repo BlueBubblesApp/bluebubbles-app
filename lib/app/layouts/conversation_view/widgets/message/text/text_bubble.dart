@@ -43,7 +43,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
           minHeight: 30,
         ),
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0)),
-        color: message.isFromMe! ? context.theme.colorScheme.primary : context.theme.colorScheme.properSurface,
+        color: message.isFromMe! ? context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.2 : 0) : context.theme.colorScheme.properSurface,
         child: FutureBuilder<List<InlineSpan>>(
           future: buildEnrichedMessageSpans(context, part, message),
           initialData: buildMessageSpans(context, part, message),
