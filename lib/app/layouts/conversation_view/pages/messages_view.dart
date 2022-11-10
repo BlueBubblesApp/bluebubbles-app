@@ -160,6 +160,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       Logger.error("Failed to fetch message chunk! $e");
     }));
 
+    if (noMoreMessages) return;
     final oldLength = _messages.length;
     _messages = messageService.struct.messages;
     _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
@@ -354,6 +355,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                       newerMessage = _messages[index - 1];
                     }
 
+                    final bool useNewRendering = ss.settings.lowMemoryMode.value;
                     Widget messageWidget = Padding(
                       padding: const EdgeInsets.only(left: 5.0, right: 5.0),
                       child: AutoScrollTag(
@@ -361,7 +363,12 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                         index: index,
                         controller: scrollController,
                         highlightColor: context.theme.colorScheme.surface.withOpacity(0.7),
-                        child: MessageWidget(
+                        child: useNewRendering ? MessageHolder(
+                          cvController: controller,
+                          message: _messages[index],
+                          oldMessageGuid: olderMessage?.guid,
+                          newMessageGuid: newerMessage?.guid,
+                        ) : MessageWidget(
                           key: Key(_messages[index].guid!),
                           message: _messages[index],
                           olderMessage: olderMessage,

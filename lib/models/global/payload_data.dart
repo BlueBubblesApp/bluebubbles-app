@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class PayloadData {
   PayloadData({
@@ -110,7 +111,7 @@ class MediaMetadata {
   String? url;
 
   factory MediaMetadata.fromJson(Map<String, dynamic> json) => MediaMetadata(
-    size: json["size"] == null ? Size.zero : Size(double.parse(json["size"].split(",").first.numericOnly()), double.parse(json["size"].split(",").last.numericOnly())),
+    size: json["size"] == null ? Size.zero : Size(double.parse(json["size"].split(",").first.toString().numericOnly()), double.parse(json["size"].split(",").last.toString().numericOnly())),
     url: json["URL"]?["NS.relative"],
   );
 

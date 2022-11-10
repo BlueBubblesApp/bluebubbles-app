@@ -407,7 +407,7 @@ class Message {
       guid: json["guid"],
       handleId: json["handleId"] ?? 0,
       otherHandle: json["otherHandle"],
-      text: sanitizeString(json["text"] ?? attributedBody.first.string),
+      text: sanitizeString(json["text"] ?? attributedBody.firstOrNull?.string),
       subject: json["subject"],
       country: json["country"],
       error: json["_error"] ?? 0,
