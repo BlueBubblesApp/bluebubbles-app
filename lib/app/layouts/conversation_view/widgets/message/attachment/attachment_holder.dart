@@ -1,3 +1,4 @@
+import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
@@ -80,17 +81,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                 content = attachmentDownloader.startDownload(_content.attachment, onComplete: onComplete);
               });
             } else if (content is PlatformFile) {
-              if (attachment.mimeStart == "image" || attachment.mimeStart == "video") {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => AttachmentFullscreenViewer(
-                      currentChat: cm.activeChat,
-                      attachment: attachment,
-                      showInteractions: true,
-                    ),
-                  ),
-                );
-              }
+
             }
           },
           child: Ink(
@@ -176,9 +167,34 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                         } else if (content is PlatformFile) {
                           final PlatformFile _content = content;
                           if (attachment.mimeStart == "image") {
-                            return ImageViewer(
-                              file: _content,
-                              attachment: attachment,
+                            return OpenContainer(
+                              tappable: false,
+                              openColor: Colors.black,
+                              closedColor: context.theme.colorScheme.properSurface,
+                              closedShape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                              ),
+                              openBuilder: (context, closeContainer) {
+                                return AttachmentFullscreenViewer(
+                                  currentChat: cm.activeChat,
+                                  attachment: attachment,
+                                  showInteractions: true,
+                                );
+                              },
+                              closedBuilder: (context, openContainer) {
+                                return GestureDetector(
+                                  onTap: () {
+                                    final _controller = cvc(cm.activeChat!.chat);
+                                    _controller.focusNode.unfocus();
+                                    _controller.subjectFocusNode.unfocus();
+                                    openContainer();
+                                  },
+                                  child: ImageViewer(
+                                    file: _content,
+                                    attachment: attachment,
+                                  ),
+                                );
+                              }
                             );
                           }/* else if (attachment.mimeStart == "video" && !kIsDesktop) {
                             return MediaFile(
@@ -234,8 +250,8 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                             );
                           }*/
                           return SizedBox(
-                            height: 40,
-                            width: 40,
+                            height: 80,
+                            width: 80,
                             child: Icon(iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline, size: 30),
                           );
                         } else {
