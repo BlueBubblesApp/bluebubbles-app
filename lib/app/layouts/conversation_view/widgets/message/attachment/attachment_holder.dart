@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:animations/animations.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/video_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
@@ -236,13 +237,12 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                               attachment: attachment,
                               file: _content,
                             );
-                          }/* else if (attachment.mimeStart == "audio" && !widget.attachment.mimeType!.contains("caf")) {
-                            return MediaFile(
-                              attachment: widget.attachment,
-                              child: AudioPlayerWidget(
-                                  file: content, context: context, width: kIsDesktop ? null : 250, isFromMe: widget.isFromMe),
+                          } else if (attachment.mimeStart == "audio") {
+                            return AudioPlayer(
+                              attachment: attachment,
+                              file: _content,
                             );
-                          } else if (attachment.mimeType == "text/x-vlocation" || attachment.uti == 'public.vlocation') {
+                          }/* else if (attachment.mimeType == "text/x-vlocation" || attachment.uti == 'public.vlocation') {
                             return MediaFile(
                               attachment: widget.attachment,
                               child: UrlPreviewWidget(

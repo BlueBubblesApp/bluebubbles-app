@@ -42,8 +42,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
     ConversationViewController thisChat = cvc(cm.activeChat!.chat);
     if (!kIsWeb && thisChat.audioPlayers.containsKey(widget.file.path)) {
-      audioController = thisChat.audioPlayers[widget.file.path]!.item2;
-      controller = thisChat.audioPlayers[widget.file.path]!.item1;
+      /*audioController = thisChat.audioPlayers[widget.file.path]!.item2;
+      controller = thisChat.audioPlayers[widget.file.path]!.item1;*/
     } else {
       if (kIsWeb || widget.file.path == null) {
         final blob = html.Blob([widget.file.bytes]);
@@ -76,7 +76,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       );
 
       if (!kIsWeb && widget.file.path != null) {
-        thisChat.audioPlayers[widget.file.path!] = Tuple2(controller, audioController);
+        // thisChat.audioPlayers[widget.file.path!] = Tuple2(controller, audioController);
       }
     }
   }

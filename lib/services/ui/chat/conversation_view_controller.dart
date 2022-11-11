@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -36,7 +37,7 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final Map<String, Metadata> urlPreviews = {};
   final Map<String, VideoPlayerController> videoPlayers = {};
   final Map<String, Player> videoPlayersDesktop = {};
-  final Map<String, Tuple2<ChewieAudioController, VideoPlayerController>> audioPlayers = {};
+  final Map<String, PlayerController> audioPlayers = {};
   final Map<String, Tuple2<Player, Player>> audioPlayersDesktop = {};
   final Map<String, List<EntityAnnotation>> mlKitParsedText = {};
 
@@ -111,9 +112,8 @@ class ConversationViewController extends StatefulController with SingleGetTicker
     for (Player v in videoPlayersDesktop.values) {
       v.dispose();
     }
-    for (Tuple2<ChewieAudioController, VideoPlayerController> a in audioPlayers.values) {
-      a.item1.dispose();
-      a.item2.dispose();
+    for (PlayerController a in audioPlayers.values) {
+      a.dispose();
     }
     for (Tuple2<Player, Player> a in audioPlayersDesktop.values) {
       a.item1.dispose();

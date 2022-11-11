@@ -38,9 +38,6 @@ class TextFieldSuffix extends StatefulWidget {
 class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
 
   void deleteAudioRecording(String path) {
-    widget.controller.audioPlayers[path]?.item1.dispose();
-    widget.controller.audioPlayers[path]?.item2.pause();
-    widget.controller.audioPlayers.removeWhere((key, _) => key == path);
     File(path).delete();
   }
 
