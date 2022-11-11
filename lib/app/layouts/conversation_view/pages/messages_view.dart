@@ -166,6 +166,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
     _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
     fetching = false;
     _messages.sublist(max(oldLength - 1, 0)).forEachIndexed((i, _) {
+      if (!mounted) return;
       listKey.currentState!.insertItem(i, duration: const Duration(milliseconds: 0));
     });
   }

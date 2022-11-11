@@ -29,10 +29,10 @@ AttachmentsService as = Get.isRegistered<AttachmentsService>() ? Get.find<Attach
 
 class AttachmentsService extends GetxService {
 
-  dynamic getContent(Attachment attachment, {String? path, bool autoDownload = true}) {
+  dynamic getContent(Attachment attachment, {String? path, bool? autoDownload, Function(PlatformFile)? onComplete}) {
     if (kIsWeb || attachment.guid == null) {
-      if (attachment.bytes == null && autoDownload) {
-        return attachmentDownloader.startDownload(attachment);
+      if (attachment.bytes == null && (autoDownload ?? ss.settings.autoDownload.value)) {
+        return attachmentDownloader.startDownload(attachment, onComplete: onComplete);
       } else {
         return PlatformFile(
           name: attachment.transferName!,
@@ -52,8 +52,8 @@ class AttachmentsService extends GetxService {
         path: pathName,
         size: attachment.totalBytes ?? 0,
       );
-    } else if (autoDownload) {
-      return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
+    } else if (autoDownload ?? ss.settings.autoDownload.value) {
+      return Get.put(AttachmentDownloadController(attachment: attachment, onComplete: onComplete), tag: attachment.guid);
     } else {
       return attachment;
     }

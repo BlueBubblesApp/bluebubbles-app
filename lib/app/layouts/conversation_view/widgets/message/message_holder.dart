@@ -1,5 +1,4 @@
-import 'dart:math';
-
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/slide_to_reply.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
@@ -120,7 +119,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
         list.add(MessagePart(
           subject: i == 0 ? message.subject : null,
           text: e.isAttachment ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
-          attachments: e.isAttachment ? [message.attachments.firstWhere((element) => element?.guid == e.attributes?.attachmentGuid)!] : [],
+          attachments: e.isAttachment ? [ms(widget.cvController.chat.guid).struct.getAttachment(e.attributes!.attachmentGuid!)!] : [],
           mention: !e.hasMention ? null : Mention(
             mentionedAddress: e.attributes?.mention,
             range: [e.range.first, e.range.first + e.range.last],
@@ -177,7 +176,10 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                         child: e.attachments.isEmpty ? TextBubble(
                           parentController: controller,
                           message: e,
-                        ) : const SizedBox.shrink(),
+                        ) : AttachmentHolder(
+                          parentController: controller,
+                          message: e,
+                        ),
                       ),
                       if (canSwipeToReply)
                         Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),

@@ -68,6 +68,10 @@ class ChatMessages {
     return _messages[guid] ?? _reactions[guid];
   }
 
+  Attachment? getAttachment(String guid) {
+    return _attachments[guid];
+  }
+
   // It isn't guaranteed that the thread originator will be in the regular
   // messages list, in case it is much older than the currently loaded messages.
   // Prefer to use this method to find originator.
