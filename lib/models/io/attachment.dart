@@ -195,7 +195,7 @@ class Attachment {
 
   bool get hasValidSize => (width ?? 0) > 0 && (height ?? 0) > 0;
 
-  double get aspectRatio => hasValidSize ? (_isPortrait() ?  (height! / width!).abs() : (width! / height!).abs()) : 0.78;
+  double get aspectRatio => hasValidSize ? (_isPortrait && height! < width! ?  (height! / width!).abs() : (width! / height!).abs()) : 0.78;
 
   String? get mimeStart => mimeType?.split("/").first;
 
@@ -244,7 +244,7 @@ class Attachment {
     "metadata": jsonEncode(metadata),
   };
 
-  bool _isPortrait() {
+  bool  get _isPortrait {
     if (metadata?['orientation'] == '1') return true;
     if (metadata?['orientation'] == 1) return true;
     if (metadata?['orientation'] == 'portrait') return true;
