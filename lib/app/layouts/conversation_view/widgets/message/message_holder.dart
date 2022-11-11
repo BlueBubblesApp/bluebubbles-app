@@ -4,15 +4,11 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/t
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/message_timestamp.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/timestamp_separator.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachment.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachments.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -119,7 +115,10 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
         list.add(MessagePart(
           subject: i == 0 ? message.subject : null,
           text: e.isAttachment ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
-          attachments: e.isAttachment ? [ms(widget.cvController.chat.guid).struct.getAttachment(e.attributes!.attachmentGuid!)!] : [],
+          attachments: e.isAttachment ? [
+            ms(widget.cvController.chat.guid).struct.getAttachment(e.attributes!.attachmentGuid!)
+                ?? Attachment.findOne(e.attributes!.attachmentGuid!)
+          ].where((e) => e != null).map((e) => e!).toList() : [],
           mention: !e.hasMention ? null : Mention(
             mentionedAddress: e.attributes?.mention,
             range: [e.range.first, e.range.first + e.range.last],
