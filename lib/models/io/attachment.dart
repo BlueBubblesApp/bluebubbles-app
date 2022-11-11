@@ -206,7 +206,7 @@ class Attachment {
 
   bool get hasValidSize => (width ?? 0) > 0 && (height ?? 0) > 0;
 
-  double get aspectRatio => hasValidSize ? (width! / height!).abs() : 0.78;
+  double get aspectRatio => hasValidSize ? (metadata?['orientation'] == 1 ?  (height! / width!).abs() : (width! / height!).abs()) : 0.78;
 
   String? get mimeStart => mimeType?.split("/").first;
 

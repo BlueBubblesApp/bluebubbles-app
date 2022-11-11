@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:isolate';
 
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -13,6 +14,7 @@ import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:tuple/tuple.dart';
+import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
 ConversationViewController cvc(Chat chat, {String? tag}) => Get.isRegistered<ConversationViewController>(tag: tag ?? chat.guid)
@@ -29,6 +31,7 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   }
 
   final Map<String, Uint8List> imageData = {};
+  final List<Tuple4<Attachment, PlatformFile, BuildContext, Completer<Uint8List>>> imageCacheQueue = [];
   final Map<String, Map<String, Uint8List>> stickerData = {};
   final Map<String, Metadata> urlPreviews = {};
   final Map<String, VideoPlayerController> videoPlayers = {};
@@ -61,6 +64,7 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   double _keyboardOffset = 0;
   Timer? _scrollDownDebounce;
   Future<void> Function(Tuple5<List<PlatformFile>, String, String, String?, String?>)? sendFunc;
+  bool isProcessingImage = false;
 
   final RxDouble timestampOffset = 0.0.obs;
 
@@ -135,6 +139,50 @@ class ConversationViewController extends StatefulController with SingleGetTicker
 
   Future<void> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
     sendFunc?.call(Tuple5(attachments, text, subject, replyGuid, effectId));
+  }
+
+  void queueImage(Tuple4<Attachment, PlatformFile, BuildContext, Completer<Uint8List>> item) {
+    imageCacheQueue.add(item);
+    if (!isProcessingImage) _processNextImage();
+  }
+
+  Future<void> _processNextImage() async {
+    if (imageCacheQueue.isEmpty) {
+      isProcessingImage = false;
+      return;
+    }
+
+    isProcessingImage = true;
+    final queued = imageCacheQueue.removeAt(0);
+    final attachment = queued.item1;
+    final file = queued.item2;
+    Uint8List? tmpData;
+    // If it's an image, compress the image when loading it
+    if (kIsWeb || file.path == null) {
+      if (attachment.mimeType?.contains("image/tif") ?? false) {
+        final receivePort = ReceivePort();
+        await Isolate.spawn(unsupportedToPngIsolate, IsolateData(file, receivePort.sendPort));
+        // Get the processed image from the isolate.
+        final image = await receivePort.first as Uint8List?;
+        tmpData = image;
+      } else {
+        tmpData = file.bytes;
+      }
+    } else if (attachment.canCompress) {
+      tmpData = await as.loadAndGetProperties(attachment, actualPath: file.path!);
+      // All other attachments can be held in memory as bytes
+    } else {
+      tmpData = await File(file.path!).readAsBytes();
+    }
+    if (tmpData == null) {
+      queued.item4.complete(Uint8List.fromList([]));
+      return;
+    }
+    imageData[attachment.guid!] = tmpData;
+    await precacheImage(MemoryImage(tmpData), queued.item3);
+    queued.item4.complete(tmpData);
+
+    await _processNextImage();
   }
 
   void close() {

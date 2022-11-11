@@ -1,4 +1,6 @@
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
+import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/app/widgets/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -65,7 +67,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
+          onTap: () async {
             if (content is Attachment) {
               setState(() {
                 content = attachmentDownloader.startDownload(content, onComplete: onComplete);
@@ -77,10 +79,25 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
               setState(() {
                 content = attachmentDownloader.startDownload(_content.attachment, onComplete: onComplete);
               });
+            } else if (content is PlatformFile) {
+              if (attachment.mimeStart == "image" || attachment.mimeStart == "video") {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => AttachmentFullscreenViewer(
+                      currentChat: cm.activeChat,
+                      attachment: attachment,
+                      showInteractions: true,
+                    ),
+                  ),
+                );
+              }
             }
           },
           child: Ink(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0)),
+            padding: content is PlatformFile
+                ? null
+                : const EdgeInsets.symmetric(vertical: 10, horizontal: 15)
+                .add(EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0)),
             color: context.theme.colorScheme.properSurface,
             child: ConstrainedBox(
               constraints: BoxConstraints(
@@ -158,20 +175,12 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                           );
                         } else if (content is PlatformFile) {
                           final PlatformFile _content = content;
-                          return SizedBox(
-                            height: 40,
-                            width: 40,
-                            child: Icon(iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline, size: 30),
-                          );
-                          /*if (attachment.mimeStart == "image") {
-                            return MediaFile(
-                              attachment: widget.attachment,
-                              child: ImageWidget(
-                                file: content,
-                                attachment: widget.attachment,
-                              ),
+                          if (attachment.mimeStart == "image") {
+                            return ImageViewer(
+                              file: _content,
+                              attachment: attachment,
                             );
-                          } else if (attachment.mimeStart == "video" && !kIsDesktop) {
+                          }/* else if (attachment.mimeStart == "video" && !kIsDesktop) {
                             return MediaFile(
                               attachment: widget.attachment,
                               child: kIsDesktop
@@ -191,13 +200,13 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                   file: content, context: context, width: kIsDesktop ? null : 250, isFromMe: widget.isFromMe),
                             );
                           } else if (attachment.mimeType == "text/x-vlocation" || attachment.uti == 'public.vlocation') {
-                            *//*return MediaFile(
+                            return MediaFile(
                               attachment: widget.attachment,
                               child: UrlPreviewWidget(
                                 linkPreviews: [],
                                 mess
                               ),
-                            );*//*
+                            );
                             return const SizedBox.shrink();
                           } else if (attachment.mimeType == "text/vcard") {
                             return MediaFile(
@@ -224,6 +233,11 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                               ),
                             );
                           }*/
+                          return SizedBox(
+                            height: 40,
+                            width: 40,
+                            child: Icon(iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline, size: 30),
+                          );
                         } else {
                           return Text(
                             "Error loading",

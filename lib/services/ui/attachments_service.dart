@@ -337,51 +337,57 @@ class AttachmentsService extends GetxService {
 
     Uint8List previewData = await originalFile.readAsBytes();
 
-    if (attachment.mimeType == "image/gif") {
-      try {
-        Size size = getGifDimensions(previewData);
-        if (size.width != 0 && size.height != 0) {
-          attachment.width = size.width.toInt();
-          attachment.height = size.height.toInt();
-        }
-      } catch (ex) {
-        Logger.error('Failed to get GIF dimensions! Error: ${ex.toString()}');
-      }
-    } else if (attachment.mimeStart == "image") {
-      try {
-        ImageProperties? props;
-        if (!kIsDesktop) {
-          props = await FlutterNativeImage.getImageProperties(filePath);
-          String orientation = props.orientation.toString();
-          if (orientation == '0') {
-            attachment.metadata!['orientation'] = 'landscape';
-          } else if (orientation == '1') {
-            attachment.metadata!['orientation'] = 'portrait';
+    if (attachment.width != null || attachment.height != null) {
+      if (attachment.mimeType == "image/gif") {
+        try {
+          Size size = getGifDimensions(previewData);
+          if (size.width != 0 && size.height != 0) {
+            attachment.width = size.width.toInt();
+            attachment.height = size.height.toInt();
           }
+          attachment.save(null);
+        } catch (ex) {
+          Logger.error('Failed to get GIF dimensions! Error: ${ex.toString()}');
         }
+      } else if (attachment.mimeStart == "image") {
+        try {
+          ImageProperties? props;
+          if (!kIsDesktop) {
+            props = await FlutterNativeImage.getImageProperties(filePath);
+            String orientation = props.orientation.toString();
+            if (orientation == '0') {
+              attachment.metadata!['orientation'] = 'landscape';
+            } else if (orientation == '1') {
+              attachment.metadata!['orientation'] = 'portrait';
+            }
+          }
 
-        Size size = await getImageSizing(filePath, properties: props);
-        if (size.width != 0 && size.height != 0) {
-          attachment.width = size.width.toInt();
-          attachment.height = size.height.toInt();
+          Size size = await getImageSizing(filePath, properties: props);
+          if (size.width != 0 && size.height != 0) {
+            attachment.width = size.width.toInt();
+            attachment.height = size.height.toInt();
+          }
+          attachment.save(null);
+        } catch (ex) {
+          Logger.error('Failed to get Image Properties! Error: ${ex.toString()}');
         }
+      }
+    }
+
+    if (attachment.metadata != null) {
+      // Map the EXIF to the metadata
+      try {
+        Map<String, IfdTag> exif = await readExifFromFile(File(filePath));
+        attachment.metadata ??= {};
+        for (MapEntry<String, IfdTag> item in exif.entries) {
+          attachment.metadata![item.key] = item.value.printable;
+        }
+        attachment.save(null);
       } catch (ex) {
-        Logger.error('Failed to get Image Properties! Error: ${ex.toString()}');
+        Logger.error('Failed to read EXIF data: ${ex.toString()}');
       }
     }
 
-    // Map the EXIF to the metadata
-    try {
-      Map<String, IfdTag> exif = await readExifFromFile(File(filePath));
-      attachment.metadata ??= {};
-      for (MapEntry<String, IfdTag> item in exif.entries) {
-        attachment.metadata![item.key] = item.value.printable;
-      }
-    } catch (ex) {
-      Logger.error('Failed to read EXIF data: ${ex.toString()}');
-    }
-
-    attachment.save(null);
     return previewData;
   }
 }

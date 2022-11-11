@@ -1,5 +1,6 @@
 import 'dart:isolate';
 
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -206,8 +207,4 @@ class ImageWidget extends StatelessWidget {
         controller.attachment.guid != "redacted-mode-demo-attachment"
             ? Center(child: buildProgressIndicator(context)) : Container());
   }
-}
-
-extension NonZero on int? {
-  int? get nonZero => (this ?? 0) == 0 ? null : this;
 }

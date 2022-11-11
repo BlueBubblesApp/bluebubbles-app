@@ -42,3 +42,7 @@ extension TextBubbleColumn on List<Widget> {
     return reversed.toList();
   }
 }
+
+extension NonZero on int? {
+  int? get nonZero => (this ?? 0) == 0 ? null : this;
+}
