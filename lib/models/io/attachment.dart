@@ -140,7 +140,7 @@ class Attachment {
     if (kIsWeb) return newAttachment;
     Attachment? existing = Attachment.findOne(oldGuid!);
     if (existing == null) {
-      throw ("Old GUID does not exist!");
+      return Future.error("Old GUID does not exist!");
     }
     // update current chat image data to prevent the image or video thumbnail from reloading
     final data = cvc(cm.activeChat!.chat).imageData[oldGuid];
@@ -190,23 +190,12 @@ class Attachment {
   }
 
   String getFriendlySize({decimals = 2}) {
-    double size = (totalBytes ?? 0) / 1024000.0;
-    String postfix = "MB";
-
-    if (size < 1) {
-      size = size * 1024;
-      postfix = "KB";
-    } else if (size > 1024) {
-      size = size / 1024;
-      postfix = "GB";
-    }
-
-    return "${size.toStringAsFixed(decimals)} $postfix";
+    return (totalBytes ?? 0.0).toDouble().getFriendlySize();
   }
 
   bool get hasValidSize => (width ?? 0) > 0 && (height ?? 0) > 0;
 
-  double get aspectRatio => hasValidSize ? (metadata?['orientation'] == 1 ?  (height! / width!).abs() : (width! / height!).abs()) : 0.78;
+  double get aspectRatio => hasValidSize ? (_isPortrait() ?  (height! / width!).abs() : (width! / height!).abs()) : 0.78;
 
   String? get mimeStart => mimeType?.split("/").first;
 
@@ -254,4 +243,12 @@ class Attachment {
     "width": width,
     "metadata": jsonEncode(metadata),
   };
+
+  bool _isPortrait() {
+    if (metadata?['orientation'] == '1') return true;
+    if (metadata?['orientation'] == 1) return true;
+    if (metadata?['orientation'] == 'portrait') return true;
+    if (metadata?['Image Orientation']?.contains("90") ?? false) return true;
+    return false;
+  }
 }

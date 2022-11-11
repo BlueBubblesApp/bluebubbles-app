@@ -120,6 +120,7 @@ class Share {
           uti: "public.jpg",
           bytes: bytes,
           transferName: fileName,
+          totalBytes: bytes.length,
         ),
       ],
       isFromMe: true,

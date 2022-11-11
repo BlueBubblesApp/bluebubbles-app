@@ -30,6 +30,14 @@ AttachmentsService as = Get.isRegistered<AttachmentsService>() ? Get.find<Attach
 class AttachmentsService extends GetxService {
 
   dynamic getContent(Attachment attachment, {String? path, bool? autoDownload, Function(PlatformFile)? onComplete}) {
+    if (attachment.guid!.startsWith("temp")) {
+      final sendProgress = ah.attachmentProgress.firstWhereOrNull((e) => e.item1 == attachment.guid);
+      if (sendProgress != null) {
+        return sendProgress;
+      } else {
+        return attachment;
+      }
+    }
     if (kIsWeb || attachment.guid == null) {
       if (attachment.bytes == null && (autoDownload ?? ss.settings.autoDownload.value)) {
         return attachmentDownloader.startDownload(attachment, onComplete: onComplete);

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
@@ -10,6 +12,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:tuple/tuple.dart';
 
 class AttachmentHolder extends CustomStateful<MessageWidgetController> {
   AttachmentHolder({
@@ -106,7 +109,37 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                     opacity: message.guid!.startsWith("temp") ? 0.5 : 1,
                     child: Builder(
                       builder: (context) {
-                        if (content is Attachment) {
+                        if (content is Tuple2<String, RxDouble>) {
+                          final Tuple2<String, RxDouble> _content = content;
+                          return Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Obx(() {
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  SizedBox(
+                                    height: 40,
+                                    width: 40,
+                                    child: Center(
+                                      child: CircleProgressBar(
+                                        value: _content.item2.value,
+                                        backgroundColor: context.theme.colorScheme.outline,
+                                        foregroundColor: context.theme.colorScheme.properOnSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    "${(attachment.totalBytes! * min(_content.item2.value, 1.0)).toDouble().getFriendlySize()} / ${attachment.getFriendlySize()}",
+                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  )
+                                ],
+                              );
+                            }),
+                          );
+                        } else if (content is Attachment) {
                           final Attachment _content = content;
                           return Column(
                             mainAxisSize: MainAxisSize.min,

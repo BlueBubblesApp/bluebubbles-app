@@ -50,7 +50,8 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple5<List<Platfor
     final subject = tuple.item3;
     final replyGuid = tuple.item4;
     final effectId = tuple.item5;
-    for (PlatformFile file in attachments) {
+    for (int i = 0; i < attachments.length; i++) {
+      final file = attachments[i];
       final message = Message(
         text: "",
         dateCreated: DateTime.now(),
@@ -61,6 +62,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple5<List<Platfor
             uti: "public.jpg",
             bytes: file.bytes,
             transferName: file.name,
+            totalBytes: file.size,
           ),
         ],
         isFromMe: true,
