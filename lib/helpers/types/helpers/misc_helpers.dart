@@ -46,7 +46,7 @@ Future<T?> createAsyncTask<T>(AsyncTask<List<dynamic>, T> task) async {
   return task.result;
 }
 
-Future<PlayerStatus> getControllerStatus(VideoPlayerController controller) async {
+PlayerStatus getControllerStatus(VideoPlayerController controller) {
   Duration currentPos = controller.value.position;
   if (controller.value.duration == currentPos) {
     return PlayerStatus.ENDED;

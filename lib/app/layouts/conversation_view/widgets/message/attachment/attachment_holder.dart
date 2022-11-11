@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/video_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/app/widgets/components/circle_progress_bar.dart';
@@ -207,6 +208,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                               closedShape: const RoundedRectangleBorder(
                                 borderRadius: BorderRadius.all(Radius.circular(20.0)),
                               ),
+                              useRootNavigator: true,
                               openBuilder: (context, closeContainer) {
                                 return AttachmentFullscreenViewer(
                                   currentChat: cm.activeChat,
@@ -229,20 +231,12 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                 );
                               }
                             );
-                          }/* else if (attachment.mimeStart == "video" && !kIsDesktop) {
-                            return MediaFile(
-                              attachment: widget.attachment,
-                              child: kIsDesktop
-                                  ? DesktopVideoWidget(
-                                attachment: widget.attachment,
-                                file: content,
-                              )
-                                  : VideoWidget(
-                                attachment: widget.attachment,
-                                file: content,
-                              ),
+                          } else if (attachment.mimeStart == "video" && !kIsDesktop) {
+                            return VideoPlayer(
+                              attachment: attachment,
+                              file: _content,
                             );
-                          } else if (attachment.mimeStart == "audio" && !widget.attachment.mimeType!.contains("caf")) {
+                          }/* else if (attachment.mimeStart == "audio" && !widget.attachment.mimeType!.contains("caf")) {
                             return MediaFile(
                               attachment: widget.attachment,
                               child: AudioPlayerWidget(
