@@ -19,10 +19,12 @@ class ContactAvatarWidget extends StatefulWidget {
     this.editable = true,
     this.onTap,
     required this.handle,
+    this.contact,
     this.scaleSize = true,
     this.preferHighResAvatar = false,
   }) : super(key: key);
   final Handle? handle;
+  final Contact? contact;
   final double? size;
   final double? fontSize;
   final double borderThickness;
@@ -36,14 +38,12 @@ class ContactAvatarWidget extends StatefulWidget {
 }
 
 class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
-  Contact? contact;
-
+  Contact? get contact => widget.contact ?? widget.handle?.contact;
   String get keyPrefix => widget.handle?.address ?? randomString(8);
 
   @override
   void initState() {
     super.initState();
-    contact = widget.handle?.contact;
     eventDispatcher.stream.listen((event) {
       if (event.item1 == 'refresh-avatar' && event.item1[0] == widget.handle?.address && mounted) {
         widget.handle?.color = event.item2[1];
@@ -51,7 +51,6 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
       }
 
       if (contact == null && event.item1 == 'update-contacts') {
-        contact = widget.handle?.contact;
         setState(() {});
       }
     });

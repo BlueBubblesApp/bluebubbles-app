@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/contact_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/video_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
@@ -73,7 +74,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () async {
+          onTap: content is PlatformFile ? null : () async {
             if (content is Attachment) {
               setState(() {
                 content = attachmentDownloader.startDownload(content, onComplete: onComplete);
@@ -85,8 +86,6 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
               setState(() {
                 content = attachmentDownloader.startDownload(_content.attachment, onComplete: onComplete);
               });
-            } else if (content is PlatformFile) {
-
             }
           },
           child: Ink(
@@ -242,7 +241,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                               attachment: attachment,
                               file: _content,
                             );
-                          }/* else if (attachment.mimeType == "text/x-vlocation" || attachment.uti == 'public.vlocation') {
+                          } /*else if (attachment.mimeType == "text/x-vlocation" || attachment.uti == 'public.vlocation') {
                             return MediaFile(
                               attachment: widget.attachment,
                               child: UrlPreviewWidget(
@@ -251,15 +250,12 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                               ),
                             );
                             return const SizedBox.shrink();
-                          } else if (attachment.mimeType == "text/vcard") {
-                            return MediaFile(
-                              attachment: widget.attachment,
-                              child: ContactWidget(
-                                file: content,
-                                attachment: widget.attachment,
-                              ),
+                          }*/ else if (attachment.mimeType?.contains("vcard") ?? false) {
+                            return ContactCard(
+                              attachment: attachment,
+                              file: _content,
                             );
-                          } else if (attachment.mimeType == null) {
+                          }/* else if (attachment.mimeType == null) {
                             return SizedBox(
                               height: 40,
                               width: 40,
