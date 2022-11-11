@@ -66,7 +66,11 @@ class MessagesService extends GetxController {
             getActiveMwc(message.threadOriginatorGuid!)?.updateThreadOriginator(message);
           }
           struct.addMessages([message]);
-          onNewMessage.call(message);
+          if (message.associatedMessageGuid != null) {
+            onNewMessage.call(message);
+          } else {
+            // todo call update function on the reacted to message
+          }
         }
       }
       currentCount = newCount;
