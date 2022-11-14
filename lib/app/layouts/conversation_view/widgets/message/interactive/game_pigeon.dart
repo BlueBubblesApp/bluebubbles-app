@@ -38,6 +38,9 @@ class _GamePigeonState extends OptimizedState<GamePigeon> with AutomaticKeepAliv
             content = file;
           });
         });
+        if (content is PlatformFile) {
+          setState(() {});
+        }
       }
     });
   }

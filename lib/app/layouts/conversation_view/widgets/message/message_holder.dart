@@ -173,7 +173,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                         onHorizontalDragCancel: !canSwipeToReply ? null : () {
                           replyOffsets[index].value = 0;
                         },
-                        child: message.hasApplePayloadData || message.isLegacyUrlPreview ? InteractiveHolder(
+                        child: message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? InteractiveHolder(
                           parentController: controller,
                           message: e,
                         ) : e.attachments.isEmpty ? TextBubble(

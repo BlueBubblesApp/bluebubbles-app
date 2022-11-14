@@ -1,5 +1,7 @@
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/game_pigeon.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/supported_interactive.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/unsupported_interactive.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.legacy.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
@@ -84,10 +86,19 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                       child: Builder(
                         builder: (context) {
                           if (payloadData == null && !(message.isLegacyUrlPreview)) {
-                            return TextBubble(
-                              parentController: controller,
-                              message: part,
-                            );
+                            switch (message.interactiveText) {
+                              case "Handwritten Message":
+                              case "Digital Touch Message":
+                                return UnsupportedInteractive(
+                                  message: message,
+                                  payloadData: null,
+                                );
+                              default:
+                                return TextBubble(
+                                  parentController: controller,
+                                  message: part,
+                                );
+                            }
                           } else if (payloadData?.type == PayloadType.url || message.isLegacyUrlPreview) {
                             if (payloadData == null) {
                               return LegacyUrlPreview(
@@ -101,32 +112,27 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                           } else {
                             final data = payloadData!.appData!.first;
                             switch (message.interactiveText) {
-                              case "Youtube":
+                              case "YouTube":
                               case "Photos":
                               case "OpenTable":
                               case "iMessage Poll":
+                              case "Shazam":
+                                return SupportedInteractive(
+                                  data: data,
+                                  message: message,
+                                );
                               case "GamePigeon":
                                 return GamePigeon(
                                   data: data,
                                   message: message,
                                 );
-                              case "Shazam":
-                                return UrlPreview(
-                                  data: UrlPreviewData(
-                                    originalUrl: data.url,
-                                    url: data.url,
-                                    title: data.userInfo?.caption,
-                                    summary: data.userInfo?.subcaption,
-                                    siteName: data.appName,
-                                  ),
-                                  message: message,
-                                  customPreview: true,
-                                );
                               case "Apple Pay":
-                              case "Handwritten Message":
-                              case "Digital Touch Message":
+                                // todo
                               default:
-                                return Container();
+                                return UnsupportedInteractive(
+                                  message: message,
+                                  payloadData: data,
+                                );
                             }
                           }
                         }

@@ -11,13 +11,11 @@ import 'package:universal_io/io.dart';
 class UrlPreview extends StatefulWidget {
   final UrlPreviewData data;
   final Message message;
-  final bool customPreview;
 
   UrlPreview({
     Key? key,
     required this.data,
     required this.message,
-    this.customPreview = false,
   }) : super(key: key);
 
   @override
@@ -35,16 +33,19 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
   void initState() {
     super.initState();
     updateObx(() async {
-      if (widget.customPreview || (data.imageMetadata?.url == null && data.iconMetadata?.url == null)) {
+      if (data.imageMetadata?.url == null && data.iconMetadata?.url == null) {
         final attachment = widget.message.attachments
-            .firstWhereOrNull((e) => widget.customPreview ? true : (e?.transferName?.contains("pluginPayloadAttachment") ?? false));
+            .firstWhereOrNull((e) => e?.transferName?.contains("pluginPayloadAttachment") ?? false);
         if (attachment != null) {
           content = as.getContent(attachment, autoDownload: true, onComplete: (file) {
             setState(() {
               content = file;
             });
           });
-        } else if (!widget.customPreview) {
+          if (content is PlatformFile) {
+            setState(() {});
+          }
+        } else {
           MetadataFetch.extract((data.url ?? data.originalUrl)!).then((metadata) {
             if (metadata?.image != null) {
               data.imageMetadata = MediaMetadata(size: const Size.square(1), url: metadata!.image);
@@ -60,7 +61,7 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final siteText = widget.customPreview ? data.siteName : Uri.tryParse(data.url ?? data.originalUrl ?? "")?.host ?? data.siteName;
+    final siteText = Uri.tryParse(data.url ?? data.originalUrl ?? "")?.host ?? data.siteName;
     final hasAppleImage = (data.imageMetadata?.url == null || (data.iconMetadata?.url == null && data.imageMetadata?.size == Size.zero));
     return Column(
       mainAxisSize: MainAxisSize.min,
