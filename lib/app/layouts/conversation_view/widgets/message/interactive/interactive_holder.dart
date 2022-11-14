@@ -55,7 +55,7 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
             } else {
               url = payloadData!.appData!.first.url;
             }
-            if (url != null) {
+            if (url != null && Uri.tryParse(url) != null) {
               await launchUrl(
                 Uri.parse(url),
                 mode: LaunchMode.externalApplication,
@@ -98,6 +98,7 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                               message: message,
                             );
                           } else {
+                            final data = payloadData!.appData!.first;
                             switch (message.interactiveText) {
                               case "Youtube":
                               case "Photos":
@@ -105,6 +106,17 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                               case "iMessage Poll":
                               case "GamePigeon":
                               case "Shazam":
+                                return UrlPreview(
+                                  data: UrlPreviewData(
+                                    originalUrl: data.url,
+                                    url: data.url,
+                                    title: data.userInfo?.caption,
+                                    summary: data.userInfo?.subcaption,
+                                    siteName: data.appName,
+                                  ),
+                                  message: message,
+                                  customPreview: true,
+                                );
                               case "Apple Pay":
                               case "Handwritten Message":
                               case "Digital Touch Message":
