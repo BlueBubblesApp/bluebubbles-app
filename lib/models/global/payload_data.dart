@@ -37,7 +37,6 @@ class PayloadData {
           final objects = m['objects'];
           data.add(extractUIDs(objects[2], objects));
         }
-        log(getPrettyJSONString(data));
         return PayloadData(
           type: PayloadType.url,
           urlData: data.map((e) => UrlPreviewData.fromJson(Map<String, dynamic>.from(e))).toList(),
@@ -51,11 +50,6 @@ class PayloadData {
     "urlData": urlData?.map((e) => e.toJson()).toList(),
     "appData": appData?.map((e) => e.toJson()).toList(),
   };
-}
-
-String getPrettyJSONString(jsonObject){
-  var encoder = JsonEncoder.withIndent("     ");
-  return encoder.convert(jsonObject);
 }
 
 class UrlPreviewData {
@@ -200,23 +194,23 @@ class UserInfo {
   };
 }
 
-dynamic replaceDollar<T>(T element) {
+dynamic replaceDollar<T>(T element, {bool isValue = false}) {
   // if list, traverse thru each element
   if (element is List) {
     final newList = [];
     for (dynamic item in element) {
-      newList.add(replaceDollar(item));
+      newList.add(replaceDollar(item, isValue: true));
     }
     return newList;
   // if map, traverse thru each key & value
   } else if (element is Map) {
     final newMap = {};
     for (MapEntry item in element.entries) {
-      newMap[replaceDollar(item.key)] = replaceDollar(item.value);
+      newMap[replaceDollar(item.key)] = replaceDollar(item.value, isValue: true);
     }
     return newMap;
   // only replace $ at beginning of string
-  } else if (element is String) {
+  } else if (element is String && !isValue) {
     if (element.startsWith("\$")) {
       element = element.replaceFirst("\$", "") as T;
     }
