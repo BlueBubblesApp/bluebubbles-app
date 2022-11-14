@@ -85,16 +85,13 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
             },
           ),
         if (content is PlatformFile && hasAppleImage && content.bytes == null && content.path != null)
-          Container(
-            color: Colors.red,
-            child: Image.file(
-              File(content.path!),
-              gaplessPlayback: true,
-              filterQuality: FilterQuality.none,
-              errorBuilder: (_, __, ___) {
-                return const SizedBox.shrink();
-              },
-            ),
+          Image.file(
+            File(content.path!),
+            gaplessPlayback: true,
+            filterQuality: FilterQuality.none,
+            errorBuilder: (_, __, ___) {
+              return const SizedBox.shrink();
+            },
           ),
         Padding(
           padding: const EdgeInsets.all(15.0),
