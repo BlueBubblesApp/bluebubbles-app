@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/slide_to_reply.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
@@ -172,7 +173,10 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                         onHorizontalDragCancel: !canSwipeToReply ? null : () {
                           replyOffsets[index].value = 0;
                         },
-                        child: e.attachments.isEmpty ? TextBubble(
+                        child: message.hasApplePayloadData || message.isLegacyUrlPreview ? InteractiveHolder(
+                          parentController: controller,
+                          message: e,
+                        ) : e.attachments.isEmpty ? TextBubble(
                           parentController: controller,
                           message: e,
                         ) : AttachmentHolder(

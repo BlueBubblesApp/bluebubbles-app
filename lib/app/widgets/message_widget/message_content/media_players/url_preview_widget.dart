@@ -50,7 +50,7 @@ class UrlPreviewController extends GetxController {
   }
 
   Future<void> fetchPreview() async {
-    data.value = controller.urlPreviews[message.text];
+    data.value = controller.legacyUrlPreviews[message.text];
 
     if (data.value != null || MetadataHelper.isNotEmpty(data.value)) return;
 
@@ -85,7 +85,7 @@ class UrlPreviewController extends GetxController {
 
     // Save the metadata
     if (data.value != null) {
-      controller.urlPreviews[message.text!] = data.value!;
+      controller.legacyUrlPreviews[message.text!] = data.value!;
     }
   }
 }

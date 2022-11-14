@@ -856,7 +856,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              if (widget.message.hasAttachments && !widget.message.isUrlPreview && !kIsWeb && !kIsDesktop) {
+              if (widget.message.hasAttachments && !widget.message.isLegacyUrlPreview && !kIsWeb && !kIsDesktop) {
                 for (Attachment? element in widget.message.attachments) {
                   Share.file(
                     "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",

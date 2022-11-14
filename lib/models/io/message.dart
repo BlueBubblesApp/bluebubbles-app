@@ -691,12 +691,12 @@ class Message {
   String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)!).join("\n"));
 
   // first condition is for macOS < 11 and second condition is for macOS >= 11
-  bool get isUrlPreview => (balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!)
-      || (hasDdResults! && (text ?? "").trim().hasUrl);
+  bool get isLegacyUrlPreview => (balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!)
+      || (hasDdResults! && (text ?? "").trim().isURL);
 
   String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
 
-  bool get isInteractive => balloonBundleId != null && !isUrlPreview;
+  bool get isInteractive => balloonBundleId != null && !isLegacyUrlPreview;
 
   String get interactiveText {
     String text = "";
@@ -877,7 +877,7 @@ class Message {
       size = Size(size.width + 28, size.height);
     }
     // if we have a URL preview, extend to the full width
-    if (isUrlPreview) {
+    if (isLegacyUrlPreview) {
       size = Size(ns.width(context) * 2 / 3 - 30, size.height);
     }
     // if we have reactions, account for the extra height they add
