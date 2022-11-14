@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/video_player.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/app/widgets/components/circle_progress_bar.dart';
@@ -16,6 +17,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:tuple/tuple.dart';
 
 class AttachmentHolder extends CustomStateful<MessageWidgetController> {
@@ -239,23 +241,32 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                 file: _content,
                               );
                             } else if (attachment.mimeStart == "audio") {
-                              return AudioPlayer(
-                                attachment: attachment,
-                                file: _content,
-                              );
-                            } /*else if (attachment.mimeType == "text/x-vlocation" || attachment.uti == 'public.vlocation') {
-                              return MediaFile(
-                                attachment: widget.attachment,
-                                child: UrlPreviewWidget(
-                                  linkPreviews: [],
-                                  mess
+                              return Padding(
+                                padding: showTail ? EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0) : EdgeInsets.zero,
+                                child: AudioPlayer(
+                                  attachment: attachment,
+                                  file: _content,
                                 ),
                               );
-                              return const SizedBox.shrink();
-                            }*/ else if (attachment.mimeType?.contains("vcard") ?? false) {
-                              return ContactCard(
-                                attachment: attachment,
-                                file: _content,
+                            } else if (attachment.mimeType == "text/x-vlocation" || attachment.uti == 'public.vlocation') {
+                              return Padding(
+                                padding: showTail ? EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0) : EdgeInsets.zero,
+                                child: UrlPreview(
+                                  data: UrlPreviewData(
+                                    title: "Location from ${DateFormat.yMd().format(message.dateCreated!)}",
+                                    siteName: "Tap to open",
+                                  ),
+                                  message: message,
+                                  file: _content,
+                                ),
+                              );
+                            } else if (attachment.mimeType?.contains("vcard") ?? false) {
+                              return Padding(
+                                padding: showTail ? EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0) : EdgeInsets.zero,
+                                child: ContactCard(
+                                  attachment: attachment,
+                                  file: _content,
+                                ),
                               );
                             } else if (attachment.mimeType == null) {
                               return Padding(

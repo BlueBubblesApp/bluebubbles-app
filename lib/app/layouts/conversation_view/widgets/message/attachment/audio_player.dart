@@ -101,7 +101,6 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
               child: Text(prettyDuration(Duration(milliseconds: controller?.maxDuration ?? 0)), style: context.theme.textTheme.labelLarge!),
             ),
           ),
-          const SizedBox(width: 10),
         ],
       )
     );
