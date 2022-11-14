@@ -4,10 +4,12 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
@@ -90,31 +92,40 @@ class OtherFile extends StatelessWidget {
           }
         }
       },
-      child: SizedBox(
-        height: 150,
-        width: 200,
-        child: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Icon(
-                  getAttachmentIcon(attachment.mimeType ?? ""),
-                  color: context.theme.colorScheme.properOnSurface,
-                ),
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              getAttachmentIcon(attachment.mimeType ?? ""),
+              color: context.theme.colorScheme.properOnSurface,
+              size: 35,
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    file.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
+                  ),
+                  const SizedBox(height: 2.5),
+                  Text(
+                    "${(mime(file.name)?.split("/").lastOrNull ?? mime(file.name) ?? "file").toUpperCase()} • ${file.size.toDouble().getFriendlySize()}",
+                    style: context.theme.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.normal, color: context.theme.colorScheme.outline),
+                    overflow: TextOverflow.clip,
+                    maxLines: 1,
+                  ),
+                ],
               ),
-              Text(
-                file.name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: context.theme.textTheme.bodyMedium,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
