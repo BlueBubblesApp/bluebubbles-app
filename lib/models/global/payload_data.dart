@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -34,6 +37,7 @@ class PayloadData {
           final objects = m['objects'];
           data.add(extractUIDs(objects[2], objects));
         }
+        log(getPrettyJSONString(data));
         return PayloadData(
           type: PayloadType.url,
           urlData: data.map((e) => UrlPreviewData.fromJson(Map<String, dynamic>.from(e))).toList(),
@@ -47,6 +51,11 @@ class PayloadData {
     "urlData": urlData?.map((e) => e.toJson()).toList(),
     "appData": appData?.map((e) => e.toJson()).toList(),
   };
+}
+
+String getPrettyJSONString(jsonObject){
+  var encoder = JsonEncoder.withIndent("     ");
+  return encoder.convert(jsonObject);
 }
 
 class UrlPreviewData {
@@ -73,14 +82,16 @@ class UrlPreviewData {
   String? siteName;
 
   factory UrlPreviewData.fromJson(Map<String, dynamic> json) => UrlPreviewData(
-    imageMetadata: json["imageMetadata"] == null ? null : MediaMetadata.fromJson(Map<String, dynamic>.from(json["imageMetadata"])),
+    imageMetadata: json["imageMetadata"] == null
+        ? (json["specialization"]?["artwork"] != null ? MediaMetadata(size: const Size.square(1), url: json["specialization"]?["artwork"]?["NS.relative"]) : null)
+        : MediaMetadata.fromJson(Map<String, dynamic>.from(json["imageMetadata"])),
     videoMetadata: json["videoMetadata"] == null ? null : MediaMetadata.fromJson(Map<String, dynamic>.from(json["videoMetadata"])),
     iconMetadata: json["iconMetadata"] == null ? null : MediaMetadata.fromJson(Map<String, dynamic>.from(json["iconMetadata"])),
     itemType: json["itemType"],
     originalUrl: json["originalURL"]?["NS.relative"],
     url: json["URL"]?["NS.relative"],
-    title: json["title"],
-    summary: json["summary"],
+    title: json["title"] ?? json["specialization"]?["name"],
+    summary: json["summary"] ?? json["specialization"]?["album"],
     siteName: json["siteName"],
   );
 

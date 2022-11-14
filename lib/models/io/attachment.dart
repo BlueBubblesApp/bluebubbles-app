@@ -209,6 +209,8 @@ class Attachment {
 
   bool get existsOnDisk => File(path).existsSync();
 
+  Future<bool> get existsOnDiskAsync async => await File(path).exists();
+
   bool get canCompress => mimeStart == "image" && !mimeType!.contains("gif");
 
   static Attachment merge(Attachment attachment1, Attachment attachment2) {
