@@ -1,4 +1,5 @@
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/game_pigeon.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.legacy.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
@@ -105,6 +106,10 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
                               case "OpenTable":
                               case "iMessage Poll":
                               case "GamePigeon":
+                                return GamePigeon(
+                                  data: data,
+                                  message: message,
+                                );
                               case "Shazam":
                                 return UrlPreview(
                                   data: UrlPreviewData(
