@@ -1,6 +1,7 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/chat_event/chat_event.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_properties.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/slide_to_reply.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
@@ -147,55 +148,62 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
-                  ...messageParts.mapIndexed((index, e) => Row(
+                  ...messageParts.mapIndexed((index, e) => Column(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                     children: [
-                      if (message.isGroupEvent || e.isUnsent)
-                        ChatEvent(
-                          part: e,
-                          message: message,
-                        ),
-                      if (!message.isGroupEvent && !e.isUnsent)
-                        GestureDetector(
-                          behavior: HitTestBehavior.deferToChild,
-                          // todo onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
-                          onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
-                            if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
-                              return;
-                            }
-                            final offset = replyOffsets[index];
-                            offset.value += details.delta.dx * 0.5;
-                            if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
-                              HapticFeedback.lightImpact();
-                              gaveHapticFeedback = true;
-                            } else if (offset.value.abs() < SlideToReply.replyThreshold) {
-                              gaveHapticFeedback = false;
-                            }
-                          },
-                          onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
-                            final offset = replyOffsets[index];
-                            if (offset.value.abs() >= SlideToReply.replyThreshold) {
-                              widget.cvController.replyToMessage = message;
-                            }
-                            offset.value = 0;
-                          },
-                          onHorizontalDragCancel: !canSwipeToReply ? null : () {
-                            replyOffsets[index].value = 0;
-                          },
-                          child: message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? InteractiveHolder(
-                            parentController: controller,
-                            message: e,
-                          ) : e.attachments.isEmpty ? TextBubble(
-                            parentController: controller,
-                            message: e,
-                          ) : AttachmentHolder(
-                            parentController: controller,
-                            message: e,
-                          ),
-                        ),
-                      if (canSwipeToReply && !message.isGroupEvent && !e.isUnsent)
-                        Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
-                    ].conditionalReverse(message.isFromMe!),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (message.isGroupEvent || e.isUnsent)
+                            ChatEvent(
+                              part: e,
+                              message: message,
+                            ),
+                          if (!message.isGroupEvent && !e.isUnsent)
+                            GestureDetector(
+                              behavior: HitTestBehavior.deferToChild,
+                              // todo onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
+                              onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
+                                if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
+                                  return;
+                                }
+                                final offset = replyOffsets[index];
+                                offset.value += details.delta.dx * 0.5;
+                                if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
+                                  HapticFeedback.lightImpact();
+                                  gaveHapticFeedback = true;
+                                } else if (offset.value.abs() < SlideToReply.replyThreshold) {
+                                  gaveHapticFeedback = false;
+                                }
+                              },
+                              onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
+                                final offset = replyOffsets[index];
+                                if (offset.value.abs() >= SlideToReply.replyThreshold) {
+                                  widget.cvController.replyToMessage = message;
+                                }
+                                offset.value = 0;
+                              },
+                              onHorizontalDragCancel: !canSwipeToReply ? null : () {
+                                replyOffsets[index].value = 0;
+                              },
+                              child: message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? InteractiveHolder(
+                                parentController: controller,
+                                message: e,
+                              ) : e.attachments.isEmpty ? TextBubble(
+                                parentController: controller,
+                                message: e,
+                              ) : AttachmentHolder(
+                                parentController: controller,
+                                message: e,
+                              ),
+                            ),
+                          if (canSwipeToReply && !message.isGroupEvent && !e.isUnsent)
+                            Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
+                        ].conditionalReverse(message.isFromMe!),
+                      ),
+                      MessageProperties(parentController: controller, part: e),
+                    ],
                   )),
                   if (message.isFromMe!)
                     DeliveredIndicator(parentController: controller),

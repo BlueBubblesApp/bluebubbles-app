@@ -7,7 +7,6 @@ class MessagePart {
     this.attachments = const [],
     this.mentions = const [],
     this.isUnsent = false,
-    this.isEdited = false,
     this.edits = const [],
     required this.part,
   }) {
@@ -21,9 +20,10 @@ class MessagePart {
   List<Attachment> attachments;
   List<Mention> mentions;
   bool isUnsent;
-  bool isEdited;
   List<List<MessagePart>> edits;
   int part;
+
+  bool get isEdited => edits.isNotEmpty;
 }
 
 class Mention {

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_properties.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/delivered_receipt.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget.dart';
@@ -81,14 +82,13 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
     } else if (newItem.dateEdited != message.dateEdited) {
       message = Message.merge(newItem, message);
       ms(message.chat.target!.guid).updateMessage(message);
-      // todo
+      updateWidgetFunctions[MessageHolder]?.call(null);
     }
   }
 
 
   void updateThreadOriginator(Message newItem) {
-    // todo
-    updateWidgetFunctions[MessageHolder]?.call(null);
+    updateWidgetFunctions[MessageProperties]?.call(null);
   }
 
   void updateAssociatedMessage(Message newItem) {

@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 void showReplyThread(BuildContext context, Message message, MessagesService service) {
+  // todo upgrade to message parts
   final _messages = service.struct.threads(message.threadOriginatorGuid ?? message.guid!);
   _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
   final controller = ScrollController();
