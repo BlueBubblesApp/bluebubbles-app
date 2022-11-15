@@ -178,10 +178,15 @@ class _UrlPreviewState extends OptimizedState<UrlPreview> with AutomaticKeepAliv
                 if (_data.iconMetadata?.url != null && _data.imageMetadata?.size == Size.zero)
                   const SizedBox(width: 10),
                 if (_data.iconMetadata?.url != null && _data.imageMetadata?.size == Size.zero)
-                  Image.network(
-                    _data.iconMetadata!.url!,
-                    gaplessPlayback: true,
-                    filterQuality: FilterQuality.none,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: 45,
+                    ),
+                    child: Image.network(
+                      _data.iconMetadata!.url!,
+                      gaplessPlayback: true,
+                      filterQuality: FilterQuality.none,
+                    ),
                   ),
               ],
             ),

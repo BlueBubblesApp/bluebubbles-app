@@ -121,6 +121,16 @@ class _SupportedInteractiveState extends OptimizedState<SupportedInteractive> wi
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                  if (isNullOrEmpty(data.userInfo?.caption)! && !isNullOrEmpty(data.ldText)!)
+                    Flexible(
+                      fit: !isNullOrEmpty(data.userInfo?.secondarySubcaption)! ? FlexFit.tight : FlexFit.loose,
+                      child: Text(
+                        data.ldText!,
+                        style: context.theme.textTheme.bodyLarge!.apply(fontWeightDelta: 2),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   if (!isNullOrEmpty(data.userInfo?.secondarySubcaption)!)
                     Text(
                       data.userInfo!.secondarySubcaption!,
