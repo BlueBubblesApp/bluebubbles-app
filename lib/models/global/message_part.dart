@@ -5,20 +5,21 @@ class MessagePart {
     this.subject,
     this.text,
     this.attachments = const [],
-    this.mention,
+    this.mentions = const [],
     this.isUnsent = false,
     this.isEdited = false,
     this.edits = const [],
     required this.part,
   }) {
     if (attachments.isEmpty) attachments = [];
+    if (mentions.isEmpty) mentions = [];
     if (edits.isEmpty) edits = [];
   }
 
   String? subject;
   String? text;
   List<Attachment> attachments;
-  Mention? mention;
+  List<Mention> mentions;
   bool isUnsent;
   bool isEdited;
   List<List<MessagePart>> edits;

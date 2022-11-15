@@ -106,12 +106,14 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       final existingPart = list.firstWhereOrNull((element) => element.part == e.attributes!.messagePart!);
       // this should only happen if there is a mention in the middle breaking up the text
       if (existingPart != null) {
-        existingPart.text = (existingPart.text ?? "") + mainString.substring(e.range.first, e.range.first + e.range.last);
+        final newText = mainString.substring(e.range.first, e.range.first + e.range.last);
+        existingPart.text = (existingPart.text ?? "") + newText;
         if (e.hasMention) {
-          existingPart.mention = Mention(
+          existingPart.mentions.add(Mention(
             mentionedAddress: e.attributes?.mention,
-            range: [e.range.first, e.range.first + e.range.last],
-          );
+            range: [existingPart.text!.indexOf(newText), existingPart.text!.indexOf(newText) + e.range.last],
+          ));
+          existingPart.mentions.sort((a, b) => a.range.first.compareTo(b.range.first));
         }
       } else {
         list.add(MessagePart(
@@ -121,10 +123,10 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
             ms(widget.cvController.chat.guid).struct.getAttachment(e.attributes!.attachmentGuid!)
                 ?? Attachment.findOne(e.attributes!.attachmentGuid!)
           ].where((e) => e != null).map((e) => e!).toList() : [],
-          mention: !e.hasMention ? null : Mention(
+          mentions: !e.hasMention ? [] : [Mention(
             mentionedAddress: e.attributes?.mention,
-            range: [e.range.first, e.range.first + e.range.last],
-          ),
+            range: [0, e.range.last],
+          )],
           part: e.attributes!.messagePart!,
         ));
       }
@@ -134,8 +136,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
 
   @override
   Widget build(BuildContext context) {
-    print(message.toMap());
-    print(messageParts);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

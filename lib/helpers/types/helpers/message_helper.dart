@@ -5,6 +5,7 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
 class MessageHelper {
@@ -221,12 +222,13 @@ class MessageHelper {
     return items.length <= 3 && replaced.isEmpty;
   }
 
-  static List<TextSpan> buildEmojiText(String text, TextStyle style) {
+  static List<TextSpan> buildEmojiText(String text, TextStyle style, {TapGestureRecognizer? recognizer}) {
     if (!fs.fontExistsOnDisk.value) {
       return [
         TextSpan(
           text: text,
           style: style,
+          recognizer: recognizer,
         )
       ];
     }
@@ -238,6 +240,7 @@ class MessageHelper {
         TextSpan(
           text: text,
           style: style,
+          recognizer: recognizer,
         )
       ];
     }
@@ -252,6 +255,7 @@ class MessageHelper {
           TextSpan(
             text: chunk,
             style: style,
+            recognizer: recognizer,
           ),
         );
         previousEnd += chunk.length;
@@ -268,16 +272,18 @@ class MessageHelper {
         TextSpan(
           text: chunk,
           style: style.apply(fontFamily: "Apple Color Emoji"),
+          recognizer: recognizer,
         ),
       );
       previousEnd += chunk.length;
     }
     if (previousEnd < text.length) {
       children.add(
-          TextSpan(
-            text: text.substring(previousEnd),
-            style: style,
-          )
+        TextSpan(
+          text: text.substring(previousEnd),
+          style: style,
+          recognizer: recognizer,
+        )
       );
     }
 
