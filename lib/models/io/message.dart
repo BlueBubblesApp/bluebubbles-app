@@ -709,7 +709,7 @@ class Message {
     return text;
   }
 
-  bool get isGroupEvent => fullText.isEmpty && attachments.isEmpty && !isInteractive && (itemType != null || groupActionType != null);
+  bool get isGroupEvent => groupTitle != null || (itemType ?? 0) > 0 || (groupActionType ?? 0) > 0;
 
   String get groupEventText {
     String text = "Unknown group event";
@@ -717,7 +717,7 @@ class Message {
 
     String? other = "someone";
     if (otherHandle != null && isParticipantEvent) {
-      other = Handle.findOne(originalROWID: otherHandle)?.displayName;
+      other = Handle.findOne(id: otherHandle)?.displayName;
     }
 
     if (itemType == 1 && groupActionType == 1) {
