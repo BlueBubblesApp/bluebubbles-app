@@ -155,6 +155,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
     ///                                          - message part column
     ///                                             - message sender
     ///                                             - reaction spacing box
+    ///                                             - previous edits
     ///                                             - message content row
     ///                                                - text / attachment / chat event / interactive | slide to reply
     ///                                                   |-> stack: stickers & reactions
@@ -204,6 +205,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                           if (reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty
                               && !(chat.isGroup && !message.isFromMe! && showSender && e.part == messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
                             const SizedBox(height: 15),
+                          // add previous edits if needed
                           if (e.isEdited)
                             Obx(() => AnimatedSize(
                               duration: const Duration(milliseconds: 250),
