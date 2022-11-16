@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing/typing_indicator.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/cupertino_conversation_tile.dart';
@@ -10,13 +8,9 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/material_
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/samsung_conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/app/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -380,7 +374,6 @@ class ChatLeading extends StatelessWidget {
                   child: const FittedBox(
                     alignment: Alignment.centerLeft,
                     child: TypingIndicator(
-                      chatList: true,
                       visible: true,
                     ),
                   ),

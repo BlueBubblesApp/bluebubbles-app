@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing/typing_indicator.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/new_message_loader.dart';
-import 'package:bluebubbles/app/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
