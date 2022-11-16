@@ -4,6 +4,8 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/chat_e
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_properties.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/slide_to_reply.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/message_timestamp.dart';
@@ -168,6 +170,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                             Stack(
                               alignment: Alignment.center,
                               fit: StackFit.loose,
+                              clipBehavior: Clip.none,
                               children: [
                                 GestureDetector(
                                   behavior: HitTestBehavior.deferToChild,
@@ -206,7 +209,25 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                     message: e,
                                   ),
                                 ),
-                                StickerHolder(stickerMessages: stickers.where((s) => s.associatedMessagePart == e.part)),
+                                StickerHolder(stickerMessages: stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part)),
+                                if (message.isFromMe!)
+                                  Positioned(
+                                    top: -15,
+                                    left: -20,
+                                    child: ReactionHolder(
+                                      reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                      message: message,
+                                    ),
+                                  ),
+                                if (!message.isFromMe!)
+                                  Positioned(
+                                    top: -15,
+                                    right: -20,
+                                    child: ReactionHolder(
+                                      reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                      message: message,
+                                    ),
+                                  ),
                               ],
                             ),
                           if (canSwipeToReply && !message.isGroupEvent && !e.isUnsent)
