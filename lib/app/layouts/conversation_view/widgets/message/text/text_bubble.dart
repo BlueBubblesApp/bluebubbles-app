@@ -31,6 +31,21 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
     super.initState();
   }
 
+  List<Color> getBubbleColors() {
+    List<Color> bubbleColors = [context.theme.colorScheme.properSurface, context.theme.colorScheme.properSurface];
+    if (ss.settings.colorfulBubbles.value && !message.isFromMe!) {
+      if (message.handle?.color == null) {
+        bubbleColors = toColorGradient(message.handle?.address);
+      } else {
+        bubbleColors = [
+          HexColor(message.handle!.color!),
+          HexColor(message.handle!.color!).lightenAmount(0.075),
+        ];
+      }
+    }
+    return bubbleColors;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ClipPath(
@@ -44,10 +59,31 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
           minHeight: 30,
         ),
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0)),
-        color: message.isFromMe! ? context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.2 : 0) : context.theme.colorScheme.properSurface,
+        color: message.isFromMe!
+            ? context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.2 : 0)
+            : null,
+        decoration: message.isFromMe! ? null : BoxDecoration(
+          gradient: LinearGradient(
+            begin: AlignmentDirectional.bottomCenter,
+            end: AlignmentDirectional.topCenter,
+            colors: getBubbleColors(),
+          ),
+        ),
         child: FutureBuilder<List<InlineSpan>>(
-          future: buildEnrichedMessageSpans(context, part, message),
-          initialData: buildMessageSpans(context, part, message),
+          future: buildEnrichedMessageSpans(
+            context,
+            part,
+            message,
+            colorOverride: ss.settings.colorfulBubbles.value && !message.isFromMe!
+                ? getBubbleColors().first.oppositeLightenOrDarken(50) : null,
+          ),
+          initialData: buildMessageSpans(
+            context,
+            part,
+            message,
+            colorOverride: ss.settings.colorfulBubbles.value && !message.isFromMe!
+                ? getBubbleColors().first.oppositeLightenOrDarken(50) : null,
+          ),
           builder: (context, snapshot) {
             if (snapshot.data != null) {
               return RichText(
