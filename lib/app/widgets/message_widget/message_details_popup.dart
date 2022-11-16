@@ -2,7 +2,6 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
@@ -19,6 +18,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:sprung/sprung.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -110,7 +110,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     List<Message> reactions = widget.message.reactions;
 
     // Filter down the messages to the unique ones (one per user, newest)
-    List<Message> reactionMessages = Reaction.getUniqueReactionMessages(reactions);
+    List<Message> reactionMessages = getUniqueReactionMessages(reactions);
 
     reactionWidgets = [];
     for (Message reaction in reactionMessages) {
@@ -327,14 +327,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(6),
-                              child: Reaction.getReactionIcon(
-                                  e,
-                                  currentlySelectedReaction == e
-                                      ? context.theme.colorScheme.onPrimary
-                                      : context.theme.colorScheme.outline,
-                                  usePink: currentlySelectedReaction == e),
-                            ),),
-                          ),
+                              child: SvgPicture.asset(
+                                'assets/reactions/$e-black.svg',
+                                color: e == "love" && currentlySelectedReaction == e
+                                    ? Colors.pink
+                                    : (currentlySelectedReaction == e ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.outline),
+                              ),
+                            ),
+                          )),
                         ),
                       ),
                     );
@@ -383,9 +383,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(6),
-                                  child: Reaction.getReactionIcon(e, currentlySelectedReaction == e
-                                      ? context.theme.colorScheme.onPrimary
-                                      : context.theme.colorScheme.outline, usePink: false),
+                                  child: SvgPicture.asset(
+                                    'assets/reactions/$e-black.svg',
+                                    color: (currentlySelectedReaction == e ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.outline),
+                                  ),
                                 ),
                               ),
                               ),

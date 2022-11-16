@@ -6,7 +6,6 @@ import 'package:bluebubbles/app/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_content/message_time_stamp_separator.dart';
-import 'package:bluebubbles/app/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/app/widgets/message_widget/stickers_widget.dart';
@@ -102,8 +101,9 @@ class _MessageState extends CustomState<MessageWidget, void, MessageWidgetContro
         key: Key("preview-${_message.guid}"), linkPreviews: _message.previewAttachments, message: _message);
     StickersWidget stickersWidget =
         StickersWidget(key: Key("stickers-${_message.guid}"), messages: _message.associatedMessages, size: _message.getBubbleSize(context));
-    ReactionsWidget reactionsWidget = ReactionsWidget(
-        key: Key("reactions-${_message.guid}"), associatedMessages: _message.associatedMessages);
+    /*ReactionsWidget reactionsWidget = ReactionsWidget(
+        key: Key("reactions-${_message.guid}"), associatedMessages: _message.associatedMessages);*/
+    const reactionsWidget = SizedBox.shrink();
     final separator = MessageTimeStampSeparator(
       newerMessage: _message,
       message: _olderMessage ?? _message,

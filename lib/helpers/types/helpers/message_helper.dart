@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/gestures.dart';

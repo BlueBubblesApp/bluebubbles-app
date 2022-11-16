@@ -1,4 +1,4 @@
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/reaction_clipper.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';

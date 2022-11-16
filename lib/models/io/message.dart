@@ -4,7 +4,6 @@ import 'dart:math';
 
 import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/main.dart';

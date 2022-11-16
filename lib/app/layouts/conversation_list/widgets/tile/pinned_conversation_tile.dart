@@ -6,9 +6,9 @@ import 'package:bluebubbles/app/layouts/conversation_list/dialogs/conversation_p
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/pinned_tile_text_bubble.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/app/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -512,10 +512,10 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
         && !(latestMessage?.isFromMe ?? true) ? Positioned(
       top: -sqrt(widget.width / 2),
       right: -sqrt(widget.width / 2) - widget.width * 0.15,
-      child: ReactionsWidget(
-        associatedMessages: [latestMessage!],
-        bigPin: true,
-        size: widget.width * 0.3,
+      child: ReactionWidget(
+        reactionType: latestMessage!.associatedMessageType!,
+        reactionIsFromMe: false,
+        messageIsFromMe: true,
       ),
     ) : const SizedBox.shrink();
   }

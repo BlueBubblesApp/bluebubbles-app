@@ -17,5 +17,6 @@ export 'types/helpers/misc_helpers.dart';
 export 'types/helpers/string_helpers.dart';
 export 'types/constants.dart';
 export 'ui/message_widget_helpers.dart';
+export 'ui/reaction_helpers.dart';
 export 'ui/theme_helpers.dart';
 export 'ui/ui_helpers.dart';

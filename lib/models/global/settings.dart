@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';

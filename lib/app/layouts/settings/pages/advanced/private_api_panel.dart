@@ -1,6 +1,5 @@
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
-import 'package:bluebubbles/app/widgets/components/reaction.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -216,33 +215,51 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                 cupertinoCustomWidgets: [
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: Reaction(reactionType: ReactionTypes.LOVE).getSmallWidget(context,
-                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: ss.settings.quickTapbackType.value == ReactionTypes.LOVE)!,
+                                    child: ReactionWidget(
+                                      reactionType: ReactionTypes.LOVE,
+                                      messageIsFromMe: true,
+                                      reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LOVE
+                                    ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: Reaction(reactionType: ReactionTypes.LIKE).getSmallWidget(context,
-                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: ss.settings.quickTapbackType.value == ReactionTypes.LIKE)!,
+                                    child: ReactionWidget(
+                                        reactionType: ReactionTypes.LIKE,
+                                        messageIsFromMe: true,
+                                        reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LIKE
+                                    ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: Reaction(reactionType: ReactionTypes.DISLIKE).getSmallWidget(context,
-                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: ss.settings.quickTapbackType.value == ReactionTypes.DISLIKE)!,
+                                    child: ReactionWidget(
+                                        reactionType: ReactionTypes.DISLIKE,
+                                        messageIsFromMe: true,
+                                        reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.DISLIKE
+                                    ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: Reaction(reactionType: ReactionTypes.LAUGH).getSmallWidget(context,
-                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: ss.settings.quickTapbackType.value == ReactionTypes.LAUGH)!,
+                                    child: ReactionWidget(
+                                        reactionType: ReactionTypes.LAUGH,
+                                        messageIsFromMe: true,
+                                        reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.LAUGH
+                                    ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: Reaction(reactionType: ReactionTypes.EMPHASIZE).getSmallWidget(context,
-                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: ss.settings.quickTapbackType.value == ReactionTypes.EMPHASIZE)!,
+                                    child: ReactionWidget(
+                                        reactionType: ReactionTypes.EMPHASIZE,
+                                        messageIsFromMe: true,
+                                        reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.EMPHASIZE
+                                    ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8),
-                                    child: Reaction(reactionType: ReactionTypes.QUESTION).getSmallWidget(context,
-                                        message: Message(isFromMe: true), isReactionPicker: true, isSelected: ss.settings.quickTapbackType.value == ReactionTypes.QUESTION)!,
+                                    child: ReactionWidget(
+                                        reactionType: ReactionTypes.QUESTION,
+                                        messageIsFromMe: true,
+                                        reactionIsFromMe: ss.settings.quickTapbackType.value != ReactionTypes.QUESTION
+                                    ),
                                   ),
                                 ],
                                 initial: ss.settings.quickTapbackType.value,
