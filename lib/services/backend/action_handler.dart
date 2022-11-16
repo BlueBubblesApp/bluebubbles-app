@@ -17,7 +17,7 @@ ActionHandler ah = Get.isRegistered<ActionHandler>() ? Get.find<ActionHandler>()
 class ActionHandler extends GetxService {
   final List<Tuple2<String, RxDouble>> attachmentProgress = [];
 
-  Future<void> sendMessage(Chat c, Message m, Message? selected, ReactionType? r) async {
+  Future<void> sendMessage(Chat c, Message m, Message? selected, String? r) async {
     if ((m.text?.isEmpty ?? true) && (m.subject?.isEmpty ?? true)) return;
 
     final List<Message> messages = <Message>[];
@@ -92,7 +92,7 @@ class ActionHandler extends GetxService {
         });
       });
     } else {
-      http.sendTapback(c.guid, selected!.text ?? "", selected.guid!, describeEnum(r)).then((response) async {
+      http.sendTapback(c.guid, selected!.text ?? "", selected.guid!, r).then((response) async {
         final newMessage = Message.fromMap(response.data['data']);
         try {
           await Message.replaceMessage(m.guid, newMessage);

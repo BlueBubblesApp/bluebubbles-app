@@ -142,7 +142,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           handleId: 0,
         ),
         selected: widget.message,
-        reaction: ReactionType.values.firstWhere((e) => describeEnum(e) == type),
+        reaction: ReactionTypes.toList().firstWhere((e) => e == type),
     ));
     Navigator.of(context).pop();
   }

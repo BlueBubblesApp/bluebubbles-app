@@ -138,7 +138,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         handleId: 0,
       ),
       selected: widget.message,
-      reaction: ReactionType.values.firstWhere((e) => describeEnum(e) == type),
+      reaction: ReactionTypes.toList().firstWhere((e) => e == type),
     ));
   }
 

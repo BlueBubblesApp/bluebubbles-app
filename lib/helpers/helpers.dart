@@ -4,7 +4,6 @@ export 'network/network_error_handler.dart';
 export 'network/network_helpers.dart';
 export 'network/network_tasks.dart';
 export 'types/classes/country_codes.dart';
-export 'types/classes/reaction.dart';
 export 'types/extensions/date_extensions.dart';
 export 'types/extensions/misc_extensions.dart';
 export 'types/extensions/rx_extensions.dart';

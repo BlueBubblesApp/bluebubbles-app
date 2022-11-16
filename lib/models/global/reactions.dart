@@ -1,1 +1,0 @@
-enum ReactionType {like, dislike, laugh, love, emphasize, question}

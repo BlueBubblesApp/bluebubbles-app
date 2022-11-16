@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:bluebubbles/app/widgets/components/reaction.dart';
-
-import '../models.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/models.dart';
 
 enum QueueType {newMessage, updatedMessage, sendMessage, sendAttachment}
 
@@ -41,7 +40,7 @@ class OutgoingItem extends QueueItem {
   Chat chat;
   Message message;
   Message? selected;
-  ReactionType? reaction;
+  String? reaction;
 
   OutgoingItem({
     required QueueType type,

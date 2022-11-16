@@ -3,7 +3,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_vie
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -110,7 +110,7 @@ class HeartRecentAction extends Action<HeartRecentIntent> {
   Object? invoke(covariant HeartRecentIntent intent) async {
     final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      _sendReactionHelper(chat, message, ReactionType.love);
+      _sendReactionHelper(chat, message, ReactionTypes.LOVE);
     }
     return null;
   }
@@ -129,7 +129,7 @@ class LikeRecentAction extends Action<LikeRecentIntent> {
   Object? invoke(covariant LikeRecentIntent intent) async {
     final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      _sendReactionHelper(chat, message, ReactionType.like);
+      _sendReactionHelper(chat, message, ReactionTypes.LIKE);
     }
     return null;
   }
@@ -148,7 +148,7 @@ class DislikeRecentAction extends Action<DislikeRecentIntent> {
   Object? invoke(covariant DislikeRecentIntent intent) async {
     final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      _sendReactionHelper(chat, message, ReactionType.dislike);
+      _sendReactionHelper(chat, message, ReactionTypes.DISLIKE);
     }
     return null;
   }
@@ -167,7 +167,7 @@ class LaughRecentAction extends Action<LaughRecentIntent> {
   Object? invoke(covariant LaughRecentIntent intent) async {
     final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      _sendReactionHelper(chat, message, ReactionType.laugh);
+      _sendReactionHelper(chat, message, ReactionTypes.LAUGH);
     }
     return null;
   }
@@ -186,7 +186,7 @@ class EmphasizeRecentAction extends Action<EmphasizeRecentIntent> {
   Object? invoke(covariant EmphasizeRecentIntent intent) async {
     final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      _sendReactionHelper(chat, message, ReactionType.emphasize);
+      _sendReactionHelper(chat, message, ReactionTypes.EMPHASIZE);
     }
     return null;
   }
@@ -205,7 +205,7 @@ class QuestionRecentAction extends Action<QuestionRecentIntent> {
   Object? invoke(covariant QuestionRecentIntent intent) async {
     final message = ms(chat.guid).mostRecent;
     if (message != null && ss.settings.enablePrivateAPI.value) {
-      _sendReactionHelper(chat, message, ReactionType.question);
+      _sendReactionHelper(chat, message, ReactionTypes.QUESTION);
     }
     return null;
   }
@@ -321,13 +321,13 @@ class GoBackAction extends Action<GoBackIntent> {
   }
 }
 
-void _sendReactionHelper(Chat c, Message selected, ReactionType t) {
+void _sendReactionHelper(Chat c, Message selected, String t) {
   outq.queue(OutgoingItem(
     type: QueueType.newMessage,
     chat: c,
     message: Message(
       associatedMessageGuid: selected.guid,
-      associatedMessageType: describeEnum(t),
+      associatedMessageType: t,
       dateCreated: DateTime.now(),
       hasAttachments: false,
       isFromMe: true,

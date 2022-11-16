@@ -188,13 +188,13 @@ class NotificationsService extends GetxService {
             } else if (actions[event.actionIndex!] == "Mark Read") {
               chat.toggleHasUnread(false);
             } else if (papi) {
-              final reaction = ReactionHelpers.emojiToReaction(actions[event.actionIndex!]);
+              final reaction = ReactionTypes.emojiToReaction[actions[event.actionIndex!]];
               outq.queue(OutgoingItem(
                 type: QueueType.newMessage,
                 chat: chat,
                 message: Message(
                   associatedMessageGuid: message.guid,
-                  associatedMessageType: describeEnum(reaction),
+                  associatedMessageType: reaction,
                   dateCreated: DateTime.now(),
                   hasAttachments: false,
                   isFromMe: true,
