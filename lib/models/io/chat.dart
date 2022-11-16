@@ -151,6 +151,10 @@ class GetMessages extends AsyncTask<List<dynamic>, List<Message>> {
       List<Message> associatedMessages = associatedMessagesQuery.find();
       associatedMessagesQuery.close();
       associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
+      for (Message m in associatedMessages) {
+        if (m.associatedMessageType != "sticker") continue;
+        m.attachments = List<Attachment>.from(m.dbAttachments);
+      }
       for (Message m in messages) {
         m.attachments = List<Attachment>.from(m.dbAttachments);
         m.associatedMessages = associatedMessages.where((e) => e.associatedMessageGuid == m.guid).toList();
@@ -203,6 +207,10 @@ class AddMessages extends AsyncTask<List<dynamic>, List<Message>> {
 
       /// Assign the relevant attachments and associated messages to the original
       /// messages
+      for (Message m in associatedMessages) {
+        if (m.associatedMessageType != "sticker") continue;
+        m.attachments = List<Attachment>.from(m.dbAttachments);
+      }
       for (Message m in newMessages) {
         m.attachments = List<Attachment>.from(m.dbAttachments);
         m.associatedMessages = associatedMessages.where((e) => e.associatedMessageGuid == m.guid).toList();

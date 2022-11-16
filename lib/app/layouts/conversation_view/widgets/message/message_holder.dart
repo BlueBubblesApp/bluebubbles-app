@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/sticker_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/chat_event/chat_event.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_properties.dart';
@@ -7,6 +8,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/t
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/message_timestamp.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/timestamp_separator.dart';
+import 'package:bluebubbles/app/widgets/components/reaction.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -137,6 +139,8 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
 
   @override
   Widget build(BuildContext context) {
+    final stickers = message.associatedMessages.where((e) => e.associatedMessageType == "sticker");
+    final reactions = message.associatedMessages.where((e) => ReactionTypes.toList().contains(e.associatedMessageType));
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -161,42 +165,49 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                               message: message,
                             ),
                           if (!message.isGroupEvent && !e.isUnsent)
-                            GestureDetector(
-                              behavior: HitTestBehavior.deferToChild,
-                              // todo onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
-                              onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
-                                if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
-                                  return;
-                                }
-                                final offset = replyOffsets[index];
-                                offset.value += details.delta.dx * 0.5;
-                                if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
-                                  HapticFeedback.lightImpact();
-                                  gaveHapticFeedback = true;
-                                } else if (offset.value.abs() < SlideToReply.replyThreshold) {
-                                  gaveHapticFeedback = false;
-                                }
-                              },
-                              onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
-                                final offset = replyOffsets[index];
-                                if (offset.value.abs() >= SlideToReply.replyThreshold) {
-                                  widget.cvController.replyToMessage = message;
-                                }
-                                offset.value = 0;
-                              },
-                              onHorizontalDragCancel: !canSwipeToReply ? null : () {
-                                replyOffsets[index].value = 0;
-                              },
-                              child: message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? InteractiveHolder(
-                                parentController: controller,
-                                message: e,
-                              ) : e.attachments.isEmpty ? TextBubble(
-                                parentController: controller,
-                                message: e,
-                              ) : AttachmentHolder(
-                                parentController: controller,
-                                message: e,
-                              ),
+                            Stack(
+                              alignment: Alignment.center,
+                              fit: StackFit.loose,
+                              children: [
+                                GestureDetector(
+                                  behavior: HitTestBehavior.deferToChild,
+                                  // todo onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
+                                  onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
+                                    if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
+                                      return;
+                                    }
+                                    final offset = replyOffsets[index];
+                                    offset.value += details.delta.dx * 0.5;
+                                    if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
+                                      HapticFeedback.lightImpact();
+                                      gaveHapticFeedback = true;
+                                    } else if (offset.value.abs() < SlideToReply.replyThreshold) {
+                                      gaveHapticFeedback = false;
+                                    }
+                                  },
+                                  onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
+                                    final offset = replyOffsets[index];
+                                    if (offset.value.abs() >= SlideToReply.replyThreshold) {
+                                      widget.cvController.replyToMessage = message;
+                                    }
+                                    offset.value = 0;
+                                  },
+                                  onHorizontalDragCancel: !canSwipeToReply ? null : () {
+                                    replyOffsets[index].value = 0;
+                                  },
+                                  child: message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? InteractiveHolder(
+                                    parentController: controller,
+                                    message: e,
+                                  ) : e.attachments.isEmpty ? TextBubble(
+                                    parentController: controller,
+                                    message: e,
+                                  ) : AttachmentHolder(
+                                    parentController: controller,
+                                    message: e,
+                                  ),
+                                ),
+                                StickerHolder(stickerMessages: stickers.where((s) => s.associatedMessagePart == e.part)),
+                              ],
                             ),
                           if (canSwipeToReply && !message.isGroupEvent && !e.isUnsent)
                             Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
