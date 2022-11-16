@@ -89,7 +89,9 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
         if (existingPart != null) {
           existingPart.edits.addAll(edits
               .where((e) => e.text?.values.isNotEmpty ?? false)
-              .map((e) => attributedBodyToMessagePart(e.text!.values.first)).toList());
+              .map((e) => attributedBodyToMessagePart(e.text!.values.first).firstOrNull)
+              .where((e) => e != null).map((e) => e!).toList());
+          existingPart.edits.removeLast();
         }
       }
     }
@@ -105,10 +107,10 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
     messageParts.sort((a, b) => a.part.compareTo(b.part));
   }
 
-  List<MessagePart> attributedBodyToMessagePart(AttributedBody e) {
-    final mainString = message.attributedBody.first.string;
+  List<MessagePart> attributedBodyToMessagePart(AttributedBody body) {
+    final mainString = body.string;
     final list = <MessagePart>[];
-    message.attributedBody.first.runs.forEachIndexed((i, e) {
+    body.runs.forEachIndexed((i, e) {
       if (e.attributes?.messagePart == null) return;
       final existingPart = list.firstWhereOrNull((element) => element.part == e.attributes!.messagePart!);
       // this should only happen if there is a mention in the middle breaking up the text
@@ -202,6 +204,24 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                           if (reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty
                               && !(chat.isGroup && !message.isFromMe! && showSender && e.part == messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
                             const SizedBox(height: 15),
+                          if (e.isEdited)
+                            Obx(() => AnimatedSize(
+                              duration: const Duration(milliseconds: 250),
+                              alignment: Alignment.bottomCenter,
+                              curve: controller.showEdits.value ? Curves.easeOutBack : Curves.easeOut,
+                              child: controller.showEdits.value ? Opacity(
+                                opacity: 0.75,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: e.edits.map((edit) => TextBubble(
+                                    parentController: controller,
+                                    message: edit,
+                                  )).toList(),
+                                ),
+                              ) : Container(height: 0, constraints: BoxConstraints(
+                                maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30
+                              )),
+                            )),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [

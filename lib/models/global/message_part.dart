@@ -20,7 +20,7 @@ class MessagePart {
   List<Attachment> attachments;
   List<Mention> mentions;
   bool isUnsent;
-  List<List<MessagePart>> edits;
+  List<MessagePart> edits;
   int part;
 
   bool get isEdited => edits.isNotEmpty;

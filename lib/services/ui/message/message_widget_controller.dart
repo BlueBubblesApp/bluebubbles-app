@@ -29,6 +29,8 @@ MessageWidgetController? getActiveMwc(String guid) => Get.isRegistered<MessageWi
     ? Get.find<MessageWidgetController>(tag: guid) : null;
 
 class MessageWidgetController extends StatefulController with SingleGetTickerProviderMixin {
+  final RxBool showEdits = false.obs;
+
   late List<MessagePart> parts;
   Message message;
   String? oldMessageGuid;

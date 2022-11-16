@@ -55,7 +55,7 @@ class _MessagePropertiesState extends CustomState<MessageProperties, void, Messa
       properties.add(TextSpan(
         text: "Edited",
         recognizer: TapGestureRecognizer()..onTap = () {
-          // todo
+          controller.showEdits.toggle();
         }
       ));
     }
