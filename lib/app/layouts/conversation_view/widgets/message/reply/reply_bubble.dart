@@ -73,7 +73,34 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
                     fontSize: context.theme.textTheme.bodyLarge!.fontSize!,
                     borderThickness: 0.1,
                   ),
-                message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? ConstrainedBox(
+                controller.parts.length <= widget.part ? ClipPath(
+                  clipper: TailClipper(
+                    isFromMe: message.isFromMe!,
+                    showTail: true,
+                  ),
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
+                      minHeight: 30,
+                    ),
+                    child: CustomPaint(
+                      painter: TailPainter(
+                        isFromMe: message.isFromMe!,
+                        showTail: true,
+                        color: context.theme.colorScheme.errorContainer,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0)),
+                        child: Text(
+                          "Failed to parse thread parts!",
+                          style: (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
+                            color: context.theme.colorScheme.onErrorContainer,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ) : message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 70),
                   child: InteractiveHolder(
                     parentController: controller,
