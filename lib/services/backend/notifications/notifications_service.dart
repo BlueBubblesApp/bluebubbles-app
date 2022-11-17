@@ -69,7 +69,8 @@ class NotificationsService extends GetxService {
       countSub = countQuery.listen((event) {
         if (!ss.settings.finishedSetup.value) return;
         final newCount = event.count();
-        if (newCount > currentCount && currentCount != 0) {
+        final activeChatFetching = cm.activeChat != null ? ms(cm.activeChat!.chat.guid).isFetching : false;
+        if (!activeChatFetching && newCount > currentCount && currentCount != 0) {
           event.limit = newCount - currentCount;
           final messages = event.find();
           event.limit = 0;

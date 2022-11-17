@@ -336,8 +336,8 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                   key: listKey,
                   itemBuilder: (BuildContext context, int index, Animation<double> animation) {
                     // paginate
-                    if (index == _messages.length) {
-                      if (!noMoreMessages && initialized) {
+                    if (index >= _messages.length) {
+                      if (!noMoreMessages && initialized && index == _messages.length) {
                         if (!fetching) {
                           loadNextChunk();
                         }

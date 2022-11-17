@@ -42,8 +42,8 @@ class MessageHolder extends CustomStateful<MessageWidgetController> {
 
 class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidgetController> {
   Message get message => controller.message;
-  Message? get olderMessage => controller.oldMwc?.message;
-  Message? get newerMessage => controller.newMwc?.message;
+  Message? get olderMessage => widget.oldMessageGuid == null ? null : service.struct.getMessage(widget.oldMessageGuid!);
+  Message? get newerMessage => controller.newMessage;
   Message? get threadOriginator => message.threadOriginatorGuid == null
       ? null : service.struct.getThreadOriginator(message.threadOriginatorGuid!);
   Chat get chat => widget.cvController.chat;
@@ -59,7 +59,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   @override
   void initState() {
     forceDelete = false;
-    controller.oldMessageGuid = widget.oldMessageGuid;
+    controller.cvController = widget.cvController;
     controller.newMessageGuid = widget.newMessageGuid;
     super.initState();
     buildMessageParts();
@@ -149,8 +149,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
 
   @override
   Widget build(BuildContext context) {
-    controller.oldMessageGuid = widget.oldMessageGuid;
-    controller.newMessageGuid = widget.newMessageGuid;
     final stickers = message.associatedMessages.where((e) => e.associatedMessageType == "sticker");
     final reactions = message.associatedMessages.where((e) => ReactionTypes.toList().contains(e.associatedMessageType));
     /// Layout tree

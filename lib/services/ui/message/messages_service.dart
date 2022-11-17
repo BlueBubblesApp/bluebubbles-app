@@ -32,6 +32,7 @@ class MessagesService extends GetxController {
   MessagesService(this.tag);
 
   int currentCount = 0;
+  bool isFetching = false;
 
   Message? get mostRecentSent => (struct.messages.where((e) => e.isFromMe!).toList()
       ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
@@ -50,7 +51,7 @@ class MessagesService extends GetxController {
     countSub = countQuery.listen((event) {
       if (!ss.settings.finishedSetup.value) return;
       final newCount = event.count();
-      if (newCount > currentCount && currentCount != 0) {
+      if (!isFetching && newCount > currentCount && currentCount != 0) {
         event.limit = newCount - currentCount;
         final messages = event.find();
         event.limit = 0;
@@ -107,6 +108,7 @@ class MessagesService extends GetxController {
   }
 
   Future<bool> loadChunk(int offset) async {
+    isFetching = true;
     List<Message> _messages = [];
     offset = offset + struct.reactions.length;
     try {
@@ -132,10 +134,12 @@ class MessagesService extends GetxController {
       final threadOriginator = Message.findOne(guid: guid);
       if (threadOriginator != null) struct.addThreadOriginator(threadOriginator);
     }
+    isFetching = false;
     return _messages.isNotEmpty;
   }
 
   Future<void> loadSearchChunk(Message around, SearchMethod method) async {
+    isFetching = true;
     List<Message> _messages = [];
     if (method == SearchMethod.local) {
       _messages = await Chat.getMessagesAsync(chat, searchAround: around.dateCreated!.millisecondsSinceEpoch);
@@ -159,6 +163,7 @@ class MessagesService extends GetxController {
       _messages.sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
       struct.addMessages(_messages);
     }
+    isFetching = false;
   }
 
   static Future<List<dynamic>> getMessages({

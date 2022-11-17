@@ -31,8 +31,7 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
   MessagePart get part => widget.message;
   Message get message => controller.message;
   PayloadData? get payloadData => message.payloadData;
-  Message? get olderMessage => controller.oldMwc?.message;
-  Message? get newerMessage => controller.newMwc?.message;
+  Message? get newerMessage => controller.newMessage;
 
   @override
   void initState() {

@@ -36,7 +36,7 @@ class AttachmentHolder extends CustomStateful<MessageWidgetController> {
 class _AttachmentHolderState extends CustomState<AttachmentHolder, void, MessageWidgetController> {
   MessagePart get part => widget.message;
   Message get message => controller.message;
-  Message? get newerMessage => controller.newMwc?.message;
+  Message? get newerMessage => controller.newMessage;
   Attachment get attachment => part.attachments.first;
   late dynamic content;
 

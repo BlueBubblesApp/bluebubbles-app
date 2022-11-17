@@ -28,8 +28,6 @@ class ReplyBubble extends CustomStateful<MessageWidgetController> {
 class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetController> {
   MessagePart get part => controller.parts[widget.part];
   Message get message => controller.message;
-  Message? get olderMessage => controller.oldMwc?.message;
-  Message? get newerMessage => controller.newMwc?.message;
 
   @override
   void initState() {
