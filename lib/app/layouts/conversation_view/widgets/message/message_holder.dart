@@ -6,6 +6,8 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/m
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_sender.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/slide_to_reply.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_line_painter.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/message_timestamp.dart';
@@ -42,7 +44,10 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   Message get message => controller.message;
   Message? get olderMessage => controller.oldMwc?.message;
   Message? get newerMessage => controller.newMwc?.message;
+  Message? get threadOriginator => message.threadOriginatorGuid == null
+      ? null : service.struct.getThreadOriginator(message.threadOriginatorGuid!);
   Chat get chat => widget.cvController.chat;
+  MessagesService get service => ms(widget.cvController.chat.guid);
   bool get canSwipeToReply => ss.settings.enablePrivateAPI.value && ss.settings.swipeToReply.value && chat.isIMessage;
   bool get showSender => !message.isGroupEvent && (!message.sameSender(olderMessage)
       || (olderMessage == null || !message.dateCreated!.isWithin(olderMessage!.dateCreated!, minutes: 30)));
@@ -129,8 +134,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
           subject: i == 0 ? message.subject : null,
           text: e.isAttachment ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
           attachments: e.isAttachment ? [
-            ms(widget.cvController.chat.guid).struct.getAttachment(e.attributes!.attachmentGuid!)
-                ?? Attachment.findOne(e.attributes!.attachmentGuid!)
+            service.struct.getAttachment(e.attributes!.attachmentGuid!) ?? Attachment.findOne(e.attributes!.attachmentGuid!)
           ].where((e) => e != null).map((e) => e!).toList() : [],
           mentions: !e.hasMention ? [] : [Mention(
             mentionedAddress: e.attributes?.mention,
@@ -145,6 +149,8 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
 
   @override
   Widget build(BuildContext context) {
+    controller.oldMessageGuid = widget.oldMessageGuid;
+    controller.newMessageGuid = widget.newMessageGuid;
     final stickers = message.associatedMessages.where((e) => e.associatedMessageType == "sticker");
     final reactions = message.associatedMessages.where((e) => ReactionTypes.toList().contains(e.associatedMessageType));
     /// Layout tree
@@ -184,9 +190,6 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
               ),
             Row(
               children: [
-                // shift over by avatar width
-                if (chat.isGroup)
-                  const SizedBox(width: 35),
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -197,117 +200,214 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: message.isFromMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                         children: [
+                          // add previous edits if needed
+                          if (e.isEdited)
+                            Padding(
+                              padding: chat.isGroup ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                              child: Obx(() => AnimatedSize(
+                                duration: const Duration(milliseconds: 250),
+                                alignment: Alignment.bottomCenter,
+                                curve: controller.showEdits.value ? Curves.easeOutBack : Curves.easeOut,
+                                child: controller.showEdits.value ? Opacity(
+                                  opacity: 0.75,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: e.edits.map((edit) => TextBubble(
+                                      parentController: controller,
+                                      message: edit,
+                                    )).toList(),
+                                  ),
+                                ) : Container(height: 0, constraints: BoxConstraints(
+                                    maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30
+                                )),
+                              )),
+                            ),
+                          if (index == 0
+                              && olderMessage != null
+                              && message.threadOriginatorGuid != null
+                              && message.showUpperMessage(olderMessage!)
+                              && getActiveMwc(message.threadOriginatorGuid!) != null)
+                            IntrinsicHeight(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  Container(
+                                    alignment: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
+                                    child: ReplyBubble(
+                                      parentController: getActiveMwc(message.threadOriginatorGuid!)!,
+                                      part: message.normalizedThreadPart,
+                                      showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value) && !getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe == message.isFromMe ? Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10.0).add(
+                                          EdgeInsets.only(left: message.isFromMe! ? 30 : 0, right: !message.isFromMe! ? 30 : 0)
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          const Expanded(
+                                            child: SizedBox.expand(),
+                                          ),
+                                          Expanded(
+                                            child: SizedBox.expand(
+                                              child: CustomPaint(
+                                                painter: ReplyLinePainter(
+                                                  isFromMe: message.isFromMe!,
+                                                  color: context.theme.colorScheme.properSurface,
+                                                  connectUpper: false,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ]
+                                      ),
+                                    ) : const SizedBox(),
+                                  ),
+                                ].conditionalReverse(!getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!),
+                              ),
+                            ),
                           // show sender, if needed
                           if (chat.isGroup && !message.isFromMe! && showSender && e.part == (messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
-                            MessageSender(olderMessage: olderMessage, message: message),
+                            Padding(
+                              padding: chat.isGroup ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                              child: MessageSender(olderMessage: olderMessage, message: message),
+                            ),
                           // add a box to account for height of reactions if
                           // a sender wasn't added and there are reactions
                           if (reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty
-                              && !(chat.isGroup && !message.isFromMe! && showSender && e.part == messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
+                              && !(chat.isGroup
+                                  && !message.isFromMe!
+                                  && showSender
+                                  && e.part == messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
                             const SizedBox(height: 15),
-                          // add previous edits if needed
-                          if (e.isEdited)
-                            Obx(() => AnimatedSize(
-                              duration: const Duration(milliseconds: 250),
-                              alignment: Alignment.bottomCenter,
-                              curve: controller.showEdits.value ? Curves.easeOutBack : Curves.easeOut,
-                              child: controller.showEdits.value ? Opacity(
-                                opacity: 0.75,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: e.edits.map((edit) => TextBubble(
-                                    parentController: controller,
-                                    message: edit,
-                                  )).toList(),
-                                ),
-                              ) : Container(height: 0, constraints: BoxConstraints(
-                                maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30
-                              )),
-                            )),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // show group event
-                              if (message.isGroupEvent || e.isUnsent)
-                                ChatEvent(
-                                  part: e,
-                                  message: message,
-                                ),
-                              // otherwise show content
-                              if (!message.isGroupEvent && !e.isUnsent)
-                                Stack(
-                                  alignment: Alignment.center,
-                                  fit: StackFit.loose,
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    // actual message content
-                                    GestureDetector(
-                                      behavior: HitTestBehavior.deferToChild,
-                                      // todo onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
-                                      onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
-                                        if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
-                                          return;
-                                        }
-                                        final offset = replyOffsets[index];
-                                        offset.value += details.delta.dx * 0.5;
-                                        if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
-                                          HapticFeedback.lightImpact();
-                                          gaveHapticFeedback = true;
-                                        } else if (offset.value.abs() < SlideToReply.replyThreshold) {
-                                          gaveHapticFeedback = false;
-                                        }
-                                      },
-                                      onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
-                                        final offset = replyOffsets[index];
-                                        if (offset.value.abs() >= SlideToReply.replyThreshold) {
-                                          widget.cvController.replyToMessage = message;
-                                        }
-                                        offset.value = 0;
-                                      },
-                                      onHorizontalDragCancel: !canSwipeToReply ? null : () {
-                                        replyOffsets[index].value = 0;
-                                      },
-                                      child: message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? InteractiveHolder(
-                                        parentController: controller,
-                                        message: e,
-                                      ) : e.attachments.isEmpty ? TextBubble(
-                                        parentController: controller,
-                                        message: e,
-                                      ) : AttachmentHolder(
-                                        parentController: controller,
-                                        message: e,
-                                      ),
+                          Padding(
+                            padding: chat.isGroup ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                            child: IntrinsicHeight(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  if (!message.isGroupEvent && !e.isUnsent)
+                                    Expanded(
+                                      child: (index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
+                                          || (index == messageParts.length - 1 && service.struct.threads(message.guid!).isNotEmpty && newerMessage != null) ? Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10.0).add(
+                                          EdgeInsets.only(left: message.isFromMe! ? 30 : 0, right: !message.isFromMe! ? 30 : 0)
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Expanded(
+                                              child: SizedBox.expand(
+                                                child: message.connectToUpper() ? CustomPaint(
+                                                  painter: ReplyLinePainter(
+                                                    isFromMe: message.isFromMe!,
+                                                    color: context.theme.colorScheme.properSurface,
+                                                    connectUpper: true,
+                                                  ),
+                                                ) : null,
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: SizedBox.expand(
+                                                child: newerMessage != null && message.connectToLower(newerMessage!) ? CustomPaint(
+                                                  painter: ReplyLinePainter(
+                                                    isFromMe: message.isFromMe!,
+                                                    color: context.theme.colorScheme.properSurface,
+                                                    connectUpper: false,
+                                                  ),
+                                                ) : null,
+                                              ),
+                                            ),
+                                          ]
+                                        ),
+                                      ) : const SizedBox(),
                                     ),
-                                    // show stickers on top
-                                    StickerHolder(stickerMessages: stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part)),
-                                    // show reactions on top
-                                    if (message.isFromMe!)
-                                      Positioned(
-                                        top: -15,
-                                        left: -20,
-                                        child: ReactionHolder(
-                                          reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
-                                          message: message,
+                                  // show group event
+                                  if (message.isGroupEvent || e.isUnsent)
+                                    ChatEvent(
+                                      part: e,
+                                      message: message,
+                                    ),
+                                  // otherwise show content
+                                  if (!message.isGroupEvent && !e.isUnsent)
+                                    Stack(
+                                      alignment: Alignment.center,
+                                      fit: StackFit.loose,
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        // actual message content
+                                        GestureDetector(
+                                          behavior: HitTestBehavior.deferToChild,
+                                          // todo onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
+                                          onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
+                                            if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
+                                              return;
+                                            }
+                                            final offset = replyOffsets[index];
+                                            offset.value += details.delta.dx * 0.5;
+                                            if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
+                                              HapticFeedback.lightImpact();
+                                              gaveHapticFeedback = true;
+                                            } else if (offset.value.abs() < SlideToReply.replyThreshold) {
+                                              gaveHapticFeedback = false;
+                                            }
+                                          },
+                                          onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
+                                            final offset = replyOffsets[index];
+                                            if (offset.value.abs() >= SlideToReply.replyThreshold) {
+                                              widget.cvController.replyToMessage = message;
+                                            }
+                                            offset.value = 0;
+                                          },
+                                          onHorizontalDragCancel: !canSwipeToReply ? null : () {
+                                            replyOffsets[index].value = 0;
+                                          },
+                                          child: message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? InteractiveHolder(
+                                            parentController: controller,
+                                            message: e,
+                                          ) : e.attachments.isEmpty ? TextBubble(
+                                            parentController: controller,
+                                            message: e,
+                                          ) : AttachmentHolder(
+                                            parentController: controller,
+                                            message: e,
+                                          ),
                                         ),
-                                      ),
-                                    if (!message.isFromMe!)
-                                      Positioned(
-                                        top: -15,
-                                        right: -20,
-                                        child: ReactionHolder(
-                                          reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
-                                          message: message,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              // swipe to reply
-                              if (canSwipeToReply && !message.isGroupEvent && !e.isUnsent)
-                                Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
-                            ].conditionalReverse(message.isFromMe!),
+                                        // show stickers on top
+                                        StickerHolder(stickerMessages: stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part)),
+                                        // show reactions on top
+                                        if (message.isFromMe!)
+                                          Positioned(
+                                            top: -15,
+                                            left: -20,
+                                            child: ReactionHolder(
+                                              reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                              message: message,
+                                            ),
+                                          ),
+                                        if (!message.isFromMe!)
+                                          Positioned(
+                                            top: -15,
+                                            right: -20,
+                                            child: ReactionHolder(
+                                              reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                              message: message,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  // swipe to reply
+                                  if (canSwipeToReply && !message.isGroupEvent && !e.isUnsent)
+                                    Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
+                                ].conditionalReverse(message.isFromMe!),
+                              ),
+                            ),
                           ),
                           // message properties (replies, edits, effect)
-                          MessageProperties(parentController: controller, part: e),
+                          Padding(
+                            padding: chat.isGroup ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
+                            child: MessageProperties(parentController: controller, part: e),
+                          ),
                         ],
                       )),
                       // delivered / read receipt

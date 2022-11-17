@@ -22,7 +22,7 @@ class MentionEntity extends Entity {
 List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Message message, {Color? colorOverride}) {
   final textSpans = <InlineSpan>[];
   final textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
-    color: message.isFromMe! ? context.theme.colorScheme.onPrimary : (colorOverride ?? context.theme.colorScheme.properOnSurface),
+    color: colorOverride ?? (message.isFromMe! ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.properOnSurface),
   );
 
   if (!isNullOrEmpty(part.subject)!) {
@@ -72,7 +72,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
 Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, MessagePart part, Message message, {Color? colorOverride}) async {
   final textSpans = <InlineSpan>[];
   final textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
-    color: message.isFromMe! ? context.theme.colorScheme.onPrimary : (colorOverride ?? context.theme.colorScheme.properOnSurface),
+    color: colorOverride ?? (message.isFromMe! ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.properOnSurface),
   );
   // extract rich content
   final urlRegex = RegExp(r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
