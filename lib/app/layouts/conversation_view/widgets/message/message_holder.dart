@@ -283,7 +283,9 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                               const SizedBox(height: 15),
                             Padding(
                               padding: chat.isGroup ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
-                              child: IntrinsicHeight(
+                              child: IntrinsicHeightWrapper(
+                                useIntrinsicHeight: (index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
+                                  || (index == messageParts.length - 1 && service.struct.threads(message.guid!).isNotEmpty && newerMessage != null),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.max,
                                   children: [
@@ -425,5 +427,21 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
         ),
       ],
     );
+  }
+}
+
+class IntrinsicHeightWrapper extends StatelessWidget {
+  final bool useIntrinsicHeight;
+  final Widget child;
+
+  const IntrinsicHeightWrapper({required this.useIntrinsicHeight, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (useIntrinsicHeight) {
+      return IntrinsicHeight(child: child);
+    } else {
+      return child;
+    }
   }
 }
