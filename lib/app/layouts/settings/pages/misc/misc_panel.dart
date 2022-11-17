@@ -166,13 +166,12 @@ class _MiscPanelState extends OptimizedState<MiscPanel> {
                   Obx(() =>
                       SettingsSwitch(
                         onChanged: (bool val) {
-                          ss.settings.lowMemoryMode.value = val;
+                          ss.settings.highPerfMode.value = val;
                           saveSettings();
                         },
-                        initialVal: ss.settings.lowMemoryMode.value,
-                        title: "Low Memory Mode",
-                        subtitle:
-                        "Reduces background processes and deletes cached storage items to improve performance on lower-end devices",
+                        initialVal: ss.settings.highPerfMode.value,
+                        title: "High Performance Mode",
+                        subtitle: "Removes inline images and videos to boost performance on lower-end devices",
                         isThreeLine: true,
                         backgroundColor: tileColor,
                       )),

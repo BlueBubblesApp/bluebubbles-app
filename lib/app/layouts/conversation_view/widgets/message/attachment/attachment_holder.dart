@@ -204,7 +204,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                             );
                           } else if (content is PlatformFile) {
                             final PlatformFile _content = content;
-                            if (attachment.mimeStart == "image") {
+                            if (attachment.mimeStart == "image" && !ss.settings.highPerfMode.value) {
                               return OpenContainer(
                                 tappable: false,
                                 openColor: Colors.black,
@@ -235,7 +235,7 @@ class _AttachmentHolderState extends CustomState<AttachmentHolder, void, Message
                                   );
                                 }
                               );
-                            } else if (attachment.mimeStart == "video" && !kIsDesktop) {
+                            } else if (attachment.mimeStart == "video" && !kIsDesktop && !ss.settings.highPerfMode.value) {
                               return VideoPlayer(
                                 attachment: attachment,
                                 file: _content,

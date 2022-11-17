@@ -116,7 +116,7 @@ class ImageWidget extends StatelessWidget {
       builder: (controller) => VisibilityDetector(
         key: Key(controller.attachment.guid!),
         onVisibilityChanged: (info) {
-          if (!ss.settings.lowMemoryMode.value) return;
+          if (!ss.settings.highPerfMode.value) return;
           if (info.visibleFraction == 0 && controller.visible && !controller.navigated) {
             controller.visible = false;
             controller.controller.imageData.remove(attachment.guid);

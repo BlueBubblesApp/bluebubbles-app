@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -28,6 +30,18 @@ class OtherFile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () async {
+        if (attachment.mimeStart == "image" || (attachment.mimeStart == "video" && !kIsDesktop)) {
+          Navigator.of(Get.context!).push(
+            ThemeSwitcher.buildPageRoute(
+              builder: (context) => AttachmentFullscreenViewer(
+                currentChat: cm.activeChat,
+                attachment: attachment,
+                showInteractions: true,
+              ),
+            ),
+          );
+          return;
+        }
         if (kIsWeb || file.path == null) {
           final content = base64.encode(file.bytes!);
           html.AnchorElement(

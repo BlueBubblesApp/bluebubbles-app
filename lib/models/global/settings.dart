@@ -18,7 +18,7 @@ class Settings {
   final RxBool autoOpenKeyboard = true.obs;
   final RxBool hideTextPreviews = false.obs;
   final RxBool showIncrementalSync = false.obs;
-  final RxBool lowMemoryMode = false.obs;
+  final RxBool highPerfMode = false.obs;
   final RxInt lastIncrementalSync = 0.obs;
   final RxInt refreshRate = 0.obs;
   final RxBool colorfulAvatars = false.obs;
@@ -184,7 +184,7 @@ class Settings {
       'autoOpenKeyboard': autoOpenKeyboard.value,
       'hideTextPreviews': hideTextPreviews.value,
       'showIncrementalSync': showIncrementalSync.value,
-      'lowMemoryMode': lowMemoryMode.value,
+      'highPerfMode': highPerfMode.value,
       'lastIncrementalSync': lastIncrementalSync.value,
       'refreshRate': refreshRate.value,
       'colorfulAvatars': colorfulAvatars.value,
@@ -299,7 +299,7 @@ class Settings {
     ss.settings.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     ss.settings.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
     ss.settings.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
-    ss.settings.lowMemoryMode.value = map['lowMemoryMode'] ?? false;
+    ss.settings.highPerfMode.value = map['highPerfMode'] ?? false;
     ss.settings.refreshRate.value = map['refreshRate'] ?? 0;
     ss.settings.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     ss.settings.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
@@ -415,7 +415,7 @@ class Settings {
     s.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     s.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
     s.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
-    s.lowMemoryMode.value = map['lowMemoryMode'] ?? false;
+    s.highPerfMode.value = map['highPerfMode'] ?? false;
     s.lastIncrementalSync.value = map['lastIncrementalSync'] ?? 0;
     s.refreshRate.value = map['refreshRate'] ?? 0;
     s.colorfulAvatars.value = map['colorfulAvatars'] ?? false;

@@ -111,7 +111,7 @@ class SettingsService extends GetxService {
     return val.item1 >= 11;
   }
 
-  int get compressionQuality => settings.lowMemoryMode.value ? 10 : settings.previewCompressionQuality.value;
+  int get compressionQuality => settings.highPerfMode.value ? 10 : settings.previewCompressionQuality.value;
 
   Future<void> checkServerUpdate({bool showDialog = true, BuildContext? context}) async {
     if (showDialog) assert(context != null);

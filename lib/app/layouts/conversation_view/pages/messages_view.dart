@@ -356,31 +356,18 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                       newerMessage = _messages[index - 1];
                     }
 
-                    final bool useNewRendering = ss.settings.lowMemoryMode.value;
-                    Widget messageWidget = Padding(
+                    final messageWidget = Padding(
                       padding: const EdgeInsets.only(left: 5.0, right: 5.0),
                       child: AutoScrollTag(
                         key: ValueKey("${_messages[index].guid!}-scrolling"),
                         index: index,
                         controller: scrollController,
                         highlightColor: context.theme.colorScheme.surface.withOpacity(0.7),
-                        child: useNewRendering ? MessageHolder(
+                        child: MessageHolder(
                           cvController: controller,
                           message: _messages[index],
                           oldMessageGuid: olderMessage?.guid,
                           newMessageGuid: newerMessage?.guid,
-                        ) : MessageWidget(
-                          key: Key(_messages[index].guid!),
-                          message: _messages[index],
-                          olderMessage: olderMessage,
-                          newerMessage: newerMessage,
-                          showHandle: chat.participants.length > 1,
-                          isFirstSentMessage: messageService.mostRecentSent?.guid == _messages[index].guid,
-                          showHero: index == 0,
-                          showReplies: true,
-                          bloc: messageService,
-                          controller: controller,
-                          autoplayEffect: index == 0 && _messages[index].originalROWID != null,
                         ),
                       ),
                     );
