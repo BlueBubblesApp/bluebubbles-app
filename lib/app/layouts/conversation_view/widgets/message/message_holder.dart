@@ -227,44 +227,24 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                 && message.threadOriginatorGuid != null
                                 && message.showUpperMessage(olderMessage!)
                                 && getActiveMwc(message.threadOriginatorGuid!) != null)
-                              IntrinsicHeight(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Container(
-                                      alignment: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
-                                      child: ReplyBubble(
-                                        parentController: getActiveMwc(message.threadOriginatorGuid!)!,
-                                        part: message.normalizedThreadPart,
-                                        showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value) && !getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe == message.isFromMe ? Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10.0).add(
-                                            EdgeInsets.only(left: (message.isFromMe! ? 30 : 0) + (chat.isGroup ? 35 : 0), right: !message.isFromMe! ? 30 : 0)
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            const Expanded(
-                                              child: SizedBox.expand(),
-                                            ),
-                                            Expanded(
-                                              child: SizedBox.expand(
-                                                child: CustomPaint(
-                                                  painter: ReplyLinePainter(
-                                                    isFromMe: message.isFromMe!,
-                                                    color: context.theme.colorScheme.properSurface,
-                                                    connectUpper: false,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ]
-                                        ),
-                                      ) : const SizedBox(),
-                                    ),
-                                  ].conditionalReverse(!getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!),
+                              DecoratedBox(
+                                decoration: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe == message.isFromMe ? ReplyLineDecoration(
+                                  isFromMe: message.isFromMe!,
+                                  color: context.theme.colorScheme.properSurface,
+                                  connectUpper: false,
+                                  connectLower: true,
+                                  context: context,
+                                ) : const BoxDecoration(),
+                                child: Container(
+                                  width: double.infinity,
+                                  alignment: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!
+                                      ? Alignment.centerRight : Alignment.centerLeft,
+                                  child: ReplyBubble(
+                                    parentController: getActiveMwc(message.threadOriginatorGuid!)!,
+                                    part: message.normalizedThreadPart,
+                                    showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value)
+                                        && !getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!,
+                                  ),
                                 ),
                               ),
                             // show sender, if needed
@@ -283,125 +263,101 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                               const SizedBox(height: 15),
                             Padding(
                               padding: chat.isGroup ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
-                              child: IntrinsicHeightWrapper(
-                                useIntrinsicHeight: (index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
-                                  || (index == messageParts.length - 1 && service.struct.threads(message.guid!).isNotEmpty && newerMessage != null),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    if (!message.isGroupEvent && !e.isUnsent)
-                                      Expanded(
-                                        child: (index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
-                                            || (index == messageParts.length - 1 && service.struct.threads(message.guid!).isNotEmpty && newerMessage != null) ? Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10.0).add(
-                                            EdgeInsets.only(left: message.isFromMe! ? 30 : 0, right: !message.isFromMe! ? 30 : 0)
-                                          ),
-                                          child: Column(
-                                            children: [
-                                              Expanded(
-                                                child: SizedBox.expand(
-                                                  child: message.connectToUpper() ? CustomPaint(
-                                                    painter: ReplyLinePainter(
-                                                      isFromMe: message.isFromMe!,
-                                                      color: context.theme.colorScheme.properSurface,
-                                                      connectUpper: true,
-                                                    ),
-                                                  ) : null,
+                              child: DecoratedBox(
+                                decoration: (index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
+                                    || (index == messageParts.length - 1 && service.struct.threads(message.guid!).isNotEmpty && newerMessage != null)
+                                    ? ReplyLineDecoration(
+                                  isFromMe: message.isFromMe!,
+                                  color: context.theme.colorScheme.properSurface,
+                                  connectUpper: message.connectToUpper(),
+                                  connectLower: newerMessage != null && message.connectToLower(newerMessage!),
+                                  context: context,
+                                ) : const BoxDecoration(),
+                                child: Container(
+                                  width: double.infinity,
+                                  alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // show group event
+                                      if (message.isGroupEvent || e.isUnsent)
+                                        ChatEvent(
+                                          part: e,
+                                          message: message,
+                                        ),
+                                      // otherwise show content
+                                      if (!message.isGroupEvent && !e.isUnsent)
+                                        Stack(
+                                          alignment: Alignment.center,
+                                          fit: StackFit.loose,
+                                          clipBehavior: Clip.none,
+                                          children: [
+                                            // actual message content
+                                            GestureDetector(
+                                              behavior: HitTestBehavior.deferToChild,
+                                              // todo onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
+                                              onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
+                                                if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
+                                                  return;
+                                                }
+                                                final offset = replyOffsets[index];
+                                                offset.value += details.delta.dx * 0.5;
+                                                if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
+                                                  HapticFeedback.lightImpact();
+                                                  gaveHapticFeedback = true;
+                                                } else if (offset.value.abs() < SlideToReply.replyThreshold) {
+                                                  gaveHapticFeedback = false;
+                                                }
+                                              },
+                                              onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
+                                                final offset = replyOffsets[index];
+                                                if (offset.value.abs() >= SlideToReply.replyThreshold) {
+                                                  widget.cvController.replyToMessage = message;
+                                                }
+                                                offset.value = 0;
+                                              },
+                                              onHorizontalDragCancel: !canSwipeToReply ? null : () {
+                                                replyOffsets[index].value = 0;
+                                              },
+                                              child: message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? InteractiveHolder(
+                                                parentController: controller,
+                                                message: e,
+                                              ) : e.attachments.isEmpty ? TextBubble(
+                                                parentController: controller,
+                                                message: e,
+                                              ) : AttachmentHolder(
+                                                parentController: controller,
+                                                message: e,
+                                              ),
+                                            ),
+                                            // show stickers on top
+                                            StickerHolder(stickerMessages: stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part)),
+                                            // show reactions on top
+                                            if (message.isFromMe!)
+                                              Positioned(
+                                                top: -15,
+                                                left: -20,
+                                                child: ReactionHolder(
+                                                  reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                                  message: message,
                                                 ),
                                               ),
-                                              Expanded(
-                                                child: SizedBox.expand(
-                                                  child: newerMessage != null && message.connectToLower(newerMessage!) ? CustomPaint(
-                                                    painter: ReplyLinePainter(
-                                                      isFromMe: message.isFromMe!,
-                                                      color: context.theme.colorScheme.properSurface,
-                                                      connectUpper: false,
-                                                    ),
-                                                  ) : null,
+                                            if (!message.isFromMe!)
+                                              Positioned(
+                                                top: -15,
+                                                right: -20,
+                                                child: ReactionHolder(
+                                                  reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                                  message: message,
                                                 ),
                                               ),
-                                            ]
-                                          ),
-                                        ) : const SizedBox(),
-                                      ),
-                                    // show group event
-                                    if (message.isGroupEvent || e.isUnsent)
-                                      ChatEvent(
-                                        part: e,
-                                        message: message,
-                                      ),
-                                    // otherwise show content
-                                    if (!message.isGroupEvent && !e.isUnsent)
-                                      Stack(
-                                        alignment: Alignment.center,
-                                        fit: StackFit.loose,
-                                        clipBehavior: Clip.none,
-                                        children: [
-                                          // actual message content
-                                          GestureDetector(
-                                            behavior: HitTestBehavior.deferToChild,
-                                            // todo onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
-                                            onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
-                                              if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
-                                                return;
-                                              }
-                                              final offset = replyOffsets[index];
-                                              offset.value += details.delta.dx * 0.5;
-                                              if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
-                                                HapticFeedback.lightImpact();
-                                                gaveHapticFeedback = true;
-                                              } else if (offset.value.abs() < SlideToReply.replyThreshold) {
-                                                gaveHapticFeedback = false;
-                                              }
-                                            },
-                                            onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
-                                              final offset = replyOffsets[index];
-                                              if (offset.value.abs() >= SlideToReply.replyThreshold) {
-                                                widget.cvController.replyToMessage = message;
-                                              }
-                                              offset.value = 0;
-                                            },
-                                            onHorizontalDragCancel: !canSwipeToReply ? null : () {
-                                              replyOffsets[index].value = 0;
-                                            },
-                                            child: message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? InteractiveHolder(
-                                              parentController: controller,
-                                              message: e,
-                                            ) : e.attachments.isEmpty ? TextBubble(
-                                              parentController: controller,
-                                              message: e,
-                                            ) : AttachmentHolder(
-                                              parentController: controller,
-                                              message: e,
-                                            ),
-                                          ),
-                                          // show stickers on top
-                                          StickerHolder(stickerMessages: stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part)),
-                                          // show reactions on top
-                                          if (message.isFromMe!)
-                                            Positioned(
-                                              top: -15,
-                                              left: -20,
-                                              child: ReactionHolder(
-                                                reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
-                                                message: message,
-                                              ),
-                                            ),
-                                          if (!message.isFromMe!)
-                                            Positioned(
-                                              top: -15,
-                                              right: -20,
-                                              child: ReactionHolder(
-                                                reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
-                                                message: message,
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    // swipe to reply
-                                    if (canSwipeToReply && !message.isGroupEvent && !e.isUnsent)
-                                      Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
-                                  ].conditionalReverse(message.isFromMe!),
+                                          ],
+                                        ),
+                                      // swipe to reply
+                                      if (canSwipeToReply && !message.isGroupEvent && !e.isUnsent)
+                                        Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
+                                    ].conditionalReverse(message.isFromMe!),
+                                  ),
                                 ),
                               ),
                             ),
@@ -427,21 +383,5 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
         ),
       ],
     );
-  }
-}
-
-class IntrinsicHeightWrapper extends StatelessWidget {
-  final bool useIntrinsicHeight;
-  final Widget child;
-
-  const IntrinsicHeightWrapper({required this.useIntrinsicHeight, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    if (useIntrinsicHeight) {
-      return IntrinsicHeight(child: child);
-    } else {
-      return child;
-    }
   }
 }

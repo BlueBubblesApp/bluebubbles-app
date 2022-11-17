@@ -1,20 +1,55 @@
 import 'dart:math';
 
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
-class ReplyLinePainter extends CustomPainter {
+class ReplyLineDecoration extends Decoration {
   final bool isFromMe;
   final bool connectUpper;
+  final bool connectLower;
   final Color color;
+  final BuildContext context;
+
+  const ReplyLineDecoration({
+    required this.isFromMe,
+    required this.connectUpper,
+    required this.connectLower,
+    required this.color,
+    required this.context,
+  });
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) {
+    return ReplyLinePainter(
+      isFromMe: isFromMe,
+      connectUpper: connectUpper,
+      connectLower: connectLower,
+      color: color,
+      context: context,
+    );
+  }
+}
+
+class ReplyLinePainter extends BoxPainter {
+  final bool isFromMe;
+  final bool connectUpper;
+  final bool connectLower;
+  final Color color;
+  final BuildContext context;
 
   const ReplyLinePainter({
     required this.isFromMe,
     required this.connectUpper,
+    required this.connectLower,
     required this.color,
+    required this.context,
   });
 
   @override
-  void paint(Canvas canvas, Size size) {
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final size = configuration.size!;
+    final _offset = offset + Offset(isFromMe ? 35 : 0, 0);
+    final double radius = min(size.height / 2, 30);
     final paint = Paint();
     paint.color = color;
     paint.style = PaintingStyle.stroke;
@@ -23,35 +58,30 @@ class ReplyLinePainter extends CustomPainter {
     final path = Path();
     if (connectUpper) {
       if (!isFromMe) {
-        path.moveTo(0, size.height);
-        path.lineTo(size.width - min(size.height, 30), size.height);
-        path.arcToPoint(Offset(size.width, size.height - min(size.height, 30)), clockwise: false, radius: Radius.circular(min(size.height, 30)));
-        path.lineTo(size.width, 0);
+        path.moveTo(_offset.dx + size.width - 35, _offset.dy);
+        path.lineTo(_offset.dx + size.width - 35, _offset.dy + (size.height / 2 - radius).clamp(0, double.infinity));
+        path.arcToPoint(Offset(_offset.dx + size.width - 35 - radius, _offset.dy + size.height / 2), clockwise: true, radius: Radius.circular(radius));
+        path.lineTo(_offset.dx + ns.width(context) * MessageWidgetController.maxBubbleSizeFactor, _offset.dy + size.height / 2);
       } else {
-        path.moveTo(size.width, size.height);
-        path.lineTo(min(size.height, 30), size.height);
-        path.arcToPoint(Offset(0, size.height - min(size.height, 30)), clockwise: true, radius: Radius.circular(min(size.height, 30)));
-        path.lineTo(0, 0);
+        path.moveTo(_offset.dx, _offset.dy);
+        path.lineTo(_offset.dx, _offset.dy + (size.height / 2 - radius).clamp(0, double.infinity));
+        path.arcToPoint(Offset(_offset.dx + radius, _offset.dy + size.height / 2), clockwise: false, radius: Radius.circular(radius));
+        path.lineTo(_offset.dx + size.width - ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30, _offset.dy + size.height / 2);
       }
-    } else {
+    } else if (connectLower) {
       if (!isFromMe) {
-        path.moveTo(0, 0);
-        path.lineTo(size.width - min(size.height, 30), 0);
-        path.arcToPoint(Offset(size.width, min(size.height, 30)), clockwise: true, radius: Radius.circular(min(size.height, 30)));
-        path.lineTo(size.width, size.height);
+        path.moveTo(_offset.dx + size.width - 35, _offset.dy + size.height);
+        path.lineTo(_offset.dx + size.width - 35, _offset.dy + size.height - (size.height / 2 - radius).clamp(0, double.infinity));
+        path.arcToPoint(Offset(_offset.dx + size.width - 35 - radius, _offset.dy + size.height / 2), clockwise: false, radius: Radius.circular(radius));
+        path.lineTo(_offset.dx + ns.width(context) * MessageWidgetController.maxBubbleSizeFactor, _offset.dy + size.height / 2);
       } else {
-        path.moveTo(0, size.height);
-        path.lineTo(0, min(size.height, 30));
-        path.arcToPoint(Offset(min(size.height, 30), 0), clockwise: true, radius: Radius.circular(min(size.height, 30)));
-        path.lineTo(size.width, 0);
+        path.moveTo(_offset.dx, _offset.dy + size.height);
+        path.lineTo(_offset.dx, _offset.dy + size.height - (size.height / 2 - radius).clamp(0, double.infinity));
+        path.arcToPoint(Offset(_offset.dx + radius, _offset.dy + size.height / 2), clockwise: true, radius: Radius.circular(radius));
+        path.lineTo(_offset.dx + size.width - ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30, _offset.dy + size.height / 2);
       }
     }
 
     canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    return false;
   }
 }
