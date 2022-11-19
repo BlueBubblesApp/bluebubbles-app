@@ -426,7 +426,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
           child: InkWell(
             onTap: () async {
               popDetails();
-              currentChat?.controller?.replyToMessage = widget.message;
+              // currentChat?.controller?.replyToMessage = widget.message;
             },
             child: ListTile(
               mouseCursor: SystemMouseCursors.click,

@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +19,9 @@ class _ReplyHolderState extends OptimizedState<ReplyHolder> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final reply = widget.controller.replyToMessage;
+      final message = widget.controller.replyToMessage?.item1;
+      final part = widget.controller.replyToMessage?.item2 ?? 0;
+      final reply = message?.guid == null ? message : (getActiveMwc(message!.guid!)?.parts[part] ?? message);
       if (reply != null) {
         return Container(
           color: context.theme.colorScheme.properSurface,
@@ -46,13 +49,17 @@ class _ReplyHolderState extends OptimizedState<ReplyHolder> {
                     if (iOS)
                       const TextSpan(text: "Replying to "),
                     TextSpan(
-                      text: reply.handle?.displayName ?? "You",
+                      text: message!.handle?.displayName ?? "You",
                       style: context.textTheme.bodyMedium!.copyWith(fontWeight: iOS ? FontWeight.bold : FontWeight.w400),
                     ),
                     if (!iOS)
                       const TextSpan(text: "\n"),
                     TextSpan(
-                      text: "${iOS ? " - " : ""}${MessageHelper.getNotificationText(reply)}",
+                      text: "${iOS ? " - " : ""}${MessageHelper.getNotificationText(reply is MessagePart ? Message(
+                        text: reply.text,
+                        subject: reply.subject,
+                        attachments: reply.attachments,
+                      ).mergeWith(message) : message)}",
                       style: context.textTheme.bodyMedium!.copyWith(fontStyle: iOS ? FontStyle.italic : null).apply(fontSizeFactor: iOS ? 1 : 1.15),
                     ),
                   ]),

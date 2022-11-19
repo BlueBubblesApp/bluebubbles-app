@@ -130,7 +130,7 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                               onPressed: () async {
                                 await widget.controller.send(
                                   [file],
-                                  "", "", null, null,
+                                  "", "", null, null, null,
                                 );
                                 deleteAudioRecording(file.path!);
                                 Get.back();
@@ -151,7 +151,8 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                     widget.controller,
                     widget.textController.text.trim(),
                     widget.subjectTextController.text.trim(),
-                    widget.controller.replyToMessage?.guid,
+                    widget.controller.replyToMessage?.item1.guid,
+                    widget.controller.replyToMessage?.item2,
                     widget.controller.chat.guid,
                     widget.sendMessage,
                   );

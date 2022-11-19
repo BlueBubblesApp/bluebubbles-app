@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/network/network_error_handler.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -68,7 +66,8 @@ class ActionHandler extends GetxService {
                 || element.expressiveSendStyleId != null
                 ? "private-api" : "apple-script",
             selectedMessageGuid: element.threadOriginatorGuid,
-            effectId: element.expressiveSendStyleId
+            effectId: element.expressiveSendStyleId,
+            partIndex: int.tryParse(element.threadOriginatorPart?.split(":").firstOrNull ?? ""),
         ).then((response) async {
           final newMessage = Message.fromMap(response.data['data']);
           try {

@@ -382,7 +382,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           child: InkWell(
             onTap: () async {
               popDetails();
-              cvController.replyToMessage = message;
+              cvController.replyToMessage = Tuple2(message, part.part);
             },
             child: ListTile(
               mouseCursor: SystemMouseCursors.click,

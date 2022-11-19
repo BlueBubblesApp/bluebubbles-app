@@ -34,6 +34,7 @@ void sendEffectAction(
     String text,
     String subjectText,
     String? threadOriginatorGuid,
+    int? part,
     String? chatGuid,
     Future<void> Function({String? effect}) sendMessage,
     ) {
@@ -49,6 +50,7 @@ void sendEffectAction(
     dateCreated: DateTime.now(),
     hasAttachments: false,
     threadOriginatorGuid: threadOriginatorGuid,
+    threadOriginatorPart: "${part ?? 0}:0:0",
     isFromMe: true,
     handleId: 0,
   );

@@ -190,7 +190,7 @@ class _MessageState extends CustomState<MessageWidget, void, MessageWidgetContro
                 || !ss.settings.swipeToReply.value
                 || !(chat?.isIMessage ?? true) ? null : (details) {
               if (offset.value >= replyThreshold) {
-                widget.controller.replyToMessage = _message;
+               // widget.controller.replyToMessage = _message;
               }
               offset.value = 0;
               // ChatLifecycleManager.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);

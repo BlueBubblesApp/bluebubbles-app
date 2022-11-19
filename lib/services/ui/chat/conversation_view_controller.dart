@@ -50,9 +50,9 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final RxList<Emoji> emojiMatches = <Emoji>[].obs;
   final RxInt emojiSelectedIndex = 0.obs;
   final ScrollController emojiScrollController = ScrollController();
-  final Rxn<Message> _replyToMessage = Rxn<Message>(null);
-  Message? get replyToMessage => _replyToMessage.value;
-  set replyToMessage(Message? m) {
+  final Rxn<Tuple2<Message, int>> _replyToMessage = Rxn<Tuple2<Message, int>>(null);
+  Tuple2<Message, int>? get replyToMessage => _replyToMessage.value;
+  set replyToMessage(Tuple2<Message, int>? m) {
     _replyToMessage.value = m;
     if (m != null) {
       focusNode.requestFocus();
@@ -64,7 +64,7 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   bool keyboardOpen = false;
   double _keyboardOffset = 0;
   Timer? _scrollDownDebounce;
-  Future<void> Function(Tuple5<List<PlatformFile>, String, String, String?, String?>)? sendFunc;
+  Future<void> Function(Tuple6<List<PlatformFile>, String, String, String?, int?, String?>)? sendFunc;
   bool isProcessingImage = false;
 
   final RxDouble timestampOffset = 0.0.obs;
@@ -137,8 +137,8 @@ class ConversationViewController extends StatefulController with SingleGetTicker
     }
   }
 
-  Future<void> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
-    sendFunc?.call(Tuple5(attachments, text, subject, replyGuid, effectId));
+  Future<void> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, int? replyPart, String? effectId) async {
+    sendFunc?.call(Tuple6(attachments, text, subject, replyGuid, replyPart, effectId));
   }
 
   void queueImage(Tuple4<Attachment, PlatformFile, BuildContext, Completer<Uint8List>> item) {

@@ -206,8 +206,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       controller.pickedAttachments,
       textController.text,
       subjectTextController.text,
-      controller.replyToMessage?.threadOriginatorGuid ?? controller.replyToMessage?.guid,
-      effect
+      controller.replyToMessage?.item1.threadOriginatorGuid ?? controller.replyToMessage?.item1.guid,
+      controller.replyToMessage?.item2,
+      effect,
     );
     controller.pickedAttachments.clear();
     textController.clear();

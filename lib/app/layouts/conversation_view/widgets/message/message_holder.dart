@@ -24,6 +24,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:tuple/tuple.dart';
 
 class MessageHolder extends CustomStateful<MessageWidgetController> {
   MessageHolder({
@@ -382,7 +383,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                   onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
                                                     final offset = replyOffsets[index];
                                                     if (offset.value.abs() >= SlideToReply.replyThreshold) {
-                                                      widget.cvController.replyToMessage = message;
+                                                      widget.cvController.replyToMessage = Tuple2(message, index);
                                                     }
                                                     offset.value = 0;
                                                   },

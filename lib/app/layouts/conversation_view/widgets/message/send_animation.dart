@@ -21,7 +21,7 @@ class SendAnimation extends CustomStateful<ConversationViewController> {
   _SendAnimationState createState() => _SendAnimationState();
 }
 
-class _SendAnimationState extends CustomState<SendAnimation, Tuple5<List<PlatformFile>, String, String, String?, String?>, ConversationViewController> {
+class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<PlatformFile>, String, String, String?, int?, String?>, ConversationViewController> {
   Message? message;
   Tween<double> tween = Tween<double>(begin: 1, end: 0);
   double offset = 0;
@@ -42,14 +42,15 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple5<List<Platfor
     });
   }
 
-  Future<void> send(Tuple5<List<PlatformFile>, String, String, String?, String?> tuple) async {
+  Future<void> send(Tuple6<List<PlatformFile>, String, String, String?, int?, String?> tuple) async {
     await controller.scrollToBottom();
 
     final attachments = tuple.item1;
     final text = tuple.item2;
     final subject = tuple.item3;
     final replyGuid = tuple.item4;
-    final effectId = tuple.item5;
+    final part = tuple.item5;
+    final effectId = tuple.item6;
     for (int i = 0; i < attachments.length; i++) {
       final file = attachments[i];
       final message = Message(
@@ -85,6 +86,7 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple5<List<Platfor
         text: text,
         subject: subject,
         threadOriginatorGuid: replyGuid,
+        threadOriginatorPart: "${part ?? 0}:0:0",
         expressiveSendStyleId: effectId,
         dateCreated: DateTime.now(),
         hasAttachments: true,

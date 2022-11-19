@@ -485,7 +485,7 @@ class HttpService extends GetxService {
   /// temporary guid to avoid duplicate messages being sent, [message] is the
   /// body of the message. Optionally provide [method] to send via private API,
   /// [effectId] to send with an effect, or [subject] to send with a subject.
-  Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, CancelToken? cancelToken}) async {
+  Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, int? partIndex, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$origin/message/text",
@@ -498,6 +498,7 @@ class HttpService extends GetxService {
             "effectId": effectId,
             "subject": subject,
             "selectedMessageGuid": selectedMessageGuid,
+            "partIndex": partIndex,
           },
           cancelToken: cancelToken
       );
@@ -558,7 +559,7 @@ class HttpService extends GetxService {
   /// Send a reaction. [chatGuid] specifies the chat, [selectedMessageText]
   /// specifies the text of the message being reacted on, [selectedMessageGuid]
   /// is the guid of the message, and [reaction] is the reaction type.
-  Future<Response> sendTapback(String chatGuid, String selectedMessageText, String selectedMessageGuid, String reaction, {CancelToken? cancelToken}) async {
+  Future<Response> sendTapback(String chatGuid, String selectedMessageText, String selectedMessageGuid, String reaction, {int? partIndex, CancelToken? cancelToken}) async {
     return runApiGuarded(() async {
       final response = await dio.post(
           "$origin/message/react",
@@ -568,6 +569,7 @@ class HttpService extends GetxService {
             "selectedMessageText": selectedMessageText,
             "selectedMessageGuid": selectedMessageGuid,
             "reaction": reaction,
+            "partIndex": partIndex,
           },
           cancelToken: cancelToken
       );
