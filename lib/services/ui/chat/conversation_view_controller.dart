@@ -179,7 +179,9 @@ class ConversationViewController extends StatefulController with SingleGetTicker
       return;
     }
     imageData[attachment.guid!] = tmpData;
-    await precacheImage(MemoryImage(tmpData), queued.item3);
+    try {
+      await precacheImage(MemoryImage(tmpData), queued.item3);
+    } catch (_) {}
     queued.item4.complete(tmpData);
 
     await _processNextImage();
