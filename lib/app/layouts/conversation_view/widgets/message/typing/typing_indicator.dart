@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing/typing_clipper.dart';
+import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -52,7 +54,7 @@ class _TypingIndicatorState extends OptimizedState<TypingIndicator> with SingleT
   Widget build(BuildContext context) {
     return AnimatedSize(
       duration: const Duration(milliseconds: 200),
-      child: widget.visible ? ClipPath(
+      child: widget.visible ? (iOS || cm.activeChat == null ? ClipPath(
         clipper: const TypingClipper(),
         child: Container(
           height: 50,
@@ -66,9 +68,9 @@ class _TypingIndicatorState extends OptimizedState<TypingIndicator> with SingleT
                 right: 12,
                 child: Row(
                   children: [
-                    buildDot(2),
-                    buildDot(1),
-                    buildDot(0),
+                    buildCupertinoDot(2),
+                    buildCupertinoDot(1),
+                    buildCupertinoDot(0),
                   ],
                   mainAxisSize: MainAxisSize.min,
                 ),
@@ -76,11 +78,27 @@ class _TypingIndicatorState extends OptimizedState<TypingIndicator> with SingleT
             ],
           ),
         ),
-      ) : const SizedBox.shrink(),
+      ) : Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 10, right: 10),
+            child: ContactAvatarWidget(
+              handle: cm.activeChat!.chat.participants.first,
+              size: 25,
+              fontSize: context.theme.textTheme.bodyMedium!.fontSize!,
+              borderThickness: 0.1,
+            ),
+          ),
+          buildMaterialDot(2),
+          buildMaterialDot(1),
+          buildMaterialDot(0),
+        ],
+        mainAxisSize: MainAxisSize.min,
+      )) : const SizedBox.shrink(),
     );
   }
 
-  Widget buildDot(int index) => AnimatedBuilder(
+  Widget buildCupertinoDot(int index) => AnimatedBuilder(
     animation: animation,
     builder: (context, child) {
       return Container(
@@ -93,6 +111,24 @@ class _TypingIndicatorState extends OptimizedState<TypingIndicator> with SingleT
         width: 10,
         height: 10,
         margin: const EdgeInsets.symmetric(horizontal: 2),
+      );
+    },
+  );
+
+  Widget buildMaterialDot(int index) => AnimatedBuilder(
+    animation: animation,
+    builder: (context, child) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: (math.sin(animation.value + (index) * math.pi / 4).abs() * 20).clamp(1, 20).toDouble()),
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.theme.colorScheme.properSurface,
+            shape: BoxShape.circle,
+          ),
+          width: 4,
+          height: 4,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+        ),
       );
     },
   );
