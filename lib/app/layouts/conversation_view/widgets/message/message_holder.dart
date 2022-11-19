@@ -84,7 +84,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       }
     }
     controller.parts = messageParts;
-    replyOffsets = List.filled(messageParts.length, 0.0.obs);
+    replyOffsets = List.generate(messageParts.length, (_) => 0.0.obs);
   }
 
   void buildMessageParts() {
