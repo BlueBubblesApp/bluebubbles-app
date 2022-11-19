@@ -33,6 +33,7 @@ class MessagesService extends GetxController {
 
   int currentCount = 0;
   bool isFetching = false;
+  bool _init = false;
 
   Message? get mostRecentSent => (struct.messages.where((e) => e.isFromMe!).toList()
       ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
@@ -41,6 +42,7 @@ class MessagesService extends GetxController {
     ..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!))).firstOrNull;
 
   void init(Chat c, Function(Message) onNewMessage, Function(Message, {String? oldGuid}) onUpdatedMessage, Function(Message) onDeletedMessage) {
+    _init = true;
     chat = c;
     updateFunc = onUpdatedMessage;
     removeFunc = onDeletedMessage;
@@ -80,7 +82,7 @@ class MessagesService extends GetxController {
 
   @override
   void onClose() {
-    countSub.cancel();
+    if (_init) countSub.cancel();
     super.onClose();
   }
 

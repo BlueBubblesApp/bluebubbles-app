@@ -1,12 +1,10 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
@@ -22,7 +20,7 @@ Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
   await Navigator.push(
     Get.context!,
     PageRouteBuilder(
-      transitionDuration: Duration(milliseconds: 150),
+      transitionDuration: const Duration(milliseconds: 150),
       pageBuilder: (context, animation, secondaryAnimation) {
         return FadeTransition(
           opacity: animation,
@@ -48,11 +46,15 @@ class ConversationPeekView extends StatefulWidget {
 
 class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> with SingleTickerProviderStateMixin {
   late final AnimationController controller;
+  late final ConversationViewController cvController = cvc(widget.chat);
   final double itemHeight = kIsDesktop || kIsWeb ? 56 : 48;
+  bool disposed = false;
 
   @override
   void initState() {
     super.initState();
+    cm.setActiveChat(widget.chat);
+    cm.activeChat!.controller = cvController;
     controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
@@ -70,6 +72,20 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
       }
     }
     Navigator.of(context).pop();
+  }
+
+  @override
+  void dispose() {
+    if (!disposed) {
+      cm.setAllInactive();
+      cvController.close();
+      ms(widget.chat.guid).close();
+      for (Message m in widget.messages) {
+        getActiveMwc(m.guid!)?.close();
+      }
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   @override
@@ -119,25 +135,33 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                   child: TweenAnimationBuilder<double>(
                     tween: Tween<double>(begin: 0.8, end: 1),
                     curve: Curves.easeOutBack,
-                    duration: Duration(milliseconds: 400),
+                    duration: const Duration(milliseconds: 400),
                     child: FadeTransition(
                       opacity: CurvedAnimation(
                         parent: controller,
-                        curve: Interval(0.0, .9, curve: Curves.ease),
+                        curve: const Interval(0.0, .9, curve: Curves.ease),
                         reverseCurve: Curves.easeInCubic,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           GestureDetector(
-                            onTap: () {
+                            onTap: () async {
+                              cm.setAllInactive();
+                              cvController.close();
+                              ms(widget.chat.guid).close();
+                              for (Message m in widget.messages) {
+                                getActiveMwc(m.guid!)?.close();
+                              }
+                              controller.dispose();
+                              disposed = true;
                               Navigator.of(context).pop();
                               ns.pushAndRemoveUntil(
-                                context,
+                                Get.context!,
                                 ConversationView(
                                   chat: widget.chat,
                                 ),
-                                    (route) => route.isFirst,
+                                (route) => route.isFirst,
                               );
                             },
                             child: Container(
@@ -157,18 +181,13 @@ class _ConversationPeekViewState extends OptimizedState<ConversationPeekView> wi
                                       absorbing: true,
                                       child: Padding(
                                         padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-                                        // todo
-                                        // child: MessageWidget(
-                                        //   key: Key(widget.messages[index].guid!),
-                                        //   message: widget.messages[index],
-                                        //   olderMessage: index == widget.messages.length - 1 ? null : widget.messages[index + 1],
-                                        //   newerMessage: index == 0 ? null : widget.messages[index - 1],
-                                        //   showHandle: widget.chat.isGroup,
-                                        //   isFirstSentMessage: false,
-                                        //   showHero: false,
-                                        //   showReplies: true,
-                                        //   autoplayEffect: false,
-                                        // )
+                                        child: MessageHolder(
+                                          key: Key(widget.messages[index].guid!),
+                                          cvController: cvController,
+                                          message: widget.messages[index],
+                                          oldMessageGuid: index == widget.messages.length - 1 ? null : widget.messages[index + 1].guid,
+                                          newMessageGuid: index == 0 ? null : widget.messages[index - 1].guid,
+                                        )
                                       ),
                                     );
                                   },
