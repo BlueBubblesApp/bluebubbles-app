@@ -348,6 +348,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                       ),
                     Expanded(
                       child: _TextFields(
+                        key: controller.textFieldKey,
                         chat: chat,
                         subjectTextController: subjectTextController,
                         textController: textController,

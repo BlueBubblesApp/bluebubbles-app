@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_content/message_attachments.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
@@ -26,18 +24,29 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
   Tween<double> tween = Tween<double>(begin: 1, end: 0);
   double offset = 0;
   Control control = Control.stop;
+  double textFieldSize = 0;
 
   @override
   void initState() {
     super.initState();
     controller.sendFunc = send;
     KeyboardVisibilityController().onChange.listen((bool visible) async {
-      await Future.delayed(Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
-        final textFieldSize = (controller.textFieldKey.currentContext?.findRenderObject() as RenderBox?)?.size.height;
-        setState(() {
-          offset = (textFieldSize ?? 0) > 300 ? 300 : 0;
-        });
+        final box = controller.textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+        textFieldSize = box?.size.height ?? 0;
+        final textFieldPos = box?.localToGlobal(Offset.zero);
+        if (visible) {
+          setState(() {
+            offset = 10;
+          });
+        } else {
+          if (textFieldSize != 0 && textFieldPos != null) {
+            setState(() {
+              offset = Get.height - textFieldPos.dy - textFieldSize;
+            });
+          }
+        }
       }
     });
   }
@@ -99,32 +108,11 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
         chat: controller.chat,
         message: _message,
       ));
-      final constraints = BoxConstraints(
-        maxWidth: ns.width(context) * MessageWidgetMixin.MAX_SIZE,
-        minHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
-        maxHeight: context.theme.extension<BubbleText>()!.bubbleText.fontSize!,
-      );
-      final renderParagraph = RichText(
-        text: TextSpan(
-          text: _message.text,
-          style: context.theme.extension<BubbleText>()!.bubbleText,
-        ),
-        maxLines: 1,
-      ).createRenderObject(context);
-      final renderParagraph2 = RichText(
-        text: TextSpan(
-          text: _message.subject ?? "",
-          style: context.theme.extension<BubbleText>()!.bubbleText,
-        ),
-        maxLines: 1,
-      ).createRenderObject(context);
-      final size = renderParagraph.getDryLayout(constraints);
-      final size2 = renderParagraph2.getDryLayout(constraints);
       setState(() {
         tween = Tween<double>(
-            begin: ns.width(context) - 30,
-            end: min(max(size.width, size2.width) + 80,
-                ns.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
+          begin: 0.9,
+          end: 0,
+        );
         control = Control.play;
         message = _message;
       });
@@ -134,9 +122,10 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
 
   @override
   Widget build(BuildContext context) {
+    final typicalWidth = ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30;
     return AnimatedPositioned(
-      duration: Duration(milliseconds: 400),
-      bottom: message != null ? 130 + offset : 10 + offset,
+      duration: Duration(milliseconds: message != null ? 400 : 0),
+      bottom: message != null ? textFieldSize + offset + 15 : offset,
       right: 5,
       curve: Curves.easeInOutCubic,
       onEnd: () {
@@ -151,39 +140,39 @@ class _SendAnimationState extends CustomState<SendAnimation, Tuple6<List<Platfor
       child: Visibility(
         visible: message != null,
         child: CustomAnimationBuilder<double>(
-            control: control,
-            tween: tween,
-            duration: Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            builder: (context, value, child) {
-              return SentMessageHelper.buildMessageWithTail(
-                context,
-                message,
-                true,
-                false,
-                message?.isBigEmoji ?? false,
-                MessageWidgetMixin.buildMessageSpansAsync(context, message),
-                customWidth: (message?.hasAttachments ?? false) &&
-                    (message?.text?.isEmpty ?? true) &&
-                    (message?.subject?.isEmpty ?? true)
-                    ? null
-                    : value,
-                customColor: (message?.hasAttachments ?? false) &&
-                    (message?.text?.isEmpty ?? true) &&
-                    (message?.subject?.isEmpty ?? true)
-                    ? Colors.transparent
-                    : null,
-                customContent: child,
-              );
-            },
-            child: (message?.hasAttachments ?? false) &&
-                (message?.text?.isEmpty ?? true) &&
-                (message?.subject?.isEmpty ?? true)
-                ? MessageAttachments(
-              message: message,
-              showTail: true,
-              showHandle: false,
-            ) : null
+          control: control,
+          tween: tween,
+          duration: Duration(milliseconds: message != null ? 150 : 0),
+          curve: Curves.linear,
+          builder: (context, value, child) {
+            return ClipPath(
+              clipper: TailClipper(
+                isFromMe: true,
+                showTail: true,
+                connectLower: false,
+                connectUpper: false,
+              ),
+              child: AnimatedContainer(
+                constraints: BoxConstraints(
+                  maxWidth: max(ns.width(context) * value, typicalWidth),
+                  minWidth: ns.width(context) * value > typicalWidth ? ns.width(context) * value : 0.0,
+                  minHeight: 30,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(const EdgeInsets.only(right: 10)),
+                color: context.theme.colorScheme.primary.darkenAmount(0.2),
+                duration: Duration(milliseconds: ns.width(context) * value > typicalWidth ? 0 : 150),
+                child: RichText(
+                  text: TextSpan(
+                    children: buildMessageSpans(
+                      context,
+                      MessagePart(part: 0, text: message!.text),
+                      message!,
+                    ),
+                  ),
+                )
+              ),
+            );
+          },
         ),
       ),
     );

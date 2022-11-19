@@ -189,7 +189,6 @@ class ConversationViewState extends OptimizedState<ConversationView> {
                                       }
                                     },
                                     child: ConversationTextField(
-                                      key: controller.textFieldKey,
                                       parentController: controller,
                                     ),
                                   ),
