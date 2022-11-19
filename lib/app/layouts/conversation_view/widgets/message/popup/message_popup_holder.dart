@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup.dart';
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -10,7 +11,7 @@ import 'package:get/get.dart';
 import 'package:tuple/tuple.dart';
 import 'package:universal_html/html.dart' as html;
 
-class MessagePopupHolder extends StatelessWidget {
+class MessagePopupHolder extends StatefulWidget {
   MessagePopupHolder({
     Key? key,
     required this.child,
@@ -23,13 +24,19 @@ class MessagePopupHolder extends StatelessWidget {
   final MessagePart part;
   final MessageWidgetController controller;
   final ConversationViewController cvController;
+
+  @override
+  _MessagePopupHolderState createState() => _MessagePopupHolderState();
+}
+
+class _MessagePopupHolderState extends OptimizedState<MessagePopupHolder> {
   final GlobalKey globalKey = GlobalKey();
 
-  Message get message => controller.message;
+  Message get message => widget.controller.message;
 
   void openPopup(BuildContext context) async {
-    cvController.focusNode.unfocus();
-    cvController.subjectFocusNode.unfocus();
+    widget.cvController.focusNode.unfocus();
+    widget.cvController.subjectFocusNode.unfocus();
     HapticFeedback.lightImpact();
     final size = globalKey.currentContext?.size;
     final childPos = (globalKey.currentContext?.findRenderObject() as RenderBox?)?.localToGlobal(Offset.zero);
@@ -60,10 +67,10 @@ class MessagePopupHolder extends StatelessWidget {
               child: MessagePopup(
                 childPosition: childPos,
                 size: size,
-                child: child,
-                part: part,
-                controller: controller,
-                cvController: cvController,
+                child: widget.child,
+                part: widget.part,
+                controller: widget.controller,
+                cvController: widget.cvController,
                 serverDetails: Tuple3(minSierra, minBigSur, version > 100),
                 sendTapback: sendTapback,
               ),
@@ -106,12 +113,12 @@ class MessagePopupHolder extends StatelessWidget {
       onDoubleTap: message.guid!.startsWith('temp') ? null : ss.settings.doubleTapForDetails.value
         ? () => openPopup(context)
         : ss.settings.enableQuickTapback.value && cm.activeChat!.chat.isIMessage
-        ? () => sendTapback(null, part.part)
+        ? () => sendTapback(null, widget.part.part)
         : null,
       onLongPress: message.guid!.startsWith('temp') ? null : ss.settings.doubleTapForDetails.value &&
         ss.settings.enableQuickTapback.value &&
         cm.activeChat!.chat.isIMessage
-        ? () => sendTapback(null, part.part)
+        ? () => sendTapback(null, widget.part.part)
         : () => openPopup(context),
       onSecondaryTapUp: (details) async {
         if (!kIsWeb && !kIsDesktop) return;
@@ -120,7 +127,7 @@ class MessagePopupHolder extends StatelessWidget {
         }
         openPopup(context);
       },
-      child: child,
+      child: widget.child,
     );
   }
 }
