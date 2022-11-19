@@ -103,14 +103,14 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
                     fontSize: context.theme.textTheme.bodyLarge!.fontSize!,
                     borderThickness: 0.1,
                   ),
-                controller.parts.length <= widget.part ? ClipPath(
+                ClipPath(
                   clipper: TailClipper(
                     isFromMe: message.isFromMe!,
                     showTail: true,
                     connectUpper: false,
                     connectLower: false,
                   ),
-                  child: Container(
+                  child: controller.parts.length <= widget.part ? Container(
                     constraints: BoxConstraints(
                       maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
                       minHeight: 30,
@@ -131,21 +131,13 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
                         ),
                       ),
                     ),
-                  ),
-                ) : message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 70),
-                  child: InteractiveHolder(
-                    parentController: controller,
-                    message: part,
-                  ),
-                ) : part.attachments.isEmpty ? ClipPath(
-                  clipper: TailClipper(
-                    isFromMe: message.isFromMe!,
-                    showTail: true,
-                    connectUpper: false,
-                    connectLower: false,
-                  ),
-                  child: Container(
+                  ) : message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive ? ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 70),
+                    child: InteractiveHolder(
+                      parentController: controller,
+                      message: part,
+                    ),
+                  ) : part.attachments.isEmpty ? Container(
                     constraints: BoxConstraints(
                       maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
                       minHeight: 30,
@@ -184,12 +176,12 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
                         ),
                       ),
                     ),
-                  ),
-                ) : ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 70),
-                  child: AttachmentHolder(
-                    parentController: controller,
-                    message: part,
+                  ) : ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 70),
+                    child: AttachmentHolder(
+                      parentController: controller,
+                      message: part,
+                    ),
                   ),
                 ),
               ],

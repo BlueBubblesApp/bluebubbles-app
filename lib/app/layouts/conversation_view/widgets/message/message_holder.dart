@@ -52,7 +52,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   Chat get chat => widget.cvController.chat;
   MessagesService get service => ms(widget.cvController.chat.guid);
   bool get canSwipeToReply => ss.settings.enablePrivateAPI.value && ss.settings.swipeToReply.value && chat.isIMessage;
-  bool get showSender => !message.isGroupEvent && (!message.sameSender(olderMessage)
+  bool get showSender => !message.isGroupEvent && (!message.sameSender(olderMessage) || (olderMessage?.isGroupEvent ?? false)
       || (olderMessage == null || !message.dateCreated!.isWithin(olderMessage!.dateCreated!, minutes: 30)));
   bool get showAvatar => (!iOS || chat.isGroup) && !samsung;
 
