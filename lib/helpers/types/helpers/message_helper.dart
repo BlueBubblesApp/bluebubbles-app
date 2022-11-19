@@ -194,13 +194,13 @@ class MessageHelper {
 
   /// Removes duplicate associated message guids from a list of [associatedMessages]
   static List<Message> normalizedAssociatedMessages(List<Message> associatedMessages) {
-    Set<int> guids = associatedMessages.map((e) => e.handleId ?? 0).toSet();
+    Set<String> guids = associatedMessages.map((e) => e.guid!).toSet();
     List<Message> normalized = [];
 
     for (Message message in associatedMessages.reversed.toList()) {
       if (!ReactionTypes.toList().contains(message.associatedMessageType)) {
         normalized.add(message);
-      } else if (guids.remove(message.handleId ?? 0)) {
+      } else if (guids.remove(message.guid)) {
         normalized.add(message);
       }
     }
