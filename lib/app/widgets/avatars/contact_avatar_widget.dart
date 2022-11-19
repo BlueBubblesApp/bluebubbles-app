@@ -181,44 +181,41 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
           ),
           clipBehavior: Clip.antiAlias,
           alignment: Alignment.center,
-          child: Obx(() {
-            // don't remove!! needed to prevent Obx from exception
-            // improper use of GetX
-            // ignore: unused_local_variable
-            final placeholderVar = null.obs.value;
-            final avatar = contact?.avatar;
-
-            if (isNullOrEmpty(avatar)!) {
-              String? initials = widget.handle?.initials?.substring(0, iOS ? null : 1);
-              if (!isNullOrEmpty(initials)!) {
-                return Text(
-                  initials!,
-                  key: Key("$keyPrefix-avatar-text"),
-                  style: TextStyle(
-                    fontSize: widget.fontSize ?? 18,
+          child: Builder(
+            builder: (context) {
+              final avatar = contact?.avatar;
+              if (isNullOrEmpty(avatar)!) {
+                String? initials = widget.handle?.initials?.substring(0, iOS ? null : 1);
+                if (!isNullOrEmpty(initials)!) {
+                  return Text(
+                    initials!,
+                    key: Key("$keyPrefix-avatar-text"),
+                    style: TextStyle(
+                      fontSize: widget.fontSize ?? 18,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  );
+                } else {
+                  return Obx(() => Icon(
+                    ss.settings.skin.value == Skins.iOS
+                        ? CupertinoIcons.person_fill
+                        : Icons.person,
                     color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                );
+                    key: Key("$keyPrefix-avatar-icon"),
+                    size: size / 2,
+                  ));
+                }
               } else {
-                return Icon(
-                  ss.settings.skin.value == Skins.iOS
-                      ? CupertinoIcons.person_fill
-                      : Icons.person,
-                  color: Colors.white,
-                  key: Key("$keyPrefix-avatar-icon"),
-                  size: size / 2,
+                return Image.memory(
+                  avatar!,
+                  cacheHeight: size.toInt() * 2,
+                  cacheWidth: size.toInt() * 2,
+                  filterQuality: FilterQuality.none,
                 );
               }
-            } else {
-              return Image.memory(
-                avatar!,
-                cacheHeight: size.toInt() * 2,
-                cacheWidth: size.toInt() * 2,
-                filterQuality: FilterQuality.none,
-              );
             }
-          }),
+          ),
         ),
       ),
     );

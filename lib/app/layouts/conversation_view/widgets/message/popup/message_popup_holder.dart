@@ -58,7 +58,7 @@ class MessagePopupHolder extends StatelessWidget {
                 ),
               ),
               child: MessagePopup(
-                childPosition: childPos!,
+                childPosition: childPos,
                 size: size,
                 child: child,
                 part: part,

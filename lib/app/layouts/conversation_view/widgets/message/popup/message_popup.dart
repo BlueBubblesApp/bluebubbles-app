@@ -138,10 +138,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           child: Stack(
             fit: StackFit.expand,
             children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                child: Container(
-                  color: context.theme.colorScheme.properSurface.withOpacity(0.3),
+              GestureDetector(
+                onTap: popDetails,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                  child: Container(
+                    color: context.theme.colorScheme.properSurface.withOpacity(0.3),
+                  ),
                 ),
               ),
               AnimatedPositioned(
@@ -149,7 +152,19 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                 curve: Curves.easeOutBack,
                 left: widget.childPosition.dx,
                 bottom: messageOffset,
-                child: widget.child,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.8, end: 1),
+                  curve: Curves.easeOutBack,
+                  duration: const Duration(milliseconds: 500),
+                  child: widget.child,
+                  builder: (context, size, child) {
+                    return Transform.scale(
+                      scale: size,
+                      child: child,
+                      alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
+                    );
+                  },
+                ),
               ),
               Positioned(
                 top: 40,
@@ -159,8 +174,10 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                   duration: const Duration(milliseconds: 500),
                   curve: Sprung.underDamped,
                   alignment: Alignment.center,
-                  child: reactions.isNotEmpty ? ClipRRect(
+                  child: reactions.isNotEmpty ? Material(
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(20),
+                    clipBehavior: Clip.antiAlias,
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                       child: Container(
@@ -184,6 +201,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                       handle: message.handle,
                                       borderThickness: 0.1,
                                       editable: false,
+                                      fontSize: 22,
                                     ),
                                   ),
                                   Padding(
