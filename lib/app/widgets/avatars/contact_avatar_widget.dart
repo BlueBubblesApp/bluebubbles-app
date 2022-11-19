@@ -156,7 +156,10 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
+            color: iOS ? null : (!ss.settings.colorfulAvatars.value
+                ? HexColor("686868")
+                : colors[0]),
+            gradient: !iOS ? null : LinearGradient(
               begin: AlignmentDirectional.topStart,
               colors: [
                 !ss.settings.colorfulAvatars.value
@@ -186,7 +189,7 @@ class _ContactAvatarWidgetState extends OptimizedState<ContactAvatarWidget> {
             final avatar = contact?.avatar;
 
             if (isNullOrEmpty(avatar)!) {
-              String? initials = widget.handle?.initials;
+              String? initials = widget.handle?.initials?.substring(0, iOS ? null : 1);
               if (!isNullOrEmpty(initials)!) {
                 return Text(
                   initials!,

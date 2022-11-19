@@ -33,6 +33,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
 
   late List<MessagePart> parts;
   Message message;
+  String? oldMessageGuid;
   String? newMessageGuid;
   ConversationViewController? cvController;
   late final String tag;
@@ -45,6 +46,7 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
   }
 
   Message? get newMessage => newMessageGuid == null ? null : ms(cvController!.chat.guid).struct.getMessage(newMessageGuid!);
+  Message? get oldMessage => oldMessageGuid == null ? null : ms(cvController!.chat.guid).struct.getMessage(oldMessageGuid!);
 
   @override
   void onInit() {

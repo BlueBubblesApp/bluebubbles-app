@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -18,6 +19,24 @@ class ReactionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (ss.settings.skin.value != Skins.iOS) {
+      return Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: reactionIsFromMe ? context.theme.colorScheme.primary : context.theme.colorScheme.properSurface,
+          border: Border.all(color: context.theme.colorScheme.background),
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Text(
+            ReactionTypes.reactionToEmoji[reactionType] ?? "X",
+            style: const TextStyle(fontSize: 15),
+            textAlign: TextAlign.center,
+          ),
+        )
+      );
+    }
     return Stack(
       alignment: messageIsFromMe ? Alignment.topRight : Alignment.topLeft,
       fit: StackFit.passthrough,

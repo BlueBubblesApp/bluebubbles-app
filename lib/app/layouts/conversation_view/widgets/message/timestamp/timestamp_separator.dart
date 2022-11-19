@@ -24,7 +24,11 @@ class TimestampSeparator extends StatelessWidget {
       return Tuple2(null, buildSeparatorDateSamsung(message.dateCreated!));
     } else if (ss.settings.skin.value != Skins.Samsung && withinTimeThreshold(message, olderMessage)) {
       final time = message.dateCreated!;
-      return Tuple2(time.isToday() ? "Today" : buildDate(time), buildTime(time));
+      if (ss.settings.skin.value == Skins.iOS) {
+        return Tuple2(time.isToday() ? "Today" : buildDate(time), buildTime(time));
+      } else {
+        return Tuple2(time.isToday() ? "Today" : buildSeparatorDateMaterial(time), buildTime(time));
+      }
     } else {
       return null;
     }

@@ -41,31 +41,32 @@ class _InteractiveHolderState extends CustomState<InteractiveHolder, void, Messa
 
   @override
   Widget build(BuildContext context) {
-    final bool showTail = message.showTail(newerMessage) && part.part == controller.parts.length - 1;
-    return ClipPath(
-      clipper: TailClipper(
-        isFromMe: message.isFromMe!,
-        showTail: showTail,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: payloadData == null ? null : () async {
-            String? url;
-            if (payloadData!.type == PayloadType.url) {
-              url = payloadData!.urlData!.first.url ?? payloadData!.urlData!.first.originalUrl;
-            } else {
-              url = payloadData!.appData!.first.url;
-            }
-            if (url != null && Uri.tryParse(url) != null) {
-              await launchUrl(
-                Uri.parse(url),
-                mode: LaunchMode.externalApplication,
-              );
-            }
-          },
-          child: Ink(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: payloadData == null ? null : () async {
+          String? url;
+          if (payloadData!.type == PayloadType.url) {
+            url = payloadData!.urlData!.first.url ?? payloadData!.urlData!.first.originalUrl;
+          } else {
+            url = payloadData!.appData!.first.url;
+          }
+          if (url != null && Uri.tryParse(url) != null) {
+            await launchUrl(
+              Uri.parse(url),
+              mode: LaunchMode.externalApplication,
+            );
+          }
+        },
+        child: CustomPaint(
+          painter: iOS ? null : TailPainter(
+            isFromMe: message.isFromMe!,
+            showTail: false,
             color: context.theme.colorScheme.properSurface,
+            width: 1.5,
+          ),
+          child: Ink(
+            color: iOS ? context.theme.colorScheme.properSurface : null,
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: ns.width(context) * 0.6,

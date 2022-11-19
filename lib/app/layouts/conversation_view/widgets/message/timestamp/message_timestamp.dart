@@ -16,11 +16,11 @@ class MessageTimestamp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final oneLine = buildDate(message.dateCreated) == buildTime(message.dateCreated);
+    final oneLine = ss.settings.skin.value == Skins.Samsung ? true : buildDate(message.dateCreated) == buildTime(message.dateCreated);
     final time = oneLine ? "   ${buildTime(message.dateCreated)}" : "   ${buildDate(message.dateCreated)}\n   ${buildTime(message.dateCreated).toLowerCase()}";
     return Obx(() => AnimatedContainer(
       duration: Duration(milliseconds: cvController.timestampOffset.value == 0 ? 150 : 0),
-      width: min(max(-cvController.timestampOffset.value, 0), 50),
+      width: ss.settings.skin.value == Skins.Samsung ? null : min(max(-cvController.timestampOffset.value, 0), 50),
       child: Text(
         time,
         style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),

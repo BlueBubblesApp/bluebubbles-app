@@ -49,6 +49,38 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
 
   @override
   Widget build(BuildContext context) {
+    if (!iOS) {
+      return ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
+          minHeight: 30,
+        ),
+        child: GestureDetector(
+          onTap: () {
+            showReplyThread(context, message, ms(message.chat.target!.guid));
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+            child: Text.rich(
+              TextSpan(children: [
+                TextSpan(
+                  text: message.handle?.displayName ?? "You",
+                  style: context.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.w400, color: context.theme.colorScheme.outline),
+                ),
+                const TextSpan(text: "\n"),
+                TextSpan(
+                  text: "${iOS ? " - " : ""}${MessageHelper.getNotificationText(message)}",
+                  style: context.textTheme.bodyMedium!.apply(fontSizeFactor: 1.15),
+                ),
+              ]),
+              style: context.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.onBackground),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: Transform.scale(
@@ -75,6 +107,8 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
                   clipper: TailClipper(
                     isFromMe: message.isFromMe!,
                     showTail: true,
+                    connectUpper: false,
+                    connectLower: false,
                   ),
                   child: Container(
                     constraints: BoxConstraints(
@@ -108,6 +142,8 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
                   clipper: TailClipper(
                     isFromMe: message.isFromMe!,
                     showTail: true,
+                    connectUpper: false,
+                    connectLower: false,
                   ),
                   child: Container(
                     constraints: BoxConstraints(

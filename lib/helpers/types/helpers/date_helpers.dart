@@ -34,6 +34,10 @@ String buildDate(DateTime? dateTime) {
   return date;
 }
 
+String buildSeparatorDateMaterial(DateTime dateTime) {
+  return DateFormat.MMMEd().format(dateTime);
+}
+
 String buildSeparatorDateSamsung(DateTime dateTime) {
   return DateFormat.yMMMMEEEEd().format(dateTime);
 }

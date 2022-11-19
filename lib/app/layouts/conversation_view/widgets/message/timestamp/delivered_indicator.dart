@@ -9,7 +9,10 @@ class DeliveredIndicator extends CustomStateful<MessageWidgetController> {
   DeliveredIndicator({
     Key? key,
     required super.parentController,
+    required this.forceShow,
   }) : super(key: key);
+
+  final bool forceShow;
 
   @override
   _DeliveredIndicatorState createState() => _DeliveredIndicatorState();
@@ -25,6 +28,8 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
   }
 
   bool get shouldShow {
+    if (widget.forceShow) return true;
+    if (!message.isFromMe!) return false;
     final messages = ms(message.chat.target!.guid).struct.messages
         .where((e) => e.isFromMe! && (e.dateDelivered != null || e.dateRead != null))
         .toList()..sort((a, b) => b.dateCreated!.compareTo(a.dateCreated!));
@@ -64,7 +69,7 @@ class _DeliveredIndicatorState extends CustomState<DeliveredIndicator, void, Mes
       alignment: Alignment.bottomCenter,
       duration: const Duration(milliseconds: 250),
       child: shouldShow ? Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5).add(const EdgeInsets.only(top: 3)),
+        padding: const EdgeInsets.symmetric(horizontal: 15).add(const EdgeInsets.only(top: 3)),
         child: Text(
           getText(),
           style: context.theme.textTheme.labelSmall!.copyWith(color: context.theme.colorScheme.outline, fontWeight: FontWeight.normal),
