@@ -191,7 +191,7 @@ class NotificationsService extends GetxService {
             } else if (papi) {
               final reaction = ReactionTypes.emojiToReaction[actions[event.actionIndex!]];
               outq.queue(OutgoingItem(
-                type: QueueType.newMessage,
+                type: QueueType.sendMessage,
                 chat: chat,
                 message: Message(
                   associatedMessageGuid: message.guid,

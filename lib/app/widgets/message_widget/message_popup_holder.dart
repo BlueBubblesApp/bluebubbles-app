@@ -127,7 +127,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
   void sendReaction(String type) {
     Logger.info("Sending reaction type: $type");
     outq.queue(OutgoingItem(
-      type: QueueType.newMessage,
+      type: QueueType.sendMessage,
       chat: widget.message.getChat() ?? cm.activeChat!.chat,
       message: Message(
         associatedMessageGuid: widget.message.guid,

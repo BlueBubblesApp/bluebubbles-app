@@ -65,6 +65,7 @@ class MessagePopupHolder extends StatelessWidget {
                 controller: controller,
                 cvController: cvController,
                 serverDetails: Tuple3(minSierra, minBigSur, version > 100),
+                sendTapback: sendTapback,
               ),
             ),
           );
@@ -77,23 +78,23 @@ class MessagePopupHolder extends StatelessWidget {
     eventDispatcher.emit('popup-pushed', false);
   }
 
-  void sendTapback() {
+  void sendTapback([String? type]) {
     HapticFeedback.lightImpact();
-    final type = ss.settings.quickTapbackType.value;
-    Logger.info("Sending reaction type: $type");
+    final reaction = type ?? ss.settings.quickTapbackType.value;
+    Logger.info("Sending reaction type: $reaction");
     outq.queue(OutgoingItem(
-      type: QueueType.newMessage,
+      type: QueueType.sendMessage,
       chat: message.getChat() ?? cm.activeChat!.chat,
       message: Message(
         associatedMessageGuid: message.guid,
-        associatedMessageType: type,
+        associatedMessageType: reaction,
         dateCreated: DateTime.now(),
         hasAttachments: false,
         isFromMe: true,
         handleId: 0,
       ),
       selected: message,
-      reaction: ReactionTypes.toList().firstWhere((e) => e == type),
+      reaction: ReactionTypes.toList().firstWhere((e) => e == reaction),
     ));
   }
 

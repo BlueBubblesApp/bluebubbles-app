@@ -512,7 +512,7 @@ class SentMessageHelper {
                             message.error = 0;
                             message.dateCreated = DateTime.now();
                             outq.queue(OutgoingItem(
-                              type: QueueType.newMessage,
+                              type: QueueType.sendMessage,
                               chat: chat,
                               message: message,
                             ));

@@ -83,7 +83,7 @@ class MethodChannelService extends GetxService {
         } else {
           final Completer<void> completer = Completer();
           outq.queue(OutgoingItem(
-              type: QueueType.newMessage,
+              type: QueueType.sendMessage,
               completer: completer,
               chat: chat,
               message: Message(text: data["text"])

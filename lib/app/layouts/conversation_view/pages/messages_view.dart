@@ -211,7 +211,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
       borderRadius: BorderRadius.circular(19),
       onTap: onTap ?? () {
         outq.queue(OutgoingItem(
-            type: QueueType.newMessage,
+            type: QueueType.sendMessage,
             chat: controller.chat,
             message: Message(text: text)
         ));

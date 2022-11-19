@@ -131,7 +131,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   void sendReaction(String type) {
     Logger.info("Sending reaction type: $type");
     outq.queue(OutgoingItem(
-        type: QueueType.newMessage,
+        type: QueueType.sendMessage,
         chat: widget.message.getChat() ?? widget.currentChat!.chat,
         message: Message(
           associatedMessageGuid: widget.message.guid,

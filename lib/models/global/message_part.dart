@@ -1,4 +1,6 @@
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
+import 'package:collection/collection.dart';
 
 class MessagePart {
   MessagePart({
@@ -24,6 +26,8 @@ class MessagePart {
   int part;
 
   bool get isEdited => edits.isNotEmpty;
+  String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
+  String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)!).join("\n"));
 }
 
 class Mention {

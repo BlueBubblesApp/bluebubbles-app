@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 
@@ -32,6 +33,7 @@ class MessagePopup extends StatefulWidget {
   final MessageWidgetController controller;
   final ConversationViewController cvController;
   final Tuple3<bool, bool, bool> serverDetails;
+  final Function([String? type]) sendTapback;
 
   const MessagePopup({
     Key? key,
@@ -42,6 +44,7 @@ class MessagePopup extends StatefulWidget {
     required this.controller,
     required this.cvController,
     required this.serverDetails,
+    required this.sendTapback,
   }) : super(key: key);
 
   @override
@@ -62,7 +65,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     .firstWhereOrNull((chat) => !chat.isGroup
       && chat.participants.firstWhereOrNull((handle) => handle.address == message.handle?.address) != null
     );
-  
+  String? selfReaction;
+  String? currentlySelectedReaction = "init";
+
   ConversationViewController get cvController => widget.cvController;
   MessagesService get service => ms(chat.guid);
   Chat get chat => widget.cvController.chat;
@@ -70,9 +75,8 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
   Message get message => widget.controller.message;
   bool get isSent => !message.guid!.startsWith('temp') && !message.guid!.startsWith('error');
   bool get showDownload => isSent &&
-      message.hasAttachments &&
-      message.attachments.where((element) => element!.mimeStart != null).isNotEmpty &&
-      message.attachments.where((element) => as.getContent(element!) is PlatformFile).isNotEmpty;
+      part.attachments.isNotEmpty &&
+      part.attachments.where((element) => as.getContent(element) is PlatformFile).isNotEmpty;
   bool get minSierra => widget.serverDetails.item1;
   bool get minBigSur => widget.serverDetails.item2;
   bool get supportsOriginalDownload => widget.serverDetails.item3;
@@ -85,14 +89,21 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
     numberToShow = min(remainingHeight ~/ itemHeight, 5);
 
     updateObx(() {
+      currentlySelectedReaction = null;
+      reactions = message.associatedMessages
+          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType)
+          && (e.associatedMessagePart ?? 0) == part.part).toList();
+      for (Message m in reactions) {
+        if (m.isFromMe!) {
+          selfReaction = m.associatedMessageType;
+          currentlySelectedReaction = selfReaction;
+          m.handle = null;
+        } else {
+          m.handle ??= m.getHandle();
+        }
+      }
       setState(() {
         messageOffset = itemHeight * numberToShow + 50;
-        reactions = message.associatedMessages
-            .where((e) => ReactionTypes.toList().contains(e.associatedMessageType)
-            && (e.associatedMessagePart ?? 0) == part.part).map((e) {
-              e.handle = e.getHandle();
-              return e;
-            }).toList();
       });
     });
   }
@@ -111,6 +122,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
 
   @override
   Widget build(BuildContext context) {
+    double narrowWidth = message.isFromMe! || !ss.settings.alwaysShowAvatars.value ? 330 : 360;
+    bool narrowScreen = ns.width(context) < narrowWidth;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: ss.settings.immersiveMode.value
@@ -248,6 +262,79 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                   ) : const SizedBox.shrink(),
                 ),
               ),
+              if (ss.settings.enablePrivateAPI.value &&
+                  isSent &&
+                  minSierra &&
+                  chat.isIMessage)
+                Positioned(
+                  bottom: itemHeight * numberToShow + 65 + widget.size.height,
+                  right: message.isFromMe! ? 15 : null,
+                  left: !message.isFromMe! ? widget.childPosition.dx + 10 : null,
+                  child: AnimatedSize(
+                    curve: Curves.easeInOut,
+                    alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
+                    duration: const Duration(milliseconds: 250),
+                    child: currentlySelectedReaction == "init" ? const SizedBox(height: 80) : ClipRRect(
+                      borderRadius: BorderRadius.circular(40.0),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          color: context.theme.colorScheme.properSurface.withAlpha(150),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: List.generate(narrowScreen ? 2 : 1, (index) {
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: ReactionTypes.toList().slice(
+                                  narrowScreen && index == 1 ? 3 : 0,
+                                  narrowScreen && index == 0 ? 3 : null
+                                ).map((e) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Material(
+                                      color: currentlySelectedReaction == e
+                                          ? context.theme.colorScheme.primary
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: SizedBox(
+                                        width: 35,
+                                        height: 35,
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(20),
+                                          onTap: () {
+                                            if (currentlySelectedReaction == e) {
+                                              currentlySelectedReaction = null;
+                                            } else {
+                                              currentlySelectedReaction = e;
+                                            }
+                                            setState(() {});
+                                            HapticFeedback.lightImpact();
+                                            widget.sendTapback(selfReaction == e ? "-$e" : e);
+                                          },
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(6.5),
+                                            child: SvgPicture.asset(
+                                              'assets/reactions/$e-black.svg',
+                                              color: e == "love" && currentlySelectedReaction == e
+                                                  ? Colors.pink
+                                                  : (currentlySelectedReaction == e ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.outline),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              );
+                            })
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               Positioned(
                 right: message.isFromMe! ? 15 : null,
                 left: !message.isFromMe! ? widget.childPosition.dx + 10 : null,
@@ -317,14 +404,10 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           child: InkWell(
             onTap: () async {
               try {
-                for (Attachment? element in message.attachments) {
-                  dynamic content = as.getContent(element!);
-                  if (content is PlatformFile) {
-                    if (element.guid == message.attachments.last?.guid) {
-                      popDetails();
-                    }
-                    await as.saveToDisk(content);
-                  }
+                dynamic content = as.getContent(part.attachments.first);
+                if (content is PlatformFile) {
+                  popDetails();
+                  await as.saveToDisk(content);
                 }
               } catch (ex, trace) {
                 Logger.error(trace.toString());
@@ -347,13 +430,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (message.fullText.replaceAll("\n", " ").hasUrl && !kIsWeb && !kIsDesktop && !ls.isBubble)
+      if ((part.text?.hasUrl ?? false) && !kIsWeb && !kIsDesktop && !ls.isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              String? url = message.url;
-              mcs.invokeMethod("open-link", {"link": url ?? message.text, "forceBrowser": true});
+              String? url = part.url;
+              mcs.invokeMethod("open-link", {"link": url ?? part.text, "forceBrowser": true});
               popDetails();
             },
             child: ListTile(
@@ -371,13 +454,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (showDownload && kIsWeb && message.attachments.first?.webUrl != null)
+      if (showDownload && kIsWeb && part.attachments.firstOrNull?.webUrl != null)
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
               await launchUrlString(
-                "${message.attachments.first!.webUrl!}?guid=${ss.settings.guidAuthKey}"
+                "${part.attachments.first.webUrl!}?guid=${ss.settings.guidAuthKey}"
               );
               popDetails();
             },
@@ -396,12 +479,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (!isNullOrEmptyString(message.fullText))
+      if (!isNullOrEmptyString(part.fullText))
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              Clipboard.setData(ClipboardData(text: message.fullText));
+              Clipboard.setData(ClipboardData(text: part.fullText));
               popDetails();
               showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
@@ -419,12 +502,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           ),
         ),
       if (showDownload && supportsOriginalDownload &&
-          message.attachments.where((element) =>
-              (element?.uti?.contains("heic") ?? false) ||
-              (element?.uti?.contains("heif") ?? false) ||
-              (element?.uti?.contains("quicktime") ?? false) ||
-              (element?.uti?.contains("coreaudio") ?? false) ||
-              (element?.uti?.contains("tiff") ?? false))
+          part.attachments.where((element) =>
+              (element.uti?.contains("heic") ?? false) ||
+              (element.uti?.contains("heif") ?? false) ||
+              (element.uti?.contains("quicktime") ?? false) ||
+              (element.uti?.contains("coreaudio") ?? false) ||
+              (element.uti?.contains("tiff") ?? false))
             .isNotEmpty)
         Material(
           color: Colors.transparent,
@@ -433,12 +516,12 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               final RxBool downloadingAttachments = true.obs;
               final RxnDouble progress = RxnDouble();
               final Rxn<Attachment> attachmentObs = Rxn<Attachment>();
-              final toDownload = message.attachments.where((element) =>
-              (element?.uti?.contains("heic") ?? false) ||
-                  (element?.uti?.contains("heif") ?? false) ||
-                  (element?.uti?.contains("quicktime") ?? false) ||
-                  (element?.uti?.contains("coreaudio") ?? false) ||
-                  (element?.uti?.contains("tiff") ?? false));
+              final toDownload = part.attachments.where((element) =>
+              (element.uti?.contains("heic") ?? false) ||
+                  (element.uti?.contains("heif") ?? false) ||
+                  (element.uti?.contains("quicktime") ?? false) ||
+                  (element.uti?.contains("coreaudio") ?? false) ||
+                  (element.uti?.contains("tiff") ?? false));
               final length = toDownload.length;
               showDialog(
                 context: context,
@@ -506,7 +589,6 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                     size: response.data.length,
                     bytes: response.data,
                   );
-                  bool lastAttachment = element.guid == toDownload.last?.guid;
                   await as.saveToDisk(file);
                 }
                 progress.value = 1;
@@ -565,7 +647,9 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (message.threadOriginatorGuid != null || service.struct.threads(message.guid!).isNotEmpty)
+      if (message.threadOriginatorGuid != null
+          || service.struct.threads(message.guid!)
+              .where((e) => e.threadOriginatorPart?.startsWith(part.part.toString()) ?? false).isNotEmpty)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -690,7 +774,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              for (Attachment? element in message.attachments) {
+              for (Attachment? element in part.attachments) {
                 cvc(cm.activeChat!.chat).imageData.remove(element!.guid!);
                 as.redownloadAttachment(element);
               }
@@ -711,22 +795,22 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if ((message.hasAttachments && !kIsWeb && !kIsDesktop) || (message.text!.isNotEmpty && !kIsDesktop))
+      if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) || (part.text!.isNotEmpty && !kIsDesktop))
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              if (message.hasAttachments && !message.isLegacyUrlPreview && !kIsWeb && !kIsDesktop) {
-                for (Attachment? element in message.attachments) {
+              if (part.attachments.isNotEmpty && !message.isLegacyUrlPreview && !kIsWeb && !kIsDesktop) {
+                for (Attachment? element in part.attachments) {
                   Share.file(
                     "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
                     element.path,
                   );
                 }
-              } else if (message.text!.isNotEmpty) {
+              } else if (part.text!.isNotEmpty) {
                 Share.text(
                   "Text shared from BlueBubbles",
-                  message.text!,
+                  part.text!,
                 );
               }
               popDetails();
@@ -856,6 +940,63 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
             trailing: Icon(
               ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
+              color: context.theme.colorScheme.properOnSurface,
+            ),
+          ),
+        ),
+      ),
+      Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            const encoder = JsonEncoder.withIndent("     ");
+            final str = encoder.convert(message.toMap(includeObjects: true));
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text(
+                  "Message Info",
+                  style: context.theme.textTheme.titleLarge,
+                ),
+                backgroundColor: context.theme.colorScheme.properSurface,
+                content: SizedBox(
+                  width: ns.width(context) * 3 / 5,
+                  height: context.height * 1 / 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(10.0),
+                    decoration: BoxDecoration(
+                      color: context.theme.backgroundColor,
+                      borderRadius: const BorderRadius.all(Radius.circular(10))
+                    ),
+                    child: SingleChildScrollView(
+                      child: SelectableText(
+                        str,
+                        style: context.theme.textTheme.bodyLarge,
+                      ),
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    child: Text(
+                      "Close",
+                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            );
+          },
+          child: ListTile(
+            mouseCursor: SystemMouseCursors.click,
+            dense: !kIsDesktop && !kIsWeb,
+            title: Text(
+              "Message Info",
+              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+            ),
+            trailing: Icon(
+              ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.info : Icons.info,
               color: context.theme.colorScheme.properOnSurface,
             ),
           ),
