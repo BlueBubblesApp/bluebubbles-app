@@ -1,0 +1,898 @@
+import 'dart:math';
+import 'dart:ui';
+
+import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
+import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_alert_dialog.dart';
+import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
+import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
+import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger.dart';
+import 'package:bluebubbles/utils/share.dart';
+import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart' as cupertino;
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:bluebubbles/models/models.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
+import 'package:sprung/sprung.dart';
+import 'package:tuple/tuple.dart';
+import 'package:url_launcher/url_launcher_string.dart';
+
+class MessagePopup extends StatefulWidget {
+  final Offset childPosition;
+  final Size size;
+  final Widget child;
+  final MessagePart part;
+  final MessageWidgetController controller;
+  final ConversationViewController cvController;
+  final Tuple3<bool, bool, bool> serverDetails;
+
+  const MessagePopup({
+    Key? key,
+    required this.childPosition,
+    required this.size,
+    required this.child,
+    required this.part,
+    required this.controller,
+    required this.cvController,
+    required this.serverDetails,
+  }) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() => _MessagePopupState();
+}
+
+class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerProviderStateMixin {
+  late final AnimationController controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 150),
+  );
+  final double itemHeight = kIsDesktop || kIsWeb ? 56 : 48;
+
+  List<Message> reactions = [];
+  late double messageOffset = Get.height - widget.childPosition.dy - widget.size.height;
+  late int numberToShow = 5;
+  late Chat? dmChat = chats.chats
+    .firstWhereOrNull((chat) => !chat.isGroup
+      && chat.participants.firstWhereOrNull((handle) => handle.address == message.handle?.address) != null
+    );
+  
+  ConversationViewController get cvController => widget.cvController;
+  MessagesService get service => ms(chat.guid);
+  Chat get chat => widget.cvController.chat;
+  MessagePart get part => widget.part;
+  Message get message => widget.controller.message;
+  bool get isSent => !message.guid!.startsWith('temp') && !message.guid!.startsWith('error');
+  bool get showDownload => isSent &&
+      message.hasAttachments &&
+      message.attachments.where((element) => element!.mimeStart != null).isNotEmpty &&
+      message.attachments.where((element) => as.getContent(element!) is PlatformFile).isNotEmpty;
+  bool get minSierra => widget.serverDetails.item1;
+  bool get minBigSur => widget.serverDetails.item2;
+  bool get supportsOriginalDownload => widget.serverDetails.item3;
+
+  @override
+  void initState() {
+    super.initState();
+    controller.forward();
+    final remainingHeight = max(Get.height - Get.statusBarHeight - 120 - widget.size.height, itemHeight);
+    numberToShow = min(remainingHeight ~/ itemHeight, 5);
+
+    updateObx(() {
+      setState(() {
+        messageOffset = itemHeight * numberToShow + 50;
+        reactions = message.associatedMessages
+            .where((e) => ReactionTypes.toList().contains(e.associatedMessageType)
+            && (e.associatedMessagePart ?? 0) == part.part).map((e) {
+              e.handle = e.getHandle();
+              return e;
+            }).toList();
+      });
+    });
+  }
+
+  void popDetails() {
+    bool dialogOpen = Get.isDialogOpen ?? false;
+    if (dialogOpen) {
+      if (kIsWeb) {
+        Get.back();
+      } else {
+        Navigator.of(context).pop();
+      }
+    }
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: ss.settings.immersiveMode.value
+            ? Colors.transparent : context.theme.colorScheme.background, // navigation bar color
+        systemNavigationBarIconBrightness: context.theme.colorScheme.brightness,
+        statusBarColor: Colors.transparent, // status bar color
+        statusBarIconBrightness: context.theme.colorScheme.brightness.opposite,
+      ),
+      child: Theme(
+        data: context.theme.copyWith(
+          // in case some components still use legacy theming
+          primaryColor: context.theme.colorScheme.bubble(context, chat.isIMessage),
+          colorScheme: context.theme.colorScheme.copyWith(
+            primary: context.theme.colorScheme.bubble(context, chat.isIMessage),
+            onPrimary: context.theme.colorScheme.onBubble(context, chat.isIMessage),
+            surface: ss.settings.monetTheming.value == Monet.full
+                ? null
+                : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
+            onSurface: ss.settings.monetTheming.value == Monet.full
+                ? null
+                : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
+          ),
+        ),
+        child: TitleBarWrapper(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                child: Container(
+                  color: context.theme.colorScheme.properSurface.withOpacity(0.3),
+                ),
+              ),
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutBack,
+                left: widget.childPosition.dx,
+                bottom: messageOffset,
+                child: widget.child,
+              ),
+              Positioned(
+                top: 40,
+                left: 15,
+                right: 15,
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 500),
+                  curve: Sprung.underDamped,
+                  alignment: Alignment.center,
+                  child: reactions.isNotEmpty ? ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Container(
+                        alignment: Alignment.center,
+                        height: 120,
+                        color: context.theme.colorScheme.properSurface.withAlpha(150),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            physics: ThemeSwitcher.getScrollPhysics(),
+                            scrollDirection: Axis.horizontal,
+                            itemBuilder: (context, index) {
+                              final message = reactions[index];
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10),
+                                    child: ContactAvatarWidget(
+                                      handle: message.handle,
+                                      borderThickness: 0.1,
+                                      editable: false,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: Text(
+                                      message.handle?.displayName ?? "You",
+                                      style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                                    ),
+                                  ),
+                                  Container(
+                                    height: 28,
+                                    width: 28,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(100),
+                                      color: message.isFromMe!
+                                          ? context.theme.colorScheme.primary : context.theme.colorScheme.properSurface,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          blurRadius: 1.0,
+                                          color: context.theme.colorScheme.outline,
+                                        )
+                                      ],
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
+                                      child: SvgPicture.asset(
+                                        'assets/reactions/${message.associatedMessageType}-black.svg',
+                                        color: message.associatedMessageType == "love"
+                                            ? Colors.pink
+                                            : message.isFromMe!
+                                            ? context.theme.colorScheme.onPrimary
+                                            : context.theme.colorScheme.properOnSurface,
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              );
+                            },
+                            itemCount: reactions.length,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ) : const SizedBox.shrink(),
+                ),
+              ),
+              Positioned(
+                right: message.isFromMe! ? 15 : null,
+                left: widget.childPosition.dx + 10,
+                bottom: 30,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.8, end: 1),
+                  curve: Curves.easeOutBack,
+                  duration: const Duration(milliseconds: 400),
+                  child: FadeTransition(
+                    opacity: CurvedAnimation(
+                      parent: controller,
+                      curve: const Interval(0.0, .9, curve: Curves.ease),
+                      reverseCurve: Curves.easeInCubic,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 5),
+                        buildDetailsMenu(context),
+                      ],
+                    ),
+                  ),
+                  builder: (context, size, child) {
+                    return Transform.scale(
+                      scale: size,
+                      child: child,
+                    );
+                  },
+                ),
+              ),
+            ],
+          )
+        ),
+      ),
+    );
+  }
+
+  Widget buildDetailsMenu(BuildContext context) {
+    double maxMenuWidth = min(max(context.width * 3 / 5, 200), context.width * 4 / 5);
+
+    List<Widget> allActions = [
+      if (ss.settings.enablePrivateAPI.value && minBigSur && chat.isIMessage && isSent)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              popDetails();
+              cvController.replyToMessage = message;
+            },
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Reply",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.reply : Icons.reply,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (showDownload)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              try {
+                for (Attachment? element in message.attachments) {
+                  dynamic content = as.getContent(element!);
+                  if (content is PlatformFile) {
+                    if (element.guid == message.attachments.last?.guid) {
+                      popDetails();
+                    }
+                    await as.saveToDisk(content);
+                  }
+                }
+              } catch (ex, trace) {
+                Logger.error(trace.toString());
+                showSnackbar("Download Error", ex.toString());
+              }
+            },
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Download to Device",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.cloud_download
+                    : Icons.file_download,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (message.fullText.replaceAll("\n", " ").hasUrl && !kIsWeb && !kIsDesktop && !ls.isBubble)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              String? url = message.url;
+              mcs.invokeMethod("open-link", {"link": url ?? message.text, "forceBrowser": true});
+              popDetails();
+            },
+            child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Open In Browser",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.macwindow
+                    : Icons.open_in_browser,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (showDownload && kIsWeb && message.attachments.first?.webUrl != null)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              await launchUrlString(
+                "${message.attachments.first!.webUrl!}?guid=${ss.settings.guidAuthKey}"
+              );
+              popDetails();
+            },
+            child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Open In New Tab",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.macwindow
+                    : Icons.open_in_browser,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (!isNullOrEmptyString(message.fullText))
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: message.fullText));
+              popDetails();
+              showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
+            },
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text("Copy", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.doc_on_clipboard
+                    : Icons.content_copy,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (showDownload && supportsOriginalDownload &&
+          message.attachments.where((element) =>
+              (element?.uti?.contains("heic") ?? false) ||
+              (element?.uti?.contains("heif") ?? false) ||
+              (element?.uti?.contains("quicktime") ?? false) ||
+              (element?.uti?.contains("coreaudio") ?? false) ||
+              (element?.uti?.contains("tiff") ?? false))
+            .isNotEmpty)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              final RxBool downloadingAttachments = true.obs;
+              final RxnDouble progress = RxnDouble();
+              final Rxn<Attachment> attachmentObs = Rxn<Attachment>();
+              final toDownload = message.attachments.where((element) =>
+              (element?.uti?.contains("heic") ?? false) ||
+                  (element?.uti?.contains("heif") ?? false) ||
+                  (element?.uti?.contains("quicktime") ?? false) ||
+                  (element?.uti?.contains("coreaudio") ?? false) ||
+                  (element?.uti?.contains("tiff") ?? false));
+              final length = toDownload.length;
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: context.theme.colorScheme.properSurface,
+                  title: Text("Downloading attachment${length > 1 ? "s" : ""}...", style: context.theme.textTheme.titleLarge),
+                  content: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Obx(
+                              () => Text(
+                              '${progress.value != null && attachmentObs.value != null ? getSizeString(progress.value! * attachmentObs.value!.totalBytes! / 1000) : ""} / ${getSizeString(attachmentObs.value!.totalBytes!.toDouble() / 1000)} (${((progress.value ?? 0) * 100).floor()}%)',
+                              style: context.theme.textTheme.bodyLarge),
+                        ),
+                        const SizedBox(height: 10.0),
+                        Obx(
+                              () => ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: LinearProgressIndicator(
+                              backgroundColor: context.theme.colorScheme.outline,
+                              valueColor: AlwaysStoppedAnimation<Color>(Get.context!.theme.colorScheme.primary),
+                              value: progress.value,
+                              minHeight: 5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 15.0,
+                        ),
+                        Obx(() => Text(
+                          progress.value == 1 ? "Download Complete!" : "You can close this dialog. The attachments will continue to download in the background.",
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                          style: context.theme.textTheme.bodyLarge,
+                        )),
+                      ]),
+                  actions: [
+                    Obx(() => downloadingAttachments.value
+                        ? Container(height: 0, width: 0)
+                        : TextButton(
+                      child: Text("Close", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                      onPressed: () async {
+                        if (Get.isSnackbarOpen ?? false) {
+                          Get.close(1);
+                        }
+                        Navigator.of(context).pop();
+                        popDetails();
+                      },
+                    ),
+                    ),
+                  ],
+                ),
+              );
+              try {
+                for (Attachment? element in toDownload) {
+                  attachmentObs.value = element;
+                  final response = await http.downloadAttachment(element!.guid!,
+                      original: true,
+                      onReceiveProgress: (count, total) =>
+                      progress.value = kIsWeb ? (count / total) : (count / element.totalBytes!));
+                  final file = PlatformFile(
+                    name: element.transferName!,
+                    path: kIsWeb ? null : element.path,
+                    size: response.data.length,
+                    bytes: response.data,
+                  );
+                  bool lastAttachment = element.guid == toDownload.last?.guid;
+                  await as.saveToDisk(file);
+                }
+                progress.value = 1;
+                downloadingAttachments.value = false;
+              } catch (ex, trace) {
+                Logger.error(trace.toString());
+                showSnackbar("Download Error", ex.toString());
+              }
+            },
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Download Original to Device",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.cloud_download
+                    : Icons.file_download,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (chat.isGroup && !message.isFromMe! && dmChat != null && !ls.isBubble)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              popDetails();
+              Navigator.pushReplacement(
+                context,
+                cupertino.CupertinoPageRoute(
+                  builder: (BuildContext context) {
+                    return ConversationView(
+                      chat: dmChat!,
+                    );
+                  },
+                ),
+              );
+            },
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Open Direct Message",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.arrow_up_right_square
+                    : Icons.open_in_new,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (message.threadOriginatorGuid != null || service.struct.threads(message.guid!).isNotEmpty)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              popDetails();
+              showReplyThread(context, message, service);
+            },
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "View Thread",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.bubble_left_bubble_right
+                    : Icons.forum,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (chat.isGroup && !message.isFromMe! && dmChat == null && !ls.isBubble)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap: () async {
+              // todo
+              /*Handle? handle = message.handle;
+              String? address = handle?.address ?? "";
+              Contact? contact = handle?.contact;
+              UniqueContact uniqueContact;
+              if (contact == null) {
+                uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(handle)));
+              } else {
+                uniqueContact = UniqueContact(address: address, displayName: contact.displayName);
+              }
+              popDetails();
+              Navigator.pushReplacement(
+                context,
+                cupertino.CupertinoPageRoute(
+                  builder: (BuildContext context) {
+                    eventDispatcher.emit("update-highlight", null);
+                    return ConversationView(
+                      isCreator: true,
+                      selected: [uniqueContact],
+                    );
+                  },
+                ),
+              );*/
+            },
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Start Conversation",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.chat_bubble
+                    : Icons.message,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (!ls.isBubble)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              // todo
+              /*popDetails();
+              Navigator.pushReplacement(
+                context,
+                cupertino.CupertinoPageRoute(
+                  builder: (BuildContext context) {
+                    List<PlatformFile> existingAttachments = [];
+                    if (!message.isUrlPreview()) {
+                      existingAttachments = message.attachments
+                          .map((attachment) => PlatformFile(
+                                name: attachment!.transferName!,
+                                path: kIsWeb ? null : attachment.path,
+                                bytes: attachment.bytes,
+                                size: attachment.totalBytes!,
+                              ))
+                          .toList();
+                    }
+                    eventDispatcher.emit("update-highlight", null);
+                    return ConversationView(
+                      isCreator: true,
+                      existingText: message.text,
+                      existingAttachments: existingAttachments,
+                      previousChat: widget.currentChat?.chat,
+                    );
+                  },
+                ),
+              );*/
+            },
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Forward",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.arrow_right
+                    : Icons.forward,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (showDownload)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              for (Attachment? element in message.attachments) {
+                cvc(cm.activeChat!.chat).imageData.remove(element!.guid!);
+                as.redownloadAttachment(element);
+              }
+              setState(() {});
+              popDetails();
+            },
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Re-download from Server",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.refresh : Icons.refresh,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if ((message.hasAttachments && !kIsWeb && !kIsDesktop) || (message.text!.isNotEmpty && !kIsDesktop))
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              if (message.hasAttachments && !message.isLegacyUrlPreview && !kIsWeb && !kIsDesktop) {
+                for (Attachment? element in message.attachments) {
+                  Share.file(
+                    "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
+                    element.path,
+                  );
+                }
+              } else if (message.text!.isNotEmpty) {
+                Share.text(
+                  "Text shared from BlueBubbles",
+                  message.text!,
+                );
+              }
+              popDetails();
+            },
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Share",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.share : Icons.share,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (!kIsWeb && !kIsDesktop)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              DateTime? finalDate;
+              await showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      "Select Reminder Time",
+                      style: context.theme.textTheme.titleLarge,
+                    ),
+                    content: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        children: [
+                          TextButton(
+                            child: Text("Cancel", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: Text("1 Hour", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                            onPressed: () {
+                              finalDate = DateTime.now().toLocal().add(const Duration(hours: 1));
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: Text("1 Day", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                            onPressed: () {
+                              finalDate = DateTime.now().toLocal().add(const Duration(days: 1));
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: Text("1 Week", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                            onPressed: () {
+                              finalDate = DateTime.now().toLocal().add(const Duration(days: 7));
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: Text("Custom", style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
+                            onPressed: () async {
+                              final messageDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now().toLocal(),
+                                  firstDate: DateTime.now().toLocal(),
+                                  lastDate: DateTime.now().toLocal().add(const Duration(days: 365)));
+                              if (messageDate != null) {
+                                final messageTime =
+                                await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                                if (messageTime != null) {
+                                  finalDate = DateTime(messageDate.year, messageDate.month, messageDate.day,
+                                      messageTime.hour, messageTime.minute);
+                                }
+                              }
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      )
+                    ]),
+                    backgroundColor: context.theme.colorScheme.properSurface,
+                  );
+                },
+              );
+              if (finalDate != null) {
+                if (!finalDate!.isAfter(DateTime.now().toLocal())) {
+                  showSnackbar("Error", "Select a date in the future");
+                  return;
+                }
+                await notif.createReminder(chat, message, finalDate!);
+                popDetails();
+                showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
+              }
+            },
+            child: ListTile(
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Remind Later",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.alarm : Icons.alarm,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            service.removeMessage(message);
+            Message.softDelete(message.guid!);
+            popDetails();
+          },
+          child: ListTile(
+            mouseCursor: SystemMouseCursors.click,
+            dense: !kIsDesktop && !kIsWeb,
+            title: Text(
+              "Delete",
+              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+            ),
+            trailing: Icon(
+              ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
+              color: context.theme.colorScheme.properOnSurface,
+            ),
+          ),
+        ),
+      ),
+    ];
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10.0),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          color: context.theme.colorScheme.properSurface.withAlpha(150),
+          width: maxMenuWidth,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: allActions.sublist(0, numberToShow - 1)..add(
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    Widget content = Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: allActions.sublist(numberToShow - 1),
+                    );
+                    Get.dialog(
+                      ss.settings.skin.value == Skins.iOS ? CupertinoAlertDialog(
+                        backgroundColor: context.theme.colorScheme.properSurface,
+                        content: content,
+                      ) : AlertDialog(
+                        backgroundColor: context.theme.colorScheme.properSurface,
+                        content: content,
+                      ),
+                      name: 'Popup Menu'
+                    );
+                  },
+                  child: ListTile(
+                    mouseCursor: SystemMouseCursors.click,
+                    dense: !kIsDesktop && !kIsWeb,
+                    title: Text("More...", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
+                    trailing: Icon(
+                      ss.settings.skin.value == Skins.iOS
+                          ? cupertino.CupertinoIcons.ellipsis
+                          : Icons.more_vert,
+                      color: context.theme.colorScheme.properOnSurface,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
