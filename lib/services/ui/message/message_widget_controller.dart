@@ -98,7 +98,6 @@ class MessageWidgetController extends StatefulController with SingleGetTickerPro
     if (message.associatedMessages.firstWhereOrNull((e) => e.guid == newItem.guid) == null) {
       message.associatedMessages.add(newItem);
     }
-    // todo
     updateWidgetFunctions[MessageHolder]?.call(null);
   }
 }

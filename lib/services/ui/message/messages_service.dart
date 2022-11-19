@@ -11,12 +11,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
 
-// TODO determine how and when to update message widgets
-// 1) when threaded items are added, the thread count needs to update
-// 2) delivered receipts
-// 3) edited & unsent messages
-
-
 MessagesService ms(String chatGuid) => Get.isRegistered<MessagesService>(tag: chatGuid)
     ? Get.find<MessagesService>(tag: chatGuid) : Get.put(MessagesService(chatGuid), tag: chatGuid);
 
@@ -69,10 +63,8 @@ class MessagesService extends GetxController {
             getActiveMwc(message.threadOriginatorGuid!)?.updateThreadOriginator(message);
           }
           struct.addMessages([message]);
-          if (message.associatedMessageGuid != null) {
+          if (message.associatedMessageGuid == null) {
             onNewMessage.call(message);
-          } else {
-            // todo call update function on the reacted to message
           }
         }
       }

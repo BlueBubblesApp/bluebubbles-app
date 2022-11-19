@@ -18,14 +18,6 @@ String getFullChatTitle(Chat _chat) {
   if (isNullOrEmpty(_chat.displayName)!) {
     Chat chat = _chat.getParticipants();
 
-    //todo - do we really need this here?
-    /*// If there are no participants, try to get them from the server
-    if (chat.participants.isEmpty) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-      await ActionHandler.handleChat(chat: chat);
-      chat = chat.getParticipants();
-    }*/
-
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type

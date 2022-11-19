@@ -227,9 +227,6 @@ extension ColorHelpers on Color {
 
     return hslDark.toColor();
   }
-  //TODO Complete saturation color helper
-  Color withSaturation([double amount = .1]) =>
-      HSLColor.fromColor(this).withSaturation(amount).toColor();
 
   double computeDifference(Color? other) {
     if (other == null) return 100;
