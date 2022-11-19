@@ -232,7 +232,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               ),
               Positioned(
                 right: message.isFromMe! ? 15 : null,
-                left: widget.childPosition.dx + 10,
+                left: !message.isFromMe! ? widget.childPosition.dx + 10 : null,
                 bottom: 30,
                 child: TweenAnimationBuilder<double>(
                   tween: Tween<double>(begin: 0.8, end: 1),
