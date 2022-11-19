@@ -68,7 +68,8 @@ class ReplyLinePainter extends BoxPainter {
         path.arcToPoint(Offset(_offset.dx + radius, _offset.dy + size.height / 2), clockwise: false, radius: Radius.circular(radius));
         path.lineTo(_offset.dx + size.width - ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30, _offset.dy + size.height / 2);
       }
-    } else if (connectLower) {
+    }
+    if (connectLower) {
       if (!isFromMe) {
         path.moveTo(_offset.dx + size.width - 35, _offset.dy + size.height);
         path.lineTo(_offset.dx + size.width - 35, _offset.dy + size.height - (size.height / 2 - radius).clamp(0, double.infinity));

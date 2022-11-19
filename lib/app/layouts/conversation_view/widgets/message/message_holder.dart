@@ -245,23 +245,26 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                 && message.threadOriginatorGuid != null
                                 && message.showUpperMessage(olderMessage!)
                                 && getActiveMwc(message.threadOriginatorGuid!) != null)
-                              DecoratedBox(
-                                decoration: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe == message.isFromMe ? ReplyLineDecoration(
-                                  isFromMe: message.isFromMe!,
-                                  color: context.theme.colorScheme.properSurface,
-                                  connectUpper: false,
-                                  connectLower: true,
-                                  context: context,
-                                ) : const BoxDecoration(),
-                                child: Container(
-                                  width: double.infinity,
-                                  alignment: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!
-                                      ? Alignment.centerRight : Alignment.centerLeft,
-                                  child: ReplyBubble(
-                                    parentController: getActiveMwc(message.threadOriginatorGuid!)!,
-                                    part: message.normalizedThreadPart,
-                                    showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS)
-                                        && !getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!,
+                              Padding(
+                                padding: EdgeInsets.only(left: chat.isGroup && getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe! ? 35 : 0),
+                                child: DecoratedBox(
+                                  decoration: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe == message.isFromMe ? ReplyLineDecoration(
+                                    isFromMe: message.isFromMe!,
+                                    color: context.theme.colorScheme.properSurface,
+                                    connectUpper: false,
+                                    connectLower: true,
+                                    context: context,
+                                  ) : const BoxDecoration(),
+                                  child: Container(
+                                    width: double.infinity,
+                                    alignment: getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!
+                                        ? Alignment.centerRight : Alignment.centerLeft,
+                                    child: ReplyBubble(
+                                      parentController: getActiveMwc(message.threadOriginatorGuid!)!,
+                                      part: message.normalizedThreadPart,
+                                      showAvatar: (chat.isGroup || ss.settings.alwaysShowAvatars.value || !iOS)
+                                          && !getActiveMwc(message.threadOriginatorGuid!)!.message.isFromMe!,
+                                    ),
                                   ),
                                 ),
                               ),
