@@ -78,7 +78,7 @@ class MessagePopupHolder extends StatelessWidget {
     eventDispatcher.emit('popup-pushed', false);
   }
 
-  void sendTapback([String? type]) {
+  void sendTapback([String? type, int? part]) {
     HapticFeedback.lightImpact();
     final reaction = type ?? ss.settings.quickTapbackType.value;
     Logger.info("Sending reaction type: $reaction");
@@ -88,6 +88,7 @@ class MessagePopupHolder extends StatelessWidget {
       message: Message(
         associatedMessageGuid: message.guid,
         associatedMessageType: reaction,
+        associatedMessagePart: part,
         dateCreated: DateTime.now(),
         hasAttachments: false,
         isFromMe: true,
@@ -105,12 +106,12 @@ class MessagePopupHolder extends StatelessWidget {
       onDoubleTap: message.guid!.startsWith('temp') ? null : ss.settings.doubleTapForDetails.value
         ? () => openPopup(context)
         : ss.settings.enableQuickTapback.value && cm.activeChat!.chat.isIMessage
-        ? sendTapback
+        ? () => sendTapback(null, part.part)
         : null,
       onLongPress: message.guid!.startsWith('temp') ? null : ss.settings.doubleTapForDetails.value &&
         ss.settings.enableQuickTapback.value &&
         cm.activeChat!.chat.isIMessage
-        ? sendTapback
+        ? () => sendTapback(null, part.part)
         : () => openPopup(context),
       onSecondaryTapUp: (details) async {
         if (!kIsWeb && !kIsDesktop) return;

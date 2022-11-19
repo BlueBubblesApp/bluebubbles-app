@@ -33,7 +33,7 @@ class MessagePopup extends StatefulWidget {
   final MessageWidgetController controller;
   final ConversationViewController cvController;
   final Tuple3<bool, bool, bool> serverDetails;
-  final Function([String? type]) sendTapback;
+  final Function([String? type, int? part]) sendTapback;
 
   const MessagePopup({
     Key? key,
@@ -311,7 +311,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                             }
                                             setState(() {});
                                             HapticFeedback.lightImpact();
-                                            widget.sendTapback(selfReaction == e ? "-$e" : e);
+                                            widget.sendTapback(selfReaction == e ? "-$e" : e, part.part);
                                           },
                                           child: Padding(
                                             padding: const EdgeInsets.all(6.5),
