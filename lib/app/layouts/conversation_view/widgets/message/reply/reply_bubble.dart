@@ -1,8 +1,8 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -57,7 +57,7 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
         ),
         child: GestureDetector(
           onTap: () {
-            showReplyThread(context, message, ms(message.chat.target!.guid));
+            showReplyThread(context, message, part, ms(message.chat.target!.guid));
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
@@ -88,7 +88,7 @@ class _ReplyBubbleState extends CustomState<ReplyBubble, void, MessageWidgetCont
         alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
         child: GestureDetector(
           onTap: () {
-            showReplyThread(context, message, ms(message.chat.target!.guid));
+            showReplyThread(context, message, part, ms(message.chat.target!.guid));
           },
           behavior: HitTestBehavior.opaque,
           child: IgnorePointer(

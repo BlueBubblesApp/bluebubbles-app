@@ -1,4 +1,4 @@
-import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -47,7 +47,7 @@ class _MessagePropertiesState extends CustomState<MessageProperties, void, Messa
       properties.add(TextSpan(
         text: "${replyList.length} repl${replyList.length > 1 ? "ies" : "y"}",
         recognizer: TapGestureRecognizer()..onTap = () {
-          showReplyThread(context, message, service);
+          showReplyThread(context, message, widget.part, service);
         }
       ));
     }

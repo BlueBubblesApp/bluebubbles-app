@@ -4,10 +4,10 @@ import 'dart:ui';
 
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_alert_dialog.dart';
-import 'package:bluebubbles/app/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -655,7 +655,13 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
           child: InkWell(
             onTap: () async {
               popDetails();
-              showReplyThread(context, message, service);
+              if (message.threadOriginatorGuid != null) {
+                final mwc = getActiveMwc(message.threadOriginatorGuid!);
+                if (mwc == null) return showSnackbar("Error", "Failed to find thread!");
+                showReplyThread(context, mwc.message, mwc.parts[message.normalizedThreadPart], service);
+              } else {
+                showReplyThread(context, message, part, service);
+              }
             },
             child: ListTile(
               mouseCursor: SystemMouseCursors.click,

@@ -22,8 +22,6 @@ class TextBubble extends CustomStateful<MessageWidgetController> {
 class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetController> {
   MessagePart get part => widget.message;
   Message get message => controller.message;
-  Message? get olderMessage => controller.oldMessage;
-  Message? get newerMessage => controller.newMessage;
 
   @override
   void initState() {

@@ -23,7 +23,7 @@ class ChatMessages {
         // add regular texts
         _messages[m.guid!] = m;
       }
-      if (m.threadOriginatorGuid != null && !m.guid!.startsWith("temp")) {
+      if (m.threadOriginatorGuid != null && !m.guid!.startsWith("temp") && m.associatedMessageGuid == null) {
         // add threaded messages
         _threads[m.threadOriginatorGuid!] ??= {};
         _threads[m.threadOriginatorGuid]![m.guid!] = m;

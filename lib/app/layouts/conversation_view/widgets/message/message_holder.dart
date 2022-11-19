@@ -32,12 +32,16 @@ class MessageHolder extends CustomStateful<MessageWidgetController> {
     this.oldMessageGuid,
     this.newMessageGuid,
     required this.message,
-  }) : super(key: key, parentController: mwc(message));
+    this.isReplyThread = false,
+    this.replyPart,
+  }) : super(key: key, parentController: getActiveMwc(message.guid!) ?? mwc(message));
 
   final Message message;
   final String? oldMessageGuid;
   final String? newMessageGuid;
   final ConversationViewController cvController;
+  final bool isReplyThread;
+  final int? replyPart;
 
   @override
   _MessageHolderState createState() => _MessageHolderState();
@@ -51,7 +55,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       ? null : service.struct.getThreadOriginator(message.threadOriginatorGuid!);
   Chat get chat => widget.cvController.chat;
   MessagesService get service => ms(widget.cvController.chat.guid);
-  bool get canSwipeToReply => ss.settings.enablePrivateAPI.value && ss.settings.swipeToReply.value && chat.isIMessage;
+  bool get canSwipeToReply => ss.settings.enablePrivateAPI.value && ss.settings.swipeToReply.value && chat.isIMessage && !widget.isReplyThread;
   bool get showSender => !message.isGroupEvent && (!message.sameSender(olderMessage) || (olderMessage?.isGroupEvent ?? false)
       || (olderMessage == null || !message.dateCreated!.isWithin(olderMessage!.dateCreated!, minutes: 30)));
   bool get showAvatar => (!iOS || chat.isGroup) && !samsung;
@@ -64,27 +68,35 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
   @override
   void initState() {
     forceDelete = false;
-    controller.cvController = widget.cvController;
-    controller.oldMessageGuid = widget.oldMessageGuid;
-    controller.newMessageGuid = widget.newMessageGuid;
     super.initState();
-    buildMessageParts();
-    // fallback - build from the actual message
-    if (messageParts.isEmpty) {
-      messageParts.addAll(message.attachments.map((e) => MessagePart(
-        attachments: [e!],
-        part: 0,
-      )));
-      if (message.fullText.isNotEmpty || message.isGroupEvent) {
-        messageParts.add(MessagePart(
-          subject: message.subject,
-          text: message.text,
-          part: 0,
-        ));
+    if (widget.isReplyThread) {
+      if (widget.replyPart != null) {
+        messageParts = [controller.parts[widget.replyPart!]];
+      } else {
+        messageParts = controller.parts;
       }
+    } else {
+      controller.cvController = widget.cvController;
+      controller.oldMessageGuid = widget.oldMessageGuid;
+      controller.newMessageGuid = widget.newMessageGuid;
+      buildMessageParts();
+      // fallback - build from the actual message
+      if (messageParts.isEmpty) {
+        messageParts.addAll(message.attachments.map((e) => MessagePart(
+          attachments: [e!],
+          part: 0,
+        )));
+        if (message.fullText.isNotEmpty || message.isGroupEvent) {
+          messageParts.add(MessagePart(
+            subject: message.subject,
+            text: message.text,
+            part: 0,
+          ));
+        }
+      }
+      controller.parts = messageParts;
+      replyOffsets = List.generate(messageParts.length, (_) => 0.0.obs);
     }
-    controller.parts = messageParts;
-    replyOffsets = List.generate(messageParts.length, (_) => 0.0.obs);
   }
 
   void buildMessageParts() {
@@ -241,7 +253,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   )),
                                 )),
                               ),
-                            if (iOS && index == 0
+                            if (iOS && index == 0 && !widget.isReplyThread
                                 && olderMessage != null
                                 && message.threadOriginatorGuid != null
                                 && message.showUpperMessage(olderMessage!)
@@ -270,7 +282,10 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                 ),
                               ),
                             // show sender, if needed
-                            if (chat.isGroup && !message.isFromMe! && showSender && e.part == (messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
+                            if (chat.isGroup
+                                && !message.isFromMe!
+                                && showSender
+                                && e.part == (messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
                               Padding(
                                 padding: showAvatar ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
                                 child: MessageSender(olderMessage: olderMessage, message: message),
@@ -283,7 +298,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                     && showSender
                                     && e.part == messageParts.firstWhereOrNull((e) => !e.isUnsent)?.part))
                               const SizedBox(height: 15),
-                            if (!iOS && index == 0
+                            if (!iOS && index == 0 && !widget.isReplyThread
                                 && olderMessage != null
                                 && message.threadOriginatorGuid != null
                                 && message.showUpperMessage(olderMessage!)
@@ -306,7 +321,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                             Padding(
                               padding: showAvatar ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
                               child: DecoratedBox(
-                                decoration: iOS && ((index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
+                                decoration: iOS && !widget.isReplyThread && ((index == 0 && message.threadOriginatorGuid != null && olderMessage != null)
                                     || (index == messageParts.length - 1 && service.struct.threads(message.guid!).isNotEmpty && newerMessage != null))
                                     ? ReplyLineDecoration(
                                   isFromMe: message.isFromMe!,
