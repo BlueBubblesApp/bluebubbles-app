@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/reaction_picker_clipper.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_alert_dialog.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
@@ -173,7 +174,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                   child: widget.child,
                   builder: (context, size, child) {
                     return Transform.scale(
-                      scale: size,
+                      scale: size.clamp(1, double.infinity),
                       child: child,
                       alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
                     );
@@ -267,7 +268,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                   minSierra &&
                   chat.isIMessage)
                 Positioned(
-                  bottom: itemHeight * numberToShow + 65 + widget.size.height,
+                  bottom: itemHeight * numberToShow + 45 + widget.size.height,
                   right: message.isFromMe! ? 15 : null,
                   left: !message.isFromMe! ? widget.childPosition.dx + 10 : null,
                   child: AnimatedSize(
@@ -275,60 +276,66 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                     alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
                     duration: const Duration(milliseconds: 250),
                     child: currentlySelectedReaction == "init" ? const SizedBox(height: 80) : ClipRRect(
-                      borderRadius: BorderRadius.circular(40.0),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(
-                          padding: const EdgeInsets.all(5),
-                          color: context.theme.colorScheme.properSurface.withAlpha(150),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: List.generate(narrowScreen ? 2 : 1, (index) {
-                              return Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: ReactionTypes.toList().slice(
-                                  narrowScreen && index == 1 ? 3 : 0,
-                                  narrowScreen && index == 0 ? 3 : null
-                                ).map((e) {
-                                  return Padding(
-                                    padding: const EdgeInsets.all(5.0),
-                                    child: Material(
-                                      color: currentlySelectedReaction == e
-                                          ? context.theme.colorScheme.primary
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(20),
-                                      child: SizedBox(
-                                        width: 35,
-                                        height: 35,
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.circular(20),
-                                          onTap: () {
-                                            if (currentlySelectedReaction == e) {
-                                              currentlySelectedReaction = null;
-                                            } else {
-                                              currentlySelectedReaction = e;
-                                            }
-                                            setState(() {});
-                                            HapticFeedback.lightImpact();
-                                            widget.sendTapback(selfReaction == e ? "-$e" : e, part.part);
-                                          },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(6.5),
-                                            child: SvgPicture.asset(
-                                              'assets/reactions/$e-black.svg',
-                                              color: e == "love" && currentlySelectedReaction == e
-                                                  ? Colors.pink
-                                                  : (currentlySelectedReaction == e ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.outline),
+                      borderRadius: BorderRadius.circular(20.0),
+                      child: ClipPath(
+                        clipper: ReactionPickerClipper(
+                          messageSize: widget.size,
+                          isFromMe: message.isFromMe!,
+                        ),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Container(
+                            padding: const EdgeInsets.all(5).add(const EdgeInsets.only(bottom: 15)),
+                            color: context.theme.colorScheme.properSurface.withAlpha(150),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: List.generate(narrowScreen ? 2 : 1, (index) {
+                                return Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: ReactionTypes.toList().slice(
+                                    narrowScreen && index == 1 ? 3 : 0,
+                                    narrowScreen && index == 0 ? 3 : null
+                                  ).map((e) {
+                                    return Padding(
+                                      padding: const EdgeInsets.all(5.0),
+                                      child: Material(
+                                        color: currentlySelectedReaction == e
+                                            ? context.theme.colorScheme.primary
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: SizedBox(
+                                          width: 35,
+                                          height: 35,
+                                          child: InkWell(
+                                            borderRadius: BorderRadius.circular(20),
+                                            onTap: () {
+                                              if (currentlySelectedReaction == e) {
+                                                currentlySelectedReaction = null;
+                                              } else {
+                                                currentlySelectedReaction = e;
+                                              }
+                                              setState(() {});
+                                              HapticFeedback.lightImpact();
+                                              widget.sendTapback(selfReaction == e ? "-$e" : e, part.part);
+                                            },
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(6.5),
+                                              child: SvgPicture.asset(
+                                                'assets/reactions/$e-black.svg',
+                                                color: e == "love" && currentlySelectedReaction == e
+                                                    ? Colors.pink
+                                                    : (currentlySelectedReaction == e ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.outline),
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                }).toList(),
-                              );
-                            })
+                                    );
+                                  }).toList(),
+                                );
+                              })
+                            ),
                           ),
                         ),
                       ),
