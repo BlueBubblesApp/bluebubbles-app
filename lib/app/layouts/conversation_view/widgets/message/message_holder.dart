@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/chat_e
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_properties.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_sender.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/select_checkbox.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/slide_to_reply.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
@@ -209,6 +210,8 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
               ),
             Row(
               children: [
+                if (!message.isFromMe! && !message.isGroupEvent)
+                  SelectCheckbox(message: message, controller: widget.cvController),
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -331,121 +334,130 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                   connectLower: newerMessage != null && message.connectToLower(newerMessage!),
                                   context: context,
                                 ) : const BoxDecoration(),
-                                child: GestureDetector(
+                                child: Obx(() => GestureDetector(
                                   behavior: HitTestBehavior.translucent,
-                                  onTap: kIsDesktop || kIsWeb || material ? () => tapped.value = !tapped.value : null,
-                                  child: Container(
-                                    width: double.infinity,
-                                    alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        // show group event
-                                        if (message.isGroupEvent || e.isUnsent)
-                                          ChatEvent(
-                                            part: e,
-                                            message: message,
-                                          ),
-                                        if (samsung)
-                                          Padding(
-                                            padding: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty
-                                                ? EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 20 : 0)
-                                                : const EdgeInsets.only(right: 10),
-                                            child: MessageTimestamp(controller: controller, cvController: widget.cvController),
-                                          ),
-                                        // otherwise show content
-                                        if (!message.isGroupEvent && !e.isUnsent)
-                                          Stack(
-                                            alignment: Alignment.center,
-                                            fit: StackFit.loose,
-                                            clipBehavior: Clip.none,
-                                            children: [
-                                              // actual message content
-                                              MessagePopupHolder(
-                                                controller: controller,
-                                                cvController: widget.cvController,
-                                                part: e,
-                                                child: GestureDetector(
-                                                  behavior: HitTestBehavior.deferToChild,
-                                                  onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
-                                                    if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
-                                                      return;
-                                                    }
-                                                    final offset = replyOffsets[index];
-                                                    offset.value += details.delta.dx * 0.5;
-                                                    if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
-                                                      HapticFeedback.lightImpact();
-                                                      gaveHapticFeedback = true;
-                                                    } else if (offset.value.abs() < SlideToReply.replyThreshold) {
-                                                      gaveHapticFeedback = false;
-                                                    }
-                                                  },
-                                                  onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
-                                                    final offset = replyOffsets[index];
-                                                    if (offset.value.abs() >= SlideToReply.replyThreshold) {
-                                                      widget.cvController.replyToMessage = Tuple2(message, index);
-                                                    }
-                                                    offset.value = 0;
-                                                  },
-                                                  onHorizontalDragCancel: !canSwipeToReply ? null : () {
-                                                    replyOffsets[index].value = 0;
-                                                  },
-                                                  child: ClipPath(
-                                                    clipper: TailClipper(
-                                                      isFromMe: message.isFromMe!,
-                                                      showTail: message.showTail(newerMessage) && e.part == controller.parts.length - 1,
-                                                      connectLower: iOS ? false : (e.part != 0 && e.part != controller.parts.length - 1)
-                                                          || (e.part == 0 && controller.parts.length > 1),
-                                                      connectUpper: iOS ? false : e.part != 0,
+                                  onTap: widget.cvController.inSelectMode.value ? () {
+                                    if (widget.cvController.isSelected(message.guid!)) {
+                                      widget.cvController.selected.remove(message);
+                                    } else {
+                                      widget.cvController.selected.add(message);
+                                    }
+                                  } : kIsDesktop || kIsWeb || material ? () => tapped.value = !tapped.value : null,
+                                  child: IgnorePointer(
+                                    ignoring: widget.cvController.inSelectMode.value,
+                                    child: Container(
+                                      width: double.infinity,
+                                      alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // show group event
+                                          if (message.isGroupEvent || e.isUnsent)
+                                            ChatEvent(
+                                              part: e,
+                                              message: message,
+                                            ),
+                                          if (samsung)
+                                            Padding(
+                                              padding: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part).isNotEmpty
+                                                  ? EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 20 : 0)
+                                                  : const EdgeInsets.only(right: 10),
+                                              child: MessageTimestamp(controller: controller, cvController: widget.cvController),
+                                            ),
+                                          // otherwise show content
+                                          if (!message.isGroupEvent && !e.isUnsent)
+                                            Stack(
+                                              alignment: Alignment.center,
+                                              fit: StackFit.loose,
+                                              clipBehavior: Clip.none,
+                                              children: [
+                                                // actual message content
+                                                MessagePopupHolder(
+                                                  controller: controller,
+                                                  cvController: widget.cvController,
+                                                  part: e,
+                                                  child: GestureDetector(
+                                                    behavior: HitTestBehavior.deferToChild,
+                                                    onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
+                                                      if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
+                                                        return;
+                                                      }
+                                                      final offset = replyOffsets[index];
+                                                      offset.value += details.delta.dx * 0.5;
+                                                      if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
+                                                        HapticFeedback.lightImpact();
+                                                        gaveHapticFeedback = true;
+                                                      } else if (offset.value.abs() < SlideToReply.replyThreshold) {
+                                                        gaveHapticFeedback = false;
+                                                      }
+                                                    },
+                                                    onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
+                                                      final offset = replyOffsets[index];
+                                                      if (offset.value.abs() >= SlideToReply.replyThreshold) {
+                                                        widget.cvController.replyToMessage = Tuple2(message, index);
+                                                      }
+                                                      offset.value = 0;
+                                                    },
+                                                    onHorizontalDragCancel: !canSwipeToReply ? null : () {
+                                                      replyOffsets[index].value = 0;
+                                                    },
+                                                    child: ClipPath(
+                                                      clipper: TailClipper(
+                                                        isFromMe: message.isFromMe!,
+                                                        showTail: message.showTail(newerMessage) && e.part == controller.parts.length - 1,
+                                                        connectLower: iOS ? false : (e.part != 0 && e.part != controller.parts.length - 1)
+                                                            || (e.part == 0 && controller.parts.length > 1),
+                                                        connectUpper: iOS ? false : e.part != 0,
+                                                      ),
+                                                      child: message.hasApplePayloadData
+                                                          || message.isLegacyUrlPreview
+                                                          || message.isInteractive ? InteractiveHolder(
+                                                        parentController: controller,
+                                                        message: e,
+                                                      ) : e.attachments.isEmpty
+                                                          && (e.text != null || e.subject != null) ? TextBubble(
+                                                        parentController: controller,
+                                                        message: e,
+                                                      ) : e.attachments.isNotEmpty ? AttachmentHolder(
+                                                        parentController: controller,
+                                                        message: e,
+                                                      ) : const SizedBox.shrink(),
                                                     ),
-                                                    child: message.hasApplePayloadData
-                                                        || message.isLegacyUrlPreview
-                                                        || message.isInteractive ? InteractiveHolder(
-                                                      parentController: controller,
-                                                      message: e,
-                                                    ) : e.attachments.isEmpty
-                                                        && (e.text != null || e.subject != null) ? TextBubble(
-                                                      parentController: controller,
-                                                      message: e,
-                                                    ) : e.attachments.isNotEmpty ? AttachmentHolder(
-                                                      parentController: controller,
-                                                      message: e,
-                                                    ) : const SizedBox.shrink(),
                                                   ),
                                                 ),
-                                              ),
-                                              // show stickers on top
-                                              StickerHolder(stickerMessages: stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part)),
-                                              // show reactions on top
-                                              if (message.isFromMe!)
-                                                Positioned(
-                                                  top: -15,
-                                                  left: -20,
-                                                  child: ReactionHolder(
-                                                    reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
-                                                    message: message,
+                                                // show stickers on top
+                                                StickerHolder(stickerMessages: stickers.where((s) => (s.associatedMessagePart ?? 0) == e.part)),
+                                                // show reactions on top
+                                                if (message.isFromMe!)
+                                                  Positioned(
+                                                    top: -15,
+                                                    left: -20,
+                                                    child: ReactionHolder(
+                                                      reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                                      message: message,
+                                                    ),
                                                   ),
-                                                ),
-                                              if (!message.isFromMe!)
-                                                Positioned(
-                                                  top: -15,
-                                                  right: -20,
-                                                  child: ReactionHolder(
-                                                    reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
-                                                    message: message,
+                                                if (!message.isFromMe!)
+                                                  Positioned(
+                                                    top: -15,
+                                                    right: -20,
+                                                    child: ReactionHolder(
+                                                      reactions: reactions.where((s) => (s.associatedMessagePart ?? 0) == e.part),
+                                                      message: message,
+                                                    ),
                                                   ),
-                                                ),
-                                            ],
-                                          ),
-                                        // swipe to reply
-                                        if (canSwipeToReply && !message.isGroupEvent && !e.isUnsent)
-                                          Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
-                                      ].conditionalReverse(message.isFromMe!),
+                                              ],
+                                            ),
+                                          // swipe to reply
+                                          if (canSwipeToReply && !message.isGroupEvent && !e.isUnsent)
+                                            Obx(() => SlideToReply(width: replyOffsets[index].value.abs())),
+                                        ].conditionalReverse(message.isFromMe!),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
+                            )),
                             // message properties (replies, edits, effect)
                             Padding(
                               padding: showAvatar ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
@@ -462,6 +474,8 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                     ],
                   ),
                 ),
+                if (message.isFromMe! && !message.isGroupEvent)
+                  SelectCheckbox(message: message, controller: widget.cvController),
                 // slide to view timestamp
                 if (!samsung)
                   MessageTimestamp(controller: controller, cvController: widget.cvController),

@@ -5,7 +5,7 @@ import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:chewie_audio/chewie_audio.dart';
+import 'package:collection/collection.dart';
 import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -25,12 +25,12 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final Chat chat;
   late final String tag;
   final AutoScrollController scrollController = AutoScrollController();
-  final GlobalKey key = GlobalKey();
 
   ConversationViewController(this.chat, {String? tag_}) {
     tag = tag_ ?? chat.guid;
   }
 
+  // caching items
   final Map<String, Uint8List> imageData = {};
   final List<Tuple4<Attachment, PlatformFile, BuildContext, Completer<Uint8List>>> imageCacheQueue = [];
   final Map<String, Map<String, Uint8List>> stickerData = {};
@@ -41,8 +41,12 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   final Map<String, Tuple2<Player, Player>> audioPlayersDesktop = {};
   final Map<String, List<EntityAnnotation>> mlKitParsedText = {};
 
+  // message view items
   final RxBool showTypingIndicator = false.obs;
   final RxBool showScrollDown = false.obs;
+  final RxDouble timestampOffset = 0.0.obs;
+  final RxBool inSelectMode = false.obs;
+  final RxList<Message> selected = <Message>[].obs;
   // text field items
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
@@ -66,8 +70,6 @@ class ConversationViewController extends StatefulController with SingleGetTicker
   Timer? _scrollDownDebounce;
   Future<void> Function(Tuple6<List<PlatformFile>, String, String, String?, int?, String?>)? sendFunc;
   bool isProcessingImage = false;
-
-  final RxDouble timestampOffset = 0.0.obs;
 
   @override
   void onInit() {
@@ -185,6 +187,10 @@ class ConversationViewController extends StatefulController with SingleGetTicker
     queued.item4.complete(tmpData);
 
     await _processNextImage();
+  }
+
+  bool isSelected(String guid) {
+    return selected.firstWhereOrNull((e) => e.guid == guid) != null;
   }
 
   void close() {

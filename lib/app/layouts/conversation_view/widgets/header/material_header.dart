@@ -34,11 +34,17 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
             child: BackButton(
               color: context.theme.colorScheme.onBackground,
               onPressed: () {
+                if (controller.inSelectMode.value) {
+                  controller.inSelectMode.value = false;
+                  controller.selected.clear();
+                  return true;
+                }
                 if (ls.isBubble) {
                   SystemNavigator.pop();
-                  return;
+                  return true;
                 }
                 eventDispatcher.emit("update-highlight", null);
+                return false;
               },
             ),
           ),
@@ -60,7 +66,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
           actions: [
-            ManualMark(chat: controller.chat),
+            ManualMark(controller: controller),
             if (Platform.isAndroid && !controller.chat.isGroup && controller.chat.participants.first.address.isPhoneNumber)
               IconButton(
                 icon: Icon(Icons.call_outlined, color: context.theme.colorScheme.onBackground),
@@ -220,10 +226,13 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: context.theme.textTheme.titleLarge!.apply(color: context.theme.colorScheme.onBackground),
-            ),
+            Obx(() {
+              final _title = controller.inSelectMode.value ? "${controller.selected.length} selected" : title;
+              return Text(
+                _title,
+                style: context.theme.textTheme.titleLarge!.apply(color: context.theme.colorScheme.onBackground),
+              );
+            }),
             if (samsung && (controller.chat.isGroup || (!title.isPhoneNumber && !title.isEmail)))
               Text(
                 controller.chat.isGroup

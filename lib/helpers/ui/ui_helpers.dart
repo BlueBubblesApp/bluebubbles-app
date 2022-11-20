@@ -15,7 +15,7 @@ import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
 class BackButton extends StatelessWidget {
-  final Function()? onPressed;
+  final bool Function()? onPressed;
   final Color? color;
 
   const BackButton({this.color, this.onPressed});
@@ -29,11 +29,13 @@ class BackButton extends StatelessWidget {
       )),
       iconSize: ss.settings.skin.value != Skins.Material ? 30 : 24,
       onPressed: () {
-        onPressed?.call();
-        while (Get.isOverlaysOpen) {
-          Get.back();
+        final result = onPressed?.call() ?? false;
+        if (!result) {
+          while (Get.isOverlaysOpen) {
+            Get.back();
+          }
+          Navigator.of(context).pop();
         }
-        Navigator.of(context).pop();
       },
     );
   }

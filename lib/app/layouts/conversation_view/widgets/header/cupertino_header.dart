@@ -49,6 +49,11 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(10),
                           onTap: () {
+                            if (controller.inSelectMode.value) {
+                              controller.inSelectMode.value = false;
+                              controller.selected.clear();
+                              return;
+                            }
                             if (ls.isBubble) {
                               SystemNavigator.pop();
                               return;
@@ -61,7 +66,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(3.0),
-                            child: const _UnreadIcon(),
+                            child: _UnreadIcon(controller: controller),
                           ),
                         ),
                       ),
@@ -86,7 +91,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                       ),
                       Align(
                         alignment: Alignment.centerRight,
-                        child: ManualMark(chat: controller.chat)
+                        child: ManualMark(controller: controller)
                       ),
                     ]
                   ),
@@ -104,7 +109,9 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _UnreadIcon extends StatefulWidget {
-  const _UnreadIcon();
+  const _UnreadIcon({required this.controller});
+
+  final ConversationViewController controller;
 
   @override
   State<StatefulWidget> createState() => _UnreadIconState();
@@ -143,19 +150,24 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 3.0, right: 3),
-          child: Text(
-            String.fromCharCode(CupertinoIcons.back.codePoint),
-            style: TextStyle(
-              fontFamily: CupertinoIcons.back.fontFamily,
-              package: CupertinoIcons.back.fontPackage,
-              fontSize: 35,
-              color: context.theme.colorScheme.primary,
-            ),
-          ),
+          child: Obx(() {
+            final icon = widget.controller.inSelectMode.value ? CupertinoIcons.xmark : CupertinoIcons.back;
+            return Text(
+              String.fromCharCode(icon.codePoint),
+              style: TextStyle(
+                fontFamily: icon.fontFamily,
+                package: icon.fontPackage,
+                fontSize: 35,
+                color: context.theme.colorScheme.primary,
+              ),
+            );
+          }),
         ),
-        if (count != 0)
-          Container(
-            width: count > 9 ? 25.0 : 20,
+        Obx(() {
+          final _count = widget.controller.inSelectMode.value ? widget.controller.selected.length : count;
+          if (_count == 0) return const SizedBox.shrink();
+          return Container(
+            width: _count > 9 ? 25.0 : 20,
             height: 20.0,
             decoration: BoxDecoration(
               color: context.theme.colorScheme.primary,
@@ -165,12 +177,13 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
             alignment: Alignment.center,
             child: Center(
               child: Text(
-                count.toString(),
+                _count.toString(),
                 textAlign: TextAlign.center,
                 style: context.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onPrimary),
               ),
             ),
-          ),
+          );
+        }),
       ],
     );
   }

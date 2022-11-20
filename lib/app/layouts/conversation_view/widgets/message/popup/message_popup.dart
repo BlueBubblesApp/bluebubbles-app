@@ -318,6 +318,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                                               setState(() {});
                                               HapticFeedback.lightImpact();
                                               widget.sendTapback(selfReaction == e ? "-$e" : e, part.part);
+                                              popDetails();
                                             },
                                             child: Padding(
                                               padding: const EdgeInsets.all(6.5),
@@ -418,14 +419,14 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                 }
               } catch (ex, trace) {
                 Logger.error(trace.toString());
-                showSnackbar("Download Error", ex.toString());
+                showSnackbar("Save Error", ex.toString());
               }
             },
             child: ListTile(
               mouseCursor: SystemMouseCursors.click,
               dense: !kIsDesktop && !kIsWeb,
               title: Text(
-                "Download to Device",
+                "Save",
                 style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
               ),
               trailing: Icon(
@@ -953,6 +954,28 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
             trailing: Icon(
               ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
+              color: context.theme.colorScheme.properOnSurface,
+            ),
+          ),
+        ),
+      ),
+      Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            cvController.inSelectMode.toggle();
+            cvController.selected.add(message);
+            popDetails();
+          },
+          child: ListTile(
+            mouseCursor: SystemMouseCursors.click,
+            dense: !kIsDesktop && !kIsWeb,
+            title: Text(
+              "Select Multiple",
+              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+            ),
+            trailing: Icon(
+              ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.checkmark_square : Icons.check_box_outlined,
               color: context.theme.colorScheme.properOnSurface,
             ),
           ),

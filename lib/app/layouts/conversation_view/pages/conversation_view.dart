@@ -76,6 +76,11 @@ class ConversationViewState extends OptimizedState<ConversationView> {
         ),
         child: WillPopScope(
           onWillPop: () async {
+            if (controller.inSelectMode.value) {
+              controller.inSelectMode.value = false;
+              controller.selected.clear();
+              return false;
+            }
             if (ls.isBubble) {
               SystemNavigator.pop();
             }
