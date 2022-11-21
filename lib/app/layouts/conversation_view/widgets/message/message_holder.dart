@@ -2,6 +2,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/sticker_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/chat_event/chat_event.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/bubble_effects.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_properties.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_sender.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/select_checkbox.dart';
@@ -375,57 +376,62 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                               clipBehavior: Clip.none,
                                               children: [
                                                 // actual message content
-                                                MessagePopupHolder(
-                                                  key: keys.length > index ? keys[index] : null,
-                                                  controller: controller,
-                                                  cvController: widget.cvController,
-                                                  part: e,
-                                                  child: GestureDetector(
-                                                    behavior: HitTestBehavior.deferToChild,
-                                                    onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
-                                                      if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
-                                                        return;
-                                                      }
-                                                      final offset = replyOffsets[index];
-                                                      offset.value += details.delta.dx * 0.5;
-                                                      if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
-                                                        HapticFeedback.lightImpact();
-                                                        gaveHapticFeedback = true;
-                                                      } else if (offset.value.abs() < SlideToReply.replyThreshold) {
-                                                        gaveHapticFeedback = false;
-                                                      }
-                                                    },
-                                                    onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
-                                                      final offset = replyOffsets[index];
-                                                      if (offset.value.abs() >= SlideToReply.replyThreshold) {
-                                                        widget.cvController.replyToMessage = Tuple2(message, index);
-                                                      }
-                                                      offset.value = 0;
-                                                    },
-                                                    onHorizontalDragCancel: !canSwipeToReply ? null : () {
-                                                      replyOffsets[index].value = 0;
-                                                    },
-                                                    child: ClipPath(
-                                                      clipper: TailClipper(
-                                                        isFromMe: message.isFromMe!,
-                                                        showTail: message.showTail(newerMessage) && e.part == controller.parts.length - 1,
-                                                        connectLower: iOS ? false : (e.part != 0 && e.part != controller.parts.length - 1)
-                                                            || (e.part == 0 && controller.parts.length > 1),
-                                                        connectUpper: iOS ? false : e.part != 0,
+                                                BubbleEffects(
+                                                  message: message,
+                                                  part: index,
+                                                  globalKey: keys.length > index ? keys[index] : null,
+                                                  child: MessagePopupHolder(
+                                                    key: keys.length > index ? keys[index] : null,
+                                                    controller: controller,
+                                                    cvController: widget.cvController,
+                                                    part: e,
+                                                    child: GestureDetector(
+                                                      behavior: HitTestBehavior.deferToChild,
+                                                      onHorizontalDragUpdate: !canSwipeToReply ? null : (details) {
+                                                        if ((message.isFromMe! && details.delta.dx > 0) || (!message.isFromMe! && details.delta.dx < 0)) {
+                                                          return;
+                                                        }
+                                                        final offset = replyOffsets[index];
+                                                        offset.value += details.delta.dx * 0.5;
+                                                        if (!gaveHapticFeedback && offset.value.abs() >= SlideToReply.replyThreshold) {
+                                                          HapticFeedback.lightImpact();
+                                                          gaveHapticFeedback = true;
+                                                        } else if (offset.value.abs() < SlideToReply.replyThreshold) {
+                                                          gaveHapticFeedback = false;
+                                                        }
+                                                      },
+                                                      onHorizontalDragEnd: !canSwipeToReply ? null : (details) {
+                                                        final offset = replyOffsets[index];
+                                                        if (offset.value.abs() >= SlideToReply.replyThreshold) {
+                                                          widget.cvController.replyToMessage = Tuple2(message, index);
+                                                        }
+                                                        offset.value = 0;
+                                                      },
+                                                      onHorizontalDragCancel: !canSwipeToReply ? null : () {
+                                                        replyOffsets[index].value = 0;
+                                                      },
+                                                      child: ClipPath(
+                                                        clipper: TailClipper(
+                                                          isFromMe: message.isFromMe!,
+                                                          showTail: message.showTail(newerMessage) && e.part == controller.parts.length - 1,
+                                                          connectLower: iOS ? false : (e.part != 0 && e.part != controller.parts.length - 1)
+                                                              || (e.part == 0 && controller.parts.length > 1),
+                                                          connectUpper: iOS ? false : e.part != 0,
+                                                        ),
+                                                        child: message.hasApplePayloadData
+                                                            || message.isLegacyUrlPreview
+                                                            || message.isInteractive ? InteractiveHolder(
+                                                          parentController: controller,
+                                                          message: e,
+                                                        ) : e.attachments.isEmpty
+                                                            && (e.text != null || e.subject != null) ? TextBubble(
+                                                          parentController: controller,
+                                                          message: e,
+                                                        ) : e.attachments.isNotEmpty ? AttachmentHolder(
+                                                          parentController: controller,
+                                                          message: e,
+                                                        ) : const SizedBox.shrink(),
                                                       ),
-                                                      child: message.hasApplePayloadData
-                                                          || message.isLegacyUrlPreview
-                                                          || message.isInteractive ? InteractiveHolder(
-                                                        parentController: controller,
-                                                        message: e,
-                                                      ) : e.attachments.isEmpty
-                                                          && (e.text != null || e.subject != null) ? TextBubble(
-                                                        parentController: controller,
-                                                        message: e,
-                                                      ) : e.attachments.isNotEmpty ? AttachmentHolder(
-                                                        parentController: controller,
-                                                        message: e,
-                                                      ) : const SizedBox.shrink(),
                                                     ),
                                                   ),
                                                 ),

@@ -44,15 +44,7 @@ class _MessagePropertiesState extends CustomState<MessageProperties, void, Messa
         recognizer: TapGestureRecognizer()..onTap = () {
           HapticFeedback.mediumImpact();
           if ((stringToMessageEffect[effect] ?? MessageEffect.none).isBubble) {
-            /*if (effect == "invisible ink" && animController == Control.playFromStart) {
-              setState(() {
-                animController = Control.stop;
-              });
-            } else {
-              setState(() {
-                animController = Control.playFromStart;
-              });
-            }*/
+            eventDispatcher.emit('play-bubble-effect', '${widget.part.part}/${message.guid}');
           } else if (widget.globalKey != null) {
             eventDispatcher.emit('play-effect', {
               'type': effect,

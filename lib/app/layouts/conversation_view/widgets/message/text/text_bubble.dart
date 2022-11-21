@@ -1,10 +1,12 @@
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:simple_animations/simple_animations.dart';
+import 'package:supercharged/supercharged.dart';
 
 class TextBubble extends CustomStateful<MessageWidgetController> {
   TextBubble({
@@ -22,10 +24,35 @@ class TextBubble extends CustomStateful<MessageWidgetController> {
 class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetController> {
   MessagePart get part => widget.message;
   Message get message => controller.message;
+  String get effectStr => effectMap.entries.firstWhereOrNull((e) => e.value == message.expressiveSendStyleId)?.key ?? "unknown";
+  MessageEffect get effect => stringToMessageEffect[effectStr] ?? MessageEffect.none;
+
+  late MovieTween tween;
+  Control anim = Control.stop;
 
   @override
   void initState() {
     forceDelete = false;
+    if (effect == MessageEffect.gentle) {
+      tween = MovieTween()
+        ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 1), curve: Curves.easeInOut)
+            .tween("size", 1.0.tweenTo(1.0))
+        ..scene(begin: const Duration(milliseconds: 1), duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
+            .tween("size", 0.0.tweenTo(0.5))
+        ..scene(begin: const Duration(milliseconds: 1000), duration: const Duration(milliseconds: 800), curve: Curves.easeInOut)
+            .tween("size", 0.5.tweenTo(1.0));
+    } else {
+      tween = MovieTween()
+        ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
+            .tween("size", 1.0.tweenTo(1.0));
+    }
+    eventDispatcher.stream.listen((event) async {
+      if (event.item1 == 'play-bubble-effect' && event.item2 == '${part.part}/${message.guid}' && effect == MessageEffect.gentle) {
+        setState(() {
+          anim = Control.playFromStart;
+        });
+      }
+    });
     super.initState();
   }
 
@@ -83,6 +110,33 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
         ),
         builder: (context, snapshot) {
           if (snapshot.data != null) {
+            if (effect == MessageEffect.gentle) {
+              return CustomAnimationBuilder<Movie>(
+                control: anim,
+                tween: tween,
+                duration: const Duration(milliseconds: 1800),
+                animationStatusListener: (status) {
+                  if (status == AnimationStatus.completed) {
+                    setState(() {
+                      anim = Control.stop;
+                    });
+                  }
+                },
+                builder: (context, anim, child) {
+                  final value1 = anim.get("size");
+                  return Transform.scale(
+                    scale: value1,
+                    alignment: Alignment.center,
+                    child: child
+                  );
+                },
+                child: RichText(
+                  text: TextSpan(
+                    children: snapshot.data!,
+                  ),
+                ),
+              );
+            }
             return RichText(
               text: TextSpan(
                 children: snapshot.data!,
