@@ -331,88 +331,89 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                       },
                     ),
                   ),
-                Positioned(
-                  top: 40,
-                  left: 15,
-                  right: 15,
-                  child: AnimatedSize(
-                    duration: const Duration(milliseconds: 500),
-                    curve: Sprung.underDamped,
-                    alignment: Alignment.center,
-                    child: reactions.isNotEmpty ? Material(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                      clipBehavior: Clip.antiAlias,
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(
-                          alignment: Alignment.center,
-                          height: 120,
-                          color: context.theme.colorScheme.properSurface.withAlpha(iOS ? 150 : 255),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              physics: ThemeSwitcher.getScrollPhysics(),
-                              scrollDirection: Axis.horizontal,
-                              itemBuilder: (context, index) {
-                                final message = reactions[index];
-                                return Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10),
-                                      child: ContactAvatarWidget(
-                                        handle: message.handle,
-                                        borderThickness: 0.1,
-                                        editable: false,
-                                        fontSize: 22,
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(bottom: 8.0),
-                                      child: Text(
-                                        message.handle?.displayName ?? "You",
-                                        style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
-                                      ),
-                                    ),
-                                    Container(
-                                      height: 28,
-                                      width: 28,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(100),
-                                        color: message.isFromMe!
-                                            ? context.theme.colorScheme.primary : context.theme.colorScheme.properSurface,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            blurRadius: 1.0,
-                                            color: context.theme.colorScheme.outline,
-                                          )
-                                        ],
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
-                                        child: SvgPicture.asset(
-                                          'assets/reactions/${message.associatedMessageType}-black.svg',
-                                          color: message.associatedMessageType == "love"
-                                              ? Colors.pink
-                                              : message.isFromMe!
-                                              ? context.theme.colorScheme.onPrimary
-                                              : context.theme.colorScheme.properOnSurface,
+                if (iOS)
+                  Positioned(
+                    top: 40,
+                    left: 15,
+                    right: 15,
+                    child: AnimatedSize(
+                      duration: const Duration(milliseconds: 500),
+                      curve: Sprung.underDamped,
+                      alignment: Alignment.center,
+                      child: reactions.isNotEmpty ? Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(20),
+                        clipBehavior: Clip.antiAlias,
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Container(
+                            alignment: Alignment.center,
+                            height: 120,
+                            color: context.theme.colorScheme.properSurface.withAlpha(iOS ? 150 : 255),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: ThemeSwitcher.getScrollPhysics(),
+                                scrollDirection: Axis.horizontal,
+                                itemBuilder: (context, index) {
+                                  final message = reactions[index];
+                                  return Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: <Widget>[
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10),
+                                        child: ContactAvatarWidget(
+                                          handle: message.handle,
+                                          borderThickness: 0.1,
+                                          editable: false,
+                                          fontSize: 22,
                                         ),
                                       ),
-                                    )
-                                  ],
-                                );
-                              },
-                              itemCount: reactions.length,
+                                      Padding(
+                                        padding: const EdgeInsets.only(bottom: 8.0),
+                                        child: Text(
+                                          message.handle?.displayName ?? "You",
+                                          style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                                        ),
+                                      ),
+                                      Container(
+                                        height: 28,
+                                        width: 28,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(100),
+                                          color: message.isFromMe!
+                                              ? context.theme.colorScheme.primary : context.theme.colorScheme.properSurface,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              blurRadius: 1.0,
+                                              color: context.theme.colorScheme.outline,
+                                            )
+                                          ],
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
+                                          child: SvgPicture.asset(
+                                            'assets/reactions/${message.associatedMessageType}-black.svg',
+                                            color: message.associatedMessageType == "love"
+                                                ? Colors.pink
+                                                : message.isFromMe!
+                                                ? context.theme.colorScheme.onPrimary
+                                                : context.theme.colorScheme.properOnSurface,
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  );
+                                },
+                                itemCount: reactions.length,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ) : const SizedBox.shrink(),
+                      ) : const SizedBox.shrink(),
+                    ),
                   ),
-                ),
                 if (ss.settings.enablePrivateAPI.value &&
                     isSent &&
                     minSierra &&
@@ -428,7 +429,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                       child: currentlySelectedReaction == "init" ? const SizedBox(height: 80) : Material(
                         clipBehavior: Clip.antiAlias,
                         color: Colors.transparent,
-                        elevation: !iOS ? 1 : 0,
+                        elevation: !iOS ? 3 : 0,
                         shadowColor: context.theme.colorScheme.background,
                         borderRadius: BorderRadius.circular(20.0),
                         child: ClipPath(
