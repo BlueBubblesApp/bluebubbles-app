@@ -162,10 +162,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         eventDispatcher.emit('theme-update', null);
                       },
                       options: Skins.values,
-                      textProcessing: (val) {
-                        var output = val.toString().split(".").last;
-                        return output == 'Samsung' ? 'Samsung (β)' : output;
-                      },
+                      textProcessing: (val) => describeEnum(val),
                       capitalize: false,
                       title: "App Skin",
                       backgroundColor: tileColor,
