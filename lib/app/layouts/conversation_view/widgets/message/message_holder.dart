@@ -65,6 +65,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
 
   List<MessagePart> messageParts = [];
   List<RxDouble> replyOffsets = [];
+  List<GlobalKey> keys = [];
   bool gaveHapticFeedback = false;
   final RxBool tapped = false.obs;
 
@@ -99,6 +100,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
       }
       controller.parts = messageParts;
       replyOffsets = List.generate(messageParts.length, (_) => 0.0.obs);
+      keys = List.generate(messageParts.length, (_) => GlobalKey());
     }
   }
 
@@ -374,6 +376,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                               children: [
                                                 // actual message content
                                                 MessagePopupHolder(
+                                                  key: keys.length > index ? keys[index] : null,
                                                   controller: controller,
                                                   cvController: widget.cvController,
                                                   part: e,
@@ -462,7 +465,11 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                             // message properties (replies, edits, effect)
                             Padding(
                               padding: showAvatar ? const EdgeInsets.only(left: 35.0) : EdgeInsets.zero,
-                              child: MessageProperties(parentController: controller, part: e),
+                              child: MessageProperties(
+                                globalKey: keys.length > index ? keys[index] : null,
+                                parentController: controller,
+                                part: e
+                              ),
                             ),
                           ],
                         ),

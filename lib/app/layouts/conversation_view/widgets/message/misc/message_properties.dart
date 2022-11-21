@@ -6,6 +6,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class MessageProperties extends CustomStateful<MessageWidgetController> {
@@ -13,9 +14,11 @@ class MessageProperties extends CustomStateful<MessageWidgetController> {
     Key? key,
     required super.parentController,
     required this.part,
+    this.globalKey,
   }) : super(key: key);
 
   final MessagePart part;
+  final GlobalKey? globalKey;
 
   @override
   _MessagePropertiesState createState() => _MessagePropertiesState();
@@ -39,7 +42,23 @@ class _MessagePropertiesState extends CustomState<MessageProperties, void, Messa
       properties.add(TextSpan(
         text: "↺ sent with $effect",
         recognizer: TapGestureRecognizer()..onTap = () {
-          // todo
+          HapticFeedback.mediumImpact();
+          if ((stringToMessageEffect[effect] ?? MessageEffect.none).isBubble) {
+            /*if (effect == "invisible ink" && animController == Control.playFromStart) {
+              setState(() {
+                animController = Control.stop;
+              });
+            } else {
+              setState(() {
+                animController = Control.playFromStart;
+              });
+            }*/
+          } else if (widget.globalKey != null) {
+            eventDispatcher.emit('play-effect', {
+              'type': effect,
+              'size': widget.globalKey!.globalPaintBounds(context),
+            });
+          }
         }
       ));
     }
@@ -71,7 +90,7 @@ class _MessagePropertiesState extends CustomState<MessageProperties, void, Messa
       alignment: Alignment.bottomCenter,
       duration: const Duration(milliseconds: 250),
       child: props.isNotEmpty ? Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 25).add(const EdgeInsets.only(top: 3)),
+        padding: const EdgeInsets.symmetric(horizontal: 15).add(const EdgeInsets.only(top: 3)),
         child: Text.rich(
           TextSpan(
             children: intersperse(const TextSpan(text: " • "), props).toList(),

@@ -12,7 +12,7 @@ import 'package:bluebubbles/app/animations/love_classes.dart';
 import 'package:bluebubbles/app/animations/love_rendering.dart';
 import 'package:bluebubbles/app/animations/spotlight_classes.dart';
 import 'package:bluebubbles/app/animations/spotlight_rendering.dart';
-import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +27,7 @@ class ScreenEffectsWidget extends StatefulWidget {
   }
 }
 
-class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerProviderStateMixin {
+class _ScreenEffectsWidgetState extends OptimizedState<ScreenEffectsWidget> with TickerProviderStateMixin {
   late final FireworkController fireworkController;
   late final CelebrationController celebrationController;
   late final ConfettiController confettiController;
@@ -36,11 +36,20 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
   late final SpotlightController spotlightController;
   late final LaserController laserController;
   String screenSelected = "";
-  bool createdControllers = false;
 
   @override
   void initState() {
     super.initState();
+
+    updateObx(() {
+      fireworkController = FireworkController(vsync: this, windowSize: Size(ns.width(context), context.height));
+      celebrationController = CelebrationController(vsync: this, windowSize: Size(ns.width(context), context.height));
+      confettiController = ConfettiController(duration: const Duration(seconds: 1));
+      balloonController = BalloonController(vsync: this, windowSize: Size(ns.width(context), context.height));
+      loveController = LoveController(vsync: this, windowSize: Size(ns.width(context), context.height));
+      spotlightController = SpotlightController(vsync: this, windowSize: Size(ns.width(context), context.height));
+      laserController = LaserController(vsync: this, windowSize: Size(ns.width(context), context.height));
+    });
 
     eventDispatcher.stream.listen((event) async {
       if (event.item1 == 'play-effect' && mounted) {
@@ -51,7 +60,7 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
         if (screenSelected == "fireworks" && !fireworkController.isPlaying) {
           fireworkController.windowSize = Size(ns.width(context), context.height);
           fireworkController.start();
-          await Future.delayed(Duration(seconds: 1));
+          await Future.delayed(const Duration(seconds: 1));
           fireworkController.stop();
           setState(() {
             screenSelected = "";
@@ -59,7 +68,7 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
         } else if (screenSelected == "celebration" && !celebrationController.isPlaying) {
           celebrationController.windowSize = Size(ns.width(context), context.height);
           celebrationController.start();
-          await Future.delayed(Duration(seconds: 1));
+          await Future.delayed(const Duration(seconds: 1));
           celebrationController.stop();
           setState(() {
             screenSelected = "";
@@ -67,20 +76,20 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
         } else if (screenSelected == "balloons" && !balloonController.isPlaying) {
           balloonController.windowSize = Size(ns.width(context), context.height);
           balloonController.start();
-          await Future.delayed(Duration(seconds: 1));
+          await Future.delayed(const Duration(seconds: 1));
           balloonController.stop();
         } else if (screenSelected == "love" && !loveController.isPlaying) {
           if (rect != null) {
             loveController.windowSize = Size(ns.width(context), context.height);
             loveController.start(Point((rect!.left + rect!.right) / 2, (rect!.top + rect!.bottom) / 2));
-            await Future.delayed(Duration(seconds: 1));
+            await Future.delayed(const Duration(seconds: 1));
             loveController.stop();
           }
         } else if (screenSelected == "spotlight" && !spotlightController.isPlaying) {
           if (rect != null) {
             spotlightController.windowSize = Size(ns.width(context), context.height);
             spotlightController.start(rect!);
-            await Future.delayed(Duration(seconds: 1));
+            await Future.delayed(const Duration(seconds: 1));
             spotlightController.stop();
             setState(() {
               screenSelected = "";
@@ -90,7 +99,7 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
           if (rect != null) {
             laserController.windowSize = Size(ns.width(context), context.height);
             laserController.start(rect!);
-            await Future.delayed(Duration(seconds: 1));
+            await Future.delayed(const Duration(seconds: 1));
             laserController.stop();
             setState(() {
               screenSelected = "";
@@ -106,20 +115,8 @@ class _ScreenEffectsWidgetState extends State<ScreenEffectsWidget> with TickerPr
 
   @override
   Widget build(BuildContext context) {
-    Future.delayed(Duration.zero, () {
-      if (!createdControllers) {
-        fireworkController = FireworkController(vsync: this, windowSize: Size(ns.width(context), context.height));
-        celebrationController = CelebrationController(vsync: this, windowSize: Size(ns.width(context), context.height));
-        confettiController = ConfettiController(duration: Duration(seconds: 1));
-        balloonController = BalloonController(vsync: this, windowSize: Size(ns.width(context), context.height));
-        loveController = LoveController(vsync: this, windowSize: Size(ns.width(context), context.height));
-        spotlightController = SpotlightController(vsync: this, windowSize: Size(ns.width(context), context.height));
-        laserController = LaserController(vsync: this, windowSize: Size(ns.width(context), context.height));
-        createdControllers = true;
-      }
-    });
     return AnimatedContainer(
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       color: screenSelected == "fireworks"
           || screenSelected == "celebration"
           || screenSelected == "spotlight"
