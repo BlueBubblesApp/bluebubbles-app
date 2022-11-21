@@ -23,6 +23,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
   final textSpans = <InlineSpan>[];
   final textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
     color: colorOverride ?? (message.isFromMe! ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.properOnSurface),
+    fontSizeFactor: message.isBigEmoji ? 4 : 1,
   );
 
   if (!isNullOrEmpty(part.subject)!) {
@@ -73,6 +74,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   final textSpans = <InlineSpan>[];
   final textStyle = (context.theme.extensions[BubbleText] as BubbleText).bubbleText.apply(
     color: colorOverride ?? (message.isFromMe! ? context.theme.colorScheme.onPrimary : context.theme.colorScheme.properOnSurface),
+    fontSizeFactor: message.isBigEmoji ? 4 : 1,
   );
   // extract rich content
   final urlRegex = RegExp(r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');

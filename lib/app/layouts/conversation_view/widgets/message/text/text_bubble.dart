@@ -48,14 +48,18 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
   Widget build(BuildContext context) {
     return Container(
       constraints: BoxConstraints(
-        maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
+        maxWidth: message.isBigEmoji ? context.width : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
         minHeight: 30,
       ),
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(EdgeInsets.only(left: message.isFromMe! ? 0 : 10, right: message.isFromMe! ? 10 : 0)),
-      color: message.isFromMe!
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15)
+        .add(EdgeInsets.only(
+          left: message.isFromMe! || message.isBigEmoji ? 0 : 10,
+          right: message.isFromMe! && !message.isBigEmoji ? 10 : 0
+        )),
+      color: message.isFromMe! && !message.isBigEmoji
           ? context.theme.colorScheme.primary.darkenAmount(message.guid!.startsWith("temp") ? 0.2 : 0)
           : null,
-      decoration: message.isFromMe! ? null : BoxDecoration(
+      decoration: message.isFromMe! || message.isBigEmoji ? null : BoxDecoration(
         gradient: LinearGradient(
           begin: AlignmentDirectional.bottomCenter,
           end: AlignmentDirectional.topCenter,
