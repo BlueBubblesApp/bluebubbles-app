@@ -18,18 +18,18 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
-class VideoViewer extends StatefulWidget {
-  VideoViewer({Key? key, required this.file, required this.attachment, required this.showInteractions})
+class FullscreenVideo extends StatefulWidget {
+  FullscreenVideo({Key? key, required this.file, required this.attachment, required this.showInteractions})
       : super(key: key);
   final PlatformFile file;
   final Attachment attachment;
   final bool showInteractions;
 
   @override
-  State<VideoViewer> createState() => _VideoViewerState();
+  State<FullscreenVideo> createState() => _FullscreenVideoState();
 }
 
-class _VideoViewerState extends State<VideoViewer> {
+class _FullscreenVideoState extends State<FullscreenVideo> {
   bool showPlayPauseOverlay = false;
   Timer? hideOverlayTimer;
   late VideoPlayerController controller;

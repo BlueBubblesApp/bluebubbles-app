@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
+import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -246,7 +246,7 @@ class ImageDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     return OpenContainer(
       openBuilder: (_, closeContainer) {
-        return AttachmentFullscreenViewer(
+        return FullscreenMediaHolder(
           attachment: attachment,
           showInteractions: true,
         );

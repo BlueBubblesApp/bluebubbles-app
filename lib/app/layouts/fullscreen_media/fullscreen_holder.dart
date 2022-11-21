@@ -5,8 +5,8 @@ import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/image_viewer/image_viewer.dart';
-import 'package:bluebubbles/app/layouts/image_viewer/video_viewer.dart';
+import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_image.dart';
+import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_video.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -17,8 +17,8 @@ import "package:flutter/material.dart";
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-class AttachmentFullscreenViewer extends StatefulWidget {
-  AttachmentFullscreenViewer({
+class FullscreenMediaHolder extends StatefulWidget {
+  FullscreenMediaHolder({
     Key? key,
     required this.attachment,
     required this.showInteractions,
@@ -30,10 +30,10 @@ class AttachmentFullscreenViewer extends StatefulWidget {
   final bool showInteractions;
 
   @override
-  AttachmentFullscreenViewerState createState() => AttachmentFullscreenViewerState();
+  FullscreenMediaHolderState createState() => FullscreenMediaHolderState();
 }
 
-class AttachmentFullscreenViewerState extends OptimizedState<AttachmentFullscreenViewer> {
+class FullscreenMediaHolderState extends OptimizedState<FullscreenMediaHolder> {
   final focusNode = FocusNode();
   late final PageController controller;
   late final messageService = widget.currentChat == null ? null : ms(widget.currentChat!.chat.guid);
@@ -142,7 +142,7 @@ class AttachmentFullscreenViewerState extends OptimizedState<AttachmentFullscree
 
                     if (content is PlatformFile) {
                       if (attachment.mimeStart == "image") {
-                        return ImageViewer(
+                        return FullscreenImage(
                           key: Key(key),
                           attachment: attachment,
                           file: content,
@@ -165,7 +165,7 @@ class AttachmentFullscreenViewerState extends OptimizedState<AttachmentFullscree
                           });
                           return Video(player: player);
                         } else {
-                          return VideoViewer(
+                          return FullscreenVideo(
                             key: Key(key),
                             file: content,
                             attachment: attachment,

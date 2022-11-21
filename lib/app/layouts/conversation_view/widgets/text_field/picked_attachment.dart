@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:animations/animations.dart';
-import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
+import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -90,7 +90,7 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> with Autom
                   mimeType: mime(widget.data.name) ?? "",
                   bytes: widget.data.bytes,
                 );
-                return AttachmentFullscreenViewer(
+                return FullscreenMediaHolder(
                   attachment: fakeAttachment,
                   showInteractions: false,
                 );

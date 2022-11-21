@@ -16,8 +16,8 @@ import 'package:intl/intl.dart' as intl;
 import 'package:photo_view/photo_view.dart';
 import 'package:universal_io/io.dart';
 
-class ImageViewer extends StatefulWidget {
-  ImageViewer({
+class FullscreenImage extends StatefulWidget {
+  FullscreenImage({
     Key? key,
     required this.file,
     required this.attachment,
@@ -31,10 +31,10 @@ class ImageViewer extends StatefulWidget {
   final Function(ScrollPhysics) updatePhysics;
 
   @override
-  State<ImageViewer> createState() => _ImageViewerState();
+  State<FullscreenImage> createState() => _FullscreenImageState();
 }
 
-class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAliveClientMixin {
+class _FullscreenImageState extends OptimizedState<FullscreenImage> with AutomaticKeepAliveClientMixin {
   final PhotoViewController controller = PhotoViewController();
   bool showOverlay = true;
   bool hasError = false;

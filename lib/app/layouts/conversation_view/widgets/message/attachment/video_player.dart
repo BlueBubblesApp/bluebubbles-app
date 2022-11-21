@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
+import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -130,7 +130,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
           } else {
             await Navigator.of(Get.context!).push(
               ThemeSwitcher.buildPageRoute(
-                builder: (context) => AttachmentFullscreenViewer(
+                builder: (context) => FullscreenMediaHolder(
                   currentChat: cm.activeChat,
                   attachment: attachment,
                   showInteractions: true,
@@ -156,7 +156,7 @@ class _VideoPlayerState extends OptimizedState<VideoPlayer> with AutomaticKeepAl
       onTap: () async {
         await Navigator.of(Get.context!).push(
           ThemeSwitcher.buildPageRoute(
-            builder: (context) => AttachmentFullscreenViewer(
+            builder: (context) => FullscreenMediaHolder(
               currentChat: cm.activeChat,
               attachment: attachment,
               showInteractions: true,
