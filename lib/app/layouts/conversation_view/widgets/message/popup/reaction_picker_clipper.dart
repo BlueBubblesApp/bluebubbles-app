@@ -1,4 +1,6 @@
 import 'dart:math';
+import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
 class ReactionPickerClipper extends CustomClipper<Path>{
@@ -18,7 +20,7 @@ class ReactionPickerClipper extends CustomClipper<Path>{
     path.lineTo(0, 20);
     path.arcToPoint(const Offset(20, 0), radius: const Radius.circular(20));
     path.lineTo(size.width - 20, 0);
-    if (size.width > messageSize.width) {
+    if (size.width > messageSize.width && ss.settings.skin.value == Skins.iOS) {
       if (isFromMe) {
         path.addArc(Rect.fromLTWH(size.width - messageSize.width, size.height - 22.5, 17.5, 17.5), 0, 2*pi);
         path.addArc(Rect.fromLTWH(size.width - messageSize.width - 5, size.height - 7.5, 7, 7), 0, 2*pi);
