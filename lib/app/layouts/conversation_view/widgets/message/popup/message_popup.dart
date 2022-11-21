@@ -441,7 +441,7 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
                             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                             child: Container(
                               padding: const EdgeInsets.all(5).add(const EdgeInsets.only(bottom: 15)),
-                              color: context.theme.colorScheme.properSurface.withAlpha(iOS ? 150 : 255),
+                              color: context.theme.colorScheme.properSurface.withAlpha(iOS ? 150 : 255).oppositeLightenOrDarken(iOS ? 0 : 10),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: List.generate(narrowScreen ? 2 : 1, (index) {
