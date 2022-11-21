@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'package:bluebubbles/app/layouts/fullscreen_media/dialogs/metadata_dialog.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -10,7 +11,6 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:photo_view/photo_view.dart';
@@ -93,67 +93,6 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
         hasError = true;
       });
     });
-  }
-
-  void showMetadataDialog() {
-    List<Widget> metaWidgets = [];
-    final metadataMap = <String, dynamic>{
-      'filename': widget.attachment.transferName,
-      'mime': widget.attachment.mimeType,
-    }..addAll(widget.attachment.metadata ?? {});
-    for (MapEntry entry in metadataMap.entries.where((element) => element.value != null)) {
-      metaWidgets.add(RichText(
-        text: TextSpan(
-          children: [
-            TextSpan(text: "${entry.key}: ", style: context.theme.textTheme.bodyLarge!.apply(fontWeightDelta: 2)),
-            TextSpan(text: entry.value.toString(), style: context.theme.textTheme.bodyLarge)
-          ],
-        ),
-      ));
-    }
-
-    if (metaWidgets.isEmpty) {
-      metaWidgets.add(Text(
-        "No metadata available",
-        style: context.theme.textTheme.bodyLarge,
-        textAlign: TextAlign.center,
-      ));
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          "Metadata",
-          style: context.theme.textTheme.titleLarge,
-        ),
-        backgroundColor: context.theme.colorScheme.properSurface,
-        content: SizedBox(
-          width: ns.width(context) * 3 / 5,
-          height: context.height * 1 / 4,
-          child: Container(
-            padding: const EdgeInsets.all(10.0),
-            decoration: BoxDecoration(
-              color: context.theme.backgroundColor,
-              borderRadius: BorderRadius.circular(10)
-            ),
-            child: ListView(
-              physics: ThemeSwitcher.getScrollPhysics(),
-              children: metaWidgets,
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            child: Text(
-              "Close",
-              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -244,7 +183,7 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
             if (value == 0) {
               await as.saveToDisk(widget.file);
             } else if (value == 1) {
-              if (kIsWeb || kIsDesktop) return showMetadataDialog();
+              if (kIsWeb || kIsDesktop) return showMetadataDialog(widget.attachment, context);
               if (widget.file.path == null) return;
               Share.file(
                 "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
@@ -252,7 +191,7 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
               );
             } else if (value == 2) {
               if (kIsWeb || kIsDesktop) return refreshAttachment();
-              showMetadataDialog();
+              showMetadataDialog(widget.attachment, context);
             } else if (value == 3) {
               refreshAttachment();
             }
@@ -364,7 +303,7 @@ class _FullscreenImageState extends OptimizedState<FullscreenImage> with Automat
                               child: CupertinoButton(
                                 padding: const EdgeInsets.symmetric(horizontal: 5),
                                 onPressed: () async {
-                                  showMetadataDialog();
+                                  showMetadataDialog(widget.attachment, context);
                                 },
                                 child: const Icon(
                                   Icons.info_outlined,
