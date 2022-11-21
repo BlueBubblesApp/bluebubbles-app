@@ -21,6 +21,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -476,6 +477,91 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                 ),
                 if (message.isFromMe! && !message.isGroupEvent)
                   SelectCheckbox(message: message, controller: widget.cvController),
+                Obx(() {
+                  if (message.error > 0) {
+                    int errorCode = message.error;
+                    String errorText = "An unknown internal error occurred.";
+                    if (errorCode == 22) {
+                      errorText = "The recipient is not registered with iMessage!";
+                    } else if (message.guid!.startsWith("error-")) {
+                      errorText = message.guid!.split('-')[1];
+                    }
+
+                    return IconButton(
+                      icon: Icon(
+                        iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline,
+                        color: context.theme.colorScheme.error,
+                      ),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              backgroundColor: context.theme.colorScheme.properSurface,
+                              title: Text("Message failed to send", style: context.theme.textTheme.titleLarge),
+                              content: Text("Error ($errorCode): $errorText", style: context.theme.textTheme.bodyLarge),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: Text(
+                                    "Retry",
+                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
+                                  ),
+                                  onPressed: () async {
+                                    // Remove the original message and notification
+                                    Navigator.of(context).pop();
+                                    service.removeMessage(message);
+                                    Message.delete(message.guid!);
+                                    await notif.clearFailedToSend();
+                                    // Re-send
+                                    message.id = null;
+                                    message.error = 0;
+                                    message.dateCreated = DateTime.now();
+                                    outq.queue(OutgoingItem(
+                                      type: QueueType.sendMessage,
+                                      chat: chat,
+                                      message: message,
+                                    ));
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text(
+                                    "Remove",
+                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
+                                  ),
+                                  onPressed: () async {
+                                    Navigator.of(context).pop();
+                                    // Delete the message from the DB
+                                    Message.delete(message.guid!);
+                                    // Remove the message from the Bloc
+                                    service.removeMessage(message);
+                                    await notif.clearFailedToSend();
+                                    // Get the "new" latest info
+                                    List<Message> latest = Chat.getMessages(chat, limit: 1);
+                                    chat.latestMessage = latest.first;
+                                    chat.latestMessageDate = latest.first.dateCreated;
+                                    chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
+                                    chat.save();
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text(
+                                    "Cancel",
+                                    style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)
+                                  ),
+                                  onPressed: () async {
+                                    Navigator.of(context).pop();
+                                    await notif.clearFailedToSend();
+                                  },
+                                )
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
                 // slide to view timestamp
                 if (!samsung)
                   MessageTimestamp(controller: controller, cvController: widget.cvController),
