@@ -393,7 +393,7 @@ class _VideoViewerState extends State<VideoViewer> {
   void refreshAttachment() {
     isReloading.value = true;
     showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
-    as.redownloadAttachment(widget.attachment, onComplete: () async {
+    as.redownloadAttachment(widget.attachment, onComplete: (file) async {
       controller.dispose();
       chewieController?.dispose();
       if (kIsWeb || widget.file.path == null) {

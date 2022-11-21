@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
+import 'package:bluebubbles/app/components/circle_progress_bar.dart';
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/image_viewer.dart';
@@ -11,6 +11,7 @@ import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import "package:flutter/material.dart";
 import 'package:flutter/services.dart';
@@ -23,70 +24,48 @@ class AttachmentFullscreenViewer extends StatefulWidget {
     required this.showInteractions,
     this.currentChat,
   }) : super(key: key);
+
   final ChatLifecycleManager? currentChat;
   final Attachment attachment;
   final bool showInteractions;
-
-  static AttachmentFullscreenViewerState? of(BuildContext context) {
-    return context.findAncestorStateOfType<AttachmentFullscreenViewerState>();
-  }
 
   @override
   AttachmentFullscreenViewerState createState() => AttachmentFullscreenViewerState();
 }
 
-class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> {
-  PageController? controller;
-  int? startingIndex;
+class AttachmentFullscreenViewerState extends OptimizedState<AttachmentFullscreenViewer> {
+  final focusNode = FocusNode();
+  late final PageController controller;
+  late final messageService = widget.currentChat == null ? null : ms(widget.currentChat!.chat.guid);
+
   int currentIndex = 0;
-  late Widget placeHolder;
   ScrollPhysics? physics;
 
-  late final messageService = widget.currentChat == null ? null : ms(widget.currentChat!.chat.guid);
+  List<Attachment> get attachments => widget.currentChat == null
+      ? [attachment] : messageService!.struct.attachments.where((e) => e.mimeStart == "image" || e.mimeStart == "video").toList();
+  Attachment get attachment => widget.attachment;
 
   @override
   void initState() {
     super.initState();
     if (kIsWeb || !widget.showInteractions) {
-      currentIndex = 0;
       controller = PageController(initialPage: 0);
     } else {
-      init();
-    }
-  }
-
-  void init() async {
-    getStartingIndex();
-    currentIndex = startingIndex ?? 0;
-    controller = PageController(initialPage: startingIndex ?? 0);
-    if (mounted) setState(() {});
-  }
-
-  void getStartingIndex() {
-    if (widget.currentChat == null) return;
-    for (int i = 0; i < messageService!.struct.attachments.length; i++) {
-      if (messageService!.struct.attachments[i].guid == widget.attachment.guid) {
-        startingIndex = i;
+      if (widget.currentChat != null) {
+        currentIndex = attachments.indexWhere((e) => e.guid == attachment.guid);
       }
+      controller = PageController(initialPage: currentIndex);
     }
   }
 
   @override
   void dispose() {
-    controller?.dispose();
+    controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    placeHolder = ClipRRect(
-      borderRadius: BorderRadius.circular(8.0),
-      child: Container(
-        height: 150,
-        width: 200,
-        color: context.theme.colorScheme.properSurface,
-      ),
-    );
     return TitleBarWrapper(
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
@@ -100,7 +79,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
             GoBackIntent: GoBackAction(context),
           },
           child: Scaffold(
-            appBar: ss.settings.skin.value != Skins.iOS ? null : AppBar(
+            appBar: !iOS ? null : AppBar(
               leading: TextButton(
                 child: Text("Done", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                 onPressed: () {
@@ -108,8 +87,13 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                 },
               ),
               leadingWidth: 75,
-              title: Text(kIsWeb || !widget.showInteractions || widget.currentChat == null ? "Media" : "${currentIndex + 1} of ${messageService!.struct.attachments.length}", style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)),
-              centerTitle: ss.settings.skin.value == Skins.iOS,
+              title: Text(
+                kIsWeb || !widget.showInteractions || widget.currentChat == null
+                    ? "Media"
+                    : "${currentIndex + 1} of ${attachments.length}",
+                style: context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.properOnSurface)
+              ),
+              centerTitle: iOS,
               iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
               backgroundColor: context.theme.colorScheme.properSurface,
               systemOverlayStyle: context.theme.colorScheme.brightness == Brightness.dark
@@ -117,189 +101,177 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                   : SystemUiOverlayStyle.dark,
             ),
             backgroundColor: Colors.black,
-            body: controller != null
-                ? FocusScope(
-                    child: Focus(
-                      focusNode: FocusNode(),
-                      autofocus: true,
-                      onKey: (node, event) {
-                        Logger.info(
-                            "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
-                            tag: "RawKeyboardListener");
-                        if (event.data.physicalKey.debugName == "Arrow Right") {
-                          if (ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT) {
-                            controller!.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
-                          } else {
-                            controller!.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
-                          }
-                        } else if (event.data.physicalKey.debugName == "Arrow Left") {
-                          if (ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.LEFT) {
-                            controller!.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
-                          } else {
-                            controller!.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
-                          }
-                        }
-                        return KeyEventResult.ignored;
-                      },
-                      child: PageView.builder(
-                        physics: physics ?? ThemeSwitcher.getScrollPhysics(),
-                        reverse: ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
-                        itemCount: kIsWeb ? 1 : messageService?.struct.attachments.length ?? 1,
-                        itemBuilder: (BuildContext context, int index) {
-                          Logger.info("Showing index: $index");
-                          Attachment attachment = !kIsWeb && widget.currentChat != null
-                              ? messageService!.struct.attachments[index]
-                              : widget.attachment;
-                          String mimeType = attachment.mimeType!;
-                          mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-                          dynamic content = as.getContent(attachment, path: attachment.guid == null ? attachment.transferName : null);
+            body: FocusScope(
+              child: Focus(
+                focusNode: focusNode,
+                autofocus: true,
+                onKey: (node, event) {
+                  Logger.info(
+                    "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
+                    tag: "RawKeyboardListener"
+                  );
+                  if (event.data.physicalKey.debugName == "Arrow Right") {
+                    if (ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT) {
+                      controller.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
+                    } else {
+                      controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
+                    }
+                  } else if (event.data.physicalKey.debugName == "Arrow Left") {
+                    if (ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.LEFT) {
+                      controller.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
+                    } else {
+                      controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
+                    }
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: PageView.builder(
+                  physics: physics ?? (attachments.length == 1 ? const NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics()),
+                  reverse: ss.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
+                  itemCount: attachments.length,
+                  onPageChanged: (int val) {
+                    setState(() {
+                      currentIndex = val;
+                    });
+                  },
+                  controller: controller,
+                  itemBuilder: (BuildContext context, int index) {
+                    final attachment = attachments[index];
+                    dynamic content = as.getContent(attachment, path: attachment.guid == null ? attachment.transferName : null);
+                    final key = attachment.guid ?? attachment.transferName ?? randomString(8);
 
-                          String viewerKey =
-                              attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString();
-
-                          if (content is PlatformFile) {
-                            content = content;
-                            if (mimeType == "image") {
-                              return ImageViewer(
-                                key: Key(viewerKey),
-                                attachment: attachment,
-                                file: content,
-                                showInteractions: widget.showInteractions,
-                              );
-                            } else if (!kIsDesktop && mimeType == "video") {
-                              if (kIsDesktop) {
-                                Player player = Player(id: attachment.hashCode)
-                                  ..add(Media.file(File(content.path!)));
-                                player.play();
-                                Future.delayed(Duration.zero, () async => await player.playbackStream.first)
-                                    .then((state) {
-                                  player.pause();
-                                  player.seek(Duration.zero);
-                                });
-                                return Video(player: player);
-                              }
-                              return VideoViewer(
-                                key: Key(viewerKey),
-                                file: content,
-                                attachment: attachment,
-                                showInteractions: widget.showInteractions,
-                              );
-                            } else {
-                              return OtherFile(
-                                attachment: attachment,
-                                file: content,
-                              );
+                    if (content is PlatformFile) {
+                      if (attachment.mimeStart == "image") {
+                        return ImageViewer(
+                          key: Key(key),
+                          attachment: attachment,
+                          file: content,
+                          showInteractions: widget.showInteractions,
+                          updatePhysics: (ScrollPhysics p) {
+                            if (physics != p) {
+                              setState(() {
+                                physics = p;
+                              });
                             }
-                          } else if (content is Attachment) {
-                            content = content;
-                            return Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                /*Center(
-                                  child: AttachmentDownloaderWidget(
-                                    key: Key(attachment.guid ??
-                                        attachment.transferName ??
-                                        Random().nextInt(100).toString()),
-                                    attachment: attachment,
-                                    onPressed: () {
-                                      attachmentDownloader.startDownload(attachment);
-                                      content = as.getContent(attachment);
-                                      if (mounted) setState(() {});
-                                    },
-                                    placeHolder: placeHolder,
-                                  ),
-                                ),*/
-                              ],
-                            );
-                          } else if (content is AttachmentDownloadController) {
-                            if (widget.attachment.mimeType == null) return Container();
-                            ever<PlatformFile?>(content.file, (file) {
-                              if (file != null) {
-                                content = file;
-                                if (mounted) setState(() {});
-                              }
-                            }, onError: (error) {
-                              content = widget.attachment;
-                              if (mounted) setState(() {});
-                            });
-                            return Obx(() {
-                              // don't remove!! needed to prevent Obx from exception
-                              // improper use of GetX
-                              // ignore: unused_local_variable
-                              final placeholderVar = null.obs.value;
-                              if (content.error.value = true) {
-                                return Text(
-                                  "Error loading",
-                                  style: context.theme.textTheme.bodyLarge,
-                                );
-                              }
-                              if (content.file.value != null) {
-                                content = content.file.value;
-                                return Container();
-                              } else {
-                                return KeyedSubtree(
-                                  key: Key(viewerKey),
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: <Widget>[
-                                      placeHolder,
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: <Widget>[
-                                          Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              CircularProgressIndicator(
-                                                value: content.progress.value?.toDouble() ?? 0,
-                                                backgroundColor: context.theme.colorScheme.properSurface,
-                                                valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                                              ),
-                                              ((content as AttachmentDownloadController).attachment.mimeType !=
-                                                  null)
-                                                  ? Container(height: 5.0)
-                                                  : Container(),
-                                              (content.attachment.mimeType != null)
-                                                  ? Text(
-                                                content.attachment.mimeType,
-                                                style: context.theme.textTheme.bodyLarge,
-                                              )
-                                                  : Container()
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }
-                            });
-                          } else {
-                            return Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Error loading",
-                                  style: context.theme.textTheme.bodyLarge,
-                                ),
-                              ],
-                            );
                           }
+                        );
+                      } else if (attachment.mimeStart == "video") {
+                        if (kIsDesktop) {
+                          Player player = Player(id: attachment.hashCode)..add(Media.file(File(content.path!)));
+                          player.play();
+                          Future.delayed(Duration.zero, () async => await player.playbackStream.first).then((state) {
+                            player.pause();
+                            player.seek(Duration.zero);
+                          });
+                          return Video(player: player);
+                        } else {
+                          return VideoViewer(
+                            key: Key(key),
+                            file: content,
+                            attachment: attachment,
+                            showInteractions: widget.showInteractions,
+                          );
+                        }
+                      } else {
+                        return const SizedBox.shrink();
+                      }
+                    } else if (content is Attachment) {
+                      final Attachment _content = content;
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            content = attachmentDownloader.startDownload(content, onComplete: (file) {
+                              setState(() {
+                                content = file;
+                              });
+                            });
+                          });
                         },
-                        onPageChanged: (int val) {
-                          currentIndex = val;
-                          setState(() {});
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            SizedBox(
+                              height: 40,
+                              width: 40,
+                              child: Center(
+                                child: Icon(iOS ? CupertinoIcons.cloud_download : Icons.cloud_download_outlined, size: 30)
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              (_content.mimeType ?? ""),
+                              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              _content.getFriendlySize(),
+                              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
+                      );
+                    } else if (content is AttachmentDownloadController) {
+                      final AttachmentDownloadController _content = content;
+                      return InkWell(
+                        onTap: () {
+                          final AttachmentDownloadController _content = content;
+                          if (!_content.error.value) return;
+                          Get.delete<AttachmentDownloadController>(tag: _content.attachment.guid);
+                          content = attachmentDownloader.startDownload(_content.attachment, onComplete: (file) {
+                            setState(() {
+                              content = file;
+                            });
+                          });
                         },
-                        controller: controller,
-                      ),
-                    ),
-                  )
-                : Container(
-                    child: Center(
-                    child: CircularProgressIndicator(
-                      backgroundColor: context.theme.colorScheme.properSurface,
-                      valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                    ),
-                  )),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: Obx(() {
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                SizedBox(
+                                  height: 40,
+                                  width: 40,
+                                  child: Center(
+                                    child: _content.error.value
+                                        ? Icon(iOS ? CupertinoIcons.arrow_clockwise : Icons.refresh, size: 30)
+                                        : CircleProgressBar(
+                                          value: _content.progress.value?.toDouble() ?? 0,
+                                          backgroundColor: context.theme.colorScheme.outline,
+                                          foregroundColor: context.theme.colorScheme.properOnSurface,
+                                        ),
+                                  ),
+                                ),
+                                _content.error.value ? const SizedBox(height: 10) : const SizedBox(height: 5),
+                                Text(
+                                  _content.error.value ? "Failed to download!" : (_content.attachment.mimeType ?? ""),
+                                  style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                )
+                              ],
+                            );
+                          }),
+                        ),
+                      );
+                    } else {
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Error loading attachment",
+                            style: context.theme.textTheme.bodyLarge,
+                          ),
+                        ],
+                      );
+                    }
+                  },
+                ),
+              ),
+            ),
           ),
         ),
       ),

@@ -30,7 +30,7 @@ AttachmentsService as = Get.isRegistered<AttachmentsService>() ? Get.find<Attach
 class AttachmentsService extends GetxService {
 
   dynamic getContent(Attachment attachment, {String? path, bool? autoDownload, Function(PlatformFile)? onComplete}) {
-    if (attachment.guid!.startsWith("temp")) {
+    if (attachment.guid?.startsWith("temp") ?? false) {
       final sendProgress = ah.attachmentProgress.firstWhereOrNull((e) => e.item1 == attachment.guid);
       if (sendProgress != null) {
         return sendProgress;
@@ -213,7 +213,7 @@ class AttachmentsService extends GetxService {
     }
   }
 
-  Future<void> redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) async {
+  Future<void> redownloadAttachment(Attachment attachment, {Function(PlatformFile)? onComplete, Function()? onError}) async {
     if (!kIsWeb) {
       final file = File(attachment.path);
       final jpgFile = File(attachment.convertedPath);
@@ -230,7 +230,7 @@ class AttachmentsService extends GetxService {
 
     Get.put(AttachmentDownloadController(
         attachment: attachment,
-        onComplete: (file) => onComplete?.call(),
+        onComplete: (file) => onComplete?.call(file),
         onError: onError
     ), tag: attachment.guid);
   }
