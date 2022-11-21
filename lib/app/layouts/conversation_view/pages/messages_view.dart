@@ -7,7 +7,6 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/app/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -15,6 +14,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:desktop_drop/desktop_drop.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -328,8 +328,8 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                   ),
                   if (_messages.isEmpty && widget.customService != null)
                     const SliverToBoxAdapter(
-                      child: NewMessageLoader(
-                          text: "Loading surrounding message context..."
+                      child: Loader(
+                        text: "Loading surrounding message context..."
                       ),
                     ),
                   SliverAnimatedList(
@@ -342,7 +342,7 @@ class MessagesViewState extends OptimizedState<MessagesView> {
                           if (!fetching) {
                             loadNextChunk();
                           }
-                          return const NewMessageLoader();
+                          return const Loader();
                         }
 
                         return const SizedBox.shrink();
@@ -409,6 +409,42 @@ class MessagesViewState extends OptimizedState<MessagesView> {
           ),
         ),
       )
+    );
+  }
+}
+
+class Loader extends StatelessWidget {
+  const Loader({this.text});
+
+  final String? text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            text ?? "Loading more messages...",
+            style: context.theme.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.outline),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ss.settings.skin.value == Skins.iOS ? Theme(
+            data: ThemeData(
+              cupertinoOverrideTheme: const CupertinoThemeData(brightness: Brightness.dark),
+            ),
+            child: const CupertinoActivityIndicator(),
+          ) : const SizedBox(
+            height: 20,
+            width: 20,
+            child: Center(
+              child: CircularProgressIndicator(strokeWidth: 2)
+            )
+          ),
+        ),
+      ],
     );
   }
 }

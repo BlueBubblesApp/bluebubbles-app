@@ -1,8 +1,8 @@
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/send_button.dart';
 import 'package:bluebubbles/app/widgets/components/send_effect_picker.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -104,10 +104,10 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                             children: [
                               Text("Review your audio snippet before sending it", style: context.theme.textTheme.bodyLarge),
                               Container(height: 10.0),
-                              AudioPlayerWidget(
+                              AudioPlayer(
                                 key: Key("AudioMessage-$path"),
                                 file: file,
-                                context: context,
+                                attachment: null,
                               )
                             ],
                           ),

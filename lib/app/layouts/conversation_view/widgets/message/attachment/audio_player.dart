@@ -8,7 +8,7 @@ import 'package:get/get.dart';
 
 class AudioPlayer extends StatefulWidget {
   final PlatformFile file;
-  final Attachment attachment;
+  final Attachment? attachment;
 
   AudioPlayer({
     Key? key,
@@ -21,7 +21,7 @@ class AudioPlayer extends StatefulWidget {
 }
 
 class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
-  Attachment get attachment => widget.attachment;
+  Attachment? get attachment => widget.attachment;
   PlatformFile get file => widget.file;
   ConversationViewController get cvController => cvc(cm.activeChat!.chat);
 
@@ -37,13 +37,13 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
   }
 
   void initBytes() async {
-    controller = cvController.audioPlayers[attachment.guid];
+    if (attachment != null) controller = cvController.audioPlayers[attachment!.guid];
     if (controller == null) {
       controller = PlayerController()..addListener(() {
         setState(() {});
       });
       await controller!.preparePlayer(file.path!);
-      cvController.audioPlayers[attachment.guid!] = controller!;
+      if (attachment != null) cvController.audioPlayers[attachment!.guid!] = controller!;
     }
     setState(() {});
   }

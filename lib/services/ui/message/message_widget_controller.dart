@@ -3,24 +3,13 @@ import 'dart:async';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/message_properties.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/delivered_indicator.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_content/delivered_receipt.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:chewie_audio/chewie_audio.dart';
 import 'package:collection/collection.dart';
-import 'package:emojis/emoji.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
-import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
-import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:scroll_to_index/scroll_to_index.dart';
-import 'package:tuple/tuple.dart';
-import 'package:video_player/video_player.dart';
 
 MessageWidgetController mwc(Message message) => Get.isRegistered<MessageWidgetController>(tag: message.guid)
     ? Get.find<MessageWidgetController>(tag: message.guid) : Get.put(MessageWidgetController(message), tag: message.guid);

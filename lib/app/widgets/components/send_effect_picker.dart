@@ -1,8 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/animations/balloon_classes.dart';
 import 'package:bluebubbles/app/animations/balloon_rendering.dart';
@@ -16,9 +15,6 @@ import 'package:bluebubbles/app/animations/love_classes.dart';
 import 'package:bluebubbles/app/animations/love_rendering.dart';
 import 'package:bluebubbles/app/animations/spotlight_classes.dart';
 import 'package:bluebubbles/app/animations/spotlight_rendering.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/app/widgets/message_widget/sent_message.dart';
-import 'package:bluebubbles/services/ui/chat/chat_lifecycle_manager.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:confetti/confetti.dart';
@@ -38,7 +34,7 @@ void sendEffectAction(
     String? chatGuid,
     Future<void> Function({String? effect}) sendMessage,
     ) {
-  if (!ss.settings.enablePrivateAPI.value) return;
+  if (!ss.settings.enablePrivateAPI.value || (text.isEmpty && subjectText.isEmpty)) return;
   String typeSelected = "bubble";
   final bubbleEffects = ["slam", "loud", "gentle", "invisible ink"];
   final screenEffects = ["echo", "spotlight", "balloons", "confetti", "love", "lasers", "fireworks", "celebration"];
@@ -59,7 +55,7 @@ void sendEffectAction(
   Control animController = Control.stop;
   final FireworkController fireworkController = FireworkController(vsync: provider, windowSize: Size(ns.width(context), context.height));
   final CelebrationController celebrationController = CelebrationController(vsync: provider, windowSize: Size(ns.width(context), context.height));
-  final ConfettiController confettiController = ConfettiController(duration: Duration(seconds: 1));
+  final ConfettiController confettiController = ConfettiController(duration: const Duration(seconds: 1));
   final BalloonController balloonController = BalloonController(vsync: provider, windowSize: Size(ns.width(context), context.height));
   final LoveController loveController = LoveController(vsync: provider, windowSize: Size(ns.width(context), context.height));
   final SpotlightController spotlightController = SpotlightController(vsync: provider, windowSize: Size(ns.width(context), context.height));
@@ -67,7 +63,7 @@ void sendEffectAction(
   Navigator.push(
     context,
     PageRouteBuilder(
-      transitionDuration: Duration(milliseconds: 150),
+      transitionDuration: const Duration(milliseconds: 150),
       pageBuilder: (context, animation, secondaryAnimation) {
         return FadeTransition(
             opacity: animation,
@@ -128,8 +124,8 @@ void sendEffectAction(
                                             width: ns.width(context) / 2,
                                             child: CupertinoSlidingSegmentedControl<String>(
                                               children: {
-                                                "bubble": Text("Bubble"),
-                                                "screen": Text("Screen"),
+                                                "bubble": const Text("Bubble"),
+                                                "screen": const Text("Screen"),
                                               },
                                               groupValue: typeSelected,
                                               thumbColor: CupertinoColors.tertiarySystemFill.lightenOrDarken(20),
@@ -142,7 +138,7 @@ void sendEffectAction(
                                             ),
                                           ),
                                         ),
-                                        Spacer(),
+                                        const Spacer(),
                                         if (typeSelected == "bubble")
                                           Padding(
                                             padding: const EdgeInsets.symmetric(vertical: 20.0),
@@ -213,37 +209,37 @@ void sendEffectAction(
                                                             if (screenSelected == "fireworks" && !fireworkController.isPlaying) {
                                                               fireworkController.windowSize = Size(ns.width(context), context.height);
                                                               fireworkController.start();
-                                                              await Future.delayed(Duration(seconds: 1));
+                                                              await Future.delayed(const Duration(seconds: 1));
                                                               fireworkController.stop();
                                                             } else if (screenSelected == "celebration" && !celebrationController.isPlaying) {
                                                               celebrationController.windowSize = Size(ns.width(context), context.height);
                                                               celebrationController.start();
-                                                              await Future.delayed(Duration(seconds: 1));
+                                                              await Future.delayed(const Duration(seconds: 1));
                                                               celebrationController.stop();
                                                             } else if (screenSelected == "balloons" && !balloonController.isPlaying) {
                                                               balloonController.windowSize = Size(ns.width(context), context.height);
                                                               balloonController.start();
-                                                              await Future.delayed(Duration(seconds: 1));
+                                                              await Future.delayed(const Duration(seconds: 1));
                                                               balloonController.stop();
                                                             } else if (screenSelected == "love" && !loveController.isPlaying) {
                                                               if (key.globalPaintBounds(context) != null) {
                                                                 loveController.windowSize = Size(ns.width(context), context.height);
                                                                 loveController.start(Point((key.globalPaintBounds(context)!.left + key.globalPaintBounds(context)!.right) / 2, (key.globalPaintBounds(context)!.top + key.globalPaintBounds(context)!.bottom) / 2));
-                                                                await Future.delayed(Duration(seconds: 1));
+                                                                await Future.delayed(const Duration(seconds: 1));
                                                                 loveController.stop();
                                                               }
                                                             } else if (screenSelected == "spotlight" && !spotlightController.isPlaying) {
                                                               if (key.globalPaintBounds(context) != null) {
                                                                 spotlightController.windowSize = Size(ns.width(context), context.height);
                                                                 spotlightController.start(key.globalPaintBounds(context)!);
-                                                                await Future.delayed(Duration(seconds: 1));
+                                                                await Future.delayed(const Duration(seconds: 1));
                                                                 spotlightController.stop();
                                                               }
                                                             } else if (screenSelected == "lasers" && !laserController.isPlaying) {
                                                               if (key.globalPaintBounds(context) != null) {
                                                                 laserController.windowSize = Size(ns.width(context), context.height);
                                                                 laserController.start(key.globalPaintBounds(context)!);
-                                                                await Future.delayed(Duration(seconds: 1));
+                                                                await Future.delayed(const Duration(seconds: 1));
                                                                 laserController.stop();
                                                               }
                                                             } else if (screenSelected == "confetti") {
@@ -277,13 +273,36 @@ void sendEffectAction(
                                                   ),
                                                 )),
                                           ),
-                                        Spacer(),
+                                        const Spacer(),
                                         Align(
                                           alignment: Alignment.centerRight,
                                           child: Padding(
                                             key: key,
                                             padding: const EdgeInsets.only(right: 5.0),
-                                            child: SentMessageHelper.buildMessageWithTail(
+                                            child: ClipPath(
+                                              clipper: TailClipper(
+                                                isFromMe: true,
+                                                showTail: true,
+                                                connectLower: false,
+                                                connectUpper: false,
+                                              ),
+                                              child: Container(
+                                                constraints: BoxConstraints(
+                                                  maxWidth: ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
+                                                ),
+                                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(const EdgeInsets.only(right: 10)),
+                                                color: context.theme.colorScheme.primary.darkenAmount(0.2),
+                                                child: RichText(
+                                                  text: TextSpan(
+                                                    children: buildMessageSpans(
+                                                      context,
+                                                      MessagePart(part: 0, text: message.text),
+                                                      message,
+                                                    ),
+                                                  ),
+                                                )
+                                              ),
+                                            )/*SentMessageHelper.buildMessageWithTail(
                                                 context,
                                                 message,
                                                 true,
@@ -298,10 +317,10 @@ void sendEffectAction(
                                               setState(() {
                                                 animController = Control.stop;
                                               });
-                                            }),
+                                            }),*/
                                           ),
                                         ),
-                                        Spacer(),
+                                        const Spacer(),
                                         TextButton(
                                           child: Text(
                                             typeSelected == "bubble"

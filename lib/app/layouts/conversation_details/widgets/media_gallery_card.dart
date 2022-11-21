@@ -2,13 +2,11 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:animations/animations.dart';
-import 'package:bluebubbles/helpers/types/constants.dart';
-import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/app/widgets/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -208,7 +206,7 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
       child = LocationWidget(file: attachmentFile);
       addPadding = false;
     }*/ else if (attachmentFile.bytes != null) {
-      child = RegularFileOpener(
+      child = OtherFile(
         file: attachmentFile,
         attachment: attachment,
       );
