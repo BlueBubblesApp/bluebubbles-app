@@ -380,6 +380,7 @@ class _MessageHolderState extends CustomState<MessageHolder, void, MessageWidget
                                                   message: message,
                                                   part: index,
                                                   globalKey: keys.length > index ? keys[index] : null,
+                                                  showTail: message.showTail(newerMessage) && e.part == controller.parts.length - 1,
                                                   child: MessagePopupHolder(
                                                     key: keys.length > index ? keys[index] : null,
                                                     controller: controller,

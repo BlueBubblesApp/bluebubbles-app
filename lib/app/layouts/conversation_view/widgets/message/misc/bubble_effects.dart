@@ -19,12 +19,14 @@ class BubbleEffects extends StatefulWidget {
     required this.message,
     required this.part,
     required this.globalKey,
+    required this.showTail,
   }) : super(key: key);
 
   final Widget child;
   final Message message;
   final int part;
   final GlobalKey? globalKey;
+  final bool showTail;
 
   @override
   _BubbleEffectsState createState() => _BubbleEffectsState();
@@ -41,6 +43,21 @@ class _BubbleEffectsState extends OptimizedState<BubbleEffects> {
 
   @override
   void initState() {
+    getTween();
+
+    eventDispatcher.stream.listen((event) async {
+      if (event.item1 == 'play-bubble-effect' && event.item2 == '${widget.part}/${widget.message.guid}') {
+        size = widget.globalKey?.currentContext?.size ?? Size.zero;
+        setState(() {
+          controller = Control.playFromStart;
+        });
+      }
+    });
+
+    super.initState();
+  }
+
+  void getTween() {
     if (effect == MessageEffect.gentle) {
       tween = MovieTween()
         ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 1), curve: Curves.easeInOut)
@@ -79,20 +96,7 @@ class _BubbleEffectsState extends OptimizedState<BubbleEffects> {
         ..scene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
             .tween("size", 1.0.tweenTo(1.0));
     }
-
-    eventDispatcher.stream.listen((event) async {
-      if (event.item1 == 'play-bubble-effect' && event.item2 == '${widget.part}/${widget.message.guid}') {
-        size = widget.globalKey?.currentContext?.size ?? Size.zero;
-        setState(() {
-          controller = Control.playFromStart;
-        });
-      }
-    });
-
-    super.initState();
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +122,7 @@ class _BubbleEffectsState extends OptimizedState<BubbleEffects> {
                 ClipPath(
                   clipper: TailClipper(
                     isFromMe: message.isFromMe!,
-                    showTail: false,
+                    showTail: widget.showTail,
                     connectLower: false,
                     connectUpper: false,
                   ),
@@ -142,6 +146,7 @@ class _BubbleEffectsState extends OptimizedState<BubbleEffects> {
         ),
       );
     }
+    getTween();
     return CustomAnimationBuilder<Movie>(
       control: controller,
       tween: tween,
@@ -168,7 +173,7 @@ class _BubbleEffectsState extends OptimizedState<BubbleEffects> {
           return Padding(
             padding: EdgeInsets.only(top: size.height * (value1.clamp(1, 1.2) - 1)),
             child: Transform.scale(
-              scale: value1,
+              scale: controller == Control.stop ? 1 : value1,
               alignment: message.isFromMe! ? Alignment.bottomRight : Alignment.bottomLeft,
               child: child
             ),
