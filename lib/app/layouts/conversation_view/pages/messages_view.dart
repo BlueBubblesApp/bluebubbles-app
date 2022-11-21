@@ -7,13 +7,13 @@ import 'package:bluebubbles/utils/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/app/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/app/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:defer_pointer/defer_pointer.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -272,137 +272,139 @@ class MessagesViewState extends OptimizedState<MessagesView> {
           opacity: _messages.isEmpty && widget.customService == null ? 0 : (dragging.value ? 0.3 : 1),
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeIn,
-          child: ScrollbarWrapper(
-            reverse: true,
-            controller: scrollController,
-            showScrollbar: true,
-            child: CustomScrollView(
-              controller: scrollController,
+          child: DeferredPointerHandler(
+            child: ScrollbarWrapper(
               reverse: true,
-              physics: ss.settings.betterScrolling.value
-                  ? const NeverScrollableScrollPhysics()
-                  : ThemeSwitcher.getScrollPhysics(),
-              slivers: <Widget>[
-                if (showSmartReplies)
+              controller: scrollController,
+              showScrollbar: true,
+              child: CustomScrollView(
+                controller: scrollController,
+                reverse: true,
+                physics: ss.settings.betterScrolling.value
+                    ? const NeverScrollableScrollPhysics()
+                    : ThemeSwitcher.getScrollPhysics(),
+                slivers: <Widget>[
+                  if (showSmartReplies)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: iOS ? 8.0 : 0.0, right: 5),
+                        child: Obx(() => AnimatedSize(
+                          duration: const Duration(milliseconds: 400),
+                          child: smartReplies.isNotEmpty || internalSmartReplies.isNotEmpty ? SizedBox(
+                            height: context.theme.extension<BubbleText>()!.bubbleText.fontSize! + 35,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              reverse: true,
+                              children: smartReplies..addAll(internalSmartReplies),
+                            ),
+                          ) : const SizedBox.shrink())
+                        ),
+                      ),
+                    ),
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: iOS ? 8.0 : 0.0, right: 5),
-                      child: Obx(() => AnimatedSize(
-                        duration: const Duration(milliseconds: 400),
-                        child: smartReplies.isNotEmpty || internalSmartReplies.isNotEmpty ? SizedBox(
-                          height: context.theme.extension<BubbleText>()!.bubbleText.fontSize! + 35,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            reverse: true,
-                            children: smartReplies..addAll(internalSmartReplies),
-                          ),
-                        ) : const SizedBox.shrink())
-                      ),
-                    ),
-                  ),
-                SliverToBoxAdapter(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      if (controller.showTypingIndicator.value &&
-                          (samsung || ss.settings.alwaysShowAvatars.value))
-                        Padding(
-                          padding: const EdgeInsets.only(left: 10.0),
-                          child: ContactAvatarWidget(
-                            key: Key("${chat.participants.first.address}-typing-indicator"),
-                            handle: chat.participants.first,
-                            size: 30,
-                            fontSize: 14,
-                            borderThickness: 0.1,
-                          ),
-                        ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 5),
-                        child: Obx(() => TypingIndicator(
-                          visible: controller.showTypingIndicator.value,
-                        )),
-                      ),
-                    ],
-                  ),
-                ),
-                if (_messages.isEmpty && widget.customService != null)
-                  const SliverToBoxAdapter(
-                    child: NewMessageLoader(
-                        text: "Loading surrounding message context..."
-                    ),
-                  ),
-                SliverAnimatedList(
-                  initialItemCount: _messages.length + 1,
-                  key: listKey,
-                  itemBuilder: (BuildContext context, int index, Animation<double> animation) {
-                    // paginate
-                    if (index >= _messages.length) {
-                      if (!noMoreMessages && initialized && index == _messages.length) {
-                        if (!fetching) {
-                          loadNextChunk();
-                        }
-                        return const NewMessageLoader();
-                      }
-
-                      return const SizedBox.shrink();
-                    }
-
-                    Message? olderMessage;
-                    Message? newerMessage;
-                    if (index + 1 < _messages.length) {
-                      olderMessage = _messages[index + 1];
-                    }
-                    if (index - 1 >= 0) {
-                      newerMessage = _messages[index - 1];
-                    }
-
-                    final messageWidget = Padding(
-                      padding: const EdgeInsets.only(left: 5.0, right: 5.0),
-                      child: AutoScrollTag(
-                        key: ValueKey("${_messages[index].guid!}-scrolling"),
-                        index: index,
-                        controller: scrollController,
-                        highlightColor: context.theme.colorScheme.surface.withOpacity(0.7),
-                        child: MessageHolder(
-                          cvController: controller,
-                          message: _messages[index],
-                          oldMessageGuid: olderMessage?.guid,
-                          newMessageGuid: newerMessage?.guid,
-                        ),
-                      ),
-                    );
-
-                    if (index == 0) {
-                      return SizeTransition(
-                        key: ValueKey(_messages[index].guid!),
-                        axis: Axis.vertical,
-                        sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut))),
-                        child: SlideTransition(
-                          position: animation.drive(
-                            Tween(
-                              begin: const Offset(0.0, 1),
-                              end: const Offset(0.0, 0.0),
-                            ).chain(
-                              CurveTween(
-                                curve: Curves.easeInOut,
-                              ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        if (controller.showTypingIndicator.value &&
+                            (samsung || ss.settings.alwaysShowAvatars.value))
+                          Padding(
+                            padding: const EdgeInsets.only(left: 10.0),
+                            child: ContactAvatarWidget(
+                              key: Key("${chat.participants.first.address}-typing-indicator"),
+                              handle: chat.participants.first,
+                              size: 30,
+                              fontSize: 14,
+                              borderThickness: 0.1,
                             ),
                           ),
-                          child: messageWidget,
+                        Padding(
+                          padding: const EdgeInsets.only(top: 5),
+                          child: Obx(() => TypingIndicator(
+                            visible: controller.showTypingIndicator.value,
+                          )),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_messages.isEmpty && widget.customService != null)
+                    const SliverToBoxAdapter(
+                      child: NewMessageLoader(
+                          text: "Loading surrounding message context..."
+                      ),
+                    ),
+                  SliverAnimatedList(
+                    initialItemCount: _messages.length + 1,
+                    key: listKey,
+                    itemBuilder: (BuildContext context, int index, Animation<double> animation) {
+                      // paginate
+                      if (index >= _messages.length) {
+                        if (!noMoreMessages && initialized && index == _messages.length) {
+                          if (!fetching) {
+                            loadNextChunk();
+                          }
+                          return const NewMessageLoader();
+                        }
+
+                        return const SizedBox.shrink();
+                      }
+
+                      Message? olderMessage;
+                      Message? newerMessage;
+                      if (index + 1 < _messages.length) {
+                        olderMessage = _messages[index + 1];
+                      }
+                      if (index - 1 >= 0) {
+                        newerMessage = _messages[index - 1];
+                      }
+
+                      final messageWidget = Padding(
+                        padding: const EdgeInsets.only(left: 5.0, right: 5.0),
+                        child: AutoScrollTag(
+                          key: ValueKey("${_messages[index].guid!}-scrolling"),
+                          index: index,
+                          controller: scrollController,
+                          highlightColor: context.theme.colorScheme.surface.withOpacity(0.7),
+                          child: MessageHolder(
+                            cvController: controller,
+                            message: _messages[index],
+                            oldMessageGuid: olderMessage?.guid,
+                            newMessageGuid: newerMessage?.guid,
+                          ),
                         ),
                       );
-                    }
 
-                    return SizedBox(
-                      key: ValueKey(_messages[index].guid!),
-                      child: messageWidget,
-                    );
-                  }
-                ),
-                const SliverPadding(
-                  padding: EdgeInsets.all(70),
-                ),
-              ],
+                      if (index == 0) {
+                        return SizeTransition(
+                          key: ValueKey(_messages[index].guid!),
+                          axis: Axis.vertical,
+                          sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut))),
+                          child: SlideTransition(
+                            position: animation.drive(
+                              Tween(
+                                begin: const Offset(0.0, 1),
+                                end: const Offset(0.0, 0.0),
+                              ).chain(
+                                CurveTween(
+                                  curve: Curves.easeInOut,
+                                ),
+                              ),
+                            ),
+                            child: messageWidget,
+                          ),
+                        );
+                      }
+
+                      return SizedBox(
+                        key: ValueKey(_messages[index].guid!),
+                        child: messageWidget,
+                      );
+                    }
+                  ),
+                  const SliverPadding(
+                    padding: EdgeInsets.all(70),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

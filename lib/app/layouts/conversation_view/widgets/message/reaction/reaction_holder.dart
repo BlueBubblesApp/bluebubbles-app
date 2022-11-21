@@ -1,8 +1,10 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
+import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
+import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 
 class ReactionHolder extends StatefulWidget {
@@ -18,7 +20,7 @@ class ReactionHolder extends StatefulWidget {
   State<ReactionHolder> createState() => _ReactionHolderState();
 }
 
-class _ReactionHolderState extends State<ReactionHolder> {
+class _ReactionHolderState extends OptimizedState<ReactionHolder> {
   Iterable<Message> get reactions => getUniqueReactionMessages(widget.reactions.toList());
 
   @override
@@ -37,10 +39,13 @@ class _ReactionHolderState extends State<ReactionHolder> {
           top: 0,
           left: !widget.message.isFromMe! ? null : -i * 2.0,
           right: widget.message.isFromMe! ? null : -i * 2.0,
-          child: ReactionWidget(
-            messageIsFromMe: widget.message.isFromMe!,
-            reactionIsFromMe: e.isFromMe!,
-            reactionType: e.associatedMessageType!,
+          child: DeferPointer(
+            child: ReactionWidget(
+              messageIsFromMe: widget.message.isFromMe!,
+              reactionIsFromMe: e.isFromMe!,
+              reactionType: e.associatedMessageType!,
+              reactions: reactions.toList(),
+            ),
           ),
         )).toList().reversed.toList(),
       ),
