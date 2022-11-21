@@ -2,7 +2,7 @@
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/send_button.dart';
-import 'package:bluebubbles/app/widgets/components/send_effect_picker.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/send_effect_picker.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';

@@ -1,5 +1,5 @@
-import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_text_field.dart';
-import 'package:bluebubbles/app/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/app/components/custom/custom_cupertino_text_field.dart';
+import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

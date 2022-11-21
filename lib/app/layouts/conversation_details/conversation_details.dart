@@ -10,7 +10,7 @@ import 'package:bluebubbles/app/layouts/conversation_details/contact_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
-import 'package:bluebubbles/app/widgets/avatars/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/services/ui/chat/chat_manager.dart';
 import 'package:bluebubbles/models/models.dart';

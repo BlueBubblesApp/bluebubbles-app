@@ -1,5 +1,5 @@
 import 'package:bluebubbles/utils/logger.dart';
-import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
+import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';

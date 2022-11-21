@@ -1,4 +1,4 @@
-import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

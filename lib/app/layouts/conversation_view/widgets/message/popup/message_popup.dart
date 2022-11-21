@@ -3,9 +3,9 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/reaction_picker_clipper.dart';
-import 'package:bluebubbles/app/widgets/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_alert_dialog.dart';
-import 'package:bluebubbles/app/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
+import 'package:bluebubbles/app/components/custom/custom_cupertino_alert_dialog.dart';
+import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';

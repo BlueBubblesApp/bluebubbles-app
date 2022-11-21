@@ -6,8 +6,8 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/t
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachments_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/reply_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
-import 'package:bluebubbles/app/widgets/cupertino/custom_cupertino_text_field.dart';
-import 'package:bluebubbles/app/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/app/components/custom/custom_cupertino_text_field.dart';
+import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
