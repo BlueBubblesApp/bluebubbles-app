@@ -171,7 +171,7 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
         // If the handle is null, find the handle data by the original handle ID.
         message.handle ??= handlesCache.values.firstWhereOrNull(
             (element) => element.originalROWID == message.handleId);
-        if (!handlesCache.containsKey(message.handle!.address)) continue;
+        if (!handlesCache.containsKey(message.handle?.address)) continue;
 
         message.handleId = handlesCache[message.handle!.address]?.id ?? 0;
         message.handle = handlesCache[message.handle!.address];
