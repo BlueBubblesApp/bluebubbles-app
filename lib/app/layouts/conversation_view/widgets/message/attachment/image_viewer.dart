@@ -34,6 +34,7 @@ class _ImageViewerState extends OptimizedState<ImageViewer> with AutomaticKeepAl
   @override
   void initState() {
     super.initState();
+    data = controller.imageData[attachment.guid];
     updateObx(() {
       initBytes();
     });

@@ -31,6 +31,7 @@ class _AudioPlayerState extends OptimizedState<AudioPlayer> with AutomaticKeepAl
   @override
   void initState() {
     super.initState();
+    if (attachment != null) controller = cvController.audioPlayers[attachment!.guid];
     updateObx(() {
       initBytes();
     });
