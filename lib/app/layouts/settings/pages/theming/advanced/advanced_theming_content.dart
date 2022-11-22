@@ -323,7 +323,7 @@ class _AdvancedThemingContentState extends OptimizedState<AdvancedThemingContent
                   backgroundColor: tileColor,
                   min: 0.5,
                   max: 3,
-                  divisions: 10,
+                  divisions: 30,
                   formatValue: ((double val) => val.toStringAsFixed(2)),
                 );
               },
