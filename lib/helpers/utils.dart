@@ -839,7 +839,7 @@ Future<void> paintGroupAvatar({
         chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
     if (await File(customPath).exists()) {
-      Uint8List? customAvatar = await circularize(await File(customPath).readAsBytes(), size: size.toInt());
+      Uint8List? customAvatar = await clip(await File(customPath).readAsBytes(), size: size.toInt(), circle: true);
       if (customAvatar != null) {
         canvas.drawImage(await loadImage(customAvatar), Offset(0, 0), Paint());
         return;
@@ -862,7 +862,12 @@ Future<void> paintGroupAvatar({
   }
 
   Paint paint = Paint()..color = Get.theme.colorScheme.properSurface;
-  canvas.drawCircle(Offset(size * 0.5, size * 0.5), size * 0.5, paint);
+  Offset _offset = Offset(size * 0.5, size * 0.5);
+  if (kIsDesktop) {
+    canvas.drawCircle(_offset, size * 0.5, paint);
+  } else {
+    canvas.drawRect(Rect.fromCenter(center: _offset, width: size, height: size), paint);
+  }
 
   int realAvatarCount = min(participants.length, maxAvatars);
 
@@ -879,7 +884,13 @@ Future<void> paintGroupAvatar({
       Paint paint = Paint();
       paint.isAntiAlias = true;
       paint.color = Get.context?.theme.colorScheme.secondary.withOpacity(0.8) ?? HexColor("686868").withOpacity(0.8);
-      canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
+      Offset _offset = Offset(left + realSize * 0.5, top + realSize * 0.5);
+      double radius = realSize * 0.5;
+      if (kIsDesktop) {
+        canvas.drawCircle(_offset, radius, paint);
+      } else {
+        canvas.drawRect(Rect.fromCenter(center: _offset, width: realSize, height: realSize), paint);
+      }
 
       IconData icon = Icons.people;
 
@@ -909,6 +920,7 @@ Future<void> paintGroupAvatar({
         size: realSize * 0.99,
         borderWidth: size * 0.01,
         fontSize: adjustedWidth * 0.3,
+        inGroup: true,
       );
     }
   }
@@ -921,7 +933,8 @@ Future<void> paintAvatar(
     required Offset offset,
     required double size,
     double? fontSize,
-    double? borderWidth}) async {
+    double? borderWidth,
+    bool inGroup=false}) async {
   fontSize ??= size * 0.5;
   borderWidth ??= size * 0.05;
 
@@ -930,7 +943,7 @@ Future<void> paintAvatar(
         chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
     if (await File(customPath).exists()) {
-      Uint8List? customAvatar = await circularize(await File(customPath).readAsBytes(), size: size.toInt());
+      Uint8List? customAvatar = await clip(await File(customPath).readAsBytes(), size: size.toInt(), circle: true);
       if (customAvatar != null) {
         canvas.drawImage(await loadImage(customAvatar), offset, Paint());
         return;
@@ -941,7 +954,7 @@ Future<void> paintAvatar(
   Contact? contact = ContactManager().getContact(handle?.address);
   if (contact?.hasAvatar ?? false) {
     Uint8List? contactAvatar =
-        await circularize(contact!.avatarHiRes.value ?? contact.avatar.value!, size: size.toInt());
+        await clip(contact!.avatarHiRes.value ?? contact.avatar.value!, size: size.toInt(), circle: kIsDesktop || inGroup);
     if (contactAvatar != null) {
       canvas.drawImage(await loadImage(contactAvatar), offset, Paint());
       return;
@@ -977,7 +990,13 @@ Future<void> paintAvatar(
             : HexColor("686868"),
   ]);
 
-  canvas.drawCircle(Offset(dx + size * 0.5, dy + size * 0.5), size * 0.5, paint);
+  Offset _offset = Offset(dx + size * 0.5, dy + size * 0.5);
+  double radius = size * 0.5;
+  if (kIsDesktop || inGroup) {
+    canvas.drawCircle(_offset, radius, paint);
+  } else {
+    canvas.drawRect(Rect.fromCenter(center: _offset, width: size, height: size), paint);
+  }
 
   String? initials = ContactManager().getContactInitials(handle);
 
@@ -1005,7 +1024,7 @@ Future<void> paintAvatar(
   }
 }
 
-Future<Uint8List?> circularize(Uint8List data, {required int size}) async {
+Future<Uint8List?> clip(Uint8List data, {required int size, required bool circle}) async {
   ui.Image image;
   Uint8List _data = data;
 
@@ -1024,7 +1043,8 @@ Future<Uint8List?> circularize(Uint8List data, {required int size}) async {
   Paint paint = Paint();
   paint.isAntiAlias = true;
 
-  Path path = Path()..addOval(Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()));
+  Rect bounds = Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
+  Path path = circle ? (Path()..addOval(bounds)) : (Path()..addRect(bounds));
 
   canvas.clipPath(path);
 
