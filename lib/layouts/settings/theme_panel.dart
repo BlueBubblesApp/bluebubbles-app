@@ -398,6 +398,8 @@ class ThemePanel extends StatelessWidget {
                           loadTheme(context);
                         },
                       )),
+                    if (kIsDesktop && Platform.isWindows)
+                      SettingsDivider(),
                     if (!kIsWeb && !kIsDesktop && monetPalette != null)
                       Obx(() {
                         if (SettingsManager().settings.skin.value == Skins.iOS) {

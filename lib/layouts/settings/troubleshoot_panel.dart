@@ -160,6 +160,8 @@ class TroubleshootPanel extends StatelessWidget {
                           await launchUrl(Uri.file(Logger.logFile.path));
                         }),
                   if (kIsDesktop)
+                    SettingsDivider(),
+                  if (kIsDesktop)
                     SettingsTile(
                         leading: SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.doc,
@@ -171,6 +173,8 @@ class TroubleshootPanel extends StatelessWidget {
                           if (Logger.startupFile.existsSync()) Logger.startupFile.createSync();
                           await launchUrl(Uri.file(Logger.startupFile.path));
                         }),
+                  if (kIsDesktop)
+                    SettingsDivider(),
                   if (kIsDesktop)
                     SettingsTile(
                       leading: SettingsLeadingIcon(
@@ -202,6 +206,7 @@ class TroubleshootPanel extends StatelessWidget {
                           if (!savedLogsDir!.existsSync()) savedLogsDir.createSync(recursive: true);
                           await launchUrl(Uri.file(savedLogsDir.path));
                         }),
+                    SettingsDivider(),
                     Obx(() => SettingsTile(
                           onTap: () async {
                             if (Logger.saveLogs.value) {
@@ -222,6 +227,7 @@ class TroubleshootPanel extends StatelessWidget {
                               ? "Logging started, tap here to end and save"
                               : "Create a bug report for developers to analyze",
                         )),
+                    SettingsDivider(),
                     SettingsTile(
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.refresh,
