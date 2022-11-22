@@ -524,6 +524,16 @@ class NotificationManager {
     });
   }
 
+  Future<void> clearDesktopNotificationsForChat(String chatGuid) async {
+    if (!notifications.containsKey(chatGuid)) return;
+    List<LocalNotification> toasts = notifications[chatGuid]!;
+    for (LocalNotification toast in toasts) {
+      await toast.close();
+    }
+    notifications[chatGuid] = [];
+    notificationCounts[chatGuid] = 0;
+  }
+
   //todo implement these notifications on web
 
   /// Creates a notification for when the socket is disconnected

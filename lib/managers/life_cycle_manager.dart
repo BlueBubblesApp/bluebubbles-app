@@ -49,7 +49,7 @@ class LifeCycleManager {
 
     // If the app is not alive (was previously closed) and the curent chat is not null (a chat is already open)
     // Then mark the current chat as read.
-    if (!_isAlive && ChatManager().activeChat != null && !kIsDesktop && chat != null) {
+    if (!_isAlive && ChatManager().activeChat != null && chat != null) {
       ChatManager().clearChatNotifications(ChatManager().activeChat!.chat);
     }
 
