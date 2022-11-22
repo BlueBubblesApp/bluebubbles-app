@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/add_participant.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/chat_info.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/chat_options.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_gallery_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/contact_tile.dart';
@@ -16,7 +17,9 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ConversationDetails extends StatefulWidget {
   final Chat chat;
@@ -28,7 +31,9 @@ class ConversationDetails extends StatefulWidget {
 }
 
 class _ConversationDetailsState extends OptimizedState<ConversationDetails> with WidgetsBindingObserver {
-  List<Attachment> attachmentsForChat = <Attachment>[];
+  List<Attachment> media = <Attachment>[];
+  List<Attachment> docs = <Attachment>[];
+  List<Message> links = [];
   bool showMoreParticipants = false;
   late Chat chat = widget.chat;
   late StreamSubscription<Query<Chat>> sub;
@@ -58,6 +63,7 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
 
     updateObx(() {
       fetchAttachments();
+      fetchLinks();
     });
   }
 
@@ -70,14 +76,31 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
   void fetchAttachments() {
     if (kIsWeb) return;
     chat.getAttachmentsAsync().then((value) {
-      final attachments = value.where((e) => !(e.message.target?.isGroupEvent ?? true)).take(25);
-      for (Attachment a in attachments) {
+      final _media = value.where((e) => !(e.message.target?.isGroupEvent ?? true) && (e.mimeStart == "image" || e.mimeStart == "video")).take(24);
+      final _docs = value.where((e) => !(e.message.target?.isGroupEvent ?? true) && e.mimeStart != "image" && e.mimeStart != "video").take(24);
+      for (Attachment a in _media) {
+        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.id == a.message.target?.handleId);
+      }
+      for (Attachment a in _docs) {
         a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.id == a.message.target?.handleId);
       }
       setState(() {
-        attachmentsForChat = attachments.toList();
+        media = _media.toList();
+        docs = _docs.toList();
       });
     });
+  }
+
+  void fetchLinks() {
+    final query = (messageBox.query(Message_.dateDeleted.isNull()
+      & Message_.dbPayloadData.notNull()
+      & Message_.balloonBundleId.contains("URLBalloonProvider"))
+      ..link(Message_.chat, Chat_.id.equals(chat.id!))
+      ..order(Message_.dateCreated, flags: Order.descending))
+        .build();
+    query.limit = 20;
+    links = query.find();
+    query.close();
   }
 
   @override
@@ -192,14 +215,14 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
               padding: EdgeInsets.symmetric(vertical: 10),
             ),
             ChatOptions(chat: chat),
-            if (!kIsWeb)
+            if (!kIsWeb && media.isNotEmpty)
               SliverPadding(
                 padding: const EdgeInsets.only(top: 20, bottom: 10, left: 15),
                 sliver: SliverToBoxAdapter(
-                  child: Text("MEDIA", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+                  child: Text("IMAGES & VIDEOS", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
                 ),
               ),
-            if (!kIsWeb)
+            if (!kIsWeb && media.isNotEmpty)
               SliverPadding(
                 padding: const EdgeInsets.all(10),
                 sliver: SliverGrid(
@@ -211,10 +234,85 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                   delegate: SliverChildBuilderDelegate(
                     (context, int index) {
                       return MediaGalleryCard(
-                        attachment: attachmentsForChat[index],
+                        attachment: media[index],
                       );
                     },
-                    childCount: attachmentsForChat.length,
+                    childCount: media.length,
+                  ),
+                ),
+              ),
+            if (!kIsWeb && links.isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.only(top: 20, bottom: 10, left: 15),
+                sliver: SliverToBoxAdapter(
+                  child: Text("LINKS", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+                ),
+              ),
+            if (!kIsWeb && links.isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.all(10),
+                sliver: SliverToBoxAdapter(
+                  child: MasonryGridView.count(
+                    crossAxisCount: max(2, ns.width(context) ~/ 200),
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      if (links[index].payloadData?.urlData?.firstOrNull == null) {
+                        return const Text("Failed to load link!");
+                      }
+                      return Material(
+                        color: context.theme.colorScheme.properSurface,
+                        borderRadius: BorderRadius.circular(20),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () async {
+                            final data = links[index].payloadData!.urlData!.first;
+                            if ((data.url ?? data.originalUrl) == null) return;
+                            await launchUrl(
+                                Uri.parse((data.url ?? data.originalUrl)!),
+                                mode: LaunchMode.externalApplication
+                            );
+                          },
+                          child: Center(
+                            child: UrlPreview(
+                              data: links[index].payloadData!.urlData!.first,
+                              message: links[index],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    itemCount: links.length,
+                  ),
+                ),
+              ),
+            if (!kIsWeb && docs.isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.only(top: 20, bottom: 10, left: 15),
+                sliver: SliverToBoxAdapter(
+                  child: Text("OTHER FILES", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+                ),
+              ),
+            if (!kIsWeb && docs.isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.all(10),
+                sliver: SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: max(2, ns.width(context) ~/ 200),
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 1.75,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                        (context, int index) {
+                      return MediaGalleryCard(
+                        attachment: docs[index],
+                      );
+                    },
+                    childCount: docs.length,
                   ),
                 ),
               ),

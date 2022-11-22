@@ -137,33 +137,34 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                     && ((chat.participants.first.contact?.phones.isNotEmpty ?? false) 
                         || !chat.participants.first.address.contains("@")))
                   Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        final contact = chat.participants.first.contact;
-                        showAddressPicker(contact, chat.participants.first, context);
-                      },
-                      onLongPress: () {
-                        final contact = chat.participants.first.contact;
-                        showAddressPicker(contact, chat.participants.first, context, isLongPressed: true);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          color: context.theme.colorScheme.properSurface,
-                        ),
-                        height: 60,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              iOS ? CupertinoIcons.phone : Icons.call,
-                              color: context.theme.colorScheme.primary,
-                              size: 20
-                            ),
-                            const SizedBox(height: 7.5),
-                            Text("Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
-                          ],
+                    child: Material(
+                      borderRadius: BorderRadius.circular(15),
+                      color: context.theme.colorScheme.properSurface,
+                      child: InkWell(
+                        onTap: () {
+                          final contact = chat.participants.first.contact;
+                          showAddressPicker(contact, chat.participants.first, context);
+                        },
+                        onLongPress: () {
+                          final contact = chat.participants.first.contact;
+                          showAddressPicker(contact, chat.participants.first, context, isLongPressed: true);
+                        },
+                        borderRadius: BorderRadius.circular(15),
+                        child: SizedBox(
+                          height: 60,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                iOS ? CupertinoIcons.phone : Icons.call,
+                                color: context.theme.colorScheme.primary,
+                                size: 20
+                              ),
+                              const SizedBox(height: 7.5),
+                              Text("Call", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -174,33 +175,34 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                   const SizedBox(width: 5),
                 if ((chat.participants.first.contact?.emails.isNotEmpty ?? false) || chat.participants.first.address.contains("@"))
                   Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        final contact = chat.participants.first.contact;
-                        showAddressPicker(contact, chat.participants.first, context, isEmail: true);
-                      },
-                      onLongPress: () {
-                        final contact = chat.participants.first.contact;
-                        showAddressPicker(contact, chat.participants.first, context, isEmail: true, isLongPressed: true);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          color: context.theme.colorScheme.properSurface,
-                        ),
-                        height: 60,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              iOS ? CupertinoIcons.mail : Icons.email,
-                              color: context.theme.colorScheme.primary,
-                              size: 20
-                            ),
-                            const SizedBox(height: 7.5),
-                            Text("Mail", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
-                          ],
+                    child: Material(
+                      borderRadius: BorderRadius.circular(15),
+                      color: context.theme.colorScheme.properSurface,
+                      child: InkWell(
+                        onTap: () {
+                          final contact = chat.participants.first.contact;
+                          showAddressPicker(contact, chat.participants.first, context, isEmail: true);
+                        },
+                        onLongPress: () {
+                          final contact = chat.participants.first.contact;
+                          showAddressPicker(contact, chat.participants.first, context, isEmail: true, isLongPressed: true);
+                        },
+                        borderRadius: BorderRadius.circular(15),
+                        child: SizedBox(
+                          height: 60,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                iOS ? CupertinoIcons.mail : Icons.email,
+                                color: context.theme.colorScheme.primary,
+                                size: 20
+                              ),
+                              const SizedBox(height: 7.5),
+                              Text("Mail", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -209,35 +211,36 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                   const SizedBox(width: 5),
                 if (!kIsWeb && !kIsDesktop && chat.participants.first.contact != null)
                   Expanded(
-                    child: InkWell(
-                      onTap: () async {
-                        final contact = chat.participants.first.contact;
-                        final handle = chat.participants.first;
-                        if (contact == null) {
-                          await mcs.invokeMethod("open-contact-form",
-                              {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
-                        } else {
-                          await mcs.invokeMethod("view-contact-form", {'id': contact.id});
-                        }
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          color: context.theme.colorScheme.properSurface,
-                        ),
-                        height: 60,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              iOS ? CupertinoIcons.info : Icons.info,
-                              color: context.theme.colorScheme.primary,
-                              size: 20
-                            ),
-                            const SizedBox(height: 7.5),
-                            Text("Info", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
-                          ],
+                    child: Material(
+                      borderRadius: BorderRadius.circular(15),
+                      color: context.theme.colorScheme.properSurface,
+                      child: InkWell(
+                        onTap: () async {
+                          final contact = chat.participants.first.contact;
+                          final handle = chat.participants.first;
+                          if (contact == null) {
+                            await mcs.invokeMethod("open-contact-form",
+                                {'address': handle.address, 'addressType': handle.address.isEmail ? 'email' : 'phone'});
+                          } else {
+                            await mcs.invokeMethod("view-contact-form", {'id': contact.id});
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(15),
+                        child: SizedBox(
+                          height: 60,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                iOS ? CupertinoIcons.info : Icons.info,
+                                color: context.theme.colorScheme.primary,
+                                size: 20
+                              ),
+                              const SizedBox(height: 7.5),
+                              Text("Info", style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.primary)),
+                            ],
+                          ),
                         ),
                       ),
                     ),
