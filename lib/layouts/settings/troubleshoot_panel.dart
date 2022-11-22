@@ -199,7 +199,7 @@ class TroubleshootPanel extends StatelessWidget {
                         title: "Open Saved Logs Location",
                         subtitle: savedLogsDir!.path,
                         onTap: () async {
-                          if (savedLogsDir!.existsSync()) savedLogsDir.createSync();
+                          if (!savedLogsDir!.existsSync()) savedLogsDir.createSync(recursive: true);
                           await launchUrl(Uri.file(savedLogsDir.path));
                         }),
                     Obx(() => SettingsTile(
@@ -316,12 +316,14 @@ class TroubleshootPanel extends StatelessWidget {
                       }
                       return Center(
                         child: Padding(
-                          padding: EdgeInsets.only(top: 8),
+                          padding: EdgeInsets.only(top: 8, bottom: 16),
                           child: Text("When you save logs, they'll show up here", style: context.textTheme.bodySmall),
                         ),
                       );
                     }),
                   ]),
+                if (kIsDesktop)
+                  SizedBox(height: 100),
               ],
             ),
           ),

@@ -112,8 +112,8 @@ class BaseLogger extends GetxService {
     // Show the snackbar when finished
     showSnackbar(
       "Success",
-      "Logs exported successfully to $filePath",
-      durationMs: kIsDesktop ? 5000 : 2500,
+      "Logs exported successfully${kIsDesktop ? "" : " to $filePath"}",
+      durationMs: 2500,
       button: kIsDesktop || kIsWeb
           ? null
           : TextButton(
