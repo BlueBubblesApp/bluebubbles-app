@@ -153,18 +153,19 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final addMember = ListTile(
-                    title: Text("Add Member", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                    title: Text("Add ${iOS ? "Member" : "people"}", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                     leading: Container(
                       width: 40 * ss.settings.avatarScale.value,
                       height: 40 * ss.settings.avatarScale.value,
                       decoration: BoxDecoration(
-                        color: context.theme.colorScheme.properSurface,
+                        color: !iOS ? null : context.theme.colorScheme.properSurface,
                         shape: BoxShape.circle,
+                        border: iOS ? null : Border.all(color: context.theme.colorScheme.primary, width: 3)
                       ),
                       child: Icon(
-                          Icons.add,
-                          color: context.theme.colorScheme.primary,
-                          size: 20
+                        Icons.add,
+                        color: context.theme.colorScheme.primary,
+                        size: 20
                       ),
                     ),
                     onTap: () {
@@ -195,8 +196,9 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                           width: 40 * ss.settings.avatarScale.value,
                           height: 40 * ss.settings.avatarScale.value,
                           decoration: BoxDecoration(
-                            color: context.theme.colorScheme.properSurface,
-                            shape: BoxShape.circle,
+                              color: !iOS ? null : context.theme.colorScheme.properSurface,
+                              shape: BoxShape.circle,
+                              border: iOS ? null : Border.all(color: context.theme.colorScheme.primary, width: 3)
                           ),
                           child: Icon(
                             Icons.more_horiz,

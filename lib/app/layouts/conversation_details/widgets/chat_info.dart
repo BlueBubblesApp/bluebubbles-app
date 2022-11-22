@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/address_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/change_name.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/widgets/contact_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -29,28 +30,66 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 10),
-        Center(
-          child: ContactAvatarGroupWidget(
-            chat: chat,
-            size: 100,
-            onTap: chat.isGroup ? () {} : null,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 12.0),
-          child: Center(
-            child: Text(
-              chat.properTitle,
-              style: context.theme.textTheme.headlineMedium!.copyWith(
-                fontWeight: FontWeight.bold, 
-                color: context.theme.colorScheme.onBackground
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+        if (iOS)
+          Center(
+            child: ContactAvatarGroupWidget(
+              chat: chat,
+              size: 100,
+              onTap: chat.isGroup ? () {} : null,
             ),
           ),
-        ),
-        if (chat.isGroup)
+        if (iOS)
+          Padding(
+            padding: const EdgeInsets.only(top: 12.0),
+            child: Center(
+              child: Text(
+                chat.properTitle,
+                style: context.theme.textTheme.headlineMedium!.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: context.theme.colorScheme.onBackground
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        if (chat.isGroup && !iOS)
+          Padding(
+            padding: const EdgeInsets.only(left: 15.0, bottom: 5.0),
+            child: Text(
+                "GROUP NAME",
+                style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)
+            ),
+          ),
+        if (chat.isGroup && !iOS)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 5.0),
+            child: Material(
+              color: Colors.transparent,
+              child: ListTile(
+                onTap: () {
+                  if (!ss.settings.enablePrivateAPI.value || !chat.isIMessage) {
+                    showChangeName(chat, "local", context);
+                  } else {
+                    showChangeName(chat, "private-api", context);
+                  }
+                },
+                onLongPress: () {
+                  showChangeName(chat, "local", context);
+                },
+                title: Text(chat.properTitle, style: context.theme.textTheme.bodyLarge!),
+                trailing: Icon(Icons.edit_outlined, color: context.theme.colorScheme.onBackground),
+              ),
+            ),
+          ),
+        if (!chat.isGroup && !iOS)
+          ContactTile(
+            key: Key(chat.participants.first.address),
+            handle: chat.participants.first,
+            chat: chat,
+            canBeRemoved: false,
+          ),
+        if (chat.isGroup && iOS)
           Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -127,7 +166,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
               ],
             ),
           ),
-        if (!chat.isGroup)
+        if (!chat.isGroup && iOS)
           Padding(
             padding: const EdgeInsets.only(left: 10.0, right: 10, top: 20),
             child: Row(
@@ -252,7 +291,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
           Padding(
             padding: const EdgeInsets.only(left: 15.0, bottom: 5.0),
             child: Text(
-              "${chat.participants.length} MEMBERS",
+              "${chat.participants.length} ${iOS ? "MEMBERS" : "OTHER PEOPLE"}",
               style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)
             ),
           ),

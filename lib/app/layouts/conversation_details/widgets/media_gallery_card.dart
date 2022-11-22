@@ -197,15 +197,12 @@ class _MediaGalleryCardState extends OptimizedState<MediaGalleryCard> with Autom
         child = ImageDisplay(attachment: attachment, image: videoPreview!, duration: duration);
         addPadding = false;
       } else {
-        child = Text(
+        child = const Text(
           "Loading video preview...",
           textAlign: TextAlign.center,
         );
       }
-    }/* else if (attachment.mimeType?.contains("location") ?? false) {
-      child = LocationWidget(file: attachmentFile);
-      addPadding = false;
-    }*/ else if (attachmentFile.bytes != null) {
+    } else if (attachmentFile.bytes != null) {
       child = OtherFile(
         file: attachmentFile,
         attachment: attachment,
@@ -279,7 +276,7 @@ class ImageDisplay extends StatelessWidget {
                       style: context.theme.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ),
-                if (attachment.message.target?.handle != null)
+                if (attachment.message.target?.handle != null && ss.settings.skin.value == Skins.iOS)
                   Positioned(
                     top: 10,
                     right: 10,

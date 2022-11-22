@@ -76,14 +76,16 @@ class ContactTile extends StatelessWidget {
                   child: TextButton(
                     style: TextButton.styleFrom(
                       shape: const CircleBorder(),
-                      backgroundColor: context.theme.colorScheme.secondary,
+                      backgroundColor: ss.settings.skin.value != Skins.iOS ? null : context.theme.colorScheme.secondary,
                     ),
-                    onLongPress: () => showAddressPicker(contact, handle, context, isLongPressed: true),
-                    onPressed: () => showAddressPicker(contact, handle, context),
+                    onLongPress: () => showAddressPicker(contact, handle, context, isEmail: true, isLongPressed: true),
+                    onPressed: () => showAddressPicker(contact, handle, isEmail: true, context),
                     child: Icon(
                         ss.settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email,
-                        color: context.theme.colorScheme.onSecondary,
-                        size: 20
+                        color: ss.settings.skin.value != Skins.iOS
+                            ? context.theme.colorScheme.onBackground
+                            : context.theme.colorScheme.onSecondary,
+                        size: ss.settings.skin.value != Skins.iOS ? 25 : 20
                     ),
                   ),
                 ),
@@ -93,7 +95,7 @@ class ContactTile extends StatelessWidget {
                   child: TextButton(
                     style: TextButton.styleFrom(
                       shape: const CircleBorder(),
-                      backgroundColor: context.theme.colorScheme.secondary,
+                      backgroundColor: ss.settings.skin.value != Skins.iOS ? null : context.theme.colorScheme.secondary,
                     ),
                     onLongPress: () => showAddressPicker(contact, handle, context, isLongPressed: true),
                     onPressed: () => showAddressPicker(contact, handle, context),
@@ -101,8 +103,10 @@ class ContactTile extends StatelessWidget {
                         ss.settings.skin.value == Skins.iOS
                             ? CupertinoIcons.phone
                             : Icons.call,
-                        color: context.theme.colorScheme.onSecondary,
-                        size: 20
+                        color: ss.settings.skin.value != Skins.iOS
+                            ? context.theme.colorScheme.onBackground
+                            : context.theme.colorScheme.onSecondary,
+                        size: ss.settings.skin.value != Skins.iOS ? 25 : 20
                     ),
                   ),
                 ),
