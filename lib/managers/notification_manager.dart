@@ -221,7 +221,9 @@ class NotificationManager {
         chat.id ?? Random().nextInt(9998) + 1,
         ![null, ""].contains(message.associatedMessageGuid),
         message.handle,
-        chat.participants);
+        chat.participants,
+        message.isGroupEvent(),
+    );
   }
 
   Future<void> createNewMessageNotification(
@@ -238,7 +240,8 @@ class NotificationManager {
       int summaryId,
       bool isReaction,
       Handle? handle,
-      List<Handle>? participants) async {
+      List<Handle>? participants,
+      bool isGroupEvent) async {
     if (kIsWeb && uh.Notification.permission == "granted") {
       Uint8List avatar = await avatarAsBytes(
           isGroup: chatIsGroup, handle: handle, participants: participants, chatGuid: chatGuid, quality: 256);
@@ -258,7 +261,7 @@ class NotificationManager {
             .whereIndexed((index, element) => selectedIndices.contains(index))
             .map((action) => action == "Mark Read"
                 ? action
-                : !isReaction && SettingsManager().settings.enablePrivateAPI.value
+                : !isReaction && !isGroupEvent && SettingsManager().settings.enablePrivateAPI.value
                     ? ReactionTypes.reactionToEmoji[action]!
                     : null)
             .whereNotNull()
