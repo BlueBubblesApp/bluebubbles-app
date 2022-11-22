@@ -178,7 +178,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                   Expanded(
                     child: Material(
                       borderRadius: BorderRadius.circular(15),
-                      color: context.theme.colorScheme.properSurface,
+                      color: tileColor,
                       child: InkWell(
                         onTap: () {
                           final contact = chat.participants.first.contact;
@@ -216,7 +216,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                   Expanded(
                     child: Material(
                       borderRadius: BorderRadius.circular(15),
-                      color: context.theme.colorScheme.properSurface,
+                      color: tileColor,
                       child: InkWell(
                         onTap: () {
                           final contact = chat.participants.first.contact;
@@ -252,7 +252,7 @@ class _ChatInfoState extends OptimizedState<ChatInfo> {
                   Expanded(
                     child: Material(
                       borderRadius: BorderRadius.circular(15),
-                      color: context.theme.colorScheme.properSurface,
+                      color: tileColor,
                       child: InkWell(
                         onTap: () async {
                           final contact = chat.participants.first.contact;
