@@ -62,6 +62,7 @@ class _LegacyUrlPreviewState extends OptimizedState<LegacyUrlPreview> with Autom
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (metadata?.image != null)
             Image.network(
