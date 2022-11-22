@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ConversationDetails extends StatefulWidget {
@@ -33,6 +34,7 @@ class ConversationDetails extends StatefulWidget {
 class _ConversationDetailsState extends OptimizedState<ConversationDetails> with WidgetsBindingObserver {
   List<Attachment> media = <Attachment>[];
   List<Attachment> docs = <Attachment>[];
+  List<Attachment> locations = <Attachment>[];
   List<Message> links = [];
   bool showMoreParticipants = false;
   late Chat chat = widget.chat;
@@ -76,17 +78,26 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
   void fetchAttachments() {
     if (kIsWeb) return;
     chat.getAttachmentsAsync().then((value) {
-      final _media = value.where((e) => !(e.message.target?.isGroupEvent ?? true) && (e.mimeStart == "image" || e.mimeStart == "video")).take(24);
-      final _docs = value.where((e) => !(e.message.target?.isGroupEvent ?? true) && e.mimeStart != "image" && e.mimeStart != "video").take(24);
+      final _media = value.where((e) => !(e.message.target?.isGroupEvent ?? true)
+          && !(e.message.target?.isInteractive ?? true)
+          && (e.mimeStart == "image" || e.mimeStart == "video")).take(24);
+      final _docs = value.where((e) => !(e.message.target?.isGroupEvent ?? true)
+          && !(e.message.target?.isInteractive ?? true)
+          && e.mimeStart != "image" && e.mimeStart != "video" && !(e.mimeType ?? "").contains("location")).take(24);
+      final _locations = value.where((e) => (e.mimeType ?? "").contains("location")).take(10);
       for (Attachment a in _media) {
         a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.id == a.message.target?.handleId);
       }
       for (Attachment a in _docs) {
         a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.id == a.message.target?.handleId);
       }
+      for (Attachment a in _locations) {
+        a.message.target?.handle = chat.participants.firstWhereOrNull((e) => e.id == a.message.target?.handleId);
+      }
       setState(() {
         media = _media.toList();
         docs = _docs.toList();
+        locations = _locations.toList();
       });
     });
   }
@@ -286,6 +297,58 @@ class _ConversationDetailsState extends OptimizedState<ConversationDetails> with
                       );
                     },
                     itemCount: links.length,
+                  ),
+                ),
+              ),
+            if (!kIsWeb && locations.isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.only(top: 20, bottom: 10, left: 15),
+                sliver: SliverToBoxAdapter(
+                  child: Text("LOCATIONS", style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+                ),
+              ),
+            if (!kIsWeb && locations.isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.all(10),
+                sliver: SliverToBoxAdapter(
+                  child: MasonryGridView.count(
+                    crossAxisCount: max(2, ns.width(context) ~/ 200),
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      if (as.getContent(locations[index]) is! PlatformFile) {
+                        return const Text("Failed to load location!");
+                      }
+                      return Material(
+                        color: context.theme.colorScheme.properSurface,
+                        borderRadius: BorderRadius.circular(20),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () async {
+                            final data = links[index].payloadData!.urlData!.first;
+                            if ((data.url ?? data.originalUrl) == null) return;
+                            await launchUrl(
+                                Uri.parse((data.url ?? data.originalUrl)!),
+                                mode: LaunchMode.externalApplication
+                            );
+                          },
+                          child: Center(
+                            child: UrlPreview(
+                              data: UrlPreviewData(
+                                title: "Location from ${DateFormat.yMd().format(locations[index].message.target!.dateCreated!)}",
+                                siteName: "Tap to open",
+                              ),
+                              message: locations[index].message.target!,
+                              file: as.getContent(locations[index]),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    itemCount: locations.length,
                   ),
                 ),
               ),
