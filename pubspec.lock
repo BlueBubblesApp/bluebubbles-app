@@ -1919,7 +1919,7 @@ packages:
       name: screen_retriever
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.2"
+    version: "0.1.4"
   secure_application:
     dependency: "direct main"
     description:

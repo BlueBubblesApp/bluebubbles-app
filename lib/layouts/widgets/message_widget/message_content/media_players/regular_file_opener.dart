@@ -2,16 +2,16 @@ import 'dart:convert';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class RegularFileOpener extends StatelessWidget {
@@ -39,7 +39,12 @@ class RegularFileOpener extends StatelessWidget {
             ..click();
         } else {
           if (kIsDesktop) {
-            launchUrl(Uri.file(file.path!));
+            File _file = File(join((await getTemporaryDirectory()).path, "BlueBubbles", "attachments", attachment.guid, basename(file.path!)));
+            if (!_file.existsSync()) {
+              _file.createSync(recursive: true);
+              File(file.path!).copySync(_file.path);
+            }
+            launchUrl(Uri.file(_file.path));
             return;
           }
           try {
