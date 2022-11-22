@@ -340,18 +340,30 @@ class NotificationManager {
 
         bool combine = false;
         bool multiple = false;
+        String? sender;
         RegExp re = RegExp("\n");
-        int newLines = (messageText.length ~/ charsPerLineEst).ceil() + re.allMatches(messageText).length;
+        if (chatIsGroup && !isGroupEvent && !isReaction) {
+          Contact? contact = ContactManager().getContact(handle?.address);
+          sender = contact?.displayName.split(" ")[0];
+        }
+        int newLines = (((sender == null ? 0 : "$sender: ".length) + messageText.length) / charsPerLineEst).ceil() + re.allMatches(messageText).length;
         String body = "";
         int count = 0;
         for (LocalNotification _toast in _notifications) {
           if (newLines + ((_toast.body ?? "").length ~/ charsPerLineEst).ceil() + re.allMatches("${_toast.body}\n").length <= maxLines) {
+            if (chatIsGroup && count == 0 && _notifications.isNotEmpty && _toast.title.length > "$chatTitle: ".length) {
+              String name = _toast.title.substring("$chatTitle: ".length).split(" ")[0];
+              body += "$name: ";
+            }
             body += "${_toast.body}\n";
             count += int.tryParse(_toast.subtitle ?? "1") ?? 1;
             multiple = true;
           } else {
             combine = true;
           }
+        }
+        if (chatIsGroup && sender != null) {
+          body += "$sender: ";
         }
         body += messageText;
         count += 1;
@@ -368,9 +380,9 @@ class NotificationManager {
           if (toasted) return;
           toast = LocalNotification(
             imagePath: path,
-            title: chatIsGroup ? "$chatTitle: $contactName" : chatTitle,
+            title: count == 1 && !isReaction && !isGroupEvent ? "$chatTitle: $contactName" : chatTitle,
             subtitle: "$count",
-            body: body,
+            body: sender != null && count == 1 ? body.split("$sender: ")[1] : body,
             actions:
               _notifications.isNotEmpty ?
                 showMarkRead ? [LocalNotificationAction(text: "Mark ${notificationCounts[chatGuid]!} Messages Read")] : []
