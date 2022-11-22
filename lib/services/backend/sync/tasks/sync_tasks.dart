@@ -106,7 +106,6 @@ class BulkSyncChats extends AsyncTask<List<dynamic>, List<Chat>> {
         if (chat == null) continue;
         final participants = item.value.map((e) => handleMap[e]).whereNotNull().toList();
         chat.handles.addAll(participants);
-        chat.participants = participants;
       }
 
       // 8. Save & return updated chats
@@ -148,15 +147,11 @@ class BulkSyncMessages extends AsyncTask<List<dynamic>, List<Message>> {
       Chat inputChat = params[0];
       List<Message> inputMessages = params[1];
 
-      if (inputChat.participants.isEmpty) {
-        inputChat.participants = List<Handle>.from(inputChat.handles);
-      }
-
       // Processing Code
       // 0: Gather handles from chat and cache them
       // They should already exist because this function makes that assumption. #logic
       Map<String, Handle> handlesCache = {};
-      for (var participant in inputChat.participants) {
+      for (var participant in inputChat.handles) {
         String addr = participant.address;
         if (handlesCache.containsKey(addr)) continue;
         handlesCache[addr] = participant;

@@ -130,9 +130,6 @@ class SearchViewState extends OptimizedState<SearchView> {
 
     for (dynamic item in response) {
       final chat = Chat.fromMap(item['chats'][0]);
-      if (chat.participants.isEmpty) {
-        chat.participants = chatBox.query(Chat_.guid.equals(chat.guid)).build().findFirst()?.handles.toList() ?? [];
-      }
       final message = Message.fromMap(item);
       chat.latestMessage = message;
       chat.guid = "${chat.guid}/${randomString(6)}";

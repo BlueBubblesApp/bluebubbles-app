@@ -104,6 +104,8 @@ class ChatManager extends GetxService {
 
       Logger.info("Got updated chat metadata from server. Saving.", tag: "Fetch-Chat");
       Chat newChat = Chat.fromMap(chatData);
+      newChat.handles.clear();
+      newChat.handles.addAll(newChat.participants);
       newChat.save();
       return newChat;
     }

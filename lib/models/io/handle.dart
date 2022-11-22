@@ -90,6 +90,7 @@ class Handle {
       Handle? existing = Handle.findOne(address: address);
       if (existing != null) {
         id = existing.id;
+        contactRelation.target = existing.contactRelation.target;
       } else if (existing == null && contactRelation.target == null) {
         contactRelation.target = cs.matchHandleToContact(this);
       }

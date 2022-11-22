@@ -263,7 +263,7 @@ class GetChats extends AsyncTask<List<dynamic>, List<Chat>> {
       /// Assign the handles to the chats, deduplicate, and get fake participants
       /// for redacted mode
       for (Chat c in chats) {
-        c.participants = List<Handle>.from(c.handles);
+        c._participants = List<Handle>.from(c.handles);
         c._deduplicateParticipants();
         c.title = c.getTitle();
         if ([c.autoSendReadReceipts, c.autoSendTypingIndicators].contains(null)) {
@@ -296,8 +296,25 @@ class Chat {
   String? latestMessageText;
   String? fakeLatestMessageText;
   String? title;
+  String get properTitle {
+    if (ss.settings.redactedMode.value) {
+      if (ss.settings.generateFakeContactNames.value) {
+        return getTitle();
+      } else if (ss.settings.hideContactInfo.value) {
+        return "";
+      }
+    }
+    title ??= getTitle();
+    return title!;
+  }
   String? displayName;
-  List<Handle> participants = [];
+  List<Handle> _participants = [];
+  List<Handle> get participants {
+    if (_participants.isEmpty) {
+      getParticipants();
+    }
+    return _participants;
+  }
   Message? latestMessage;
   bool? autoSendReadReceipts = true;
   bool? autoSendTypingIndicators = true;
@@ -329,7 +346,7 @@ class Chat {
     this.displayName,
     String? customAvatar,
     int? pinnedIndex,
-    this.participants = const [],
+    List<Handle>? participants,
     this.latestMessage,
     this.latestMessageDate,
     this.latestMessageText,
@@ -341,7 +358,8 @@ class Chat {
   }) {
     customAvatarPath = customAvatar;
     pinIndex = pinnedIndex;
-    if (participants.isEmpty) participants = [];
+    if (textFieldAttachments.isEmpty) textFieldAttachments = [];
+    _participants = participants ?? [];
   }
 
   factory Chat.fromMap(Map<String, dynamic> json) {
@@ -431,11 +449,19 @@ class Chat {
       }
       try {
         id = chatBox.put(this);
-        if (participants.isNotEmpty && existing?.participants.length != participants.length) {
-          final newChat = chatBox.get(id!);
-          newChat?.handles.clear();
-          newChat?.handles.addAll(participants);
-          newChat?.handles.applyToDb();
+        final _chat = chatBox.get(id!);
+        if (_chat!.handles.length > handles.length) {
+          final remove = List<Handle>.from(_chat.handles.where((e) => handles.firstWhereOrNull((e2) => e2.address == e.address) == null));
+          for (Handle e in remove) {
+            _chat.handles.remove(e);
+          }
+          _chat.handles.applyToDb();
+        } else if (_chat.handles.length < handles.length) {
+          final add = List<Handle>.from(handles.where((e) => _chat.handles.firstWhereOrNull((e2) => e2.address == e.address) == null));
+          for (Handle e in add) {
+            _chat.handles.add(e);
+          }
+          _chat.handles.applyToDb();
         }
       } on UniqueViolationException catch (_) {}
     });
@@ -733,7 +759,7 @@ class Chat {
     if (kIsWeb || id == null) return this;
     store.runInTransaction(TxMode.read, () {
       /// Find the handles themselves
-      participants = List<Handle>.from(handles);
+      _participants = List<Handle>.from(handles);
     });
 
     _deduplicateParticipants();
@@ -898,9 +924,6 @@ class Chat {
     latestMessageDate ??= other.latestMessageDate;
     latestMessageText ??= other.latestMessageText;
     muteArgs ??= other.muteArgs;
-    if (participants.isEmpty) {
-      participants.addAll(other.participants);
-    }
     title ??= other.title;
 
     return this;
