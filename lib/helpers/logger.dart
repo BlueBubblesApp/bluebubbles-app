@@ -36,14 +36,14 @@ class BaseLogger extends GetxService {
   init() async {
     // For now, only do logs on desktop
     if (kIsDesktop) {
-      String startupPath = (await getDownloadsDirectory())!.path;
+      String startupPath = (await getApplicationSupportDirectory()).path;
       startupPath = join(startupPath, "BlueBubbles_Logs_Startup.txt");
-      startupFile = File(startupPath);
-      if (await startupFile.exists()) {
-        await startupFile.writeAsString("", mode: FileMode.writeOnly);
-        startup.listen((val) async {
+      startupFile = File(startupPath)..createSync();
+      if (startupFile.existsSync()) {
+        startupFile.writeAsStringSync("", mode: FileMode.writeOnly);
+        startup.listen((val) {
           if (val) {
-            await writeToStartupFile('----------------${DateTime.now().toLocal()}----------------');
+            writeToStartupFile('----------------${DateTime.now().toLocal()}----------------');
           }
         });
       }
@@ -76,9 +76,9 @@ class BaseLogger extends GetxService {
     logs.clear();
   }
 
-  Future<void> writeToStartupFile(String log) async {
-    if (kIsDesktop && await startupFile.exists()) {
-      await startupFile.writeAsString('$log\n', mode: FileMode.writeOnlyAppend);
+  void writeToStartupFile(String log) {
+    if (kIsDesktop && startupFile.existsSync()) {
+      startupFile.writeAsStringSync('$log\n', mode: FileMode.writeOnlyAppend);
     }
   }
 
@@ -103,17 +103,17 @@ class BaseLogger extends GetxService {
       filePath = (await getApplicationSupportDirectory()).path;
       DateTime now = DateTime.now().toLocal();
       filePath = join(filePath, "Saved Logs",
-          "BlueBubbles_Logs_${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
+          "BlueBubbles_Logs_${now.year}-${now.month}-${now.day}_${now.hour}-${now.minute}-${now.second}.txt");
     }
     File file = File(filePath);
-    await file.create(recursive: true);
-    await file.writeAsString(logs.join('\n'));
+    file.createSync(recursive: true);
+    file.writeAsStringSync(logs.join('\n'));
 
     // Show the snackbar when finished
     showSnackbar(
       "Success",
-      "Logs exported successfully to $filePath",
-      durationMs: kIsDesktop ? 5000 : 2500,
+      "Logs exported successfully${kIsDesktop ? "" : " to $filePath"}",
+      durationMs: 2500,
       button: kIsDesktop || kIsWeb
           ? null
           : TextButton(

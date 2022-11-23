@@ -63,7 +63,7 @@ packages:
       name: async
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.9.0"
+    version: "2.8.2"
   async_extension:
     dependency: transitive
     description:
@@ -218,7 +218,7 @@ packages:
       name: characters
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.2.1"
+    version: "1.2.0"
   charcode:
     dependency: transitive
     description:
@@ -276,7 +276,7 @@ packages:
       name: clock
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.1.1"
+    version: "1.1.0"
   code_builder:
     dependency: transitive
     description:
@@ -579,7 +579,7 @@ packages:
       name: fake_async
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.3.1"
+    version: "1.3.0"
   faker:
     dependency: "direct main"
     description:
@@ -1356,6 +1356,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.3"
+  local_notifier:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: "78d87ac4b89ad68854dad27aea0b819758d7228d"
+      resolved-ref: "78d87ac4b89ad68854dad27aea0b819758d7228d"
+      url: "https://github.com/jjoelj/local_notifier.git"
+    source: git
+    version: "0.1.5"
   location:
     dependency: "direct main"
     description:
@@ -1404,7 +1413,7 @@ packages:
       name: matcher
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.12.12"
+    version: "0.12.11"
   material_color_utilities:
     dependency: "direct main"
     description:
@@ -1425,7 +1434,7 @@ packages:
       name: meta
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.8.0"
+    version: "1.7.0"
   metadata_fetch:
     dependency: "direct main"
     description:
@@ -1910,7 +1919,7 @@ packages:
       name: screen_retriever
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.2"
+    version: "0.1.4"
   secure_application:
     dependency: "direct main"
     description:
@@ -2132,7 +2141,7 @@ packages:
       name: source_span
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.9.0"
+    version: "1.8.2"
   sprintf:
     dependency: transitive
     description:
@@ -2202,7 +2211,7 @@ packages:
       name: string_scanner
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.1.1"
+    version: "1.1.0"
   string_validator:
     dependency: transitive
     description:
@@ -2244,28 +2253,28 @@ packages:
       name: term_glyph
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.2.1"
+    version: "1.2.0"
   test:
     dependency: transitive
     description:
       name: test
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.21.4"
+    version: "1.21.1"
   test_api:
     dependency: transitive
     description:
       name: test_api
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.12"
+    version: "0.4.9"
   test_core:
     dependency: transitive
     description:
       name: test_core
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.16"
+    version: "0.4.13"
   timezone:
     dependency: transitive
     description:
@@ -2525,15 +2534,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.2"
-  win_toast:
-    dependency: "direct main"
-    description:
-      path: "packages/win_toast"
-      ref: f64b90f651e8655a75568b0db67319ba48a5156a
-      resolved-ref: f64b90f651e8655a75568b0db67319ba48a5156a
-      url: "https://github.com/jjoelj/flutter-plugins.git"
-    source: git
-    version: "0.0.2"
   window_manager:
     dependency: "direct main"
     description:
@@ -2541,6 +2541,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.2.5"
+  windows_taskbar:
+    dependency: "direct main"
+    description:
+      name: windows_taskbar
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.1.0+1"
   wkt_parser:
     dependency: transitive
     description:

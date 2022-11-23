@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -154,6 +155,10 @@ class ChatManager {
 
   Future<void> clearChatNotifications(Chat chat) async {
     chat.toggleHasUnread(false);
+
+    if (kIsDesktop) {
+      await NotificationManager().clearDesktopNotificationsForChat(chat.guid);
+    }
 
     // Handle Private API features
     if (SettingsManager().settings.enablePrivateAPI.value) {

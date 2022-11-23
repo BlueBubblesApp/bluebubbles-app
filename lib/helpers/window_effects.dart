@@ -18,27 +18,30 @@ class WindowEffects {
     WindowEffect.disabled
   ];
 
-  static final Map<WindowEffect, int> _versions = {
-    WindowEffect.tabbed: 22523,
-    WindowEffect.mica: 22000,
-    WindowEffect.aero: 0,
-    WindowEffect.acrylic: 17134,
-    WindowEffect.transparent: 0,
-    WindowEffect.disabled: 0,
+  static final Map<WindowEffect, Tuple2<int?, int?>> _versions = {
+    WindowEffect.tabbed: Tuple2(22523, null),
+    WindowEffect.mica: Tuple2(22000, null),
+    WindowEffect.aero: Tuple2(0, 22523),
+    WindowEffect.acrylic: Tuple2(17134, null),
+    WindowEffect.transparent: Tuple2(0, null),
+    WindowEffect.disabled: Tuple2(0, null),
   };
 
   static List<WindowEffect> get effects =>
-      _effects.where((effect) => parsedWindowsVersion() >= _versions[effect]!).toList();
+      _effects.where((effect) {
+        int version = parsedWindowsVersion();
+        return version >= _versions[effect]!.item1! &&
+            (_versions[effect]!.item2 == null || (version <= _versions[effect]!.item2!));
+      }).toList();
 
   static final _descriptions = {
     WindowEffect.tabbed: "Tabbed is a Mica-like material that incorporates theme and desktop wallpaper, but is more "
         "sensitive to desktop wallpaper color. Works only on later Windows 11 versions (build 22523 or higher).",
-    WindowEffect.mica: "Mica is an opaque, dynamic material that incorporates theme and desktop wallpaper to paint "
-        "the background of long-lived windows. Works only on Windows 11 or greater (build 22000 or higher).",
+    WindowEffect.mica: "Mica replaces your background color with an incorporation of the desktop wallpaper and your "
+        "theme. It is not affected by your background color. Works only on Windows 11 or greater (build 22000 or higher).",
     WindowEffect.aero: "Aero glass effect. Windows Vista & Windows 7 like glossy blur effect.",
-    WindowEffect.acrylic: "Acrylic is a type of brush that creates a translucent texture. You can apply acrylic to "
-        "app surfaces to add depth and help establish a visual hierarchy. Works only on Windows 10 version 1803 or "
-        "higher (build 17134 or higher).",
+    WindowEffect.acrylic: "Acrylic is a translucent brush effect that works best with colors other than pure white "
+        "and pure black. Works only on Windows 10 version 1803 or higher (build 17134 or higher).",
     WindowEffect.transparent: "Transparent window background.",
     WindowEffect.disabled: "Default window background.",
   };

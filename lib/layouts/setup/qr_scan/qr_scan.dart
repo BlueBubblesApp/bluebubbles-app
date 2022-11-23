@@ -544,21 +544,43 @@ class _QRScanState extends State<QRScan> {
             });
           }
 
-          if (isNullOrEmpty(data["data"])! && (addr.contains("ngrok.io") || addr.contains("trycloudflare.com"))) {
-            return setState(() {
-              error = "Firebase is required when using Ngrok or Cloudflare!";
-            });
-          } else {
-            try {
-              FCMData fcmData = FCMData.fromMap(data["data"]);
-              SettingsManager().saveFCMData(fcmData);
-            } catch (_) {
+          // If no FCM data
+          if (isNullOrEmpty(data["data"])!) {
+            // Check proxy service
+            dio.Response response = await api.serverInfo();
+            Map<String, dynamic> resp = response.data;
+            if (response.statusCode != 200) {
+              return setState(() {
+                error =
+                "Failed to connect to server! ${resp["error"]?["type"] ?? "API_ERROR"}: ${resp["message"] ?? resp["error"]["message"]}";
+              });
+            }
+            String proxyService = resp['data']['proxy_service'];
+            if (proxyService == "dynamic-dns") {
               if (Platform.isAndroid) {
                 showSnackbar("Warning", "No Firebase project detected! You will not receive notifications for new messages!");
               }
+              goToNextPage();
+              return;
             }
-            goToNextPage();
+            return setState(() {
+              error = "Firebase is required unless using Dynamic DNS!";
+            });
           }
+
+          // At this point firebase data is not null/empty
+          // This try-catch is for if the data is malformed
+          try {
+            FCMData fcmData = FCMData.fromMap(data["data"]);
+            SettingsManager().saveFCMData(fcmData);
+          } catch (_) {
+            if (Platform.isAndroid) {
+              showSnackbar(
+                  "Warning", "No Firebase project detected! You will not receive notifications for new messages!");
+            }
+          }
+
+          goToNextPage();
         } else if (mounted) {
           if (err != null) {
             final errorData = jsonDecode(err as String);

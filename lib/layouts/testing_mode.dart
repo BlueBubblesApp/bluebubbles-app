@@ -68,7 +68,8 @@ class TestingMode extends GetView<TestingModeController> {
                           Random().nextInt(9998) + 1,
                           false,
                           null,
-                          null
+                          null,
+                          false
                       );
                     },
                   ),

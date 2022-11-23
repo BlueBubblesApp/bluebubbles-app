@@ -1148,6 +1148,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         dialogTitle: 'Choose a location to save this file',
                         fileName: "BlueBubbles-settings-${now.year}${now.month}${now.day}_${now
                             .hour}${now.minute}${now.second}.json",
+                        type: FileType.any,
+                        allowedExtensions: ["json"],
                       );
                       if (_filePath == null) {
                         return showSnackbar('Failed', 'You didn\'t select a file path!');
@@ -1258,6 +1260,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           dialogTitle: 'Choose a location to save this file',
                           fileName: "BlueBubbles-theming-${now.year}${now.month}${now.day}_${now
                               .hour}${now.minute}${now.second}.json",
+                          type: FileType.custom,
+                          allowedExtensions: ["json"],
                         );
                         if (_filePath == null) {
                           return showSnackbar('Failed', 'You didn\'t select a file path!');

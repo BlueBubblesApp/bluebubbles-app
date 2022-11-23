@@ -80,6 +80,7 @@ class DesktopPanel extends StatelessWidget {
                         subtitle: "Automatically open the desktop app on startup.",
                         backgroundColor: tileColor,
                       )),
+                  SettingsDivider(),
                   if (Platform.isLinux)
                     Obx(
                       () => SettingsSwitch(
@@ -94,6 +95,8 @@ class DesktopPanel extends StatelessWidget {
                         backgroundColor: tileColor,
                       ),
                     ),
+                  if (Platform.isLinux)
+                    SettingsDivider(),
                   Obx(() {
                     if (SettingsManager().settings.useCustomTitleBar.value || !Platform.isLinux) {
                       return Obx(
@@ -112,6 +115,7 @@ class DesktopPanel extends StatelessWidget {
                     }
                     return SizedBox.shrink();
                   }),
+                  SettingsDivider(),
                   Obx(() {
                     if (SettingsManager().settings.useCustomTitleBar.value || !Platform.isLinux) {
                       return Obx(
@@ -149,7 +153,7 @@ class DesktopPanel extends StatelessWidget {
                         saveSettings();
                       },
                       title: "Improve Mouse Wheel Scrolling",
-                      subtitle: "Enabling this setting will break touch scrolling and degrade trackpad scrolling.",
+                      subtitle: "Enabling this setting will break touch scrolling and trackpad scrolling.",
                     ),
                     if (SettingsManager().settings.betterScrolling.value)
                       SettingsSlider(

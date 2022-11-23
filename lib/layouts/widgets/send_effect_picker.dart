@@ -20,6 +20,7 @@ import 'package:bluebubbles/layouts/animations/spotlight_rendering.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/managers/chat/chat_controller.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:confetti/confetti.dart';
@@ -63,6 +64,7 @@ void sendEffectAction(
   final LoveController loveController = LoveController(vsync: provider, windowSize: Size(CustomNavigator.width(context), context.height));
   final SpotlightController spotlightController = SpotlightController(vsync: provider, windowSize: Size(CustomNavigator.width(context), context.height));
   final LaserController laserController = LaserController(vsync: provider, windowSize: Size(CustomNavigator.width(context), context.height));
+  EventDispatcher().emit('popup-pushed', true);
   Navigator.push(
     context,
     PageRouteBuilder(
@@ -334,5 +336,5 @@ void sendEffectAction(
       fullscreenDialog: true,
       opaque: false,
     ),
-  );
+  ).then((response) => EventDispatcher().emit('popup-pushed', false));
 }

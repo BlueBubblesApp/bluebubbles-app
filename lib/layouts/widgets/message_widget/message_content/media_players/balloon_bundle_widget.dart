@@ -2,11 +2,14 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 Map<String, IconData> iconMap = {
   'com.apple.Handwriting.HandwritingProvider': SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.square_pencil : Icons.brush,
@@ -93,7 +96,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
                     Container(height: 10.0),
                     Icon(bundleIcon, color: context.theme.colorScheme.properOnSurface, size: 48),
                     Container(height: 10.0),
-                    Text("(Cannot open on Android)",
+                    Text("(Cannot open on ${kIsWeb ? "Web" : kIsDesktop ? Platform.isWindows ? "Windows" : "Linux" : "Android"})",
                         textAlign: TextAlign.center, maxLines: 1, style: context.theme.textTheme.bodyMedium),
                   ],
                 ),

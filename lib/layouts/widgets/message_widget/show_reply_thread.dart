@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ void showReplyThread(BuildContext context, Message message, MessageBloc? message
   }
   _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
   final controller = ScrollController();
+  EventDispatcher().emit('popup-pushed', true);
   Navigator.push(
     context,
     PageRouteBuilder(
@@ -90,11 +92,11 @@ void showReplyThread(BuildContext context, Message message, MessageBloc? message
                   ),
                 ),
               ),
-            )
+            ),
         );
       },
       fullscreenDialog: true,
       opaque: false,
     ),
-  );
+  ).then((response) => EventDispatcher().emit('popup-pushed', false));
 }

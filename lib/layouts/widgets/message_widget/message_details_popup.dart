@@ -455,10 +455,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
                 for (Attachment? element in widget.message.attachments) {
                   dynamic content = AttachmentHelper.getContent(element!);
                   if (content is PlatformFile) {
-                    if (element.guid == widget.message.attachments.last?.guid) {
-                      popDetails();
-                    }
                     await AttachmentHelper.saveToGallery(content);
+                    if (element.guid == widget.message.attachments.last?.guid) {
+                      if (kIsDesktop) {
+                        break;
+                      } else {
+                        popDetails();
+                      }
+                    }
                   }
                 }
               } catch (ex, trace) {

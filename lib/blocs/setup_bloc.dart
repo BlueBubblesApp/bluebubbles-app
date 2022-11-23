@@ -132,8 +132,9 @@ class SetupBloc {
       int syncStart = SettingsManager().settings.lastIncrementalSync.value;
       incrementalSyncManager = IncrementalSyncManager(syncStart, chatGuid: chatGuid, saveDate: saveDate, onComplete: onComplete);
       await incrementalSyncManager!.start();
-    } catch (ex) {
+    } catch (ex, st) {
       Logger.error('Incremental sync failed! Error: $ex');
+      Logger.error(st);
     } finally {
       isIncrementalSyncing.value = false;
     }

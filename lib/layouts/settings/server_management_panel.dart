@@ -205,6 +205,10 @@ class ServerManagementPanel extends StatelessWidget {
                                       TextSpan(text: "\n\n"),
                                     if (controller.iCloudAccount.value != null)
                                       TextSpan(text: "iCloud Account: ${redact ? "Redacted" : controller.iCloudAccount.value}"),
+                                    if (controller.proxyService.value != null)
+                                      TextSpan(text: "\n\n"),
+                                    if (controller.proxyService.value != null)
+                                      TextSpan(text: "Proxy Service: ${controller.proxyService.value}"),
                                     TextSpan(text: "\n\n"),
                                     TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
                                   ]

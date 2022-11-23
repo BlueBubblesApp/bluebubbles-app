@@ -387,10 +387,10 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       child: Padding(
                         padding: const EdgeInsets.only(left: 10.0, right: 10, top: 20),
                         child: Row(
-                          mainAxisAlignment: kIsWeb || kIsDesktop ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             if (!kIsWeb && !kIsDesktop)
-                              InkWell(
+                              Expanded(child: InkWell(
                                 onTap: () {
                                   final contact = ContactManager().getContact(chat.participants.first.address);
                                   onPressContact(contact, chat.participants.first);
@@ -421,7 +421,9 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                     ],
                                   ),
                                 ),
-                              ),
+                              )),
+                            if (!kIsWeb && !kIsDesktop)
+                              SizedBox(width: 10),
                             InkWell(
                               onTap: () {
                                 final contact = ContactManager().getContact(chat.participants.first.address);
@@ -453,7 +455,9 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                               ),
                             ),
                             if (!kIsWeb && !kIsDesktop)
-                              InkWell(
+                              SizedBox(width: 10),
+                            if (!kIsWeb && !kIsDesktop)
+                             Expanded(child: InkWell(
                                 onTap: () async {
                                   final contact = ContactManager().getContact(chat.participants.first.address);
                                   final handle = chat.participants.first;
@@ -484,7 +488,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                     ],
                                   ),
                                 ),
-                              )
+                              )),
                           ],
                         ),
                       ),
@@ -1164,14 +1168,14 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, int index) {
-                          return Container(
+                          return Obx(() => Container(
                             decoration: BoxDecoration(
-                              border: Border.all(color: context.theme.colorScheme.background, width: 10),
+                              border: Border.all(color: _backgroundColor.value, width: 10),
                             ),
                             child: AttachmentDetailsCard(
                               attachment: attachmentsForChat[index],
                             ),
-                          );
+                          ));
                         },
                         childCount: attachmentsForChat.length,
                       ),

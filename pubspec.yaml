@@ -129,20 +129,20 @@ dependencies:
   emojis: ^0.9.9
   defer_pointer: ^0.0.2
   pasteboard: ^0.2.0
-  win_toast:
+  local_notifier:
     git:
-      url: https://github.com/jjoelj/flutter-plugins.git
-      ref: f64b90f651e8655a75568b0db67319ba48a5156a
-      path: packages/win_toast
+      url: https://github.com/jjoelj/local_notifier.git
+      ref: 78d87ac4b89ad68854dad27aea0b819758d7228d
   dynamic_color: ^1.4.0
   material_color_utilities: ^0.2.0
   dart_vlc: ^0.3.0
   geolocator: 8.2.1
   flex_color_scheme: ^5.1.0
   reorderables: ^0.5.0
-  screen_retriever: ^0.1.2
+  screen_retriever: ^0.1.3
   flutter_acrylic: ^1.0.0+2
   expandable_page_view: ^1.0.17
+  windows_taskbar: ^1.1.0+1
   idb_shim: ^2.0.1+1
   chunked_stream: ^1.4.1
   image_picker: ^0.8.5+3
@@ -240,6 +240,16 @@ flutter:
     - assets/icon/icon.png
     - assets/changelog/changelog.md
     - assets/icon/icon.ico
+    - assets/badges/badge-1.ico
+    - assets/badges/badge-2.ico
+    - assets/badges/badge-3.ico
+    - assets/badges/badge-4.ico
+    - assets/badges/badge-5.ico
+    - assets/badges/badge-6.ico
+    - assets/badges/badge-7.ico
+    - assets/badges/badge-8.ico
+    - assets/badges/badge-9.ico
+    - assets/badges/badge-10.ico
     - .env
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
@@ -269,7 +279,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 1.9.102.0
+  msix_version: 1.10.0.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico

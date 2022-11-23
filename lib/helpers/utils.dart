@@ -21,6 +21,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -35,6 +36,7 @@ import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:slugify/slugify.dart';
+import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
@@ -273,7 +275,8 @@ String buildDate(DateTime? dateTime) {
     date = "Yesterday";
   } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
     date = intl.DateFormat(SettingsManager().settings.skin.value != Skins.iOS ? "EEE" : "EEEE").format(dateTime);
-  } else if (SettingsManager().settings.skin.value == Skins.Material && DateTime.now().difference(dateTime.toLocal()).inDays <= 365) {
+  } else if (SettingsManager().settings.skin.value == Skins.Material &&
+      DateTime.now().difference(dateTime.toLocal()).inDays <= 365) {
     date = intl.DateFormat.MMMd().format(dateTime);
   } else if (SettingsManager().settings.skin.value == Skins.Samsung && DateTime.now().year == dateTime.toLocal().year) {
     date = intl.DateFormat.MMMd().format(dateTime);
@@ -381,6 +384,26 @@ String uriToFilename(String? uri, String? mimeType) {
 
   // Rebuild the filename
   return (ext != null && ext.isNotEmpty) ? '$filename.$ext' : filename;
+}
+
+Tuple2<FileType, List<String>?> extensionsHelper(String? mimeType, String? extension) {
+  if (mimeType != null) {
+    if (mimeType == "application/pdf") {
+      return Tuple2(FileType.custom, ["pdf"]);
+    } else if (mimeType == "application/zip") {
+      return Tuple2(FileType.custom, ["zip"]);
+    } else if (mimeType.startsWith("audio")) {
+      return Tuple2(FileType.audio, null);
+    } else if (mimeType.startsWith("image")) {
+      return Tuple2(FileType.image, null);
+    } else if (mimeType.startsWith("video")) {
+      return Tuple2(FileType.video, null);
+    }
+  }
+  if (extension != null) {
+    return Tuple2(FileType.custom, [extension]);
+  }
+  return Tuple2(FileType.any, null);
 }
 
 String getGroupEventText(Message message) {
@@ -816,7 +839,7 @@ Future<void> paintGroupAvatar({
         chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
     if (await File(customPath).exists()) {
-      Uint8List? customAvatar = await circularize(await File(customPath).readAsBytes(), size: size.toInt());
+      Uint8List? customAvatar = await clip(await File(customPath).readAsBytes(), size: size.toInt(), circle: true);
       if (customAvatar != null) {
         canvas.drawImage(await loadImage(customAvatar), Offset(0, 0), Paint());
         return;
@@ -838,8 +861,13 @@ Future<void> paintGroupAvatar({
     return;
   }
 
-  Paint paint = Paint()..color = (Get.context?.theme.colorScheme.secondary ?? HexColor("928E8E")).withOpacity(0.6);
-  canvas.drawCircle(Offset(size * 0.5, size * 0.5), size * 0.5, paint);
+  Paint paint = Paint()..color = Get.theme.colorScheme.properSurface;
+  Offset _offset = Offset(size * 0.5, size * 0.5);
+  if (kIsDesktop) {
+    canvas.drawCircle(_offset, size * 0.5, paint);
+  } else {
+    canvas.drawRect(Rect.fromCenter(center: _offset, width: size, height: size), paint);
+  }
 
   int realAvatarCount = min(participants.length, maxAvatars);
 
@@ -856,7 +884,13 @@ Future<void> paintGroupAvatar({
       Paint paint = Paint();
       paint.isAntiAlias = true;
       paint.color = Get.context?.theme.colorScheme.secondary.withOpacity(0.8) ?? HexColor("686868").withOpacity(0.8);
-      canvas.drawCircle(Offset(left + realSize * 0.5, top + realSize * 0.5), realSize * 0.5, paint);
+      Offset _offset = Offset(left + realSize * 0.5, top + realSize * 0.5);
+      double radius = realSize * 0.5;
+      if (kIsDesktop) {
+        canvas.drawCircle(_offset, radius, paint);
+      } else {
+        canvas.drawRect(Rect.fromCenter(center: _offset, width: realSize, height: realSize), paint);
+      }
 
       IconData icon = Icons.people;
 
@@ -886,6 +920,7 @@ Future<void> paintGroupAvatar({
         size: realSize * 0.99,
         borderWidth: size * 0.01,
         fontSize: adjustedWidth * 0.3,
+        inGroup: true,
       );
     }
   }
@@ -898,7 +933,8 @@ Future<void> paintAvatar(
     required Offset offset,
     required double size,
     double? fontSize,
-    double? borderWidth}) async {
+    double? borderWidth,
+    bool inGroup=false}) async {
   fontSize ??= size * 0.5;
   borderWidth ??= size * 0.05;
 
@@ -907,7 +943,7 @@ Future<void> paintAvatar(
         chatGuid.characters.where((c) => c.isAlphabetOnly || c.isNum).join(), "avatar.jpg");
 
     if (await File(customPath).exists()) {
-      Uint8List? customAvatar = await circularize(await File(customPath).readAsBytes(), size: size.toInt());
+      Uint8List? customAvatar = await clip(await File(customPath).readAsBytes(), size: size.toInt(), circle: true);
       if (customAvatar != null) {
         canvas.drawImage(await loadImage(customAvatar), offset, Paint());
         return;
@@ -918,7 +954,7 @@ Future<void> paintAvatar(
   Contact? contact = ContactManager().getContact(handle?.address);
   if (contact?.hasAvatar ?? false) {
     Uint8List? contactAvatar =
-        await circularize(contact!.avatarHiRes.value ?? contact.avatar.value!, size: size.toInt());
+        await clip(contact!.avatarHiRes.value ?? contact.avatar.value!, size: size.toInt(), circle: kIsDesktop || inGroup);
     if (contactAvatar != null) {
       canvas.drawImage(await loadImage(contactAvatar), offset, Paint());
       return;
@@ -954,7 +990,13 @@ Future<void> paintAvatar(
             : HexColor("686868"),
   ]);
 
-  canvas.drawCircle(Offset(dx + size * 0.5, dy + size * 0.5), size * 0.5, paint);
+  Offset _offset = Offset(dx + size * 0.5, dy + size * 0.5);
+  double radius = size * 0.5;
+  if (kIsDesktop || inGroup) {
+    canvas.drawCircle(_offset, radius, paint);
+  } else {
+    canvas.drawRect(Rect.fromCenter(center: _offset, width: size, height: size), paint);
+  }
 
   String? initials = ContactManager().getContactInitials(handle);
 
@@ -982,7 +1024,7 @@ Future<void> paintAvatar(
   }
 }
 
-Future<Uint8List?> circularize(Uint8List data, {required int size}) async {
+Future<Uint8List?> clip(Uint8List data, {required int size, required bool circle}) async {
   ui.Image image;
   Uint8List _data = data;
 
@@ -1001,7 +1043,8 @@ Future<Uint8List?> circularize(Uint8List data, {required int size}) async {
   Paint paint = Paint();
   paint.isAntiAlias = true;
 
-  Path path = Path()..addOval(Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()));
+  Rect bounds = Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
+  Path path = circle ? (Path()..addOval(bounds)) : (Path()..addRect(bounds));
 
   canvas.clipPath(path);
 

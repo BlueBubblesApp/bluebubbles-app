@@ -34,6 +34,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:get/get.dart';
 import 'package:giphy_get/giphy_get.dart';
@@ -812,7 +813,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 onTap: () async {
                   GiphyGif? gif = await GiphyGet.getGif(
                     context: context,
-                    apiKey: GIPHY_API_KEY,
+                    apiKey: kIsWeb ? GIPHY_API_KEY : dotenv.get('GIPHY_API_KEY'),
                     tabColor: context.theme.primaryColor,
                   );
                   if (gif?.images?.original != null) {
@@ -1054,6 +1055,22 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             if (windowsData != null) {
               if ((windowsData.physicalKey == PhysicalKeyboardKey.keyV ||
                       windowsData.logicalKey == LogicalKeyboardKey.keyV) &&
+                  (event.isControlPressed)) {
+                Pasteboard.image.then((image) {
+                  if (image != null) {
+                    addAttachment(PlatformFile(
+                      name: "${randomString(8)}.png",
+                      bytes: image,
+                      size: image.length,
+                    ));
+                  }
+                });
+              }
+            }
+
+            if (linuxData != null) {
+              if ((linuxData.physicalKey == PhysicalKeyboardKey.keyV ||
+                  linuxData.logicalKey == LogicalKeyboardKey.keyV) &&
                   (event.isControlPressed)) {
                 Pasteboard.image.then((image) {
                   if (image != null) {

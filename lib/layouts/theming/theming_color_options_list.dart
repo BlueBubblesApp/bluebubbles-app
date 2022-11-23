@@ -366,6 +366,29 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                 ],
               ),
             )),
+          if (kIsDesktop && Platform.isWindows && SettingsManager().settings.useWindowsAccent.value)
+            SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info_outline,
+                        size: 20,
+                        color: context.theme.colorScheme.primary,
+                      ),
+                      SizedBox(width: 20),
+                      Expanded(
+                          child: Text(
+                            "Some of these colors are generated from your Windows accent color. Disable using the Windows accent color to view the original theme colors.",
+                            style:
+                            context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.properOnSurface),
+                          )),
+                    ],
+                  ),
+                )),
           SliverPadding(
             padding: EdgeInsets.only(top: 20, bottom: 10, left: 15),
             sliver: SliverToBoxAdapter(
