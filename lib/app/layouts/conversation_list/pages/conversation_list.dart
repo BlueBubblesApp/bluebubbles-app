@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
@@ -97,14 +98,11 @@ class ConversationListController extends StatefulController {
 
   void openNewChatCreator(BuildContext context, {List<PlatformFile>? existing}) async {
     eventDispatcher.emit("update-highlight", null);
-    /*ns.pushAndRemoveUntil(
+    ns.pushAndRemoveUntil(
       context,
-      ConversationView(
-        isCreator: true,
-        existingAttachments: existing ?? [],
-      ),
+      ChatCreator(),
       (route) => route.isFirst,
-    )*/;
+    );
   }
 }
 

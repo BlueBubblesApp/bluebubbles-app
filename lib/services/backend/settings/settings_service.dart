@@ -111,6 +111,10 @@ class SettingsService extends GetxService {
     return val.item1 >= 11;
   }
 
+  bool get isMinBigSurSync {
+    return (prefs.getInt("macos-version") ?? 11) >= 11;
+  }
+
   int get compressionQuality => settings.highPerfMode.value ? 10 : settings.previewCompressionQuality.value;
 
   Future<void> checkServerUpdate({bool showDialog = true, BuildContext? context}) async {

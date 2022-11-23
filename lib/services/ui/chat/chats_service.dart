@@ -17,6 +17,7 @@ class ChatsService extends GetxService {
   late final StreamSubscription countSub;
 
   final RxBool hasChats = false.obs;
+  final Completer<void> loadedAllChats = Completer();
   final RxBool loadedChatBatch = false.obs;
   final RxList<Chat> chats = <Chat>[].obs;
 
@@ -77,7 +78,7 @@ class ChatsService extends GetxService {
       chats.value = newChats;
       loadedChatBatch.value = true;
     }
-
+    loadedAllChats.complete();
     Logger.info("Finished fetching chats (${chats.length}).", tag: "ChatBloc");
     // update share targets
     for (Chat c in chats.where((e) => !isNullOrEmpty(e.title)!).take(4)) {

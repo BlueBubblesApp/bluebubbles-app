@@ -482,24 +482,33 @@ class Chat {
   /// Get a chat's title
   String getTitle() {
     if (isNullOrEmpty(displayName)!) {
-      // generate names for group chats or DMs
-      List<String> titles = participants.map((e) => e.displayName.trim().split(isGroup && e.contact != null ? " " : String.fromCharCode(65532)).first).toList();
-      if (titles.isEmpty) {
-        title = chatIdentifier;
-      } else if (titles.length == 1) {
-        title = titles[0];
-      } else if (titles.length <= 4) {
-        title = titles.join(", ");
-        int pos = title!.lastIndexOf(", ");
-        if (pos != -1) title = "${title!.substring(0, pos)} & ${title!.substring(pos + 2)}";
-      } else {
-        title = titles.take(3).join(", ");
-        title = "$title & ${titles.length - 3} others";
-      }
+      title = getChatCreatorSubtitle();
     } else {
       title = displayName;
     }
     return title!;
+  }
+
+  /// Get a chat's title
+  String getChatCreatorSubtitle() {
+    // generate names for group chats or DMs
+    List<String> titles = participants.map((e) => e.displayName.trim().split(isGroup && e.contact != null ? " " : String.fromCharCode(65532)).first).toList();
+    if (titles.isEmpty) {
+      return chatIdentifier!;
+    } else if (titles.length == 1) {
+      return titles[0];
+    } else if (titles.length <= 4) {
+      final _title = titles.join(", ");
+      int pos = _title.lastIndexOf(", ");
+      if (pos != -1) {
+        return "${_title.substring(0, pos)} & ${_title.substring(pos + 2)}";
+      } else {
+        return _title;
+      }
+    } else {
+      final _title = titles.take(3).join(", ");
+      return "$_title & ${titles.length - 3} others";
+    }
   }
 
   /// Return whether or not the notification should be muted

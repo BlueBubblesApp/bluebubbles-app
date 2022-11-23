@@ -62,6 +62,7 @@ class SettingsScaffold extends StatelessWidget {
               title,
               style: context.theme.textTheme.titleLarge,
             ),
+            actions: actions,
           ),
         ),
         body: NotificationListener<ScrollEndNotification>(
