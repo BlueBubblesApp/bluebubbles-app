@@ -115,12 +115,7 @@ Future<Null> initApp(bool bubble) async {
           Logger.error(e);
           Logger.error(s);
           Logger.info("Failed to attach to existing store, opening from path");
-          try {
-            store = await openStore(directory: objectBoxDirectory.path);
-          } catch (e, s) {
-            Logger.error(e);
-            Logger.error(s);
-          }
+          store = await openStore(directory: objectBoxDirectory.path);
         }
       } else {
         try {
