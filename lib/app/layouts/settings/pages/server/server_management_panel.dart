@@ -130,7 +130,7 @@ class _ServerManagementPanelState extends CustomState<ServerManagementPanel, voi
                               TextSpan(
                                   children: [
                                     TextSpan(text: "Connection Status: "),
-                                    TextSpan(text: describeEnum(socket.state.value), style: TextStyle(color: getIndicatorColor(socket.state.value))),
+                                    TextSpan(text: describeEnum(socket.state.value).toUpperCase(), style: TextStyle(color: getIndicatorColor(socket.state.value))),
                                     TextSpan(text: "\n\n"),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       TextSpan(text: "Private API Status: "),
