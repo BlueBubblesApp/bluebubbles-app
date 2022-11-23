@@ -1076,25 +1076,6 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
             ),
           ),
         ),
-      if (showDownload)
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: redownload,
-            child: ListTile(
-              mouseCursor: SystemMouseCursors.click,
-              dense: !kIsDesktop && !kIsWeb,
-              title: Text(
-                "Re-download from Server",
-                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
-              ),
-              trailing: Icon(
-                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.refresh : Icons.refresh,
-                color: context.theme.colorScheme.properOnSurface,
-              ),
-            ),
-          ),
-        ),
       if ((part.attachments.isNotEmpty && !kIsWeb && !kIsDesktop) || (part.text!.isNotEmpty && !kIsDesktop))
         Material(
           color: Colors.transparent,
@@ -1109,6 +1090,25 @@ class _MessagePopupState extends OptimizedState<MessagePopup> with SingleTickerP
               ),
               trailing: Icon(
                 ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.share : Icons.share,
+                color: context.theme.colorScheme.properOnSurface,
+              ),
+            ),
+          ),
+        ),
+      if (showDownload)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: redownload,
+            child: ListTile(
+              mouseCursor: SystemMouseCursors.click,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                "Re-download from Server",
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.properOnSurface),
+              ),
+              trailing: Icon(
+                ss.settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.refresh : Icons.refresh,
                 color: context.theme.colorScheme.properOnSurface,
               ),
             ),
