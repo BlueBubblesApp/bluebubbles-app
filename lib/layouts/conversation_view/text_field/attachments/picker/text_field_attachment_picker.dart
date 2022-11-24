@@ -144,7 +144,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        primary: context.theme.colorScheme.properSurface,
+                                        backgroundColor: context.theme.colorScheme.properSurface,
                                       ),
                                       onPressed: () async {
                                         final res = await FilePicker.platform.pickFiles(withReadStream: true, allowMultiple: true);
@@ -197,7 +197,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        primary: context.theme.colorScheme.properSurface,
+                                        backgroundColor: context.theme.colorScheme.properSurface,
                                       ),
                                       onPressed: () async {
                                         await Share.location(ChatManager().activeChat!.chat);
@@ -245,7 +245,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        primary: context.theme.colorScheme.properSurface,
+                                        backgroundColor: context.theme.colorScheme.properSurface,
                                       ),
                                       onPressed: () async {
                                         openFullCamera();
@@ -284,7 +284,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        primary: context.theme.colorScheme.properSurface,
+                                        backgroundColor: context.theme.colorScheme.properSurface,
                                       ),
                                       onPressed: () async {
                                         openFullCamera(type: "video");

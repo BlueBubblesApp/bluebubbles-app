@@ -750,8 +750,9 @@ class Message {
       threadOriginator?.handle ??= Handle.findOne(id: threadOriginator.handleId);
       if (threadOriginator != null) associatedMessages.add(threadOriginator);
       if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
-      if (!guid!.startsWith("temp"))
+      if (!guid!.startsWith("temp")) {
         bloc?.threadOriginators.conditionalAdd(guid!, threadOriginatorGuid!, shouldRefresh);
+      }
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     return this;

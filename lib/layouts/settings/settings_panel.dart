@@ -24,6 +24,7 @@ import 'package:bluebubbles/layouts/settings/troubleshoot_panel.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -33,7 +34,6 @@ import 'package:bluebubbles/repository/intents.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -818,13 +818,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
+                  style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    primary: context.theme.colorScheme.primary,
-                    onPrimary: context.theme.colorScheme.onPrimary,
-                    onSurface: context.theme.colorScheme.properOnSurface,
+                    backgroundColor: context.theme.colorScheme.primary,
+                    foregroundColor: context.theme.colorScheme.onPrimary,
+                    disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                    disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                     textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onPrimary),
                   ),
                   onPressed: () async {
@@ -857,15 +857,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 SizedBox(width: 10),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: context.theme.colorScheme.primary)),
-                    primary: context.theme.colorScheme.properSurface,
-                    onPrimary: context.theme.colorScheme.onPrimary,
-                    onSurface: context.theme.colorScheme.properOnSurface,
-                    textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
-                  ),
-                  onPressed: () async {
+                        foregroundColor: context.theme.colorScheme.onPrimary,
+                        backgroundColor: context.theme.colorScheme.properSurface,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: context.theme.colorScheme.primary)),
+                        disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                        disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
+                        textStyle:
+                            context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                      ),
+                      onPressed: () async {
                     var response = await api.getSettings();
                     if (response.statusCode == 200 && response.data.isNotEmpty) {
                       try {
@@ -976,12 +978,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   children: [
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
+                        foregroundColor: context.theme.colorScheme.onPrimary,
+                        backgroundColor: context.theme.colorScheme.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        primary: context.theme.colorScheme.primary,
-                        onPrimary: context.theme.colorScheme.onPrimary,
-                        onSurface: context.theme.colorScheme.properOnSurface,
+                        disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                        disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                         textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onPrimary),
                       ),
                       onPressed: () async {
@@ -1023,13 +1026,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     SizedBox(width: 10),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
+                        foregroundColor: context.theme.colorScheme.onPrimary,
+                        backgroundColor: context.theme.colorScheme.properSurface,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                             side: BorderSide(color: context.theme.colorScheme.primary)),
-                        primary: context.theme.colorScheme.properSurface,
-                        onPrimary: context.theme.colorScheme.onPrimary,
-                        onSurface: context.theme.colorScheme.properOnSurface,
-                        textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
+                        disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                        disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
+                        textStyle:
+                            context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                       ),
                       onPressed: () async {
                         var response = await api.getTheme();
@@ -1120,12 +1125,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
+                    foregroundColor: context.theme.colorScheme.onPrimary,
+                    backgroundColor: context.theme.colorScheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    primary: context.theme.colorScheme.primary,
-                    onPrimary: context.theme.colorScheme.onPrimary,
-                    onSurface: context.theme.colorScheme.properOnSurface,
+                    disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                    disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                     textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onPrimary),
                   ),
                   onPressed: () async {
@@ -1187,12 +1193,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 SizedBox(width: 10),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
+                    foregroundColor: context.theme.colorScheme.onPrimary,
+                    backgroundColor: context.theme.colorScheme.properSurface,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                         side: BorderSide(color: context.theme.colorScheme.primary)),
-                    primary: context.theme.colorScheme.properSurface,
-                    onPrimary: context.theme.colorScheme.onPrimary,
-                    onSurface: context.theme.colorScheme.properOnSurface,
+                    disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                    disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                     textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                   ),
                   onPressed: () async {
@@ -1227,12 +1234,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
+                      foregroundColor: context.theme.colorScheme.onPrimary,
+                      backgroundColor: context.theme.colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      primary: context.theme.colorScheme.primary,
-                      onPrimary: context.theme.colorScheme.onPrimary,
-                      onSurface: context.theme.colorScheme.properOnSurface,
+                      disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                      disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                       textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.onPrimary),
                     ),
                     onPressed: () async {
@@ -1298,12 +1306,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SizedBox(width: 10),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
+                      foregroundColor: context.theme.colorScheme.onPrimary,
+                      backgroundColor: context.theme.colorScheme.properSurface,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                           side: BorderSide(color: context.theme.colorScheme.primary)),
-                      primary: context.theme.colorScheme.properSurface,
-                      onPrimary: context.theme.colorScheme.onPrimary,
-                      onSurface: context.theme.colorScheme.properOnSurface,
+                      disabledForegroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.38),
+                      disabledBackgroundColor: context.theme.colorScheme.properOnSurface.withOpacity(0.12),
                       textStyle: context.theme.textTheme.bodyLarge!.apply(color: context.theme.colorScheme.properOnSurface),
                     ),
                     onPressed: () async {

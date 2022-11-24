@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -1647,7 +1646,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             padding: EdgeInsets.only(
                               right: 0,
                             ),
-                            primary: context.theme.colorScheme.primary,
+                            backgroundColor: context.theme.colorScheme.primary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(40),
                             ),

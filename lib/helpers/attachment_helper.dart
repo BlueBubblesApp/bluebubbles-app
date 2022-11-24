@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io' show File;
 import 'dart:isolate';
-import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';

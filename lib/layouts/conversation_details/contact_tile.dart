@@ -232,7 +232,7 @@ class ContactTile extends StatelessWidget {
                           ),
                           ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                  primary: Colors.transparent, padding: EdgeInsets.only(left: 5), elevation: 0.0),
+                                  backgroundColor: Colors.transparent, padding: EdgeInsets.only(left: 5), elevation: 0.0),
                               onPressed: () {
                                 data = data.toggle();
                               },

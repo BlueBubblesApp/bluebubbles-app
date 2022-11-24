@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -165,9 +163,9 @@ class _AvatarCropState extends State<AvatarCrop> {
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: context.theme.colorScheme.onPrimaryContainer)
+                      side: BorderSide(color: context.theme.colorScheme.onPrimaryContainer)
                     ),
-                    primary: context.theme.colorScheme.primaryContainer,
+                    backgroundColor: context.theme.colorScheme.primaryContainer,
                   ),
                   onPressed: () async {
                     final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ['png', 'jpg', 'jpeg']);
