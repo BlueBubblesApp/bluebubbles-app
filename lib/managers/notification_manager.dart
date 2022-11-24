@@ -379,7 +379,7 @@ class NotificationManager {
           if (toasted) return;
           toast = LocalNotification(
             imagePath: path,
-            title: count == 1 && !isReaction && !isGroupEvent ? "$chatTitle: $contactName" : chatTitle,
+            title: chatIsGroup && count == 1 && !isReaction && !isGroupEvent ? "$chatTitle: $contactName" : chatTitle,
             subtitle: "$count",
             body: sender != null && count == 1 ? body.split("$sender: ")[1] : body,
             actions:
