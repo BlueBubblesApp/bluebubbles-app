@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
@@ -385,6 +386,8 @@ class Settings {
         prefs.setInt(key, value);
       } else if (value is double) {
         prefs.setDouble(key, value);
+      } else if (value is List) {
+        prefs.setString(key, jsonEncode(value));
       }
     });
     return this;
@@ -633,8 +636,8 @@ class Settings {
     SettingsManager().settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     SettingsManager().settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     SettingsManager().settings.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    SettingsManager().settings.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
-    SettingsManager().settings.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
+    SettingsManager().settings.selectedActionIndices.value = (map['selectedActionIndices'] != null ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>();
+    SettingsManager().settings.actionList.value = (map['actionList'] != null ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
     SettingsManager().settings.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
     SettingsManager().settings.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
     SettingsManager().settings.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
@@ -751,8 +754,8 @@ class Settings {
     s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     s.useCustomTitleBar.value = map['useCustomTitleBar'] ?? true;
-    s.selectedActionIndices.value = ((map['selectedActionIndices'] ?? [0, 1, 2, 3, 4]) as List).cast<int>();
-    s.actionList.value = ((map['actionList'] ?? ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]) as List).cast<String>();
+    s.selectedActionIndices.value = (map['selectedActionIndices'] != null ? jsonDecode(map['selectedActionIndices']) as List : [0, 1, 2, 3, 4]).cast<int>();
+    s.actionList.value = (map['actionList'] != null ? jsonDecode(map['actionList']) as List : ["Mark Read", ReactionTypes.LOVE, ReactionTypes.LIKE, ReactionTypes.LAUGH, ReactionTypes.EMPHASIZE, ReactionTypes.DISLIKE, ReactionTypes.QUESTION]).cast<String>();
     s.windowEffect.value = WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled;
     s.windowEffectCustomOpacityLight.value = map['windowEffectCustomOpacityLight'] ?? 0.5;
     s.windowEffectCustomOpacityDark.value = map['windowEffectCustomOpacityDark'] ?? 0.5;
