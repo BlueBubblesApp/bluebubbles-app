@@ -9,19 +9,19 @@ import 'package:universal_io/io.dart';
 String? sanitizeServerAddress({String? address}) {
   String serverAddress = address ?? ss.settings.serverAddress.value;
 
-  String sanitized = serverAddress.replaceAll("https://", "").replaceAll("http://", "").replaceAll('"', "").trim();
+  String sanitized = serverAddress.replaceAll('"', "").trim();
   if (sanitized.isEmpty) return null;
 
-  Uri? uri = Uri.tryParse(serverAddress);
+  Uri? uri = Uri.tryParse(sanitized);
   if (uri?.scheme.isEmpty ?? false) {
-    if (serverAddress.contains("ngrok.io") || serverAddress.contains("trycloudflare.com")) {
-      serverAddress = "https://$serverAddress";
+    if (sanitized.contains("ngrok.io") || sanitized.contains("trycloudflare.com")) {
+      uri = Uri.tryParse("https://$serverAddress");
     } else {
-      serverAddress = "http://$serverAddress";
+      uri = Uri.tryParse("http://$serverAddress");
     }
   }
 
-  return serverAddress;
+  return uri.toString();
 }
 
 Future<String> getDeviceName() async {
