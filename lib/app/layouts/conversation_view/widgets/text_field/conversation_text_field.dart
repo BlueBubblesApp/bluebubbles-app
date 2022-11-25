@@ -44,7 +44,6 @@ class ConversationTextField extends CustomStateful<ConversationViewController> {
 }
 
 class ConversationTextFieldState extends CustomState<ConversationTextField, void, ConversationViewController> with TickerProviderStateMixin {
-  late final textController = TextEditingController(text: chat.textFieldText);
   final subjectTextController = TextEditingController();
   final recorderController = RecorderController();
   // emoji
@@ -61,8 +60,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   Chat get chat => controller.chat;
   String get chatGuid => chat.guid;
 
-  late final StreamSubscription<Query<Chat>> sub;
-
   @override
   void initState() {
     super.initState();
@@ -70,18 +67,6 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
     // Load the initial chat drafts
     getDrafts();
-
-    // Watch for changes in the drafts
-    final draftsWatcher = chatBox.query(Chat_.guid.equals(chat.guid) & (
-      Chat_.textFieldAttachments.notNull() | Chat_.textFieldText.notNull())).watch(triggerImmediately: true);
-    sub = draftsWatcher.listen((Query<Chat> query) async {
-      final chat = query.findFirst();
-      if (chat == null) return;
-
-      getTextDraft(text: chat.textFieldText);
-      await getAttachmentDrafts(attachments: chat.textFieldAttachments);
-    });
-
     if (ss.settings.autoOpenKeyboard.value) {
       updateObx(() {
         controller.focusNode.requestFocus();
@@ -91,7 +76,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     controller.focusNode.addListener(() => focusListener(false));
     controller.subjectFocusNode.addListener(() => focusListener(true));
 
-    textController.addListener(() => textListener(false));
+    controller.textController.addListener(() => textListener(false));
     subjectTextController.addListener(() => textListener(true));
   }
 
@@ -103,8 +88,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   void getTextDraft({ String? text }) {
     // Only change the text if the incoming text is different.
     final incomingText = text ?? chat.textFieldText;
-    if (incomingText != null && incomingText.isNotEmpty && incomingText != textController.text) {
-      textController.text = incomingText;
+    if (incomingText != null && incomingText.isNotEmpty && incomingText != controller.textController.text) {
+      controller.textController.text = incomingText;
     }
   }
 
@@ -146,10 +131,10 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   void textListener(bool subject) {
     if (!subject) {
-      chat.textFieldText = textController.text;
+      chat.textFieldText = controller.textController.text;
     }
     // typing indicators
-    final newText = "${subjectTextController.text}\n${textController.text}";
+    final newText = "${subjectTextController.text}\n${controller.textController.text}";
     if (newText != oldText) {
       _debounceTyping?.cancel();
       oldText = newText;
@@ -163,7 +148,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       });
     }
     // emoji picker
-    final _controller = subject ? subjectTextController : textController;
+    final _controller = subject ? subjectTextController : controller.textController;
     final newEmojiText = _controller.text;
     if (newEmojiText.contains(":") && newEmojiText != oldEmojiText) {
       oldEmojiText = newEmojiText;
@@ -222,14 +207,13 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   @override
   void dispose() {
-    sub.cancel();
-    chat.textFieldText = textController.text;
+    chat.textFieldText = controller.textController.text;
     chat.textFieldAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
     chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);
 
     controller.focusNode.dispose();
     controller.subjectFocusNode.dispose();
-    textController.dispose();
+    controller.textController.dispose();
     subjectTextController.dispose();
     recorderController.dispose();
     socket.sendMessage("stopped-typing", {"chatGuid": chatGuid});
@@ -240,16 +224,22 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   Future<void> sendMessage({String? effect}) async {
     await controller.send(
       controller.pickedAttachments,
-      textController.text,
+      controller.textController.text,
       subjectTextController.text,
       controller.replyToMessage?.item1.threadOriginatorGuid ?? controller.replyToMessage?.item1.guid,
       controller.replyToMessage?.item2,
       effect,
     );
     controller.pickedAttachments.clear();
-    textController.clear();
+    controller.textController.clear();
     subjectTextController.clear();
     controller.replyToMessage = null;
+
+    // Remove the saved text field draft
+    if ((chat.textFieldText ?? "").isNotEmpty) {
+      chat.textFieldText = "";
+      chat.save(updateTextFieldText: true);
+    }
   }
 
   @override
@@ -387,7 +377,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         key: controller.textFieldKey,
                         chat: chat,
                         subjectTextController: subjectTextController,
-                        textController: textController,
+                        textController: controller.textController,
                         controller: controller,
                         recorderController: recorderController,
                         sendMessage: sendMessage,
@@ -399,7 +389,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                         child: TextFieldSuffix(
                           chat: chat,
                           subjectTextController: subjectTextController,
-                          textController: textController,
+                          textController: controller.textController,
                           controller: controller,
                           recorderController: recorderController,
                           sendMessage: sendMessage,

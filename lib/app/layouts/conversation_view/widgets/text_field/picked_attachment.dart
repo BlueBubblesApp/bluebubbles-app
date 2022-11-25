@@ -147,6 +147,8 @@ class _PickedAttachmentState extends OptimizedState<PickedAttachment> with Autom
                             ),
                             onPressed: () {
                               widget.controller.pickedAttachments.removeWhere((e) => e.path == widget.data.path);
+                              widget.controller.chat.textFieldAttachments.removeWhere((e) => e == widget.data.path);
+                              widget.controller.chat.save(updateTextFieldAttachments: true);
                             },
                           ),
                         ),
