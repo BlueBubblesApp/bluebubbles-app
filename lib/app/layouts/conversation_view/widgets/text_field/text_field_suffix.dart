@@ -3,6 +3,7 @@ import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/send_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/send_effect_picker.dart';
+import 'package:bluebubbles/app/wrappers/cupertino_icon_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/models.dart';
@@ -67,22 +68,32 @@ class _TextFieldSuffixState extends OptimizedState<TextFieldSuffix> {
                   minimumSize: const Size(32, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: iOS ?
-                  Padding(
-                    padding: const EdgeInsets.only(left: 1),
-                    child: Icon(
-                      CupertinoIcons.stop_fill,
-                      color: context.theme.colorScheme.onPrimary,
-                      size: 15,
+                child: Obx(() => !widget.controller.showRecording.value ? 
+                  (iOS ?
+                    const CupertinoIconWrapper(icon: Icon(
+                      CupertinoIcons.waveform,
+                      color: Colors.white,
+                      size: 20,
+                    )) :
+                    Icon(
+                      Icons.mic_none,
+                      color: context.theme.colorScheme.properOnSurface,
+                      size: 20,
                     )
-                  ) :
+                  ) : iOS ?
+                  CupertinoIconWrapper(icon: Icon(
+                    CupertinoIcons.stop_fill,
+                    color: context.theme.colorScheme.onPrimary,
+                    size: 15,
+                  )) :
                   Center(
-                    child:  Icon(
+                    child: Icon(
                       Icons.stop_circle,
                       color: context.theme.colorScheme.properOnSurface,
                       size: 15,
                     ),
-                  ),
+                  )
+                ),
                 onPressed: () async {
                   widget.controller.showRecording.toggle();
                   if (widget.controller.showRecording.value) {
