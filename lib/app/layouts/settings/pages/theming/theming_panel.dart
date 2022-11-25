@@ -582,7 +582,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                 ),
                 if (!kIsWeb && !kIsDesktop)
                   Obx(() {
-                    if (controller.refreshRates.length > 2) {
+                    if (controller.refreshRates.length > 1) {
                       return SettingsHeader(
                           headerColor: headerColor,
                           tileColor: tileColor,
