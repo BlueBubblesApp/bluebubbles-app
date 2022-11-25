@@ -76,7 +76,7 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
     return Container(
       constraints: BoxConstraints(
         maxWidth: message.isBigEmoji ? context.width : ns.width(context) * MessageWidgetController.maxBubbleSizeFactor - 30,
-        minHeight: 30,
+        minHeight: 40,
       ),
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15)
         .add(EdgeInsets.only(
@@ -137,10 +137,13 @@ class _TextBubbleState extends CustomState<TextBubble, void, MessageWidgetContro
                 ),
               );
             }
-            return RichText(
-              text: TextSpan(
-                children: snapshot.data!,
-              ),
+            return Padding(
+              padding: (message.fullText.length == 1) ? const EdgeInsets.only(left: 3, right: 3) : EdgeInsets.zero,
+              child: RichText(
+                text: TextSpan(
+                  children: snapshot.data!,
+                ),
+              )
             );
           }
           return const SizedBox.shrink();
