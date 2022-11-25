@@ -167,21 +167,19 @@ class _UnreadIconState extends OptimizedState<_UnreadIcon> {
           final _count = widget.controller.inSelectMode.value ? widget.controller.selected.length : count;
           if (_count == 0) return const SizedBox.shrink();
           return Container(
-            width: _count > 9 ? 25.0 : 20,
+            width: 20.0,
             height: 20.0,
             decoration: BoxDecoration(
               color: context.theme.colorScheme.primary,
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.circular(25)
+              shape: BoxShape.circle
             ),
             alignment: Alignment.center,
-            child: Center(
-              child: Text(
-                _count.toString(),
-                textAlign: TextAlign.center,
-                style: context.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onPrimary),
-              ),
-            ),
+            padding: const EdgeInsets.only(left: 1.0),
+            child: Text(
+              _count.toString(),
+              style: context.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onPrimary, fontSize: _count > 9 ?
+                context.textTheme.bodyMedium!.fontSize! - 1.0 : context.textTheme.bodyMedium!.fontSize),
+            )
           );
         }),
       ],
