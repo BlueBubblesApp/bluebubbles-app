@@ -117,14 +117,18 @@ class _ContactCardState extends OptimizedState<ContactCard> with AutomaticKeepAl
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Text(
-                  contact?.displayName ?? 'Unknown',
-                  style: context.theme.textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
-                  softWrap: true,
+                Flexible(
+                  child:  Text(
+                    contact?.displayName ?? 'Unknown',
+                    style: context.theme.textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                    softWrap: true,
+                  ),
                 ),
+                Container(width: 2),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     ContactAvatarWidget(
                       handle: null,
@@ -142,7 +146,7 @@ class _ContactCardState extends OptimizedState<ContactCard> with AutomaticKeepAl
                   ],
                 )
               ],
-            ),
+            )
           ),
         ),
       ),
