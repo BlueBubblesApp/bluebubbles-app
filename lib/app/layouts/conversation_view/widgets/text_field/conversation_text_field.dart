@@ -10,6 +10,7 @@ import 'package:bluebubbles/app/components/custom/custom_cupertino_text_field.da
 import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger.dart';
@@ -60,13 +61,29 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   Chat get chat => controller.chat;
   String get chatGuid => chat.guid;
 
+  late final StreamSubscription<Query<Chat>> sub;
+
   @override
   void initState() {
     super.initState();
     forceDelete = false;
+
+    // Load the initial chat drafts
+    getDrafts();
+
+    // Watch for changes in the drafts
+    final draftsWatcher = chatBox.query(Chat_.guid.equals(chat.guid) & (
+      Chat_.textFieldAttachments.notNull() | Chat_.textFieldText.notNull())).watch(triggerImmediately: true);
+    sub = draftsWatcher.listen((Query<Chat> query) async {
+      final chat = query.findFirst();
+      if (chat == null) return;
+
+      getTextDraft(text: chat.textFieldText);
+      await getAttachmentDrafts(attachments: chat.textFieldAttachments);
+    });
+
     if (ss.settings.autoOpenKeyboard.value) {
       updateObx(() {
-        getDraftAttachments();
         controller.focusNode.requestFocus();
       });
     }
@@ -78,19 +95,37 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     subjectTextController.addListener(() => textListener(true));
   }
 
-  void getDraftAttachments() async {
-    if (chat.textFieldAttachments.isNotEmpty) {
-      for (String s in chat.textFieldAttachments) {
-        final file = File(s);
-        if (await file.exists()) {
-          final bytes = await file.readAsBytes();
-          controller.pickedAttachments.add(PlatformFile(
-            name: file.path.split("/").last,
-            bytes: bytes,
-            size: bytes.length,
-            path: s,
-          ));
-        }
+  void getDrafts() async {
+    getTextDraft();
+    await getAttachmentDrafts();
+  }
+
+  void getTextDraft({ String? text }) {
+    // Only change the text if the incoming text is different.
+    final incomingText = text ?? chat.textFieldText;
+    if (incomingText != null && incomingText.isNotEmpty && incomingText != textController.text) {
+      textController.text = incomingText;
+    }
+  }
+
+  Future<void> getAttachmentDrafts({ List<String> attachments = const [] }) async {
+    // Only change the attachments if the incoming attachments are different.
+    final incomingAttachments = attachments.isEmpty ? chat.textFieldAttachments : attachments;
+    final currentPicked = controller.pickedAttachments.map((element) => element.path).toList();
+    if (incomingAttachments.any((element) => !currentPicked.contains(element))) {
+      controller.pickedAttachments.clear();
+    }
+
+    for (String s in incomingAttachments) {
+      final file = File(s);
+      if (!currentPicked.contains(s) && await file.exists()) {
+        final bytes = await file.readAsBytes();
+        controller.pickedAttachments.add(PlatformFile(
+          name: file.path.split("/").last,
+          bytes: bytes,
+          size: bytes.length,
+          path: s,
+        ));
       }
     }
   }
@@ -187,6 +222,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   @override
   void dispose() {
+    sub.cancel();
     chat.textFieldText = textController.text;
     chat.textFieldAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
     chat.save(updateTextFieldText: true, updateTextFieldAttachments: true);

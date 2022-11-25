@@ -100,6 +100,23 @@ class IntentsService extends GetxService {
       final chat = Chat.findOne(guid: guid);
       if (chat == null) return;
 
+      // Add the attachments/text to the chat's draft state variables
+      bool updateAttachments = false;
+      bool updateText = false;
+      if (attachments.isNotEmpty) {
+        chat.textFieldAttachments = attachments.map((e) => e.path!).toList();
+        updateAttachments = true;
+      }
+      if (text != null && text.isNotEmpty) {
+        chat.textFieldText = text;
+        updateText = true;
+      }
+
+      // Save the draft state variables
+      if (updateAttachments || updateText) {
+        chat.save(updateTextFieldAttachments: updateAttachments, updateTextFieldText: updateText);
+      }
+
       if (cm.activeChat?.chat.guid != guid) {
         ns.pushAndRemoveUntil(
           Get.context!,
